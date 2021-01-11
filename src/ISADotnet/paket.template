@@ -1,0 +1,25 @@
+type project
+id
+    ISADotnet
+authors 
+    Heinrich Lukas Weil
+description
+	description
+owners
+    HLWeil
+licenseUrl
+    https://github.com/HLWeil/ISADotnet/blob/master/LICENSE
+requireLicenseAcceptance
+    False
+language
+    F#
+copyright
+    Copyright 2020
+tags
+    F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA
+summary
+    ISA compliant experimental metadata toolkit in F#
+repositoryType
+    git
+repositoryUrl
+    https://github.com/HLWeil/ISADotnet

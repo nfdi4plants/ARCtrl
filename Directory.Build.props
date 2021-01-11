@@ -1,0 +1,13 @@
+<Project>
+ <PropertyGroup>
+    <PackageLicenseUrl>https://github.com/HLWeil/ISADotnet/blob/master/License.txt</PackageLicenseUrl>
+    <PackageProjectUrl>https://HLWeil.github.io/ISADotnet/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/HLWeil/ISADotnet/</RepositoryUrl>
+	<FsDocsLogoLink>https://fsharp.org</FsDocsLogoLink>
+    <FsDocsLicenseLink>https://github.com/HLWeil/ISADotnet/blob/master/License.txt</FsDocsLicenseLink>
+    <FsDocsReleaseNotesLink>https://github.com/HLWeil/ISADotnet/blob/master/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
+    <FsDocsNavbarPosition>fixed-left</FsDocsNavbarPosition>
+    <FsDocsWarnOnMissingDocs>true</FsDocsWarnOnMissingDocs>
+    <FsDocsTheme>default</FsDocsTheme>
+ </PropertyGroup>
+</Project>
