@@ -7,7 +7,6 @@
   <ItemGroup>
     <Compile Include="DataModel.fs" />
     <Compile Include="IO.fs" />
-    <Compile Include="InvestigationFile\DataModel.fs" />
     <Compile Include="InvestigationFile\API.fs" />
     <Compile Include="InvestigationFile\IO.fs" />
     <None Include="paket.references" />
