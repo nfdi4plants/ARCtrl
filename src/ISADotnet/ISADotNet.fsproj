@@ -5,7 +5,30 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="DataModel.fs" />
+    <Compile Include="DataModel\Reference.fs" />
+    <Compile Include="DataModel\Ontology.fs" />
+    <Compile Include="DataModel\Factor.fs" />
+    <Compile Include="DataModel\Protocol.fs" />
+    <Compile Include="DataModel\Material.fs" />
+    <Compile Include="DataModel\Data.fs" />
+    <Compile Include="DataModel\Process.fs" />
+    <Compile Include="DataModel\Publication.fs" />
+    <Compile Include="DataModel\Person.fs" />
+    <Compile Include="DataModel\Assay.fs" />
+    <Compile Include="DataModel\Study.fs" />
+    <Compile Include="DataModel\Investigation.fs" />
+    <Compile Include="API\Reference.fs" />
+    <Compile Include="API\Ontology.fs" />
+    <Compile Include="API\Factor.fs" />
+    <Compile Include="API\Protocol.fs" />
+    <Compile Include="API\Data.fs" />
+    <Compile Include="API\Material.fs" />
+    <Compile Include="API\Process.fs" />
+    <Compile Include="API\Publication.fs" />
+    <Compile Include="API\Person.fs" />
+    <Compile Include="API\Assay.fs" />
+    <Compile Include="API\Study.fs" />
+    <Compile Include="API\Investigation.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="InvestigationFile\API.fs" />
     <Compile Include="InvestigationFile\IO.fs" />
