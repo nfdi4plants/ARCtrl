@@ -19,10 +19,24 @@ type ProcessParameterValue =
             Unit = unit
         }
 
+[<AnyOf>]
+type ProcessInput =
+    
+    | [<SerializationOrder(1)>] Source of Source
+    | [<SerializationOrder(0)>] Sample of Sample
+    | [<SerializationOrder(0)>] Data of Data
+    | [<SerializationOrder(0)>] Material of Material 
+
+[<AnyOf>]
+type ProcessOutput =
+    | Sample of Sample
+    | Data of Data
+    | Material of Material 
+
 type Process = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"name")>]
         Name : string
         [<JsonPropertyName(@"executesProtocol")>]
@@ -38,9 +52,9 @@ type Process =
         [<JsonPropertyName(@"nextProcess")>]
         NextProcess : Process
         [<JsonPropertyName(@"inputs")>]
-        Inputs : string list
+        Inputs : ProcessInput list
         [<JsonPropertyName(@"outputs")>]
-        Outputs : string list
+        Outputs : ProcessOutput list
         [<JsonPropertyName(@"comments")>]
         Comments : Comment list
     }

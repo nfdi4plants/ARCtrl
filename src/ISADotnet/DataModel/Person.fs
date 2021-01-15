@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 type Person = 
     {   
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"lastName")>]
         LastName : string
         [<JsonPropertyName(@"firstName")>]
@@ -13,7 +13,7 @@ type Person =
         [<JsonPropertyName(@"midInitials")>]
         MidInitials : string
         [<JsonPropertyName(@"email")>]
-        EMail : string
+        EMail : EMail
         [<JsonPropertyName(@"phone")>]
         Phone : string
         [<JsonPropertyName(@"fax")>]
@@ -42,16 +42,3 @@ type Person =
             Roles = roles
             Comments = comments
         }
-
-
-    static member LastNameTab = "Last Name"
-    static member FirstNameTab = "First Name"
-    static member MidInitialsTab = "Mid Initials"
-    static member EmailTab = "Email"
-    static member PhoneTab = "Phone"
-    static member FaxTab = "Fax"
-    static member AddressTab = "Address"
-    static member AffiliationTab = "Affiliation"
-    static member RolesTab = "Roles"
-    static member RolesTermAccessionNumberTab = "Roles Term Accession Number"
-    static member RolesTermSourceREFTab = "Roles Term Source REF"

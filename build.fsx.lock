@@ -297,7 +297,7 @@ NUGET
       Microsoft.NETCore.Platforms (>= 1.1)
       Microsoft.NETCore.Targets (>= 1.1)
       System.Runtime (>= 4.3)
-    System.Diagnostics.DiagnosticSource (5.0)
+    System.Diagnostics.DiagnosticSource (5.0.1)
       System.Memory (>= 4.5.4)
       System.Runtime.CompilerServices.Unsafe (>= 5.0)
     System.Diagnostics.Process (4.3)

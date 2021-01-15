@@ -16,7 +16,7 @@ type DataFile =
 type Data = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"name")>]
         Name : string
         [<JsonPropertyName(@"type")>]
@@ -37,7 +37,7 @@ type Data =
 type Source = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string 
+        ID : URI 
         [<JsonPropertyName(@"name")>]
         Name : string
         [<JsonPropertyName(@"characteristics")>]
@@ -55,7 +55,7 @@ type Source =
 type Sample = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"name")>]
         Name : string
         [<JsonPropertyName(@"characteristics")>]

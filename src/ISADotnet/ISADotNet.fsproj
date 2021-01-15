@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="JsonAnyOf.fs" />
     <Compile Include="DataModel\Reference.fs" />
     <Compile Include="DataModel\Ontology.fs" />
     <Compile Include="DataModel\Factor.fs" />
@@ -29,7 +30,7 @@
     <Compile Include="API\Assay.fs" />
     <Compile Include="API\Study.fs" />
     <Compile Include="API\Investigation.fs" />
-    <Compile Include="IO.fs" />
+    <Compile Include="JsonIO\IO.fs" />
     <Compile Include="InvestigationFile\API.fs" />
     <Compile Include="InvestigationFile\IO.fs" />
     <None Include="paket.references" />

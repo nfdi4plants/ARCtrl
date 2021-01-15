@@ -2,16 +2,22 @@ namespace ISADotNet
 
 open System.Text.Json.Serialization
 
+[<AnyOf>]
+type AnnotationValue = 
+    | [<SerializationOrder(2)>]Text of string
+    | [<SerializationOrder(1)>]Float of float
+    | [<SerializationOrder(0)>]Int of int
+
 type OntologyAnnotation =
     {
         [<JsonPropertyName("@id")>]
         ID : URI
         [<JsonPropertyName("annotationValue")>]
-        Name : string
+        Name : AnnotationValue
         [<JsonPropertyName("termSource")>]
         TermSourceREF : string
         [<JsonPropertyName("termAccession")>]
-        TermAccessionNumber : string
+        TermAccessionNumber : URI
         [<JsonPropertyName("comments")>]
         Comments : Comment list
     }
@@ -25,10 +31,7 @@ type OntologyAnnotation =
             Comments = comments
         }
 
-    static member NameTab = "Term Source Name"
-    static member FileTab = "Term Source File"
-    static member VersionTab = "Term Source Version"
-    static member DescriptionTab = "Term Source Description"
+
 
 
 type OntologySourceReference =
@@ -55,7 +58,3 @@ type OntologySourceReference =
             Comments    = comments
         }
 
-    static member NameTab = "Term Source Name"
-    static member FileTab = "Term Source File"
-    static member VersionTab = "Term Source Version"
-    static member DescriptionTab = "Term Source Description"

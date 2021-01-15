@@ -6,7 +6,7 @@ open System.Text.Json.Serialization
 type Investigation = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"filename")>]
         FileName : string
         [<JsonPropertyName(@"identifier")>]

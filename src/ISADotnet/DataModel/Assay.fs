@@ -13,7 +13,7 @@ type AssayMaterials =
 type Assay = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"filename")>]
         FileName : string
         [<JsonPropertyName(@"measurementType")>]

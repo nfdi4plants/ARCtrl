@@ -5,7 +5,7 @@ open System.Text.Json.Serialization
 type MaterialAttribute = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"characteristicType")>]
         CharacteristicType : OntologyAnnotation
     
@@ -21,7 +21,7 @@ type MaterialAttribute =
 type MaterialAttributeValue = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"category")>]
         Category : MaterialAttribute
         [<JsonPropertyName(@"value")>]
@@ -39,6 +39,8 @@ type MaterialAttributeValue =
             Unit = unit         
         }
 
+
+// TO - DO : String Enum Converter
 type MaterialType =
     | ExtractName // "Extract Name"
     | LabeledExtractName // "Labeled Extract Name"
@@ -52,7 +54,7 @@ type MaterialType =
 type Material = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"name")>]
         Name : string
         [<JsonPropertyName(@"type")>]

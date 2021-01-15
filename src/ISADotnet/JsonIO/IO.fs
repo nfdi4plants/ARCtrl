@@ -1,24 +1,24 @@
 ﻿namespace ISADotNet
 
 module IO =
-    open FSharp.Data
+
     let x = 1
-//    module Json = 
+    //module Json = 
 
-//        module private Json =
+    //    module private Json =
 
-//            let fromString (s:string) = 
-//                JsonValue.Parse s
+    //        let fromString (s:string) = 
+    //            JsonValue.Parse s
     
-//            let item (name : string) (obj : JsonValue) =
-//                obj.Item name
+    //        let item (name : string) (obj : JsonValue) =
+    //            obj.Item name
     
-//            let tryItem (name : string) (obj : JsonValue) =
-//                try
-//                    obj.Item name
-//                    |> Some
-//                with
-//                | _ -> None
+    //        let tryItem (name : string) (obj : JsonValue) =
+    //            try
+    //                obj.Item name
+    //                |> Some
+    //            with
+    //            | _ -> None
     
 //            let toArray (obj : JsonValue) =
 //                obj.AsArray()

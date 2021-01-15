@@ -133,7 +133,7 @@ module API =
 //            tryGetBy (fun p -> p.DOI = doi) investigation
     
 //        /// If an publication with the given pubmedID exists in the investigation, returns it
-//        let tryGetByPubMedID (pubMedID : string) (investigation:Investigation) =
+//        let tryGetByPubMedID (pubMedID : URI) (investigation:Investigation) =
 //            tryGetBy (fun p -> p.PubMedID = pubMedID) investigation
 
 //        /// Returns true, if a publication for which the predicate returns true exists in the investigation
@@ -150,7 +150,7 @@ module API =
 //            exists (fun p -> p.DOI = doi) investigation
     
 //        /// Returns true, if a publication with the given pubmedID exists in the investigation
-//        let existsByPubMedID (pubMedID : string) (investigation:Investigation) =
+//        let existsByPubMedID (pubMedID : URI) (investigation:Investigation) =
 //            exists (fun p -> p.PubMedID = pubMedID) investigation
 
 //        /// Adds the given publication to the investigation  
@@ -192,7 +192,7 @@ module API =
 //            removeBy (fun p -> p.DOI = doi) investigation
 
 //        /// If a publication with the given pubMedID exists in the investigation, removes it from the investigation
-//        let removeByPubMedID (pubMedID : string) (investigation : Investigation) = 
+//        let removeByPubMedID (pubMedID : URI) (investigation : Investigation) = 
 //            removeBy (fun p -> p.PubMedID = pubMedID) investigation
 
 //    module Study =
@@ -575,7 +575,7 @@ module API =
 //                tryGetBy (fun p -> p.DOI = doi) study
         
 //            /// If an publication with the given pubmedID exists in the study, returns it
-//            let tryGetByPubMedID (pubMedID : string) (study:Study) =
+//            let tryGetByPubMedID (pubMedID : URI) (study:Study) =
 //                tryGetBy (fun p -> p.PubMedID = pubMedID) study
 
 //            /// Returns true, if a publication for which the predicate returns true exists in the study
@@ -592,7 +592,7 @@ module API =
 //                exists (fun p -> p.DOI = doi) study
         
 //            /// Returns true, if a publication with the given pubmedID exists in the study
-//            let existsByPubMedID (pubMedID : string) (study:Study) =
+//            let existsByPubMedID (pubMedID : URI) (study:Study) =
 //                exists (fun p -> p.PubMedID = pubMedID) study
 
 //            /// Adds the given publication to the study  
@@ -634,7 +634,7 @@ module API =
 //                removeBy (fun p -> p.DOI = doi) study
 
 //            /// If a publication with the given pubMedID exists in the study, removes it from the study
-//            let removeByPubMedID (pubMedID : string) (study : Study) = 
+//            let removeByPubMedID (pubMedID : URI) (study : Study) = 
 //                removeBy (fun p -> p.PubMedID = pubMedID) study
 
 

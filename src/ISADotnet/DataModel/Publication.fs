@@ -7,7 +7,7 @@ type Publication =
         [<JsonPropertyName(@"@id")>]
         ID : URI
         [<JsonPropertyName(@"pubMedID")>]
-        PubMedID : string
+        PubMedID : URI
         [<JsonPropertyName(@"doi")>]
         DOI : string
         [<JsonPropertyName(@"authorList")>]

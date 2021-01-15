@@ -4,6 +4,8 @@ open System.Text.Json.Serialization
 
 type URI = string
 
+type EMail = string
+
 type Comment = 
     {
         [<JsonPropertyName(@"@id")>]

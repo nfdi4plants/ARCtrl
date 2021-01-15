@@ -22,7 +22,7 @@ type StudyMaterials =
 type Study = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"filename")>]
         FileName : string
         [<JsonPropertyName(@"identifier")>]
@@ -83,27 +83,5 @@ type Study =
             Comments                    = comments
         }
 
-    static member IdentifierTab = "Study Identifier"
-    static member TitleTab = "Study Title"
-    static member DescriptionTab = "Study Description"
-    static member SubmissionDateTab = "Study Submission Date"
-    static member PublicReleaseDateTab = "Study Public Release Date"
-    static member FileNameTab = "Study File Name"
 
-    static member DesignDescriptorsTab = "STUDY DESIGN DESCRIPTORS"
-    static member PublicationsTab = "STUDY PUBLICATIONS"
-    static member FactorsTab = "STUDY FACTORS"
-    static member AssaysTab = "STUDY ASSAYS"
-    static member ProtocolsTab = "STUDY PROTOCOLS"
-    static member ContactsTab = "STUDY CONTACTS"
 
-    static member DesignDescriptorsTabPrefix = "Study Design"
-    static member PublicationsTabPrefix = "Study Publication"
-    static member FactorsTabPrefix = "Study Factor"
-    static member AssaysTabPrefix = "Study Assay"
-    static member ProtocolsTabPrefix = "Study Protocol"
-    static member ContactsTabPrefix = "Study Person"
-
-    static member DesignTypeTab = "Type"
-    static member DesignTypeTermAccessionNumberTab = "Type Term Accession Number"
-    static member DesignTypeTermSourceREFTab = "Type Term Source REF"

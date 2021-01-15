@@ -34,8 +34,9 @@ NUGET
     FsCheck (2.14.3)
       FSharp.Core (>= 4.2.3)
     FSharp.Core (4.7.2)
-    FSharp.Data (3.3.3)
-      FSharp.Core (>= 4.3.4)
+    FSharp.SystemTextJson (0.15.14)
+      FSharp.Core (>= 4.7)
+      System.Text.Json (>= 4.6)
     FSharpSpreadsheetML (0.0.1)
       DocumentFormat.OpenXml
       FSharp.Core (4.7.2)

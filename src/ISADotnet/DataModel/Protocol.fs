@@ -6,7 +6,7 @@ open System.Text.Json.Serialization
 type ProtocolParameter = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"parameterName")>]
         ParameterName : OntologyAnnotation
     }
@@ -38,7 +38,7 @@ type Component =
 type Protocol =
     {       
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"name")>]
         Name :          string
         [<JsonPropertyName(@"protocolType")>]

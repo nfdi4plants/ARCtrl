@@ -5,14 +5,13 @@ open System.Text.Json.Serialization
 type Factor = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"factorName")>]
         Name : string
         [<JsonPropertyName(@"factorType")>]
         FactorType : OntologyAnnotation
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list
-    
+        Comments : Comment list    
     }
 
     static member create id name factorType comments =
@@ -23,23 +22,20 @@ type Factor =
             Comments = comments         
         }
 
-    static member NameTab = "Name"
-    static member FactorTypeTab = "Type"
-    static member TypeTermAccessionNumberTab = "Type Term Accession Number"
-    static member TypeTermSourceREFTab = "Type Term Source REF"
 
 
-
+[<AnyOf>]
 type Value =
-    | Ontology of OntologyAnnotation
-    | Numeric of float
-    | Name of string
+    | [<SerializationOrder(0)>] Ontology of OntologyAnnotation
+    | [<SerializationOrder(1)>] Int of int
+    | [<SerializationOrder(2)>] Float of float
+    | [<SerializationOrder(3)>] Name of string
 
 
 type FactorValue =
     {
         [<JsonPropertyName(@"@id")>]
-        ID : string
+        ID : URI
         [<JsonPropertyName(@"category")>]
         Category : Factor
         [<JsonPropertyName(@"value")>]
