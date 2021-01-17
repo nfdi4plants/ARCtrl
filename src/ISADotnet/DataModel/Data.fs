@@ -1,12 +1,14 @@
 namespace ISADotNet
 
+open System.Text.Json
 open System.Text.Json.Serialization
 
+[<StringEnum>]
 type DataFile =
 
-    | RawDataFile // "Raw Data File"
-    | DerivedDataFile // "Derived Data File"
-    | ImageFile // "Image File"
+    | [<StringEnumValue("Raw Data File")>]      RawDataFile // "Raw Data File"
+    | [<StringEnumValue("Derived Data File")>]  DerivedDataFile // "Derived Data File"
+    | [<StringEnumValue("Image File")>]         ImageFile // "Image File"
 
     static member RawDataFileJson       = "Raw Data File"
     static member DerivedDataFileJson   = "Derived Data File"

@@ -40,10 +40,10 @@ type MaterialAttributeValue =
         }
 
 
-// TO - DO : String Enum Converter
+[<StringEnumAttribute>]
 type MaterialType =
-    | ExtractName // "Extract Name"
-    | LabeledExtractName // "Labeled Extract Name"
+    | [<StringEnumValue("Extract Name")>]           ExtractName // "Extract Name"
+    | [<StringEnumValue("Labeled Extract Name")>]   LabeledExtractName // "Labeled Extract Name"
 
     static member create t =
         if t = "Extract Name" then ExtractName
