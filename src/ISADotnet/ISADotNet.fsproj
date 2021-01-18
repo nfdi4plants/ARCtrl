@@ -6,7 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="JsonAnyOf.fs" />
-    <Compile Include="DataModel\Reference.fs" />
+    <Compile Include="DataModel\Comment.fs" />
     <Compile Include="DataModel\Ontology.fs" />
     <Compile Include="DataModel\Factor.fs" />
     <Compile Include="DataModel\Protocol.fs" />
@@ -18,7 +18,8 @@
     <Compile Include="DataModel\Assay.fs" />
     <Compile Include="DataModel\Study.fs" />
     <Compile Include="DataModel\Investigation.fs" />
-    <Compile Include="API\Reference.fs" />
+    <Compile Include="API\Update.fs" />
+    <Compile Include="API\Comment.fs" />
     <Compile Include="API\Ontology.fs" />
     <Compile Include="API\Factor.fs" />
     <Compile Include="API\Protocol.fs" />
