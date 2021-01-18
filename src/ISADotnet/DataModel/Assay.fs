@@ -53,14 +53,3 @@ type Assay =
             ProcessSequence             = processSequence
             Comments                    = comments
         }
-
-
-
-    static member MeasurementTypeTab = "Measurement Type"
-    static member MeasurementTypeTermAccessionNumberTab = "Measurement Type Term Accession Number"
-    static member MeasurementTypeTermSourceREFTab = "Measurement Type Term Source REF"
-    static member TechnologyTypeTab = "Technology Type"
-    static member TechnologyTypeTermAccessionNumberTab = "Technology Type Term Accession Number"
-    static member TechnologyTypeTermSourceREFTab = "Technology Type Term Source REF"
-    static member TechnologyPlatformTab = "Technology Platform"
-    static member FileNameTab = "File Name"

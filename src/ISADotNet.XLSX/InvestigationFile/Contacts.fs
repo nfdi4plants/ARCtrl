@@ -21,143 +21,86 @@ module Contacts =
     let rolesTermAccessionNumberLabel = "Roles Term Accession Number"
     let rolesTermSourceREFLabel = "Roles Term Source REF"
 
+    let labels = [lastNameLabel;firstNameLabel;midInitialsLabel;emailLabel;phoneLabel;faxLabel;addressLabel;affiliationLabel;rolesLabel;rolesTermAccessionNumberLabel;rolesTermSourceREFLabel]
 
-    let createPerson lastName firstName midInitials email phone fax address affiliation role rolesTermAccessionNumber rolesTermSourceREF comments =
+    let fromString lastName firstName midInitials email phone fax address affiliation role rolesTermAccessionNumber rolesTermSourceREF comments =
         let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermAccessionNumber rolesTermSourceREF
         Person.create null lastName firstName midInitials email phone fax address affiliation roles comments
 
+    let fromSparseMatrix (matrix : SparseMatrix) =
+        
+        List.init matrix.Length (fun i -> 
+            let comments = 
+                matrix.CommentKeys 
+                |> List.map (fun k -> 
+                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+            fromString
+                (matrix.TryGetValueDefault("",(lastNameLabel,i)))
+                (matrix.TryGetValueDefault("",(firstNameLabel,i)))
+                (matrix.TryGetValueDefault("",(midInitialsLabel,i)))
+                (matrix.TryGetValueDefault("",(emailLabel,i)))
+                (matrix.TryGetValueDefault("",(phoneLabel,i)))
+                (matrix.TryGetValueDefault("",(faxLabel,i)))
+                (matrix.TryGetValueDefault("",(addressLabel,i)))
+                (matrix.TryGetValueDefault("",(affiliationLabel,i)))
+                (matrix.TryGetValueDefault("",(rolesLabel,i)))
+                (matrix.TryGetValueDefault("",(rolesTermAccessionNumberLabel,i)))
+                (matrix.TryGetValueDefault("",(rolesTermSourceREFLabel,i)))
+                comments
+        )
+
+    let toSparseMatrix (persons:Person list) =
+        let matrix = SparseMatrix.Create (keys = labels,length=persons.Length)
+        let mutable commentKeys = []
+        persons
+        |> List.iteri (fun i p ->
+            let role,rolesTermAccessionNumber,rolesTermSourceREF = OntologyAnnotation.toAggregatedStrings ';' p.Roles
+            do matrix.Matrix.Add ((lastNameLabel,i),                    p.LastName)
+            do matrix.Matrix.Add ((firstNameLabel,i),                   p.FirstName)
+            do matrix.Matrix.Add ((midInitialsLabel,i),                 p.MidInitials)
+            do matrix.Matrix.Add ((emailLabel,i),                       p.EMail)
+            do matrix.Matrix.Add ((phoneLabel,i),                       p.Phone)
+            do matrix.Matrix.Add ((faxLabel,i),                         p.Fax)
+            do matrix.Matrix.Add ((addressLabel,i),                     p.Address)
+            do matrix.Matrix.Add ((affiliationLabel,i),                 p.Affiliation)
+            do matrix.Matrix.Add ((rolesLabel,i),                       role)  
+            do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rolesTermAccessionNumber)
+            do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rolesTermSourceREF)
+
+            p.Comments
+            |> List.iter (fun comment -> 
+                commentKeys <- comment.Name :: commentKeys
+                matrix.Matrix.Add((comment.Name,i),comment.Value)
+            )      
+        )
+        {matrix with CommentKeys = commentKeys |> List.distinct}
+
+
     let readPersons (prefix : string) lineNumber (en:IEnumerator<Row>) =
-        let rec loop 
-            lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-            comments remarks lineNumber = 
+        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
 
-            let create () = 
-                let length =
-                    [|lastNames;firstNames;midInitialss;emails;phones;faxs;addresss;affiliations;roless;rolesTermAccessionNumbers;rolesTermSourceREFs|]
-                    |> Array.map Array.length
-                    |> Array.max
-
-                List.init length (fun i ->
-                    let roles = 
-                        splitAndCreateOntologies
-                            (Array.tryItemDefault i "" roless)
-                            (Array.tryItemDefault i "" rolesTermAccessionNumbers)
-                            (Array.tryItemDefault i "" rolesTermSourceREFs)
-                    let comments = 
-                        List.map (fun (key,values) -> 
-                            Comment.create "" key (Array.tryItemDefault i "" values)
-                        ) comments
-                    Person.create
-                        ""
-                        (Array.tryItemDefault i "" lastNames)
-                        (Array.tryItemDefault i "" firstNames)
-                        (Array.tryItemDefault i "" midInitialss)
-                        (Array.tryItemDefault i "" emails)
-                        (Array.tryItemDefault i "" phones)
-                        (Array.tryItemDefault i "" faxs)
-                        (Array.tryItemDefault i "" addresss)
-                        (Array.tryItemDefault i "" affiliations)
-                        roles
-                        comments
-                    |> REF.Item
-                )
             if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v) |> Array.ofIndexedSeq
-                match Array.tryItem 0 row , Array.trySkip 1 row with
+                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
+                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
                 | Comment k, Some v -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        ((k,v) :: comments) remarks (lineNumber + 1)
+                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
 
-                | Some k, Some lastNames when k = prefix + " " + Person.LastNameLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
+                | Some k, Some v when List.exists (fun label -> k = prefix + " " + label) labels -> 
+                    let label = List.find (fun label -> k = prefix + " " + label) labels
+                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
 
-                | Some k, Some firstNames when k = prefix + " " + Person.FirstNameLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some midInitialss when k = prefix + " " + Person.MidInitialsLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some emails when k = prefix + " " + Person.EmailLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some phones when k = prefix + " " + Person.PhoneLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some faxs when k = prefix + " " + Person.FaxLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some addresss when k = prefix + " " + Person.AddressLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some affiliations when k = prefix + " " + Person.AffiliationLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some roless when k = prefix + " " + Person.RolesLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some rolesTermAccessionNumbers when k = prefix + " " + Person.RolesTermAccessionNumberLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some rolesTermSourceREFs when k = prefix + " " + Person.RolesTermSourceREFLabel -> 
-                    loop 
-                        lastNames firstNames midInitialss emails phones faxs addresss affiliations roless rolesTermAccessionNumbers rolesTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,create ()
-                | _ -> None, lineNumber,remarks,create ()
+                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
+                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
             else
-                None,lineNumber,remarks,create ()
-        loop [||] [||] [||] [||] [||] [||] [||] [||] [||] [||] [||] [] [] lineNumber
+                None,lineNumber,remarks,fromSparseMatrix matrix
+        loop (SparseMatrix.Create()) [] lineNumber
 
     
     let writePersons prefix (persons : Person list) =
-        let commentKeys = persons |> List.collect (fun person -> person.Comments |> List.map (fun c -> c.Name)) |> List.distinct
-
-        seq {
-            let roleNames,roleAccessions,roleSourceRefs = persons |> List.map (fun p -> mergeOntologies p.Roles) |> List.unzip3
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.LastNameLabel                      :: (persons |> List.map (fun person -> person.LastName))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.FirstNameLabel                      :: (persons |> List.map (fun person -> person.FirstName))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.MidInitialsLabel                      :: (persons |> List.map (fun person -> person.MidInitials))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.EmailLabel                      :: (persons |> List.map (fun person -> person.EMail))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.PhoneLabel                      :: (persons |> List.map (fun person -> person.Phone))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.FaxLabel                      :: (persons |> List.map (fun person -> person.Fax))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.AddressLabel                      :: (persons |> List.map (fun person -> person.Address))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.AffiliationLabel                      :: (persons |> List.map (fun person -> person.Affiliation))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.RolesLabel                      :: roleNames))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.RolesTermAccessionNumberLabel   :: roleAccessions))
-            yield   ( Row.ofValues None 0u (prefix + " " + Person.RolesTermSourceREFLabel         :: roleSourceRefs))
-
-            for key in commentKeys do
-                let values = 
-                    persons |> List.map (fun person -> 
-                        List.tryPickDefault (fun (c : Comment) -> if c.Name = key then Some c.Value else None) "" person.Comments
-                    )
-                yield ( Row.ofValues None 0u (wrapCommentKey key :: values))
-        }
+        persons
+        |> toSparseMatrix
+        |> SparseMatrix.ToRows prefix

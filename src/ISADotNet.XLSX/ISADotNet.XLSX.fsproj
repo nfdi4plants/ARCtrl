@@ -5,9 +5,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="InvestigationFile\Comment.fs" />
     <Compile Include="InvestigationFile\SparseMatrix.fs" />
     <Compile Include="InvestigationFile\Conversions.fs" />
-    <Compile Include="InvestigationFile\Comment.fs" />
     <Compile Include="InvestigationFile\Contacts.fs" />
     <Compile Include="InvestigationFile\DesignDescriptors.fs" />
     <Compile Include="InvestigationFile\Factors.fs" />

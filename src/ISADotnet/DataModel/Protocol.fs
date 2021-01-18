@@ -70,17 +70,3 @@ type Protocol =
             Comments        = comments
         }
 
-    static member NameTab = "Name"
-    static member ProtocolTypeTab = "Type"
-    static member TypeTermAccessionNumberTab = "Type Term Accession Number"
-    static member TypeTermSourceREFTab = "Type Term Source REF"
-    static member DescriptionTab = "Description"
-    static member URITab = "URI"
-    static member VersionTab = "Version"
-    static member ParametersNameTab = "Parameters Name"
-    static member ParametersTermAccessionNumberTab = "Parameters Term Accession Number"
-    static member ParametersTermSourceREFTab = "Parameters Term Source REF"
-    static member ComponentsNameTab = "Components Name"
-    static member ComponentsTypeTab = "Components Type"
-    static member ComponentsTypeTermAccessionNumberTab = "Components Type Term Accession Number"
-    static member ComponentsTypeTermSourceREFTab = "Components Type Term Source REF"

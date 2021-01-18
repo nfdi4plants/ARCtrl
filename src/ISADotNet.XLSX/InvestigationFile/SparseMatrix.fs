@@ -1,6 +1,80 @@
 namespace ISADotNet.XSLX
 
 open ISADotNet
+open System.Collections.Generic
+open FSharpSpreadsheetML
+
+type SparseMatrix = 
+
+    {
+        Matrix : Dictionary<string*int,string>
+        Keys : string list
+        CommentKeys : string list
+        Length : int
+    }
+
+    member this.TryGetValueDefault(defaultValue,key) =
+        if this.Matrix.ContainsKey(key) then
+            this.Matrix.Item(key)
+        else
+            defaultValue
+
+    static member Create(?matrix,?keys,?commentKeys,?length) = 
+        {
+            Matrix= Option.defaultValue (Dictionary()) matrix
+            Keys = Option.defaultValue [] keys
+            CommentKeys = Option.defaultValue [] commentKeys
+            Length = Option.defaultValue 0 length
+        }
+
+    static member AddRow key (values:seq<int*string>) (matrix : SparseMatrix) =
+        let values = 
+            values 
+            |> Seq.map (fun (i,v) -> 
+                let i = i-2
+                matrix.Matrix.Add((key,i),v)
+                i,v
+            )
+        let maxInt = Seq.maxBy fst values |> fst
+        
+        {matrix with 
+            Keys = key :: matrix.Keys
+            Length = if maxInt > matrix.Length then maxInt else matrix.Length
+        }
+
+    static member AddComment key (values:seq<int*string>) (matrix : SparseMatrix) =
+        let values = 
+            values 
+            |> Seq.map (fun (i,v) -> 
+                let i = i-2
+                matrix.Matrix.Add((key,i),v)
+                i,v
+            )
+        let maxInt = Seq.maxBy fst values |> fst
+        
+        {matrix with 
+            CommentKeys = key :: matrix.CommentKeys
+            Length = if maxInt > matrix.Length then maxInt else matrix.Length
+        }
+
+    static member ToRows (prefix : string) (matrix : SparseMatrix) =
+        seq {
+            for key in matrix.Keys do
+                (Row.ofValues None 0u (prefix + " " + key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+            for key in matrix.CommentKeys do
+                (Row.ofValues None 0u (Comment.wrapCommentKey key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+        }
+
+        
+module Seq = 
+    
+    /// If at least i values exist in seq a, builds a new array that contains the elements of the given seq, exluding the first i elements
+    let trySkip i s =
+        try
+            Seq.skip i s
+            |> Some
+        with
+        | _ -> None
 
 module Array = 
     

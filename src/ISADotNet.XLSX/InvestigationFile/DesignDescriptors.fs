@@ -13,82 +13,72 @@ module DesignDescriptors =
     let designTypeTermAccessionNumberLabel = "Type Term Accession Number"
     let designTypeTermSourceREFLabel = "Type Term Source REF"
 
-    let createDesign designType typeTermAccessionNumber typeTermSourceREF comments =
+    let labels = [designTypeLabel;designTypeTermAccessionNumberLabel;designTypeTermSourceREFLabel]
+
+    let fromString designType typeTermAccessionNumber typeTermSourceREF comments =
         OntologyAnnotation.create null (AnnotationValue.fromString designType) typeTermAccessionNumber typeTermSourceREF comments
 
+    let fromSparseMatrix (matrix : SparseMatrix) =
+        
+        List.init matrix.Length (fun i -> 
+
+            let comments = 
+                matrix.CommentKeys 
+                |> List.map (fun k -> 
+                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+
+            fromString
+                (matrix.TryGetValueDefault("",(designTypeLabel,i)))
+                (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i)))
+                (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i)))
+                comments
+        )
+
+    let toSparseMatrix (designs: OntologyAnnotation list) =
+        let matrix = SparseMatrix.Create (keys = labels,length=designs.Length)
+        let mutable commentKeys = []
+        designs
+        |> List.iteri (fun i d ->
+            let name,accession,source = OntologyAnnotation.toString d
+            do matrix.Matrix.Add ((designTypeLabel,i),                      name)
+            do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   accession)
+            do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         source)
+
+            p.Comments
+            |> List.iter (fun comment -> 
+                commentKeys <- comment.Name :: commentKeys
+                matrix.Matrix.Add((comment.Name,i),comment.Value)
+            )      
+        )
+        {matrix with CommentKeys = commentKeys |> List.distinct}
+
+
     let readDesigns (prefix : string) lineNumber (en:IEnumerator<Row>) =
-        let rec loop 
-            designTypes typeTermAccessionNumbers typeTermSourceREFs
-            comments remarks lineNumber = 
-
-            let create () = 
-                let length =
-                    [|designTypes;typeTermAccessionNumbers;typeTermSourceREFs|]
-                    |> Array.map Array.length
-                    |> Array.max
-
-                List.init length (fun i ->
-                    let comments = 
-                        List.map (fun (key,values) -> 
-                            Comment.create "" key (Array.tryItemDefault i "" values)
-                        ) comments
-                    createDesign
-                        (Array.tryItemDefault i "" designTypes)
-                        (Array.tryItemDefault i "" typeTermAccessionNumbers)
-                        (Array.tryItemDefault i "" typeTermSourceREFs)
-                        comments
-                )
+        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
 
             if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v) |> Array.ofIndexedSeq
-                match Array.tryItem 0 row , Array.trySkip 1 row with
+                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
+                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
                 | Comment k, Some v -> 
-                    loop 
-                        designTypes typeTermAccessionNumbers typeTermSourceREFs
-                        ((k,v) :: comments) remarks (lineNumber + 1)
+                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop 
-                        designTypes typeTermAccessionNumbers typeTermSourceREFs
-                        comments (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
 
-                | Some k, Some designTypes when k = prefix + " " + designTypeLabel -> 
-                    loop 
-                        designTypes typeTermAccessionNumbers typeTermSourceREFs
-                        comments remarks (lineNumber + 1)
+                | Some k, Some v when List.exists (fun label -> k = prefix + " " + label) labels -> 
+                    let label = List.find (fun label -> k = prefix + " " + label) labels
+                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
 
-                | Some k, Some typeTermAccessionNumbers when k = prefix + " " + designTypeTermAccessionNumberLabel -> 
-                    loop 
-                        designTypes typeTermAccessionNumbers typeTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some typeTermSourceREFs when k = prefix + " " + designTypeTermSourceREFLabel -> 
-                    loop 
-                        designTypes typeTermAccessionNumbers typeTermSourceREFs
-                        comments remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,create ()
-                | _ -> None, lineNumber,remarks,create ()
+                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
+                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
             else
-                None,lineNumber,remarks,create ()
-        loop [||] [||] [||] [] [] lineNumber
+                None,lineNumber,remarks,fromSparseMatrix matrix
+        loop (SparseMatrix.Create()) [] lineNumber
 
     
     
     let writeDesigns prefix (designs : OntologyAnnotation list) =
-        let commentKeys = designs |> List.collect (fun design -> design.Comments |> List.map (fun c -> c.Name))
-    
-        seq {
-
-            yield   ( Row.ofValues None 0u (prefix + " " + designTypeLabel                      :: (designs |> List.map (fun design -> design.Name))))
-            yield   ( Row.ofValues None 0u (prefix + " " + designTypeTermAccessionNumberLabel   :: (designs |> List.map (fun design -> design.TermAccessionNumber))))
-            yield   ( Row.ofValues None 0u (prefix + " " + designTypeTermSourceREFLabel         :: (designs |> List.map (fun design -> design.TermSourceREF))))
-    
-            for key in commentKeys do
-                let values = 
-                    designs |> List.map (fun design -> 
-                        List.tryPickDefault (fun (c : Comment) -> if c.Name = key then Some c.Value else None) "" design.Comments
-                    )
-                yield ( Row.ofValues None 0u (wrapCommentKey key :: values))
-        }
+        designs
+        |> toSparseMatrix
+        |> SparseMatrix.ToRows prefix

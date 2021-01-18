@@ -18,6 +18,12 @@ module Comment =
                 if r.Success then Some r.Value
                 else None
         )
+   
+    let wrapCommentKey k = 
+        sprintf "Comment[<%s>]" k
+
+    let fromString k v =
+        Comment.create null k v
 
 module Remark = 
 
@@ -32,8 +38,6 @@ module Remark =
             else None
         )
 
-    let wrapCommentKey k = 
-        sprintf "Comment[<%s>]" k
 
     let wrapRemark r = 
         sprintf "#%s" r

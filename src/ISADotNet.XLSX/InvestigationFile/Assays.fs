@@ -8,130 +8,98 @@ open Remark
 open System.Collections.Generic
 
 module Assays = 
+
+    let measurementTypeLabel =                    "Measurement Type"
+    let measurementTypeTermAccessionNumberLabel = "Measurement Type Term Accession Number"
+    let measurementTypeTermSourceREFLabel =       "Measurement Type Term Source REF"
+    let technologyTypeLabel =                     "Technology Type"
+    let technologyTypeTermAccessionNumberLabel =  "Technology Type Term Accession Number"
+    let technologyTypeTermSourceREFLabel =        "Technology Type Term Source REF"
+    let technologyPlatformLabel =                 "Technology Platform"
+    let fileNameLabel =                           "File Name"
+
+    let labels = 
+        [
+        measurementTypeLabel;measurementTypeTermAccessionNumberLabel;measurementTypeTermSourceREFLabel;
+        technologyTypeLabel;technologyTypeTermAccessionNumberLabel;technologyTypeTermSourceREFLabel;technologyPlatformLabel;fileNameLabel
+        ]
+
+    
+    let fromString measurementType measurementTypeTermAccessionNumber measurementTypeTermSourceREF technologyType technologyTypeTermAccessionNumber technologyTypeTermSourceREF technologyPlatform fileName comments =
+        let measurementType = OntologyAnnotation.fromString measurementType measurementTypeTermAccessionNumber measurementTypeTermSourceREF
+        let technologyType = OntologyAnnotation.fromString technologyType technologyTypeTermAccessionNumber technologyTypeTermSourceREF
+        Assay.create null fileName measurementType technologyType technologyPlatform [] {Samples=[];OtherMaterials=[]} [] [] [] comments
+        
+    let fromSparseMatrix (matrix : SparseMatrix) =
+        
+        List.init matrix.Length (fun i -> 
+
+            let comments = 
+                matrix.CommentKeys 
+                |> List.map (fun k -> 
+                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+
+            fromString
+                (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
+                (matrix.TryGetValueDefault("",(measurementTypeTermAccessionNumberLabel,i)))
+                (matrix.TryGetValueDefault("",(measurementTypeTermSourceREFLabel,i)))
+                (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
+                (matrix.TryGetValueDefault("",(technologyTypeTermAccessionNumberLabel,i))) 
+                (matrix.TryGetValueDefault("",(technologyTypeTermSourceREFLabel,i)))   
+                (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
+                (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
+                comments
+        )
+
+    let toSparseMatrix (assays: Assay list) =
+        let matrix = SparseMatrix.Create (keys = labels,length=assays.Length)
+        let mutable commentKeys = []
+        assays
+        |> List.iteri (fun i a ->
+            let measurementType,measurementAccession,measurementSource = OntologyAnnotation.toString a.MeasurementType
+            let technologyType,technologyAccession,technologySource = OntologyAnnotation.toString a.TechnologyType
+            do matrix.Matrix.Add ((measurementTypeLabel,i),                       measurementType)
+            do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    measurementAccession)
+            do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          measurementSource)
+            do matrix.Matrix.Add ((technologyTypeLabel,i),                        technologyType)
+            do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     technologyAccession)
+            do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           technologySource)
+            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    a.TechnologyPlatform)
+            do matrix.Matrix.Add ((fileNameLabel,i),                              a.FileName)
+
+            a.Comments
+            |> List.iter (fun comment -> 
+                commentKeys <- comment.Name :: commentKeys
+                matrix.Matrix.Add((comment.Name,i),comment.Value)
+            )      
+        )
+        {matrix with CommentKeys = commentKeys |> List.distinct}
+
     let readAssays (prefix : string) lineNumber (en:IEnumerator<Row>) =
-        let rec loop 
-            measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-            comments remarks lineNumber = 
+        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
 
-            let create () = 
-                let length =
-                    [|measurementTypes;measurementTypeTermAccessionNumbers;measurementTypeTermSourceREFs;technologyTypes;technologyTypeTermAccessionNumbers;technologyTypeTermSourceREFs;technologyPlatforms;fileNames|]
-                    |> Array.map Array.length
-                    |> Array.max
-
-                List.init length (fun i ->
-                    let measurementType = 
-                        OntologyAnnotation.create 
-                            (Array.tryItemDefault i "" measurementTypes)
-                            (Array.tryItemDefault i "" measurementTypeTermAccessionNumbers)
-                            (Array.tryItemDefault i "" measurementTypeTermSourceREFs)
-                            []
-                        |> REF.Item
-                    let technologyType = 
-                        OntologyAnnotation.create 
-                            (Array.tryItemDefault i "" technologyTypes)
-                            (Array.tryItemDefault i "" technologyTypeTermAccessionNumbers)
-                            (Array.tryItemDefault i "" technologyTypeTermSourceREFs)
-                            []
-                        |> REF.Item
-                    let comments = 
-                        List.map (fun (key,values) -> 
-                            Comment.create "" key (Array.tryItemDefault i "" values)
-                        ) comments
-                    Assay.create
-                        ""
-                        (Array.tryItemDefault i "" fileNames)
-                        measurementType
-                        technologyType
-                        (Array.tryItemDefault i "" technologyPlatforms)
-                        []
-                        ([],[])
-                        []
-                        []
-                        []
-                        comments
-                    |> REF.Item
-                )
             if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v) |> Array.ofIndexedSeq
-                match Array.tryItem 0 row , Array.trySkip 1 row with
+                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
+                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
                 | Comment k, Some v -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        ((k,v) :: comments) remarks (lineNumber + 1)
+                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
 
-                | Some k, Some measurementTypes when k = prefix + " " + Assay.MeasurementTypeTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
+                | Some k, Some v when List.exists (fun label -> k = prefix + " " + label) labels -> 
+                    let label = List.find (fun label -> k = prefix + " " + label) labels
+                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
 
-                | Some k, Some measurementTypeTermAccessionNumbers when k = prefix + " " + Assay.MeasurementTypeTermAccessionNumberTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some measurementTypeTermSourceREFs when k = prefix + " " + Assay.MeasurementTypeTermSourceREFTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some technologyTypes when k = prefix + " " + Assay.TechnologyTypeTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some technologyTypeTermAccessionNumbers when k = prefix + " " + Assay.TechnologyTypeTermAccessionNumberTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some technologyTypeTermSourceREFs when k = prefix + " " + Assay.TechnologyTypeTermSourceREFTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some technologyPlatforms when k = prefix + " " + Assay.TechnologyPlatformTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, Some fileNames when k = prefix + " " + Assay.FileNameTab -> 
-                    loop 
-                        measurementTypes measurementTypeTermAccessionNumbers measurementTypeTermSourceREFs technologyTypes technologyTypeTermAccessionNumbers technologyTypeTermSourceREFs technologyPlatforms fileNames
-                        comments remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,create ()
-                | _ -> None, lineNumber,remarks,create ()
+                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
+                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
             else
-                None,lineNumber,remarks,create ()
-        loop [||] [||] [||] [||] [||] [||] [||] [||] [] [] lineNumber
+                None,lineNumber,remarks,fromSparseMatrix matrix
+        loop (SparseMatrix.Create()) [] lineNumber
 
     
     let writeAssays prefix (assays : Assay list) =
-        let commentKeys = assays |> List.collect (fun assay -> assay.Comments |> List.map (fun c -> c.Name)) |> List.distinct
-
-        seq { 
-            let measurementTypes,measurementTypeAccessions,measurementTypeSourceRefs = assays |> List.map (fun a -> dismantleOntology a.MeasurementType) |> List.unzip3
-            let technologyTypes,technologyTypeAccessions,technologyTypeSourceRefs = assays |> List.map (fun a -> dismantleOntology a.TechnologyType) |> List.unzip3
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.MeasurementTypeTab                      :: measurementTypes))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.MeasurementTypeTermAccessionNumberTab   :: measurementTypeAccessions))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.MeasurementTypeTermSourceREFTab         :: measurementTypeSourceRefs))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.TechnologyTypeTab                       :: technologyTypes))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.TechnologyTypeTermAccessionNumberTab    :: technologyTypeAccessions))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.TechnologyTypeTermSourceREFTab          :: technologyTypeSourceRefs ))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.TechnologyPlatformTab                   :: (assays |> List.map (fun assay -> assay.TechnologyPlatform))))
-            yield   ( Row.ofValues None 0u (prefix + " " + Assay.FileNameTab                             :: (assays |> List.map (fun assay -> assay.FileName))))               
-            
-            for key in commentKeys do
-                let values = 
-                    assays |> List.map (fun assay -> 
-                        List.tryPickDefault (fun (c : Comment) -> if c.Name = key then Some c.Value else None) "" assay.Comments
-                    )
-                yield ( Row.ofValues None 0u (wrapCommentKey key :: values))
-        }
+        assays
+        |> toSparseMatrix
+        |> SparseMatrix.ToRows prefix

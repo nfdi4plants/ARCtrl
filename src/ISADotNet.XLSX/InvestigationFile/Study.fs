@@ -53,62 +53,78 @@ module Study =
             Comments = comments
             }
 
+    
+    let studyInfoLabels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel;fileNameLabel]
+    
+    let fromSparseMatrix (matrix : SparseMatrix) =
+        
+        let i = 0
 
+        let comments = 
+            matrix.CommentKeys 
+            |> List.map (fun k -> 
+                Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+
+        StudyInfo.create
+            (matrix.TryGetValueDefault("",(identifierLabel,i)))  
+            (matrix.TryGetValueDefault("",(titleLabel,i)))  
+            (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
+            (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
+            (matrix.TryGetValueDefault("",(publicReleaseDateLabel,i)))  
+            (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
+            comments
+
+
+    let toSparseMatrix (studyInfo: StudyInfo) =
+        let i = 0
+        let matrix = SparseMatrix.Create (keys = studyInfoLabels)
+        let mutable commentKeys = []
+
+        do matrix.Matrix.Add ((identifierLabel,i),          studyInfo.Identifier)
+        do matrix.Matrix.Add ((titleLabel,i),               studyInfo.Title)
+        do matrix.Matrix.Add ((descriptionLabel,i),         studyInfo.Description)
+        do matrix.Matrix.Add ((submissionDateLabel,i),      studyInfo.SubmissionDate)
+        do matrix.Matrix.Add ((publicReleaseDateLabel,i),   studyInfo.PublicReleaseDate)
+        do matrix.Matrix.Add ((fileNameLabel,i),            studyInfo.FileName)
+
+
+        studyInfo.Comments
+        |> List.iter (fun comment -> 
+            commentKeys <- comment.Name :: commentKeys
+            matrix.Matrix.Add((comment.Name,i),comment.Value)
+            )      
+
+        {matrix with CommentKeys = commentKeys |> List.distinct}
 
 
     
     let readStudyInfo lineNumber (en:IEnumerator<Row>) =
-        let rec loop identifier title description submissionDate publicReleaseDate fileName comments remarks lineNumber = 
+        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
 
-            if en.MoveNext() then        
-                let row = en.Current
-                match Row.tryGetValueAt None 1u row, Row.tryGetValueAt None 2u row with
+            if en.MoveNext() then  
+                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
+                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
                 | Comment k, Some v -> 
-                    loop identifier title description submissionDate publicReleaseDate fileName ((Comment.create "" k v) :: comments) remarks (lineNumber + 1)         
-                | Comment k, None -> 
-                    loop identifier title description submissionDate publicReleaseDate fileName ((Comment.create "" k "") :: comments) remarks (lineNumber + 1)         
+                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop identifier title description submissionDate publicReleaseDate fileName comments (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
 
-                | Some k, Some identifier when k = identifierLabel->              
-                    loop identifier  title description submissionDate publicReleaseDate fileName comments remarks (lineNumber + 1)
+                | Some k, Some v when List.contains k studyInfoLabels -> 
+                    loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
 
-                | Some k, Some title when k = titleLabel ->
-                    loop identifier title description submissionDate publicReleaseDate fileName comments remarks (lineNumber + 1)
-
-                |Some k, Some description when k = descriptionLabel ->
-                    loop identifier title description submissionDate publicReleaseDate fileName comments remarks (lineNumber + 1)
-
-                | Some k, Some submissionDate when k = submissionDateLabel ->
-                    loop identifier title description submissionDate publicReleaseDate fileName comments remarks (lineNumber + 1)
-
-                | Some k, Some publicReleaseDate when k = publicReleaseDateLabel ->
-                    loop identifier title description submissionDate publicReleaseDate fileName comments remarks (lineNumber + 1)
-
-                | Some k, Some fileName when k = fileNameLabel ->
-                    loop identifier title description submissionDate publicReleaseDate fileName comments remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber, remarks, StudyInfo.create identifier title description submissionDate publicReleaseDate fileName (comments |> List.rev)
-                | _ -> 
-                    None,lineNumber, remarks, StudyInfo.create identifier title description submissionDate publicReleaseDate fileName (comments |> List.rev)
+                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
+                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
             else
-                None,lineNumber, remarks, StudyInfo.create identifier title description submissionDate publicReleaseDate fileName (comments |> List.rev)
-        loop "" "" "" "" "" "" [] [] lineNumber
+                None,lineNumber,remarks,fromSparseMatrix matrix
+        loop (SparseMatrix.Create()) [] lineNumber
 
     
     let writeStudyInfo (study : Study) =  
-
-        seq {   
-            yield   ( Row.ofValues None 0u [identifierLabel;         study.Identifier]          )
-            yield   ( Row.ofValues None 0u [titleLabel;              study.Title]               )
-            yield   ( Row.ofValues None 0u [descriptionLabel;        study.Description]         )
-            yield   ( Row.ofValues None 0u [submissionDateLabel;     study.SubmissionDate]      )
-            yield   ( Row.ofValues None 0u [publicReleaseDateLabel;  study.PublicReleaseDate]   )
-            yield   ( Row.ofValues None 0u [fileNameLabel;           study.FileName]            )
-            yield!  (study.Comments |> List.map (fun c ->  Row.ofValues None 0u [wrapCommentKey c.Name;c.Value]))          
-        }
+        study.
+        |> toSparseMatrix
+        |> SparseMatrix.ToRows prefix
     
     let readStudy lineNumber (en:IEnumerator<Row>) = 
 

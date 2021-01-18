@@ -43,7 +43,7 @@ type Source =
         [<JsonPropertyName(@"name")>]
         Name : string
         [<JsonPropertyName(@"characteristics")>]
-        Characteristics : MaterialAttributeValue
+        Characteristics : MaterialAttributeValue list
     }
 
     static member create id name characteristics : Source=
@@ -65,7 +65,7 @@ type Sample =
         [<JsonPropertyName(@"factorValues")>]
         FactorValues : FactorValue list
         [<JsonPropertyName(@"derivesFrom")>]
-        DerivesFrom : Source
+        DerivesFrom : Source list
     }
 
     static member create id name characteristics factorValues derivesFrom : Sample=
