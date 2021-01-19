@@ -9,13 +9,14 @@ open TestingUtils
 open ISADotNet.XLSX
 
 [<Tests>]
-let testISAXLSXIO = 
+let testInvestigationFile = 
 
-    let testDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
-    let referenceInvestigationFilePath = System.IO.Path.Combine(testDirectory,"isa.investigation.xlsx")
-    let outputInvestigationFilePath = System.IO.Path.Combine(testDirectory,"new.isa.investigation.xlsx")
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
+    let referenceInvestigationFilePath = System.IO.Path.Combine(sourceDirectory,"isa.investigation.xlsx")
+    let outputInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new.isa.investigation.xlsx")
 
-    testList "IO" [
+    testList "InvestigationFileTests" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
@@ -58,6 +59,116 @@ let testISAXLSXIO =
         )
         |> testSequenced
     ]
+
+[<Tests>]
+let testSparseMatrix =
+
+    testList "SparseMatrixTests" [
+ 
+        testCase "Create" (fun () -> 
+            
+            let keys = ["A";"B"]
+            let length = 2
+
+            let sparseMatrix = SparseMatrix.Create(keys = keys,length = length)
+            
+            Expect.equal sparseMatrix.Matrix.Count 0 "Dictionary was not empty"
+            Expect.equal sparseMatrix.Keys keys "Keys were not taken properly"
+            Expect.equal sparseMatrix.CommentKeys [] "Comment keys should be empty"
+            Expect.equal sparseMatrix.Length length "Length did not match"
+
+        )
+
+        testCase "AddRow" (fun () ->
+
+            let firstKey,firstRow = "Greetings",[1,"Hello";2,"Bye"]
+            let secondKey,secondRow = "AndAgain",[4,"Hello Again"]
+
+            let sparseMatrixFirstRow = 
+                SparseMatrix.Create()
+                |> SparseMatrix.AddRow firstKey firstRow
+
+            Expect.equal sparseMatrixFirstRow.Matrix.Count  2           "FirstRowAdded: Dictionary was not empty"
+            Expect.equal sparseMatrixFirstRow.Keys          [firstKey]  "FirstRowAdded: Keys were not updated properly"
+            Expect.equal sparseMatrixFirstRow.CommentKeys   []          "FirstRowAdded: Comment keys should be empty"
+            Expect.equal sparseMatrixFirstRow.Length        2           "FirstRowAdded: Length did not update according to item count"
+            
+            let sparseMatrixSecondRow = 
+                sparseMatrixFirstRow
+                |> SparseMatrix.AddRow secondKey secondRow
+
+            Expect.equal sparseMatrixSecondRow.Matrix.Count  3                       "SecondRowAdded: Dictionary was not empty"
+            Expect.equal sparseMatrixSecondRow.Keys          [firstKey;secondKey]    "SecondRowAdded: Keys were not updated properly"
+            Expect.equal sparseMatrixSecondRow.CommentKeys   []                      "SecondRowAdded: Comment keys should be empty"
+            Expect.equal sparseMatrixSecondRow.Length        4                       "SecondRowAdded: Length did not update according to item count"            
+
+        )
+
+        testCase "AddComment" (fun () ->
+
+            let firstKey,firstRow = "Greetings",[1,"Hello";2,"Bye"]
+            let secondKey,secondRow = "AndAgain",[4,"Hello Again"]
+            let firstComment,firstCommentRow = "CommentSameLength",[1,"Lel";2,"Lal";3,"Lul"]
+            let secondComment,secondCommentRow = "CommentLonger",[2,"Lal";5,"Sho"]
+
+            let sparseMatrixFirstComment = 
+                SparseMatrix.Create()
+                |> SparseMatrix.AddRow firstKey firstRow
+                |> SparseMatrix.AddRow secondKey secondRow
+                |> SparseMatrix.AddComment firstComment firstCommentRow
+
+            Expect.equal sparseMatrixFirstComment.Matrix.Count  6                       "FirstCommentAdded: Dictionary was not empty"
+            Expect.equal sparseMatrixFirstComment.Keys          [firstKey;secondKey]    "FirstCommentAdded: Keys were not updated properly"
+            Expect.equal sparseMatrixFirstComment.CommentKeys   [firstComment]          "FirstCommentAdded: Comment keys should be empty"
+            Expect.equal sparseMatrixFirstComment.Length        4                       "FirstCommentAdded: Length did not update according to item count"
+
+            let sparseMatrixSecondComment = 
+                sparseMatrixFirstComment
+                |> SparseMatrix.AddComment secondComment secondCommentRow
+
+            Expect.equal sparseMatrixSecondComment.Matrix.Count  8                              "SecondCommentAdded: Dictionary was not empty"
+            Expect.equal sparseMatrixSecondComment.Keys          [firstKey;secondKey]           "SecondCommentAdded: Keys were not update properly"
+            Expect.equal sparseMatrixSecondComment.CommentKeys   [firstComment;secondComment]   "SecondCommentAdded: Comment keys should be empty"
+            Expect.equal sparseMatrixSecondComment.Length        5                              "SecondCommentAdded: Length did not update according to item count"                    
+        )
+        |> testSequenced
+
+        testCase "ToRow" (fun () ->
+
+            let firstKey,firstRow = "Greetings",[1,"Hello";2,"Bye"]
+            let secondKey,secondRow = "AndAgain",[4,"Hello Again"]
+            let firstComment,firstCommentRow = "CommentSameLength",[1,"Lel";2,"Lal";3,"Lul"]
+            let secondComment,secondCommentRow = "CommentLonger",[2,"Lal";5,"Sho"]
+
+            let sparseMatrix = 
+                SparseMatrix.Create()
+                |> SparseMatrix.AddRow firstKey firstRow
+                |> SparseMatrix.AddRow secondKey secondRow
+                |> SparseMatrix.AddComment firstComment firstCommentRow
+                |> SparseMatrix.AddComment secondComment secondCommentRow
+
+
+            let testRows = 
+                [
+                    firstKey ::     List.init 5 (fun i -> match Seq.tryFind (fst >> (=) (i+1)) firstRow with | Some (_,v) -> v | None -> "")
+                    secondKey ::    List.init 5 (fun i -> match Seq.tryFind (fst >> (=) (i+1)) secondRow with | Some (_,v) -> v | None -> "")
+                    Comment.wrapCommentKey firstComment ::  List.init 5 (fun i -> match Seq.tryFind (fst >> (=) (i+1)) firstCommentRow with | Some (_,v) -> v | None -> "")
+                    Comment.wrapCommentKey secondComment :: List.init 5 (fun i -> match Seq.tryFind (fst >> (=) (i+1)) secondCommentRow with | Some (_,v) -> v | None -> "")               
+                ]
+
+            sparseMatrix
+            |> SparseMatrix.ToRows
+            |> Seq.iteri (fun i r ->               
+                let testSeq = Seq.item i testRows
+                Expect.sequenceEqual (Row.getRowValues None r) testSeq ""
+            
+            )
+
+        )
+        |> testSequenced
+    ]
+
+
 
 //        testCase "InvestigationInfo" (fun () -> 
 

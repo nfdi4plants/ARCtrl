@@ -95,7 +95,7 @@ module Protocols =
                 matrix.Matrix.Add((comment.Name,i),comment.Value)
             )      
         )
-        {matrix with CommentKeys = commentKeys |> List.distinct}
+        {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
     let readProtocols (prefix : string) lineNumber (en:IEnumerator<Row>) =
         let rec loop (matrix : SparseMatrix) remarks lineNumber = 

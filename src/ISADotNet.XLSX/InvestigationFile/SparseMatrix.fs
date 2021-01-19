@@ -42,7 +42,7 @@ type SparseMatrix =
             else Seq.maxBy fst values |> fst |> (+) 1
         
         {matrix with 
-            Keys = key :: matrix.Keys
+            Keys = List.append matrix.Keys [key]
             Length = if length > matrix.Length then length else matrix.Length
         }
 
@@ -60,7 +60,7 @@ type SparseMatrix =
             else Seq.maxBy fst values |> fst |> (+) 1
         
         {matrix with 
-            CommentKeys = key :: matrix.CommentKeys
+            CommentKeys = List.append matrix.CommentKeys [key]
             Length = if length > matrix.Length then length else matrix.Length
         }
 

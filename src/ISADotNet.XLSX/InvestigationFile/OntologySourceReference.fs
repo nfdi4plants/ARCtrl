@@ -50,7 +50,7 @@ module OntologySourceReference =
                 matrix.Matrix.Add((comment.Name,i),comment.Value)
             )      
         )
-        {matrix with CommentKeys = commentKeys |> List.distinct}
+        {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
     let readTermSources lineNumber (en:IEnumerator<Row>) =
         let rec loop (matrix : SparseMatrix) remarks lineNumber = 

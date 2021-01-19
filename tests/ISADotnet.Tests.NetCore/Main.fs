@@ -6,6 +6,8 @@ open Expecto
 let main argv =
 
     //ISADotnet core tests
-    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXTests.testISAXLSXIO |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXTests.testInvestigationFile |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXTests.testSparseMatrix |> ignore
+
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv APITests.testUpdate |> ignore
     0

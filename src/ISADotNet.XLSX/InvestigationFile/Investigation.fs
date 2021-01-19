@@ -81,7 +81,7 @@ module Investigation =
                 matrix.Matrix.Add((comment.Name,i),comment.Value)
                 )      
 
-            {matrix with CommentKeys = commentKeys |> List.distinct}
+            {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
       
         static member ReadInvestigationInfo lineNumber (en:IEnumerator<Row>) =

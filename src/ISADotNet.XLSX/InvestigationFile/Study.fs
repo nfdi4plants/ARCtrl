@@ -91,7 +91,7 @@ module Study =
                 matrix.Matrix.Add((comment.Name,i),comment.Value)
                 )      
 
-            {matrix with CommentKeys = commentKeys |> List.distinct}
+            {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
       
         static member ReadStudyInfo lineNumber (en:IEnumerator<Row>) =
