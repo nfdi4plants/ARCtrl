@@ -6,7 +6,7 @@ open ISADotNet
 open Expecto
 open TestingUtils
 
-open ISADotNet
+open ISADotNet.XLSX
 
 [<Tests>]
 let testISAXLSXIO = 
@@ -15,55 +15,50 @@ let testISAXLSXIO =
     let referenceInvestigationFilePath = System.IO.Path.Combine(testDirectory,"isa.investigation.xlsx")
     let outputInvestigationFilePath = System.IO.Path.Combine(testDirectory,"new.isa.investigation.xlsx")
 
-
-    testCase "Test" (fun () ->
-        Expect.isTrue (1 = 1) "1 = 1"
-    )
-    //testList "IO" [
-    //    testCase "ReaderSuccess" (fun () -> 
+    testList "IO" [
+        testCase "ReaderSuccess" (fun () -> 
             
-    //        let readingSuccess = 
-    //            try 
-    //                IO.fromFile referenceInvestigationFilePath |> ignore
-    //                Result.Ok "DidRun"
-    //            with
-    //            | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+            let readingSuccess = 
+                try 
+                    Investigation.fromFile referenceInvestigationFilePath |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
 
-    //        Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
 
-    //    )
+        )
 
-    //    testCase "WriterSuccess" (fun () ->
+        testCase "WriterSuccess" (fun () ->
 
-    //        let i = IO.fromFile referenceInvestigationFilePath
+            let i = Investigation.fromFile referenceInvestigationFilePath
 
-    //        let writingSuccess = 
-    //            try 
-    //                IO.toFile outputInvestigationFilePath i
-    //                Result.Ok "DidRun"
-    //            with
-    //            | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+            let writingSuccess = 
+                try 
+                    Investigation.toFile outputInvestigationFilePath i
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
 
-    //        Expect.isOk writingSuccess (Result.getMessage writingSuccess)
-    //    )
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
 
-    //    testCase "OutputMatchesInput" (fun () ->
+        testCase "OutputMatchesInput" (fun () ->
 
-    //        let i =                
-    //            Spreadsheet.fromFile referenceInvestigationFilePath false
-    //            |> Spreadsheet.getRowsBySheetIndex 0u 
-    //            |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
-    //        let o = 
-    //            Spreadsheet.fromFile outputInvestigationFilePath false
-    //            |> Spreadsheet.getRowsBySheetIndex 0u 
-    //            |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
+            let i =                
+                Spreadsheet.fromFile referenceInvestigationFilePath false
+                |> Spreadsheet.getRowsBySheetIndex 0u 
+                |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
+            let o = 
+                Spreadsheet.fromFile outputInvestigationFilePath false
+                |> Spreadsheet.getRowsBySheetIndex 0u 
+                |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
 
-    //        Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
-    //    )
-    //    |> testSequenced
+            Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
+        )
+        |> testSequenced
+    ]
 
-
-    //]
 //        testCase "InvestigationInfo" (fun () -> 
 
 //            let investigation = IO.fromFile referenceInvestigationFilePath

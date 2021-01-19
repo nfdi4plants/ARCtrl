@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open ISADotNet
 

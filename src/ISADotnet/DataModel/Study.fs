@@ -18,6 +18,9 @@ type StudyMaterials =
             OtherMaterials = otherMaterials           
         }
 
+    static member Empty =
+        StudyMaterials.create [] [] []
+
 
 type Study = 
     {

@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
@@ -44,7 +44,7 @@ module DesignDescriptors =
             do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   accession)
             do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         source)
 
-            p.Comments
+            d.Comments
             |> List.iter (fun comment -> 
                 commentKeys <- comment.Name :: commentKeys
                 matrix.Matrix.Add((comment.Name,i),comment.Value)
@@ -81,4 +81,4 @@ module DesignDescriptors =
     let writeDesigns prefix (designs : OntologyAnnotation list) =
         designs
         |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        |> fun m -> SparseMatrix.ToRows(m,prefix)

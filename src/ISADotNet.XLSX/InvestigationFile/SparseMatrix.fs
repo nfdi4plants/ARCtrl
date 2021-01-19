@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open ISADotNet
 open System.Collections.Generic
@@ -31,36 +31,44 @@ type SparseMatrix =
         let values = 
             values 
             |> Seq.map (fun (i,v) -> 
-                let i = i-2
+                let i = i-1
                 matrix.Matrix.Add((key,i),v)
                 i,v
             )
-        let maxInt = Seq.maxBy fst values |> fst
+            |> Seq.toArray
+
+        let length = 
+            if Seq.isEmpty values then 0
+            else Seq.maxBy fst values |> fst |> (+) 1
         
         {matrix with 
             Keys = key :: matrix.Keys
-            Length = if maxInt > matrix.Length then maxInt else matrix.Length
+            Length = if length > matrix.Length then length else matrix.Length
         }
 
     static member AddComment key (values:seq<int*string>) (matrix : SparseMatrix) =
         let values = 
             values 
             |> Seq.map (fun (i,v) -> 
-                let i = i-2
+                let i = i-1
                 matrix.Matrix.Add((key,i),v)
                 i,v
             )
-        let maxInt = Seq.maxBy fst values |> fst
+            |> Seq.toArray
+        let length = 
+            if Seq.isEmpty values then 0
+            else Seq.maxBy fst values |> fst |> (+) 1
         
         {matrix with 
             CommentKeys = key :: matrix.CommentKeys
-            Length = if maxInt > matrix.Length then maxInt else matrix.Length
+            Length = if length > matrix.Length then length else matrix.Length
         }
 
-    static member ToRows (prefix : string) (matrix : SparseMatrix) =
+    static member ToRows(matrix,?prefix) =
+        let prefix = match prefix with | Some p -> p + " " | None -> ""
         seq {
             for key in matrix.Keys do
-                (Row.ofValues None 0u (prefix + " " + key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+                (Row.ofValues None 0u (prefix + key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
             for key in matrix.CommentKeys do
                 (Row.ofValues None 0u (Comment.wrapCommentKey key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
         }

@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
@@ -8,6 +8,22 @@ open System.Collections.Generic
 
 module Investigation = 
 
+    let identifierLabel = "Investigation Identifier"
+    let titleLabel = "Investigation Title"
+    let descriptionLabel = "Investigation Description"
+    let submissionDateLabel = "Investigation Submission Date"
+    let publicReleaseDateLabel = "Investigation Public Release Date"
+
+    let investigationLabel = "INVESTIGATION"
+    let ontologySourceReferenceLabel = "ONTOLOGY SOURCE REFERENCE"
+    let publicationsLabel = "INVESTIGATION PUBLICATIONS"
+    let contactsLabel = "INVESTIGATION CONTACTS"
+    let studyLabel = "STUDY"
+
+    let publicationsLabelPrefix = "Investigation Publication"
+    let contactsLabelPrefix = "Investigation Person"
+
+    
     type InvestigationInfo =
         {
         Identifier : string
@@ -18,7 +34,6 @@ module Investigation =
         Comments : Comment list
         }
 
-
         static member create identifier title description submissionDate publicReleaseDate comments =
             {
             Identifier = identifier
@@ -28,65 +43,81 @@ module Investigation =
             PublicReleaseDate = publicReleaseDate
             Comments = comments
             }
+  
+        static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel]
+    
+        static member FromSparseMatrix (matrix : SparseMatrix) =
+        
+            let i = 0
 
-        static member IdentifierTab = "Investigation Identifier"
-        static member TitleTab = "Investigation Title"
-        static member DescriptionTab = "Investigation Description"
-        static member SubmissionDateTab = "Investigation Submission Date"
-        static member PublicReleaseDateTab = "Investigation Public Release Date"
+            let comments = 
+                matrix.CommentKeys 
+                |> List.map (fun k -> 
+                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
+            InvestigationInfo.create
+                (matrix.TryGetValueDefault("",(identifierLabel,i)))  
+                (matrix.TryGetValueDefault("",(titleLabel,i)))  
+                (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
+                (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
+                (matrix.TryGetValueDefault("",(publicReleaseDateLabel,i)))  
+                comments
+
+
+        static member ToSparseMatrix (investigation: Investigation) =
+            let i = 0
+            let matrix = SparseMatrix.Create (keys = InvestigationInfo.Labels,length=1)
+            let mutable commentKeys = []
+
+            do matrix.Matrix.Add ((identifierLabel,i),          investigation.Identifier)
+            do matrix.Matrix.Add ((titleLabel,i),               investigation.Title)
+            do matrix.Matrix.Add ((descriptionLabel,i),         investigation.Description)
+            do matrix.Matrix.Add ((submissionDateLabel,i),      investigation.SubmissionDate)
+            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   investigation.PublicReleaseDate)
+
+            investigation.Comments
+            |> List.iter (fun comment -> 
+                commentKeys <- comment.Name :: commentKeys
+                matrix.Matrix.Add((comment.Name,i),comment.Value)
+                )      
+
+            {matrix with CommentKeys = commentKeys |> List.distinct}
+
+      
+        static member ReadInvestigationInfo lineNumber (en:IEnumerator<Row>) =
+            let rec loop (matrix : SparseMatrix) remarks lineNumber = 
+
+                if en.MoveNext() then  
+                    let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
+                    match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
+
+                    | Comment k, Some v -> 
+                        loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
+
+                    | Remark k, _  -> 
+                        loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+
+                    | Some k, Some v when List.contains k InvestigationInfo.Labels -> 
+                        loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
+
+                    | Some k, _ -> Some k,lineNumber,remarks,InvestigationInfo.FromSparseMatrix matrix
+                    | _ -> None, lineNumber,remarks,InvestigationInfo.FromSparseMatrix matrix
+                else
+                    None,lineNumber,remarks,InvestigationInfo.FromSparseMatrix matrix
+            loop (SparseMatrix.Create()) [] lineNumber
 
     
-    let readInvestigationInfo lineNumber (en:IEnumerator<Row>) =
-        let rec loop identifier title description submissionDate publicReleaseDate comments remarks lineNumber = 
+        static member WriteInvestigationInfo (investigation : Investigation) =  
+            investigation
+            |> InvestigationInfo.ToSparseMatrix
+            |> SparseMatrix.ToRows
+ 
+    let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
+        Investigation.create 
+            null null investigationInfo.Identifier investigationInfo.Title investigationInfo.Description investigationInfo.SubmissionDate investigationInfo.PublicReleaseDate
+            ontologySourceReference publications contacts studies investigationInfo.Comments remarks
 
-            if en.MoveNext() then    
 
-                let row = en.Current
-
-                match Row.tryGetValueAt None 1u row, Row.tryGetValueAt None 2u row with
-
-                | Comment k, Some v -> 
-                    loop identifier title description submissionDate publicReleaseDate ((Comment.create "" k v) :: comments) remarks (lineNumber + 1)         
-                | Comment k, None -> 
-                    loop identifier title description submissionDate publicReleaseDate ((Comment.create "" k "") :: comments) remarks (lineNumber + 1)         
-
-                | Remark k, _  -> 
-                    loop identifier title description submissionDate publicReleaseDate comments (Remark.create lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some identifier when k = InvestigationInfo.IdentifierTab->              
-                    loop identifier title description submissionDate publicReleaseDate comments remarks (lineNumber + 1)
-
-                | Some k, Some title when k = InvestigationInfo.TitleTab ->
-                    loop identifier title description submissionDate publicReleaseDate comments remarks (lineNumber + 1)
-
-                |Some k, Some description when k = InvestigationInfo.DescriptionTab ->
-                    loop identifier title description submissionDate publicReleaseDate comments remarks (lineNumber + 1)
-
-                | Some k, Some submissionDate when k = InvestigationInfo.SubmissionDateTab ->
-                    loop identifier title description submissionDate publicReleaseDate comments remarks (lineNumber + 1)
-
-                | Some k, Some publicReleaseDate when k = InvestigationInfo.PublicReleaseDateTab ->
-                    loop identifier title description submissionDate publicReleaseDate comments remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber, remarks, InvestigationInfo.create identifier title description submissionDate publicReleaseDate (comments |> List.rev)
-                | _ -> 
-                    None,lineNumber, remarks, InvestigationInfo.create identifier title description submissionDate publicReleaseDate (comments |> List.rev)
-            else
-                None,lineNumber, remarks, InvestigationInfo.create identifier title description submissionDate publicReleaseDate (comments |> List.rev)
-        loop "" "" "" "" "" [] [] lineNumber
-
-    
-    let writeInvestigationInfo (investigation : Investigation) =  
-        seq {       
-            yield   ( Row.ofValues None 0u [Investigation.IdentifierTab;         investigation.Identifier])
-            yield   ( Row.ofValues None 0u [Investigation.TitleTab;              investigation.Title])
-            yield   ( Row.ofValues None 0u [Investigation.DescriptionTab;        investigation.Description])
-            yield   ( Row.ofValues None 0u [Investigation.SubmissionDateTab;     investigation.SubmissionDate])
-            yield   ( Row.ofValues None 0u [Investigation.PublicReleaseDateTab;  investigation.PublicReleaseDate])
-            yield!  (investigation.Comments |> List.map (fun c ->  Row.ofValues None 0u [wrapCommentKey c.Name;c.Value]))         
-        }
-    
     let fromRows (rows:seq<Row>) =
         let en = rows.GetEnumerator()              
         
@@ -95,30 +126,28 @@ module Investigation =
         let rec loop lastLine ontologySourceReferences investigationInfo publications contacts studies remarks lineNumber =
             match lastLine with
 
-            | Some k when k = Investigation.OntologySourceReferenceTab -> 
-                let currentLine,lineNumber,newRemarks,ontologySourceReferences = readTermSources (lineNumber + 1) en         
+            | Some k when k = ontologySourceReferenceLabel -> 
+                let currentLine,lineNumber,newRemarks,ontologySourceReferences = OntologySourceReference.readTermSources (lineNumber + 1) en         
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
-            | Some k when k = Investigation.InvestigationTab -> 
-                let currentLine,lineNumber,newRemarks,investigationInfo = readInvestigationInfo (lineNumber + 1) en       
+            | Some k when k = investigationLabel -> 
+                let currentLine,lineNumber,newRemarks,investigationInfo = InvestigationInfo.ReadInvestigationInfo (lineNumber + 1) en       
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
-            | Some k when k = Investigation.PublicationsTab -> 
-                let currentLine,lineNumber,newRemarks,publications = readPublications Investigation.PublicationsTabPrefix (lineNumber + 1) en       
+            | Some k when k = publicationsLabel -> 
+                let currentLine,lineNumber,newRemarks,publications = Publications.readPublications publicationsLabelPrefix (lineNumber + 1) en       
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
-            | Some k when k = Investigation.ContactsTab -> 
-                let currentLine,lineNumber,newRemarks,contacts = readPersons Investigation.ContactsTabPrefix (lineNumber + 1) en       
+            | Some k when k = contactsLabel -> 
+                let currentLine,lineNumber,newRemarks,contacts = Contacts.readPersons contactsLabelPrefix (lineNumber + 1) en       
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
-            | Some k when k = Investigation.StudyTab -> 
-                let currentLine,lineNumber,newRemarks,study = readStudy (lineNumber + 1) en  
+            | Some k when k = studyLabel -> 
+                let currentLine,lineNumber,newRemarks,study = Study.readStudy (lineNumber + 1) en  
                 loop currentLine ontologySourceReferences investigationInfo publications contacts (study::studies) (List.append remarks newRemarks) lineNumber
 
             | k -> 
-                Investigation.create 
-                    "" "" investigationInfo.Identifier investigationInfo.Title investigationInfo.Description investigationInfo.SubmissionDate investigationInfo.PublicReleaseDate
-                    ontologySourceReferences publications contacts (List.rev studies) investigationInfo.Comments remarks
+                fromParts investigationInfo ontologySourceReferences publications contacts (List.rev studies) remarks
 
         if en.MoveNext () then
             let currentLine = en.Current |> Row.tryGetValueAt None 1u
@@ -156,21 +185,21 @@ module Investigation =
             loop 1 (rows |> List.ofSeq) []
             |> List.rev
         seq {
-            yield  Row.ofValues None 0u [Investigation.OntologySourceReferenceTab]
-            yield! writeTermSources (investigation.OntologySourceReferences |> List.map REF.toItem)
+            yield  Row.ofValues None 0u [ontologySourceReferenceLabel]
+            yield! OntologySourceReference.writeTermSources investigation.OntologySourceReferences
 
-            yield  Row.ofValues None 0u [Investigation.InvestigationTab]
-            yield! writeInvestigationInfo investigation
+            yield  Row.ofValues None 0u [investigationLabel]
+            yield! InvestigationInfo.WriteInvestigationInfo investigation
 
-            yield  Row.ofValues None 0u [Investigation.PublicationsTab]
-            yield! writePublications Investigation.PublicationsTabPrefix (investigation.Publications |> List.map REF.toItem)
+            yield  Row.ofValues None 0u [publicationsLabel]
+            yield! Publications.writePublications publicationsLabelPrefix investigation.Publications
 
-            yield  Row.ofValues None 0u [Investigation.ContactsTab]
-            yield! writePersons Investigation.ContactsTabPrefix (investigation.Contacts |> List.map REF.toItem)
+            yield  Row.ofValues None 0u [contactsLabel]
+            yield! Contacts.writePersons contactsLabelPrefix investigation.Contacts
 
             for study in investigation.Studies do
-                yield  Row.ofValues None 0u [Investigation.StudyTab]
-                yield! writeStudy (study |> REF.toItem)
+                yield  Row.ofValues None 0u [studyLabel]
+                yield! Study.writeStudy study
         }
         |> insertRemarks investigation.Remarks
         |> Seq.mapi (fun i row -> Row.updateRowIndex (i+1 |> uint) row)

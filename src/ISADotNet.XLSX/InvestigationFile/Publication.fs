@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
@@ -92,4 +92,4 @@ module Publications =
     let writePublications prefix (publications : Publication list) =
         publications
         |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        |> fun m -> SparseMatrix.ToRows(m,prefix)

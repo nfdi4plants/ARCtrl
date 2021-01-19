@@ -49,18 +49,3 @@ type Investigation =
             Comments                    = comments
             Remarks                     = remarks
         }
-
-    static member IdentifierTab = "Investigation Identifier"
-    static member TitleTab = "Investigation Title"
-    static member DescriptionTab = "Investigation Description"
-    static member SubmissionDateTab = "Investigation Submission Date"
-    static member PublicReleaseDateTab = "Investigation Public Release Date"
-
-    static member InvestigationTab = "INVESTIGATION"
-    static member OntologySourceReferenceTab = "ONTOLOGY SOURCE REFERENCE"
-    static member PublicationsTab = "INVESTIGATION PUBLICATIONS"
-    static member ContactsTab = "INVESTIGATION CONTACTS"
-    static member StudyTab = "STUDY"
-
-    static member PublicationsTabPrefix = "Investigation Publication"
-    static member ContactsTabPrefix = "Investigation Person"

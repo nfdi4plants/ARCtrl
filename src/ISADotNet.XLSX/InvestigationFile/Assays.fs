@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
@@ -102,4 +102,4 @@ module Assays =
     let writeAssays prefix (assays : Assay list) =
         assays
         |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        |> fun m -> SparseMatrix.ToRows(m,prefix)

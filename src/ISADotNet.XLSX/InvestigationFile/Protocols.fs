@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
@@ -124,4 +124,4 @@ module Protocols =
     let writeProtocols prefix (protocols : Protocol list) =
         protocols
         |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        |> fun m -> SparseMatrix.ToRows(m,prefix)

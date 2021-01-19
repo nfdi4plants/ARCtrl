@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
@@ -103,4 +103,4 @@ module Contacts =
     let writePersons prefix (persons : Person list) =
         persons
         |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        |> fun m -> SparseMatrix.ToRows(m,prefix)

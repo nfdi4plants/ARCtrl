@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
@@ -41,7 +41,6 @@ module Study =
         Comments : Comment list
         }
 
-
         static member create identifier title description submissionDate publicReleaseDate fileName comments =
             {
             Identifier = identifier
@@ -52,80 +51,82 @@ module Study =
             FileName = fileName
             Comments = comments
             }
-
+  
+        static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel;fileNameLabel]
     
-    let studyInfoLabels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel;fileNameLabel]
-    
-    let fromSparseMatrix (matrix : SparseMatrix) =
+        static member FromSparseMatrix (matrix : SparseMatrix) =
         
-        let i = 0
+            let i = 0
 
-        let comments = 
-            matrix.CommentKeys 
-            |> List.map (fun k -> 
-                Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+            let comments = 
+                matrix.CommentKeys 
+                |> List.map (fun k -> 
+                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-        StudyInfo.create
-            (matrix.TryGetValueDefault("",(identifierLabel,i)))  
-            (matrix.TryGetValueDefault("",(titleLabel,i)))  
-            (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
-            (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
-            (matrix.TryGetValueDefault("",(publicReleaseDateLabel,i)))  
-            (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
-            comments
-
-
-    let toSparseMatrix (studyInfo: StudyInfo) =
-        let i = 0
-        let matrix = SparseMatrix.Create (keys = studyInfoLabels)
-        let mutable commentKeys = []
-
-        do matrix.Matrix.Add ((identifierLabel,i),          studyInfo.Identifier)
-        do matrix.Matrix.Add ((titleLabel,i),               studyInfo.Title)
-        do matrix.Matrix.Add ((descriptionLabel,i),         studyInfo.Description)
-        do matrix.Matrix.Add ((submissionDateLabel,i),      studyInfo.SubmissionDate)
-        do matrix.Matrix.Add ((publicReleaseDateLabel,i),   studyInfo.PublicReleaseDate)
-        do matrix.Matrix.Add ((fileNameLabel,i),            studyInfo.FileName)
+            StudyInfo.create
+                (matrix.TryGetValueDefault("",(identifierLabel,i)))  
+                (matrix.TryGetValueDefault("",(titleLabel,i)))  
+                (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
+                (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
+                (matrix.TryGetValueDefault("",(publicReleaseDateLabel,i)))  
+                (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
+                comments
 
 
-        studyInfo.Comments
-        |> List.iter (fun comment -> 
-            commentKeys <- comment.Name :: commentKeys
-            matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+        static member ToSparseMatrix (study: Study) =
+            let i = 0
+            let matrix = SparseMatrix.Create (keys = StudyInfo.Labels,length = 1)
+            let mutable commentKeys = []
 
-        {matrix with CommentKeys = commentKeys |> List.distinct}
+            do matrix.Matrix.Add ((identifierLabel,i),          study.Identifier)
+            do matrix.Matrix.Add ((titleLabel,i),               study.Title)
+            do matrix.Matrix.Add ((descriptionLabel,i),         study.Description)
+            do matrix.Matrix.Add ((submissionDateLabel,i),      study.SubmissionDate)
+            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   study.PublicReleaseDate)
+            do matrix.Matrix.Add ((fileNameLabel,i),            study.FileName)
 
+            study.Comments
+            |> List.iter (fun comment -> 
+                commentKeys <- comment.Name :: commentKeys
+                matrix.Matrix.Add((comment.Name,i),comment.Value)
+                )      
 
-    
-    let readStudyInfo lineNumber (en:IEnumerator<Row>) =
-        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
+            {matrix with CommentKeys = commentKeys |> List.distinct}
 
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
+      
+        static member ReadStudyInfo lineNumber (en:IEnumerator<Row>) =
+            let rec loop (matrix : SparseMatrix) remarks lineNumber = 
 
-                | Comment k, Some v -> 
-                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
+                if en.MoveNext() then  
+                    let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
+                    match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
-                | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    | Comment k, Some v -> 
+                        loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
-                | Some k, Some v when List.contains k studyInfoLabels -> 
-                    loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
+                    | Remark k, _  -> 
+                        loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
 
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
-                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
-            else
-                None,lineNumber,remarks,fromSparseMatrix matrix
-        loop (SparseMatrix.Create()) [] lineNumber
+                    | Some k, Some v when List.contains k StudyInfo.Labels -> 
+                        loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
+
+                    | Some k, _ -> Some k,lineNumber,remarks,StudyInfo.FromSparseMatrix matrix
+                    | _ -> None, lineNumber,remarks,StudyInfo.FromSparseMatrix matrix
+                else
+                    None,lineNumber,remarks,StudyInfo.FromSparseMatrix matrix
+            loop (SparseMatrix.Create()) [] lineNumber
 
     
-    let writeStudyInfo (study : Study) =  
-        study.
-        |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        static member WriteStudyInfo (study : Study) =  
+            study
+            |> StudyInfo.ToSparseMatrix
+            |> SparseMatrix.ToRows
     
+    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays protocols contacts =
+        Study.create 
+            null studyInfo.FileName studyInfo.Identifier studyInfo.Title studyInfo.Description studyInfo.SubmissionDate studyInfo.PublicReleaseDate
+            publications contacts designDescriptors protocols StudyMaterials.Empty [] assays factors [] [] studyInfo.Comments
+
     let readStudy lineNumber (en:IEnumerator<Row>) = 
 
         let rec loop lastLine (studyInfo : StudyInfo) designDescriptors publications factors assays protocols contacts remarks lineNumber =
@@ -157,34 +158,31 @@ module Study =
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | k -> 
-                k,lineNumber,remarks, 
-                    Study.create 
-                        "" studyInfo.FileName studyInfo.Identifier studyInfo.Title studyInfo.Description studyInfo.SubmissionDate studyInfo.PublicReleaseDate 
-                        publications contacts designDescriptors protocols ([],[],[]) [] assays factors [] [] studyInfo.Comments
+                k,lineNumber,remarks, fromParts studyInfo designDescriptors publications factors assays protocols contacts
     
-        let currentLine,lineNumber,remarks,item = readStudyInfo lineNumber en  
+        let currentLine,lineNumber,remarks,item = StudyInfo.ReadStudyInfo lineNumber en  
         loop currentLine item [] [] [] [] [] [] remarks lineNumber
 
     
     let writeStudy (study : Study) =
         seq {          
-            yield! writeStudyInfo study
+            yield! StudyInfo.WriteStudyInfo study
 
             yield  Row.ofValues None 0u [designDescriptorsLabel]
-            yield! DesignDescriptors.writeDesigns designDescriptorsLabelPrefix (study.StudyDesignDescriptors |> List.map REF.toItem)
+            yield! DesignDescriptors.writeDesigns designDescriptorsLabelPrefix study.StudyDesignDescriptors
 
             yield  Row.ofValues None 0u [publicationsLabel]
-            yield! writePublications publicationsLabelPrefix (study.Publications |> List.map REF.toItem)
+            yield! Publications.writePublications publicationsLabelPrefix study.Publications
 
             yield  Row.ofValues None 0u [factorsLabel]
-            yield! writeFactors factorsLabelPrefix (study.Factors |> List.map REF.toItem)
+            yield! Factors.writeFactors factorsLabelPrefix study.Factors
 
             yield  Row.ofValues None 0u [assaysLabel]
-            yield! writeAssays assaysLabelPrefix (study.Assays |> List.map REF.toItem)
+            yield! Assays.writeAssays assaysLabelPrefix study.Assays
 
             yield  Row.ofValues None 0u [protocolsLabel]
-            yield! writeProtocols protocolsLabelPrefix (study.Protocols |> List.map REF.toItem)
+            yield! Protocols.writeProtocols protocolsLabelPrefix study.Protocols
 
             yield  Row.ofValues None 0u [contactsLabel]
-            yield! writePersons contactsLabelPrefix (study.Contacts |> List.map REF.toItem)
+            yield! Contacts.writePersons contactsLabelPrefix study.Contacts
         }

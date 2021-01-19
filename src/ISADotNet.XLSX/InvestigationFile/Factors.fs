@@ -1,4 +1,4 @@
-namespace ISADotNet.XSLX
+namespace ISADotNet.XLSX
 
 
 open DocumentFormat.OpenXml.Spreadsheet
@@ -85,5 +85,5 @@ module Factors =
     let writeFactors prefix (factors : Factor list) =
         factors
         |> toSparseMatrix
-        |> SparseMatrix.ToRows prefix
+        |> fun m -> SparseMatrix.ToRows(m,prefix)
         
