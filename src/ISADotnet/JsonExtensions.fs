@@ -150,6 +150,8 @@ module JsonExtensions =
             let s = 
                 if reader.TokenType = JsonTokenType.String then 
                     reader.GetString() 
+                elif reader.TokenType = JsonTokenType.Number then 
+                    reader.GetDouble() |> string
                 else
                     let mutable l : (JsonTokenType*TokenValue) list = []
                     let mutable bracket = 0
