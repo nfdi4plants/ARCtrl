@@ -1,4 +1,6 @@
-﻿namespace ISADotNet
+﻿namespace ISADotNet.API
+
+open ISADotNet
 
 module Update =
 

@@ -9,10 +9,10 @@ module IO =
     module Protocol = 
 
         let fromString (s:string) = 
-            JsonSerializer.Deserialize<Protocol>(s,JsonAnyOf.options)
+            JsonSerializer.Deserialize<Protocol>(s,JsonExtensions.options)
 
         let toString (p:Protocol) = 
-            JsonSerializer.Serialize<Protocol>(p,JsonAnyOf.options)
+            JsonSerializer.Serialize<Protocol>(p,JsonExtensions.options)
 
         let fromFile (path : string) = 
             File.ReadAllText path 
@@ -24,10 +24,10 @@ module IO =
     module Process = 
 
         let fromString (s:string) = 
-            JsonSerializer.Deserialize<Process>(s,JsonAnyOf.options)
+            JsonSerializer.Deserialize<Process>(s,JsonExtensions.options)
 
         let toString (p:Process) = 
-            JsonSerializer.Serialize<Process>(p,JsonAnyOf.options)
+            JsonSerializer.Serialize<Process>(p,JsonExtensions.options)
 
         let fromFile (path : string) = 
             File.ReadAllText path 
@@ -40,10 +40,10 @@ module IO =
     module Investigation =
         
         let fromString (s:string) = 
-            JsonSerializer.Deserialize<Investigation>(s,JsonAnyOf.options)
+            JsonSerializer.Deserialize<Investigation>(s,JsonExtensions.options)
 
         let toString (i:Investigation) = 
-            JsonSerializer.Serialize<Investigation>(i,JsonAnyOf.options)
+            JsonSerializer.Serialize<Investigation>(i,JsonExtensions.options)
 
         let fromFile (path : string) = 
             File.ReadAllText path 

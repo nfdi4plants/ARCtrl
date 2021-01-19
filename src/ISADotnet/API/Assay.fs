@@ -1,5 +1,6 @@
-namespace ISADotNet
+namespace ISADotNet.API
 
+open ISADotNet
 open Update
 
 module Assay =  

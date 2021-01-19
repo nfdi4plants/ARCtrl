@@ -1,8 +1,9 @@
-namespace ISADotNet
+namespace ISADotNet.API
 
+open ISADotNet
 open Update
 
-module Ontology =
+module OntologySourceReference =
 
     ///// If a ontology source reference for which the predicate returns true exists in the investigation, gets it
     //let tryGetBy (predicate : OntologySourceReference -> bool) (investigation:Investigation) =
@@ -71,7 +72,7 @@ module Ontology =
         { ontology with
             Comments = comments }
 
-module Annotation =  
+module OntologyAnnotation =  
 
     ///// If a ontology annotation for which the predicate returns true exists in the Study.StudyDesignDescriptors, gets it
     //let tryGetBy (predicate : OntologyAnnotation -> bool) (study:Study) =

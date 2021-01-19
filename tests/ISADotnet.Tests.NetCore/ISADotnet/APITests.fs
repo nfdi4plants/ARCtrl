@@ -1,9 +1,8 @@
 ﻿module APITests
 
-open FSharpSpreadsheetML
 open Expecto
 
-open ISADotNet
+open ISADotNet.API
 open TestingUtils
 open Update
 
