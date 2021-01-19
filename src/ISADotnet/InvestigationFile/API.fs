@@ -1,6 +1,6 @@
 ﻿namespace ISADotNet.InvestigationFile
 
-open Update
+open ISADotNet.Update
 
 /// Contains functions for manipulating ISA Investigation file items
 [<System.Obsolete("This is deprecated and only left for control for now")>]
@@ -58,11 +58,11 @@ module API =
             else 
                 investigation
 
-        /// If the given ontology source reference exists in the investigation, removes it from the investigation
+        /// If the given ontology source reference exists in the investigation, removes it
         let remove (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
             removeBy ((=) ontologySourceReference) investigation
 
-        /// If a ontology source reference with the given name exists in the investigation, removes it from the investigation
+        /// If a ontology source reference with the given name exists in the investigation, removes it
         let removeByName (name : string) (investigation : Investigation) = 
             removeBy (fun t -> t.Name = name)  investigation
 

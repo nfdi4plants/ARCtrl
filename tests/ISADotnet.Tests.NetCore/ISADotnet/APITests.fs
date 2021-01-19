@@ -1,4 +1,4 @@
-﻿module UpdateTests
+﻿module APITests
 
 open FSharpSpreadsheetML
 open Expecto

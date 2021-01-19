@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="ISADotnet\API\UpdateTests.fs" />
+    <Compile Include="ISADotnet\APITests.fs" />
     <Compile Include="ISADotnet\ISAXLSXTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
