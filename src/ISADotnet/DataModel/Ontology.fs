@@ -32,8 +32,6 @@ type OntologyAnnotation =
         }
 
 
-
-
 type OntologySourceReference =
     {
         [<JsonPropertyName("description")>]

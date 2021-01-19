@@ -22,8 +22,6 @@ type Factor =
             Comments = comments         
         }
 
-
-
 [<AnyOf>]
 type Value =
     | [<SerializationOrder(0)>] Ontology of OntologyAnnotation
