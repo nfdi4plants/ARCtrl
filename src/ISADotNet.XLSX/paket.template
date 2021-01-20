@@ -1,10 +1,10 @@
 type project
 id
-    ISADotnet.XLSX
+    ISADotNet.XLSX
 authors 
     Heinrich Lukas Weil
 description
-	description
+	This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in the dotnet environment. The underlying datamodel can be directly read from and written to ISA-Json and ISA-Excel (ISATab format) files.
 owners
     HLWeil
 licenseUrl
@@ -18,7 +18,7 @@ copyright
 tags
     F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA Excel XLSX Tab
 summary
-    ISA compliant experimental metadata toolkit in F#
+    Excel File IO methods for ISA compliant experimental metadata toolkit in F#
 repositoryType
     git
 repositoryUrl

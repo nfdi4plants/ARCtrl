@@ -5,6 +5,7 @@ open System.Text.Json
 open System.IO
 
 
+
 module Protocol = 
 
     let fromString (s:string) = 
@@ -35,6 +36,50 @@ module Process =
     let toFile (path : string) (p:Process) = 
         File.WriteAllText(path,toString p)
 
+module Assay = 
+
+    let fromString (s:string) = 
+        JsonSerializer.Deserialize<Assay>(s,JsonExtensions.options)
+
+    let toString (a:Assay) = 
+        JsonSerializer.Serialize<Assay>(a,JsonExtensions.options)
+
+    let fromFile (path : string) = 
+        File.ReadAllText path 
+        |> fromString
+
+    let toFile (path : string) (a:Assay) = 
+        File.WriteAllText(path,toString a)
+
+module Person = 
+
+    let fromString (s:string) = 
+        JsonSerializer.Deserialize<Person>(s,JsonExtensions.options)
+
+    let toString (p:Person) = 
+        JsonSerializer.Serialize<Person>(p,JsonExtensions.options)
+
+    let fromFile (path : string) = 
+        File.ReadAllText path 
+        |> fromString
+
+    let toFile (path : string) (p:Person) = 
+        File.WriteAllText(path,toString p)
+
+module Study =
+    
+    let fromString (s:string) = 
+        JsonSerializer.Deserialize<Study>(s,JsonExtensions.options)
+
+    let toString (s:Study) = 
+        JsonSerializer.Serialize<Study>(s,JsonExtensions.options)
+
+    let fromFile (path : string) = 
+        File.ReadAllText path 
+        |> fromString
+
+    let toFile (path : string) (s:Study) = 
+        File.WriteAllText(path,toString s)
 
 module Investigation =
         

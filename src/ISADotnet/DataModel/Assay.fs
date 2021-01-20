@@ -4,7 +4,7 @@ open System.Text.Json.Serialization
 
 type AssayMaterials =
     {
-        [<JsonPropertyName(@"sources")>]
+        [<JsonPropertyName(@"samples")>]
         Samples : Sample list
         [<JsonPropertyName(@"otherMaterials")>]
         OtherMaterials : Material list    

@@ -285,7 +285,12 @@ module JsonExtensions =
 
     
     let options =
-        let options = JsonSerializerOptions(IgnoreNullValues=true, PropertyNamingPolicy=JsonNamingPolicy.CamelCase)
+        let options = 
+            JsonSerializerOptions(
+                IgnoreNullValues=true, 
+                PropertyNamingPolicy=JsonNamingPolicy.CamelCase, 
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            )
         options.Converters.Add(AnyOfUnionConverter())
         options.Converters.Add(StringEnumConverter())
         options.Converters.Add(JsonFSharpConverter())

@@ -16,7 +16,7 @@ let testInvestigationFile =
     let referenceInvestigationFilePath = System.IO.Path.Combine(sourceDirectory,"isa.investigation.xlsx")
     let outputInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new.isa.investigation.xlsx")
 
-    testList "InvestigationFileTests" [
+    testList "InvestigationXLSXTests" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
