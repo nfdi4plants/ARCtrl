@@ -29,9 +29,9 @@ module Person =
     let existsByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
         List.exists (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) persons
 
-    ///// adds the given person to the investigation  
-    //let add (person : Person) (investigation:Investigation) =
-    //    {investigation with Contacts = List.append investigation.Contacts [person]}
+    /// adds the given person to the persons  
+    let add (persons : Person list) (person : Person) =
+        List.append persons [person]
 
     /// Updates all persons for which the predicate returns true with the given person values
     let updateBy (predicate : Person -> bool) (updateOption:UpdateOptions) (person : Person) (persons : Person list) =

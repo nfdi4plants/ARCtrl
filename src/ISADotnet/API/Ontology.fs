@@ -27,9 +27,9 @@ module OntologySourceReference =
     //let contains (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
     //    exists ((=) ontologySourceReference) investigation
 
-    ///// Adds the given ontology source reference to the investigation  
-    //let add (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
-    //    {investigation with OntologySourceReferences = List.append investigation.OntologySourceReferences [ontologySourceReference]}
+    /// Adds the given ontology source reference to the investigation  
+    let add (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
+        {investigation with OntologySourceReferences = List.append investigation.OntologySourceReferences [ontologySourceReference]}
 
     /// Updates all ontology source references for which the predicate returns true with the given ontology source reference values
     let updateBy (predicate : OntologySourceReference -> bool) (updateOption : UpdateOptions) (ontologySourceReference : OntologySourceReference) (ontologies : OntologySourceReference list) =
@@ -96,9 +96,9 @@ module OntologyAnnotation =
     let existsByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
         List.exists (fun (d:OntologyAnnotation) -> d.Name = name) annotations
 
-    ///// Adds the given ontology annotation to the Study.StudyDesignDescriptors
-    //let add (design : OntologyAnnotation) (study:Study) =
-    //    {study with StudyDesignDescriptors = List.append study.StudyDesignDescriptors [design]}
+    /// Adds the given ontology annotation to the Study.StudyDesignDescriptors
+    let add (onotolgyAnnotations: OntologyAnnotation list) (onotolgyAnnotation : OntologyAnnotation) =
+        List.append onotolgyAnnotations [onotolgyAnnotation]
 
     /// Updates all ontology annotations for which the predicate returns true with the given ontology annotations values
     let updateBy (predicate : OntologyAnnotation -> bool) (updateOption : UpdateOptions) (design : OntologyAnnotation) (annotations : OntologyAnnotation list) =

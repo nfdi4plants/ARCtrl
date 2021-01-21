@@ -30,9 +30,9 @@ module Study =
     let existsByIdentifier (identifier : string) (studies : Study list) =
         List.exists (fun (s:Study) -> s.Identifier = identifier) studies
 
-    ///// Adds the given study to the investigation  
-    //let add (study : Study) (investigation:Investigation) =
-    //    {investigation with Studies = List.append investigation.Studies [study]}
+    /// Adds the given study to the studies  
+    let add (studies : Study list) (study : Study) =
+        List.append studies [study]
 
     /// Updates all studies for which the predicate returns true with the given study values
     let updateBy (predicate : Study -> bool) (updateOption:UpdateOptions) (study : Study) (studies : Study list) =
@@ -60,6 +60,49 @@ module Study =
     let removeByIdentifier (identifier : string) (studies : Study list) = 
         List.filter (fun (s:Study) -> s.Identifier = identifier) studies
     
+
+    /// Returns assays of a study
+    let getAssays (study : Study) =
+        study.Assays
+
+    /// Applies function f to the assays of a study
+    let mapAssays (f : Assay list -> Assay list) (study : Study) =
+        { study with 
+            Assays = f study.Assays }
+
+    /// Replaces study assays with the given assay list
+    let setAssays (study : Study) (assays : Assay list) =
+        { study with
+            Assays = assays }
+    
+    /// Returns factors of a study
+    let getFactors (study : Study) =
+        study.Factors
+
+    /// Applies function f to the factors of a study
+    let mapFactors (f : Factor list -> Factor list) (study : Study) =
+        { study with 
+            Factors = f study.Factors }
+
+    /// Replaces study factors with the given assay list
+    let setFactors (study : Study) (factors : Factor list) =
+        { study with
+            Factors = factors }
+
+    /// Returns protocols of a study
+    let getProtocols (study : Study) =
+        study.Protocols
+
+    /// Applies function f to the protocols of a study
+    let mapProtocols (f : Protocol list -> Protocol list) (study : Study) =
+        { study with 
+            Protocols = f study.Protocols }
+
+    /// Replaces study protocols with the given assay list
+    let setProtocols (study : Study) (protocols : Protocol list) =
+        { study with
+            Protocols = protocols }
+
     /// Returns all contacts of a study
     let getContacts (study : Study) =
         study.Contacts
@@ -102,135 +145,3 @@ module Study =
         { study with
             StudyDesignDescriptors = descriptors }
 
-    //module Person = 
-    
-    //    /// If a person for which the predicate returns true exists in the study, gets it
-    //    let tryGetBy (predicate : Person -> bool) (study:Study) =
-    //        study.Contacts
-    //        |> List.tryFind (predicate) 
-    
-    //    /// If a person with the given full name exists in the study, returns it
-    //    let tryGetByFullName (firstName : string) (midInitials : string) (lastName : string) (study:Study) =
-    //        tryGetBy (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) study
-    
-    //    /// Returns true, if a person for which the predicate returns true exists in the study
-    //    let exists (predicate : Person -> bool) (study:Study) =
-    //        study.Contacts
-    //        |> List.exists (predicate) 
-    
-    //    /// Returns true, if the given person exists in the study
-    //    let contains (person : Person) (study:Study) =
-    //        exists ((=) person) study
-    
-    //    /// If an person with the given identfier exists in the study exists, returns it
-    //    let existsByFullName (firstName : string) (midInitials : string) (lastName : string) (study:Study) =
-    //        exists (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) study
-    
-    //    /// adds the given person to the study  
-    //    let add (person : Person) (study:Study) =
-    //        {study with Contacts = List.append study.Contacts [person]}
-    
-    //    /// If an person exists in the study for which the predicate returns true, updates it with the given person
-    //    let updateBy (predicate : Person -> bool) (updateOption:UpdateOptions) (person : Person) (study:Study) =
-    //        if exists predicate study then
-    //            {study 
-    //                with Contacts = 
-    //                        study.Contacts
-    //                        |> List.map (fun p -> if predicate p then updateOption.updateRecordType p person else p) 
-    //            }
-    //        else 
-    //            study
-    
-    //    /// If a person with the same name as the given person exists in the study exists, updates it with the given person
-    //    let updateByFullName (updateOption:UpdateOptions) (person : Person) (study:Study) =
-    //        updateBy (fun p -> p.FirstName = person.FirstName && p.MidInitials = person.MidInitials && p.LastName = person.LastName) updateOption person study
-    
-    //    /// If a person for which the predicate returns true exists in the study, removes it from the study
-    //    let removeBy (predicate : Person -> bool) (study:Study) =
-    //        if exists predicate study then
-    //            {study with Contacts = List.filter (predicate >> not) study.Contacts}
-    //        else 
-    //            study
-    
-    //    /// If the given person exists in the study, removes it from the study
-    //    let remove (person : Person) (study:Study) =
-    //        removeBy ((=) person) study
-    
-    //    /// If a person with the given full name exists in the study, removes it from the study
-    //    let removeByFullName (firstName : string) (midInitials : string) (lastName : string) (study:Study) =
-    //        removeBy (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) study
-
-    
-    //module Publication =  
-  
-    //    /// If a publication for which the predicate returns true exists in the study, gets it
-    //    let tryGetBy (predicate : Publication -> bool) (study:Study) =
-    //        study.Publications
-    //        |> List.tryFind (predicate) 
-
-    //    /// If an publication with the given doi exists in the study, returns it
-    //    let tryGetByDOI (doi : string) (study:Study) =
-    //        tryGetBy (fun p -> p.DOI = doi) study
-    
-    //    /// If an publication with the given pubmedID exists in the study, returns it
-    //    let tryGetByPubMedID (pubMedID : string) (study:Study) =
-    //        tryGetBy (fun p -> p.PubMedID = pubMedID) study
-
-    //    /// Returns true, if a publication for which the predicate returns true exists in the study
-    //    let exists (predicate : Publication -> bool) (study:Study) =
-    //        study.Publications
-    //        |> List.exists (predicate) 
-
-    //    /// Returns true, if the publication exists in the study
-    //    let contains (publication : Publication) (study:Study) =
-    //        exists ((=) publication) study
-
-    //    /// Returns true, if a publication with the given doi exists in the study
-    //    let existsByDoi (doi : string) (study:Study) =
-    //        exists (fun p -> p.DOI = doi) study
-    
-    //    /// Returns true, if a publication with the given pubmedID exists in the study
-    //    let existsByPubMedID (pubMedID : string) (study:Study) =
-    //        exists (fun p -> p.PubMedID = pubMedID) study
-
-    //    /// Adds the given publication to the study  
-    //    let add (publication : Publication) (study:Study) =
-    //        {study with Publications = List.append study.Publications [publication]}
-
-    //    /// If an publication exists in the study for which the predicate returns true, updates it with the given publication
-    //    let updateBy (predicate : Publication -> bool) (updateOption:UpdateOptions) (publication : Publication) (study:Study) =
-    //        if exists predicate study then
-    //            {study 
-    //                with Publications = 
-    //                     study.Publications
-    //                     |> List.map (fun p -> if predicate p then updateOption.updateRecordType p publication else p) 
-    //            }
-    //        else 
-    //            study
-
-    //    /// If an publication with the same doi as the given publication exists in the study, updates it with the given publication
-    //    let updateByDoi (updateOption:UpdateOptions) (publication : Publication) (study:Study) =
-    //        updateBy (fun p -> p.DOI = publication.DOI) updateOption publication study
-
-    //    /// If an publication with the same pubmedID as the given publication exists in the study, updates it with the given publication
-    //    let updateByPubMedID (updateOption:UpdateOptions) (publication : Publication) (study:Study) =
-    //        updateBy (fun p -> p.PubMedID = publication.PubMedID) updateOption publication study
-
-    //    /// If a publication for which the predicate returns true exists in the study, removes it from the study
-    //    let removeBy (predicate : Publication -> bool) (study:Study) =
-    //        if exists predicate study then
-    //            {study with Publications = List.filter (predicate >> not) study.Publications}
-    //        else 
-    //            study
-
-    //    /// If the given publication exists in the study, removes it from the study
-    //    let remove (publication : Publication) (study:Study) =
-    //        removeBy ((=) publication) study
-
-    //    /// If a publication with the given doi exists in the study, removes it from the study
-    //    let removeByDoi (doi : string) (study : Study) = 
-    //        removeBy (fun p -> p.DOI = doi) study
-
-    //    /// If a publication with the given pubMedID exists in the study, removes it from the study
-    //    let removeByPubMedID (pubMedID : string) (study : Study) = 
-    //        removeBy (fun p -> p.PubMedID = pubMedID) study

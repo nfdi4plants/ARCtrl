@@ -8,9 +8,9 @@ module Publication =
   
     open ISADotNet
 
-    ///// Adds the given publication to the investigation  
-    //let add (publication : Publication) (investigation:Investigation) =
-    //    {investigation with Publications = List.append investigation.Publications [publication]}
+    /// Adds the given publication to the publications  
+    let add (publications : Publication list) (publication : Publication) =
+        List.append publications [publication]
 
     ///// Returns true, if a publication for which the predicate returns true exists in the investigation
     //let exists (predicate : Publication -> bool) (investigation:Investigation) =

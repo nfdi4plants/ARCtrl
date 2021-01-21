@@ -27,9 +27,9 @@ module Protocol =
     let existsByName (name : string) (protocols : Protocol list) =
         List.exists (fun (p:Protocol) -> p.Name = name) protocols
 
-    ///// Adds the given protocol to the study  
-    //let add (protocol : Protocol) (study:Study) =
-    //    {study with Protocols = List.append study.Protocols [protocol]}
+    /// Adds the given protocol to the protocols  
+    let add (protocols : Protocol list) (protocol : Protocol) =
+        List.append protocols [protocol]
 
     /// Updates all protocols for which the predicate returns true with the given protocol values
     let updateBy (predicate : Protocol -> bool) (updateOption : UpdateOptions) (protocol : Protocol) (protocols : Protocol list) =

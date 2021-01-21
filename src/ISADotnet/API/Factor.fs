@@ -27,9 +27,9 @@ module Factor =
     let existsByName (name : string) (factors:Factor list) =
         List.exists (fun (f:Factor) -> f.Name = name) factors
 
-    ///// adds the given factor to the study  
-    //let add (factor : Factor) (study:Study) =
-    //    {study with Factors = List.append study.Factors [factor]}
+    /// adds the given factor to the factors  
+    let add (factors:Factor list) (factor : Factor) =
+        List.append factors [factor]
 
     /// Updates all factors for which the predicate returns true with the given factor values
     let updateBy (predicate : Factor -> bool) (updateOption : UpdateOptions) (factor : Factor) (factors : Factor list) =

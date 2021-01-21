@@ -27,9 +27,9 @@ module Assay =
     let existsByFileName (fileName : string) (assays : Assay list) =
         List.exists (fun (a:Assay) -> a.FileName = fileName) assays
 
-    ///// Adds the given assay to the study  
-    //let add (assay : Assay) (study:Study) =
-    //    {study with Assays = List.append study.Assays [assay]}
+    /// Adds the given assay to the assays  
+    let add (assays : Assay list) (assay : Assay) =
+        List.append assays [assay]
 
     /// Updates all assays for which the predicate returns true with the given assays values
     let updateBy (predicate : Assay -> bool) (updateOption : UpdateOptions) (assay : Assay) (assays : Assay list) =
