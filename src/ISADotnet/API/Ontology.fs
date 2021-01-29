@@ -12,7 +12,7 @@ module OntologySourceReference =
 
     /// If an ontology source reference with the given name exists in the list, returns it
     let tryGetByName (name : string) (ontologies : OntologySourceReference list) =
-        List.tryFind (fun (t : OntologySourceReference) -> t.Name = name) ontologies
+        List.tryFind (fun (t : OntologySourceReference) -> t.Name = Some name) ontologies
 
     ///// Returns true, if a ontology source reference for which the predicate returns true exists in the investigation
     //let exists (predicate : OntologySourceReference -> bool) (investigation:Investigation) =
@@ -21,15 +21,15 @@ module OntologySourceReference =
 
     /// If an ontology source reference with the given name exists in the list, returns true
     let existsByName (name : string) (ontologies : OntologySourceReference list) =
-        List.exists (fun (t : OntologySourceReference) -> t.Name = name) ontologies
+        List.exists (fun (t : OntologySourceReference) -> t.Name = Some name) ontologies
 
     ///// Returns true, if the investigation contains the given ontology source reference
     //let contains (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
     //    exists ((=) ontologySourceReference) investigation
 
     /// Adds the given ontology source reference to the investigation  
-    let add (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
-        {investigation with OntologySourceReferences = List.append investigation.OntologySourceReferences [ontologySourceReference]}
+    let add (ontologySourceReference : OntologySourceReference) (ontologies : OntologySourceReference list) =
+        List.append ontologies [ontologySourceReference]
 
     /// Updates all ontology source references for which the predicate returns true with the given ontology source reference values
     let updateBy (predicate : OntologySourceReference -> bool) (updateOption : UpdateOptions) (ontologySourceReference : OntologySourceReference) (ontologies : OntologySourceReference list) =
@@ -56,7 +56,7 @@ module OntologySourceReference =
 
     /// If a ontology source reference with the given name exists in the list, removes it
     let removeByName (name : string) (ontologies : OntologySourceReference list) = 
-        List.filter (fun (t : OntologySourceReference) -> t.Name = name) ontologies
+        List.filter (fun (t : OntologySourceReference) -> t.Name = Some name) ontologies
 
     /// Returns comments of ontology source ref
     let getComments (ontology : OntologySourceReference) =
@@ -65,12 +65,12 @@ module OntologySourceReference =
     /// Applies function f on comments in ontology source ref
     let mapComments (f : Comment list -> Comment list) (ontology : OntologySourceReference) =
         { ontology with 
-            Comments = f ontology.Comments}
+            Comments = Option.map f ontology.Comments}
 
     /// Replaces comments in ontology source ref by given comment list
     let setComments (ontology : OntologySourceReference) (comments : Comment list) =
         { ontology with
-            Comments = comments }
+            Comments = Some comments }
 
 module OntologyAnnotation =  
 
@@ -81,7 +81,7 @@ module OntologyAnnotation =
 
     /// If an ontology annotation with the given annotation value exists in the list, returns it
     let tryGetByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
-        List.tryFind (fun (d:OntologyAnnotation) -> d.Name = name) annotations
+        List.tryFind (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
 
     ///// Returns true, if a ontology annotation for which the predicate returns true exists in the Study.StudyDesignDescriptors
     //let exists (predicate : OntologyAnnotation -> bool) (study:Study) =
@@ -94,7 +94,7 @@ module OntologyAnnotation =
 
     /// If a ontology annotation with the given annotation value exists in the list, returns true
     let existsByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
-        List.exists (fun (d:OntologyAnnotation) -> d.Name = name) annotations
+        List.exists (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
 
     /// Adds the given ontology annotation to the Study.StudyDesignDescriptors
     let add (onotolgyAnnotations: OntologyAnnotation list) (onotolgyAnnotation : OntologyAnnotation) =
@@ -125,7 +125,7 @@ module OntologyAnnotation =
 
     /// If a ontology annotation with the annotation value exists in the list, removes it
     let removeByName (name : AnnotationValue) (annotations : OntologyAnnotation list) = 
-        List.filter (fun (d:OntologyAnnotation) -> d.Name = name) annotations
+        List.filter (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
 
     // Comments
     
@@ -136,9 +136,9 @@ module OntologyAnnotation =
     /// Applies function f on comments of a ontology annotation
     let mapComments (f : Comment list -> Comment list) (annotation : OntologyAnnotation) =
         { annotation with 
-            Comments = f annotation.Comments}
+            Comments = Option.map f annotation.Comments}
     
     /// Replaces comments of a ontology annotation by given comment list
     let setComments (annotation : OntologyAnnotation) (comments : Comment list) =
         { annotation with
-            Comments = comments }
+            Comments = Some comments }

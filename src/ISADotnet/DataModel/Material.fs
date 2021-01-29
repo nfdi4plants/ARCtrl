@@ -5,9 +5,9 @@ open System.Text.Json.Serialization
 type MaterialAttribute = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"characteristicType")>]
-        CharacteristicType : OntologyAnnotation
+        CharacteristicType : OntologyAnnotation option
     
     }
 
@@ -21,13 +21,13 @@ type MaterialAttribute =
 type MaterialAttributeValue = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"category")>]
-        Category : MaterialAttribute
+        Category : MaterialAttribute option
         [<JsonPropertyName(@"value")>]
-        Value : Value
+        Value : Value option
         [<JsonPropertyName(@"unit")>]
-        Unit : OntologyAnnotation
+        Unit : OntologyAnnotation option
     
     }
 
@@ -54,15 +54,15 @@ type MaterialType =
 type Material = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"type")>]
-        MaterialType : MaterialType
+        MaterialType : MaterialType option
         [<JsonPropertyName(@"characteristics")>]
-        Characteristics : MaterialAttributeValue list
+        Characteristics : MaterialAttributeValue list option
         [<JsonPropertyName(@"derivesFrom")>]
-        DerivesFrom : OntologyAnnotation
+        DerivesFrom : OntologyAnnotation option
     
     }
 

@@ -12,7 +12,7 @@ module Factor =
 
     /// If a factor with the given name exists in the list, returns it
     let tryGetByName (name : string) (factors:Factor list) =
-        List.tryFind (fun (f:Factor) -> f.Name = name) factors
+        List.tryFind (fun (f:Factor) -> f.Name = Some name) factors
 
     ///// Returns true, if a factor for which the predicate returns true exists in the study
     //let exists (predicate : Factor -> bool) (study:Study) =
@@ -25,7 +25,7 @@ module Factor =
 
     /// If a factor with the given name exists in the list exists, returns true
     let existsByName (name : string) (factors:Factor list) =
-        List.exists (fun (f:Factor) -> f.Name = name) factors
+        List.exists (fun (f:Factor) -> f.Name = Some name) factors
 
     /// adds the given factor to the factors  
     let add (factors:Factor list) (factor : Factor) =
@@ -55,7 +55,7 @@ module Factor =
 
     /// If a factor with the given name exists in the list, removes it
     let removeByName (name : string) (factors : Factor list) = 
-        List.filter (fun (f:Factor) -> f.Name = name) factors
+        List.filter (fun (f:Factor) -> f.Name = Some name) factors
 
     /// Returns comments of a factor
     let getComments (factor : Factor) =
@@ -64,12 +64,12 @@ module Factor =
     /// Applies function f on comments of a factor
     let mapComments (f : Comment list -> Comment list) (factor : Factor) =
         { factor with 
-            Comments = f factor.Comments}
+            Comments = Option.map f factor.Comments}
 
     /// Replaces comments of a factor by given comment list
     let setComments (factor : Factor) (comments : Comment list) =
         { factor with
-            Comments = comments }
+            Comments = Some comments }
 
     /// Returns factor type of a factor
     let getFactorType (factor : Factor) =
@@ -78,9 +78,9 @@ module Factor =
     /// Applies function f on factor type of a factor
     let mapFactorType (f : OntologyAnnotation -> OntologyAnnotation) (factor : Factor) =
         { factor with 
-            FactorType = f factor.FactorType}
+            FactorType = Option.map f factor.FactorType}
 
     /// Replaces factor type of a factor by given factor type
     let setFactorType (factor : Factor) (factorType : OntologyAnnotation) =
         { factor with
-            FactorType = factorType }
+            FactorType = Some factorType }

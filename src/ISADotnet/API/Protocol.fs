@@ -12,7 +12,7 @@ module Protocol =
 
     /// If a protocol with the given identfier exists in the list, returns it
     let tryGetByName (name : string) (protocols : Protocol list) =
-        List.tryFind (fun (p:Protocol) -> p.Name = name) protocols
+        List.tryFind (fun (p:Protocol) -> p.Name = Some name) protocols
 
     ///// Returns true, if a protocol for which the predicate returns true exists in the study
     //let exists (predicate : Protocol -> bool) (study:Study) =
@@ -25,7 +25,7 @@ module Protocol =
 
     /// If a protocol with the given name exists in the list exists, returns true
     let existsByName (name : string) (protocols : Protocol list) =
-        List.exists (fun (p:Protocol) -> p.Name = name) protocols
+        List.exists (fun (p:Protocol) -> p.Name = Some name) protocols
 
     /// Adds the given protocol to the protocols  
     let add (protocols : Protocol list) (protocol : Protocol) =
@@ -55,7 +55,7 @@ module Protocol =
 
     /// If a protocol with the given name exists in the list, removes it
     let removeByName (name : string) (protocols : Protocol list) = 
-        List.filter (fun (p:Protocol) -> p.Name = name) protocols
+        List.filter (fun (p:Protocol) -> p.Name = Some name) protocols
 
     // Comments
 
@@ -66,12 +66,12 @@ module Protocol =
     /// Applies function f on comments of a protocol
     let mapComments (f : Comment list -> Comment list) (protocol : Protocol) =
         { protocol with 
-            Comments = f protocol.Comments}
+            Comments = Option.map f protocol.Comments}
 
     /// Replaces comments of a protocol by given comment list
     let setComments (protocol : Protocol) (comments : Comment list) =
         { protocol with
-            Comments = comments }
+            Comments = Some comments }
 
     // Protocol Type
 
@@ -82,12 +82,12 @@ module Protocol =
     /// Applies function f on protocol type of a protocol
     let mapProtocolType (f : OntologyAnnotation -> OntologyAnnotation) (protocol : Protocol) =
         { protocol with 
-            ProtocolType = f protocol.ProtocolType}
+            ProtocolType = Option.map f protocol.ProtocolType}
 
     /// Replaces protocol type of a protocol by given protocol type
     let setProtocolType (protocol : Protocol) (protocolType : OntologyAnnotation) =
         { protocol with
-            ProtocolType = protocolType }
+            ProtocolType = Some protocolType }
 
     // Components
 
@@ -98,12 +98,12 @@ module Protocol =
     /// Applies function f on components of a protocol
     let mapComponents (f : Component list -> Component list) (protocol : Protocol) =
         { protocol with 
-            Components = f protocol.Components}
+            Components = Option.map f protocol.Components}
 
     /// Replaces components of a protocol by given component list
     let setComponents (protocol : Protocol) (components : Component list) =
         { protocol with
-            Components = components }
+            Components = Some components }
 
     // Protocol Parameters
     
@@ -114,9 +114,9 @@ module Protocol =
     /// Applies function f on protocol parameters of a protocol
     let mapParameters (f : ProtocolParameter list -> ProtocolParameter list) (protocol : Protocol) =
         { protocol with 
-            Parameters = f protocol.Parameters}
+            Parameters = Option.map f protocol.Parameters}
     
     /// Replaces protocol parameters of a protocol by given protocol parameter list
     let setParameters (protocol : Protocol) (parameters : ProtocolParameter list) =
         { protocol with
-            Parameters = parameters }
+            Parameters = Some parameters }

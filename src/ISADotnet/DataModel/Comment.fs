@@ -9,11 +9,11 @@ type EMail = string
 type Comment = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"value")>]
-        Value : string
+        Value : string option
     }
   
     static member create id name value = 
@@ -26,7 +26,7 @@ type Comment =
 
 type Remark = 
     {
-        Line : int
+        Line : int 
         Value : string
     }
     

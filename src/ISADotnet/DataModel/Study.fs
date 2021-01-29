@@ -4,11 +4,11 @@ open System.Text.Json.Serialization
 
 type StudyMaterials =
     {   [<JsonPropertyName(@"sources")>]
-        Sources : Source list
+        Sources : Source list option
         [<JsonPropertyName(@"samples")>]
-        Samples : Sample list
+        Samples : Sample list option
         [<JsonPropertyName(@"otherMaterials")>]
-        OtherMaterials : Material list    
+        OtherMaterials : Material list option
     }
 
     static member create sources samples otherMaterials =
@@ -19,49 +19,49 @@ type StudyMaterials =
         }
 
     static member Empty =
-        StudyMaterials.create [] [] []
+        StudyMaterials.create None None None
 
 
 type Study = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"filename")>]
-        FileName : string
+        FileName : string option
         [<JsonPropertyName(@"identifier")>]
-        Identifier : string
+        Identifier : string option
         [<JsonPropertyName(@"title")>]
-        Title : string 
+        Title : string option
         [<JsonPropertyName(@"description")>]
-        Description : string
+        Description : string option
         [<JsonPropertyName(@"submissionDate")>]
-        SubmissionDate : string
+        SubmissionDate : string option
         [<JsonPropertyName(@"publicReleaseDate")>]
-        PublicReleaseDate : string
+        PublicReleaseDate : string option
         [<JsonPropertyName(@"publications")>]
-        Publications : Publication list
+        Publications : Publication list option
         [<JsonPropertyName(@"people")>]
-        Contacts : Person list
+        Contacts : Person list option
         [<JsonPropertyName(@"studyDesignDescriptors")>]
-        StudyDesignDescriptors : OntologyAnnotation list
+        StudyDesignDescriptors : OntologyAnnotation list option
         [<JsonPropertyName(@"protocols")>]
-        Protocols : Protocol list
+        Protocols : Protocol list option
         [<JsonPropertyName(@"materials")>]
-        Materials : StudyMaterials
+        Materials : StudyMaterials option
         [<JsonPropertyName(@"processSequence")>]
-        ProcessSequence : Process list
+        ProcessSequence : Process list option
         [<JsonPropertyName(@"assays")>]
-        Assays : Assay list
+        Assays : Assay list option
         [<JsonPropertyName(@"factors")>]
-        Factors : Factor list
+        Factors : Factor list option
         /// List of all the characteristics categories (or material attributes) defined in the study, used to avoid duplication of their declaration when each material_attribute_value is created. 
         [<JsonPropertyName(@"characteristicCategories")>]
-        CharacteristicCategories : MaterialAttribute list
+        CharacteristicCategories : MaterialAttribute list option
         /// List of all the unitsdefined in the study, used to avoid duplication of their declaration when each value is created.
         [<JsonPropertyName(@"unitCategories")>]
-        UnitCategories : OntologyAnnotation list
+        UnitCategories : OntologyAnnotation list option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list
+        Comments : Comment list option
     }
 
     static member create id filename identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors protocols materials processSequence assays factors characteristicCategories unitCategories comments : Study=
