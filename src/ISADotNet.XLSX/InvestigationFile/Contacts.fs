@@ -3,6 +3,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -25,7 +26,18 @@ module Contacts =
 
     let fromString lastName firstName midInitials email phone fax address affiliation role rolesTermAccessionNumber rolesTermSourceREF comments =
         let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermAccessionNumber rolesTermSourceREF
-        Person.create null lastName firstName midInitials email phone fax address affiliation roles comments
+        Person.create 
+            None 
+            (Option.fromValueWithDefault "" lastName   ) 
+            (Option.fromValueWithDefault "" firstName  )
+            (Option.fromValueWithDefault "" midInitials) 
+            (Option.fromValueWithDefault "" email      )
+            (Option.fromValueWithDefault "" phone      )
+            (Option.fromValueWithDefault "" fax        )
+            (Option.fromValueWithDefault "" address    )
+            (Option.fromValueWithDefault "" affiliation) 
+            (Option.fromValueWithDefault [] roles      )
+            (Option.fromValueWithDefault [] comments   )
 
     let fromSparseMatrix (matrix : SparseMatrix) =
         
@@ -54,20 +66,21 @@ module Contacts =
         let mutable commentKeys = []
         persons
         |> List.iteri (fun i p ->
-            let role,rolesTermAccessionNumber,rolesTermSourceREF = OntologyAnnotation.toAggregatedStrings ';' p.Roles
-            do matrix.Matrix.Add ((lastNameLabel,i),                    p.LastName)
-            do matrix.Matrix.Add ((firstNameLabel,i),                   p.FirstName)
-            do matrix.Matrix.Add ((midInitialsLabel,i),                 p.MidInitials)
-            do matrix.Matrix.Add ((emailLabel,i),                       p.EMail)
-            do matrix.Matrix.Add ((phoneLabel,i),                       p.Phone)
-            do matrix.Matrix.Add ((faxLabel,i),                         p.Fax)
-            do matrix.Matrix.Add ((addressLabel,i),                     p.Address)
-            do matrix.Matrix.Add ((affiliationLabel,i),                 p.Affiliation)
+            let role,rolesTermAccessionNumber,rolesTermSourceREF = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
+            do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
+            do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))
+            do matrix.Matrix.Add ((midInitialsLabel,i),                 (Option.defaultValue ""  p.MidInitials  ))
+            do matrix.Matrix.Add ((emailLabel,i),                       (Option.defaultValue ""  p.EMail        ))
+            do matrix.Matrix.Add ((phoneLabel,i),                       (Option.defaultValue ""  p.Phone        ))
+            do matrix.Matrix.Add ((faxLabel,i),                         (Option.defaultValue ""  p.Fax          ))
+            do matrix.Matrix.Add ((addressLabel,i),                     (Option.defaultValue ""  p.Address      ))
+            do matrix.Matrix.Add ((affiliationLabel,i),                 (Option.defaultValue ""  p.Affiliation  ))
             do matrix.Matrix.Add ((rolesLabel,i),                       role)  
             do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rolesTermAccessionNumber)
             do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rolesTermSourceREF)
 
             p.Comments
+            |> Option.defaultValue []
             |> List.iter (fun comment -> 
                 commentKeys <- comment.Name :: commentKeys
                 matrix.Matrix.Add((comment.Name,i),comment.Value)

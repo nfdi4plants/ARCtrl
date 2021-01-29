@@ -92,7 +92,7 @@ module Assay =
     /// Applies function f on comments of an assay
     let mapComments (f : Comment list -> Comment list) (assay : Assay) =
         { assay with 
-            Comments = Option.map f assay.Comments}
+            Comments = Option.mapDefault [] f assay.Comments}
     
     /// Replaces comments of an assay by given comment list
     let setComments (assay : Assay) (comments : Comment list) =
@@ -108,7 +108,7 @@ module Assay =
     /// Applies function f on data files of an assay
     let mapData (f : Data list -> Data list) (assay : Assay) =
         { assay with 
-            DataFiles = Option.map f assay.DataFiles}
+            DataFiles = Option.mapDefault [] f assay.DataFiles}
         
     /// Replaces data files of an assay by given data file list
     let setData (assay : Assay) (dataFiles : Data list) =
@@ -124,7 +124,7 @@ module Assay =
     /// Applies function f on unit categories of an assay
     let mapUnitCategories (f : OntologyAnnotation list -> OntologyAnnotation list) (assay : Assay) =
         { assay with 
-            UnitCategories = Option.map f assay.UnitCategories}
+            UnitCategories = Option.mapDefault [] f assay.UnitCategories}
             
     /// Replaces unit categories of an assay by given unit categorie list
     let setUnitCategories (assay : Assay) (unitCategories : OntologyAnnotation list) =
@@ -140,7 +140,7 @@ module Assay =
     /// Applies function f on characteristic categories of an assay
     let mapCharacteristics (f : MaterialAttribute list -> MaterialAttribute list) (assay : Assay) =
         { assay with 
-            CharacteristicCategories = Option.map f assay.CharacteristicCategories}
+            CharacteristicCategories = Option.mapDefault [] f assay.CharacteristicCategories}
             
     /// Replaces characteristic categories of an assay by given characteristic categorie list
     let setCharacteristics (assay : Assay) (characteristics : MaterialAttribute list) =
@@ -188,7 +188,7 @@ module Assay =
     /// Applies function f on processes of an assay
     let mapProcesses (f : Process list -> Process list) (assay : Assay) =
         { assay with 
-            ProcessSequence = Option.map f assay.ProcessSequence}
+            ProcessSequence = Option.mapDefault [] f assay.ProcessSequence}
                 
     /// Replaces processes of an assay by given processe list
     let setProcesses (assay : Assay) (processes : Process list) =

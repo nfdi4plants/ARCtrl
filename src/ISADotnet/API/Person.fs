@@ -90,7 +90,7 @@ module Person =
     /// Applies function f on roles of a person
     let mapRoles (f : OntologyAnnotation list -> OntologyAnnotation list) (person : Person) =
         { person with 
-            Roles = Option.map f person.Roles}
+            Roles = Option.mapDefault [] f person.Roles}
     
     /// Replaces roles of a person with the given roles
     let setRoles (person : Person) (roles : OntologyAnnotation list) =
@@ -106,7 +106,7 @@ module Person =
     /// Applies function f on comments of a person
     let mapComments (f : Comment list -> Comment list) (person : Person) =
         { person with 
-            Comments = Option.map f person.Comments}
+            Comments = Option.mapDefault [] f person.Comments}
     
     /// Replaces comments of a person by given comment list
     let setComments (person : Person) (comments : Comment list) =

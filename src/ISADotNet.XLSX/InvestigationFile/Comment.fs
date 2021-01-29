@@ -1,6 +1,7 @@
 namespace ISADotNet.XLSX
 
 open ISADotNet
+open ISADotNet.API
 open System.Text.RegularExpressions
 
 module Comment = 
@@ -23,7 +24,10 @@ module Comment =
         sprintf "Comment[<%s>]" k
 
     let fromString k v =
-        Comment.create null k v
+        Comment.create 
+            None 
+            (Option.fromValueWithDefault "" k) 
+            (Option.fromValueWithDefault "" v)
 
 module Remark = 
 

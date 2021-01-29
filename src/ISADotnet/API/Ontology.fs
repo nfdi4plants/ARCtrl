@@ -65,7 +65,7 @@ module OntologySourceReference =
     /// Applies function f on comments in ontology source ref
     let mapComments (f : Comment list -> Comment list) (ontology : OntologySourceReference) =
         { ontology with 
-            Comments = Option.map f ontology.Comments}
+            Comments = Option.mapDefault [] f ontology.Comments}
 
     /// Replaces comments in ontology source ref by given comment list
     let setComments (ontology : OntologySourceReference) (comments : Comment list) =
@@ -136,7 +136,7 @@ module OntologyAnnotation =
     /// Applies function f on comments of a ontology annotation
     let mapComments (f : Comment list -> Comment list) (annotation : OntologyAnnotation) =
         { annotation with 
-            Comments = Option.map f annotation.Comments}
+            Comments = Option.mapDefault [] f annotation.Comments}
     
     /// Replaces comments of a ontology annotation by given comment list
     let setComments (annotation : OntologyAnnotation) (comments : Comment list) =

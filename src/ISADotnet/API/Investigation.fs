@@ -12,7 +12,7 @@ module Investigation =
     /// Applies function f on person of an investigation
     let mapContacts (f:Person list -> Person list) (investigation: Investigation) =
         { investigation with 
-            Contacts = Option.map f investigation.Contacts }
+            Contacts = Option.mapDefault [] f investigation.Contacts }
 
     /// Replaces persons of an investigation with the given person list
     let setContacts (investigation:Investigation) (persons:Person list) =
@@ -26,7 +26,7 @@ module Investigation =
     /// Applies function f on publications of an investigation
     let mapPublications (f:Publication list -> Publication list) (investigation: Investigation) =
         { investigation with 
-            Publications = Option.map f investigation.Publications }
+            Publications = Option.mapDefault [] f investigation.Publications }
 
     /// Replaces publications of an investigation with the given publication list
     let setPublications (investigation:Investigation) (publications:Publication list) =
@@ -40,7 +40,7 @@ module Investigation =
     /// Applies function f on ontology source ref of an investigation
     let mapOntologies (f:OntologySourceReference list -> OntologySourceReference list) (investigation: Investigation) =
         { investigation with 
-            OntologySourceReferences = Option.map  f investigation.OntologySourceReferences }
+            OntologySourceReferences = Option.mapDefault []  f investigation.OntologySourceReferences }
 
     /// Replaces ontology source ref of an investigation with the given ontology source ref list
     let setOntologies (investigation:Investigation) (ontologies:OntologySourceReference list) =
@@ -54,7 +54,7 @@ module Investigation =
     /// Applies function f on studies of an investigation
     let mapStudies (f:Study list -> Study list) (investigation: Investigation) =
         { investigation with 
-            Studies = Option.map  f investigation.Studies }
+            Studies = Option.mapDefault []  f investigation.Studies }
 
     /// Replaces studies of an investigation with the given study list
     let setStudies (investigation:Investigation) (studies:Study list) =
@@ -68,7 +68,7 @@ module Investigation =
     /// Applies function f on comments of an investigation
     let mapComments (f:Comment list -> Comment list) (investigation: Investigation) =
         { investigation with 
-            Comments = Option.map f investigation.Comments }
+            Comments = Option.mapDefault [] f investigation.Comments }
 
     /// Replaces comments of an investigation with the given comment list
     let setComments (investigation:Investigation) (comments:Comment list) =

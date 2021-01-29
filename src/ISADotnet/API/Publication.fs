@@ -89,7 +89,7 @@ module Publication =
     /// Applies function f on comments of a protocol
     let mapComments (f : Comment list -> Comment list) (publication : Publication) =
         { publication with 
-            Comments = Option.map f publication.Comments}
+            Comments = Option.mapDefault [] f publication.Comments}
     
     /// Replaces comments of a protocol by given comment list
     let setComments (publication : Publication) (comments : Comment list) =

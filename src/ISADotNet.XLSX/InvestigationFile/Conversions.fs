@@ -1,6 +1,7 @@
 namespace ISADotNet.XLSX
 
 open ISADotNet
+open ISADotNet.API
 
 module URI =
 
@@ -28,17 +29,34 @@ module AnnotationValue =
 module OntologyAnnotation =
 
     let fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.create null (AnnotationValue.fromString term) (URI.fromString accession) source []
+        OntologyAnnotation.create 
+            None 
+            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
+            (Option.fromValueWithDefault "" source)
+            None
+
 
     let toString (oa : OntologyAnnotation) =
-        oa.Name |> AnnotationValue.toString,
-        oa.TermAccessionNumber |> URI.toString,
-        oa.TermSourceREF
+        oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
+        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue "",
+        oa.TermSourceREF |> Option.defaultValue ""
 
-    let fromAggregatedStrings (separator:char) (terms:string) (accessions:string) (source:string) =
-        (terms.Split separator, accessions.Split separator, source.Split separator)
-        |||> Array.map3 fromString 
-        |> List.ofArray
+    
+
+    let fromAggregatedStrings (separator:char) (terms:string) (accessions:string) (source:string) : OntologyAnnotation list=
+        if terms = "" && terms = "" && source = "" then
+            []
+        else
+            let terms,accessions,sources = terms.Split separator, accessions.Split separator, source.Split separator
+            let l = 
+            match terms.Length,accessions.Length,sources.Length with
+            | (a,b,c) when a = b && b = c -> Array.map3 fromString terms accessions sources
+            | (a,b,c) when a = b && b = c -> Array.map3 fromString terms accessions sources
+            |
+            |
+            | _ -> failwithf "Cant"
+            |> List.ofArray
 
     let toAggregatedStrings (separator:char) (oas : OntologyAnnotation list) =
         oas
