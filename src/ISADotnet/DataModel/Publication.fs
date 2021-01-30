@@ -31,6 +31,7 @@ type Publication =
             Comments    = comments
         }
 
-
+    static member empty =
+        Publication.create None None None None None None None
 
 

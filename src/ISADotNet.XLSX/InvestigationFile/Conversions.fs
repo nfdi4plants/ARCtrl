@@ -68,28 +68,30 @@ module OntologyAnnotation =
         let l = getLengthOfAggregatedStrings separator [|terms;accessions;source|]
         if l = 0 then []
         else 
-            let terms : string [] = if terms = "" then Array.zeroCreate l else terms.Split(separator)
-            let accessions : string [] = if accessions = "" then Array.zeroCreate l else accessions.Split(separator)
-            let sources : string [] = if source = "" then Array.zeroCreate l else source.Split(separator)
+            let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
+            let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
+            let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             Array.map3 fromString terms accessions sources
             |> Array.toList
 
-    /// Returns the aggregated ISATAb OntologyAnnotation Name, Accession number and ontology source from a list of ISAJson OntologyAnnotation objects
+    /// Returns the aggregated ISATab OntologyAnnotation Name, Accession number and ontology source from a list of ISAJson OntologyAnnotation objects
     let toAggregatedStrings (separator:char) (oas : OntologyAnnotation list) =
-        oas
-        |> List.map toString
-        |> List.reduce (fun (terms, accessions, sources) (term, accession, source) -> 
-            sprintf "%s%c%s" terms      separator term,
-            sprintf "%s%c%s" accessions separator accession,
-            sprintf "%s%c%s" sources    separator source
-        ) 
+        if oas = [] then "","",""
+        else
+            oas
+            |> List.map toString
+            |> List.reduce (fun (terms, accessions, sources) (term, accession, source) -> 
+                sprintf "%s%c%s" terms      separator term,
+                sprintf "%s%c%s" accessions separator accession,
+                sprintf "%s%c%s" sources    separator source
+            ) 
 
 module Component = 
     
     /// Create a ISAJson Component from ISATab string entries
     let fromString (name: string) (term:string) (accession:string) (source:string) =
         OntologyAnnotation.fromString term accession source
-        |> Some
+        |> Option.fromValueWithDefault OntologyAnnotation.empty
         |> Component.create (Option.fromValueWithDefault "" name)
 
     /// Get ISATab string entries from an ISAJson Component object
@@ -102,30 +104,32 @@ module Component =
         let l = OntologyAnnotation.getLengthOfAggregatedStrings separator [|names;terms;accessions;source|]
         if l = 0 then []
         else 
-            let names : string [] = if names = "" then Array.zeroCreate l else names.Split(separator)
-            let terms : string [] = if terms = "" then Array.zeroCreate l else terms.Split(separator)
-            let accessions : string [] = if accessions = "" then Array.zeroCreate l else accessions.Split(separator)
-            let sources : string [] = if source = "" then Array.zeroCreate l else source.Split(separator)
+            let names : string [] = if names = "" then Array.create l "" else names.Split(separator)
+            let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
+            let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
+            let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             Array.map4 fromString names terms accessions sources
             |> Array.toList
 
     /// Returns the aggregated ISATAb Component Name, Ontology Annotation value, Accession number and ontology source from a list of ISAJson Component objects
     let toAggregatedStrings (separator:char) (cs : Component list) =
-        cs
-        |> List.map toString
-        |> List.reduce (fun (names,terms, accessions, sources) (name,term, accession, source) -> 
-            sprintf "%s%c%s" names      separator name,
-            sprintf "%s%c%s" terms      separator term,
-            sprintf "%s%c%s" accessions separator accession,
-            sprintf "%s%c%s" sources    separator source
-        ) 
+        if cs = [] then "","","",""
+        else
+            cs
+            |> List.map toString
+            |> List.reduce (fun (names,terms, accessions, sources) (name,term, accession, source) -> 
+                sprintf "%s%c%s" names      separator name,
+                sprintf "%s%c%s" terms      separator term,
+                sprintf "%s%c%s" accessions separator accession,
+                sprintf "%s%c%s" sources    separator source
+            ) 
 
 module ProtocolParameter =
 
     /// Create a ISAJson Protocol Parameter from ISATab string entries
     let fromString (term:string) (accession:string) (source:string) =
         OntologyAnnotation.fromString term accession source
-        |> Some
+        |> Option.fromValueWithDefault OntologyAnnotation.empty
         |> ProtocolParameter.create None
 
     /// Get ISATab string entries from an ISAJson ProtocolParameter object
@@ -139,10 +143,12 @@ module ProtocolParameter =
 
     /// Returns the aggregated ISATAb Ontology Annotation value, Accession number and ontology source from a list of ISAJson ProtocolParameter objects
     let toAggregatedStrings (separator:char) (oas : ProtocolParameter list) =
-        oas
-        |> List.map toString
-        |> List.reduce (fun (terms, accessions, sources) (term, accession, source) -> 
-            sprintf "%s%c%s" terms      separator term,
-            sprintf "%s%c%s" accessions separator accession,
-            sprintf "%s%c%s" sources    separator source
-        ) 
+        if oas = [] then "","",""
+        else
+            oas
+            |> List.map toString
+            |> List.reduce (fun (terms, accessions, sources) (term, accession, source) -> 
+                sprintf "%s%c%s" terms      separator term,
+                sprintf "%s%c%s" accessions separator accession,
+                sprintf "%s%c%s" sources    separator source
+            ) 

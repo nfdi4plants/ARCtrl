@@ -3,6 +3,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -17,6 +18,14 @@ module OntologySourceReference =
     
     let labels = [nameLabel;fileLabel;versionLabel;descriptionLabel]
 
+    let fromString description file name version comments =
+        OntologySourceReference.create
+            (Option.fromValueWithDefault "" description)
+            (Option.fromValueWithDefault "" file)
+            (Option.fromValueWithDefault "" name)
+            (Option.fromValueWithDefault "" version)
+            (Option.fromValueWithDefault [] comments)
+
     let fromSparseMatrix (matrix : SparseMatrix) =
         
         List.init matrix.Length (fun i -> 
@@ -26,7 +35,7 @@ module OntologySourceReference =
                 |> List.map (fun k -> 
                     Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            OntologySourceReference.create
+            fromString
                 (matrix.TryGetValueDefault("",(descriptionLabel,i)))
                 (matrix.TryGetValueDefault("",(fileLabel,i)))
                 (matrix.TryGetValueDefault("",(nameLabel,i)))
@@ -39,16 +48,20 @@ module OntologySourceReference =
         let mutable commentKeys = []
         ontologySources
         |> List.iteri (fun i o ->
-            do matrix.Matrix.Add ((nameLabel,i),        o.Name)
-            do matrix.Matrix.Add ((fileLabel,i),        o.File)
-            do matrix.Matrix.Add ((versionLabel,i),     o.Version)
-            do matrix.Matrix.Add ((descriptionLabel,i), o.Description)
+            do matrix.Matrix.Add ((nameLabel,i),        (Option.defaultValue "" o.Name))
+            do matrix.Matrix.Add ((fileLabel,i),        (Option.defaultValue "" o.File))
+            do matrix.Matrix.Add ((versionLabel,i),     (Option.defaultValue "" o.Version))
+            do matrix.Matrix.Add ((descriptionLabel,i), (Option.defaultValue "" o.Description))
 
-            o.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+            match o.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )     
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 

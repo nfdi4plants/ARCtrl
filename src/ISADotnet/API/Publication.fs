@@ -29,6 +29,11 @@ module Publication =
     let existsByPubMedID (pubMedID : string) (publications : Publication list) =
         List.exists (fun p -> p.PubMedID = Some pubMedID) publications
 
+    /// If a publication with the given doi exists in the investigation, returns it
+    let tryGetByDoi doi (publications:Publication list) =
+        publications
+        |> List.tryFind (fun publication -> publication.DOI = doi)
+
     /// Updates all publications for which the predicate returns true with the given publication values
     let updateBy (predicate : Publication -> bool) (updateOption : UpdateOptions) (publication : Publication) (publications : Publication list) =
         if List.exists predicate publications then

@@ -8,6 +8,8 @@ type AnnotationValue =
     | [<SerializationOrder(1)>]Float of float
     | [<SerializationOrder(0)>]Int of int
 
+    static member empty = Text ""
+
 type OntologyAnnotation =
     {
         [<JsonPropertyName("@id")>]
@@ -31,6 +33,8 @@ type OntologyAnnotation =
             Comments = comments
         }
 
+    static member empty =
+        OntologyAnnotation.create None None None None None
 
 type OntologySourceReference =
     {
@@ -56,3 +60,5 @@ type OntologySourceReference =
             Comments    = comments
         }
 
+    static member empty =
+        OntologySourceReference.create None None None None None

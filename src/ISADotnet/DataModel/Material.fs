@@ -17,6 +17,8 @@ type MaterialAttribute =
             CharacteristicType = characteristicType     
         }
 
+    static member empty =
+        MaterialAttribute.create None None 
 
 type MaterialAttributeValue = 
     {
@@ -39,6 +41,8 @@ type MaterialAttributeValue =
             Unit = unit         
         }
 
+    static member empty =
+        MaterialAttributeValue.create None None None None
 
 [<StringEnumAttribute>]
 type MaterialType =
@@ -74,3 +78,6 @@ type Material =
             Characteristics = characteristics     
             DerivesFrom     = derivesFrom       
         }
+
+    static member empty =
+        Material.create None None None None None

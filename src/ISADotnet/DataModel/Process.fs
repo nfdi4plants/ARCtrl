@@ -19,6 +19,9 @@ type ProcessParameterValue =
             Unit = unit
         }
 
+    static member empty =
+        ProcessParameterValue.create None None None
+
 [<AnyOf>]
 type ProcessInput =
     
@@ -73,3 +76,6 @@ type Process =
             Outputs             = outputs
             Comments            = comments       
         }
+
+    static member empty =
+        Process.create None None None None None None None None None None None

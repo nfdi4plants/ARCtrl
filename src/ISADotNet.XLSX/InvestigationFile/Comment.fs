@@ -29,6 +29,10 @@ module Comment =
             (Option.fromValueWithDefault "" k) 
             (Option.fromValueWithDefault "" v)
 
+    let toString (c:Comment) =
+        Option.defaultValue "" c.Name,    
+        Option.defaultValue "" c.Value
+
 module Remark = 
 
     let remarkRegex = Regex(@"(?<=#).*")

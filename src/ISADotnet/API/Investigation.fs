@@ -88,3 +88,7 @@ module Investigation =
     let setRemarks (investigation:Investigation) (remarks:Remark list) =
         { investigation with
             Remarks = remarks }
+
+    /// Update the investigation with the values of the given newInvestigation
+    let update (updateOption:API.Update.UpdateOptions) (investigation : Investigation) newInvestigation =
+        updateOption.updateRecordType investigation newInvestigation

@@ -42,3 +42,6 @@ type Person =
             Roles = roles
             Comments = comments
         }
+
+    static member empty =
+        Person.create None None None None None None None None None None None

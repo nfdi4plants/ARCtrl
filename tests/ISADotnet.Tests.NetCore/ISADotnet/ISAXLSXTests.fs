@@ -14,7 +14,9 @@ let testInvestigationFile =
     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
     let referenceInvestigationFilePath = System.IO.Path.Combine(sourceDirectory,"isa.investigation.xlsx")
-    let outputInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new.isa.investigation.xlsx")
+    let outputInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new_isa.investigation.xlsx")
+    let referenceEmptyInvestigationFilePath = System.IO.Path.Combine(sourceDirectory,"empty_isa.investigation.xlsx")
+    let outputEmptyInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new_empty_isa.investigation.xlsx")
 
     testList "InvestigationXLSXTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -47,18 +49,58 @@ let testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let i =                
-                Spreadsheet.fromFile referenceInvestigationFilePath false
+                Spreadsheet.fromFile referenceEmptyInvestigationFilePath false
                 |> Spreadsheet.getRowsBySheetIndex 0u 
                 |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
             let o = 
-                Spreadsheet.fromFile outputInvestigationFilePath false
+                Spreadsheet.fromFile outputEmptyInvestigationFilePath false
                 |> Spreadsheet.getRowsBySheetIndex 0u 
                 |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
 
             Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
         )
+        //testCase "ReaderSuccessEmpty" (fun () -> 
+            
+        //    let readingSuccess = 
+        //        try 
+        //            Investigation.fromFile referenceEmptyInvestigationFilePath |> ignore
+        //            Result.Ok "DidRun"
+        //        with
+        //        | err -> Result.Ok(sprintf "Reading the empty test file failed: %s" err.Message)
+        //    Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        //)
+
+        //testCase "WriterSuccessEmpty" (fun () ->
+
+        //    let i = Investigation.fromFile referenceEmptyInvestigationFilePath
+
+        //    let writingSuccess = 
+        //        try 
+        //            Investigation.toFile outputEmptyInvestigationFilePath i
+        //            Result.Ok "DidRun"
+        //        with
+        //        | err -> Result.Ok(sprintf "Writing the empty test file failed: %s" err.Message)
+
+        //    Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        //)
+
+        //testCase "OutputMatchesInputEmpty" (fun () ->
+
+        //    let i =                
+        //        Spreadsheet.fromFile referenceEmptyInvestigationFilePath false
+        //        |> Spreadsheet.getRowsBySheetIndex 0u 
+        //        |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
+        //    let o = 
+        //        Spreadsheet.fromFile outputEmptyInvestigationFilePath false
+        //        |> Spreadsheet.getRowsBySheetIndex 0u 
+        //        |> Seq.map (Row.getRowValues None >> Seq.reduce (fun a b -> a + b))
+
+        //    Expect.sequenceEqual o i "Written empty investigation file does not match read empty investigation file"
+        //)
         |> testSequenced
     ]
+
 
 [<Tests>]
 let testSparseMatrix =

@@ -22,6 +22,9 @@ type Factor =
             Comments = comments         
         }
 
+    static member empty =
+        Factor.create None None None None
+
 [<AnyOf>]
 type Value =
     | [<SerializationOrder(0)>] Ontology of OntologyAnnotation
@@ -50,3 +53,6 @@ type FactorValue =
             Value = value
             Unit = unit         
         }
+
+    static member empty =
+        FactorValue.create None None None None

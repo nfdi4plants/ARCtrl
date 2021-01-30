@@ -79,12 +79,15 @@ module Contacts =
             do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rolesTermAccessionNumber)
             do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rolesTermSourceREF)
 
-            p.Comments
-            |> Option.defaultValue []
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+            match p.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

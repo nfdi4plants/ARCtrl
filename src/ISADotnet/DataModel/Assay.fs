@@ -10,6 +10,15 @@ type AssayMaterials =
         OtherMaterials : Material list option
     }
 
+    static member create samples otherMaterials =
+        {
+            Samples = samples
+            OtherMaterials = otherMaterials       
+        }
+
+    static member empty =
+        AssayMaterials.create None None
+
 type Assay = 
     {
         [<JsonPropertyName(@"@id")>]
@@ -53,3 +62,6 @@ type Assay =
             ProcessSequence             = processSequence
             Comments                    = comments
         }
+
+    static member empty =
+        Assay.create None None None None None None None None None None None

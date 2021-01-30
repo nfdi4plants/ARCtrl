@@ -3,6 +3,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -16,7 +17,12 @@ module DesignDescriptors =
     let labels = [designTypeLabel;designTypeTermAccessionNumberLabel;designTypeTermSourceREFLabel]
 
     let fromString designType typeTermAccessionNumber typeTermSourceREF comments =
-        OntologyAnnotation.create null (AnnotationValue.fromString designType) typeTermAccessionNumber typeTermSourceREF comments
+        OntologyAnnotation.create 
+            None 
+            (Option.fromValueWithDefault "" designType |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" typeTermAccessionNumber |> Option.map URI.fromString)
+            (Option.fromValueWithDefault "" typeTermSourceREF)
+            (Option.fromValueWithDefault [] comments)
 
     let fromSparseMatrix (matrix : SparseMatrix) =
         
@@ -44,11 +50,15 @@ module DesignDescriptors =
             do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   accession)
             do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         source)
 
-            d.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+            match d.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

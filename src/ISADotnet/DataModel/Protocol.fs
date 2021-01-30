@@ -33,7 +33,9 @@ type Component =
             ComponentName = name
             ComponentType = componentType
         }
-
+       
+    static member empty =
+        Component.create None None 
 
 type Protocol =
     {       
@@ -70,3 +72,5 @@ type Protocol =
             Comments        = comments
         }
 
+    static member empty = 
+        Protocol.create None None None None None None None None None

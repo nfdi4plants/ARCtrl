@@ -35,6 +35,8 @@ type Data =
             Comments = comments         
         }
 
+    static member empty =
+        Data.create None None None None
 
 type Source = 
     {
@@ -53,6 +55,8 @@ type Source =
             Characteristics = characteristics          
         }
 
+    static member empty =
+        Source.create None None None
 
 type Sample = 
     {
@@ -76,3 +80,6 @@ type Sample =
             FactorValues    = factorValues
             DerivesFrom     = derivesFrom       
         }
+
+    static member empty =
+        Sample.create None None None None None

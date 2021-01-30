@@ -49,3 +49,6 @@ type Investigation =
             Comments                    = comments
             Remarks                     = remarks
         }
+
+    static member empty =
+        Investigation.create None None None None None None None None None None None None [] 

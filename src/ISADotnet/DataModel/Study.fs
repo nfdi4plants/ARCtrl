@@ -18,7 +18,7 @@ type StudyMaterials =
             OtherMaterials = otherMaterials           
         }
 
-    static member Empty =
+    static member empty =
         StudyMaterials.create None None None
 
 
@@ -86,5 +86,6 @@ type Study =
             Comments                    = comments
         }
 
-
+    static member empty =
+        Study.create None None None None None None None None None None None None None None None None None None 
 
