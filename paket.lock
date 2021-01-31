@@ -37,7 +37,7 @@ NUGET
     FSharp.SystemTextJson (0.15.14)
       FSharp.Core (>= 4.7)
       System.Text.Json (>= 4.6)
-    FSharpSpreadsheetML (0.0.1)
+    FSharpSpreadsheetML (0.0.2)
       DocumentFormat.OpenXml
       FSharp.Core (4.7.2)
     Iced (1.10)
@@ -63,7 +63,7 @@ NUGET
       System.Memory (>= 4.5.4)
       System.Reflection.Metadata (>= 1.8.1)
       System.Runtime.CompilerServices.Unsafe (>= 4.7.1)
-    Microsoft.Diagnostics.Tracing.TraceEvent (2.0.64)
+    Microsoft.Diagnostics.Tracing.TraceEvent (2.0.65)
       System.Runtime.CompilerServices.Unsafe (>= 4.5.2)
     Microsoft.DotNet.PlatformAbstractions (3.1.6)
     Microsoft.Win32.Registry (5.0)

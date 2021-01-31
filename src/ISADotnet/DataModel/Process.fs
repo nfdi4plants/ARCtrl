@@ -5,11 +5,11 @@ open System.Text.Json.Serialization
 type ProcessParameterValue =
     {
         [<JsonPropertyName(@"category")>]
-        Category    : ProtocolParameter
+        Category    : ProtocolParameter option
         [<JsonPropertyName(@"value")>]
-        Value       : Value
+        Value       : Value option
         [<JsonPropertyName(@"unit")>]
-        Unit        : OntologyAnnotation option   
+        Unit        : OntologyAnnotation option
     }
 
     static member create category value unit : ProcessParameterValue = 
@@ -18,6 +18,9 @@ type ProcessParameterValue =
             Value = value
             Unit = unit
         }
+
+    static member empty =
+        ProcessParameterValue.create None None None
 
 [<AnyOf>]
 type ProcessInput =
@@ -36,27 +39,27 @@ type ProcessOutput =
 type Process = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"executesProtocol")>]
-        ExecutesProtocol : Protocol
+        ExecutesProtocol : Protocol option
         [<JsonPropertyName(@"parameterValues")>]
-        ParameterValues : ProcessParameterValue list
+        ParameterValues : ProcessParameterValue list option
         [<JsonPropertyName(@"performer")>]
-        Performer : string
+        Performer : string option
         [<JsonPropertyName(@"date")>]
-        Date : string
+        Date : string option
         [<JsonPropertyName(@"previousProcess")>]
-        PreviousProcess : Process 
+        PreviousProcess : Process  option
         [<JsonPropertyName(@"nextProcess")>]
-        NextProcess : Process
+        NextProcess : Process option
         [<JsonPropertyName(@"inputs")>]
-        Inputs : ProcessInput list
+        Inputs : ProcessInput list option
         [<JsonPropertyName(@"outputs")>]
-        Outputs : ProcessOutput list
+        Outputs : ProcessOutput list option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list
+        Comments : Comment list option
     }
 
     static member create id name executesProtocol parameterValues performer date previousProcess nextProcess inputs outputs comments : Process= 
@@ -73,3 +76,6 @@ type Process =
             Outputs             = outputs
             Comments            = comments       
         }
+
+    static member empty =
+        Process.create None None None None None None None None None None None

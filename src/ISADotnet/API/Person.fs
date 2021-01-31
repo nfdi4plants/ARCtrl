@@ -14,7 +14,13 @@ module Person =
 
     /// If a person with the given FirstName, MidInitials and LastName exists in the list, returns it
     let tryGetByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.tryFind (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) persons
+        List.tryFind (fun p -> 
+            if midInitials = "" then 
+                p.FirstName = Some firstName && p.LastName = Some lastName
+            else 
+
+                p.FirstName = Some firstName && p.MidInitials = Some midInitials && p.LastName = Some lastName
+        ) persons
 
     ///// Returns true, if a person for which the predicate returns true exists in the investigation
     //let exists (predicate : Person -> bool) (investigation:Investigation) =
@@ -27,7 +33,13 @@ module Person =
 
     /// If an person with the given FirstName, MidInitials and LastName exists in the list, returns true
     let existsByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.exists (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) persons
+        List.exists (fun p -> 
+            if midInitials = "" then 
+                p.FirstName = Some firstName && p.LastName = Some lastName
+            else 
+
+                p.FirstName = Some firstName && p.MidInitials = Some midInitials && p.LastName = Some lastName
+        ) persons
 
     /// adds the given person to the persons  
     let add (persons : Person list) (person : Person) =
@@ -59,7 +71,15 @@ module Person =
     
     /// If a person with the given FirstName, MidInitials and LastName exists in the list, removes it
     let removeByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.filter (fun p -> p.FirstName = firstName && p.MidInitials = midInitials && p.LastName = lastName) persons
+        List.filter (fun p -> 
+            if midInitials = "" then 
+                p.FirstName = Some firstName && p.LastName = Some lastName
+                |> not
+            else 
+
+                p.FirstName = Some firstName && p.MidInitials = Some midInitials && p.LastName = Some lastName
+                |> not
+        ) persons
 
     // Roles
     
@@ -70,12 +90,12 @@ module Person =
     /// Applies function f on roles of a person
     let mapRoles (f : OntologyAnnotation list -> OntologyAnnotation list) (person : Person) =
         { person with 
-            Roles = f person.Roles}
+            Roles = Option.mapDefault [] f person.Roles}
     
     /// Replaces roles of a person with the given roles
     let setRoles (person : Person) (roles : OntologyAnnotation list) =
         { person with
-            Roles = roles }
+            Roles = Some roles }
 
     // Comments
     
@@ -86,9 +106,9 @@ module Person =
     /// Applies function f on comments of a person
     let mapComments (f : Comment list -> Comment list) (person : Person) =
         { person with 
-            Comments = f person.Comments}
+            Comments = Option.mapDefault [] f person.Comments}
     
     /// Replaces comments of a person by given comment list
     let setComments (person : Person) (comments : Comment list) =
         { person with
-            Comments = comments }
+            Comments = Some comments }

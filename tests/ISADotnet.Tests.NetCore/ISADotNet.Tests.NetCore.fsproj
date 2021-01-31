@@ -8,8 +8,8 @@
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="ISADotnet\ISAJsonTests.fs" />
     <Compile Include="ISADotnet\JsonExtensionsTests.fs" />
+    <Compile Include="ISADotnet\ISAJsonTests.fs" />
     <Compile Include="ISADotnet\APITests.fs" />
     <Compile Include="ISADotnet\ISAXLSXTests.fs" />
     <Compile Include="Main.fs" />

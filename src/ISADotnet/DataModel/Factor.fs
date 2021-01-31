@@ -5,13 +5,13 @@ open System.Text.Json.Serialization
 type Factor = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"factorName")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"factorType")>]
-        FactorType : OntologyAnnotation
+        FactorType : OntologyAnnotation option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list    
+        Comments : Comment list option
     }
 
     static member create id name factorType comments =
@@ -21,6 +21,9 @@ type Factor =
             FactorType = factorType
             Comments = comments         
         }
+
+    static member empty =
+        Factor.create None None None None
 
 [<AnyOf>]
 type Value =
@@ -33,13 +36,13 @@ type Value =
 type FactorValue =
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"category")>]
-        Category : Factor
+        Category : Factor option
         [<JsonPropertyName(@"value")>]
-        Value : Value
+        Value : Value option
         [<JsonPropertyName(@"unit")>]
-        Unit : OntologyAnnotation
+        Unit : OntologyAnnotation option
     
     }
 
@@ -50,3 +53,6 @@ type FactorValue =
             Value = value
             Unit = unit         
         }
+
+    static member empty =
+        FactorValue.create None None None None

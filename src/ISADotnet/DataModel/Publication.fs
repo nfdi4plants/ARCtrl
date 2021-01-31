@@ -5,19 +5,19 @@ open System.Text.Json.Serialization
 type Publication = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"pubMedID")>]
-        PubMedID : URI
+        PubMedID : URI option
         [<JsonPropertyName(@"doi")>]
-        DOI : string
+        DOI : string option
         [<JsonPropertyName(@"authorList")>]
-        Authors : string
+        Authors : string option
         [<JsonPropertyName(@"title")>]
-        Title : string
+        Title : string option
         [<JsonPropertyName(@"status")>]
-        Status : OntologyAnnotation
+        Status : OntologyAnnotation option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list
+        Comments : Comment list option
     }
 
     static member create id pubMedID doi authors title status comments =
@@ -31,6 +31,7 @@ type Publication =
             Comments    = comments
         }
 
-
+    static member empty =
+        Publication.create None None None None None None None
 
 

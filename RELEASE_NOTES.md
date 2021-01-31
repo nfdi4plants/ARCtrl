@@ -1,3 +1,10 @@
+#### 0.0.3 - Sunday, January 31, 2021
+
+**Switched all ISA Datamodel field to optional to better reflect the json files**
+**Update API to these datamodel changes**
+**Update XLSX reader/writer to these datamodel changes**
+**Fixed bug where aggregated strings in Excel files were not parsed correctly**
+
 #### 0.0.2 - Thursday, January 21, 2021
 
 **Increased the minimum version of the System.Json.Text dependancy**

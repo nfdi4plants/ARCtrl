@@ -6,29 +6,29 @@ open System.Text.Json.Serialization
 type Investigation = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"filename")>]
-        FileName : string
+        FileName : string option
         [<JsonPropertyName(@"identifier")>]
-        Identifier : string
+        Identifier : string option
         [<JsonPropertyName(@"title")>]
-        Title : string 
+        Title : string option
         [<JsonPropertyName(@"description")>]
-        Description : string
+        Description : string option
         [<JsonPropertyName(@"submissionDate")>]
-        SubmissionDate : string
+        SubmissionDate : string option
         [<JsonPropertyName(@"publicReleaseDate")>]
-        PublicReleaseDate : string
+        PublicReleaseDate : string option
         [<JsonPropertyName(@"ontologySourceReferences")>]
-        OntologySourceReferences : OntologySourceReference list
+        OntologySourceReferences : OntologySourceReference list option
         [<JsonPropertyName(@"publications")>]
-        Publications : Publication list
+        Publications : Publication list option
         [<JsonPropertyName(@"people")>]
-        Contacts : Person list
+        Contacts : Person list option
         [<JsonPropertyName(@"studies")>]
-        Studies : Study list
+        Studies : Study list option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list
+        Comments : Comment list option
         [<JsonIgnore>]
         Remarks     : Remark list
     }
@@ -49,3 +49,6 @@ type Investigation =
             Comments                    = comments
             Remarks                     = remarks
         }
+
+    static member empty =
+        Investigation.create None None None None None None None None None None None None [] 

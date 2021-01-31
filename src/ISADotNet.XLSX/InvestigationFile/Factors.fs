@@ -4,6 +4,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -16,10 +17,14 @@ module Factors =
     let typeTermSourceREFLabel = "Type Term Source REF"
 
     let labels = [nameLabel;factorTypeLabel;typeTermAccessionNumberLabel;typeTermSourceREFLabel]
-
+    
     let fromString name designType typeTermAccessionNumber typeTermSourceREF comments =
         let factorType = OntologyAnnotation.fromString designType typeTermAccessionNumber typeTermSourceREF
-        Factor.create null name factorType comments
+        Factor.create 
+            None 
+            (Option.fromValueWithDefault "" name) 
+            (Option.fromValueWithDefault OntologyAnnotation.empty factorType) 
+            (Option.fromValueWithDefault [] comments)
 
     let fromSparseMatrix (matrix : SparseMatrix) =
         
@@ -43,17 +48,21 @@ module Factors =
         let mutable commentKeys = []
         factors
         |> List.iteri (fun i f ->
-            let factorType,accession,source = OntologyAnnotation.toString f.FactorType
-            do matrix.Matrix.Add ((nameLabel,i),                    f.Name)
+            let factorType,accession,source = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              factorType)
             do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), accession)
             do matrix.Matrix.Add ((typeTermSourceREFLabel,i),       source)
 
-            f.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+            match f.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )     
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

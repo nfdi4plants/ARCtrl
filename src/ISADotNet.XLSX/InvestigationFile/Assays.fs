@@ -3,6 +3,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -28,7 +29,18 @@ module Assays =
     let fromString measurementType measurementTypeTermAccessionNumber measurementTypeTermSourceREF technologyType technologyTypeTermAccessionNumber technologyTypeTermSourceREF technologyPlatform fileName comments =
         let measurementType = OntologyAnnotation.fromString measurementType measurementTypeTermAccessionNumber measurementTypeTermSourceREF
         let technologyType = OntologyAnnotation.fromString technologyType technologyTypeTermAccessionNumber technologyTypeTermSourceREF
-        Assay.create null fileName measurementType technologyType technologyPlatform [] {Samples=[];OtherMaterials=[]} [] [] [] comments
+        Assay.create 
+            None 
+            (Option.fromValueWithDefault "" fileName)
+            (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
+            (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
+            (Option.fromValueWithDefault "" technologyPlatform)
+            None
+            None
+            None 
+            None 
+            None 
+            (Option.fromValueWithDefault [] comments)
         
     let fromSparseMatrix (matrix : SparseMatrix) =
         
@@ -56,22 +68,26 @@ module Assays =
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
-            let measurementType,measurementAccession,measurementSource = OntologyAnnotation.toString a.MeasurementType
-            let technologyType,technologyAccession,technologySource = OntologyAnnotation.toString a.TechnologyType
+            let measurementType,measurementAccession,measurementSource = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
+            let technologyType,technologyAccession,technologySource = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       measurementType)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    measurementAccession)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          measurementSource)
             do matrix.Matrix.Add ((technologyTypeLabel,i),                        technologyType)
             do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     technologyAccession)
             do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           technologySource)
-            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    a.TechnologyPlatform)
-            do matrix.Matrix.Add ((fileNameLabel,i),                              a.FileName)
+            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
+            do matrix.Matrix.Add ((fileNameLabel,i),                              (Option.defaultValue "" a.FileName))
 
-            a.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+            match a.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )   
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 

@@ -5,27 +5,27 @@ open System.Text.Json.Serialization
 type Person = 
     {   
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"lastName")>]
-        LastName : string
+        LastName : string option
         [<JsonPropertyName(@"firstName")>]
-        FirstName : string
+        FirstName : string option
         [<JsonPropertyName(@"midInitials")>]
-        MidInitials : string
+        MidInitials : string option
         [<JsonPropertyName(@"email")>]
-        EMail : EMail
+        EMail : EMail option
         [<JsonPropertyName(@"phone")>]
-        Phone : string
+        Phone : string option
         [<JsonPropertyName(@"fax")>]
-        Fax : string
+        Fax : string option
         [<JsonPropertyName(@"address")>]
-        Address : string
+        Address : string option
         [<JsonPropertyName(@"affiliation")>]
-        Affiliation : string
+        Affiliation : string option
         [<JsonPropertyName(@"roles")>]
-        Roles : OntologyAnnotation list
-        [<JsonPropertyName(@"comments")>]
-        Comments : Comment list  
+        Roles : OntologyAnnotation list option
+        [<JsonPropertyName(@"comments")>] 
+        Comments : Comment list option  
     }
 
     static member create id lastName firstName midInitials email phone fax address affiliation roles comments : Person =
@@ -42,3 +42,6 @@ type Person =
             Roles = roles
             Comments = comments
         }
+
+    static member empty =
+        Person.create None None None None None None None None None None None

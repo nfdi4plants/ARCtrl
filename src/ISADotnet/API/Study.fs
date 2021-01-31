@@ -15,7 +15,7 @@ module Study =
 
     /// If an study with the given identfier exists in the list, returns it
     let tryGetByIdentifier (identifier : string) (studies : Study list) =
-        List.tryFind (fun (s:Study) -> s.Identifier = identifier) studies
+        List.tryFind (fun (s:Study) -> s.Identifier = Some identifier) studies
 
     ///// Returns true, if a study for which the predicate returns true exists in the investigation
     //let exists (predicate : Study -> bool) (investigation:Investigation) =
@@ -28,7 +28,7 @@ module Study =
 
     /// If an study with the given identfier exists in the list, returns true
     let existsByIdentifier (identifier : string) (studies : Study list) =
-        List.exists (fun (s:Study) -> s.Identifier = identifier) studies
+        List.exists (fun (s:Study) -> s.Identifier = Some identifier) studies
 
     /// Adds the given study to the studies  
     let add (studies : Study list) (study : Study) =
@@ -58,7 +58,7 @@ module Study =
 
     /// If a study with the given identifier exists in the list, removes it
     let removeByIdentifier (identifier : string) (studies : Study list) = 
-        List.filter (fun (s:Study) -> s.Identifier = identifier) studies
+        List.filter (fun (s:Study) -> s.Identifier = Some identifier) studies
     
 
     /// Returns assays of a study
@@ -68,12 +68,12 @@ module Study =
     /// Applies function f to the assays of a study
     let mapAssays (f : Assay list -> Assay list) (study : Study) =
         { study with 
-            Assays = f study.Assays }
+            Assays = Option.mapDefault [] f study.Assays }
 
     /// Replaces study assays with the given assay list
     let setAssays (study : Study) (assays : Assay list) =
         { study with
-            Assays = assays }
+            Assays = Some assays }
     
     /// Returns factors of a study
     let getFactors (study : Study) =
@@ -82,12 +82,12 @@ module Study =
     /// Applies function f to the factors of a study
     let mapFactors (f : Factor list -> Factor list) (study : Study) =
         { study with 
-            Factors = f study.Factors }
+            Factors = Option.mapDefault [] f study.Factors }
 
     /// Replaces study factors with the given assay list
     let setFactors (study : Study) (factors : Factor list) =
         { study with
-            Factors = factors }
+            Factors = Some factors }
 
     /// Returns protocols of a study
     let getProtocols (study : Study) =
@@ -96,12 +96,12 @@ module Study =
     /// Applies function f to the protocols of a study
     let mapProtocols (f : Protocol list -> Protocol list) (study : Study) =
         { study with 
-            Protocols = f study.Protocols }
+            Protocols = Option.mapDefault [] f study.Protocols }
 
     /// Replaces study protocols with the given assay list
     let setProtocols (study : Study) (protocols : Protocol list) =
         { study with
-            Protocols = protocols }
+            Protocols = Some protocols }
 
     /// Returns all contacts of a study
     let getContacts (study : Study) =
@@ -110,12 +110,12 @@ module Study =
     /// Applies function f to contacts of a study
     let mapContacts (f : Person list -> Person list) (study : Study) =
         { study with 
-            Contacts = f study.Contacts }
+            Contacts = Option.mapDefault [] f study.Contacts }
 
     /// Replaces contacts of a study with the given person list
     let setContacts (study : Study) (persons : Person list) =
         { study with
-            Contacts = persons }
+            Contacts = Some persons }
 
     /// Returns publications of a study
     let getPublications (study : Study) =
@@ -124,12 +124,12 @@ module Study =
     /// Applies function f to publications of the study
     let mapPublications (f : Publication list -> Publication list) (study : Study) =
         { study with 
-            Publications = f study.Publications }
+            Publications = Option.mapDefault [] f study.Publications }
 
     /// Replaces publications of a study with the given publication list
     let setPublications (study : Study) (publications : Publication list) =
         { study with
-            Publications = publications }
+            Publications = Some publications }
 
     /// Returns study design descriptors of a study
     let getDescriptors (study : Study) =
@@ -138,10 +138,10 @@ module Study =
     /// Applies function f to to study design descriptors of a study
     let mapDescriptors (f : OntologyAnnotation list -> OntologyAnnotation list) (study : Study) =
         { study with 
-            StudyDesignDescriptors = f study.StudyDesignDescriptors }
+            StudyDesignDescriptors = Option.mapDefault [] f study.StudyDesignDescriptors }
 
     /// Replaces study design descriptors with the given ontology annotation list
     let setDescriptors (study : Study) (descriptors : OntologyAnnotation list) =
         { study with
-            StudyDesignDescriptors = descriptors }
+            StudyDesignDescriptors = Some descriptors }
 

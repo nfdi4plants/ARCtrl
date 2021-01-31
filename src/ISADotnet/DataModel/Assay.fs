@@ -5,37 +5,46 @@ open System.Text.Json.Serialization
 type AssayMaterials =
     {
         [<JsonPropertyName(@"samples")>]
-        Samples : Sample list
+        Samples : Sample list option
         [<JsonPropertyName(@"otherMaterials")>]
-        OtherMaterials : Material list    
+        OtherMaterials : Material list option
     }
+
+    static member create samples otherMaterials =
+        {
+            Samples = samples
+            OtherMaterials = otherMaterials       
+        }
+
+    static member empty =
+        AssayMaterials.create None None
 
 type Assay = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"filename")>]
-        FileName : string
+        FileName : string option
         [<JsonPropertyName(@"measurementType")>]
-        MeasurementType : OntologyAnnotation
+        MeasurementType : OntologyAnnotation option
         [<JsonPropertyName(@"technologyType")>]
-        TechnologyType : OntologyAnnotation
+        TechnologyType : OntologyAnnotation option
         [<JsonPropertyName(@"technologyPlatform")>]
-        TechnologyPlatform : string
+        TechnologyPlatform : string option
         [<JsonPropertyName(@"dataFiles")>]
-        DataFiles : Data list
+        DataFiles : Data list option
         [<JsonPropertyName(@"materials")>]
-        Materials : AssayMaterials
+        Materials : AssayMaterials option
         /// List of all the characteristics categories (or material attributes) defined in the study, used to avoid duplication of their declaration when each material_attribute_value is created. 
         [<JsonPropertyName(@"characteristicCategories")>]
-        CharacteristicCategories : MaterialAttribute list
+        CharacteristicCategories : MaterialAttribute list option
         /// List of all the unitsdefined in the study, used to avoid duplication of their declaration when each value is created.
         [<JsonPropertyName(@"unitCategories")>]
-        UnitCategories : OntologyAnnotation list
+        UnitCategories : OntologyAnnotation list option
         [<JsonPropertyName(@"processSequence")>]
-        ProcessSequence : Process list
+        ProcessSequence : Process list option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list
+        Comments : Comment list option
     }
 
 
@@ -53,3 +62,6 @@ type Assay =
             ProcessSequence             = processSequence
             Comments                    = comments
         }
+
+    static member empty =
+        Assay.create None None None None None None None None None None None

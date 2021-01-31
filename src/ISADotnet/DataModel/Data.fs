@@ -18,13 +18,13 @@ type DataFile =
 type Data = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"type")>]
-        DataType : DataFile
+        DataType : DataFile option
         [<JsonPropertyName(@"comments")>]
-        Comments : Comment list  
+        Comments : Comment list option
     }
 
     static member create id name dataType comments =
@@ -35,15 +35,17 @@ type Data =
             Comments = comments         
         }
 
+    static member empty =
+        Data.create None None None None
 
 type Source = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI 
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"characteristics")>]
-        Characteristics : MaterialAttributeValue list
+        Characteristics : MaterialAttributeValue list option
     }
 
     static member create id name characteristics : Source=
@@ -53,19 +55,21 @@ type Source =
             Characteristics = characteristics          
         }
 
+    static member empty =
+        Source.create None None None
 
 type Sample = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name : string
+        Name : string option
         [<JsonPropertyName(@"characteristics")>]
-        Characteristics : MaterialAttributeValue list
+        Characteristics : MaterialAttributeValue list option
         [<JsonPropertyName(@"factorValues")>]
-        FactorValues : FactorValue list
+        FactorValues : FactorValue list option
         [<JsonPropertyName(@"derivesFrom")>]
-        DerivesFrom : Source list
+        DerivesFrom : Source list option
     }
 
     static member create id name characteristics factorValues derivesFrom : Sample=
@@ -76,3 +80,6 @@ type Sample =
             FactorValues    = factorValues
             DerivesFrom     = derivesFrom       
         }
+
+    static member empty =
+        Sample.create None None None None None

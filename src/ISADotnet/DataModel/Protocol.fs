@@ -6,9 +6,9 @@ open System.Text.Json.Serialization
 type ProtocolParameter = 
     {
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"parameterName")>]
-        ParameterName : OntologyAnnotation
+        ParameterName : OntologyAnnotation option
     }
 
     static member create id parameterName : ProtocolParameter= 
@@ -23,9 +23,9 @@ type ProtocolParameter =
 type Component = 
     {
         [<JsonPropertyName(@"componentName")>]
-        ComponentName : string
+        ComponentName : string option
         [<JsonPropertyName(@"componentType")>]
-        ComponentType : OntologyAnnotation
+        ComponentType : OntologyAnnotation option
     }
 
     static member create name componentType =
@@ -33,28 +33,30 @@ type Component =
             ComponentName = name
             ComponentType = componentType
         }
-
+       
+    static member empty =
+        Component.create None None 
 
 type Protocol =
     {       
         [<JsonPropertyName(@"@id")>]
-        ID : URI
+        ID : URI option
         [<JsonPropertyName(@"name")>]
-        Name :          string
+        Name :          string option
         [<JsonPropertyName(@"protocolType")>]
-        ProtocolType :  OntologyAnnotation
+        ProtocolType :  OntologyAnnotation option
         [<JsonPropertyName(@"description")>]
-        Description :   string
+        Description :   string option
         [<JsonPropertyName(@"uri")>]
-        Uri :           URI
+        Uri :           URI option
         [<JsonPropertyName(@"version")>]
-        Version :       string
+        Version :       string option
         [<JsonPropertyName(@"parameters")>]
-        Parameters :    ProtocolParameter list
+        Parameters :    ProtocolParameter list option
         [<JsonPropertyName(@"components")>]
-        Components :    Component list
+        Components :    Component list option
         [<JsonPropertyName(@"comments")>]
-        Comments :      Comment list
+        Comments :      Comment list option
     }
 
     static member create id name protocolType description uri version parameters components comments : Protocol= 
@@ -70,3 +72,5 @@ type Protocol =
             Comments        = comments
         }
 
+    static member empty = 
+        Protocol.create None None None None None None None None None

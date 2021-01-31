@@ -5,8 +5,8 @@ open System.Reflection
 [<assembly: AssemblyTitleAttribute("ISADotNet.XLSX")>]
 [<assembly: AssemblyProductAttribute("ISADotNet")>]
 [<assembly: AssemblyDescriptionAttribute("ISA compliant experimental metadata toolkit in F#")>]
-[<assembly: AssemblyVersionAttribute("0.0.2")>]
-[<assembly: AssemblyFileVersionAttribute("0.0.2")>]
+[<assembly: AssemblyVersionAttribute("0.0.3")>]
+[<assembly: AssemblyFileVersionAttribute("0.0.3")>]
 [<assembly: AssemblyConfigurationAttribute("Release")>]
 do ()
 
@@ -14,6 +14,6 @@ module internal AssemblyVersionInformation =
     let [<Literal>] AssemblyTitle = "ISADotNet.XLSX"
     let [<Literal>] AssemblyProduct = "ISADotNet"
     let [<Literal>] AssemblyDescription = "ISA compliant experimental metadata toolkit in F#"
-    let [<Literal>] AssemblyVersion = "0.0.2"
-    let [<Literal>] AssemblyFileVersion = "0.0.2"
+    let [<Literal>] AssemblyVersion = "0.0.3"
+    let [<Literal>] AssemblyFileVersion = "0.0.3"
     let [<Literal>] AssemblyConfiguration = "Release"

@@ -3,6 +3,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -36,7 +37,17 @@ module Protocols =
         let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermAccessionNumber parametersTermSourceREF
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF
         
-        Protocol.create null name protocolType description uri version parameters components comments
+        Protocol.create 
+            None 
+            (Option.fromValueWithDefault "" name |> Option.map URI.fromString) 
+            (Option.fromValueWithDefault OntologyAnnotation.empty protocolType)
+            (Option.fromValueWithDefault "" description)
+            (Option.fromValueWithDefault "" uri |> Option.map URI.fromString) 
+            (Option.fromValueWithDefault "" version)
+            (Option.fromValueWithDefault [] parameters)
+            (Option.fromValueWithDefault [] components) 
+            (Option.fromValueWithDefault [] comments)
+
 
     let fromSparseMatrix (matrix : SparseMatrix) =
         
@@ -70,17 +81,17 @@ module Protocols =
         let mutable commentKeys = []
         protocols
         |> List.iteri (fun i p ->
-            let protocolType,protocolAccession,protocolSource = OntologyAnnotation.toString p.ProtocolType
-            let parameterType,parameterAccession,parameterSource = ProtocolParameter.toAggregatedStrings ';' p.Parameters
-            let componentName,componentType,componentAccession,componentSource = Component.toAggregatedStrings ';' p.Components
+            let protocolType,protocolAccession,protocolSource = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let parameterType,parameterAccession,parameterSource = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
+            let componentName,componentType,componentAccession,componentSource = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 
-            do matrix.Matrix.Add ((nameLabel,i),                                p.Name)
+            do matrix.Matrix.Add ((nameLabel,i),                                (Option.defaultValue "" p.Name))
             do matrix.Matrix.Add ((protocolTypeLabel,i),                        protocolType)
             do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i),             protocolAccession)
             do matrix.Matrix.Add ((typeTermSourceREFLabel,i),                   protocolSource)
-            do matrix.Matrix.Add ((descriptionLabel,i),                         p.Description)
-            do matrix.Matrix.Add ((uriLabel,i),                                 p.Uri)
-            do matrix.Matrix.Add ((versionLabel,i),                             p.Version)
+            do matrix.Matrix.Add ((descriptionLabel,i),                         (Option.defaultValue "" p.Description))
+            do matrix.Matrix.Add ((uriLabel,i),                                 (Option.defaultValue "" p.Uri))
+            do matrix.Matrix.Add ((versionLabel,i),                             (Option.defaultValue "" p.Version))
             do matrix.Matrix.Add ((parametersNameLabel,i),                      parameterType)
             do matrix.Matrix.Add ((parametersTermAccessionNumberLabel,i),       parameterAccession)
             do matrix.Matrix.Add ((parametersTermSourceREFLabel,i),             parameterSource)
@@ -89,11 +100,15 @@ module Protocols =
             do matrix.Matrix.Add ((componentsTypeTermAccessionNumberLabel,i),   componentAccession)
             do matrix.Matrix.Add ((componentsTypeTermSourceREFLabel,i),         componentSource)
 
-            p.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-            )      
+            match p.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )    
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

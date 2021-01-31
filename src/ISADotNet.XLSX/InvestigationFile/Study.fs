@@ -3,6 +3,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -78,18 +79,22 @@ module Study =
             let matrix = SparseMatrix.Create (keys = StudyInfo.Labels,length = 1)
             let mutable commentKeys = []
 
-            do matrix.Matrix.Add ((identifierLabel,i),          study.Identifier)
-            do matrix.Matrix.Add ((titleLabel,i),               study.Title)
-            do matrix.Matrix.Add ((descriptionLabel,i),         study.Description)
-            do matrix.Matrix.Add ((submissionDateLabel,i),      study.SubmissionDate)
-            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   study.PublicReleaseDate)
-            do matrix.Matrix.Add ((fileNameLabel,i),            study.FileName)
+            do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" study.Identifier))
+            do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" study.Title))
+            do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" study.Description))
+            do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" study.SubmissionDate))
+            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
+            do matrix.Matrix.Add ((fileNameLabel,i),            (Option.defaultValue "" study.FileName))
 
-            study.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-                )      
+            match study.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )    
 
             {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
@@ -124,8 +129,24 @@ module Study =
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays protocols contacts =
         Study.create 
-            null studyInfo.FileName studyInfo.Identifier studyInfo.Title studyInfo.Description studyInfo.SubmissionDate studyInfo.PublicReleaseDate
-            publications contacts designDescriptors protocols StudyMaterials.Empty [] assays factors [] [] studyInfo.Comments
+            None 
+            (Option.fromValueWithDefault "" studyInfo.FileName)
+            (Option.fromValueWithDefault "" studyInfo.Identifier)
+            (Option.fromValueWithDefault "" studyInfo.Title)
+            (Option.fromValueWithDefault "" studyInfo.Description) 
+            (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
+            (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
+            (Option.fromValueWithDefault [] publications)
+            (Option.fromValueWithDefault [] contacts)
+            (Option.fromValueWithDefault [] designDescriptors) 
+            (Option.fromValueWithDefault [] protocols)
+            None
+            None 
+            (Option.fromValueWithDefault [] assays)
+            (Option.fromValueWithDefault [] factors) 
+            None 
+            None
+            (Option.fromValueWithDefault [] studyInfo.Comments)
 
     let readStudy lineNumber (en:IEnumerator<Row>) = 
 
@@ -169,20 +190,20 @@ module Study =
             yield! StudyInfo.WriteStudyInfo study
 
             yield  Row.ofValues None 0u [designDescriptorsLabel]
-            yield! DesignDescriptors.writeDesigns designDescriptorsLabelPrefix study.StudyDesignDescriptors
+            yield! DesignDescriptors.writeDesigns designDescriptorsLabelPrefix (Option.defaultValue [] study.StudyDesignDescriptors)
 
             yield  Row.ofValues None 0u [publicationsLabel]
-            yield! Publications.writePublications publicationsLabelPrefix study.Publications
+            yield! Publications.writePublications publicationsLabelPrefix (Option.defaultValue [] study.Publications)
 
             yield  Row.ofValues None 0u [factorsLabel]
-            yield! Factors.writeFactors factorsLabelPrefix study.Factors
+            yield! Factors.writeFactors factorsLabelPrefix (Option.defaultValue [] study.Factors)
 
             yield  Row.ofValues None 0u [assaysLabel]
-            yield! Assays.writeAssays assaysLabelPrefix study.Assays
+            yield! Assays.writeAssays assaysLabelPrefix (Option.defaultValue [] study.Assays)
 
             yield  Row.ofValues None 0u [protocolsLabel]
-            yield! Protocols.writeProtocols protocolsLabelPrefix study.Protocols
+            yield! Protocols.writeProtocols protocolsLabelPrefix (Option.defaultValue [] study.Protocols)
 
             yield  Row.ofValues None 0u [contactsLabel]
-            yield! Contacts.writePersons contactsLabelPrefix study.Contacts
+            yield! Contacts.writePersons contactsLabelPrefix (Option.defaultValue [] study.Contacts)
         }

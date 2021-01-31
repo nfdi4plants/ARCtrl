@@ -2,6 +2,7 @@ namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
 open FSharpSpreadsheetML
 open ISADotNet
+open ISADotNet.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -69,17 +70,21 @@ module Investigation =
             let matrix = SparseMatrix.Create (keys = InvestigationInfo.Labels,length=1)
             let mutable commentKeys = []
 
-            do matrix.Matrix.Add ((identifierLabel,i),          investigation.Identifier)
-            do matrix.Matrix.Add ((titleLabel,i),               investigation.Title)
-            do matrix.Matrix.Add ((descriptionLabel,i),         investigation.Description)
-            do matrix.Matrix.Add ((submissionDateLabel,i),      investigation.SubmissionDate)
-            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   investigation.PublicReleaseDate)
+            do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" investigation.Identifier))
+            do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" investigation.Title))
+            do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" investigation.Description))
+            do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" investigation.SubmissionDate))
+            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" investigation.PublicReleaseDate))
 
-            investigation.Comments
-            |> List.iter (fun comment -> 
-                commentKeys <- comment.Name :: commentKeys
-                matrix.Matrix.Add((comment.Name,i),comment.Value)
-                )      
+            match investigation.Comments with 
+            | None -> ()
+            | Some c ->
+                c
+                |> List.iter (fun comment -> 
+                    let n,v = comment |> Comment.toString
+                    commentKeys <- n :: commentKeys
+                    matrix.Matrix.Add((n,i),v)
+                )   
 
             {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
@@ -114,8 +119,19 @@ module Investigation =
  
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
         Investigation.create 
-            null null investigationInfo.Identifier investigationInfo.Title investigationInfo.Description investigationInfo.SubmissionDate investigationInfo.PublicReleaseDate
-            ontologySourceReference publications contacts studies investigationInfo.Comments remarks
+            None 
+            None 
+            (Option.fromValueWithDefault "" investigationInfo.Identifier)
+            (Option.fromValueWithDefault "" investigationInfo.Title)
+            (Option.fromValueWithDefault "" investigationInfo.Description) 
+            (Option.fromValueWithDefault "" investigationInfo.SubmissionDate) 
+            (Option.fromValueWithDefault "" investigationInfo.PublicReleaseDate)
+            (Option.fromValueWithDefault [] ontologySourceReference) 
+            (Option.fromValueWithDefault [] publications)  
+            (Option.fromValueWithDefault [] contacts)  
+            (Option.fromValueWithDefault [] studies)  
+            (Option.fromValueWithDefault [] investigationInfo.Comments)  
+            remarks
 
 
     let fromRows (rows:seq<Row>) =
@@ -186,18 +202,18 @@ module Investigation =
             |> List.rev
         seq {
             yield  Row.ofValues None 0u [ontologySourceReferenceLabel]
-            yield! OntologySourceReference.writeTermSources investigation.OntologySourceReferences
+            yield! OntologySourceReference.writeTermSources (Option.defaultValue [] investigation.OntologySourceReferences)
 
             yield  Row.ofValues None 0u [investigationLabel]
             yield! InvestigationInfo.WriteInvestigationInfo investigation
 
             yield  Row.ofValues None 0u [publicationsLabel]
-            yield! Publications.writePublications publicationsLabelPrefix investigation.Publications
+            yield! Publications.writePublications publicationsLabelPrefix (Option.defaultValue [] investigation.Publications)
 
             yield  Row.ofValues None 0u [contactsLabel]
-            yield! Contacts.writePersons contactsLabelPrefix investigation.Contacts
+            yield! Contacts.writePersons contactsLabelPrefix (Option.defaultValue [] investigation.Contacts)
 
-            for study in investigation.Studies do
+            for study in (Option.defaultValue [] investigation.Studies) do
                 yield  Row.ofValues None 0u [studyLabel]
                 yield! Study.writeStudy study
         }
