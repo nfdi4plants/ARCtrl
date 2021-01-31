@@ -6,7 +6,7 @@ framework: netstandard2.0
 nuget FSharp.Core 4.7.2
 nuget System.Text.Json ~> 5.0.1
 nuget FSharp.SystemTextJson ~> 0.15.14
-nuget FSharpSpreadsheetML
+nuget FSharpSpreadsheetML ~> 0.0.2
 
 nuget Expecto
 nuget Expecto.BenchmarkDotNet
