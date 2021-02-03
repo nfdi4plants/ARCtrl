@@ -1,3 +1,9 @@
+#### 0.0.4 - Wednes, February 03, 2021
+
+**Add append optional list functionality when updating record types**
+**Add tests**
+**Soften version constraint of FSharp.Core package dependancy**
+
 #### 0.0.3 - Sunday, January 31, 2021
 
 **Switched all ISA Datamodel field to optional to better reflect the json files**
