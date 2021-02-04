@@ -38,4 +38,3 @@ type Remark =
 
     static member toTuple (remark : Remark ) =
         remark.Line,remark.Value
-

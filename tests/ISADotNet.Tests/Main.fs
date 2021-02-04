@@ -1,4 +1,4 @@
-﻿module ISADotnet.Tests.NetCore
+﻿module ISADotnet.Tests
 
 open Expecto
 
