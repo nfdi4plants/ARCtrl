@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>The fslab documentation template
+</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="author" content="nfdi4plants, Lukas Weil, Kevin Frey">
+    <link rel="shortcut icon" type="image/x-icon" href="http://localhost:8901//img/favicon.ico">
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/MathJax.js?config=TeX-MML-AM_CHTML"></script> -->
+
+    <link type="text/css" rel="stylesheet" href="http://localhost:8901/content/fsdocs-default.css" />
+    <link type="text/css" rel="stylesheet" href="http://localhost:8901/content/fsdocs-custom.css" />
+    <script type="text/javascript" src="http://localhost:8901/content/fsdocs-tips.js"></script>
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <!-- END SEARCH BOX: this adds support for the search box -->
+    
+<script type="text/javascript">
+    var wsUri = "ws://localhost:8901/websocket";
+    function init()
+    {
+        websocket = new WebSocket(wsUri);
+        websocket.onclose = function(evt) { onClose(evt) };
+    }
+    function onClose(evt)
+    {
+        console.log('closing');
+        websocket.close();
+        document.location.reload();
+    }
+    window.addEventListener("load", init, false);
+</script>
+
+</head> 
+
+<body>
+    <div class="columns is-fullheight m-0">
+        <div id="fsdocs-menu" class="column is-2 is-paddingless">
+            <aside class="menu">
+                <div class="container is-paddingless is-marginless has-background-dark">
+                    <a href="http://localhost:8901/">
+                        <figure class="image is-128x128 container">
+                            <img src="http://localhost:8901/img/logo.png">
+                        </figure>
+                    </a>
+                    <h2 class="title has-text-centered has-text-white pb-4">ISADotNet</h2>
+                </div>
+                <div class="content">
+                    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+                    <div id="header">
+                        <div class="searchbox" id="fsdocs-searchbox">
+                            <label for="search-by">
+                                <i class="fas fa-search"></i>
+                            </label>
+                            <input data-search-input="" id="search-by" type="search" placeholder="Search..." class="input"/>
+                            <span data-search-clear="">
+                                <i class="fas fa-times"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <!-- END SEARCH BOX: this adds support for the search box -->
+                    <ul class="navbar-nav">
+                        <li class="nav-header">Links</li>
+                        <li class="nav-item" id="fsdocs-license-link"><a class="nav-link" href="https://github.com/nfdi4plants/ISADotNet/blob/developer/LICENSE">License (MIT)</a></li>
+                        <li class="nav-item" id="fsdocs-release-notes-link"><a class="nav-link" href="https://github.com/nfdi4plants/ISADotNet/blob/developer/RELEASE_NOTES.md">Release Notes</a></li>
+                        <li class="nav-item" id="fsdocs-repository-link"><a class="nav-link" href="https://github.com/nfdi4plants/ISADotNet/">Source Repository</a></li>
+                        <li class="nav-header">
+  Documentation
+</li>             
+<li class="nav-item">
+  <a class="nav-link" href="http://localhost:8901/0_Markdown-Cheatsheet.html">
+    Markdown cheatsheet
+
+  </a>
+</li>             
+<li class="nav-item">
+  <a class="nav-link" href="http://localhost:8901/1_fsharp-code-example.html">
+    F# code formatting example
+
+  </a>
+</li>             
+<li class="nav-item">
+  <a class="nav-link" href="http://localhost:8901/2_inline-references.html">
+    Inline package references and charting
+
+  </a>
+</li>             
+<li class="nav-item">
+  <a class="nav-link" href="http://localhost:8901/3_notebooks.html">
+    Including notebooks
+
+  </a>
+</li>             
+<li class="nav-item">
+  <a class="nav-link" href="http://localhost:8901/Home.html">
+    Home
+
+  </a>
+</li>
+                        {{fsdocs-list-of-namespaces}}
+                    </ul>
+                </div>
+            </aside>
+        </div>
+        <div class="column is-10 is-paddingless">
+            <div class="section pt-4">
+                <div class="container" id="fsdocs-content">
+                    <h1><a name="The-fslab-documentation-template" class="anchor" href="#The-fslab-documentation-template">The fslab documentation template</a></h1>
+<p>This template scaffolds the necessary folder structure for FSharp.Formatting
+and adds custom styles in the <strong>fslab</strong> theme.</p>
+<p>The provided stylesheet was compiled from sass (before uploading the nuget package) and
+uses the <a href="https://bulma.io/">Bulma</a> CSS framework instead of bootstrap which is used by FSharp.Formatting per default.</p>
+<h4><a name="Table-of-contents" class="anchor" href="#Table-of-contents">Table of contents</a></h4>
+<ul>
+<li><a href="#Installation">Installation</a></li>
+<li><a href="#Usage">Usage</a></li>
+<li><a href="#Quick-content-rundown">Quick content rundown</a></li>
+<li><a href="#Creating-new-content">Creating new content</a></li>
+<li>
+<a href="#Customization-options">Customization options</a>
+<ul>
+<li><a href="#Style-sheet-options">Style sheet options</a></li>
+<li><a href="#Inclusion-of-sample-content">Inclusion of sample content</a></li>
+<li><a href="#Create-notebooks">Create notebooks</a></li>
+</ul>
+</li>
+</ul>
+<h2><a name="Installation" class="anchor" href="#Installation">Installation</a></h2>
+<p>This template is available as a <em>dotnet new</em> template (from <a href="https://www.nuget.org/packages/FsLab.DocumentationTemplate/">nuget</a>):</p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="no-highlight">dotnet new -i FsLab.DocumentationTemplate
+</code></pre></td></tr></table>
+<h2><a name="Usage" class="anchor" href="#Usage">Usage</a></h2>
+<p>If not already present, create a <em>local tool manifest</em> in the root of your project that you want to write documentation for:</p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="no-highlight">dotnet new tool-manifest
+</code></pre></td></tr></table>
+<p>Then, still in the root of your project, run:</p>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="no-highlight">dotnet new fslab-docs
+</code></pre></td></tr></table>
+<h2><a name="Quick-content-rundown" class="anchor" href="#Quick-content-rundown">Quick content rundown:</a></h2>
+<p>The default template initializes the following folder structure when you initialize it in the root of your project.</p>
+<p>See <a href="#Customization-options">further below</a> for command line customization options of the template.</p>
+<pre>
+docs
+│   index.fsx
+│   _template.html
+|   _template.ipynb
+|   
+│   0_Markdown-Cheatsheet.md
+│   1_fsharp-code-example.fsx
+│   2_inline-references.fsx
+│   3_notebooks.fsx
+|
+├───content
+│   fsdocs-custom.css
+│
+├───img
+│       favicon.ico
+│       logo.png
+│
+└───reference
+        _template.html
+</pre>
+<ul>
+<li>
+<p><code>index.fsx</code> is the file you are reading just now. It contains the very content you are reading at the moment
+in a markdown block indicated by <code>(** *)</code> guards. It will be rendered as the root <code>index.html</code> file of your documentation.</p>
+</li>
+<li><p><code>_template.html</code> is the root html scaffold (sidebar to the left, script and style loading) where all of the individual docs will be injected into</p></li>
+<li><p><code>0_Markdown-Cheatsheet.md</code> is a adaption of <a href="https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet">this markdown cheat sheet</a> that shows how to write markdown and showcases the rendered equivalents. It can also be viewed in all its glory <a href="https://fslab.org/docs-template/0_Markdown-Cheatsheet.html">here</a>.</p></li>
+<li><p><code>1_fsharp-code-example.fsx</code> is a script file that showcases the syntax highlighting style for F# snippets. It can also be viewed in all its glory <a href="https://fslab.org/docs-template/1_fsharp-code-example.html">here</a>.</p></li>
+<li><p><code>2_inline-references.fsx</code> is a script file that explains how to use inline references and use Plotly.NET for charting. It can also be viewed in all its glory <a href="https://fslab.org/docs-template/2_inline-references.html">here</a>.</p></li>
+<li><p><code>3_notebooks.fsx</code> is a script file that showcases conditional content in documentation and how to use that to create dotnet interactive notebooks besides your html documentation. It can also be viewed in all its glory <a href="https://fslab.org/docs-template/3_notebooks.html">here</a>.</p></li>
+<li>
+<p><code>fsdocs-custom.css</code> contains the custom styling that applies the fslab styles.</p>
+<ul>
+<li><p>the <code>img</code> folder contains the fslab logo and favicon. replace these files (with the same names) to youse sours</p></li>
+<li><p><code>reference/_template.html</code> is a slightly adapted version of the template above for the API documentation</p></li>
+</ul>
+</li>
+</ul>
+<h2><a name="Creating-new-content" class="anchor" href="#Creating-new-content">Creating new content</a></h2>
+<ul>
+<li><p>run <code>dotnet fsdocs watch --eval</code> to spawn a watcher and dev server that hosts your docs on <a href="http://localhost:8901/">http://localhost:8901/</a> (You currently will still have to refresh the page when you make changes to files)</p></li>
+<li><p>add a new .md or .fsx file to the <code>content</code> directory (or into a new subdirectory there)</p></li>
+<li>the sidebar title for the document will be either the file name or, if existent, the first level 1 header in the file</li>
+<li>when writing a .fsx file, code will automatically become syntax-highlighted code snippets.</li>
+<li><p>use <code>(** &lt;markdown here&gt; *)</code> to guard markdown sections in .fsx files</p></li>
+<li><p>use <code>(*** include-value:&lt;val name&gt; ***)</code> to include the value of a binding</p></li>
+<li><p>use <code>(*** include-it ***)</code> to include the evaluation of the previous snippet block</p></li>
+</ul>
+<p>For more info please refer to the <a href="http://fsprojects.github.io/FSharp.Formatting/">FSharp.Formatting documentation</a>.</p>
+<h2><a name="Customization-options" class="anchor" href="#Customization-options">Customization options</a></h2>
+<h3><a name="Style-sheet-options" class="anchor" href="#Style-sheet-options">Style sheet options</a></h3>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="no-highlight">-s|--styles             Set the type of style content the template will initialize. For the sass file to work, you will have to download bulma
+
+        all             - sass file, compiled csss, and minified css
+
+        sass            - only include the sass file
+
+        minified        - only include the minified css file
+
+        css             - only include the compiled css file
+
+        Default:        css
+</code></pre></td></tr></table>
+<h3><a name="Inclusion-of-sample-content" class="anchor" href="#Inclusion-of-sample-content">Inclusion of sample content</a></h3>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="no-highlight">-is|--include-samples   wether to include sample files in the generated content
+
+        bool            - Optional
+
+        Default:        true
+</code></pre></td></tr></table>
+<h3><a name="Create-notebooks" class="anchor" href="#Create-notebooks">Create notebooks</a></h3>
+<table class="pre"><tr><td class="snippet"><pre class="fssnip"><code lang="no-highlight">-in|--include-notebooks  wether to include the notebook template file
+        
+        bool            - Optional
+
+        Default:        true
+</code></pre></td></tr></table>
+
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- BEGIN SEARCH BOX: this adds support for the search box -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.css" />
+    <script type="text/javascript">var fsdocs_search_baseurl = 'http://localhost:8901/'</script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.8/lunr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/JavaScript-autoComplete/1.0.4/auto-complete.min.js"></script>
+    <script type="text/javascript" src="http://localhost:8901/content/fsdocs-search.js"></script>
+    <!-- END SEARCH BOX: this adds support for the search box -->
+</body>
+
+</html>
