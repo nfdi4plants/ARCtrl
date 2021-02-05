@@ -43,45 +43,9 @@ module Assay =
     let updateByFileName (updateOption:UpdateOptions) (assay : Assay) (assays : Assay list) =
         updateBy (fun a -> a.FileName = assay.FileName) updateOption assay assays
 
-    ///// If an assay for which the predicate returns true exists in the study, removes it from the study
-    //let removeBy (predicate : Assay -> bool) (study:Study) =
-    //    if exists predicate study then
-    //        {study with Assays = List.filter (predicate >> not) study.Assays}
-    //    else 
-    //        study
-
-    ///// If the given assay exists in the study, removes it from the study
-    //let remove (assay : Assay) (study:Study) =
-    //    removeBy ((=) assay) study
-
     /// Updates all assays with the same name as the given assay with its values
     let removeByFileName (fileName : string) (assays : Assay list) = 
-        List.filter (fun (a:Assay) -> a.FileName = Some fileName) assays
-
-    ///// TODO Filename = identfier ausformulieren
-    ///// If no assay with the same identifier as the given assay exists in the list, adds the given assay to the list
-    //let tryAdd (assay : Assay) (assays : Assay list) =
-    //    if assays |> List.exists (fun studyAssay -> studyAssay.FileName = assay.FileName) then
-    //        None
-    //    else 
-    //        Some (List.append assays [assay])
-
-    ///// If an assay with the given identfier exists in the list, removes it
-    //let tryRemove (assayIdentfier : string) (assays : Assay list) =
-    //    if assays |> List.exists (fun assay -> assay.FileName = assayIdentfier) then
-    //        Some (List.filter (fun (assay:Assay) -> assay.FileName <> assayIdentfier) assays)
-    //    else 
-    //        None
-
-    ///// If an assay with the same identifier as the given assay exists in the list, overwrites its values with values in the given assay
-    //let tryUpdate (assay : Assay) (assays : Assay list) =
-    //    if assays |> List.exists (fun studyAssay -> studyAssay.FileName = assay.FileName) then
-    //        Some (
-    //            assays 
-    //            |> List.map (fun studyAssay -> if studyAssay.FileName = assay.FileName then assay else studyAssay) 
-    //        )
-    //    else 
-    //        None
+        List.filter (fun (a:Assay) -> a.FileName = Some fileName |> not) assays
 
     // Comment
 

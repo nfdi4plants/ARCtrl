@@ -42,20 +42,9 @@ module Factor =
     let updateByName (updateOption : UpdateOptions) (factor : Factor) (factors : Factor list) =
         updateBy (fun f -> f.Name = factor.Name) updateOption factor factors
 
-    ///// If a factor for which the predicate returns true exists in the study, removes it from the study
-    //let removeBy (predicate : Factor -> bool) (study:Study) =
-    //    if exists predicate study then
-    //        {study with Factors = List.filter (predicate >> not) study.Factors}
-    //    else 
-    //        study
-
-    ///// If the given factor exists in the study, removes it from the study
-    //let remove (factor : Factor) (study:Study) =
-    //    removeBy ((=) factor) study
-
     /// If a factor with the given name exists in the list, removes it
     let removeByName (name : string) (factors : Factor list) = 
-        List.filter (fun (f:Factor) -> f.Name = Some name) factors
+        List.filter (fun (f:Factor) -> f.Name = Some name |> not) factors
 
     /// Returns comments of a factor
     let getComments (factor : Factor) =

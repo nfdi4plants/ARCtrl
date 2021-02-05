@@ -32,7 +32,7 @@ module Publication =
     /// If a publication with the given doi exists in the investigation, returns it
     let tryGetByDoi doi (publications:Publication list) =
         publications
-        |> List.tryFind (fun publication -> publication.DOI = doi)
+        |> List.tryFind (fun publication -> publication.DOI = Some doi)
 
     /// Updates all publications for which the predicate returns true with the given publication values
     let updateBy (predicate : Publication -> bool) (updateOption : UpdateOptions) (publication : Publication) (publications : Publication list) =
@@ -50,24 +50,13 @@ module Publication =
     let updateByPubMedID (updateOption : UpdateOptions) (publication : Publication) (publications : Publication list) =
         updateBy (fun p -> p.PubMedID = publication.PubMedID) updateOption publication publications
 
-    ///// If a publication for which the predicate returns true exists in the investigation, removes it from the investigation
-    //let removeBy (predicate : Publication -> bool) (investigation:Investigation) =
-    //    if exists predicate investigation then
-    //        {investigation with Publications = List.filter (predicate >> not) investigation.Publications}
-    //    else 
-    //        investigation
-
-    ///// If the given publication exists in the investigation, removes it from the investigation
-    //let remove (publication : Publication) (investigation:Investigation) =
-    //    removeBy ((=) publication) investigation
-
     /// If a publication with the given doi exists in the investigation, removes it from the investigation
     let removeByDoi (doi : string) (publications : Publication list) = 
-        List.filter (fun p -> p.DOI = Some doi) publications
+        List.filter (fun p -> p.DOI = Some doi |> not) publications
 
     /// If a publication with the given pubMedID exists in the investigation, removes it
     let removeByPubMedID (pubMedID : string) (publications : Publication list) = 
-        List.filter (fun p -> p.PubMedID = Some pubMedID) publications
+        List.filter (fun p -> p.PubMedID = Some pubMedID |> not) publications
 
     /// Status
 

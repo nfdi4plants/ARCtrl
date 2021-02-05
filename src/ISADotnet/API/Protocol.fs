@@ -42,20 +42,9 @@ module Protocol =
     let updateByName (updateOption:UpdateOptions) (protocol : Protocol) (protocols : Protocol list) =
         updateBy (fun p -> p.Name = protocol.Name) updateOption protocol protocols
 
-    ///// If a protocol for which the predicate returns true exists in the study, removes it from the study
-    //let removeBy (predicate : Protocol -> bool) (study:Study) =
-    //    if exists predicate study then
-    //        {study with Protocols = List.filter (predicate >> not) study.Protocols}
-    //    else 
-    //        study
-
-    ///// If the given protocol exists in the study, removes it from the study
-    //let remove (protocol : Protocol) (study:Study) =
-    //    removeBy ((=) protocol) study
-
     /// If a protocol with the given name exists in the list, removes it
     let removeByName (name : string) (protocols : Protocol list) = 
-        List.filter (fun (p:Protocol) -> p.Name = Some name) protocols
+        List.filter (fun (p:Protocol) -> p.Name = Some name |> not) protocols
 
     // Comments
 

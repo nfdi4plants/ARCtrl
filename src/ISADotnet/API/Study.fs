@@ -45,20 +45,9 @@ module Study =
     let updateByIdentifier (updateOption:UpdateOptions) (study : Study) (studies : Study list) =
         updateBy (fun (s:Study) -> s.Identifier = study.Identifier) updateOption study studies
 
-    ///// If a study for which the predicate returns true exists in the investigation, removes it
-    //let removeBy (predicate : Study -> bool) (investigation:Investigation) =
-    //    if exists predicate investigation then
-    //        {investigation with Studies = List.filter (predicate >> not) investigation.Studies}
-    //    else 
-    //        investigation
-
-    ///// If the given study exists in the investigation, removes it
-    //let remove (study : Study) (investigation:Investigation) =
-    //    removeBy ((=) study) investigation
-
     /// If a study with the given identifier exists in the list, removes it
     let removeByIdentifier (identifier : string) (studies : Study list) = 
-        List.filter (fun (s:Study) -> s.Identifier = Some identifier) studies
+        List.filter (fun (s:Study) -> s.Identifier = Some identifier |> not) studies
     
 
     /// Returns assays of a study

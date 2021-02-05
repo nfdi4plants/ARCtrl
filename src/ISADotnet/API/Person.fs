@@ -57,17 +57,6 @@ module Person =
     /// Updates all persons with the same FirstName, MidInitials and LastName as the given person with its values
     let updateByFullName (updateOption:UpdateOptions) (person : Person) (persons : Person list) =
         updateBy (fun p -> p.FirstName = person.FirstName && p.MidInitials = person.MidInitials && p.LastName = person.LastName) updateOption person persons
-
-    ///// If a person for which the predicate returns true exists in the investigation, removes it from the investigation
-    //let removeBy (predicate : Person -> bool) (investigation:Investigation) =
-    //    if exists predicate investigation then
-    //        {investigation with Contacts = List.filter (predicate >> not) investigation.Contacts}
-    //    else 
-    //        investigation
-
-    ///// If the given person exists in the investigation, removes it from the investigation
-    //let remove (person : Person) (investigation:Investigation) =
-    //    removeBy ((=) person) investigation
     
     /// If a person with the given FirstName, MidInitials and LastName exists in the list, removes it
     let removeByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =

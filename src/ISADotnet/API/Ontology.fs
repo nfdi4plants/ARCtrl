@@ -43,20 +43,10 @@ module OntologySourceReference =
     let updateByName (updateOption:UpdateOptions) (ontologySourceReference : OntologySourceReference) (ontologies:OntologySourceReference list) =
         updateBy (fun t -> t.Name = ontologySourceReference.Name) updateOption ontologySourceReference ontologies
 
-    ///// If a ontology source reference for which the predicate returns true exists in the investigation, removes it from the investigation
-    //let removeBy (predicate : OntologySourceReference -> bool) (investigation:Investigation) =
-    //    if exists predicate investigation then
-    //        {investigation with OntologySourceReferences = List.filter (predicate >> not) investigation.OntologySourceReferences}
-    //    else 
-    //        investigation
-
-    ///// If the given ontology source reference exists in the investigation, removes it from the investigation
-    //let remove (ontologySourceReference : OntologySourceReference) (investigation:Investigation) =
-    //    removeBy ((=) ontologySourceReference) investigation
 
     /// If a ontology source reference with the given name exists in the list, removes it
     let removeByName (name : string) (ontologies : OntologySourceReference list) = 
-        List.filter (fun (t : OntologySourceReference) -> t.Name = Some name) ontologies
+        List.filter (fun (t : OntologySourceReference) -> t.Name = Some name |> not) ontologies
 
     /// Returns comments of ontology source ref
     let getComments (ontology : OntologySourceReference) =
@@ -112,20 +102,9 @@ module OntologyAnnotation =
     let updateByName (updateOption:UpdateOptions) (design : OntologyAnnotation) (annotations : OntologyAnnotation list) =
         updateBy (fun f -> f.Name = design.Name) updateOption design annotations
 
-    ///// If a ontology annotation for which the predicate returns true exists in the Study.StudyDesignDescriptors, removes it from the study
-    //let removeBy (predicate : OntologyAnnotation -> bool) (study:Study) =
-    //    if exists predicate study then
-    //        {study with StudyDesignDescriptors = List.filter (predicate >> not) study.StudyDesignDescriptors}
-    //    else 
-    //        study
-
-    ///// If the given ontology annotation exists in the Study.StudyDesignDescriptors, removes it from the study
-    //let remove (design : OntologyAnnotation) (study:Study) =
-    //    removeBy ((=) design) study
-
     /// If a ontology annotation with the annotation value exists in the list, removes it
     let removeByName (name : AnnotationValue) (annotations : OntologyAnnotation list) = 
-        List.filter (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
+        List.filter (fun (d:OntologyAnnotation) -> d.Name = Some name |> not) annotations
 
     // Comments
     
