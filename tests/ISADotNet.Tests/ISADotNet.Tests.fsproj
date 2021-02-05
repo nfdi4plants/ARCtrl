@@ -1,12 +1,12 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
+
   <ItemGroup>
-    <None Include="paket.references" />
     <Compile Include="Utils.fs" />
     <Compile Include="ISADotnet\JsonExtensionsTests.fs" />
     <Compile Include="ISADotnet\ISAJsonTests.fs" />
@@ -14,14 +14,28 @@
     <Compile Include="ISADotnet\ISAXLSXTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
+
   <ItemGroup>
-    <PackageReference Include="AltCover" Version="7.1.778" />
+    <Content Include="ISADotnet\TestFiles\AssayTestFile.json" />
+    <Content Include="ISADotnet\TestFiles\InvestigationTestFile.json" />
+    <Content Include="ISADotnet\TestFiles\ProcessTestFile.json" />
+    <Content Include="ISADotnet\TestFiles\ProtocolTestFile.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="ISADotnet\TestFiles\empty_isa.investigation.xlsx" />
+    <None Include="ISADotnet\TestFiles\isa.investigation.xlsx" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Expecto" Version="9.*" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
-    <ProjectReference Include="..\..\src\ISADotNet.XLSX\ISADotNet.XLSX.fsproj" />
-    <ProjectReference Include="..\..\src\ISADotnet\ISADotNet.fsproj" />
-    <PackageReference Update="FSharp.Core" Version="4.*" />
+    <PackageReference Update="FSharp.Core" Version="5.*" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ISADotNet\ISADotNet.fsproj" />
+    <ProjectReference Include="..\..\src\ISADotNet.XLSX\ISADotNet.XLSX.fsproj" />
+  </ItemGroup>
 </Project>
