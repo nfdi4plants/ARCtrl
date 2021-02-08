@@ -1,5 +1,6 @@
 #r "paket:
 nuget BlackFox.Fake.BuildTask
+nuget ReleaseNotes.FAKE
 nuget Fake.Core.Target
 nuget Fake.Core.Process
 nuget Fake.Core.ReleaseNotes
@@ -20,6 +21,7 @@ nuget Fake.Tools.Git //"
 #r "netstandard" // Temp fix for https://github.com/dotnet/fsharp/issues/5216
 #endif
 
+open ReleaseNotes.FAKE
 open BlackFox.Fake
 open System.IO
 open Fake.Core
@@ -373,6 +375,31 @@ module ReleaseTasks =
             Git.Branches.push "temp/gh-pages"
         else failwith "aborted"
     }
+
+module ReleaseNoteTasks =
+    
+    let createAssemblyVersion = BuildTask.create "createvfs" [] {
+        ReleaseNotes.FAKE.AssemblyVersion.create "ReleaseNotes.FAKE"
+    }
+
+    let updateReleaseNotes = BuildTask.createFn "ReleaseNotes" [] (fun config ->
+        ReleaseNotes.FAKE.Release.exists()
+
+        ReleaseNotes.FAKE.Release.update config
+    )
+
+    let githubDraft = BuildTask.createFn "GithubDraft" [] (fun config ->
+
+        let body = "We are ready to go for the first release!"
+
+        ReleaseNotes.FAKE.Github.draft(
+            "Freymaurer",
+            "ReleaseNotes.FAKE",
+            (Some body),
+            None,
+            config
+        )
+    )
 
 open BasicTasks
 open TestTasks
