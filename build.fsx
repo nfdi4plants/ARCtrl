@@ -174,11 +174,6 @@ module PackageTasks =
                             Properties = ([
                                 "Version",stableVersionTag
                                 "PackageReleaseNotes",  (release.Notes |> List.map replaceCommitLink |> String.concat "\r\n")
-                                /// Excludes the following fom nuget paket
-                                /// <ItemGroup>
-                                ///   <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-                                /// </ItemGroup>
-                                "IncludeContentInPack", "false"
                             ] @ p.MSBuildParams.Properties)
                         }
                     {
@@ -191,12 +186,13 @@ module PackageTasks =
                 /// https://fable.io/docs/your-fable-project/author-a-fable-library.html
                 "src/ISADotNet/ISADotNet.fsproj"
                 |> Fake.DotNet.DotNet.pack (fun p ->
-                    Trace.tracef "LOOK AT ME: %A" p.MSBuildParams.Targets
                     let msBuildParams =
                         {p.MSBuildParams with 
                             Properties = ([
                                 "PackageId", "ISADotNet.Fable"
                                 "Version",stableVersionTag
+                                "Description","Fable compliant release for the ISA compliant experimental metadata toolkit in F#. Additionally to the compiled library, it is shipped with the uncompiled code."
+                                "PackageTags","F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA Json Fable"
                                 "PackageReleaseNotes",  (release.Notes |> List.map replaceCommitLink |> String.concat "\r\n")
                             ] @ p.MSBuildParams.Properties)
                         }
@@ -427,4 +423,4 @@ let _preRelease =
         [setPrereleaseTag; clean; build; copyBinaries; runTests; packPrerelease; buildDocsPrerelease; createPrereleaseTag; publishNugetPrerelease; prereleaseDocs]
 
 // run copyBinaries by default
-BuildTask.runOrDefault copyBinaries
+BuildTask.runOrDefaultWithArguments copyBinaries
