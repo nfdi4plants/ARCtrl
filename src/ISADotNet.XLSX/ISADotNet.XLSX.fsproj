@@ -19,6 +19,7 @@
     <Compile Include="InvestigationFile\Study.fs" />
     <Compile Include="InvestigationFile\OntologySourceReference.fs" />
     <Compile Include="InvestigationFile\Investigation.fs" />
+    <Compile Include="AssayFile\IO.fs" />
   </ItemGroup>
 
   <ItemGroup>
