@@ -63,7 +63,8 @@ module DesignDescriptors =
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
 
-    let readDesigns (prefix : string) lineNumber (en:IEnumerator<Row>) =
+    let readDesigns (prefix : string option) lineNumber (en:IEnumerator<Row>) =
+        let prefix = match prefix with | Some p ->  p + " " | None -> ""
         let rec loop (matrix : SparseMatrix) remarks lineNumber = 
 
             if en.MoveNext() then  
@@ -76,8 +77,8 @@ module DesignDescriptors =
                 | Remark k, _  -> 
                     loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
 
-                | Some k, Some v when List.exists (fun label -> k = prefix + " " + label) labels -> 
-                    let label = List.find (fun label -> k = prefix + " " + label) labels
+                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
+                    let label = List.find (fun label -> k = prefix + label) labels
                     loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
 
                 | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
@@ -88,7 +89,10 @@ module DesignDescriptors =
 
     
     
-    let writeDesigns prefix (designs : OntologyAnnotation list) =
+    let writeDesigns (prefix : string option) (designs : OntologyAnnotation list) =
         designs
         |> toSparseMatrix
-        |> fun m -> SparseMatrix.ToRows(m,prefix)
+        |> fun m -> 
+            match prefix with 
+            | Some prefix -> SparseMatrix.ToRows(m,prefix)
+            | None -> SparseMatrix.ToRows(m)

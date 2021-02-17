@@ -155,27 +155,27 @@ module Study =
             match lastLine with
 
             | Some k when k = designDescriptorsLabel -> 
-                let currentLine,lineNumber,newRemarks,designDescriptors = DesignDescriptors.readDesigns designDescriptorsLabelPrefix (lineNumber + 1) en         
+                let currentLine,lineNumber,newRemarks,designDescriptors = DesignDescriptors.readDesigns (Some designDescriptorsLabelPrefix) (lineNumber + 1) en         
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = publicationsLabel -> 
-                let currentLine,lineNumber,newRemarks,publications = Publications.readPublications publicationsLabelPrefix (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,publications = Publications.readPublications (Some publicationsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = factorsLabel -> 
-                let currentLine,lineNumber,newRemarks,factors = Factors.readFactors factorsLabelPrefix (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,factors = Factors.readFactors (Some factorsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = assaysLabel -> 
-                let currentLine,lineNumber,newRemarks,assays = Assays.readAssays assaysLabelPrefix (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,assays = Assays.readAssays (Some assaysLabelPrefix) (lineNumber + 1) en       
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = protocolsLabel -> 
-                let currentLine,lineNumber,newRemarks,protocols = Protocols.readProtocols protocolsLabelPrefix (lineNumber + 1) en  
+                let currentLine,lineNumber,newRemarks,protocols = Protocols.readProtocols (Some protocolsLabelPrefix) (lineNumber + 1) en  
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = contactsLabel -> 
-                let currentLine,lineNumber,newRemarks,contacts = Contacts.readPersons contactsLabelPrefix (lineNumber + 1) en  
+                let currentLine,lineNumber,newRemarks,contacts = Contacts.readPersons (Some contactsLabelPrefix) (lineNumber + 1) en  
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | k -> 
@@ -190,20 +190,20 @@ module Study =
             yield! StudyInfo.WriteStudyInfo study
 
             yield  Row.ofValues None 0u [designDescriptorsLabel]
-            yield! DesignDescriptors.writeDesigns designDescriptorsLabelPrefix (Option.defaultValue [] study.StudyDesignDescriptors)
+            yield! DesignDescriptors.writeDesigns (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
 
             yield  Row.ofValues None 0u [publicationsLabel]
-            yield! Publications.writePublications publicationsLabelPrefix (Option.defaultValue [] study.Publications)
+            yield! Publications.writePublications (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
 
             yield  Row.ofValues None 0u [factorsLabel]
-            yield! Factors.writeFactors factorsLabelPrefix (Option.defaultValue [] study.Factors)
+            yield! Factors.writeFactors (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
 
             yield  Row.ofValues None 0u [assaysLabel]
-            yield! Assays.writeAssays assaysLabelPrefix (Option.defaultValue [] study.Assays)
+            yield! Assays.writeAssays (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
 
             yield  Row.ofValues None 0u [protocolsLabel]
-            yield! Protocols.writeProtocols protocolsLabelPrefix (Option.defaultValue [] study.Protocols)
+            yield! Protocols.writeProtocols (Some protocolsLabelPrefix) (Option.defaultValue [] study.Protocols)
 
             yield  Row.ofValues None 0u [contactsLabel]
-            yield! Contacts.writePersons contactsLabelPrefix (Option.defaultValue [] study.Contacts)
+            yield! Contacts.writePersons (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
         }

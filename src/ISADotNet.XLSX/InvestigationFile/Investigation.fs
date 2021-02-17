@@ -151,11 +151,11 @@ module Investigation =
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = publicationsLabel -> 
-                let currentLine,lineNumber,newRemarks,publications = Publications.readPublications publicationsLabelPrefix (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,publications = Publications.readPublications (Some publicationsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = contactsLabel -> 
-                let currentLine,lineNumber,newRemarks,contacts = Contacts.readPersons contactsLabelPrefix (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,contacts = Contacts.readPersons (Some contactsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = studyLabel -> 
@@ -208,10 +208,10 @@ module Investigation =
             yield! InvestigationInfo.WriteInvestigationInfo investigation
 
             yield  Row.ofValues None 0u [publicationsLabel]
-            yield! Publications.writePublications publicationsLabelPrefix (Option.defaultValue [] investigation.Publications)
+            yield! Publications.writePublications (Some publicationsLabelPrefix) (Option.defaultValue [] investigation.Publications)
 
             yield  Row.ofValues None 0u [contactsLabel]
-            yield! Contacts.writePersons contactsLabelPrefix (Option.defaultValue [] investigation.Contacts)
+            yield! Contacts.writePersons (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
             for study in (Option.defaultValue [] investigation.Studies) do
                 yield  Row.ofValues None 0u [studyLabel]
