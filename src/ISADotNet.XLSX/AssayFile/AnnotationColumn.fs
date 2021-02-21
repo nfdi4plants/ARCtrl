@@ -29,7 +29,7 @@ module Value =
             |> Value.Ontology
             |> Some
 
-module Column =
+module AnnotationColumn =
 
     type SwateHeader =
         {
@@ -177,6 +177,7 @@ module Column =
                     fun matrix i -> 
                         match Dictionary.tryGetValue (h.HeaderString,i) matrix with
                         | Some "user-specific" -> None
+                        | Some v when v.Contains (Option.defaultValue "" h.Term.Value.TermAccessionNumber) -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
@@ -187,6 +188,7 @@ module Column =
                     fun matrix i -> 
                         match Dictionary.tryGetValue (h.HeaderString,i) matrix with
                         | Some "user-specific" -> None
+                        | Some v when v = (Option.defaultValue "" h.Term.Value.TermSourceREF) -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
@@ -225,6 +227,7 @@ module Column =
                     fun matrix i -> 
                         match Dictionary.tryGetValue (h.HeaderString,i) matrix with
                         | Some "user-specific" -> None
+                        | Some v when v.Contains (Option.defaultValue "" h.Term.Value.TermAccessionNumber) -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
@@ -235,6 +238,7 @@ module Column =
                     fun matrix i -> 
                         match Dictionary.tryGetValue (h.HeaderString,i) matrix with
                         | Some "user-specific" -> None
+                        | Some v when v = (Option.defaultValue "" h.Term.Value.TermSourceREF) -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
@@ -276,6 +280,7 @@ module Column =
                     fun matrix i -> 
                         match Dictionary.tryGetValue (h.HeaderString,i) matrix with
                         | Some "user-specific" -> None
+                        | Some v when v.Contains (Option.defaultValue "" h.Term.Value.TermAccessionNumber) -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
@@ -286,6 +291,7 @@ module Column =
                     fun matrix i -> 
                         match Dictionary.tryGetValue (h.HeaderString,i) matrix with
                         | Some "user-specific" -> None
+                        | Some v when v = (Option.defaultValue "" h.Term.Value.TermSourceREF) -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
@@ -321,7 +327,7 @@ module Column =
         )
 
     let tryGetSourceNameGetter (headers:string seq) =
-        Seq.tryPick tryParseSampleName headers
+        Seq.tryPick tryParseSourceName headers
         |> Option.map (fun h -> 
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
                 Dictionary.tryGetValue (h.HeaderString,i) matrix
