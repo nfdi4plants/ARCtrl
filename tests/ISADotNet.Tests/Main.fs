@@ -6,9 +6,12 @@ open Expecto
 let main argv =
 
     //XLSX IO Test
-    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXTests.testStringConversions |> ignore
-    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXTests.testSparseMatrix |> ignore
-    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXTests.testInvestigationFile |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testStringConversions |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testSparseMatrix |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testInvestigationFile |> ignore
+
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testSwateHeaderFunctions |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testMetaDataFunctions |> ignore
 
     // Json IO Tests
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv JsonExtensionsTests.testAnyOf |> ignore

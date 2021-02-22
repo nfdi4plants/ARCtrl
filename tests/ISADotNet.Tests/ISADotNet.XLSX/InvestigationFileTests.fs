@@ -1,4 +1,4 @@
-﻿module ISAXLSXTests
+﻿module ISAXLSXInvestigationTests
 
 open FSharpSpreadsheetML
 open ISADotNet
