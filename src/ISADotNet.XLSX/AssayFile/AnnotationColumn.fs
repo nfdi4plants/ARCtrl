@@ -49,12 +49,16 @@ module AnnotationColumn =
 
         static member fromStringHeader header =
                   
-            let nameRegex = Regex.Match(header,@"(?<= \[).*(?=\])")
+            let namePattern = @"(?<= \[).*(?=\])"
+            let ontologySourcePattern = @"(?<=#t)\S+:[^;)]*"
+            let numberPattern = @"(?<= \(#)\d+(?=[;)])"
+
+            let nameRegex = Regex.Match(header,namePattern)
             let kindRegex = Regex.Match(header,@".*(?= \(#.*\))")
             if nameRegex.Success then
                 let kind = Regex.Match(header,@".*(?= \[)")
-                let ontologySourceRegex = Regex.Match(header,@"(?<=#t)\S+:\d*")
-                let numberRegex = Regex.Match(header,@"(?<= \(#)\d+")
+                let ontologySourceRegex = Regex.Match(header,ontologySourcePattern)
+                let numberRegex = Regex.Match(header,numberPattern)
                 let number = if numberRegex.Success then Some (int numberRegex.Value) else None
                 let termSource,termAccession = 
                     if ontologySourceRegex.Success then 
@@ -64,7 +68,7 @@ module AnnotationColumn =
                 SwateHeader.create header kind.Value (Some (OntologyAnnotation.fromString nameRegex.Value termAccession termSource)) number
             elif kindRegex.Success then
                 let kind = kindRegex.Value
-                let numberRegex = Regex.Match(header,@"(?<= \(#)\d+")
+                let numberRegex = Regex.Match(header,numberPattern)
                 let number = if numberRegex.Success then Some (int numberRegex.Value) else None
                 SwateHeader.create header kind None number
             else
