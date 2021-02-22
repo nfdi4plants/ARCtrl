@@ -49,6 +49,12 @@ module Seq =
 
 module AnnotationTable = 
     
+    let splitIntoProtocols (sheetName:string) (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
+        seq {
+            Protocol.create None (Some sheetName) None None None None None None None, headers
+        }
+
+
     let splitIntoColumns (headers : seq<string>) =
         headers
         |> Seq.groupWhen (fun header -> 
@@ -160,4 +166,5 @@ module AnnotationTable =
             )
         )
         |> Seq.concat
+    
     
