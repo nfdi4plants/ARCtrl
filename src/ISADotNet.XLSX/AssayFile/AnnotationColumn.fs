@@ -8,7 +8,7 @@ open System.Text.RegularExpressions
 /// Functions for 
 module AnnotationColumn =
 
-    type SwateHeader =
+    type ColumnHeader =
         {
             HeaderString : string
             Kind : string
@@ -42,14 +42,14 @@ module AnnotationColumn =
                         ontologySourceRegex.Value.Split ':'
                         |> fun o -> o.[0], o.[1]
                     else "", ""
-                SwateHeader.create header kind.Value (Some (OntologyAnnotation.fromString nameRegex.Value termAccession termSource)) number
+                ColumnHeader.create header kind.Value (Some (OntologyAnnotation.fromString nameRegex.Value termAccession termSource)) number
             elif kindRegex.Success then
                 let kind = kindRegex.Value
                 let numberRegex = Regex.Match(header,numberPattern)
                 let number = if numberRegex.Success then Some (int numberRegex.Value) else None
-                SwateHeader.create header kind None number
+                ColumnHeader.create header kind None number
             else
-                SwateHeader.create header header None None
+                ColumnHeader.create header header None None
         
 
     let mergeOntology (termSourceHeaderOntology : OntologyAnnotation Option) (termAccessionHeaderOntology : OntologyAnnotation Option) =
@@ -60,8 +60,8 @@ module AnnotationColumn =
         | None, None -> None
 
     
-    let tryParseTermSourceReferenceHeader (termHeader:SwateHeader) (header:string) =
-        match SwateHeader.fromStringHeader header with
+    let tryParseTermSourceReferenceHeader (termHeader:ColumnHeader) (header:string) =
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Term Source REF" && h.Number = termHeader.Number -> 
             match h.Term,termHeader.Term with
             | None, None -> Some h
@@ -69,8 +69,8 @@ module AnnotationColumn =
             | _ -> None
         | _ -> None
     
-    let tryParseTermAccessionNumberHeader (termHeader:SwateHeader) (header:string) =
-        match SwateHeader.fromStringHeader header with
+    let tryParseTermAccessionNumberHeader (termHeader:ColumnHeader) (header:string) =
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Term Accession Number"  && h.Number = termHeader.Number -> 
             match h.Term,termHeader.Term with
             | None, None -> Some h
@@ -79,37 +79,40 @@ module AnnotationColumn =
         | _ -> None
     
     let tryParseParameterHeader (header:string) =
-        match SwateHeader.fromStringHeader header with
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Parameter" || h.Kind = "Parameter Value" ->
             Some h
         | _ -> None
     
     let tryParseFactorHeader (header:string) =
-        match SwateHeader.fromStringHeader header with
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Factor" || h.Kind = "Factor Value" ->
             Some h
         | _ -> None
 
     let tryParseCharacteristicsHeader (header:string) =
-        match SwateHeader.fromStringHeader header with
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Characteristics" || h.Kind = "Characteristics Value" ->
             Some h
         | _ -> None
 
     let tryParseUnitHeader (header:string) =
-        match SwateHeader.fromStringHeader header with
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Unit" ->
             Some h
         | _ -> None   
     
     let tryParseSampleName (header:string) =
-        match SwateHeader.fromStringHeader header with
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Sample Name" ->
             Some h
         | _ -> None
 
     let tryParseSourceName (header:string) =
-        match SwateHeader.fromStringHeader header with
+        match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Source Name" ->
             Some h
         | _ -> None
+
+    let isSample header = tryParseSampleName header |> Option.isSome 
+    let isSource header = tryParseSourceName header |> Option.isSome 

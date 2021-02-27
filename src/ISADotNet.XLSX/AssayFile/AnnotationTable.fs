@@ -1,35 +1,87 @@
 ﻿namespace ISADotNet.XLSX.AssayFile
 
+open ISADotNet.XLSX
 open ISADotNet
 
 module AnnotationTable = 
-   
-
-    let splitIntoProtocols (sheetName:string) (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
-        seq {
-            Protocol.create None (Some sheetName) None None None None None None None, headers
-        }
+    
 
 
-    let getProcessGetter protocolMetaData (columnGroup : seq<seq<string>>) =
+    let splitBySamples (sheetName:string) (headers : seq<string>) =
+        let isSample header = AnnotationColumn.tryParseSampleName header |> Option.isSome 
+        let isSource header = AnnotationColumn.tryParseSourceName header |> Option.isSome 
+        
+        match Seq.filter isSource headers |> Seq.length, Seq.filter isSample headers |> Seq.length with
+        | 1,1  | 0,1 -> headers |> Seq.singleton
+        | 0,2 when Seq.head headers |> isSample && Seq.last headers |> isSample -> headers |> Seq.singleton
+        | _ -> Seq.groupWhen false (fun header -> isSample header || isSource header) headers
+
+    let splitByNamedProtocols (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
+        let isSample (header:string) = header.Contains "Sample" || header.Contains "Source"
+    
+        let rec loop (protocolOverlaps : (Protocol option * seq<string>) list) (namedProtocols : (Protocol * Set<string>) list) (remainingHeaders : Set<string>) =
+            match namedProtocols with
+            | _ when remainingHeaders.IsEmpty -> 
+                protocolOverlaps
+            | (p,hs)::l ->
+                if Set.isSubset hs remainingHeaders then
+                    loop ((Some p,Set.toSeq hs)::protocolOverlaps) l (Set.difference remainingHeaders hs)
+                else 
+                    loop protocolOverlaps l remainingHeaders
+            | [] ->
+                (None ,remainingHeaders |> Set.toSeq)::protocolOverlaps
+        
+        let sampleColumns,otherColumns = headers |> Seq.filter (isSample) |> Seq.toList,headers |> Seq.filter (isSample>>not)
+    
+        let protocolOverlaps = loop [] (namedProtocols |> Seq.map (fun (p,hs) -> p,hs |> Set.ofSeq) |> List.ofSeq) (otherColumns |> Set.ofSeq)
+        
+        match sampleColumns with
+        | [] -> protocolOverlaps
+        | [s] -> protocolOverlaps |> List.map (fun (p,hs) -> p,Seq.append [s] hs)
+        | [s1;s2] -> protocolOverlaps |> List.map (fun (p,hs) -> p,Seq.append (Seq.append [s1] hs) [s2])
+        | s -> protocolOverlaps |> List.map (fun (p,hs) -> p,Seq.append hs s)
+
+    let indexProtocolsBySheetName (sheetName:string) (protocols : (Protocol * seq<string>) seq) =
+        let unnamedProtocolCount = protocols |> Seq.filter (fun (p,_) -> p.Name.IsNone) |> Seq.length
+        match unnamedProtocolCount with
+        | 0 -> protocols
+        | 1 -> 
+            protocols 
+            |> Seq.map (fun (p,hs) -> 
+                if p.Name.IsNone then
+                    {p with Name = Some sheetName},hs
+                else p,hs
+            )
+        | _ -> 
+            let mutable i = 0 
+            protocols 
+            |> Seq.map (fun (p,hs) -> 
+                if p.Name.IsNone then
+                    let name = sprintf "%s_%i" sheetName i
+                    i <- i + 1
+                    {p with Name = Some sheetName},hs
+                else p,hs
+            )
+
+    let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
     
         let characteristics,characteristicValueGetters =
-            columnGroup |> Seq.choose AnnotationNode.tryGetCharacteristicGetterFunction
+            nodes |> Seq.choose AnnotationNode.tryGetCharacteristicGetterFunction
             |> Seq.fold (fun (cl,cvl) (c,cv) -> c.Value :: cl, cv :: cvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let factors,factorValueGetters =
-            columnGroup |> Seq.choose AnnotationNode.tryGetFactorGetterFunction
+            nodes |> Seq.choose AnnotationNode.tryGetFactorGetterFunction
             |> Seq.fold (fun (fl,fvl) (f,fv) -> f.Value :: fl, fv :: fvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let parameters,parameterValueGetters =
-            columnGroup |> Seq.choose AnnotationNode.tryGetParameterGetterFunction
+            nodes |> Seq.choose AnnotationNode.tryGetParameterGetterFunction
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     
         let inputGetter,outputGetter =
-            match columnGroup |> Seq.tryPick AnnotationNode.tryGetSourceNameGetter with
+            match nodes |> Seq.tryPick AnnotationNode.tryGetSourceNameGetter with
             | Some inputNameGetter ->
-                let outputNameGetter = columnGroup |> Seq.tryPick AnnotationNode.tryGetSampleNameGetter
+                let outputNameGetter = nodes |> Seq.tryPick AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
                     fun matrix i -> 
                         Source.create
@@ -47,8 +99,8 @@ module AnnotationTable =
                          |> Sample
                 (fun matrix i -> inputGetter matrix i |> Source),outputGetter
             | None ->
-                let inputNameGetter = columnGroup |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
-                let outputNameGetter = columnGroup |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
+                let inputNameGetter = nodes |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
+                let outputNameGetter = nodes |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
                     fun matrix i -> 
                         Sample.create

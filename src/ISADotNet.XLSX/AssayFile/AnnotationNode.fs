@@ -6,11 +6,13 @@ open AnnotationColumn
 
 module AnnotationNode = 
     
+    type NodeHeader = ColumnHeader seq
+
     /// Splits the headers of an annotation table into 
     let splitIntoNodes (headers : seq<string>) =
         headers
-        |> Seq.groupWhen (fun header -> 
-            match (AnnotationColumn.SwateHeader.fromStringHeader header).Kind with
+        |> Seq.groupWhen false (fun header -> 
+            match (AnnotationColumn.ColumnHeader.fromStringHeader header).Kind with
             | "Unit"                    -> false
             | "Term Source REF"         -> false
             | "Term Accession Number"   -> false

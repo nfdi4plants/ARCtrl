@@ -17,24 +17,27 @@ module internal Seq =
     ///
     /// For example: 
     ///    Seq.groupWhen isOdd [3;3;2;4;1;2] = seq [[3]; [3; 2; 4]; [1; 2]]
-    let groupWhen f (input:seq<'a>) =
+    let groupWhen (withOverlap : bool) predicate (input:seq<'a>) =
         use en = input.GetEnumerator()
-
+    
         let rec loop cont =
             if en.MoveNext() then
-                if (f en.Current) then
-                    let temp = en.Current
+                let temp = en.Current
+                if predicate temp then
+                    
                     loop (fun y -> 
+                        printfn "if: %O, temp: %O" y temp
                         cont 
                             (   match y with
+                                | h::t when withOverlap -> [temp]::(temp::h)::t
                                 | h::t -> []::(temp::h)::t
                                 //| h::t -> [temp]::(h)::t
                                 | [] -> [[temp]]
                             )
                          )
                 else
-                    let temp = en.Current                    
                     loop (fun y -> 
+                        printfn "else: %O, temp: %O" y temp
                         cont 
                             (   match y with
                                 | h::t -> (temp::h)::t
@@ -46,12 +49,13 @@ module internal Seq =
         // Remove when first element is empty due to "[]::(temp::h)::t"
         let tmp:seq<seq<'a>> = 
             match (loop id) with
-            | h::t -> match h with
-                      | [] -> t
-                      | _  -> h::t
+            | h::t ->   match h with
+                        | [x] when predicate x && withOverlap -> t
+                        | [] -> t
+                        | _  -> h::t
             | [] -> []
             |> Seq.cast
-
+    
         tmp
 
 module internal Array = 
