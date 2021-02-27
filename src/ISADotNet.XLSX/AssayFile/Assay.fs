@@ -4,6 +4,30 @@ open FSharpSpreadsheetML
 
 open ISADotNet
 
+open FSharpSpreadsheetML
+open FSharpSpreadsheetML.Table
+open DocumentFormat.OpenXml.Spreadsheet
+
+module private Table = 
+    /// Reads a complete table. Values are stored sparsely in a dictionary, with the key being a column header and row index tuple
+    let toSparseValueMatrix (sst:SharedStringTable Option) sheetData (table:Table) =
+        let area = getArea table
+        let dictionary = System.Collections.Generic.Dictionary<string*int,string>()
+        [Area.leftBoundary area .. Area.rightBoundary area]
+        |> List.iter (fun c ->
+            let upperBoundary = Area.upperBoundary area
+            let lowerBoundary = Area.lowerBoundary area
+            let header = SheetData.tryGetCellValueAt sst upperBoundary c sheetData |> Option.get
+            List.init (lowerBoundary - upperBoundary |> int) (fun i ->
+                let r = uint i + upperBoundary + 1u
+                match SheetData.tryGetCellValueAt sst r c sheetData with
+                | Some v -> dictionary.Add((header,i),v)
+                | None -> ()                              
+            )
+            |> ignore
+        )
+        dictionary
+
 module AssayFile =
 
     /// Create a new ISADotNet.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
@@ -22,10 +46,14 @@ module AssayFile =
 
             let assayMetaData,contacts = 
                 Spreadsheet.tryGetSheetBySheetName "Investigation" doc
-                |> Option.get
-                |> SheetData.getRows
-                |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
-                |> MetaData.fromRows
+                |> Option.map (fun sheet -> 
+                    sheet
+                    |> SheetData.getRows
+                    |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
+                    |> MetaData.fromRows
+                )
+                |> Option.defaultValue (None,[])
+                
 
             let sheetNames = 
                 Spreadsheet.getWorkbookPart doc
@@ -47,7 +75,7 @@ module AssayFile =
                             AnnotationTable.splitIntoProtocols sheetname [] headers
                             |> Seq.map (fun (protocolMetaData,headers) ->
                                 let characteristic,factors,protocol,processGetter = 
-                                    AnnotationTable.splitIntoColumns headers
+                                    AnnotationNode.splitIntoNodes headers
                                     |> AnnotationTable.getProcessGetter protocolMetaData
                                 characteristic,factors,protocol,
                                 Table.getArea table

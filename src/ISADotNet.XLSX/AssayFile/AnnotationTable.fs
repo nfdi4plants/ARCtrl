@@ -2,88 +2,34 @@
 
 open ISADotNet
 
-module Seq =
-
-    /// Iterates over elements of the input sequence and groups adjacent elements.
-    /// A new group is started when the specified predicate holds about the element
-    /// of the sequence (and at the beginning of the iteration).
-    ///
-    /// For example: 
-    ///    Seq.groupWhen isOdd [3;3;2;4;1;2] = seq [[3]; [3; 2; 4]; [1; 2]]
-    let groupWhen f (input:seq<'a>) =
-        use en = input.GetEnumerator()
-
-        let rec loop cont =
-            if en.MoveNext() then
-                if (f en.Current) then
-                    let temp = en.Current
-                    loop (fun y -> 
-                        cont 
-                            (   match y with
-                                | h::t -> []::(temp::h)::t
-                                //| h::t -> [temp]::(h)::t
-                                | [] -> [[temp]]
-                            )
-                         )
-                else
-                    let temp = en.Current                    
-                    loop (fun y -> 
-                        cont 
-                            (   match y with
-                                | h::t -> (temp::h)::t
-                                | []   -> [[temp]]
-                            )
-                         )
-            else
-                cont []
-        // Remove when first element is empty due to "[]::(temp::h)::t"
-        let tmp:seq<seq<'a>> = 
-            match (loop id) with
-            | h::t -> match h with
-                      | [] -> t
-                      | _  -> h::t
-            | [] -> []
-            |> Seq.cast
-
-        tmp
-
 module AnnotationTable = 
-    
+   
+
     let splitIntoProtocols (sheetName:string) (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
         seq {
             Protocol.create None (Some sheetName) None None None None None None None, headers
         }
 
 
-    let splitIntoColumns (headers : seq<string>) =
-        headers
-        |> Seq.groupWhen (fun header -> 
-            match (AnnotationColumn.SwateHeader.fromStringHeader header).Kind with
-            | "Unit"                    -> false
-            | "Term Source REF"         -> false
-            | "Term Accession Number"   -> false
-            | _ -> true
-        )
-
     let getProcessGetter protocolMetaData (columnGroup : seq<seq<string>>) =
     
         let characteristics,characteristicValueGetters =
-            columnGroup |> Seq.choose AnnotationColumn.tryGetCharacteristicGetterFunction
+            columnGroup |> Seq.choose AnnotationNode.tryGetCharacteristicGetterFunction
             |> Seq.fold (fun (cl,cvl) (c,cv) -> c.Value :: cl, cv :: cvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let factors,factorValueGetters =
-            columnGroup |> Seq.choose AnnotationColumn.tryGetFactorGetterFunction
+            columnGroup |> Seq.choose AnnotationNode.tryGetFactorGetterFunction
             |> Seq.fold (fun (fl,fvl) (f,fv) -> f.Value :: fl, fv :: fvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let parameters,parameterValueGetters =
-            columnGroup |> Seq.choose AnnotationColumn.tryGetParameterGetterFunction
+            columnGroup |> Seq.choose AnnotationNode.tryGetParameterGetterFunction
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     
         let inputGetter,outputGetter =
-            match columnGroup |> Seq.tryPick AnnotationColumn.tryGetSourceNameGetter with
+            match columnGroup |> Seq.tryPick AnnotationNode.tryGetSourceNameGetter with
             | Some inputNameGetter ->
-                let outputNameGetter = columnGroup |> Seq.tryPick AnnotationColumn.tryGetSampleNameGetter
+                let outputNameGetter = columnGroup |> Seq.tryPick AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
                     fun matrix i -> 
                         Source.create
@@ -101,8 +47,8 @@ module AnnotationTable =
                          |> Sample
                 (fun matrix i -> inputGetter matrix i |> Source),outputGetter
             | None ->
-                let inputNameGetter = columnGroup |> Seq.head |> AnnotationColumn.tryGetSampleNameGetter
-                let outputNameGetter = columnGroup |> Seq.last |> AnnotationColumn.tryGetSampleNameGetter
+                let inputNameGetter = columnGroup |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
+                let outputNameGetter = columnGroup |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
                     fun matrix i -> 
                         Sample.create
@@ -157,7 +103,7 @@ module AnnotationTable =
     let indexRelatedProcessesByProtocolName (processes : seq<Process>) =
         processes
         |> Seq.groupBy (fun p -> p.ExecutesProtocol)
-        |> Seq.map (fun (protocol,processGroup) ->
+        |> Seq.collect (fun (protocol,processGroup) ->
             processGroup
             |> Seq.mapi (fun i p -> 
                 {p with Name = 
@@ -165,6 +111,5 @@ module AnnotationTable =
                 }
             )
         )
-        |> Seq.concat
     
     

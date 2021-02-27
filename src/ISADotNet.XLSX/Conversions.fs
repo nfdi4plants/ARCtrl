@@ -152,3 +152,21 @@ module ProtocolParameter =
                 sprintf "%s%c%s" accessions separator accession,
                 sprintf "%s%c%s" sources    separator source
             ) 
+
+
+module Value =
+
+    let fromOptions (value : string Option) (termAccesssion: string Option) (termSource: string Option) =
+        match value, termSource, termAccesssion with
+        | Some value, None, None ->
+            match box value with
+            | :? int as i -> Value.Int i
+            | :? float as f -> Value.Float f
+            | _ -> Value.Name value
+            |> Some
+        | None, None, None -> 
+            None
+        | _ -> 
+            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termAccesssion) (Option.defaultValue "" termSource)
+            |> Value.Ontology
+            |> Some
