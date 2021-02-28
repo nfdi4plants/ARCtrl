@@ -7,7 +7,7 @@ module AnnotationTable =
     
 
 
-    let splitBySamples (sheetName:string) (headers : seq<string>) =
+    let splitBySamples (headers : seq<string>) =
         let isSample header = AnnotationColumn.tryParseSampleName header |> Option.isSome 
         let isSource header = AnnotationColumn.tryParseSourceName header |> Option.isSome 
         
@@ -19,27 +19,27 @@ module AnnotationTable =
     let splitByNamedProtocols (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
         let isSample (header:string) = header.Contains "Sample" || header.Contains "Source"
     
-        let rec loop (protocolOverlaps : (Protocol option * seq<string>) list) (namedProtocols : (Protocol * Set<string>) list) (remainingHeaders : Set<string>) =
+        let rec loop (protocolOverlaps : (Protocol * seq<string>) list) (namedProtocols : (Protocol * Set<string>) list) (remainingHeaders : Set<string>) =
             match namedProtocols with
             | _ when remainingHeaders.IsEmpty -> 
                 protocolOverlaps
             | (p,hs)::l ->
                 if Set.isSubset hs remainingHeaders then
-                    loop ((Some p,Set.toSeq hs)::protocolOverlaps) l (Set.difference remainingHeaders hs)
+                    loop ((p,Set.toSeq hs)::protocolOverlaps) l (Set.difference remainingHeaders hs)
                 else 
                     loop protocolOverlaps l remainingHeaders
             | [] ->
-                (None ,remainingHeaders |> Set.toSeq)::protocolOverlaps
+                (Protocol.empty ,remainingHeaders |> Set.toSeq)::protocolOverlaps
         
         let sampleColumns,otherColumns = headers |> Seq.filter (isSample) |> Seq.toList,headers |> Seq.filter (isSample>>not)
     
         let protocolOverlaps = loop [] (namedProtocols |> Seq.map (fun (p,hs) -> p,hs |> Set.ofSeq) |> List.ofSeq) (otherColumns |> Set.ofSeq)
         
         match sampleColumns with
-        | [] -> protocolOverlaps
-        | [s] -> protocolOverlaps |> List.map (fun (p,hs) -> p,Seq.append [s] hs)
-        | [s1;s2] -> protocolOverlaps |> List.map (fun (p,hs) -> p,Seq.append (Seq.append [s1] hs) [s2])
-        | s -> protocolOverlaps |> List.map (fun (p,hs) -> p,Seq.append hs s)
+        | [] ->         protocolOverlaps |> Seq.ofList
+        | [s] ->        protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append [s] hs)
+        | [s1;s2] ->    protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append (Seq.append [s1] hs) [s2])
+        | s ->          protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append hs s)
 
     let indexProtocolsBySheetName (sheetName:string) (protocols : (Protocol * seq<string>) seq) =
         let unnamedProtocolCount = protocols |> Seq.filter (fun (p,_) -> p.Name.IsNone) |> Seq.length
@@ -59,7 +59,7 @@ module AnnotationTable =
                 if p.Name.IsNone then
                     let name = sprintf "%s_%i" sheetName i
                     i <- i + 1
-                    {p with Name = Some sheetName},hs
+                    {p with Name = Some name},hs
                 else p,hs
             )
 
@@ -162,6 +162,48 @@ module AnnotationTable =
                         protocol.Value.Name |> Option.map (fun s -> sprintf "%s_%i" s i)
                 }
             )
+        )
+
+    let sampleOfSource (s:Source) =
+        Sample.create s.ID s.Name s.Characteristics None None
+
+    let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
+        let samples = 
+            referenceProcesses
+            |> Seq.collect (fun p -> 
+                printfn "%O" p.Name 
+                let inputs =
+                    p.Inputs 
+                    |> Option.defaultValue [] 
+                    |> Seq.choose (function | ProcessInput.Sample x -> Some(x.Name, x) | _ -> None)
+                let outputs =
+                    p.Outputs 
+                    |> Option.defaultValue [] 
+                    |> Seq.choose (function | ProcessOutput.Sample x -> Some(x.Name, x) | _ -> None)
+                Seq.append inputs outputs
+                )
+            |> Seq.filter (fun (name,s) -> name <> None && name <> (Some ""))
+            |> Seq.groupBy fst
+            |> Seq.map (fun (name,s) -> name, s |> Seq.map snd |> Seq.reduce API.Update.UpdateByExisting.updateRecordType)
+            |> Map.ofSeq
+    
+        let updateInput (i:ProcessInput) =
+            match i with 
+            | ProcessInput.Source x ->      match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample (API.Update.UpdateByExisting.updateRecordType (sampleOfSource x) sample) | None -> i
+            | ProcessInput.Data x ->        match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample sample | None -> i
+            | ProcessInput.Sample x ->      match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample (API.Update.UpdateByExisting.updateRecordType x sample) | None -> i
+            | ProcessInput.Material x ->    match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample sample | None -> i
+        let updateOutput (o:ProcessOutput) =                         
+            match o with                                             
+            | ProcessOutput.Data x ->       match Map.tryFind x.Name samples with   | Some sample -> ProcessOutput.Sample sample | None -> o
+            | ProcessOutput.Sample x ->     match Map.tryFind x.Name samples with   | Some sample -> ProcessOutput.Sample (API.Update.UpdateByExisting.updateRecordType x sample) | None -> o
+            | ProcessOutput.Material x ->   match Map.tryFind x.Name samples with   | Some sample -> ProcessOutput.Sample sample | None -> o
+        processes
+        |> Seq.map (fun p -> 
+           {p with
+                    Inputs = p.Inputs |> Option.map (List.map updateInput)
+                    Outputs = p.Outputs |> Option.map (List.map updateOutput)
+           }
         )
     
     

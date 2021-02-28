@@ -8,25 +8,25 @@ open FSharpSpreadsheetML
 open FSharpSpreadsheetML.Table
 open DocumentFormat.OpenXml.Spreadsheet
 
-module private Table = 
-    /// Reads a complete table. Values are stored sparsely in a dictionary, with the key being a column header and row index tuple
-    let toSparseValueMatrix (sst:SharedStringTable Option) sheetData (table:Table) =
-        let area = getArea table
-        let dictionary = System.Collections.Generic.Dictionary<string*int,string>()
-        [Area.leftBoundary area .. Area.rightBoundary area]
-        |> List.iter (fun c ->
-            let upperBoundary = Area.upperBoundary area
-            let lowerBoundary = Area.lowerBoundary area
-            let header = SheetData.tryGetCellValueAt sst upperBoundary c sheetData |> Option.get
-            List.init (lowerBoundary - upperBoundary |> int) (fun i ->
-                let r = uint i + upperBoundary + 1u
-                match SheetData.tryGetCellValueAt sst r c sheetData with
-                | Some v -> dictionary.Add((header,i),v)
-                | None -> ()                              
-            )
-            |> ignore
-        )
-        dictionary
+//module private Table = 
+//    /// Reads a complete table. Values are stored sparsely in a dictionary, with the key being a column header and row index tuple
+//    let toSparseValueMatrix (sst:SharedStringTable Option) sheetData (table:Table) =
+//        let area = getArea table
+//        let dictionary = System.Collections.Generic.Dictionary<string*int,string>()
+//        [Area.leftBoundary area .. Area.rightBoundary area]
+//        |> List.iter (fun c ->
+//            let upperBoundary = Area.upperBoundary area
+//            let lowerBoundary = Area.lowerBoundary area
+//            let header = SheetData.tryGetCellValueAt sst upperBoundary c sheetData |> Option.get
+//            List.init (lowerBoundary - upperBoundary |> int) (fun i ->
+//                let r = uint i + upperBoundary + 1u
+//                match SheetData.tryGetCellValueAt sst r c sheetData with
+//                | Some v -> dictionary.Add((header,i),v)
+//                | None -> ()                              
+//            )
+//            |> ignore
+//        )
+//        dictionary
 
 module AssayFile =
 
@@ -62,17 +62,21 @@ module AssayFile =
                 |> Sheet.Sheets.getSheets
                 |> Seq.map Sheet.getName
         
+            let namedProtocols = []
+
             let characteristics,factors,protocols,processes =
                 sheetNames
-                |> Seq.collect (fun sheetname ->
-                    match Spreadsheet.tryGetWorksheetPartBySheetName sheetname doc with
+                |> Seq.collect (fun sheetName ->
+                    match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Some wsp ->
                         match Table.tryGetByNameBy (fun s -> s.Contains "annotationTable") wsp with
                         | Some table -> 
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table
                             let m = Table.toSparseValueMatrix sst sheet table
-                            AnnotationTable.splitIntoProtocols sheetname [] headers
+                            AnnotationTable.splitBySamples headers
+                            |> Seq.collect (AnnotationTable.splitByNamedProtocols namedProtocols)
+                            |> AnnotationTable.indexProtocolsBySheetName sheetName
                             |> Seq.map (fun (protocolMetaData,headers) ->
                                 let characteristic,factors,protocol,processGetter = 
                                     AnnotationNode.splitIntoNodes headers
@@ -95,8 +99,11 @@ module AssayFile =
                     Seq.append protocols' (Seq.singleton protocol),
                     Seq.append processes' processes
                 ) (List.empty,List.empty,Seq.empty,Seq.empty)
+
+            let processes = AnnotationTable.updateSamplesByReference processes processes
             
             let assay = assayMetaData |> Option.defaultValue Assay.empty
+            
             factors,
             protocols |> Seq.toList,
             contacts,
