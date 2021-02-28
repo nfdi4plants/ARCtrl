@@ -4,11 +4,22 @@ open ISADotNet
 open ISADotNet.XLSX
 open AnnotationColumn
 
+/// Functions for parsing nodes and node values of an annotation table
+///
+/// The distinction between columns and nodes is made, as some columns are just used to give additional information for other columns. These columns are grouped together as one node
+/// e.g a "Term Source REF" column after a "Parameter" Column adds info to the Parameter Column
+///
+/// On the other hand, some colums are stand alone nodes, e.g. "Sample Name"
 module AnnotationNode = 
     
     type NodeHeader = ColumnHeader seq
 
-    /// Splits the headers of an annotation table into 
+    /// Splits the headers of an annotation table into nodes
+    ///
+    /// The distinction between columns and nodes is made, as some columns are just used to give additional information for other columns. These columns are grouped together as one node
+    /// e.g a "Term Source REF" column after a "Parameter" Column adds info to the Parameter Column
+    ///
+    /// On the other hand, some colums are stand alone nodes, e.g. "Sample Name"
     let splitIntoNodes (headers : seq<string>) =
         headers
         |> Seq.groupWhen false (fun header -> 
@@ -19,6 +30,7 @@ module AnnotationNode =
             | _ -> true
         )
 
+    /// If the headers of a node depict a unit, returns a function for parsing the values of the matrix to this unit
     let tryGetUnitGetterFunction (headers:string seq) =
 
         Seq.tryPick tryParseUnitHeader headers
@@ -52,6 +64,7 @@ module AnnotationNode =
                     None
         )
     
+    /// If the headers of a node depict a parameter, returns the parameter and a function for parsing the values of the matrix to the values of this parameter
     let tryGetParameterGetterFunction (headers:string seq) =
         Seq.tryPick tryParseParameterHeader headers
         |> Option.map (fun h -> 
@@ -102,6 +115,7 @@ module AnnotationNode =
                     (unitGetter |> Option.map (fun f -> f matrix i))
         )
     
+    /// If the headers of a node depict a factor, returns the factor and a function for parsing the values of the matrix to the values of this factor
     let tryGetFactorGetterFunction (headers:string seq) =
         Seq.tryPick tryParseFactorHeader headers
         |> Option.map (fun h -> 
@@ -155,6 +169,7 @@ module AnnotationNode =
                     (unitGetter |> Option.map (fun f -> f matrix i))
         )
 
+    /// If the headers of a node depict a characteristic, returns the characteristic and a function for parsing the values of the matrix to the values of this characteristic
     let tryGetCharacteristicGetterFunction (headers:string seq) =
         Seq.tryPick tryParseCharacteristicsHeader headers
         |> Option.map (fun h -> 
@@ -206,6 +221,7 @@ module AnnotationNode =
                     (unitGetter |> Option.map (fun f -> f matrix i))
         )
 
+    /// If the headers of a node depict a sample name, returns a function for parsing the values of the matrix to the sample names
     let tryGetSampleNameGetter (headers:string seq) =
         Seq.tryPick tryParseSampleName headers
         |> Option.map (fun h -> 
@@ -213,6 +229,7 @@ module AnnotationNode =
                 Dictionary.tryGetValue (h.HeaderString,i) matrix
         )
 
+    /// If the headers of a node depict a source name, returns a function for parsing the values of the matrix to the source names
     let tryGetSourceNameGetter (headers:string seq) =
         Seq.tryPick tryParseSourceName headers
         |> Option.map (fun h -> 

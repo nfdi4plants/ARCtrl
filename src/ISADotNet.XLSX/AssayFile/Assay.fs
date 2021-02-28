@@ -4,30 +4,13 @@ open FSharpSpreadsheetML
 
 open ISADotNet
 
-open FSharpSpreadsheetML
-open FSharpSpreadsheetML.Table
-open DocumentFormat.OpenXml.Spreadsheet
-
-//module private Table = 
-//    /// Reads a complete table. Values are stored sparsely in a dictionary, with the key being a column header and row index tuple
-//    let toSparseValueMatrix (sst:SharedStringTable Option) sheetData (table:Table) =
-//        let area = getArea table
-//        let dictionary = System.Collections.Generic.Dictionary<string*int,string>()
-//        [Area.leftBoundary area .. Area.rightBoundary area]
-//        |> List.iter (fun c ->
-//            let upperBoundary = Area.upperBoundary area
-//            let lowerBoundary = Area.lowerBoundary area
-//            let header = SheetData.tryGetCellValueAt sst upperBoundary c sheetData |> Option.get
-//            List.init (lowerBoundary - upperBoundary |> int) (fun i ->
-//                let r = uint i + upperBoundary + 1u
-//                match SheetData.tryGetCellValueAt sst r c sheetData with
-//                | Some v -> dictionary.Add((header,i),v)
-//                | None -> ()                              
-//            )
-//            |> ignore
-//        )
-//        dictionary
-
+/// Functions for parsing an ISAXLSX Assay File
+///
+/// This is based on the ISA.Tab Format: https://isa-specs.readthedocs.io/en/latest/isatab.html#assay-table-file
+///
+/// But with the table being modified according to the SWATE tool: https://github.com/nfdi4plants/Swate
+///
+/// Additionally, the file can contain several sheets containing parameter tables and a sheet containing additional assay metadata
 module AssayFile =
 
     /// Create a new ISADotNet.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
@@ -36,6 +19,7 @@ module AssayFile =
         |> MetaData.init metadataSheetName 
         |> Spreadsheet.close
 
+    /// Parses the assay file
     let fromFile (path:string) = 
 
         let doc = Spreadsheet.fromFile path false

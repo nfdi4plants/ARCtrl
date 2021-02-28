@@ -3,10 +3,10 @@
 open ISADotNet.XLSX
 open ISADotNet
 
+/// Functions for parsing an annotation table to the described processes
 module AnnotationTable = 
     
-
-
+    /// Splits the headers of an annotation table into parts, so that each part has at most one input and one output column (Source Name, Sample Name)
     let splitBySamples (headers : seq<string>) =
         let isSample header = AnnotationColumn.tryParseSampleName header |> Option.isSome 
         let isSource header = AnnotationColumn.tryParseSourceName header |> Option.isSome 
@@ -16,6 +16,7 @@ module AnnotationTable =
         | 0,2 when Seq.head headers |> isSample && Seq.last headers |> isSample -> headers |> Seq.singleton
         | _ -> Seq.groupWhen false (fun header -> isSample header || isSource header) headers
 
+    /// Splits the parts into protocols according to the headers given together with the named protocols. Assins the input and output column to each resulting protocol
     let splitByNamedProtocols (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
         let isSample (header:string) = header.Contains "Sample" || header.Contains "Source"
     
@@ -41,6 +42,7 @@ module AnnotationTable =
         | [s1;s2] ->    protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append (Seq.append [s1] hs) [s2])
         | s ->          protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append hs s)
 
+    /// Name unnamed protocols with the given sheetName. If there is more than one unnamed protocol, additionally add an index
     let indexProtocolsBySheetName (sheetName:string) (protocols : (Protocol * seq<string>) seq) =
         let unnamedProtocolCount = protocols |> Seq.filter (fun (p,_) -> p.Name.IsNone) |> Seq.length
         match unnamedProtocolCount with
@@ -63,6 +65,7 @@ module AnnotationTable =
                 else p,hs
             )
 
+    /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
     let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
     
         let characteristics,characteristicValueGetters =
@@ -140,6 +143,7 @@ module AnnotationTable =
                 (outputGetter matrix i |> List.singleton |> Some)
                 None
 
+    /// Merges processes with the same parameter values, grouping the input and output files
     let mergeIdenticalProcesses (processes : seq<Process>) =
         processes
         |> Seq.groupBy (fun p -> p.ExecutesProtocol,p.ParameterValues)
@@ -152,6 +156,7 @@ module AnnotationTable =
             )
         )
 
+    /// Name processes by the protocol they execute. If more than one process adds the same protocol, additionally add an index
     let indexRelatedProcessesByProtocolName (processes : seq<Process>) =
         processes
         |> Seq.groupBy (fun p -> p.ExecutesProtocol)
@@ -164,9 +169,13 @@ module AnnotationTable =
             )
         )
 
+    /// Create a sample from a source
     let sampleOfSource (s:Source) =
         Sample.create s.ID s.Name s.Characteristics None None
 
+    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
+    ///
+    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
     let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
         let samples = 
             referenceProcesses

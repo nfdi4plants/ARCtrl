@@ -5,12 +5,13 @@ open FSharpSpreadsheetML
 open ISADotNet
 open ISADotNet.XLSX
 
+/// Functions for reading and writing the additional information stored in the assay metadata sheet
 module MetaData =
 
     let assaysLabel = "ASSAY METADATA"
     let contactsLabel = "ASSAY PERFORMERS"
 
-    /// Map Assay Metadata to excel rows
+    /// Write Assay Metadata to excel rows
     let toRows (assay:Assay) (contacts : Person list) =
         seq {          
 
@@ -22,6 +23,7 @@ module MetaData =
         }
         |> Seq.mapi (fun i row -> Row.updateRowIndex (i+1 |> uint) row)
 
+    /// Read Assay Metadata from excel rows
     let fromRows (rows: seq<DocumentFormat.OpenXml.Spreadsheet.Row>) =
         let en = rows.GetEnumerator()
         let rec loop lastLine assays contacts lineNumber =

@@ -5,9 +5,10 @@ open ISADotNet
 open ISADotNet.XLSX
 open System.Text.RegularExpressions
 
-/// Functions for 
+/// Functions for parsing single column headers of an annotation table
 module AnnotationColumn =
 
+    /// Typed depiction of a Swate Header: Kind [TermName] (#Number, #tOntology)
     type ColumnHeader =
         {
             HeaderString : string
@@ -16,6 +17,7 @@ module AnnotationColumn =
             Number : int Option
         }
 
+        /// Creater helper function 
         static member create headerString kind term number =
             {
                 HeaderString = headerString
@@ -24,6 +26,7 @@ module AnnotationColumn =
                 Number = number       
             }
 
+        /// Parses a string to a column header
         static member fromStringHeader header =
                   
             let namePattern = @"(?<= \[).*(?=\])"
@@ -32,6 +35,8 @@ module AnnotationColumn =
 
             let nameRegex = Regex.Match(header,namePattern)
             let kindRegex = Regex.Match(header,@".*(?= \(#.*\))")
+
+            // Parsing a header of shape: Kind [TermName] (#Number, #tOntology)
             if nameRegex.Success then
                 let kind = Regex.Match(header,@".*(?= \[)")
                 let ontologySourceRegex = Regex.Match(header,ontologySourcePattern)
@@ -43,15 +48,19 @@ module AnnotationColumn =
                         |> fun o -> o.[0], o.[1]
                     else "", ""
                 ColumnHeader.create header kind.Value (Some (OntologyAnnotation.fromString nameRegex.Value termAccession termSource)) number
+
+            // Parsing a header of shape: Kind (#Number)
             elif kindRegex.Success then
                 let kind = kindRegex.Value
                 let numberRegex = Regex.Match(header,numberPattern)
                 let number = if numberRegex.Success then Some (int numberRegex.Value) else None
                 ColumnHeader.create header kind None number
+
+            // Parsing a header of shape: Kind
             else
                 ColumnHeader.create header header None None
         
-
+    /// If both options have a value, updates the fields of the first ontology with the fields of the second ontology
     let mergeOntology (termSourceHeaderOntology : OntologyAnnotation Option) (termAccessionHeaderOntology : OntologyAnnotation Option) =
         match termSourceHeaderOntology, termAccessionHeaderOntology with
         | Some oa1, Some oa2 -> API.Update.UpdateAll.updateRecordType oa1 oa2 |> Some
@@ -59,7 +68,7 @@ module AnnotationColumn =
         | None, Some oa -> Some oa
         | None, None -> None
 
-    
+    /// Parses to ColumnHeader, if the given header describes a Term Source Reference
     let tryParseTermSourceReferenceHeader (termHeader:ColumnHeader) (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Term Source REF" && h.Number = termHeader.Number -> 
@@ -69,6 +78,7 @@ module AnnotationColumn =
             | _ -> None
         | _ -> None
     
+    /// Parses to ColumnHeader, if the given header describes a Term Accession Number
     let tryParseTermAccessionNumberHeader (termHeader:ColumnHeader) (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Term Accession Number"  && h.Number = termHeader.Number -> 
@@ -78,41 +88,50 @@ module AnnotationColumn =
             | _ -> None
         | _ -> None
     
+    /// Parses to ColumnHeader, if the given header describes a Parameter Value
     let tryParseParameterHeader (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Parameter" || h.Kind = "Parameter Value" ->
             Some h
         | _ -> None
     
+    /// Parses to ColumnHeader, if the given header describes a Factor Value
     let tryParseFactorHeader (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Factor" || h.Kind = "Factor Value" ->
             Some h
         | _ -> None
 
+    /// Parses to ColumnHeader, if the given header describes a Characteristics Value
     let tryParseCharacteristicsHeader (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Characteristics" || h.Kind = "Characteristics Value" ->
             Some h
         | _ -> None
 
+    /// Parses to ColumnHeader, if the given header describes a Unit of measurement
     let tryParseUnitHeader (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Unit" ->
             Some h
         | _ -> None   
     
+    /// Parses to ColumnHeader, if the given header describes a sample name
     let tryParseSampleName (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Sample Name" ->
             Some h
         | _ -> None
 
+    /// Parses to ColumnHeader, if the given header describes source name
     let tryParseSourceName (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Source Name" ->
             Some h
         | _ -> None
 
+    /// Returns true, if the given header describes a sample name
     let isSample header = tryParseSampleName header |> Option.isSome 
+
+    /// Returns true, if the given header describes a source name
     let isSource header = tryParseSourceName header |> Option.isSome 
