@@ -24,6 +24,7 @@
     <Compile Include="AssayFile\AnnotationNode.fs" />
     <Compile Include="AssayFile\AnnotationTable.fs" />
     <Compile Include="AssayFile\MetaData.fs" />
+    <Compile Include="AssayFile\SwateTable.fs" />
     <Compile Include="AssayFile\Assay.fs" />
   </ItemGroup>
 

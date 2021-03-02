@@ -11,16 +11,16 @@ open ISADotNet.XLSX
 open ISADotNet.XLSX.AssayFile
 
 [<Tests>]
-let testSwateHeaderFunctions = 
+let testColumnHeaderFunctions = 
 
-    testList "SwateHeaderFunctionTests" [
+    testList "ColumnHeaderFunctionTests" [
         testCase "RawKindTest" (fun () ->
 
             let headerString = "RawHeader"
 
-            let header = AnnotationColumn.SwateHeader.fromStringHeader headerString
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testHeader = AnnotationColumn.SwateHeader.create headerString "RawHeader" None None
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "RawHeader" None None
 
             Expect.equal header testHeader "Should have used header string as kind"
         )
@@ -28,9 +28,9 @@ let testSwateHeaderFunctions =
 
             let headerString = "RawHeader (#5)"
 
-            let header = AnnotationColumn.SwateHeader.fromStringHeader headerString
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testHeader = AnnotationColumn.SwateHeader.create headerString "RawHeader" None (Some 5)
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "RawHeader" None (Some 5)
 
             Expect.equal header testHeader "Number was not parsed correctly"
         )
@@ -38,9 +38,9 @@ let testSwateHeaderFunctions =
 
             let headerString = "NamedHeader [Name]"
 
-            let header = AnnotationColumn.SwateHeader.fromStringHeader headerString
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testHeader = AnnotationColumn.SwateHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Name" "" "" |> Some) None
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Name" "" "" |> Some) None
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )
@@ -48,9 +48,9 @@ let testSwateHeaderFunctions =
 
             let headerString = "NamedHeader [Term] (#3; #tSource:Accession)"
 
-            let header = AnnotationColumn.SwateHeader.fromStringHeader headerString
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testHeader = AnnotationColumn.SwateHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Term" "Accession" "Source" |> Some) (Some 3)
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Term" "Accession" "Source" |> Some) (Some 3)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )

@@ -10,7 +10,7 @@ let main argv =
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testSparseMatrix |> ignore
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testInvestigationFile |> ignore
 
-    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testSwateHeaderFunctions |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testColumnHeaderFunctions |> ignore
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testMetaDataFunctions |> ignore
 
     // Json IO Tests
