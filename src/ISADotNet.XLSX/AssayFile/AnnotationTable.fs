@@ -14,12 +14,12 @@ module AnnotationTable =
         match Seq.filter isSource headers |> Seq.length, Seq.filter isSample headers |> Seq.length with
         | 1,1  | 0,1 -> headers |> Seq.singleton
         | 0,2 when Seq.head headers |> isSample && Seq.last headers |> isSample -> headers |> Seq.singleton
-        | _ -> Seq.groupWhen false (fun header -> isSample header || isSource header) headers
+        | _ -> Seq.groupWhen true (fun header -> isSample header || isSource header) headers
 
     /// Splits the parts into protocols according to the headers given together with the named protocols. Assins the input and output column to each resulting protocol
     let splitByNamedProtocols (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
-        let isSample (header:string) = header.Contains "Sample" || header.Contains "Source"
-    
+        let isSample (header:string) = AnnotationColumn.isSample header || AnnotationColumn.isSource header
+
         let rec loop (protocolOverlaps : (Protocol * seq<string>) list) (namedProtocols : (Protocol * Set<string>) list) (remainingHeaders : Set<string>) =
             match namedProtocols with
             | _ when remainingHeaders.IsEmpty -> 
@@ -167,7 +167,7 @@ module AnnotationTable =
                         protocol.Value.Name |> Option.map (fun s -> sprintf "%s_%i" s i)
                 }
             )
-        )
+        )    
 
     /// Create a sample from a source
     let sampleOfSource (s:Source) =
@@ -214,5 +214,4 @@ module AnnotationTable =
                     Outputs = p.Outputs |> Option.map (List.map updateOutput)
            }
         )
-    
     

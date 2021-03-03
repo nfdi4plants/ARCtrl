@@ -1,5 +1,6 @@
 ﻿namespace ISADotNet.XLSX.AssayFile
 
+open System.Collections.Generic
 open FSharpSpreadsheetML
 
 open ISADotNet
@@ -19,6 +20,21 @@ module AssayFile =
         |> MetaData.init metadataSheetName 
         |> Spreadsheet.close
 
+    let fromSparseMatrix (processNameRoot:string) namedProtocols matrixHeaders (matrixLength:int) (sparseMatrix : Dictionary<string*int,string>) = 
+        AnnotationTable.splitBySamples matrixHeaders
+        |> Seq.collect (AnnotationTable.splitByNamedProtocols namedProtocols)
+        |> AnnotationTable.indexProtocolsBySheetName processNameRoot
+        |> Seq.map (fun (protocolMetaData,headers) ->
+            let characteristic,factors,protocol,processGetter = 
+                AnnotationNode.splitIntoNodes headers
+                |> AnnotationTable.getProcessGetter protocolMetaData
+            characteristic,factors,protocol,
+            
+            Seq.init matrixLength (processGetter sparseMatrix)
+            |> AnnotationTable.mergeIdenticalProcesses
+            |> AnnotationTable.indexRelatedProcessesByProtocolName
+        )
+
     /// Parses the assay file
     let fromFile (path:string) = 
 
@@ -28,6 +44,7 @@ module AssayFile =
 
         try
 
+            // Get the metadata from the metadata sheet
             let assayMetaData,contacts = 
                 Spreadsheet.tryGetSheetBySheetName "Investigation" doc
                 |> Option.map (fun sheet -> 
@@ -38,7 +55,13 @@ module AssayFile =
                 )
                 |> Option.defaultValue (None,[])
                 
-
+            // Get the named protocol templates from the custom xml
+            let protocolTemplates = 
+                Spreadsheet.getWorkbookPart doc
+                |> SwateTable.readSwateTables
+                |> Seq.choose (fun st -> st.ProtocolGroup |> Option.map (fun ps -> st.Worksheet,ps.Protocols))
+                |> Map.ofSeq
+           
             let sheetNames = 
                 Spreadsheet.getWorkbookPart doc
                 |> Workbook.get
@@ -46,34 +69,33 @@ module AssayFile =
                 |> Sheet.Sheets.getSheets
                 |> Seq.map Sheet.getName
         
-            let namedProtocols = []
-
             let characteristics,factors,protocols,processes =
                 sheetNames
-                |> Seq.collect (fun sheetName ->
+                |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Some wsp ->
                         match Table.tryGetByNameBy (fun s -> s.Contains "annotationTable") wsp with
                         | Some table -> 
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table
+                            
                             let m = Table.toSparseValueMatrix sst sheet table
-                            AnnotationTable.splitBySamples headers
-                            |> Seq.collect (AnnotationTable.splitByNamedProtocols namedProtocols)
-                            |> AnnotationTable.indexProtocolsBySheetName sheetName
-                            |> Seq.map (fun (protocolMetaData,headers) ->
-                                let characteristic,factors,protocol,processGetter = 
-                                    AnnotationNode.splitIntoNodes headers
-                                    |> AnnotationTable.getProcessGetter protocolMetaData
-                                characteristic,factors,protocol,
+                            let length = 
                                 Table.getArea table
                                 |> fun area -> Table.Area.lowerBoundary area - Table.Area.upperBoundary area |> int
-                                |> fun length -> 
-                                    Seq.init length (processGetter m)
-                                    |> AnnotationTable.mergeIdenticalProcesses
-                                    |> AnnotationTable.indexRelatedProcessesByProtocolName
+
+                            let namedProtocols = 
+                                Map.tryFind sheetName protocolTemplates
+                                |> Option.defaultValue Seq.empty
+                                |> Seq.map (fun p -> 
+                                    Protocol.create None (Some p.Id) None None None None None None None,
+                                    SwateTable.selectProtocolheaders p headers
+                                    )
+                                |> Seq.toList
+
+
+                            fromSparseMatrix sheetName namedProtocols headers length m  
                     
-                            )
                         | None -> Seq.empty
                     | None -> Seq.empty                
                 )
