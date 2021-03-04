@@ -54,7 +54,7 @@ module AssayFile =
                     |> MetaData.fromRows
                 )
                 |> Option.defaultValue (None,[])
-                
+            
             // Get the named protocol templates from the custom xml
             let protocolTemplates = 
                 Spreadsheet.getWorkbookPart doc
@@ -78,21 +78,21 @@ module AssayFile =
                         | Some table -> 
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table
-                            
                             let m = Table.toSparseValueMatrix sst sheet table
                             let length = 
                                 Table.getArea table
                                 |> fun area -> Table.Area.lowerBoundary area - Table.Area.upperBoundary area |> int
-
                             let namedProtocols = 
                                 Map.tryFind sheetName protocolTemplates
                                 |> Option.defaultValue Seq.empty
-                                |> Seq.map (fun p -> 
-                                    Protocol.create None (Some p.Id) None None None None None None None,
-                                    SwateTable.selectProtocolheaders p headers
-                                    )
+                                |> Seq.choose (fun p -> 
+                                    SwateTable.trySelectProtocolheaders p headers
+                                    |> Option.map (fun nps -> 
+                                        Protocol.create None (Some p.Id) None None None None None None None,
+                                        nps
+                                    )                                                                       
+                                )
                                 |> Seq.toList
-
 
                             fromSparseMatrix sheetName namedProtocols headers length m  
                     

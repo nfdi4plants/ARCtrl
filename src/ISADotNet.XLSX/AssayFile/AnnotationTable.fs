@@ -18,6 +18,9 @@ module AnnotationTable =
 
     /// Splits the parts into protocols according to the headers given together with the named protocols. Assins the input and output column to each resulting protocol
     let splitByNamedProtocols (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
+        let sortAgainst =
+            let m = headers |> Seq.mapi (fun i x -> x,i) |> Map.ofSeq
+            fun hs -> hs |> Seq.sortBy (fun v -> m.[v])
         let isSample (header:string) = AnnotationColumn.isSample header || AnnotationColumn.isSource header
 
         let rec loop (protocolOverlaps : (Protocol * seq<string>) list) (namedProtocols : (Protocol * Set<string>) list) (remainingHeaders : Set<string>) =
@@ -34,10 +37,12 @@ module AnnotationTable =
         
         let sampleColumns,otherColumns = headers |> Seq.filter (isSample) |> Seq.toList,headers |> Seq.filter (isSample>>not)
     
-        let protocolOverlaps = loop [] (namedProtocols |> Seq.map (fun (p,hs) -> p,hs |> Set.ofSeq) |> List.ofSeq) (otherColumns |> Set.ofSeq)
+        let protocolOverlaps = 
+            loop [] (namedProtocols |> Seq.map (fun (p,hs) -> p,hs |> Set.ofSeq) |> List.ofSeq) (otherColumns |> Set.ofSeq)
+            |> Seq.map (fun (p,hs) -> p, sortAgainst hs)
         
         match sampleColumns with
-        | [] ->         protocolOverlaps |> Seq.ofList
+        | [] ->         protocolOverlaps 
         | [s] ->        protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append [s] hs)
         | [s1;s2] ->    protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append (Seq.append [s1] hs) [s2])
         | s ->          protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append hs s)
@@ -163,7 +168,7 @@ module AnnotationTable =
         |> Seq.collect (fun (protocol,processGroup) ->
             processGroup
             |> Seq.mapi (fun i p -> 
-                {p with Name = 
+                {p with Name =                         
                         protocol.Value.Name |> Option.map (fun s -> sprintf "%s_%i" s i)
                 }
             )

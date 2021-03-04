@@ -27,20 +27,24 @@ module SwateTable =
         
     type Protocol =
         {
-            Id: string
-            ProtocolVersion: string
-            SwateVersion: string
+            Id              : string
+            ProtocolVersion : string
+            SwateVersion    : string
+            TableName       : string
+            WorksheetName   : string
             Blocks: SpannedBuildingBlock seq       
         }
     
-        static member create id protocolVersion swateVersion blocks =
-            {Id = id; ProtocolVersion = protocolVersion; SwateVersion = swateVersion; Blocks = blocks}
+        static member create id protocolVersion swateVersion tableName worksheetName blocks =
+            {Id = id; ProtocolVersion = protocolVersion; SwateVersion = swateVersion; Blocks = blocks; TableName = tableName; WorksheetName = worksheetName}
     
         static member fromXmlElement (element:OpenXmlElement) =
             Protocol.create
                 (element.GetAttribute("Id","").Value)
                 (element.GetAttribute("ProtocolVersion","").Value)
                 (element.GetAttribute("SwateVersion","").Value)
+                (element.GetAttribute("TableName","").Value)
+                (element.GetAttribute("WorksheetName","").Value)
                 (element.Elements() |> Seq.map SpannedBuildingBlock.fromXmlElement)
     
     type ProtocolGroup = 
@@ -132,11 +136,17 @@ module SwateTable =
         else 
             Seq.empty
 
-    let selectProtocolheaders (protocol:Protocol) (headers:seq<string>) =
-        let protocolBlocks =
+    let trySelectProtocolheaders (protocol:Protocol) (headers:seq<string>) =
+        let nodes = AnnotationNode.splitIntoNodes headers
+        let blocks = protocol.Blocks |> Seq.map (fun b -> b.Name) |> Set.ofSeq
+        let blocksMatch =
             protocol.Blocks
-            |> Seq.map (fun b -> b.Name)
-            |> Set.ofSeq
-        AnnotationNode.splitIntoNodes headers
-        |> Seq.filter (Seq.exists protocolBlocks.Contains)
-        |> Seq.concat
+            |> Seq.map (fun b -> Seq.exists (fun n -> Seq.contains b.Name n) nodes)
+            |> Seq.reduce (&&)
+        if blocksMatch then
+            nodes 
+            |> Seq.filter (Seq.exists blocks.Contains)
+            |> Seq.concat
+            |> Some
+        else
+            None

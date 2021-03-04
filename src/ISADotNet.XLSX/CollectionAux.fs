@@ -26,7 +26,6 @@ module internal Seq =
                 if predicate temp then
                     
                     loop (fun y -> 
-                        printfn "if: %O, temp: %O" y temp
                         cont 
                             (   match y with
                                 | h::t when withOverlap -> [temp]::(temp::h)::t
@@ -37,7 +36,6 @@ module internal Seq =
                          )
                 else
                     loop (fun y -> 
-                        printfn "else: %O, temp: %O" y temp
                         cont 
                             (   match y with
                                 | h::t -> (temp::h)::t
