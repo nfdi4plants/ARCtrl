@@ -161,7 +161,7 @@ module AnnotationTable =
             )
         )
 
-    /// Name processes by the protocol they execute. If more than one process adds the same protocol, additionally add an index
+    /// Name processes by the protocol they execute. If more than one process executes the same protocol, additionally add an index
     let indexRelatedProcessesByProtocolName (processes : seq<Process>) =
         processes
         |> Seq.groupBy (fun p -> p.ExecutesProtocol)

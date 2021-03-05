@@ -143,6 +143,117 @@ let testHeaderSplittingFunctions =
     ]
 
 [<Tests>]
+let testProcessComparisonFunctions = 
+
+    let parameters = 
+        [
+        ProtocolParameter.create None (Some (OntologyAnnotation.fromString "Term1" "" ""))
+        ProtocolParameter.create None (Some (OntologyAnnotation.fromString "Term2" "" ""))
+        ]
+
+    let parameterValues1 =
+        [
+            ProcessParameterValue.create (Some parameters.[0]) (Value.fromOptions (Some "Value1") None None) None
+            ProcessParameterValue.create (Some parameters.[1]) (Value.fromOptions (Some "Value2") None None) None
+        ]
+
+    let parameterValues2 = 
+        [
+            ProcessParameterValue.create (Some parameters.[0]) (Value.fromOptions (Some "Value1") None None) None
+            ProcessParameterValue.create (Some parameters.[1]) (Value.fromOptions (Some "Value3") None None) None
+        ]
+
+    let protocol1 = Protocol.create None (Some "Protocol1") None None None None (Some parameters) None None
+    let protocol2 = Protocol.create None (Some "Protocol2") None None None None (Some parameters) None None
+
+    let sample1 = Sample.create None (Some "Sample1") None None None
+    let sample2 = Sample.create None (Some "Sample2") None None None
+    let sample3 = Sample.create None (Some "Sample3") None None None
+    let sample4 = Sample.create None (Some "Sample4") None None None
+
+    let source1 = Source.create None (Some "Source1") None
+    let source2 = Source.create None (Some "Source2") None
+    let source3 = Source.create None (Some "Source3") None
+    let source4 = Source.create None (Some "Source4") None
+
+    testList "ProcessComparisonTests" [
+        testCase "MergeProcesses" (fun () ->
+
+            let process1 = Process.create None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.create None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.create None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.create None (Some "Process4") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+
+            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
+
+            Expect.hasLength mergedProcesses 1 "Should have merged all 4 Processes as they execute with the same params"
+
+            let mergedProcess = Seq.head mergedProcesses
+
+            Expect.isSome mergedProcess.Inputs "Inputs were dropped"
+            Expect.isSome mergedProcess.Outputs "Outputs were dropped"
+
+            Expect.sequenceEqual mergedProcess.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source2;ProcessInput.Source source3;ProcessInput.Source source4] "Inputs were not merged correctly"
+            Expect.sequenceEqual mergedProcess.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample2;ProcessOutput.Sample sample3;ProcessOutput.Sample sample4] "Inputs were not merged correctly"
+        )        
+        testCase "MergeProcessesDifferentParams" (fun () ->
+
+            let process1 = Process.create None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.create None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.create None (Some "Process3") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.create None (Some "Process4") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+
+            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
+
+            Expect.hasLength mergedProcesses 2 "Processes executed with two different parameter values, therefore they should be merged to two different processes"
+
+            let mergedProcess1 = Seq.item 0 mergedProcesses
+            let mergedProcess2 = Seq.item 1 mergedProcesses
+
+            Expect.isSome mergedProcess1.Inputs "Inputs were dropped for mergedProcess1"
+            Expect.isSome mergedProcess1.Outputs "Outputs were dropped for mergedProcess1"
+
+            Expect.sequenceEqual mergedProcess1.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source2] "Inputs were not merged correctly for mergedProcess1"
+            Expect.sequenceEqual mergedProcess1.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample2] "Inputs were not merged correctly for mergedProcess1"
+        
+            Expect.isSome mergedProcess2.Inputs "Inputs were dropped for mergedProcess2"
+            Expect.isSome mergedProcess2.Outputs "Outputs were dropped for mergedProcess2"
+
+            Expect.sequenceEqual mergedProcess2.Inputs.Value [ProcessInput.Source source3;ProcessInput.Source source4] "Inputs were not merged correctly for mergedProcess2"
+            Expect.sequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample3;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
+        
+        )
+        testCase "MergeProcessesDifferentProtocols" (fun () ->
+
+            let process1 = Process.create None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.create None (Some "Process2") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.create None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.create None (Some "Process4") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+
+            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
+
+            Expect.hasLength mergedProcesses 2 "Processes executed with two different protocols, therefore they should be merged to two different processes"
+
+            let mergedProcess1 = Seq.item 0 mergedProcesses
+            let mergedProcess2 = Seq.item 1 mergedProcesses
+
+            Expect.isSome mergedProcess1.Inputs "Inputs were dropped for mergedProcess1"
+            Expect.isSome mergedProcess1.Outputs "Outputs were dropped for mergedProcess1"
+
+            Expect.sequenceEqual mergedProcess1.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source3] "Inputs were not merged correctly for mergedProcess1"
+            Expect.sequenceEqual mergedProcess1.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample3] "Inputs were not merged correctly for mergedProcess1"
+        
+            Expect.isSome mergedProcess2.Inputs "Inputs were dropped for mergedProcess2"
+            Expect.isSome mergedProcess2.Outputs "Outputs were dropped for mergedProcess2"
+
+            Expect.sequenceEqual mergedProcess2.Inputs.Value [ProcessInput.Source source2;ProcessInput.Source source4] "Inputs were not merged correctly for mergedProcess2"
+            Expect.sequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample2;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
+        
+        )
+    ]
+
+
+[<Tests>]
 let testMetaDataFunctions = 
 
     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
