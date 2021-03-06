@@ -105,7 +105,7 @@ module AnnotationNode =
                         (termAccessionGetter matrix i)
                         (termSourceGetter matrix i)
                     
-            let category = mergeOntology category1 category2 |> Option.map (Some >> ProtocolParameter.create None)
+            let category = mergeOntology h.Term category1 |> mergeOntology category2 |> Option.map (Some >> ProtocolParameter.create None)
             
             category,
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
@@ -157,7 +157,7 @@ module AnnotationNode =
                         (termSourceGetter matrix i)
                     
             let factor = 
-                mergeOntology category1 category2 
+                mergeOntology h.Term category1 |> mergeOntology category2
                 |> Option.map (fun oa ->  Factor.create None (oa.Name |> Option.map AnnotationValue.toString) (Some oa) None)
             
             factor,
@@ -186,6 +186,7 @@ module AnnotationNode =
                         | Some v -> Some v
                         | _ -> None 
                 | None -> None, fun _ _ -> None
+
             let category2, termSourceGetter =
                 match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
                 | Some h ->
@@ -210,7 +211,7 @@ module AnnotationNode =
                         (termAccessionGetter matrix i)
                         (termSourceGetter matrix i)
                     
-            let characteristic = mergeOntology category1 category2 |> Option.map (Some >> MaterialAttribute.create None)            
+            let characteristic = mergeOntology h.Term category1 |> mergeOntology category2 |> Option.map (Some >> MaterialAttribute.create None)            
             
             characteristic,
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->

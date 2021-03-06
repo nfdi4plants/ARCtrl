@@ -153,6 +153,17 @@ module ProtocolParameter =
                 sprintf "%s%c%s" sources    separator source
             ) 
 
+module MaterialAttribute =
+
+    /// Create a ISAJson MaterialAttribute from ISATab string entries
+    let fromString (term:string) (accession:string) (source:string) =
+        OntologyAnnotation.fromString term accession source
+        |> Option.fromValueWithDefault OntologyAnnotation.empty
+        |> MaterialAttribute.create None
+
+    /// Get ISATab string entries from an ISAJson MaterialAttribute object
+    let toString (ma : MaterialAttribute) =
+        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
 
 module Value =
 

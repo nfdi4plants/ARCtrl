@@ -7,6 +7,7 @@ open ISADotNet
 open Expecto
 open TestingUtils
 
+open ISADotNet
 open ISADotNet.XLSX
 open ISADotNet.XLSX.AssayFile
 
@@ -143,6 +144,88 @@ let testHeaderSplittingFunctions =
     ]
 
 [<Tests>]
+let testNodeGetterFunctions =
+
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+
+    let assayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTableTestFile.xlsx")
+    
+    let doc = Spreadsheet.fromFile assayFilePath false
+    let sst = Spreadsheet.tryGetSharedStringTable doc
+    let wsp = Spreadsheet.tryGetWorksheetPartBySheetIndex 0u doc |> Option.get
+    let table = Table.tryGetByNameBy (fun s -> s.Contains "annotationTable") wsp |> Option.get
+
+    let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
+        
+    testList "NodGetterTests" [
+        testCase "RetreiveValueFromMatrix" (fun () ->
+            let tryGetValue k (dict:System.Collections.Generic.Dictionary<'K,'V>) = 
+                let b,v = dict.TryGetValue(k)
+                if b then Some v
+                else None
+
+            let v = tryGetValue ("Unit [square centimeter] (#h; #tUO:0000081; #u)",0) m
+
+            Expect.isSome v "Value could not be retrieved from matrix"
+
+            let expectedValue = "square centimeter"
+
+            Expect.equal v.Value expectedValue "Value retrieved from matrix is not correct"
+
+        )
+
+        testCase "GetUnitGetter" (fun () ->
+
+            let headers = ["Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+
+            let unitGetterOption = AnnotationNode.tryGetUnitGetterFunction headers
+
+            Expect.isSome unitGetterOption "Unit Getter was not returned even though headers should have matched"
+
+            let unitGetter = unitGetterOption.Value
+
+            let unit = unitGetter m 0
+
+            let expectedUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" 
+
+            Expect.equal unit expectedUnit "Retrieved Unit is wrong"
+        )
+        testCase "GetUnitGetterWrongHeaders" (fun () ->
+
+            let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+
+            let unitGetterOption = AnnotationNode.tryGetUnitGetterFunction headers
+
+            Expect.isNone unitGetterOption "Unit Getter was returned even though headers should not have matched"
+        )
+        testCase "GetCharacteristicsGetter" (fun () ->
+
+            let headers = ["Characteristics [leaf size]";"Term Source REF [leaf size] (#h; #tTO:0002637)";"Term Accession Number [leaf size] (#h; #tTO:0002637)";"Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+
+            let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetterFunction headers
+
+            Expect.isSome characteristicGetterOption "Characteristic Getter was not returned even though headers should have matched"
+
+            let characteristic,characteristicValue = characteristicGetterOption.Value
+
+            //let unit = unitGetter m 0
+
+            let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "0002637" "TO" 
+
+            Expect.equal characteristic.Value expectedCharacteristic "Retrieved Characteristic is wrong"
+        )
+        testCase "GetCharacteristicsGetterWrongHeaders" (fun () ->
+
+            let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+
+            let unitGetterOption = AnnotationNode.tryGetCharacteristicGetterFunction headers
+
+            Expect.isNone unitGetterOption "Characteristic Getter was returned even though headers should not have matched"
+        )
+    ]
+
+
+[<Tests>]
 let testProcessComparisonFunctions = 
 
     let parameters = 
@@ -250,6 +333,21 @@ let testProcessComparisonFunctions =
             Expect.sequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample2;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
         
         )
+        testCase "IndexIdenticalProcessesByProtocolName" (fun () ->
+
+            let process1 = Process.create None None (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.create None None (Some protocol1) (Some parameterValues2) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.create None None (Some protocol2) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.create None None (Some protocol2) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+
+            let indexedProcesses = AnnotationTable.indexRelatedProcessesByProtocolName [process1;process2;process3;process4]
+
+            let names = indexedProcesses |> Seq.map (fun p -> Option.defaultValue "" p.Name)
+
+            let expectedNames = ["Protocol1_0";"Protocol1_1";"Protocol2_0";"Protocol2_1"]
+
+            Expect.sequenceEqual names expectedNames "Processes were not indexed correctly"
+        )
     ]
 
 
@@ -257,8 +355,7 @@ let testProcessComparisonFunctions =
 let testMetaDataFunctions = 
 
     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referenceAssayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTestFile.xlsx")
+    let referenceAssayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayMetadataTestFile.xlsx")
 
     testList "MetaDataTests" [
         testCase "CanReadMetaData" (fun () ->
