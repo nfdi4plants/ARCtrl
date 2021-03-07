@@ -1,3 +1,10 @@
+### 0.1.1+93e1117 (Released 2021-2-17)
+* Additions:
+    * latest commit #93e1117
+    * [[#93e1117](https://github.com/nfdi4plants/ISADotNet/commit/93e11171fb1ec5030378f9123c3e6d61b530afaa)] add assayFile init function
+    * [[#4c3e434](https://github.com/nfdi4plants/ISADotNet/commit/4c3e4349d8f501138204311fb04d749bdff63b52)] make investigation file prefixes optional
+    * [[#235b714](https://github.com/nfdi4plants/ISADotNet/commit/235b7141dd2f40654a941449a20cbfdd032f471b)] Create README.md
+
 ### 0.1.0+5f34043 (Released 2021-2-8)
 * Additions:
     * latest commit #5f34043

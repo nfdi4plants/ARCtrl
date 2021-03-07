@@ -7,9 +7,10 @@
 
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="CollectionAux.fs" />
+    <Compile Include="Conversions.fs" />
     <Compile Include="InvestigationFile\Comment.fs" />
     <Compile Include="InvestigationFile\SparseMatrix.fs" />
-    <Compile Include="InvestigationFile\Conversions.fs" />
     <Compile Include="InvestigationFile\Contacts.fs" />
     <Compile Include="InvestigationFile\DesignDescriptors.fs" />
     <Compile Include="InvestigationFile\Factors.fs" />
@@ -19,14 +20,24 @@
     <Compile Include="InvestigationFile\Study.fs" />
     <Compile Include="InvestigationFile\OntologySourceReference.fs" />
     <Compile Include="InvestigationFile\Investigation.fs" />
+    <Compile Include="AssayFile\AnnotationColumn.fs" />
+    <Compile Include="AssayFile\AnnotationNode.fs" />
+    <Compile Include="AssayFile\AnnotationTable.fs" />
+    <Compile Include="AssayFile\MetaData.fs" />
+    <Compile Include="AssayFile\SwateTable.fs" />
+    <Compile Include="AssayFile\Assay.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharpSpreadsheetML" Version="0.0.3" />
+    <PackageReference Include="FSharpSpreadsheetML" Version="0.0.4" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ISADotnet\ISADotNet.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.1" />
   </ItemGroup>
   
   <PropertyGroup>

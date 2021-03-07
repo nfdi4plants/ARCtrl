@@ -80,6 +80,20 @@ let testUpdate =
             /// eExisting is not a list and should update by replacing eOld    
             Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateAllAppendLists'"
         )
+
+        testCase "StringType UpdateByExistingAppendLists" (fun () ->
+            let eOld = {StringField = "Hello"}
+            let eExisting = {StringField = "New Hello"}
+            let eEmpty = {StringField = ""}
+            
+            let shouldUpate = UpdateByExistingAppendLists.updateRecordType eOld eExisting
+            let shouldNotUpdate = UpdateByExistingAppendLists.updateRecordType eOld eEmpty
+            
+            /// eExisting is not empty and should update eOld
+            Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateByExistingAppendLists' by not updating old record type."
+            /// eEmpty is empty and should not update eOld
+            Expect.equal shouldNotUpdate eOld "Record Type with string failed with 'UpdateByExistingAppendLists' by updating with new empty record type."
+        )
     
         testCase "IntType UpdateByExisting" (fun () ->
             let eOld = {IntField = 5}
@@ -203,6 +217,23 @@ let testUpdate =
             Expect.sequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
         )
     
+        testCase "SeqType UpdateByExistingAppendLists" (fun () ->
+            let eOld = {
+                StringSeq = seq ["This"; "Is"; "A"; "Test"]
+                StringOptSeq = seq [Some "Input"; None; Some "noNone"]
+            }
+            let eNew = {
+                StringSeq = seq ["A"; "New"; "Varient"]
+                StringOptSeq = seq []
+            }
+    
+            let update = UpdateByExistingAppendLists.updateRecordType eOld eNew
+    
+            /// Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
+            Expect.sequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
+            Expect.sequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
+        )
+
         testCase "RecordTypeType UpdateByExisting" (fun () ->
             let eOld = {
                 StringType = {StringField = "This is a string"} 
@@ -354,6 +385,27 @@ let testUpdate =
             Expect.sequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
             Expect.equal updateEmpty.OptionalList eOld.OptionalList "Optional List was updated with empty value even though \"UpdateAllAppendLists\" option is used"
         )
+
+        testCase "OptionalListType UpdateByExistingAppendLists" (fun () ->
+            let eOld = {
+                OptionalList = Some ["Value"]
+            }
+            let eNew = {
+                OptionalList = Some ["NewValue"]
+            }
+            let eNewEmpty = {
+                OptionalList = None         
+            }
+    
+            let update = UpdateByExistingAppendLists.updateRecordType eOld eNew
+            let updateEmpty = UpdateByExistingAppendLists.updateRecordType eOld eNewEmpty
+            let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
+
+            /// map types will never be checked if they are empty or not, so they will always be replaced
+            Expect.sequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
+            Expect.equal updateEmpty.OptionalList eOld.OptionalList "Optional List was updated with empty value even though \"UpdateByExistingAppendLists\" option is used"
+        )
+
 
         testCase "OptionalRecordTypeType UpdateByExisting" (fun () ->
             let eOld = {

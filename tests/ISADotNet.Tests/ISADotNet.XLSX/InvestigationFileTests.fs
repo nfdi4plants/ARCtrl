@@ -1,4 +1,4 @@
-﻿module ISAXLSXTests
+﻿module ISAXLSXInvestigationTests
 
 open FSharpSpreadsheetML
 open ISADotNet
@@ -290,6 +290,51 @@ let testStringConversions =
                 Expect.isNone pParams "Parsing aggregated string to protocol parameters should have failed because of differing lengths"
                 
             )
+        ]
+        testList "Value" [
+            testCase "ParseOntology"(fun () ->
+
+                let value = Value.fromOptions (Some "Name") (Some "Accession") (Some "Source")
+
+                Expect.isSome value "Should have returned Value but returned None"
+
+                let expectedAnnotationValue = AnnotationValue.Text "Name"
+                let expectedAnnotation = OntologyAnnotation.create None (Some expectedAnnotationValue) (Some "Accession") (Some "Source") None
+                let expectedValue = Value.Ontology expectedAnnotation
+
+                Expect.equal value.Value expectedValue "Value was parsed incorrectly"
+            )
+            testCase "ParseText"(fun () ->
+
+                let value = Value.fromOptions (Some "Name") None None
+
+                Expect.isSome value "Should have returned Value but returned None"
+
+                let expectedValue = Value.Name "Name"
+
+                Expect.equal value.Value expectedValue "Value was parsed incorrectly"
+            )
+            testCase "ParseInt"(fun () ->
+
+                let value = Value.fromOptions (Some "5") None None
+
+                Expect.isSome value "Should have returned Value but returned None"
+
+                let expectedValue = Value.Int 5
+
+                Expect.equal value.Value expectedValue "Value was parsed incorrectly"
+            )
+            testCase "ParseFloat"(fun () ->
+
+                let value = Value.fromOptions (Some "2.3") None None
+
+                Expect.isSome value "Should have returned Value but returned None"
+
+                let expectedValue = Value.Float 2.3
+
+                Expect.equal value.Value expectedValue "Value was parsed incorrectly"
+            )
+
         ]
     ]
     |> testSequenced

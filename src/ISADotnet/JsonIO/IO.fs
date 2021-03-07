@@ -5,6 +5,21 @@ open System.Text.Json
 open System.IO
 open FSharp.SystemTextJson
 
+module OntologyAnnotation = 
+
+    let fromString (s:string) = 
+        JsonSerializer.Deserialize<OntologyAnnotation>(s,JsonExtensions.options)
+
+    let toString (oa:OntologyAnnotation) = 
+        JsonSerializer.Serialize<OntologyAnnotation>(oa,JsonExtensions.options)
+
+    let fromFile (path : string) = 
+        File.ReadAllText path 
+        |> fromString
+
+    let toFile (path : string) (oa:OntologyAnnotation) = 
+        File.WriteAllText(path,toString oa)
+
 module Protocol = 
 
     let fromString (s:string) = 

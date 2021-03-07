@@ -11,7 +11,8 @@
     <Compile Include="ISADotnet\JsonExtensionsTests.fs" />
     <Compile Include="ISADotnet\ISAJsonTests.fs" />
     <Compile Include="ISADotnet\APITests.fs" />
-    <Compile Include="ISADotnet\ISAXLSXTests.fs" />
+    <Compile Include="ISADotNet.XLSX\InvestigationFileTests.fs" />
+    <Compile Include="ISADotNet.XLSX\AssayFileTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
