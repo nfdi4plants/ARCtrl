@@ -157,7 +157,7 @@ let testNodeGetterFunctions =
 
     let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
         
-    testList "NodGetterTests" [
+    testList "NodeGetterTests" [
         testCase "RetreiveValueFromMatrix" (fun () ->
             let tryGetValue k (dict:System.Collections.Generic.Dictionary<'K,'V>) = 
                 let b,v = dict.TryGetValue(k)
@@ -206,13 +206,23 @@ let testNodeGetterFunctions =
 
             Expect.isSome characteristicGetterOption "Characteristic Getter was not returned even though headers should have matched"
 
-            let characteristic,characteristicValue = characteristicGetterOption.Value
+            let characteristic,characteristicValueGetter = characteristicGetterOption.Value
 
-            //let unit = unitGetter m 0
+            Expect.isSome characteristic "CharacteristGetter was returned but not characteristic was returned"
 
             let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "0002637" "TO" 
 
             Expect.equal characteristic.Value expectedCharacteristic "Retrieved Characteristic is wrong"
+
+            let expectedUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" |> Some
+
+            let expectedValue = Value.fromOptions (Some "10") None None
+
+            let expectedCharacteristicValue = MaterialAttributeValue.create None (Some expectedCharacteristic) expectedValue expectedUnit
+
+            let characteristicValue = characteristicValueGetter m 0
+
+            Expect.equal characteristicValue expectedCharacteristicValue "Retrieved Characteristic Value was not correct"
         )
         testCase "GetCharacteristicsGetterWrongHeaders" (fun () ->
 
@@ -221,6 +231,124 @@ let testNodeGetterFunctions =
             let unitGetterOption = AnnotationNode.tryGetCharacteristicGetterFunction headers
 
             Expect.isNone unitGetterOption "Characteristic Getter was returned even though headers should not have matched"
+        )
+        testCase "GetFactorGetter" (fun () ->
+
+            let headers = ["Factor [time]";"Term Source REF [time] (#h; #tPATO:0000165)";"Term Accession Number [time] (#h; #tPATO:0000165)";"Unit [hour] (#h; #tUO:0000032; #u)";"Term Source REF [hour] (#h; #tUO:0000032; #u)";"Term Accession Number [hour] (#h; #tUO:0000032; #u)"]
+
+            let factorGetterOption = AnnotationNode.tryGetFactorGetterFunction headers
+
+            Expect.isSome factorGetterOption "Factor Getter was not returned even though headers should have matched"
+            
+            let factor,factorValueGetter = factorGetterOption.Value
+
+            Expect.isSome factor "FactorGetter was returned but no factor was returned"
+
+            let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO" 
+
+            Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
+            
+            let expectedUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some
+
+            let expectedValue = Value.fromOptions (Some "5") None None
+
+            let expectedFactorValue = FactorValue.create None (Some expectedFactor) expectedValue expectedUnit
+
+            let factorValue = factorValueGetter m 0
+
+            Expect.equal factorValue expectedFactorValue "Retrieved Factor Value was not correct"
+        )
+        testCase "GetFactorGetterWrongHeaders" (fun () ->
+
+            let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+
+            let unitGetterOption = AnnotationNode.tryGetFactorGetterFunction headers
+
+            Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
+        )
+        testCase "GetParameterGetter" (fun () ->
+
+            let headers = ["Parameter [temperature unit]";"Term Source REF [temperature unit] (#h; #tUO:0000005)";"Term Accession Number [temperature unit] (#h; #tUO:0000005)";"Unit [degree Celsius] (#h; #tUO:0000027; #u)";"Term Source REF [degree Celsius] (#h; #tUO:0000027; #u)";"Term Accession Number [degree Celsius] (#h; #tUO:0000027; #u)"]
+
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+
+            Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
+            
+            let parameter,parameterValueGetter = parameterGetterOption.Value
+
+            Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
+
+            let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
+
+            Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
+
+            let expectedUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some
+
+            let expectedValue = Value.fromOptions (Some "27") None None
+
+            let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedValue expectedUnit
+
+            let parameterValue = parameterValueGetter m 0
+
+            Expect.equal parameterValue expectedParameterValue "Retrieved Parameter Value was not correct"
+        )
+        testCase "GetParameterGetterNoUnit" (fun () ->
+
+            let headers = ["Parameter [measurement device]";"Term Source REF [measurement device] (#h; #tOBI:0000832)";"Term Accession Number [measurement device] (#h; #tOBI:0000832)"]
+
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+
+            Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
+            
+            let parameter,parameterValueGetter = parameterGetterOption.Value
+
+            Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
+
+            Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "dawdawdawd"
+
+            let expectedParameter = ProtocolParameter.fromString "measurement device" "0000832" "OBI" 
+
+            Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
+            
+            let expectedValue = Value.fromOptions (Some "Bruker NMR probe") (Some "http://purl.obolibrary.org/obo/OBI_0000561") (Some "OBI")
+
+            let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedValue None
+
+            let parameterValue = parameterValueGetter m 0
+
+            Expect.equal parameterValue expectedParameterValue "Retrieved Unitless Parameter Value was not correct"
+        )
+        testCase "GetParameterGetterUserSpecific" (fun () ->
+
+            let headers = ["Parameter [heating block]";"Term Source REF [heating block] (#h; #tOBI:0400108)";"Term Accession Number [heating block] (#h; #tOBI:0400108)"]
+
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+
+            Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
+            
+            let parameter,parameterValueGetter = parameterGetterOption.Value
+
+            Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
+
+            let expectedParameter = ProtocolParameter.fromString "heating block" "0400108" "OBI" 
+
+            Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
+            
+            let expectedValue = Value.fromOptions (Some "Freds old stove") None None
+
+            let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedValue None
+
+            let parameterValue = parameterValueGetter m 0
+
+            Expect.equal parameterValue expectedParameterValue "Retrieved Unitless Parameter Value was not correct"
+        )
+        testCase "GetParameterGetterWrongHeaders" (fun () ->
+
+            let headers = ["Factor [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+
+            let unitGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+
+            Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
     ]
 

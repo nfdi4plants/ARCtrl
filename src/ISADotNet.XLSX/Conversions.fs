@@ -41,7 +41,7 @@ module OntologyAnnotation =
             (Option.fromValueWithDefault "" source)
             None
 
-    /// Get a ISATab string entries from an ISAJson Ontology Annotation object
+    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
     let toString (oa : OntologyAnnotation) =
         oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
         oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue "",
@@ -165,15 +165,30 @@ module MaterialAttribute =
     let toString (ma : MaterialAttribute) =
         ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
 
+module Factor =
+
+    /// Create a ISAJson MaterialAttribute from ISATab string entries
+    let fromString (name : string) (term:string) (accession:string) (source:string) =
+        let oa =
+            OntologyAnnotation.fromString term accession source
+            |> Option.fromValueWithDefault OntologyAnnotation.empty
+        Factor.create None (Option.fromValueWithDefault "" name) oa None
+
+    /// Get ISATab string entries from an ISAJson MaterialAttribute object
+    let toString (ma : MaterialAttribute) =
+        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")   
+
 module Value =
 
     let fromOptions (value : string Option) (termAccesssion: string Option) (termSource: string Option) =
         match value, termSource, termAccesssion with
         | Some value, None, None ->
-            match box value with
-            | :? int as i -> Value.Int i
-            | :? float as f -> Value.Float f
-            | _ -> Value.Name value
+            try Value.Int (int value)
+            with
+            | _ -> 
+                try Value.Float (float value)
+                with
+                | _ -> Value.Name value
             |> Some
         | None, None, None -> 
             None
