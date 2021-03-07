@@ -64,53 +64,68 @@ module AnnotationNode =
                     None
         )
     
+    let tryGetValueGetter (valueHeader : ColumnHeader) (headers:string seq) =
+        let category1, termAccessionGetter =
+            match Seq.tryPick (tryParseTermAccessionNumberHeader valueHeader) headers with
+            | Some h ->
+                h.Term,
+                fun matrix i -> 
+                    match Dictionary.tryGetValue (h.HeaderString,i) matrix with
+                    | Some "user-specific" -> None
+                    | Some v -> Some v
+                    | _ -> None 
+            | None -> None, fun _ _ -> None
+        let category2, termSourceGetter =
+            match Seq.tryPick (tryParseTermSourceReferenceHeader valueHeader) headers with
+            | Some h ->
+                h.Term,
+                fun matrix i -> 
+                    match Dictionary.tryGetValue (h.HeaderString,i) matrix with
+                    | Some "user-specific" -> None
+                    | Some v -> Some v
+                    | _ -> None 
+            | None -> None, fun _ _ -> None
+    
+        let category = mergeOntology valueHeader.Term category1 |> mergeOntology category2 
+
+        let valueGetter = 
+            fun matrix i ->
+                let value = 
+                    match Dictionary.tryGetValue (valueHeader.HeaderString,i) matrix with
+                    | Some "user-specific" -> None
+                    | Some v -> Some v
+                    | _ -> None 
+
+                // Set termAcession and termSource of the value to None if they are the same as the header. 
+                // This is done as Swate fills empty with the header but these values should not be transferred to the isa model
+                let termAccession,termSource = 
+                    match termAccessionGetter matrix i,termSourceGetter matrix i,category with
+                    | Some a, Some s,Some c ->
+                        match c.TermAccessionNumber,c.TermSourceREF with
+                        | Some ca, Some cs when a.Contains ca && s.Contains cs ->
+                            None,None
+                        | _ -> Some a, Some s
+                    | (a,s,c) -> a,s
+                Value.fromOptions 
+                    value
+                    termAccession
+                    termSource
+        category,valueGetter
+
     /// If the headers of a node depict a parameter, returns the parameter and a function for parsing the values of the matrix to the values of this parameter
     let tryGetParameterGetterFunction (headers:string seq) =
         Seq.tryPick tryParseParameterHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
                   
-            let category1, termAccessionGetter =
-                match Seq.tryPick (tryParseTermAccessionNumberHeader h) headers with
-                | Some h ->
-                    h.Term,
-                    fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v when v.Contains (Option.defaultValue "" h.Term.Value.TermAccessionNumber) -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                | None -> None, fun _ _ -> None
-            let category2, termSourceGetter =
-                match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
-                | Some h ->
-                    h.Term,
-                    fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v when v = (Option.defaultValue "" h.Term.Value.TermSourceREF) -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                | None -> None, fun _ _ -> None
-    
-            let valueGetter = 
-                fun matrix i ->
-                    let v = 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                    Value.fromOptions 
-                        v
-                        (termAccessionGetter matrix i)
-                        (termSourceGetter matrix i)
-                    
-            let category = mergeOntology h.Term category1 |> mergeOntology category2 |> Option.map (Some >> ProtocolParameter.create None)
-            
-            category,
+            let category,valueGetter = tryGetValueGetter h headers                              
+                
+            let parameter = category |> Option.map (Some >> ProtocolParameter.create None)
+
+            parameter,
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
                 ProcessParameterValue.create 
-                    category
+                    parameter
                     (valueGetter matrix i)
                     (unitGetter |> Option.map (fun f -> f matrix i))
         )
@@ -120,44 +135,11 @@ module AnnotationNode =
         Seq.tryPick tryParseFactorHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
-                  
-            let category1, termAccessionGetter =
-                match Seq.tryPick (tryParseTermAccessionNumberHeader h) headers with
-                | Some h ->
-                    h.Term,
-                    fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v when v.Contains (Option.defaultValue "" h.Term.Value.TermAccessionNumber) -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                | None -> None, fun _ _ -> None
-            let category2, termSourceGetter =
-                match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
-                | Some h ->
-                    h.Term,
-                    fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v when v = (Option.defaultValue "" h.Term.Value.TermSourceREF) -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                | None -> None, fun _ _ -> None
-    
-            let valueGetter = 
-                fun matrix i ->
-                    let v = 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                    Value.fromOptions 
-                        v
-                        (termAccessionGetter matrix i)
-                        (termSourceGetter matrix i)
+            
+            let category,valueGetter = tryGetValueGetter h headers    
                     
             let factor = 
-                mergeOntology h.Term category1 |> mergeOntology category2
+                category
                 |> Option.map (fun oa ->  Factor.create None (oa.Name |> Option.map AnnotationValue.toString) (Some oa) None)
             
             factor,
@@ -175,43 +157,9 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
                   
-            let category1, termAccessionGetter =
-                match Seq.tryPick (tryParseTermAccessionNumberHeader h) headers with
-                | Some h ->
-                    h.Term,
-                    fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v when v.Contains (Option.defaultValue "" h.Term.Value.TermAccessionNumber) -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                | None -> None, fun _ _ -> None
-
-            let category2, termSourceGetter =
-                match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
-                | Some h ->
-                    h.Term,
-                    fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v when v = (Option.defaultValue "" h.Term.Value.TermSourceREF) -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                | None -> None, fun _ _ -> None
-    
-            let valueGetter = 
-                fun matrix i ->
-                    let v = 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
-                        | Some "user-specific" -> None
-                        | Some v -> Some v
-                        | _ -> None 
-                    Value.fromOptions 
-                        v
-                        (termAccessionGetter matrix i)
-                        (termSourceGetter matrix i)
+            let category,valueGetter = tryGetValueGetter h headers    
                     
-            let characteristic = mergeOntology h.Term category1 |> mergeOntology category2 |> Option.map (Some >> MaterialAttribute.create None)            
+            let characteristic = category |> Option.map (Some >> MaterialAttribute.create None)            
             
             characteristic,
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
