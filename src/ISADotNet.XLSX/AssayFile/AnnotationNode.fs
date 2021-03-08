@@ -113,7 +113,7 @@ module AnnotationNode =
         category,valueGetter
 
     /// If the headers of a node depict a parameter, returns the parameter and a function for parsing the values of the matrix to the values of this parameter
-    let tryGetParameterGetterFunction (headers:string seq) =
+    let tryGetParameterGetter (headers:string seq) =
         Seq.tryPick tryParseParameterHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
@@ -131,7 +131,7 @@ module AnnotationNode =
         )
     
     /// If the headers of a node depict a factor, returns the factor and a function for parsing the values of the matrix to the values of this factor
-    let tryGetFactorGetterFunction (headers:string seq) =
+    let tryGetFactorGetter (headers:string seq) =
         Seq.tryPick tryParseFactorHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
@@ -152,7 +152,7 @@ module AnnotationNode =
         )
 
     /// If the headers of a node depict a characteristic, returns the characteristic and a function for parsing the values of the matrix to the values of this characteristic
-    let tryGetCharacteristicGetterFunction (headers:string seq) =
+    let tryGetCharacteristicGetter (headers:string seq) =
         Seq.tryPick tryParseCharacteristicsHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers

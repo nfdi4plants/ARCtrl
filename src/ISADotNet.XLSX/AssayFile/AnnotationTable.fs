@@ -74,15 +74,15 @@ module AnnotationTable =
     let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
     
         let characteristics,characteristicValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetCharacteristicGetterFunction
+            nodes |> Seq.choose AnnotationNode.tryGetCharacteristicGetter
             |> Seq.fold (fun (cl,cvl) (c,cv) -> c.Value :: cl, cv :: cvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let factors,factorValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetFactorGetterFunction
+            nodes |> Seq.choose AnnotationNode.tryGetFactorGetter
             |> Seq.fold (fun (fl,fvl) (f,fv) -> f.Value :: fl, fv :: fvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let parameters,parameterValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetParameterGetterFunction
+            nodes |> Seq.choose AnnotationNode.tryGetParameterGetter
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     

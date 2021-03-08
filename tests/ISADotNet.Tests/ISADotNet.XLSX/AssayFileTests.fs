@@ -202,7 +202,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Characteristics [leaf size]";"Term Source REF [leaf size] (#h; #tTO:0002637)";"Term Accession Number [leaf size] (#h; #tTO:0002637)";"Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
 
-            let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetterFunction headers
+            let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetter headers
 
             Expect.isSome characteristicGetterOption "Characteristic Getter was not returned even though headers should have matched"
 
@@ -228,7 +228,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
 
-            let unitGetterOption = AnnotationNode.tryGetCharacteristicGetterFunction headers
+            let unitGetterOption = AnnotationNode.tryGetCharacteristicGetter headers
 
             Expect.isNone unitGetterOption "Characteristic Getter was returned even though headers should not have matched"
         )
@@ -236,7 +236,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Factor [time]";"Term Source REF [time] (#h; #tPATO:0000165)";"Term Accession Number [time] (#h; #tPATO:0000165)";"Unit [hour] (#h; #tUO:0000032; #u)";"Term Source REF [hour] (#h; #tUO:0000032; #u)";"Term Accession Number [hour] (#h; #tUO:0000032; #u)"]
 
-            let factorGetterOption = AnnotationNode.tryGetFactorGetterFunction headers
+            let factorGetterOption = AnnotationNode.tryGetFactorGetter headers
 
             Expect.isSome factorGetterOption "Factor Getter was not returned even though headers should have matched"
             
@@ -262,7 +262,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
 
-            let unitGetterOption = AnnotationNode.tryGetFactorGetterFunction headers
+            let unitGetterOption = AnnotationNode.tryGetFactorGetter headers
 
             Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
@@ -270,7 +270,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [temperature unit]";"Term Source REF [temperature unit] (#h; #tUO:0000005)";"Term Accession Number [temperature unit] (#h; #tUO:0000005)";"Unit [degree Celsius] (#h; #tUO:0000027; #u)";"Term Source REF [degree Celsius] (#h; #tUO:0000027; #u)";"Term Accession Number [degree Celsius] (#h; #tUO:0000027; #u)"]
 
-            let parameterGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
             Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
             
@@ -296,7 +296,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [measurement device]";"Term Source REF [measurement device] (#h; #tOBI:0000832)";"Term Accession Number [measurement device] (#h; #tOBI:0000832)"]
 
-            let parameterGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
             Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
             
@@ -322,7 +322,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [heating block]";"Term Source REF [heating block] (#h; #tOBI:0400108)";"Term Accession Number [heating block] (#h; #tOBI:0400108)"]
 
-            let parameterGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
             Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
             
@@ -346,7 +346,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Factor [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
 
-            let unitGetterOption = AnnotationNode.tryGetParameterGetterFunction headers
+            let unitGetterOption = AnnotationNode.tryGetParameterGetter headers
 
             Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
@@ -533,6 +533,7 @@ let testMetaDataFunctions =
 
             Expect.equal contacts.[2] testContact "Test Person could not be correctly read from metadata sheet"
         )
+
     ]
     |> testSequenced
 
