@@ -76,7 +76,7 @@ let testHeaderSplittingFunctions =
             let resultHeaders = AnnotationTable.splitBySamples headers
 
             Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as only one sample column was set"
-            Expect.sequenceEqual headers (resultHeaders |> Seq.head) "Shouldn't have split headers, as only one sample column was set"
+            Expect.sequenceEqual (resultHeaders |> Seq.head) ["Paramer [MyDude]";"Characteristic [MyGuy]";"Sample Name"] "Should have moved sample to the end"
         )
         testCase "SplitBySamplesOnlySourceAndSample" (fun () ->
 
@@ -85,7 +85,7 @@ let testHeaderSplittingFunctions =
             let resultHeaders = AnnotationTable.splitBySamples headers
 
             Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as only one source column and sample column was set"
-            Expect.sequenceEqual headers (resultHeaders |> Seq.head) "Shouldn't have split headers, as only one source column and sample column was set"
+            Expect.sequenceEqual (resultHeaders |> Seq.head) ["Source Name";"Paramer [MyDude]";"Characteristic [MyGuy]";"Sample Name"] "Should have put source at front and sample at end"
         )
         testCase "SplitBySamplesManySamples" (fun () ->
 
@@ -352,6 +352,90 @@ let testNodeGetterFunctions =
         )
     ]
 
+[<Tests>]
+let testProcessGetter =
+
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+
+    let assayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTableTestFile.xlsx")
+    
+    let doc = Spreadsheet.fromFile assayFilePath false
+    let sst = Spreadsheet.tryGetSharedStringTable doc
+    let wsp = Spreadsheet.tryGetWorksheetPartBySheetIndex 0u doc |> Option.get
+    let table = Table.tryGetByNameBy (fun s -> s.Contains "annotationTable") wsp |> Option.get
+
+    let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
+
+    let characteristicHeaders = ["Characteristics [leaf size]";"Term Source REF [leaf size] (#h; #tTO:0002637)";"Term Accession Number [leaf size] (#h; #tTO:0002637)";"Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+    let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "0002637" "TO" 
+    let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" |> Some
+    let expectedCharacteristicValue = MaterialAttributeValue.create None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
+
+    let factorHeaders = ["Factor [time]";"Term Source REF [time] (#h; #tPATO:0000165)";"Term Accession Number [time] (#h; #tPATO:0000165)";"Unit [hour] (#h; #tUO:0000032; #u)";"Term Source REF [hour] (#h; #tUO:0000032; #u)";"Term Accession Number [hour] (#h; #tUO:0000032; #u)"]
+    let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO" 
+    let expectedFactorUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some
+    let expectedFactorValue = FactorValue.create None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
+
+    let parameterHeaders = ["Parameter [temperature unit]";"Term Source REF [temperature unit] (#h; #tUO:0000005)";"Term Accession Number [temperature unit] (#h; #tUO:0000005)";"Unit [degree Celsius] (#h; #tUO:0000027; #u)";"Term Source REF [degree Celsius] (#h; #tUO:0000027; #u)";"Term Accession Number [degree Celsius] (#h; #tUO:0000027; #u)"]
+    let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
+    let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some
+    let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
+
+    let sourceHeader = ["Source Name"]
+    let expectedSourceName = "Source1"
+
+    let sampleHeader = ["Sample Name"]
+    let expectedSampleName = "Sample1"
+
+    testList "ProcessGetterTests" [
+        testCase "ProcessGetterSourceParamsSample" (fun () ->
+
+            let headers = sourceHeader @ characteristicHeaders @ factorHeaders @ parameterHeaders @ sampleHeader
+
+            let expectedSource = Source.create None (Some expectedSourceName) (Some [expectedCharacteristicValue])
+            let expectedInput = ProcessInput.Source expectedSource
+            let expectedOutput = ProcessOutput.Sample (Sample.create None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) (Some [expectedSource])  )
+
+            let expectedProtocol = Protocol.create None None None None None None (Some [expectedParameter]) None None
+
+            let expectedProcess = Process.create None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
+
+            let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
+
+            Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
+            Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
+            Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
+
+            let processV = processGetter m 0
+
+            Expect.equal processV expectedProcess "Process was retrieved incorrectly"
+    
+        )
+        testCase "ProcessGetterSampleParams" (fun () ->
+
+            let headers = 
+                sampleHeader @ characteristicHeaders @ factorHeaders @ parameterHeaders
+                |> AnnotationTable.splitBySamples
+                |> Seq.head
+
+            let expectedOutput = ProcessOutput.Sample (Sample.create None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
+
+            let expectedProtocol = Protocol.create None None None None None None (Some [expectedParameter]) None None
+
+            let expectedProcess = Process.create None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None None (Some [expectedOutput]) None
+
+            let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
+
+            Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
+            Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
+            Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
+
+            let processV = processGetter m 0
+
+            Expect.equal processV expectedProcess "Process was retrieved incorrectly"
+    
+        )
+    ]
 
 [<Tests>]
 let testProcessComparisonFunctions = 

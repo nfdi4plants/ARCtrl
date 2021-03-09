@@ -12,7 +12,12 @@ module AnnotationTable =
         let isSource header = AnnotationColumn.tryParseSourceName header |> Option.isSome 
         
         match Seq.filter isSource headers |> Seq.length, Seq.filter isSample headers |> Seq.length with
-        | 1,1  | 0,1 -> headers |> Seq.singleton
+        | 1,1  -> 
+            Seq.filter isSample headers
+            |> Seq.append (Seq.filter (fun s -> (isSample s || isSource s) |> not) headers) 
+            |> Seq.append (Seq.filter isSource headers)
+            |> Seq.singleton
+        | 0,1 -> Seq.append (Seq.filter (isSample>>not) headers) (Seq.filter isSample headers) |> Seq.singleton
         | 0,2 when Seq.head headers |> isSample && Seq.last headers |> isSample -> headers |> Seq.singleton
         | _ -> Seq.groupWhen true (fun header -> isSample header || isSource header) headers
 
@@ -105,19 +110,24 @@ module AnnotationTable =
                             (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
                             (inputGetter matrix i |> List.singleton |> Some)
                          |> Sample
-                (fun matrix i -> inputGetter matrix i |> Source),outputGetter
+                (fun matrix i -> inputGetter matrix i |> Source |> Some),outputGetter
             | None ->
                 let inputNameGetter = nodes |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
                 let outputNameGetter = nodes |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
-                    fun matrix i -> 
-                        Sample.create
-                            None
-                            (inputNameGetter |> Option.bind (fun o -> o matrix i))
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            None
-                            None
-                        |> ProcessInput.Sample
+
+                    fun matrix i ->      
+                        inputNameGetter
+                        |> Option.map (fun ing ->
+                            Sample.create
+                                None
+                                (ing matrix i)
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                None
+                                None
+                            |> ProcessInput.Sample
+                    )   
+
                 let outputGetter =
                     fun matrix i -> 
                         Sample.create
@@ -144,7 +154,7 @@ module AnnotationTable =
                 None
                 None
                 None          
-                (inputGetter matrix i |> List.singleton |> Some)
+                (inputGetter matrix i |> Option.map List.singleton)
                 (outputGetter matrix i |> List.singleton |> Some)
                 None
 
