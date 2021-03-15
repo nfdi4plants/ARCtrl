@@ -188,40 +188,53 @@ module AnnotationTable =
     let sampleOfSource (s:Source) =
         Sample.create s.ID s.Name s.Characteristics None None
 
+    /// Create a sample from a source
+    let sourceOfSample (s:Sample) =
+        Source.create s.ID s.Name s.Characteristics
+
+
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
     /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
     let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
         let samples = 
             referenceProcesses
+            |> Seq.append processes
             |> Seq.collect (fun p -> 
                 printfn "%O" p.Name 
                 let inputs =
                     p.Inputs 
                     |> Option.defaultValue [] 
-                    |> Seq.choose (function | ProcessInput.Sample x -> Some(x.Name, x) | _ -> None)
+                    |> Seq.choose (function | ProcessInput.Sample x -> Some(x.Name,true, x) | ProcessInput.Source x -> Some (x.Name,false,sampleOfSource x)| _ -> None)
                 let outputs =
                     p.Outputs 
                     |> Option.defaultValue [] 
-                    |> Seq.choose (function | ProcessOutput.Sample x -> Some(x.Name, x) | _ -> None)
+                    |> Seq.choose (function | ProcessOutput.Sample x -> Some(x.Name,true, x) | _ -> None)
                 Seq.append inputs outputs
+                |> Seq.distinct
                 )
-            |> Seq.filter (fun (name,s) -> name <> None && name <> (Some ""))
-            |> Seq.groupBy fst
-            |> Seq.map (fun (name,s) -> name, s |> Seq.map snd |> Seq.reduce API.Update.UpdateByExisting.updateRecordType)
+            |> Seq.filter (fun (name,_,s) -> name <> None && name <> (Some ""))
+            |> Seq.groupBy (fun (name,_,s) -> name)
+            |> Seq.map (fun (name,s) -> 
+                let x = s |> Seq.map (fun (name,_,s) -> s) |> Seq.reduce API.Update.UpdateByExisting.updateRecordType
+                if Seq.exists (fun (name,isSample,s) -> isSample) s then
+                    name, ProcessInput.Sample x
+                else name, ProcessInput.Source (sourceOfSample x)
+            
+            )
             |> Map.ofSeq
     
         let updateInput (i:ProcessInput) =
             match i with 
-            | ProcessInput.Source x ->      match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample (API.Update.UpdateByExisting.updateRecordType (sampleOfSource x) sample) | None -> i
-            | ProcessInput.Data x ->        match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample sample | None -> i
-            | ProcessInput.Sample x ->      match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample (API.Update.UpdateByExisting.updateRecordType x sample) | None -> i
-            | ProcessInput.Material x ->    match Map.tryFind x.Name samples with   | Some sample -> ProcessInput.Sample sample | None -> i
+            | ProcessInput.Source x ->      match Map.tryFind x.Name samples with   | Some s -> s | None -> ProcessInput.Source x
+            | ProcessInput.Sample x ->      match Map.tryFind x.Name samples with   | Some s -> s | None -> ProcessInput.Sample x
+            | ProcessInput.Data x ->        ProcessInput.Data x
+            | ProcessInput.Material x ->    ProcessInput.Material x
         let updateOutput (o:ProcessOutput) =                         
             match o with                                             
-            | ProcessOutput.Data x ->       match Map.tryFind x.Name samples with   | Some sample -> ProcessOutput.Sample sample | None -> o
-            | ProcessOutput.Sample x ->     match Map.tryFind x.Name samples with   | Some sample -> ProcessOutput.Sample (API.Update.UpdateByExisting.updateRecordType x sample) | None -> o
-            | ProcessOutput.Material x ->   match Map.tryFind x.Name samples with   | Some sample -> ProcessOutput.Sample sample | None -> o
+            | ProcessOutput.Sample x ->     match Map.tryFind x.Name samples with   | Some (ProcessInput.Sample x) -> ProcessOutput.Sample x | _ -> ProcessOutput.Sample x
+            | ProcessOutput.Data x ->       ProcessOutput.Data x
+            | ProcessOutput.Material x ->   ProcessOutput.Material x
         processes
         |> Seq.map (fun p -> 
            {p with
