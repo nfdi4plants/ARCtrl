@@ -27,7 +27,7 @@ let testInvestigationFile =
                     Investigation.fromFile referenceInvestigationFilePath |> ignore
                     Result.Ok "DidRun"
                 with
-                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
 
@@ -42,7 +42,7 @@ let testInvestigationFile =
                     Investigation.toFile outputInvestigationFilePath i
                     Result.Ok "DidRun"
                 with
-                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+                | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
 
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
@@ -69,7 +69,7 @@ let testInvestigationFile =
                     Investigation.fromFile referenceEmptyInvestigationFilePath |> ignore
                     Result.Ok "DidRun"
                 with
-                | err -> Result.Ok(sprintf "Reading the empty test file failed: %s" err.Message)
+                | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
         )
 
@@ -82,7 +82,7 @@ let testInvestigationFile =
                     Investigation.toFile outputEmptyInvestigationFilePath i
                     Result.Ok "DidRun"
                 with
-                | err -> Result.Ok(sprintf "Writing the empty test file failed: %s" err.Message)
+                | err -> Result.Error(sprintf "Writing the empty test file failed: %s" err.Message)
 
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )

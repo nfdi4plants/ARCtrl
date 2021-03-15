@@ -677,3 +677,77 @@ let testMetaDataFunctions =
     ]
     |> testSequenced
 
+[<Tests>]
+let testAssayFileReader = 
+
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let assayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTestFile.xlsx")
+
+    let expectedPersons =
+        [
+        Contacts.fromString "Weil" "Lukas" "H." "" "" "" "" "" "researcher" "http://purl.obolibrary.org/obo/MS_1001271" "MS" ([Comment.fromString "Worksheet" "GreatAssay"])
+        Contacts.fromString "Leil" "Wukas" "" "" "" "" "" "" "" "" "" ([Comment.fromString "Worksheet" "SecondAssay"])
+        ]
+
+    let technologyType =
+        OntologyAnnotation.fromString "mass spectrometry" "http://purl.obolibrary.org/obo/MS_1000268" "MS"
+        
+    let fileName = @"GreatAssay\assay.isa.xlsx"
+
+    let temperatureUnit = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
+
+    let temperature = ProtocolParameter.fromString "temperature" "0000029" "NCRO" 
+
+    let peptidase = ProtocolParameter.fromString "Peptidase" "C16965" "NCIT"
+
+    let time1 = ProtocolParameter.fromString "time" "0000721" "EFO"
+
+    let time2 = Factor.fromString "time" "time" "0000165" "PATO"
+
+    let leafSize = MaterialAttribute.fromString "leaf size" "0002637" "TO"
+
+    testList "AssayFileReaderTests" [
+        testCase "ReaderSuccess" (fun () -> 
+                       
+            let readingSuccess = 
+                try 
+                    AssayFile.fromFile assayFilePath |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        )
+        testCase "ReadsCorrectly" (fun () ->        
+            
+            let factors,protocols,persons,assay = AssayFile.fromFile assayFilePath
+
+            let expectedProtocols = 
+                [
+                Protocol.create None (Some "GreatAssay") None None None None (Some [temperatureUnit]) None None
+                Protocol.create None (Some "peptide_digestion") None None None None (Some [peptidase;temperature;time1]) None None
+                Protocol.create None (Some "SecondAssay") None None None None (Some [temperatureUnit]) None None
+                ]
+
+            let expectedFactors = [time2]
+
+            Expect.sequenceEqual factors expectedFactors        "Factors were read incorrectly"
+            Expect.sequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
+            Expect.sequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
+
+            Expect.isSome assay.FileName "FileName was not read"
+            Expect.equal assay.FileName.Value fileName "FileName was not read correctly"
+
+            Expect.isSome assay.TechnologyType "Technology Type was not read"
+            Expect.equal assay.TechnologyType.Value technologyType "Technology Type was not read correctly"
+
+            Expect.isSome assay.CharacteristicCategories "Characteristics were not read"
+            Expect.equal assay.CharacteristicCategories.Value [leafSize] "Characteristics were not read correctly"
+
+            Expect.isSome assay.ProcessSequence "Processes were not read"
+            assay.ProcessSequence.Value
+            |> Seq.map (fun p -> Option.defaultValue "" p.Name)
+            |> fun names -> Expect.sequenceEqual names ["GreatAssay_0";"GreatAssay_1";"peptide_digestion_0";"SecondAssay_0"] "Process names do not match"
+
+        )
+    ]
