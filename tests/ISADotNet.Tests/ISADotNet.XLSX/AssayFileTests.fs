@@ -458,6 +458,13 @@ let testProcessComparisonFunctions =
             ProcessParameterValue.create (Some parameters.[1]) (Value.fromOptions (Some "Value3") None None) None
         ]
 
+    let characteristic =  MaterialAttribute.create None (Some (OntologyAnnotation.fromString "Term4" "" ""))
+    let characteristicValue = MaterialAttributeValue.create None (Some characteristic) (Value.fromOptions (Some "Value4") None None) None
+
+    let factor =  Factor.create None (Some "Factor") (Some (OntologyAnnotation.fromString "Term5" "" "")) None
+    let factorValue = FactorValue.create None (Some factor) (Value.fromOptions (Some "Value5") None None) None
+
+
     let protocol1 = Protocol.create None (Some "Protocol1") None None None None (Some parameters) None None
     let protocol2 = Protocol.create None (Some "Protocol2") None None None None (Some parameters) None None
 
@@ -559,6 +566,55 @@ let testProcessComparisonFunctions =
             let expectedNames = ["Protocol1_0";"Protocol1_1";"Protocol2_0";"Protocol2_1"]
 
             Expect.sequenceEqual names expectedNames "Processes were not indexed correctly"
+        )
+        testCase "MergeSampleInfoTransformToSource" (fun () ->
+            
+            let sourceWithSampleName = ProcessInput.Source (Source.create None (Some "Sample1") None)
+
+            let process1 = Process.create None None None None None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.create None None None None None None None None (Some [sourceWithSampleName]) (Some [Sample sample2]) None
+
+            let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
+
+            let expectedProcessSequence =
+                [
+                    process1
+                    Process.create None None None None None None None None (Some ([ProcessInput.Sample sample1])) (Some [Sample sample2]) None
+                
+                ]
+
+            Expect.sequenceEqual updatedProcesses expectedProcessSequence "Source with same name as sample should have been converted to sample"        
+        )
+        testCase "MergeSampleInfo" (fun () ->
+            
+            let outputOfFirst = ProcessOutput.Sample (Sample.create None (Some "Sample1") None (Some [factorValue]) None)
+            let inputOfSecond = ProcessInput.Source (Source.create None (Some "Sample1") (Some [characteristicValue]))
+
+            let process1 = Process.create None None None None None None None None (Some [Source source1]) (Some [outputOfFirst]) None
+            let process2 = Process.create None None None None None None None None (Some [inputOfSecond]) (Some [Sample sample2]) None
+
+            let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
+
+
+            let outputs = (Seq.head updatedProcesses).Outputs
+            Expect.isSome outputs "Outputs of first Process are empty"
+            let outputSample = 
+                match outputs.Value with
+                | [ProcessOutput.Sample s] -> s
+                | _ -> failwithf "Expected a single sample for outputs but got %A" outputs
+
+
+            let inputs = (Seq.item 1 updatedProcesses).Inputs
+            Expect.isSome inputs "Inputs of second Process are empty"
+            let inputSample = 
+                match inputs.Value with
+                | [ProcessInput.Sample s] -> s
+                | _ -> failwithf "Expected a single sample for inputs but got %A" inputs
+            
+            let expectedSample = Sample.create None (Some "Sample1") (Some [characteristicValue]) (Some [factorValue]) None
+
+            Expect.equal inputSample outputSample "The information of the output of the first process and the input of the second process was not equalized"      
+            Expect.equal expectedSample outputSample "Values were not correclty merged"
         )
     ]
 
