@@ -126,15 +126,17 @@ module SwateTable =
                 (element.Elements() |> Seq.tryPick (fun e -> try TableValidation.fromXmlElement e |> Some with | _ -> None))
     
     let readSwateTables (wbp : WorkbookPart) =
-        let customXml = wbp.GetPartsOfType<CustomXmlPart>() |> Seq.head
+        match wbp.GetPartsOfType<CustomXmlPart>() |> Seq.tryHead with
+        | Some customXml ->
+
+            let reader = DocumentFormat.OpenXml.OpenXmlReader.Create(customXml)    
         
-        let reader = DocumentFormat.OpenXml.OpenXmlReader.Create(customXml)    
-        
-        if reader.Read() then
-            reader.LoadCurrentElement().Elements()
-            |> Seq.map SwateTable.fromXmlElement
-        else 
-            Seq.empty
+            if reader.Read() then
+                reader.LoadCurrentElement().Elements()
+                |> Seq.map SwateTable.fromXmlElement
+            else 
+                Seq.empty
+        | None -> Seq.empty
 
     let trySelectProtocolheaders (protocol:Protocol) (headers:seq<string>) =
         let nodes = AnnotationNode.splitIntoNodes headers
