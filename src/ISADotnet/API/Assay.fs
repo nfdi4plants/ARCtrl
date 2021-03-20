@@ -174,3 +174,19 @@ module Assay =
     let setMaterials (assay : Assay) (materials : AssayMaterials) =
         { assay with
             Materials = Some materials }
+
+    let getInputsWithParameterBy (predicate:ProtocolParameter -> bool) (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.choose (Process.tryGetInputsWithParameterBy predicate)
+            |> List.concat
+        | None -> []
+        
+    let getOutputsWithParameterBy (predicate:ProtocolParameter -> bool) (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.choose (Process.tryGetOutputsWithParameterBy predicate)
+            |> List.concat
+        | None -> []

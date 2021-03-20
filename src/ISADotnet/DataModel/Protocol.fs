@@ -17,8 +17,9 @@ type ProtocolParameter =
             ParameterName = parameterName
         
         }
-
-
+    
+    static member empty =
+        ProtocolParameter.create None None
 
 type Component = 
     {
