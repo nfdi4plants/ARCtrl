@@ -3,6 +3,24 @@ namespace ISADotNet.API
 open ISADotNet
 open Update
 
+module ProtocolParameter =
+
+    /// Returns the name of the paramater as string if it exists
+    let tryGetNameAsString (pp : ProtocolParameter) =
+        pp.ParameterName
+        |> Option.bind (OntologyAnnotation.tryGetNameAsString)
+
+    /// Returns the name of the paramater as string
+    let getNameAsString (pp : ProtocolParameter) =
+        tryGetNameAsString pp
+        |> Option.defaultValue ""
+
+    /// Returns true if the given name matches the name of the parameter
+    let nameEqualsString (name : string) (pp : ProtocolParameter) =
+        match pp.ParameterName with
+        | Some oa -> OntologyAnnotation.nameEqualsString name oa
+        | None -> false
+
 module Protocol =  
   
     ///// If a protocol for which the predicate returns true exists in the study, gets it

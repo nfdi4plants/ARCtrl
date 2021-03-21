@@ -199,4 +199,42 @@ module Assay =
         | Some processes -> 
             processes
             |> List.collect Process.getParameters
+            |> List.distinct
+        | None -> []
+
+    
+    /// If the assay contains a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
+    let getInputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.choose (Process.tryGetInputsWithCharacteristicBy predicate)
+            |> List.concat
+        | None -> []
+        
+    /// If the assay contains a process implementing the given parameter, return the list of output files together with their according parameter values of this parameter
+    let getOutputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.choose (Process.tryGetOutputsWithCharacteristicBy predicate)
+            |> List.concat
+        | None -> [] 
+
+    /// If the assay contains a process implementing the given factor, return the list of output files together with their according factor values of this factor
+    let getOutputsWithFactorBy (predicate:Factor -> bool) (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.choose (Process.tryGetOutputsWithFactorBy predicate)
+            |> List.concat
+        | None -> []
+
+    /// Returns the factors implemented by the processes contained in this assay
+    let getFactors (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.collect Process.getFactors
+            |> List.distinct
         | None -> []

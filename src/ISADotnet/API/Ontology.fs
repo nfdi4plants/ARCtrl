@@ -64,6 +64,21 @@ module OntologySourceReference =
 
 module OntologyAnnotation =  
 
+    /// Returns the name of the ontology as string if it has a name
+    let tryGetNameAsString (oa : OntologyAnnotation) =
+        oa.Name
+        |> Option.map (fun oa ->
+            match oa with
+            | AnnotationValue.Text s  -> s
+            | AnnotationValue.Float f -> string f
+            | AnnotationValue.Int i   -> string i
+        )
+
+    /// Returns the name of the ontology as string
+    let getNameAsString (oa : OntologyAnnotation) =
+        tryGetNameAsString oa
+        |> Option.defaultValue ""
+
     /// Returns true if the given name matches the name of the ontology annotation
     let nameEqualsString (name : string) (oa : OntologyAnnotation) =
         match oa.Name with

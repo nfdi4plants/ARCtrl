@@ -73,3 +73,37 @@ module Factor =
     let setFactorType (factor : Factor) (factorType : OntologyAnnotation) =
         { factor with
             FactorType = Some factorType }
+
+    /// Returns the name of the factor as string if it exists
+    let tryGetName (f : Factor) =
+        f.Name
+
+    /// Returns the name of the factor as string
+    let getNameAsString (f : Factor) =
+        f.Name |> Option.defaultValue ""
+
+    /// Returns true if the given name matches the name of the factor
+    let nameEqualsString (name : string) (f : Factor) =
+        match f.Name with
+        | Some n -> name = n
+        | None -> false
+
+
+module FactorValue =
+
+    /// Returns the name of the factor value as string if it exists
+    let tryGetNameAsString (fv : FactorValue) =
+        fv.Category
+        |> Option.bind (Factor.tryGetName)
+
+    /// Returns the name of the factor value as string
+    let getNameAsString (fv : FactorValue) =
+        tryGetNameAsString fv
+        |> Option.defaultValue ""
+
+    /// Returns true if the given name matches the name of the factor value
+    let nameEqualsString (name : string) (fv : FactorValue) =
+        match fv.Category with
+        | Some f -> Factor.nameEqualsString name f
+        | None -> false
+
