@@ -3,6 +3,15 @@ namespace ISADotNet.API
 open ISADotNet
 open Update
 
+module Value = 
+
+    let toString (v: Value) =
+        match v with
+        | Value.Name s      -> s
+        | Value.Float f     -> string f
+        | Value.Int i       -> string i
+        | Value.Ontology o  -> OntologyAnnotation.getNameAsString o
+
 module Factor =  
 
     ///// If a factor for which the predicate returns true exists in the study, gets it
@@ -107,3 +116,18 @@ module FactorValue =
         | Some f -> Factor.nameEqualsString name f
         | None -> false
 
+    /// Returns the value of the factor value as string if it exists (with unit)
+    let tryGetValueAsString (fv : FactorValue) =
+        let unit = fv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
+        fv.Value
+        |> Option.map (fun v ->
+            let s = v |> Value.toString
+            match unit with
+            | Some u -> s + " " + u
+            | None -> s
+        )
+
+    /// Returns the value of the factor value as string (with unit)
+    let getValueAsString (fv : FactorValue) =
+        tryGetValueAsString fv
+        |> Option.defaultValue ""

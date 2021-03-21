@@ -20,6 +20,21 @@ module ProcessParameterValue =
         | Some oa -> ProtocolParameter.nameEqualsString name oa
         | None -> false
 
+    /// Returns the value of the parameter value as string if it exists (with unit)
+    let tryGetValueAsString (pv : ProcessParameterValue) =
+        let unit = pv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
+        pv.Value
+        |> Option.map (fun v ->
+            let s = v |> Value.toString
+            match unit with
+            | Some u -> s + " " + u
+            | None -> s
+        )
+
+    /// Returns the value of the parameter value as string (with unit)
+    let getValueAsString (pv : ProcessParameterValue) =
+        tryGetValueAsString pv
+        |> Option.defaultValue ""
 
 /// Functions for handling the ProcessInput Type
 module ProcessInput =

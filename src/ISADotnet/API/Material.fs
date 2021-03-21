@@ -37,3 +37,19 @@ module MaterialAttributeValue =
         match mv.Category with
         | Some oa -> MaterialAttribute.nameEqualsString name oa
         | None -> false
+
+    /// Returns the value of the characteristic value as string if it exists (with unit)
+    let tryGetValueAsString (mv : MaterialAttributeValue) =
+        let unit = mv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
+        mv.Value
+        |> Option.map (fun v ->
+            let s = v |> Value.toString
+            match unit with
+            | Some u -> s + " " + u
+            | None -> s
+        )
+
+    /// Returns the value of the characteristic value as string (with unit)
+    let getValueAsString (mv : MaterialAttributeValue) =
+        tryGetValueAsString mv
+        |> Option.defaultValue ""
