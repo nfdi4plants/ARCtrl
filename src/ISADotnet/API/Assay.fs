@@ -175,6 +175,7 @@ module Assay =
         { assay with
             Materials = Some materials }
 
+    /// If the assay contains a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
     let getInputsWithParameterBy (predicate:ProtocolParameter -> bool) (assay : Assay) =
         match assay.ProcessSequence with
         | Some processes -> 
@@ -183,10 +184,19 @@ module Assay =
             |> List.concat
         | None -> []
         
+    /// If the assay contains a process implementing the given parameter, return the list of output files together with their according parameter values of this parameter
     let getOutputsWithParameterBy (predicate:ProtocolParameter -> bool) (assay : Assay) =
         match assay.ProcessSequence with
         | Some processes -> 
             processes
             |> List.choose (Process.tryGetOutputsWithParameterBy predicate)
             |> List.concat
+        | None -> []
+
+    /// Returns the parameters implemented by the processes contained in this assay
+    let getParameters (assay : Assay) =
+        match assay.ProcessSequence with
+        | Some processes -> 
+            processes
+            |> List.collect Process.getParameters
         | None -> []

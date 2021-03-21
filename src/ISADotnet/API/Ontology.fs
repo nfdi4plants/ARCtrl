@@ -64,10 +64,14 @@ module OntologySourceReference =
 
 module OntologyAnnotation =  
 
-    ///// If a ontology annotation for which the predicate returns true exists in the Study.StudyDesignDescriptors, gets it
-    //let tryGetBy (predicate : OntologyAnnotation -> bool) (study:Study) =
-    //    study.StudyDesignDescriptors
-    //    |> List.tryFind (predicate) 
+    /// Returns true if the given name matches the name of the ontology annotation
+    let nameEqualsString (name : string) (oa : OntologyAnnotation) =
+        match oa.Name with
+        | Some (AnnotationValue.Text s) when s  = name -> true
+        | None when name = "" -> true
+        | Some (AnnotationValue.Float f) when (string f)  = name -> true
+        | Some (AnnotationValue.Int i) when (string i)  = name -> true
+        | _ -> false
 
     /// If an ontology annotation with the given annotation value exists in the list, returns it
     let tryGetByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
