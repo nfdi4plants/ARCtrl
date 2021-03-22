@@ -15,7 +15,7 @@ module ProtocolParameter =
         tryGetNameAsString pp
         |> Option.defaultValue ""
 
-    /// Returns the name of the paramater and its number as string
+    /// Returns the name of the paramater and its number as string (e.g. "temperature #2")
     let getNameAsStringWithNumber (pp : ProtocolParameter) =
         pp.ParameterName
         |> Option.map (OntologyAnnotation.getNameAsStringWithNumber)
@@ -27,7 +27,7 @@ module ProtocolParameter =
         | Some oa -> OntologyAnnotation.nameEqualsString name oa
         | None -> false
 
-    /// Returns true if the given numbered name matches the name of the parameter
+    /// Returns true if the given numbered name matches the name of the parameter (e.g. "temperature #2")
     let nameWithNumberEqualsString (name : string) (pp : ProtocolParameter) =
         match pp.ParameterName with
         | Some oa -> OntologyAnnotation.nameWithNumberEqualsString name oa

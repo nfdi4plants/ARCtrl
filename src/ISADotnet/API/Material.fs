@@ -14,7 +14,7 @@ module MaterialAttribute =
         tryGetNameAsString ma
         |> Option.defaultValue ""
 
-    /// Returns the name of the characteristic and its number as string
+    /// Returns the name of the characteristic and its number as string (e.g. "temperature #2")
     let getNameAsStringWithNumber (ma : MaterialAttribute) =
         ma.CharacteristicType
         |> Option.map (OntologyAnnotation.getNameAsStringWithNumber)
@@ -26,7 +26,7 @@ module MaterialAttribute =
         | Some oa -> OntologyAnnotation.nameEqualsString name oa
         | None -> false
 
-    /// Returns true if the given numbered name matches the name of the characteristic
+    /// Returns true if the given numbered name matches the name of the characteristic (e.g. "temperature #2")
     let nameWithNumberEqualsString (name : string) (ma : MaterialAttribute) =
         match ma.CharacteristicType with
         | Some oa -> OntologyAnnotation.nameWithNumberEqualsString name oa

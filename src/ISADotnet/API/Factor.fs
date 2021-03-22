@@ -91,7 +91,7 @@ module Factor =
     let getNameAsString (f : Factor) =
         f.Name |> Option.defaultValue ""
 
-    /// Returns the name of the factor and its number as string
+    /// Returns the name of the factor and its number as string (e.g. "temperature #2")
     let getNameAsStringWithNumber (f : Factor) =
         f.FactorType
         |> Option.map (OntologyAnnotation.getNameAsStringWithNumber)
@@ -103,7 +103,7 @@ module Factor =
         | Some n -> name = n
         | None -> false
 
-    /// Returns true if the given numbered name matches the name of the factor
+    /// Returns true if the given numbered name matches the name of the factor (e.g. "temperature #2")
     let nameWithNumberEqualsString (name : string) (f : Factor) =
         match f.FactorType with
         | Some oa -> OntologyAnnotation.nameWithNumberEqualsString name oa
