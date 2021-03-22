@@ -281,3 +281,71 @@ module Process =
             )
             |> Option.fromValueWithDefault []
         | None -> None
+
+module ProcessSequence = 
+
+    /// Returns the names of the protocols the given processes impelement
+    let getProtocolNames (processSequence : Process list) =
+        processSequence
+        |> List.choose (fun p ->
+            p.ExecutesProtocol
+            |> Option.bind (fun protocol ->
+                protocol.Name
+            )        
+        )
+        |> List.distinct
+
+    /// Returns a list of the processes, containing only the ones executing a protocol for which the predicate returns true
+    let filterByProtocolBy (predicate : Protocol -> bool) (processSequence : Process list) =
+        processSequence
+        |> List.filter (fun p ->
+            match p.ExecutesProtocol with
+            | Some protocol when predicate protocol -> true
+            | _ -> false
+        )
+
+    /// Returns a list of the processes, containing only the ones executing a protocol with the given name
+    let filterByProtocolName (protocolName : string) (processSequence : Process list) =
+        filterByProtocolBy (fun (p:Protocol) -> p.Name = Some protocolName)
+
+    /// If the processes contain a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
+    let getInputsWithParameterBy (predicate:ProtocolParameter -> bool) (processSequence : Process list) =
+        processSequence
+        |> List.choose (Process.tryGetInputsWithParameterBy predicate)
+        |> List.concat
+        
+    /// If the processes contain a process implementing the given parameter, return the list of output files together with their according parameter values of this parameter
+    let getOutputsWithParameterBy (predicate:ProtocolParameter -> bool) (processSequence : Process list) =
+        processSequence
+        |> List.choose (Process.tryGetOutputsWithParameterBy predicate)
+        |> List.concat
+
+    /// Returns the parameters implemented by the processes contained in these processes
+    let getParameters (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getParameters
+        |> List.distinct
+    
+    /// If the processes contain a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
+    let getInputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (processSequence : Process list) =
+        processSequence
+        |> List.choose (Process.tryGetInputsWithCharacteristicBy predicate)
+        |> List.concat
+        
+    /// If the processes contain a process implementing the given parameter, return the list of output files together with their according parameter values of this parameter
+    let getOutputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (processSequence : Process list) =
+        processSequence
+        |> List.choose (Process.tryGetOutputsWithCharacteristicBy predicate)
+        |> List.concat
+
+    /// If the processes contain a process implementing the given factor, return the list of output files together with their according factor values of this factor
+    let getOutputsWithFactorBy (predicate:Factor -> bool) (processSequence : Process list) =
+        processSequence
+        |> List.choose (Process.tryGetOutputsWithFactorBy predicate)
+        |> List.concat
+
+    /// Returns the factors implemented by the processes contained in these processes
+    let getFactors (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getFactors
+        |> List.distinct
