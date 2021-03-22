@@ -17,16 +17,20 @@ module ProtocolParameter =
 
     /// Returns the name of the paramater and its number as string
     let getNameAsStringWithNumber (pp : ProtocolParameter) =
-        let number = pp.ParameterName |> Option.bind (fun oa -> oa.Comments) |> Option.bind (CommentList.tryItem "Number")
-        let name = getNameAsString pp
-        match number with
-        | Some n -> name + " #" + n
-        | None -> name
-
+        pp.ParameterName
+        |> Option.map (OntologyAnnotation.getNameAsStringWithNumber)
+        |> Option.defaultValue ""
+        
     /// Returns true if the given name matches the name of the parameter
     let nameEqualsString (name : string) (pp : ProtocolParameter) =
         match pp.ParameterName with
         | Some oa -> OntologyAnnotation.nameEqualsString name oa
+        | None -> false
+
+    /// Returns true if the given numbered name matches the name of the parameter
+    let nameWithNumberEqualsString (name : string) (pp : ProtocolParameter) =
+        match pp.ParameterName with
+        | Some oa -> OntologyAnnotation.nameWithNumberEqualsString name oa
         | None -> false
 
 module Protocol =  

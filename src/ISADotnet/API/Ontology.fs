@@ -79,6 +79,14 @@ module OntologyAnnotation =
         tryGetNameAsString oa
         |> Option.defaultValue ""
 
+    /// Returns the name of the ontology with the number as string
+    let getNameAsStringWithNumber (oa : OntologyAnnotation) =       
+        let number = oa.Comments |> Option.bind (CommentList.tryItem "Number")
+        let name = getNameAsString oa
+        match number with
+        | Some n -> name + " #" + n
+        | None -> name
+
     /// Returns true if the given name matches the name of the ontology annotation
     let nameEqualsString (name : string) (oa : OntologyAnnotation) =
         match oa.Name with
@@ -87,6 +95,10 @@ module OntologyAnnotation =
         | Some (AnnotationValue.Float f) when (string f)  = name -> true
         | Some (AnnotationValue.Int i) when (string i)  = name -> true
         | _ -> false
+
+    /// Returns true if the given name with number matches the name of the ontology annotation
+    let nameWithNumberEqualsString (name : string) (oa : OntologyAnnotation) =
+        getNameAsStringWithNumber oa = name
 
     /// If an ontology annotation with the given annotation value exists in the list, returns it
     let tryGetByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
