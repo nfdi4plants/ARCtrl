@@ -47,7 +47,9 @@ module AnnotationColumn =
                         ontologySourceRegex.Value.Split ':'
                         |> fun o -> o.[0], o.[1]
                     else "", ""
-                ColumnHeader.create header kind.Value (Some (OntologyAnnotation.fromString nameRegex.Value termAccession termSource)) number
+                let numberComment = number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
+                let ontology = OntologyAnnotation.fromString nameRegex.Value termAccession termSource
+                ColumnHeader.create header kind.Value (Some {ontology with Comments = numberComment}) number
 
             // Parsing a header of shape: Kind (#Number)
             elif kindRegex.Success then

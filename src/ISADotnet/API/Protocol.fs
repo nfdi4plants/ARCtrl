@@ -15,6 +15,14 @@ module ProtocolParameter =
         tryGetNameAsString pp
         |> Option.defaultValue ""
 
+    /// Returns the name of the paramater and its number as string
+    let getNameAsStringWithNumber (pp : ProtocolParameter) =
+        let number = pp.ParameterName |> Option.bind (fun oa -> oa.Comments) |> Option.bind (CommentList.tryItem "Number")
+        let name = getNameAsString pp
+        match number with
+        | Some n -> name + " #" + n
+        | None -> name
+
     /// Returns true if the given name matches the name of the parameter
     let nameEqualsString (name : string) (pp : ProtocolParameter) =
         match pp.ParameterName with

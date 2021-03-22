@@ -64,6 +64,7 @@ module AnnotationNode =
                     None
         )
     
+    /// If the headers of a node depict a value header (parameter,factor,characteristic), returns the category and a function for parsing the values of the matrix to the values
     let tryGetValueGetter (valueHeader : ColumnHeader) (headers:string seq) =
         let category1, termAccessionGetter =
             match Seq.tryPick (tryParseTermAccessionNumberHeader valueHeader) headers with
@@ -87,7 +88,7 @@ module AnnotationNode =
             | None -> None, fun _ _ -> None
     
         let category = mergeOntology valueHeader.Term category1 |> mergeOntology category2 
-
+         
         let valueGetter = 
             fun matrix i ->
                 let value = 
