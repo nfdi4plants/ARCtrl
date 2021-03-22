@@ -182,6 +182,17 @@ module ProcessOutput =
 /// Functions for handling ISA Processes
 module Process =
 
+    /// Returns the name of the protocol the given process executes
+    let tryGetProtocolName (p: Process) =
+        p.ExecutesProtocol
+        |> Option.bind (fun p -> p.Name)
+
+    /// Returns the name of the protocol the given process executes
+    let getProtocolName (p: Process) =
+        p.ExecutesProtocol
+        |> Option.bind (fun p -> p.Name)
+        |> Option.get 
+
     /// Returns the parameters describing the process
     let getParameters (p: Process) =
         match p.ParameterValues with
@@ -306,7 +317,7 @@ module ProcessSequence =
 
     /// Returns a list of the processes, containing only the ones executing a protocol with the given name
     let filterByProtocolName (protocolName : string) (processSequence : Process list) =
-        filterByProtocolBy (fun (p:Protocol) -> p.Name = Some protocolName)
+        filterByProtocolBy (fun (p:Protocol) -> p.Name = Some protocolName) processSequence
 
     /// If the processes contain a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
     let getInputsWithParameterBy (predicate:ProtocolParameter -> bool) (processSequence : Process list) =
