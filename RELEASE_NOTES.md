@@ -1,3 +1,9 @@
+### 0.2.3+3536cd3 (Released 2021-3-23)
+* Additions:
+    * latest commit #3536cd3
+* Bugfixes:
+    * [[#3536cd3](https://github.com/nfdi4plants/ISADotNet/commit/3536cd3262ccc499547fb7c0661b648e2afc5b36)] fix assay file reader sample updating
+
 ### 0.2.2+83de052 (Released 2021-3-22)
 * Additions:
     * latest commit #83de052
