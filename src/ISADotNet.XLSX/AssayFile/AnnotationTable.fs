@@ -196,10 +196,9 @@ module AnnotationTable =
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
     /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
-    let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
+    let private updateSamplesBy (referenceProcesses : Process seq) (processes : Process seq) = 
         let samples = 
             referenceProcesses
-            |> Seq.append processes
             |> Seq.collect (fun p -> 
                 printfn "%O" p.Name 
                 let inputs =
@@ -213,14 +212,16 @@ module AnnotationTable =
                 Seq.append inputs outputs
                 |> Seq.distinct
                 )
-            |> Seq.filter (fun (name,_,s) -> name <> None && name <> (Some ""))
-            |> Seq.groupBy (fun (name,_,s) -> name)
-            |> Seq.map (fun (name,s) -> 
-                let x = s |> Seq.map (fun (name,_,s) -> s) |> Seq.reduce API.Update.UpdateByExisting.updateRecordType
-                if Seq.exists (fun (name,isSample,s) -> isSample) s then
-                    name, ProcessInput.Sample x
-                else name, ProcessInput.Source (sourceOfSample x)
-            
+            |> Seq.filter (fun (name,_,samples) -> name <> None && name <> (Some ""))
+            |> Seq.groupBy (fun (name,_,samples) -> name)
+            |> Seq.map (fun (name,samples) -> 
+                let aggregatedSample = 
+                    samples 
+                    |> Seq.map (fun (name,_,s) -> s) 
+                    |> Seq.reduce (fun s1 s2 -> if s1 = s2 then s1 else API.Update.UpdateByExistingAppendLists.updateRecordType s1 s2)
+                if Seq.exists (fun (name,isSample,s) -> isSample) samples then
+                    name, ProcessInput.Sample aggregatedSample
+                else name, ProcessInput.Source (sourceOfSample aggregatedSample)          
             )
             |> Map.ofSeq
     
@@ -242,4 +243,18 @@ module AnnotationTable =
                     Outputs = p.Outputs |> Option.map (List.map updateOutput)
            }
         )
-    
+
+    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
+    ///
+    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
+    let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
+        referenceProcesses
+        |> Seq.append processes
+        |> updateSamplesBy processes
+
+    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
+    ///
+    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
+    let updateSamplesByThemselves (processes : Process seq) =
+        processes
+        |> updateSamplesBy processes

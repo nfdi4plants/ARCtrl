@@ -106,7 +106,7 @@ module AssayFile =
                     Seq.append processes' processes
                 ) (List.empty,List.empty,Seq.empty,Seq.empty)
 
-            let processes = AnnotationTable.updateSamplesByReference processes processes
+            let processes = AnnotationTable.updateSamplesByThemselves processes
             
             let assay = assayMetaData |> Option.defaultValue Assay.empty
             

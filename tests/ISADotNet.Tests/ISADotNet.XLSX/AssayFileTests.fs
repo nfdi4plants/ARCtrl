@@ -576,7 +576,7 @@ let testProcessComparisonFunctions =
             let process1 = Process.create None None None None None None None None (Some [Source source1]) (Some [Sample sample1]) None
             let process2 = Process.create None None None None None None None None (Some [sourceWithSampleName]) (Some [Sample sample2]) None
 
-            let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
+            let updatedProcesses = AnnotationTable.updateSamplesByThemselves [process1;process2]
 
             let expectedProcessSequence =
                 [
@@ -616,7 +616,7 @@ let testProcessComparisonFunctions =
             let expectedSample = Sample.create None (Some "Sample1") (Some [characteristicValue]) (Some [factorValue]) None
 
             Expect.equal inputSample outputSample "The information of the output of the first process and the input of the second process was not equalized"      
-            Expect.equal expectedSample outputSample "Values were not correclty merged"
+            Expect.equal outputSample expectedSample "Values were not correctly merged"
         )
     ]
 
