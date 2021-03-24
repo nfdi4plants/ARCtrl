@@ -132,6 +132,18 @@ module AnnotationColumn =
             Some h
         | _ -> None
 
+    /// Parses to ColumnHeader, if the given header describes a data file
+    let tryParseDataFileName (header:string) =
+        match ColumnHeader.fromStringHeader header with
+        | h when h.Kind = "Data File Name" -> Some h
+        | h when h.Kind = "Raw Data File" -> Some h   
+        | h when h.Kind = "Derived Data File" -> Some h  
+        | h when h.Kind = "Image File" -> Some h  
+        | _ -> None
+
+    /// Returns true, if the given header describes a data column
+    let isData header = tryParseDataFileName header |> Option.isSome 
+
     /// Returns true, if the given header describes a sample name
     let isSample header = tryParseSampleName header |> Option.isSome 
 

@@ -172,6 +172,27 @@ module AnnotationNode =
         )
 
     /// If the headers of a node depict a sample name, returns a function for parsing the values of the matrix to the sample names
+    let tryGetDataFileGetter (headers:string seq) =
+        Seq.tryPick tryParseDataFileName headers
+        |> Option.map (fun h -> 
+
+            let dataType = 
+                if h.Kind = "Image File" then Some DataFile.ImageFile
+                elif h.Kind = "Raw Data File" then Some DataFile.RawDataFile
+                elif h.Kind = "Derived Data File" then Some DataFile.DerivedDataFile 
+                else None
+            let numberComment = h.Number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
+            
+            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+                
+                Data.create
+                    None
+                    (Dictionary.tryGetValue (h.HeaderString,i) matrix)
+                    dataType
+                    numberComment
+        )
+
+    /// If the headers of a node depict a sample name, returns a function for parsing the values of the matrix to the sample names
     let tryGetSampleNameGetter (headers:string seq) =
         Seq.tryPick tryParseSampleName headers
         |> Option.map (fun h -> 
