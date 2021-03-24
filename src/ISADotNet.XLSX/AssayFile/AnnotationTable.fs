@@ -200,7 +200,6 @@ module AnnotationTable =
         let samples = 
             referenceProcesses
             |> Seq.collect (fun p -> 
-                printfn "%O" p.Name 
                 let inputs =
                     p.Inputs 
                     |> Option.defaultValue [] 
