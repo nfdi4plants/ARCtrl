@@ -1,3 +1,10 @@
+### 0.2.4+1c7ed14 (Released 2021-3-24)
+* Additions:
+    * latest commit #1c7ed14
+    * [[#0c9b3e9](https://github.com/nfdi4plants/ISADotNet/commit/0c9b3e91006f8a2ee50ae14f3369110a7e54caec)] bump to 0.2.3
+* Bugfixes:
+    * [[#1c7ed14](https://github.com/nfdi4plants/ISADotNet/commit/1c7ed14b8fd55e1017ca5bffe2dcd324c968b744)] fix: remove printf from assay file reader
+
 ### 0.2.3+3536cd3 (Released 2021-3-23)
 * Additions:
     * latest commit #3536cd3
