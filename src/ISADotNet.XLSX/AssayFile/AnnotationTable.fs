@@ -91,52 +91,90 @@ module AnnotationTable =
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     
+        let dataFileGetter = nodes |> Seq.tryPick AnnotationNode.tryGetDataFileGetter
+
         let inputGetter,outputGetter =
             match nodes |> Seq.tryPick AnnotationNode.tryGetSourceNameGetter with
             | Some inputNameGetter ->
                 let outputNameGetter = nodes |> Seq.tryPick AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
                     fun matrix i -> 
-                        Source.create
-                            None
-                            (inputNameGetter matrix i)
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                        let source = 
+                            Source.create
+                                None
+                                (inputNameGetter matrix i)
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                        if dataFileGetter.IsSome then 
+                            [source;source]
+                        else 
+                            [source]
+                
                 let outputGetter =
                     fun matrix i -> 
-                        Sample.create
-                            None
-                            (outputNameGetter |> Option.bind (fun o -> o matrix i))
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            (inputGetter matrix i |> List.singleton |> Some)
-                         |> Sample
-                (fun matrix i -> inputGetter matrix i |> Source |> Some),outputGetter
+                        let data = dataFileGetter |> Option.map (fun f -> f matrix i)
+                        let outputName = 
+                            match outputNameGetter |> Option.bind (fun o -> o matrix i) with
+                            | Some s -> Some s
+                            | None -> 
+                                match data with
+                                | Some data -> data.Name
+                                | None -> None
+                        let sample =
+                            Sample.create
+                                None
+                                outputName
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (inputGetter matrix i |> List.distinct |> Some)
+                        if data.IsSome then 
+                            [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
+                        else 
+                            [ProcessOutput.Sample sample]                      
+                (fun matrix i -> inputGetter matrix i |> List.map Source |> Some),outputGetter
             | None ->
                 let inputNameGetter = nodes |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
                 let outputNameGetter = nodes |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
 
                     fun matrix i ->      
-                        inputNameGetter
-                        |> Option.map (fun ing ->
-                            Sample.create
-                                None
-                                (ing matrix i)
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                                None
-                                None
-                            |> ProcessInput.Sample
-                    )   
+                        let source = 
+                            inputNameGetter
+                            |> Option.map (fun ing ->
+                                Sample.create
+                                    None
+                                    (ing matrix i)
+                                    (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                    None
+                                    None
+                                |> ProcessInput.Sample
+                            )   
+                        match source with
+                        | Some source when dataFileGetter.IsSome -> Some [source;source]
+                        | Some source -> Some  [source]
+                        | None -> None
+                            
 
                 let outputGetter =
                     fun matrix i -> 
-                        Sample.create
-                            None
-                            (outputNameGetter |> Option.bind (fun o -> o matrix i))
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            None
-                        |> Sample
+                        let data = dataFileGetter |> Option.map (fun f -> f matrix i)
+                        let outputName = 
+                            match outputNameGetter |> Option.bind (fun o -> o matrix i) with
+                            | Some s -> Some s
+                            | None -> 
+                                match data with
+                                | Some data -> data.Name
+                                | None -> None
+                        let sample =
+                            Sample.create
+                                None
+                                outputName
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                None
+                        if data.IsSome then 
+                            [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
+                        else 
+                            [ProcessOutput.Sample sample]  
                 inputGetter,outputGetter
     
         let protocol = {protocolMetaData with Parameters = API.Option.fromValueWithDefault [] parameters}
@@ -154,8 +192,8 @@ module AnnotationTable =
                 None
                 None
                 None          
-                (inputGetter matrix i |> Option.map List.singleton)
-                (outputGetter matrix i |> List.singleton |> Some)
+                (inputGetter matrix i)
+                (outputGetter matrix i |> Some)
                 None
 
     /// Merges processes with the same parameter values, grouping the input and output files
