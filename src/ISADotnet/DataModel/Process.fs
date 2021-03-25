@@ -151,6 +151,6 @@ type Process =
 
             let name = this.Name |> Option.defaultValue "Unnamed Process"
 
-            sprintf "%s [%i Inputs -> %i Params -> %i Outputs]" name inputCount outputCount paramCount 
+            sprintf "%s [%i Inputs -> %i Params -> %i Outputs]" name inputCount paramCount outputCount
             
 
