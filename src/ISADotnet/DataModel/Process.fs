@@ -22,6 +22,26 @@ type ProcessParameterValue =
     static member empty =
         ProcessParameterValue.create None None None
 
+    interface IISAPrintable with
+        member this.Print() =
+            this.ToString()
+        member this.PrintCompact() =
+            let category = this.Category |> Option.map (fun f -> f.NameAsString)
+            let unit = this.Unit |> Option.map (fun oa -> oa.NameAsString)
+            let value = 
+                this.Value
+                |> Option.map (fun v ->
+                    let s = (v :> IISAPrintable).PrintCompact()
+                    match unit with
+                    | Some u -> s + " " + u
+                    | None -> s
+                )
+            match category,value with
+            | Some category, Some value -> category + ":" + value
+            | Some category, None -> category + ":" + "No Value"
+            | None, Some value -> value
+            | None, None -> ""
+
 [<AnyOf>]
 type ProcessInput =
     
@@ -30,11 +50,52 @@ type ProcessInput =
     | [<SerializationOrder(0)>] Data of Data
     | [<SerializationOrder(0)>] Material of Material 
 
+    member this.Name =
+        match this with
+        | ProcessInput.Sample s     -> s.Name
+        | ProcessInput.Source s     -> s.Name
+        | ProcessInput.Material m   -> m.Name
+        | ProcessInput.Data d       -> d.Name
+
+    member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            match this with 
+            | ProcessInput.Sample s     -> sprintf "Sample {%s}" ((s :> IISAPrintable).PrintCompact())
+            | ProcessInput.Source s     -> sprintf "Source {%s}" ((s :> IISAPrintable).PrintCompact())
+            | ProcessInput.Material m   -> sprintf "Material {%s}" ((m :> IISAPrintable).PrintCompact())
+            | ProcessInput.Data d       -> sprintf "Data {%s}" ((d :> IISAPrintable).PrintCompact())
+
+
 [<AnyOf>]
 type ProcessOutput =
     | Sample of Sample
     | Data of Data
     | Material of Material 
+
+    member this.Name =
+        match this with
+        | ProcessOutput.Sample s     -> s.Name
+        | ProcessOutput.Material m   -> m.Name
+        | ProcessOutput.Data d       -> d.Name
+
+    member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            match this with 
+            | ProcessOutput.Sample s     -> sprintf "Sample {%s}" ((s :> IISAPrintable).PrintCompact())
+            | ProcessOutput.Material m   -> sprintf "Material {%s}" ((m :> IISAPrintable).PrintCompact())
+            | ProcessOutput.Data d       -> sprintf "Data {%s}" ((d :> IISAPrintable).PrintCompact())
 
 type Process = 
     {
@@ -79,3 +140,17 @@ type Process =
 
     static member empty =
         Process.create None None None None None None None None None None None
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            let inputCount = this.Inputs |> Option.defaultValue [] |> List.length
+            let outputCount = this.Outputs |> Option.defaultValue [] |> List.length
+            let paramCount = this.ParameterValues |> Option.defaultValue [] |> List.length
+
+            let name = this.Name |> Option.defaultValue "Unnamed Process"
+
+            sprintf "%s [%i Inputs -> %i Params -> %i Outputs]" name inputCount outputCount paramCount 
+            
+

@@ -3,6 +3,9 @@ namespace ISADotNet.API
 open ISADotNet
 open Update
 
+
+(*type ProtocolParameter with*)
+
 module ProtocolParameter =
 
     /// Returns the name of the paramater as string if it exists

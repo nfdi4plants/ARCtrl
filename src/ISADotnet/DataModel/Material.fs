@@ -20,6 +20,24 @@ type MaterialAttribute =
     static member empty =
         MaterialAttribute.create None None 
 
+    /// Returns the name of the characteristic as string
+    member this.NameAsString =
+        this.CharacteristicType
+        |> Option.map (fun oa -> oa.NameAsString)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the characteristic with the number as string (e.g. "temperature #2")
+    member this.NameAsStringWithNumber =       
+        this.CharacteristicType
+        |> Option.map (fun oa -> oa.NameAsStringWithNumber)
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() =
+            this.ToString()
+        member this.PrintCompact() =
+            "OA " + this.NameAsStringWithNumber
+
 type MaterialAttributeValue = 
     {
         [<JsonPropertyName(@"@id")>]
@@ -44,6 +62,26 @@ type MaterialAttributeValue =
     static member empty =
         MaterialAttributeValue.create None None None None
 
+    interface IISAPrintable with
+        member this.Print() =
+            this.ToString()
+        member this.PrintCompact() =
+            let category = this.Category |> Option.map (fun f -> f.NameAsString)
+            let unit = this.Unit |> Option.map (fun oa -> oa.NameAsString)
+            let value = 
+                this.Value
+                |> Option.map (fun v ->
+                    let s = (v :> IISAPrintable).PrintCompact()
+                    match unit with
+                    | Some u -> s + " " + u
+                    | None -> s
+                )
+            match category,value with
+            | Some category, Some value -> category + ":" + value
+            | Some category, None -> category + ":" + "No Value"
+            | None, Some value -> value
+            | None, None -> ""
+
 [<StringEnumAttribute>]
 type MaterialType =
     | [<StringEnumValue("Extract Name")>]           ExtractName // "Extract Name"
@@ -54,6 +92,11 @@ type MaterialType =
         elif t = "Labeled Extract Name" then LabeledExtractName
         else failwith "No other value than \"Extract Name\" or \"Labeled Extract Name\" allowed for materialtype"
 
+    /// Returns the type of the MaterialType
+    member this.AsString =
+        match this with
+        | ExtractName -> "Extract"
+        | LabeledExtractName -> "Labeled Extract"
 
 type Material = 
     {
@@ -66,8 +109,7 @@ type Material =
         [<JsonPropertyName(@"characteristics")>]
         Characteristics : MaterialAttributeValue list option
         [<JsonPropertyName(@"derivesFrom")>]
-        DerivesFrom : OntologyAnnotation option
-    
+        DerivesFrom : OntologyAnnotation option   
     }
 
     static member create id name materialType characteristics derivesFrom : Material=
@@ -81,3 +123,17 @@ type Material =
 
     static member empty =
         Material.create None None None None None
+
+    member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            let chars = this.Characteristics |> Option.defaultValue [] |> List.length
+            match this.MaterialType with
+            | Some t ->
+                sprintf "%s [%s; %i characteristics]" this.NameAsString t.AsString chars
+            | None -> sprintf "%s [%i characteristics]" this.NameAsString chars
