@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="JsonExtensions.fs" />
+    <Compile Include="Printer.fs" />
     <Compile Include="DataModel\Comment.fs" />
     <Compile Include="DataModel\Ontology.fs" />
     <Compile Include="DataModel\Factor.fs" />

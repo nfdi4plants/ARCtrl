@@ -3,6 +3,15 @@ namespace ISADotNet.API
 open ISADotNet
 open Update
 
+module Value = 
+
+    let toString (v: Value) =
+        match v with
+        | Value.Name s      -> s
+        | Value.Float f     -> string f
+        | Value.Int i       -> string i
+        | Value.Ontology o  -> OntologyAnnotation.getNameAsString o
+
 module Factor =  
 
     ///// If a factor for which the predicate returns true exists in the study, gets it
@@ -73,3 +82,64 @@ module Factor =
     let setFactorType (factor : Factor) (factorType : OntologyAnnotation) =
         { factor with
             FactorType = Some factorType }
+
+    /// Returns the name of the factor as string if it exists
+    let tryGetName (f : Factor) =
+        f.Name
+
+    /// Returns the name of the factor as string
+    let getNameAsString (f : Factor) =
+        f.Name |> Option.defaultValue ""
+
+    /// Returns the name of the factor and its number as string (e.g. "temperature #2")
+    let getNameAsStringWithNumber (f : Factor) =
+        f.FactorType
+        |> Option.map (OntologyAnnotation.getNameAsStringWithNumber)
+        |> Option.defaultValue ""
+
+    /// Returns true if the given name matches the name of the factor
+    let nameEqualsString (name : string) (f : Factor) =
+        match f.Name with
+        | Some n -> name = n
+        | None -> false
+
+    /// Returns true if the given numbered name matches the name of the factor (e.g. "temperature #2")
+    let nameWithNumberEqualsString (name : string) (f : Factor) =
+        match f.FactorType with
+        | Some oa -> OntologyAnnotation.nameWithNumberEqualsString name oa
+        | None -> false
+
+
+module FactorValue =
+
+    /// Returns the name of the factor value as string if it exists
+    let tryGetNameAsString (fv : FactorValue) =
+        fv.Category
+        |> Option.bind (Factor.tryGetName)
+
+    /// Returns the name of the factor value as string
+    let getNameAsString (fv : FactorValue) =
+        tryGetNameAsString fv
+        |> Option.defaultValue ""
+
+    /// Returns true if the given name matches the name of the factor value
+    let nameEqualsString (name : string) (fv : FactorValue) =
+        match fv.Category with
+        | Some f -> Factor.nameEqualsString name f
+        | None -> false
+
+    /// Returns the value of the factor value as string if it exists (with unit)
+    let tryGetValueAsString (fv : FactorValue) =
+        let unit = fv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
+        fv.Value
+        |> Option.map (fun v ->
+            let s = v |> Value.toString
+            match unit with
+            | Some u -> s + " " + u
+            | None -> s
+        )
+
+    /// Returns the value of the factor value as string (with unit)
+    let getValueAsString (fv : FactorValue) =
+        tryGetValueAsString fv
+        |> Option.defaultValue ""

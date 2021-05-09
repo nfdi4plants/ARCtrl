@@ -36,6 +36,32 @@ type OntologyAnnotation =
     static member empty =
         OntologyAnnotation.create None None None None None
 
+    /// Returns the name of the ontology as string
+    member this.NameAsString =
+        this.Name
+        |> Option.map (fun oa ->
+            match oa with
+            | AnnotationValue.Text s  -> s
+            | AnnotationValue.Float f -> string f
+            | AnnotationValue.Int i   -> string i
+        )
+        |> Option.defaultValue ""
+
+    /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    member this.NameAsStringWithNumber =       
+        let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
+        let name = this.NameAsString
+        match number with
+        | Some n -> name + " #" + n
+        | None -> name
+
+    interface IISAPrintable with
+        member this.Print() =
+            this.ToString()
+        member this.PrintCompact() =
+            "OA " + this.NameAsStringWithNumber
+
+
 type OntologySourceReference =
     {
         [<JsonPropertyName("description")>]

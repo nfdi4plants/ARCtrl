@@ -25,8 +25,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{BF89DA8A-6
 		docs\1_fsharp-code-example.fsx = docs\1_fsharp-code-example.fsx
 		docs\2_inline-references.fsx = docs\2_inline-references.fsx
 		docs\3_notebooks.fsx = docs\3_notebooks.fsx
+		docs\AddPrinters.fsx = docs\AddPrinters.fsx
 		docs\Home.fsx = docs\Home.fsx
 		docs\index.fsx = docs\index.fsx
+		docs\VisualizeAssayGraph.fsx = docs\VisualizeAssayGraph.fsx
 	EndProjectSection
 EndProject
 Global

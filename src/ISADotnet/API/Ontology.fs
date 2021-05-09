@@ -64,10 +64,41 @@ module OntologySourceReference =
 
 module OntologyAnnotation =  
 
-    ///// If a ontology annotation for which the predicate returns true exists in the Study.StudyDesignDescriptors, gets it
-    //let tryGetBy (predicate : OntologyAnnotation -> bool) (study:Study) =
-    //    study.StudyDesignDescriptors
-    //    |> List.tryFind (predicate) 
+    /// Returns the name of the ontology as string if it has a name
+    let tryGetNameAsString (oa : OntologyAnnotation) =
+        oa.Name
+        |> Option.map (fun oa ->
+            match oa with
+            | AnnotationValue.Text s  -> s
+            | AnnotationValue.Float f -> string f
+            | AnnotationValue.Int i   -> string i
+        )
+
+    /// Returns the name of the ontology as string
+    let getNameAsString (oa : OntologyAnnotation) =
+        tryGetNameAsString oa
+        |> Option.defaultValue ""
+
+    /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    let getNameAsStringWithNumber (oa : OntologyAnnotation) =       
+        let number = oa.Comments |> Option.bind (CommentList.tryItem "Number")
+        let name = getNameAsString oa
+        match number with
+        | Some n -> name + " #" + n
+        | None -> name
+
+    /// Returns true if the given name matches the name of the ontology annotation
+    let nameEqualsString (name : string) (oa : OntologyAnnotation) =
+        match oa.Name with
+        | Some (AnnotationValue.Text s) when s  = name -> true
+        | None when name = "" -> true
+        | Some (AnnotationValue.Float f) when (string f)  = name -> true
+        | Some (AnnotationValue.Int i) when (string i)  = name -> true
+        | _ -> false
+
+    /// Returns true if the given name with number matches the name of the ontology annotation (e.g. "temperature #2")
+    let nameWithNumberEqualsString (name : string) (oa : OntologyAnnotation) =
+        getNameAsStringWithNumber oa = name
 
     /// If an ontology annotation with the given annotation value exists in the list, returns it
     let tryGetByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =

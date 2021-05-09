@@ -47,7 +47,9 @@ module AnnotationColumn =
                         ontologySourceRegex.Value.Split ':'
                         |> fun o -> o.[0], o.[1]
                     else "", ""
-                ColumnHeader.create header kind.Value (Some (OntologyAnnotation.fromString nameRegex.Value termAccession termSource)) number
+                let numberComment = number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
+                let ontology = OntologyAnnotation.fromString nameRegex.Value termAccession termSource
+                ColumnHeader.create header kind.Value (Some {ontology with Comments = numberComment}) number
 
             // Parsing a header of shape: Kind (#Number)
             elif kindRegex.Success then
@@ -129,6 +131,18 @@ module AnnotationColumn =
         | h when h.Kind = "Source Name" ->
             Some h
         | _ -> None
+
+    /// Parses to ColumnHeader, if the given header describes a data file
+    let tryParseDataFileName (header:string) =
+        match ColumnHeader.fromStringHeader header with
+        | h when h.Kind = "Data File Name" -> Some h
+        | h when h.Kind = "Raw Data File" -> Some h   
+        | h when h.Kind = "Derived Data File" -> Some h  
+        | h when h.Kind = "Image File" -> Some h  
+        | _ -> None
+
+    /// Returns true, if the given header describes a data column
+    let isData header = tryParseDataFileName header |> Option.isSome 
 
     /// Returns true, if the given header describes a sample name
     let isSample header = tryParseSampleName header |> Option.isSome 

@@ -14,6 +14,11 @@ type DataFile =
     static member DerivedDataFileJson   = "Derived Data File"
     static member ImageFileJson         = "Image File"
 
+    member this.AsString =
+        match this with
+        | RawDataFile       -> "RawDataFileJson"
+        | DerivedDataFile   -> "DerivedDataFileJson"
+        | ImageFile         -> "ImageFileJson"
 
 type Data = 
     {
@@ -38,6 +43,19 @@ type Data =
     static member empty =
         Data.create None None None None
 
+    member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            match this.DataType with
+            | Some t ->
+                sprintf "%s [%s]" this.NameAsString t.AsString 
+            | None -> sprintf "%s" this.NameAsString
+
 type Source = 
     {
         [<JsonPropertyName(@"@id")>]
@@ -57,6 +75,17 @@ type Source =
 
     static member empty =
         Source.create None None None
+
+    member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            let l = this.Characteristics |> Option.defaultValue [] |> List.length
+            sprintf "%s [%i characteristics]" this.NameAsString l 
 
 type Sample = 
     {
@@ -83,3 +112,15 @@ type Sample =
 
     static member empty =
         Sample.create None None None None None
+
+    member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() = 
+            this.ToString()
+        member this.PrintCompact() =
+            let chars = this.Characteristics |> Option.defaultValue [] |> List.length
+            let facts = this.FactorValues |> Option.defaultValue [] |> List.length
+            sprintf "%s [%i characteristics; %i factors]" this.NameAsString chars facts

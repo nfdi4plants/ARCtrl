@@ -174,3 +174,38 @@ module Assay =
     let setMaterials (assay : Assay) (materials : AssayMaterials) =
         { assay with
             Materials = Some materials }
+
+    /// If the assay contains a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
+    let getInputsWithParameterBy (predicate:ProtocolParameter -> bool) (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map (ProcessSequence.getInputsWithParameterBy predicate)
+        
+    /// If the assay contains a process implementing the given parameter, return the list of output files together with their according parameter values of this parameter
+    let getOutputsWithParameterBy (predicate:ProtocolParameter -> bool) (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map (ProcessSequence.getOutputsWithParameterBy predicate)
+
+    /// Returns the parameters implemented by the processes contained in this assay
+    let getParameters (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map ProcessSequence.getParameters
+    
+    /// If the assay contains a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
+    let getInputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map (ProcessSequence.getInputsWithCharacteristicBy predicate)
+        
+    /// If the assay contains a process implementing the given parameter, return the list of output files together with their according parameter values of this parameter
+    let getOutputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map (ProcessSequence.getOutputsWithCharacteristicBy predicate)
+
+    /// If the assay contains a process implementing the given factor, return the list of output files together with their according factor values of this factor
+    let getOutputsWithFactorBy (predicate:Factor -> bool) (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map (ProcessSequence.getOutputsWithFactorBy predicate)
+
+    /// Returns the factors implemented by the processes contained in this assay
+    let getFactors (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map ProcessSequence.getFactors

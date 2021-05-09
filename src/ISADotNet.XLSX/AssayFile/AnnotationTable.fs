@@ -91,52 +91,90 @@ module AnnotationTable =
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     
+        let dataFileGetter = nodes |> Seq.tryPick AnnotationNode.tryGetDataFileGetter
+
         let inputGetter,outputGetter =
             match nodes |> Seq.tryPick AnnotationNode.tryGetSourceNameGetter with
             | Some inputNameGetter ->
                 let outputNameGetter = nodes |> Seq.tryPick AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
                     fun matrix i -> 
-                        Source.create
-                            None
-                            (inputNameGetter matrix i)
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                        let source = 
+                            Source.create
+                                None
+                                (inputNameGetter matrix i)
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                        if dataFileGetter.IsSome then 
+                            [source;source]
+                        else 
+                            [source]
+                
                 let outputGetter =
                     fun matrix i -> 
-                        Sample.create
-                            None
-                            (outputNameGetter |> Option.bind (fun o -> o matrix i))
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            (inputGetter matrix i |> List.singleton |> Some)
-                         |> Sample
-                (fun matrix i -> inputGetter matrix i |> Source |> Some),outputGetter
+                        let data = dataFileGetter |> Option.map (fun f -> f matrix i)
+                        let outputName = 
+                            match outputNameGetter |> Option.bind (fun o -> o matrix i) with
+                            | Some s -> Some s
+                            | None -> 
+                                match data with
+                                | Some data -> data.Name
+                                | None -> None
+                        let sample =
+                            Sample.create
+                                None
+                                outputName
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (inputGetter matrix i |> List.distinct |> Some)
+                        if data.IsSome then 
+                            [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
+                        else 
+                            [ProcessOutput.Sample sample]                      
+                (fun matrix i -> inputGetter matrix i |> List.map Source |> Some),outputGetter
             | None ->
                 let inputNameGetter = nodes |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
                 let outputNameGetter = nodes |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
                 let inputGetter = 
 
                     fun matrix i ->      
-                        inputNameGetter
-                        |> Option.map (fun ing ->
-                            Sample.create
-                                None
-                                (ing matrix i)
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                                None
-                                None
-                            |> ProcessInput.Sample
-                    )   
+                        let source = 
+                            inputNameGetter
+                            |> Option.map (fun ing ->
+                                Sample.create
+                                    None
+                                    (ing matrix i)
+                                    (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                    None
+                                    None
+                                |> ProcessInput.Sample
+                            )   
+                        match source with
+                        | Some source when dataFileGetter.IsSome -> Some [source;source]
+                        | Some source -> Some  [source]
+                        | None -> None
+                            
 
                 let outputGetter =
                     fun matrix i -> 
-                        Sample.create
-                            None
-                            (outputNameGetter |> Option.bind (fun o -> o matrix i))
-                            (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                            None
-                        |> Sample
+                        let data = dataFileGetter |> Option.map (fun f -> f matrix i)
+                        let outputName = 
+                            match outputNameGetter |> Option.bind (fun o -> o matrix i) with
+                            | Some s -> Some s
+                            | None -> 
+                                match data with
+                                | Some data -> data.Name
+                                | None -> None
+                        let sample =
+                            Sample.create
+                                None
+                                outputName
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                None
+                        if data.IsSome then 
+                            [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
+                        else 
+                            [ProcessOutput.Sample sample]  
                 inputGetter,outputGetter
     
         let protocol = {protocolMetaData with Parameters = API.Option.fromValueWithDefault [] parameters}
@@ -154,8 +192,8 @@ module AnnotationTable =
                 None
                 None
                 None          
-                (inputGetter matrix i |> Option.map List.singleton)
-                (outputGetter matrix i |> List.singleton |> Some)
+                (inputGetter matrix i)
+                (outputGetter matrix i |> Some)
                 None
 
     /// Merges processes with the same parameter values, grouping the input and output files
@@ -196,12 +234,10 @@ module AnnotationTable =
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
     /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
-    let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
+    let private updateSamplesBy (referenceProcesses : Process seq) (processes : Process seq) = 
         let samples = 
             referenceProcesses
-            |> Seq.append processes
             |> Seq.collect (fun p -> 
-                printfn "%O" p.Name 
                 let inputs =
                     p.Inputs 
                     |> Option.defaultValue [] 
@@ -213,14 +249,16 @@ module AnnotationTable =
                 Seq.append inputs outputs
                 |> Seq.distinct
                 )
-            |> Seq.filter (fun (name,_,s) -> name <> None && name <> (Some ""))
-            |> Seq.groupBy (fun (name,_,s) -> name)
-            |> Seq.map (fun (name,s) -> 
-                let x = s |> Seq.map (fun (name,_,s) -> s) |> Seq.reduce API.Update.UpdateByExisting.updateRecordType
-                if Seq.exists (fun (name,isSample,s) -> isSample) s then
-                    name, ProcessInput.Sample x
-                else name, ProcessInput.Source (sourceOfSample x)
-            
+            |> Seq.filter (fun (name,_,samples) -> name <> None && name <> (Some ""))
+            |> Seq.groupBy (fun (name,_,samples) -> name)
+            |> Seq.map (fun (name,samples) -> 
+                let aggregatedSample = 
+                    samples 
+                    |> Seq.map (fun (name,_,s) -> s) 
+                    |> Seq.reduce (fun s1 s2 -> if s1 = s2 then s1 else API.Update.UpdateByExistingAppendLists.updateRecordType s1 s2)
+                if Seq.exists (fun (name,isSample,s) -> isSample) samples then
+                    name, ProcessInput.Sample aggregatedSample
+                else name, ProcessInput.Source (sourceOfSample aggregatedSample)          
             )
             |> Map.ofSeq
     
@@ -242,4 +280,18 @@ module AnnotationTable =
                     Outputs = p.Outputs |> Option.map (List.map updateOutput)
            }
         )
-    
+
+    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
+    ///
+    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
+    let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
+        referenceProcesses
+        |> Seq.append processes
+        |> updateSamplesBy processes
+
+    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
+    ///
+    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
+    let updateSamplesByThemselves (processes : Process seq) =
+        processes
+        |> updateSamplesBy processes

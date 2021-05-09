@@ -51,7 +51,9 @@ let testColumnHeaderFunctions =
 
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Term" "Accession" "Source" |> Some) (Some 3)
+            let testComment = Comment.fromString "Number" "3"
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "Term")) (Some (URI.fromString "Accession")) (Some "Source") (Some [testComment])
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 3)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )
@@ -574,7 +576,7 @@ let testProcessComparisonFunctions =
             let process1 = Process.create None None None None None None None None (Some [Source source1]) (Some [Sample sample1]) None
             let process2 = Process.create None None None None None None None None (Some [sourceWithSampleName]) (Some [Sample sample2]) None
 
-            let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
+            let updatedProcesses = AnnotationTable.updateSamplesByThemselves [process1;process2]
 
             let expectedProcessSequence =
                 [
@@ -614,7 +616,7 @@ let testProcessComparisonFunctions =
             let expectedSample = Sample.create None (Some "Sample1") (Some [characteristicValue]) (Some [factorValue]) None
 
             Expect.equal inputSample outputSample "The information of the output of the first process and the input of the second process was not equalized"      
-            Expect.equal expectedSample outputSample "Values were not correclty merged"
+            Expect.equal outputSample expectedSample "Values were not correctly merged"
         )
     ]
 

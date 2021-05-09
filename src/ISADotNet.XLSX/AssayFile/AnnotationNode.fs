@@ -64,6 +64,7 @@ module AnnotationNode =
                     None
         )
     
+    /// If the headers of a node depict a value header (parameter,factor,characteristic), returns the category and a function for parsing the values of the matrix to the values
     let tryGetValueGetter (valueHeader : ColumnHeader) (headers:string seq) =
         let category1, termAccessionGetter =
             match Seq.tryPick (tryParseTermAccessionNumberHeader valueHeader) headers with
@@ -87,7 +88,7 @@ module AnnotationNode =
             | None -> None, fun _ _ -> None
     
         let category = mergeOntology valueHeader.Term category1 |> mergeOntology category2 
-
+         
         let valueGetter = 
             fun matrix i ->
                 let value = 
@@ -168,6 +169,27 @@ module AnnotationNode =
                     characteristic
                     (valueGetter matrix i)
                     (unitGetter |> Option.map (fun f -> f matrix i))
+        )
+
+    /// If the headers of a node depict a sample name, returns a function for parsing the values of the matrix to the sample names
+    let tryGetDataFileGetter (headers:string seq) =
+        Seq.tryPick tryParseDataFileName headers
+        |> Option.map (fun h -> 
+
+            let dataType = 
+                if h.Kind = "Image File" then Some DataFile.ImageFile
+                elif h.Kind = "Raw Data File" then Some DataFile.RawDataFile
+                elif h.Kind = "Derived Data File" then Some DataFile.DerivedDataFile 
+                else None
+            let numberComment = h.Number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
+            
+            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+                
+                Data.create
+                    None
+                    (Dictionary.tryGetValue (h.HeaderString,i) matrix)
+                    dataType
+                    numberComment
         )
 
     /// If the headers of a node depict a sample name, returns a function for parsing the values of the matrix to the sample names

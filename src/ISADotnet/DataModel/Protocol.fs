@@ -17,8 +17,27 @@ type ProtocolParameter =
             ParameterName = parameterName
         
         }
+    
+    static member empty =
+        ProtocolParameter.create None None
 
+    /// Returns the name of the parameter as string
+    member this.NameAsString =
+        this.ParameterName
+        |> Option.map (fun oa -> oa.NameAsStringWithNumber)
+        |> Option.defaultValue ""
 
+    /// Returns the name of the parameter with the number as string (e.g. "temperature #2")
+    member this.NameAsStringWithNumber =       
+        this.ParameterName
+        |> Option.map (fun oa -> oa.NameAsStringWithNumber)
+        |> Option.defaultValue ""
+
+    interface IISAPrintable with
+        member this.Print() =
+            this.ToString()
+        member this.PrintCompact() =
+            "OA " + this.NameAsStringWithNumber
 
 type Component = 
     {
