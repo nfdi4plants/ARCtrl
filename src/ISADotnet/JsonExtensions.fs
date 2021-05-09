@@ -96,11 +96,32 @@ module JsonExtensions =
         let rec loop s l =
         
             match l with
-            | (t,v)::l when t = JsonTokenType.None ->                   loop s l
-            | (t,v)::l when t = JsonTokenType.StartObject ->            loop (s+"{") l
-            | (t,v)::l when t = JsonTokenType.EndObject ->              loop (s+"}") l
-            | (t,v)::l when t = JsonTokenType.StartArray ->             loop (s+"[") l
-            | (t,v)::l when t = JsonTokenType.EndArray ->               loop (s+"]") l
+            | (t,v)::l when t = JsonTokenType.None ->                   loop s l            
+            
+
+            | (t,v)::l when t = JsonTokenType.StartArray && elementCameBefore ->             
+                elementCameBefore <- false
+                loop (s+",[") l
+
+            | (t,v)::l when t = JsonTokenType.StartArray ->                             
+                loop (s+"[") l
+
+            | (t,v)::l when t = JsonTokenType.EndArray ->               
+                elementCameBefore <- true
+                loop (s+"]") l
+
+
+            | (t,v)::l when t = JsonTokenType.StartObject && elementCameBefore ->            
+                elementCameBefore <- false
+                loop (s+",{") l
+            
+            | (t,v)::l when t = JsonTokenType.StartObject ->            
+                loop (s+"{") l
+
+            | (t,v)::l when t = JsonTokenType.EndObject ->          
+                elementCameBefore <- true
+                loop (s+"}") l
+
 
             | (t,String v)::l when t = JsonTokenType.PropertyName && elementCameBefore -> 
                 elementCameBefore <- false
@@ -191,7 +212,7 @@ module JsonExtensions =
                         else l <- List.append l [reader.TokenType,None]
                     l
                     |> detokenizeJson
-          
+
             FSharp.Reflection.FSharpType.GetUnionCases t
             // Sort union cases before trying to deseralize them one after one
             |> Array.sortBy (fun case ->
@@ -200,7 +221,7 @@ module JsonExtensions =
                 |> Option.defaultValue 0
             )
             // Returns the first union case value which could be deserialized from the input string
-            |> Array.pick (fun case ->             
+            |> Array.pick (fun case ->          
                 let caseType = Case.getType case
                 Serialization.tryDeserializeUnionCase s caseType opts
                 |> Option.map (fun value -> FSharpValue.MakeUnion(case,[|value|]) :?> 'T)   
