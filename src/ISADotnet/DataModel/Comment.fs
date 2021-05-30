@@ -2,8 +2,6 @@ namespace ISADotNet
 
 open System.Text.Json.Serialization
 
-type URI = string
-
 type EMail = string
 
 type Comment = 
@@ -23,6 +21,16 @@ type Comment =
             Value = value      
         }
 
+    static member fromStrings name value =
+        let name = Option.fromValueWithDefault "" name
+        let value = Option.fromValueWithDefault "" value
+        Comment.create None name value
+    
+    static member toStrings (comment : Comment) =
+        Option.defaultValue "" comment.Name, Option.defaultValue "" comment.Value
+
+    static member Create(?Id,?Name,?Value) =
+        Comment.create Id Name Value
 
 
 type Remark = 

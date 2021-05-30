@@ -45,3 +45,6 @@ type Person =
 
     static member empty =
         Person.create None None None None None None None None None None None
+
+    static member Create (?Id,?LastName,?FirstName,?MidInitials,?Email,?Phone,?Fax,?Address,?Affiliation,?Roles,?Comments) =
+        Person.create Id LastName FirstName MidInitials Email Phone Fax Address Affiliation Roles Comments

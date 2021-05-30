@@ -19,6 +19,9 @@ type AssayMaterials =
     static member empty =
         AssayMaterials.create None None
 
+    static member Create(?Samples,?OtherMaterials) =
+        AssayMaterials.create Samples OtherMaterials
+
 type Assay = 
     {
         [<JsonPropertyName(@"@id")>]
@@ -65,3 +68,6 @@ type Assay =
 
     static member empty =
         Assay.create None None None None None None None None None None None
+
+    static member Create (?Id,?FileName,?MeasurementType,?TechnologyType,?TechnologyPlatform,?DataFiles,?Materials,?CharacteristicChategories,?UnitCategories,?ProcessSequence,?Comments) =
+        Assay.create Id FileName MeasurementType TechnologyType TechnologyPlatform DataFiles Materials CharacteristicChategories UnitCategories ProcessSequence Comments

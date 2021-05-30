@@ -43,6 +43,9 @@ type Data =
     static member empty =
         Data.create None None None None
 
+    static member Create (?Id,?Name,?DataType,?Comments) =
+        Data.create Id Name DataType Comments
+
     member this.NameAsString =
         this.Name
         |> Option.defaultValue ""
@@ -75,6 +78,9 @@ type Source =
 
     static member empty =
         Source.create None None None
+
+    static member Create (?Id,?Name,?Characteristics) =
+        Source.create Id Name Characteristics
 
     member this.NameAsString =
         this.Name
@@ -112,6 +118,9 @@ type Sample =
 
     static member empty =
         Sample.create None None None None None
+
+    static member Create (?Id,?Name,?Characteristics,?FactorValues,?DerivesFrom) =
+        Sample.create Id Name Characteristics FactorValues DerivesFrom
 
     member this.NameAsString =
         this.Name

@@ -52,3 +52,6 @@ type Investigation =
 
     static member empty =
         Investigation.create None None None None None None None None None None None None [] 
+
+    static member Create(?Id,?FileName,?Identifier,?Title,?Description,?SubmissionDate,?PublicReleaseDate,?OntologySourceReferences,?Publications,?Contacts,?Studies,?Comments,?Remarks) =
+        Investigation.create Id FileName Identifier Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Option.defaultValue [] Remarks)
