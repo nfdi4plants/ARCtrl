@@ -3,49 +3,22 @@ namespace ISADotNet.XLSX
 open ISADotNet
 open ISADotNet.API
 
-module URI =
+module internal Option =
+ 
+    /// If the value matches the default, a None is returned, else a Some is returned
+    let fromValueWithDefault d v =
+        if d = v then None
+        else Some v
 
-    /// Create a ISAJson URI from a ISATab string entry
-    let fromString (s : string) : URI=
-        s
+    /// Applies the function f on the value of the option if it exists, else applies it on the default value. If the result value matches the default, a None is returned
+    let mapDefault (d : 'T) (f: 'T -> 'T) (o : 'T option) =
+        match o with
+        | Some v -> f v
+        | None   -> f d
+        |> fromValueWithDefault d
 
-    /// Create a ISATab string URI from a ISAJson object
-    let toString (s : URI) : string=
-        s
-
-module AnnotationValue =
-
-    /// Create a ISAJson Annotation value from a ISATab string entry
-    let fromString (s : string) = 
-        try s |> int |> AnnotationValue.Int
-        with | _ -> 
-            try s |> float |> AnnotationValue.Float
-            with
-            | _ -> AnnotationValue.Text s
-
-    /// Get a ISATab string Annotation Name from a ISAJson object
-    let toString (v : AnnotationValue) = 
-        match v with
-        | Text s -> s
-        | Int i -> string i
-        | Float f -> string f
 
 module OntologyAnnotation =
-
-    /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    let fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.create 
-            None 
-            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
-            (Option.fromValueWithDefault "" source)
-            None
-
-    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
-    let toString (oa : OntologyAnnotation) =
-        oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
-        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue "",
-        oa.TermSourceREF |> Option.defaultValue ""
 
     /// Returns the length of a subpropertylist from the aggregated strings
     ///
@@ -71,7 +44,7 @@ module OntologyAnnotation =
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
-            Array.map3 fromString terms accessions sources
+            Array.map3 OntologyAnnotation.fromString terms accessions sources
             |> Array.toList
 
     /// Returns the aggregated ISATab OntologyAnnotation Name, Accession number and ontology source from a list of ISAJson OntologyAnnotation objects
@@ -79,7 +52,7 @@ module OntologyAnnotation =
         if oas = [] then "","",""
         else
             oas
-            |> List.map toString
+            |> List.map OntologyAnnotation.toString
             |> List.reduce (fun (terms, accessions, sources) (term, accession, source) -> 
                 sprintf "%s%c%s" terms      separator term,
                 sprintf "%s%c%s" accessions separator accession,
@@ -87,17 +60,6 @@ module OntologyAnnotation =
             ) 
 
 module Component = 
-    
-    /// Create a ISAJson Component from ISATab string entries
-    let fromString (name: string) (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.fromString term accession source
-        |> Option.fromValueWithDefault OntologyAnnotation.empty
-        |> Component.create (Option.fromValueWithDefault "" name)
-
-    /// Get ISATab string entries from an ISAJson Component object
-    let toString (c : Component) =
-        let (n,t,a) = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")
-        c.ComponentName |> Option.defaultValue "",n,t,a
         
     /// Returns a list of ISAJson Component objects from ISATab aggregated strings
     let fromAggregatedStrings (separator:char) (names:string) (terms:string) (accessions:string) (source:string) =
@@ -108,7 +70,7 @@ module Component =
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
-            Array.map4 fromString names terms accessions sources
+            Array.map4 Component.fromString names terms accessions sources
             |> Array.toList
 
     /// Returns the aggregated ISATAb Component Name, Ontology Annotation value, Accession number and ontology source from a list of ISAJson Component objects
@@ -116,7 +78,7 @@ module Component =
         if cs = [] then "","","",""
         else
             cs
-            |> List.map toString
+            |> List.map Component.toString
             |> List.reduce (fun (names,terms, accessions, sources) (name,term, accession, source) -> 
                 sprintf "%s%c%s" names      separator name,
                 sprintf "%s%c%s" terms      separator term,
@@ -125,16 +87,6 @@ module Component =
             ) 
 
 module ProtocolParameter =
-
-    /// Create a ISAJson Protocol Parameter from ISATab string entries
-    let fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.fromString term accession source
-        |> Option.fromValueWithDefault OntologyAnnotation.empty
-        |> ProtocolParameter.create None
-
-    /// Get ISATab string entries from an ISAJson ProtocolParameter object
-    let toString (pp : ProtocolParameter) =
-        pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")        
 
     /// Returns a list of ISAJson ProtocolParameter objects from ISATab aggregated strings
     let fromAggregatedStrings (separator:char) (terms:string) (accessions:string) (source:string) =
@@ -146,53 +98,11 @@ module ProtocolParameter =
         if oas = [] then "","",""
         else
             oas
-            |> List.map toString
+            |> List.map ProtocolParameter.toString
             |> List.reduce (fun (terms, accessions, sources) (term, accession, source) -> 
                 sprintf "%s%c%s" terms      separator term,
                 sprintf "%s%c%s" accessions separator accession,
                 sprintf "%s%c%s" sources    separator source
             ) 
 
-module MaterialAttribute =
-
-    /// Create a ISAJson MaterialAttribute from ISATab string entries
-    let fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.fromString term accession source
-        |> Option.fromValueWithDefault OntologyAnnotation.empty
-        |> MaterialAttribute.create None
-
-    /// Get ISATab string entries from an ISAJson MaterialAttribute object
-    let toString (ma : MaterialAttribute) =
-        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
-
-module Factor =
-
-    /// Create a ISAJson MaterialAttribute from ISATab string entries
-    let fromString (name : string) (term:string) (accession:string) (source:string) =
-        let oa =
-            OntologyAnnotation.fromString term accession source
-            |> Option.fromValueWithDefault OntologyAnnotation.empty
-        Factor.create None (Option.fromValueWithDefault "" name) oa None
-
-    /// Get ISATab string entries from an ISAJson MaterialAttribute object
-    let toString (ma : MaterialAttribute) =
-        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")   
-
-module Value =
-
-    let fromOptions (value : string Option) (termAccesssion: string Option) (termSource: string Option) =
-        match value, termSource, termAccesssion with
-        | Some value, None, None ->
-            try Value.Int (int value)
-            with
-            | _ -> 
-                try Value.Float (float value)
-                with
-                | _ -> Value.Name value
-            |> Some
-        | None, None, None -> 
-            None
-        | _ -> 
-            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termAccesssion) (Option.defaultValue "" termSource)
-            |> Value.Ontology
-            |> Some
+    

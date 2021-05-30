@@ -25,6 +25,20 @@ type Factor =
     static member empty =
         Factor.create None None None None
 
+    static member Create(?Id,?Name,?FactorType,?Comments) =
+        Factor.create Id Name FactorType Comments
+
+    /// Create a ISAJson Factor from ISATab string entries
+    static member fromString (name : string) (term:string) (accession:string) (source:string) =
+        let oa =
+            OntologyAnnotation.fromString term accession source
+            |> Option.fromValueWithDefault OntologyAnnotation.empty
+        Factor.create None (Option.fromValueWithDefault "" name) oa None
+
+    /// Get ISATab string entries from an ISAJson Factor object
+    static member toString (factor : Factor) =
+        factor.FactorType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")  
+
     /// Returns the name of the factor as string
     member this.NameAsString =
         this.Name
@@ -48,6 +62,30 @@ type Value =
     | [<SerializationOrder(1)>] Int of int
     | [<SerializationOrder(2)>] Float of float
     | [<SerializationOrder(3)>] Name of string
+
+    static member fromOptions (value : string Option) (termAccesssion: string Option) (termSource: string Option) =
+        match value, termSource, termAccesssion with
+        | Some value, None, None ->
+            try Value.Int (int value)
+            with
+            | _ -> 
+                try Value.Float (float value)
+                with
+                | _ -> Value.Name value
+            |> Some
+        | None, None, None -> 
+            None
+        | _ -> 
+            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termAccesssion) (Option.defaultValue "" termSource)
+            |> Value.Ontology
+            |> Some
+
+    static member toOptions (value : Value) =
+        match value with
+        | Ontology oa -> oa.Name |> Option.map AnnotationValue.toString,oa.TermAccessionNumber,oa.TermSourceREF
+        | Int i -> string i |> Some, None, None
+        | Float f -> string f |> Some, None, None
+        | Name s -> s |> Some, None, None
 
     interface IISAPrintable with
         member this.Print() =
@@ -79,6 +117,9 @@ type FactorValue =
             Value = value
             Unit = unit         
         }
+
+    static member Create(?Id,?Category,?Value,?Unit) =
+        FactorValue.create Id Category Value Unit
 
     static member empty =
         FactorValue.create None None None None

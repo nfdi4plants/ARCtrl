@@ -34,4 +34,7 @@ type Publication =
     static member empty =
         Publication.create None None None None None None None
 
+    static member Create (?Id,?PubMedID,?Doi,?Authors,?Title,?Status,?Comments) =
+        Publication.create Id PubMedID Doi Authors Title Status Comments
+
 

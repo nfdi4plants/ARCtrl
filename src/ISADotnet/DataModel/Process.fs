@@ -22,6 +22,9 @@ type ProcessParameterValue =
     static member empty =
         ProcessParameterValue.create None None None
 
+    static member Create (?Category,?Value,?Unit) = 
+        ProcessParameterValue.create Category Value Unit
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
@@ -140,6 +143,9 @@ type Process =
 
     static member empty =
         Process.create None None None None None None None None None None None
+
+    static member Create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
+        Process.create Id Name ExecutesProtocol ParameterValues Performer Date PreviousProcess NextProcess Inputs Outputs Comments
 
     interface IISAPrintable with
         member this.Print() = 

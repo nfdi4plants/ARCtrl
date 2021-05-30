@@ -21,6 +21,8 @@ type StudyMaterials =
     static member empty =
         StudyMaterials.create None None None
 
+    static member Create(?Sources,?Samples,?OtherMaterials) = 
+        StudyMaterials.create Sources Samples OtherMaterials
 
 type Study = 
     {
@@ -89,3 +91,5 @@ type Study =
     static member empty =
         Study.create None None None None None None None None None None None None None None None None None None 
 
+    static member Create(?Id,?FileName,?Identifier,?Title,?Description,?SubmissionDate,?PublicReleaseDate,?Publications,?Contacts,?StudyDesignDescriptors,?Protocols,?Materials,?ProcessSequence,?Assays,?Factors,?CharacteristicCategories,?UnitCategories,?Comments) =
+        Study.create Id FileName Identifier Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Protocols Materials ProcessSequence Assays Factors CharacteristicCategories UnitCategories Comments

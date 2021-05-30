@@ -20,6 +20,19 @@ type MaterialAttribute =
     static member empty =
         MaterialAttribute.create None None 
 
+    static member Create (?Id,?CharacteristicType) =
+        MaterialAttribute.create Id CharacteristicType
+
+    /// Create a ISAJson MaterialAttribute from ISATab string entries
+    static member fromString (term:string) (accession:string) (source:string) =
+        OntologyAnnotation.fromString term accession source
+        |> Option.fromValueWithDefault OntologyAnnotation.empty
+        |> MaterialAttribute.create None
+
+    /// Get ISATab string entries from an ISAJson MaterialAttribute object
+    static member toString (ma : MaterialAttribute) =
+        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
+
     /// Returns the name of the characteristic as string
     member this.NameAsString =
         this.CharacteristicType
@@ -61,6 +74,9 @@ type MaterialAttributeValue =
 
     static member empty =
         MaterialAttributeValue.create None None None None
+
+    static member Create(?Id,?Category,?Value,?Unit) =
+        MaterialAttributeValue.create Id Category Value Unit
 
     interface IISAPrintable with
         member this.Print() =
@@ -123,6 +139,9 @@ type Material =
 
     static member empty =
         Material.create None None None None None
+
+    static member Create(?Id,?Name,?MaterialType,?Characteristics,?DerivesFrom) = 
+        Material.create Id Name MaterialType Characteristics DerivesFrom
 
     member this.NameAsString =
         this.Name

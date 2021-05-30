@@ -10,6 +10,21 @@ type AnnotationValue =
 
     static member empty = Text ""
 
+    /// Create a ISAJson Annotation value from a ISATab string entry
+    static member fromString (s : string) = 
+        try s |> int |> AnnotationValue.Int
+        with | _ -> 
+            try s |> float |> AnnotationValue.Float
+            with
+            | _ -> AnnotationValue.Text s
+
+    /// Get a ISATab string Annotation Name from a ISAJson object
+    static member toString (v : AnnotationValue) = 
+        match v with
+        | Text s -> s
+        | Int i -> string i
+        | Float f -> string f
+
 type OntologyAnnotation =
     {
         [<JsonPropertyName("@id")>]
@@ -36,6 +51,9 @@ type OntologyAnnotation =
     static member empty =
         OntologyAnnotation.create None None None None None
 
+    static member Create(?Id,?Name,?TermAccessionNumber,?TermSourceREF,?Comments) =
+        OntologyAnnotation.create Id Name TermAccessionNumber TermSourceREF Comments
+
     /// Returns the name of the ontology as string
     member this.NameAsString =
         this.Name
@@ -54,6 +72,23 @@ type OntologyAnnotation =
         match number with
         | Some n -> name + " #" + n
         | None -> name
+
+
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromString (term:string) (accession:string) (source:string) =
+        OntologyAnnotation.create 
+            None 
+            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
+            (Option.fromValueWithDefault "" source)
+            None
+
+    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
+    static member toString (oa : OntologyAnnotation) =
+        oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
+        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue "",
+        oa.TermSourceREF |> Option.defaultValue ""
+
 
     interface IISAPrintable with
         member this.Print() =
@@ -88,3 +123,6 @@ type OntologySourceReference =
 
     static member empty =
         OntologySourceReference.create None None None None None
+
+    static member Create(?Description,?File,?Name,?Version,?Comments) =
+        OntologySourceReference.create Description File Name Version Comments

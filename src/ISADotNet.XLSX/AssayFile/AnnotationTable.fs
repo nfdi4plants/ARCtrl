@@ -35,7 +35,7 @@ module AnnotationTable =
                             Source.create
                                 None
                                 (inputNameGetter matrix i)
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                         if dataFileGetter.IsSome then 
                             [source;source]
                         else 
@@ -55,8 +55,8 @@ module AnnotationTable =
                             Sample.create
                                 None
                                 outputName
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                                (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                                (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                 (inputGetter matrix i |> List.distinct |> Some)
                         if data.IsSome then 
                             [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
@@ -75,7 +75,7 @@ module AnnotationTable =
                                 Sample.create
                                     None
                                     (ing matrix i)
-                                    (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                    (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                     None
                                     None
                                 |> ProcessInput.Sample
@@ -100,8 +100,8 @@ module AnnotationTable =
                             Sample.create
                                 None
                                 outputName
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
-                                (factorValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                                (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                 None
                         if data.IsSome then 
                             [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
@@ -109,7 +109,7 @@ module AnnotationTable =
                             [ProcessOutput.Sample sample]  
                 inputGetter,outputGetter
     
-        let protocol = {protocolMetaData with Parameters = API.Option.fromValueWithDefault [] parameters}
+        let protocol = {protocolMetaData with Parameters = Option.fromValueWithDefault [] parameters}
     
         characteristics,
         factors,
@@ -119,7 +119,7 @@ module AnnotationTable =
                 None 
                 None 
                 (Some protocol) 
-                (parameterValueGetters |> List.map (fun f -> f matrix i) |> API.Option.fromValueWithDefault [])
+                (parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                 None
                 None
                 None
@@ -135,8 +135,8 @@ module AnnotationTable =
         |> Seq.map (fun (_,processGroup) ->
             processGroup
             |> Seq.reduce (fun p1 p2 ->
-                let mergedInputs = List.append (p1.Inputs |> Option.defaultValue []) (p2.Inputs |> Option.defaultValue []) |> API.Option.fromValueWithDefault []
-                let mergedOutputs = List.append (p1.Outputs |> Option.defaultValue []) (p2.Outputs |> Option.defaultValue []) |> API.Option.fromValueWithDefault []
+                let mergedInputs = List.append (p1.Inputs |> Option.defaultValue []) (p2.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
+                let mergedOutputs = List.append (p1.Outputs |> Option.defaultValue []) (p2.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 {p1 with Inputs = mergedInputs; Outputs = mergedOutputs}
             )
         )
