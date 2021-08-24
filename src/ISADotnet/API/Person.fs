@@ -60,13 +60,12 @@ module Person =
     
     /// If a person with the given FirstName, MidInitials and LastName exists in the list, removes it
     let removeByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.filter (fun p -> 
-            if midInitials = "" then 
-                p.FirstName = Some firstName && p.LastName = Some lastName
+        List.filter (fun p ->
+            if midInitials = "" then
+                (p.FirstName = Some firstName && p.LastName = Some lastName)
                 |> not
-            else 
-
-                p.FirstName = Some firstName && p.MidInitials = Some midInitials && p.LastName = Some lastName
+            else
+                (p.FirstName = Some firstName && p.MidInitials = Some midInitials && p.LastName = Some lastName)
                 |> not
         ) persons
 
