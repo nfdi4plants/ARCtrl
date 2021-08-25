@@ -1,3 +1,11 @@
+### 0.2.6+0fa5cb5 (Released 2021-8-25)
+* Additions:
+    * latest commit #0fa5cb5
+    * [[#a5b970f](https://github.com/nfdi4plants/ISADotNet/commit/a5b970f5c004622878c2dbc942a120b55ef4e34b)] add pretty printer example script
+* Bugfixes:
+    * [[#17200f7](https://github.com/nfdi4plants/ISADotNet/commit/17200f770a5511d19b1c164e300c9b680c877db3)] fix missing commas in json deserializer
+    * [[#24f9872](https://github.com/nfdi4plants/ISADotNet/commit/24f987261a479c009a28ea0da0d9f49b2e589926)] Fix Person.removeByFullName error
+
 ### 0.2.5+02f30a0 (Released 2021-3-26)
 * Additions:
     * latest commit #02f30a0
