@@ -74,7 +74,7 @@ module AssayFile =
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Some wsp ->
-                        match Table.tryGetByNameBy (fun s -> s.Contains "annotationTable") wsp with
+                        match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
                         | Some table -> 
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table

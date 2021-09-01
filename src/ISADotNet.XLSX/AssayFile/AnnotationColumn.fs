@@ -29,34 +29,39 @@ module AnnotationColumn =
         /// Parses a string to a column header
         static member fromStringHeader header =
                   
-            let namePattern = @"(?<= \[).*(?=\])"
-            let ontologySourcePattern = @"(?<=#t)\S+:[^;)]*"
-            let numberPattern = @"(?<= \(#)\d+(?=[;)])"
+            let kindPattern = @".*(?= [\[\(])"
+            let namePattern = @"(?<= \[)[^#\]]*(?=[\]#])"
+            let ontologySourcePattern = @"(?<=\()\S+:[^;)#]*(?=[\)\#])"
+            let numberPattern = @"(?<=#)\d+(?=[\)\]])"
 
             let nameRegex = Regex.Match(header,namePattern)
-            let kindRegex = Regex.Match(header,@".*(?= \(#.*\))")
+            let kindRegex = Regex.Match(header,kindPattern)
+            let ontologySourceRegex = Regex.Match(header,ontologySourcePattern)
+            let numberRegex = Regex.Match(header,numberPattern)
+
+            let number = if numberRegex.Success then Some (int numberRegex.Value) else None
+            let numberComment = number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
 
             // Parsing a header of shape: Kind [TermName] (#Number, #tOntology)
             if nameRegex.Success then
-                let kind = Regex.Match(header,@".*(?= \[)")
-                let ontologySourceRegex = Regex.Match(header,ontologySourcePattern)
-                let numberRegex = Regex.Match(header,numberPattern)
-                let number = if numberRegex.Success then Some (int numberRegex.Value) else None
-                let termSource,termAccession = 
-                    if ontologySourceRegex.Success then 
-                        ontologySourceRegex.Value.Split ':'
-                        |> fun o -> o.[0], o.[1]
-                    else "", ""
-                let numberComment = number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
-                let ontology = OntologyAnnotation.fromString nameRegex.Value termAccession termSource
-                ColumnHeader.create header kind.Value (Some {ontology with Comments = numberComment}) number
+                                                                             
+                let ontology = OntologyAnnotation.fromString nameRegex.Value "" ""
+
+                ColumnHeader.create header kindRegex.Value (Some {ontology with Comments = numberComment}) number
 
             // Parsing a header of shape: Kind (#Number)
             elif kindRegex.Success then
                 let kind = kindRegex.Value
-                let numberRegex = Regex.Match(header,numberPattern)
-                let number = if numberRegex.Success then Some (int numberRegex.Value) else None
-                ColumnHeader.create header kind None number
+
+                let ontology = 
+                    if ontologySourceRegex.Success then 
+                        ontologySourceRegex.Value.Split ':'
+                        |> fun o -> OntologyAnnotation.fromString ""  o.[1] o.[0]
+                        |> fun ontology -> {ontology with Comments = numberComment}
+                        |> Some
+                    else None
+
+                ColumnHeader.create header kind ontology number
 
             // Parsing a header of shape: Kind
             else
@@ -65,11 +70,11 @@ module AnnotationColumn =
     /// If both options have a value, updates the fields of the first ontology with the fields of the second ontology
     let mergeOntology (termSourceHeaderOntology : OntologyAnnotation Option) (termAccessionHeaderOntology : OntologyAnnotation Option) =
         match termSourceHeaderOntology, termAccessionHeaderOntology with
-        | Some oa1, Some oa2 -> API.Update.UpdateAll.updateRecordType oa1 oa2 |> Some
+        | Some oa1, Some oa2 -> API.Update.UpdateByExisting.updateRecordType oa1 oa2 |> Some
         | Some oa, None -> Some oa
         | None, Some oa -> Some oa
         | None, None -> None
-
+        
     /// Parses to ColumnHeader, if the given header describes a Term Source Reference
     let tryParseTermSourceReferenceHeader (termHeader:ColumnHeader) (header:string) =
         match ColumnHeader.fromStringHeader header with
