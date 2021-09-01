@@ -35,7 +35,7 @@ let testColumnHeaderFunctions =
 
             Expect.equal header testHeader "Number was not parsed correctly"
         )
-        testCase "NameWithNoOntology" (fun () ->
+        testCase "Name" (fun () ->
 
             let headerString = "NamedHeader [Name]"
 
@@ -45,15 +45,29 @@ let testColumnHeaderFunctions =
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )
-        testCase "NumberedWithOntology" (fun () ->
+        testCase "NameWithNumber" (fun () ->
 
-            let headerString = "NamedHeader [Term] (#3; #tSource:Accession)"
+            let headerString = "NamedHeader [Name#5]"
 
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testComment = Comment.fromString "Number" "3"
-            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "Term")) (Some (URI.fromString "Accession")) (Some "Source") (Some [testComment])
-            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 3)
+            let testComment = Comment.fromString "Number" "5"
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
+
+
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
+
+            Expect.equal header testHeader "Dit not parse Name correctly"
+        )
+        testCase "AccessionWithNumber" (fun () ->
+
+            let headerString = "Term Accession Number (MS:1000031#2)"
+
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
+
+            let testComment = Comment.fromString "Number" "2"
+            let testOntology = OntologyAnnotation.create None None (Some (URI.fromString "1000031")) (Some "MS") (Some [testComment])
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )
@@ -166,7 +180,7 @@ let testNodeGetterFunctions =
                 if b then Some v
                 else None
 
-            let v = tryGetValue ("Unit [square centimeter] (#h; #tUO:0000081; #u)",0) m
+            let v = tryGetValue ("Unit",0) m
 
             Expect.isSome v "Value could not be retrieved from matrix"
 
@@ -178,7 +192,7 @@ let testNodeGetterFunctions =
 
         testCase "GetUnitGetter" (fun () ->
 
-            let headers = ["Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
 
             let unitGetterOption = AnnotationNode.tryGetUnitGetterFunction headers
 
@@ -194,7 +208,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetUnitGetterWrongHeaders" (fun () ->
 
-            let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Parameter [square centimeter]";"Term Source REF (UO:0000081)";"Term Accession Number (UO:0000081)"]
 
             let unitGetterOption = AnnotationNode.tryGetUnitGetterFunction headers
 
@@ -202,7 +216,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetCharacteristicsGetter" (fun () ->
 
-            let headers = ["Characteristics [leaf size]";"Term Source REF [leaf size] (#h; #tTO:0002637)";"Term Accession Number [leaf size] (#h; #tTO:0002637)";"Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
 
             let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetter headers
 
@@ -236,7 +250,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetFactorGetter" (fun () ->
 
-            let headers = ["Factor [time]";"Term Source REF [time] (#h; #tPATO:0000165)";"Term Accession Number [time] (#h; #tPATO:0000165)";"Unit [hour] (#h; #tUO:0000032; #u)";"Term Source REF [hour] (#h; #tUO:0000032; #u)";"Term Accession Number [hour] (#h; #tUO:0000032; #u)"]
+            let headers = ["Factor [time#2]";"Unit (#2)";"Term Source REF (PATO:0000165#2)";"Term Accession Number (PATO:0000165#2)"]
 
             let factorGetterOption = AnnotationNode.tryGetFactorGetter headers
 
@@ -246,7 +260,11 @@ let testNodeGetterFunctions =
 
             Expect.isSome factor "FactorGetter was returned but no factor was returned"
 
-            let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO" 
+            let testComment = Comment.fromString "Number" "2"
+
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [testComment])
+
+            let expectedFactor = Factor.create None (Some "time") (Some testOntology) None
 
             Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
             
@@ -270,7 +288,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetter" (fun () ->
 
-            let headers = ["Parameter [temperature unit]";"Term Source REF [temperature unit] (#h; #tUO:0000005)";"Term Accession Number [temperature unit] (#h; #tUO:0000005)";"Unit [degree Celsius] (#h; #tUO:0000027; #u)";"Term Source REF [degree Celsius] (#h; #tUO:0000027; #u)";"Term Accession Number [degree Celsius] (#h; #tUO:0000027; #u)"]
+            let headers = ["Parameter [temperature unit#3]";"Unit (#3)";"Term Source REF (UO:0000005#3)";"Term Accession Number (UO:0000005#3)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -280,7 +298,11 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
+            let testComment = Comment.fromString "Number" "3"
+
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [testComment])
+
+            let expectedParameter = ProtocolParameter.create None (Some testOntology)
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
 
@@ -296,7 +318,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetterNoUnit" (fun () ->
 
-            let headers = ["Parameter [measurement device]";"Term Source REF [measurement device] (#h; #tOBI:0000832)";"Term Accession Number [measurement device] (#h; #tOBI:0000832)"]
+            let headers = ["Parameter [measurement device]";"Term Source REF (OBI:0000832)";"Term Accession Number (OBI:0000832)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -306,7 +328,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "dawdawdawd"
+            Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "Parameter has no TermSourceRef"
 
             let expectedParameter = ProtocolParameter.fromString "measurement device" "0000832" "OBI" 
 
@@ -322,7 +344,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetterUserSpecific" (fun () ->
 
-            let headers = ["Parameter [heating block]";"Term Source REF [heating block] (#h; #tOBI:0400108)";"Term Accession Number [heating block] (#h; #tOBI:0400108)"]
+            let headers = ["Parameter [heating block]";"Term Source REF (OBI:0400108)";"Term Accession Number (OBI:0400108)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -346,7 +368,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetterWrongHeaders" (fun () ->
 
-            let headers = ["Factor [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Factor [square centimeter]";"Term Source REF (UO:0000081)";"Term Accession Number (UO:0000081)"]
 
             let unitGetterOption = AnnotationNode.tryGetParameterGetter headers
 
