@@ -5,75 +5,7 @@ open ISADotNet
 
 /// Functions for parsing an annotation table to the described processes
 module AnnotationTable = 
-    
-    /// Splits the headers of an annotation table into parts, so that each part has at most one input and one output column (Source Name, Sample Name)
-    let splitBySamples (headers : seq<string>) =
-        let isSample header = AnnotationColumn.tryParseSampleName header |> Option.isSome 
-        let isSource header = AnnotationColumn.tryParseSourceName header |> Option.isSome 
-        
-        match Seq.filter isSource headers |> Seq.length, Seq.filter isSample headers |> Seq.length with
-        | 1,1  -> 
-            Seq.filter isSample headers
-            |> Seq.append (Seq.filter (fun s -> (isSample s || isSource s) |> not) headers) 
-            |> Seq.append (Seq.filter isSource headers)
-            |> Seq.singleton
-        | 0,1 -> Seq.append (Seq.filter (isSample>>not) headers) (Seq.filter isSample headers) |> Seq.singleton
-        | 0,2 when Seq.head headers |> isSample && Seq.last headers |> isSample -> headers |> Seq.singleton
-        | _ -> Seq.groupWhen true (fun header -> isSample header || isSource header) headers
 
-    /// Splits the parts into protocols according to the headers given together with the named protocols. Assins the input and output column to each resulting protocol
-    let splitByNamedProtocols (namedProtocols : (Protocol * seq<string>) seq) (headers : seq<string>) =
-        let sortAgainst =
-            let m = headers |> Seq.mapi (fun i x -> x,i) |> Map.ofSeq
-            fun hs -> hs |> Seq.sortBy (fun v -> m.[v])
-        let isSample (header:string) = AnnotationColumn.isSample header || AnnotationColumn.isSource header
-
-        let rec loop (protocolOverlaps : (Protocol * seq<string>) list) (namedProtocols : (Protocol * Set<string>) list) (remainingHeaders : Set<string>) =
-            match namedProtocols with
-            | _ when remainingHeaders.IsEmpty -> 
-                protocolOverlaps
-            | (p,hs)::l ->
-                if Set.isSubset hs remainingHeaders then
-                    loop ((p,Set.toSeq hs)::protocolOverlaps) l (Set.difference remainingHeaders hs)
-                else 
-                    loop protocolOverlaps l remainingHeaders
-            | [] ->
-                (Protocol.empty ,remainingHeaders |> Set.toSeq)::protocolOverlaps
-        
-        let sampleColumns,otherColumns = headers |> Seq.filter (isSample) |> Seq.toList,headers |> Seq.filter (isSample>>not)
-    
-        let protocolOverlaps = 
-            loop [] (namedProtocols |> Seq.map (fun (p,hs) -> p,hs |> Set.ofSeq) |> List.ofSeq) (otherColumns |> Set.ofSeq)
-            |> Seq.map (fun (p,hs) -> p, sortAgainst hs)
-        
-        match sampleColumns with
-        | [] ->         protocolOverlaps 
-        | [s] ->        protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append [s] hs)
-        | [s1;s2] ->    protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append (Seq.append [s1] hs) [s2])
-        | s ->          protocolOverlaps |> Seq.map (fun (p,hs) -> p,Seq.append hs s)
-
-    /// Name unnamed protocols with the given sheetName. If there is more than one unnamed protocol, additionally add an index
-    let indexProtocolsBySheetName (sheetName:string) (protocols : (Protocol * seq<string>) seq) =
-        let unnamedProtocolCount = protocols |> Seq.filter (fun (p,_) -> p.Name.IsNone) |> Seq.length
-        match unnamedProtocolCount with
-        | 0 -> protocols
-        | 1 -> 
-            protocols 
-            |> Seq.map (fun (p,hs) -> 
-                if p.Name.IsNone then
-                    {p with Name = Some sheetName},hs
-                else p,hs
-            )
-        | _ -> 
-            let mutable i = 0 
-            protocols 
-            |> Seq.map (fun (p,hs) -> 
-                if p.Name.IsNone then
-                    let name = sprintf "%s_%i" sheetName i
-                    i <- i + 1
-                    {p with Name = Some name},hs
-                else p,hs
-            )
 
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
     let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =

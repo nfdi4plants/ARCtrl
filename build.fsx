@@ -140,7 +140,12 @@ module TestTasks =
             Shell.cleanDirs (!! "tests/**/**/TestResult")
     }
 
-    let runTests = BuildTask.create "RunTests" [clean; cleanTestResults; build; copyBinaries] {
+    let cleanTestBinaries =
+        BuildTask.create "cleanTestBinaries" [] {
+            Shell.cleanDirs (!! "tests/**/bin")
+    }
+
+    let runTests = BuildTask.create "RunTests" [clean; cleanTestBinaries; cleanTestResults; build; copyBinaries] {
         let standardParams = Fake.DotNet.MSBuild.CliArguments.Create ()
         Fake.DotNet.DotNet.test(fun testParams ->
             {
