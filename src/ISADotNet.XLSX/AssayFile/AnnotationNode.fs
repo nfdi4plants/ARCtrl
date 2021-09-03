@@ -65,7 +65,7 @@ module AnnotationNode =
         )
     
     /// If the headers of a node depict a value header (parameter,factor,characteristic), returns the category and a function for parsing the values of the matrix to the values
-    let tryGetValueGetter (valueHeader : ColumnHeader) (headers:string seq) =
+    let tryGetValueGetter hasUnit (valueHeader : ColumnHeader) (headers:string seq) =
         let category1, termAccessionGetter =
             match Seq.tryPick (tryParseTermAccessionNumberHeader valueHeader) headers with
             | Some h ->
@@ -100,13 +100,16 @@ module AnnotationNode =
                 // Set termAcession and termSource of the value to None if they are the same as the header. 
                 // This is done as Swate fills empty with the header but these values should not be transferred to the isa model
                 let termAccession,termSource = 
-                    match termAccessionGetter matrix i,termSourceGetter matrix i,category with
-                    | Some a, Some s,Some c ->
-                        match c.TermAccessionNumber,c.TermSourceREF with
-                        | Some ca, Some cs when a.Contains ca && s.Contains cs ->
-                            None,None
-                        | _ -> Some a, Some s
-                    | (a,s,c) -> a,s
+                    if hasUnit then 
+                        None, None
+                    else
+                        match termAccessionGetter matrix i,termSourceGetter matrix i,category with
+                        | Some a, Some s,Some c ->
+                            match c.TermAccessionNumber,c.TermSourceREF with
+                            | Some ca, Some cs when a.Contains ca && s.Contains cs ->
+                                None,None
+                            | _ -> Some a, Some s
+                        | (a,s,c) -> a,s
                 Value.fromOptions 
                     value
                     termAccession
@@ -119,7 +122,7 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
                   
-            let category,valueGetter = tryGetValueGetter h headers                              
+            let category,valueGetter = tryGetValueGetter unitGetter.IsSome h headers                              
                 
             let parameter = category |> Option.map (Some >> ProtocolParameter.create None)
 
@@ -137,7 +140,7 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
             
-            let category,valueGetter = tryGetValueGetter h headers    
+            let category,valueGetter = tryGetValueGetter unitGetter.IsSome h headers    
                     
             let factor = 
                 category
@@ -158,7 +161,7 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
                   
-            let category,valueGetter = tryGetValueGetter h headers    
+            let category,valueGetter = tryGetValueGetter unitGetter.IsSome h headers    
                     
             let characteristic = category |> Option.map (Some >> MaterialAttribute.create None)            
             

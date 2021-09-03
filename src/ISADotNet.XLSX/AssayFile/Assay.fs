@@ -20,20 +20,16 @@ module AssayFile =
         |> MetaData.init metadataSheetName 
         |> Spreadsheet.close
 
-    let fromSparseMatrix (processNameRoot:string) namedProtocols matrixHeaders (matrixLength:int) (sparseMatrix : Dictionary<string*int,string>) = 
-        AnnotationTable.splitBySamples matrixHeaders
-        |> Seq.collect (AnnotationTable.splitByNamedProtocols namedProtocols)
-        |> AnnotationTable.indexProtocolsBySheetName processNameRoot
-        |> Seq.map (fun (protocolMetaData,headers) ->
-            let characteristic,factors,protocol,processGetter = 
-                AnnotationNode.splitIntoNodes headers
-                |> AnnotationTable.getProcessGetter protocolMetaData
-            characteristic,factors,protocol,
+    let fromSparseMatrix (processNameRoot:string) matrixHeaders (matrixLength:int) (sparseMatrix : Dictionary<string*int,string>) = 
+        let characteristic,factors,protocol,processGetter = 
+            AnnotationNode.splitIntoNodes matrixHeaders
+            |> AnnotationTable.getProcessGetter ({Protocol.empty with Name = Some processNameRoot}) 
+        characteristic,factors,protocol,
             
-            Seq.init matrixLength (processGetter sparseMatrix)
-            |> AnnotationTable.mergeIdenticalProcesses
-            |> AnnotationTable.indexRelatedProcessesByProtocolName
-        )
+        Seq.init matrixLength (processGetter sparseMatrix)
+        |> AnnotationTable.mergeIdenticalProcesses
+        |> AnnotationTable.indexRelatedProcessesByProtocolName
+
 
     /// Parses the assay file
     let fromFile (path:string) = 
@@ -53,14 +49,7 @@ module AssayFile =
                     |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
                     |> MetaData.fromRows
                 )
-                |> Option.defaultValue (None,[])
-            
-            // Get the named protocol templates from the custom xml
-            let protocolTemplates = 
-                Spreadsheet.getWorkbookPart doc
-                |> SwateTable.readSwateTables
-                |> Seq.choose (fun st -> st.ProtocolGroup |> Option.map (fun ps -> st.Worksheet,ps.Protocols))
-                |> Map.ofSeq
+                |> Option.defaultValue (None,[])          
            
             let sheetNames = 
                 Spreadsheet.getWorkbookPart doc
@@ -74,7 +63,7 @@ module AssayFile =
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Some wsp ->
-                        match Table.tryGetByNameBy (fun s -> s.Contains "annotationTable") wsp with
+                        match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
                         | Some table -> 
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table
@@ -82,19 +71,8 @@ module AssayFile =
                             let length = 
                                 Table.getArea table
                                 |> fun area -> Table.Area.lowerBoundary area - Table.Area.upperBoundary area |> int
-                            let namedProtocols = 
-                                Map.tryFind sheetName protocolTemplates
-                                |> Option.defaultValue Seq.empty
-                                |> Seq.choose (fun p -> 
-                                    SwateTable.trySelectProtocolheaders p headers
-                                    |> Option.map (fun nps -> 
-                                        Protocol.create None (Some p.Id) None None None None None None None,
-                                        nps
-                                    )                                                                       
-                                )
-                                |> Seq.toList
 
-                            fromSparseMatrix sheetName namedProtocols headers length m  
+                            Seq.singleton (fromSparseMatrix sheetName headers length m)
                     
                         | None -> Seq.empty
                     | None -> Seq.empty                

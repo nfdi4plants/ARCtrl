@@ -35,7 +35,7 @@ let testColumnHeaderFunctions =
 
             Expect.equal header testHeader "Number was not parsed correctly"
         )
-        testCase "NameWithNoOntology" (fun () ->
+        testCase "Name" (fun () ->
 
             let headerString = "NamedHeader [Name]"
 
@@ -45,103 +45,31 @@ let testColumnHeaderFunctions =
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )
-        testCase "NumberedWithOntology" (fun () ->
+        testCase "NameWithNumber" (fun () ->
 
-            let headerString = "NamedHeader [Term] (#3; #tSource:Accession)"
+            let headerString = "NamedHeader [Name#5]"
 
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let testComment = Comment.fromString "Number" "3"
-            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "Term")) (Some (URI.fromString "Accession")) (Some "Source") (Some [testComment])
-            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 3)
+            let testComment = Comment.fromString "Number" "5"
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
+
+
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
         )
-    ]
+        testCase "AccessionWithNumber" (fun () ->
 
-[<Tests>]
-let testHeaderSplittingFunctions = 
-    testList "HeaderSplittingFunctionTests" [
-        testCase "SplitBySamplesOnlySource" (fun () ->
+            let headerString = "Term Accession Number (MS:1000031#2)"
 
-            let headers = ["Source Name";"Paramer [MyDude]";"Characteristic [MyGuy]"]
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
-            let resultHeaders = AnnotationTable.splitBySamples headers
+            let testComment = Comment.fromString "Number" "2"
+            let testOntology = OntologyAnnotation.create None None (Some (URI.fromString "1000031")) (Some "MS") (Some [testComment])
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
-            Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as only one source column was set"
-            Expect.sequenceEqual headers (resultHeaders |> Seq.head) "Shouldn't have split headers, as only one source column was set"
-        )
-        testCase "SplitBySamplesOnlySample" (fun () ->
-
-            let headers = ["Sample Name";"Paramer [MyDude]";"Characteristic [MyGuy]"]
-
-            let resultHeaders = AnnotationTable.splitBySamples headers
-
-            Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as only one sample column was set"
-            Expect.sequenceEqual (resultHeaders |> Seq.head) ["Paramer [MyDude]";"Characteristic [MyGuy]";"Sample Name"] "Should have moved sample to the end"
-        )
-        testCase "SplitBySamplesOnlySourceAndSample" (fun () ->
-
-            let headers = ["Source Name";"Paramer [MyDude]";"Sample Name";"Characteristic [MyGuy]"]
-
-            let resultHeaders = AnnotationTable.splitBySamples headers
-
-            Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as only one source column and sample column was set"
-            Expect.sequenceEqual (resultHeaders |> Seq.head) ["Source Name";"Paramer [MyDude]";"Characteristic [MyGuy]";"Sample Name"] "Should have put source at front and sample at end"
-        )
-        testCase "SplitBySamplesManySamples" (fun () ->
-
-            let headers = ["Source Name";"Paramer [MyDude]";"Sample Name";"Characteristic [MyGuy]";"Sample Name (#2)"]
-
-            let resultHeaders = AnnotationTable.splitBySamples headers
-
-            let testResults = seq [["Source Name";"Paramer [MyDude]";"Sample Name"];["Sample Name";"Characteristic [MyGuy]";"Sample Name (#2)"]] |> Seq.map (List.toSeq)
-
-            Expect.hasLength resultHeaders 2 "Should have split headers, as several sample columns were set"
-            Expect.sequenceEqual resultHeaders testResults "Headers were not split correctly"
-        )
-        testCase "splitByNamedProtocolsNoProtocols" (fun () ->
-
-            let headers = ["Source Name";"Paramer [MyDude]";"Parameter [MyBro]";"Parameter [MyGuy]";"Sample Name"]
-
-            let namedProtocols = []
-
-            let resultHeaders = AnnotationTable.splitByNamedProtocols namedProtocols headers
-
-            Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as no named protocol was given"
-            Expect.sequenceEqual headers (resultHeaders |> Seq.head |> snd) "Shouldn't have split headers, as no named protocol was given"
-        )
-        testCase "splitByNamedProtocols" (fun () ->
-
-            let headers = ["Source Name";"Paramer [MyDude]";"Parameter [MyBro]";"Parameter [MyGuy]";"Sample Name"]
-
-            let protocolWithName = Protocol.create None (Some "NamedProtocol") None None None None None None None
-            let namedProtocols = [protocolWithName,seq ["Parameter [MyBro]";"Parameter [MyGuy]"]]
-
-            let resultHeaders = AnnotationTable.splitByNamedProtocols namedProtocols headers |> Seq.map (fun (p,s) -> p, List.ofSeq s)
-
-            let testResults = 
-                [
-                    Protocol.empty,["Source Name";"Paramer [MyDude]";"Sample Name"]
-                    protocolWithName,["Source Name";"Parameter [MyBro]";"Parameter [MyGuy]";"Sample Name"]
-                ]
-
-            Expect.hasLength resultHeaders 2 "Should have split headers with the given protocol"
-            Expect.isTrue (testResults.Head |> snd |> Seq.contains "Source Name" && testResults.Head |> snd |> Seq.contains "Sample Name") "Source and Sample column were not added to named Protocol"
-            Expect.isTrue (testResults |> Seq.item 1|> snd |> Seq.contains "Source Name" && testResults |> Seq.item 1 |> snd |> Seq.contains "Sample Name") "Source and Sample column were not added to unnamed Protocol"
-            Expect.sequenceEqual resultHeaders testResults "Headers were not split correctly"
-        )
-        testCase "splitByNamedProtocolsWrongHeaders" (fun () ->
-
-            let headers = ["Source Name";"Paramer [MyDude]";"Parameter [MyBro]";"Parameter [MyGuy]";"Sample Name"]
-
-            let protocolWithName = Protocol.create None (Some "NamedProtocol") None None None None None None None
-            let namedProtocols = [protocolWithName,seq ["Parameter [Wreeeng]";"Parameter [Wraaang]"]]
-
-            let resultHeaders = AnnotationTable.splitByNamedProtocols namedProtocols headers
-
-            Expect.hasLength resultHeaders 1 "Shouldn't have split headers, as headers did not match"
-            Expect.sequenceEqual headers (resultHeaders |> Seq.head |> snd) "Shouldn't have split headers, as headers did not match"
+            Expect.equal header testHeader "Dit not parse Name correctly"
         )
     ]
 
@@ -166,7 +94,7 @@ let testNodeGetterFunctions =
                 if b then Some v
                 else None
 
-            let v = tryGetValue ("Unit [square centimeter] (#h; #tUO:0000081; #u)",0) m
+            let v = tryGetValue ("Unit",0) m
 
             Expect.isSome v "Value could not be retrieved from matrix"
 
@@ -178,7 +106,7 @@ let testNodeGetterFunctions =
 
         testCase "GetUnitGetter" (fun () ->
 
-            let headers = ["Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
 
             let unitGetterOption = AnnotationNode.tryGetUnitGetterFunction headers
 
@@ -194,7 +122,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetUnitGetterWrongHeaders" (fun () ->
 
-            let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Parameter [square centimeter]";"Term Source REF (UO:0000081)";"Term Accession Number (UO:0000081)"]
 
             let unitGetterOption = AnnotationNode.tryGetUnitGetterFunction headers
 
@@ -202,7 +130,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetCharacteristicsGetter" (fun () ->
 
-            let headers = ["Characteristics [leaf size]";"Term Source REF [leaf size] (#h; #tTO:0002637)";"Term Accession Number [leaf size] (#h; #tTO:0002637)";"Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
 
             let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetter headers
 
@@ -236,7 +164,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetFactorGetter" (fun () ->
 
-            let headers = ["Factor [time]";"Term Source REF [time] (#h; #tPATO:0000165)";"Term Accession Number [time] (#h; #tPATO:0000165)";"Unit [hour] (#h; #tUO:0000032; #u)";"Term Source REF [hour] (#h; #tUO:0000032; #u)";"Term Accession Number [hour] (#h; #tUO:0000032; #u)"]
+            let headers = ["Factor [time#2]";"Unit (#2)";"Term Source REF (PATO:0000165#2)";"Term Accession Number (PATO:0000165#2)"]
 
             let factorGetterOption = AnnotationNode.tryGetFactorGetter headers
 
@@ -246,7 +174,11 @@ let testNodeGetterFunctions =
 
             Expect.isSome factor "FactorGetter was returned but no factor was returned"
 
-            let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO" 
+            let testComment = Comment.fromString "Number" "2"
+
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [testComment])
+
+            let expectedFactor = Factor.create None (Some "time") (Some testOntology) None
 
             Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
             
@@ -270,7 +202,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetter" (fun () ->
 
-            let headers = ["Parameter [temperature unit]";"Term Source REF [temperature unit] (#h; #tUO:0000005)";"Term Accession Number [temperature unit] (#h; #tUO:0000005)";"Unit [degree Celsius] (#h; #tUO:0000027; #u)";"Term Source REF [degree Celsius] (#h; #tUO:0000027; #u)";"Term Accession Number [degree Celsius] (#h; #tUO:0000027; #u)"]
+            let headers = ["Parameter [temperature unit#3]";"Unit (#3)";"Term Source REF (UO:0000005#3)";"Term Accession Number (UO:0000005#3)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -280,7 +212,11 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
+            let testComment = Comment.fromString "Number" "3"
+
+            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [testComment])
+
+            let expectedParameter = ProtocolParameter.create None (Some testOntology)
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
 
@@ -296,7 +232,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetterNoUnit" (fun () ->
 
-            let headers = ["Parameter [measurement device]";"Term Source REF [measurement device] (#h; #tOBI:0000832)";"Term Accession Number [measurement device] (#h; #tOBI:0000832)"]
+            let headers = ["Parameter [measurement device]";"Term Source REF (OBI:0000832)";"Term Accession Number (OBI:0000832)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -306,7 +242,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "dawdawdawd"
+            Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "Parameter has no TermSourceRef"
 
             let expectedParameter = ProtocolParameter.fromString "measurement device" "0000832" "OBI" 
 
@@ -322,7 +258,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetterUserSpecific" (fun () ->
 
-            let headers = ["Parameter [heating block]";"Term Source REF [heating block] (#h; #tOBI:0400108)";"Term Accession Number [heating block] (#h; #tOBI:0400108)"]
+            let headers = ["Parameter [heating block]";"Term Source REF (OBI:0400108)";"Term Accession Number (OBI:0400108)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -346,7 +282,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetterWrongHeaders" (fun () ->
 
-            let headers = ["Factor [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+            let headers = ["Factor [square centimeter]";"Term Source REF (UO:0000081)";"Term Accession Number (UO:0000081)"]
 
             let unitGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -368,20 +304,27 @@ let testProcessGetter =
 
     let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
 
-    let characteristicHeaders = ["Characteristics [leaf size]";"Term Source REF [leaf size] (#h; #tTO:0002637)";"Term Accession Number [leaf size] (#h; #tTO:0002637)";"Unit [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
+    let characteristicHeaders = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
     let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "0002637" "TO" 
     let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" |> Some
     let expectedCharacteristicValue = MaterialAttributeValue.create None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
 
-    let factorHeaders = ["Factor [time]";"Term Source REF [time] (#h; #tPATO:0000165)";"Term Accession Number [time] (#h; #tPATO:0000165)";"Unit [hour] (#h; #tUO:0000032; #u)";"Term Source REF [hour] (#h; #tUO:0000032; #u)";"Term Accession Number [hour] (#h; #tUO:0000032; #u)"]
-    let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO" 
-    let expectedFactorUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some
-    let expectedFactorValue = FactorValue.create None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
+    let factorHeaders = ["Factor [time#2]";"Unit (#2)";"Term Source REF (PATO:0000165#2)";"Term Accession Number (PATO:0000165#2)"]
+    let expectedFactorComment = Comment.fromString "Number" "2"  
+    let expectedFactorOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [expectedFactorComment])
+    let expectedFactor = Factor.create None (Some "time") (Some expectedFactorOntology) None                
+    let expectedFactorUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some    
+    let expectedFactorValue = Value.fromOptions (Some "5") None None
+    let expectedFactorValue = FactorValue.create None (Some expectedFactor) expectedFactorValue expectedFactorUnit
 
-    let parameterHeaders = ["Parameter [temperature unit]";"Term Source REF [temperature unit] (#h; #tUO:0000005)";"Term Accession Number [temperature unit] (#h; #tUO:0000005)";"Unit [degree Celsius] (#h; #tUO:0000027; #u)";"Term Source REF [degree Celsius] (#h; #tUO:0000027; #u)";"Term Accession Number [degree Celsius] (#h; #tUO:0000027; #u)"]
-    let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
-    let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some
-    let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
+    let parameterHeaders = ["Parameter [temperature unit#3]";"Unit (#3)";"Term Source REF (UO:0000005#3)";"Term Accession Number (UO:0000005#3)"]
+    let expectedParameterComment = Comment.fromString "Number" "3"
+    let expectedParameterOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [expectedParameterComment])   
+    let expectedParameter = ProtocolParameter.create None (Some expectedParameterOntology)
+    let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some    
+    let expectedParameterValue = Value.fromOptions (Some "27") None None  
+    let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedParameterValue expectedParameterUnit
+
 
     let sourceHeader = ["Source Name"]
     let expectedSourceName = "Source1"
@@ -417,14 +360,17 @@ let testProcessGetter =
 
             let headers = 
                 sampleHeader @ characteristicHeaders @ factorHeaders @ parameterHeaders
-                |> AnnotationTable.splitBySamples
-                |> Seq.head
+                //|> AnnotationTable.splitBySamples
+                //|> Seq.head
 
-            let expectedOutput = ProcessOutput.Sample (Sample.create None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
+            let expectedOutput = ProcessOutput.Sample (Sample.create None None (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
+
+            let expectedInput = ProcessInput.Sample (Sample.create None (Some expectedSampleName) (Some [expectedCharacteristicValue]) None None  )
+
 
             let expectedProtocol = Protocol.create None None None None None None (Some [expectedParameter]) None None
 
-            let expectedProcess = Process.create None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None None (Some [expectedOutput]) None
+            let expectedProcess = Process.create None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
             let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
 
@@ -696,17 +642,29 @@ let testAssayFileReader =
         
     let fileName = @"GreatAssay\assay.isa.xlsx"
 
+    let temperatureUnit2Comment = Comment.fromString "Number" "2"  
+    let temperatureUnit2Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [temperatureUnit2Comment])
+    let temperatureUnit2 = ProtocolParameter.create None (Some temperatureUnit2Ontology)
+
     let temperatureUnit = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
 
-    let temperature = ProtocolParameter.fromString "temperature" "0000029" "NCRO" 
+    let temperatureComment = Comment.fromString "Number" "2"  
+    let temperatureOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature")) (Some "0000029") (Some "NCRO") (Some [temperatureComment])
+    let temperature = ProtocolParameter.create None (Some temperatureOntology)
 
     let peptidase = ProtocolParameter.fromString "Peptidase" "C16965" "NCIT"
 
-    let time1 = ProtocolParameter.fromString "time" "0000721" "EFO"
+    let time1Comment = Comment.fromString "Number" "3"  
+    let time1Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000721") (Some "EFO") (Some [time1Comment])
+    let time1 = ProtocolParameter.create None (Some time1Ontology)
 
-    let time2 = Factor.fromString "time" "time" "0000165" "PATO"
+    let time2Comment = Comment.fromString "Number" "4"  
+    let time2Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [time2Comment])
+    let time2 = Factor.create None (Some "time") (Some time2Ontology) None
+
 
     let leafSize = MaterialAttribute.fromString "leaf size" "0002637" "TO"
+
 
     testList "AssayFileReaderTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -726,9 +684,8 @@ let testAssayFileReader =
 
             let expectedProtocols = 
                 [
-                Protocol.create None (Some "GreatAssay") None None None None (Some [temperatureUnit]) None None
-                Protocol.create None (Some "peptide_digestion") None None None None (Some [peptidase;temperature;time1]) None None
-                Protocol.create None (Some "SecondAssay") None None None None (Some [temperatureUnit]) None None
+                Protocol.create None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None
+                Protocol.create None (Some "SecondAssay") None None None None (Some [temperatureUnit2]) None None
                 ]
 
             let expectedFactors = [time2]
@@ -749,7 +706,7 @@ let testAssayFileReader =
             Expect.isSome assay.ProcessSequence "Processes were not read"
             assay.ProcessSequence.Value
             |> Seq.map (fun p -> Option.defaultValue "" p.Name)
-            |> fun names -> Expect.sequenceEqual names ["GreatAssay_0";"GreatAssay_1";"peptide_digestion_0";"SecondAssay_0"] "Process names do not match"
+            |> fun names -> Expect.sequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
 
         )
     ]
