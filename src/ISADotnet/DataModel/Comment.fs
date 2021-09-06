@@ -13,24 +13,20 @@ type Comment =
         [<JsonPropertyName(@"value")>]
         Value : string option
     }
-  
-    static member create id name value = 
+
+    static member create(?Id,?Name,?Value) : Comment =
         {
-            ID = id
-            Name = name 
-            Value = value      
+            ID      = Id
+            Name    = Name
+            Value   = Value
         }
 
     static member fromStrings name value =
-        let name = Option.fromValueWithDefault "" name
-        let value = Option.fromValueWithDefault "" value
-        Comment.create None name value
+        Comment.create (Name=name,Value=value)
     
     static member toStrings (comment : Comment) =
         Option.defaultValue "" comment.Name, Option.defaultValue "" comment.Value
 
-    static member Create(?Id,?Name,?Value) =
-        Comment.create Id Name Value
 
 
 type Remark = 
@@ -39,11 +35,11 @@ type Remark =
         Value : string
     }
     
-    static member create line value = 
+    static member create(line,value) : Remark = 
         {
             Line = line 
             Value = value      
         }
 
     static member toTuple (remark : Remark ) =
-        remark.Line,remark.Value
+        remark.Line, remark.Value

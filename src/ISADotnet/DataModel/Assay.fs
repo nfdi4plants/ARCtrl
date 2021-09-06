@@ -10,17 +10,15 @@ type AssayMaterials =
         OtherMaterials : Material list option
     }
 
-    static member create samples otherMaterials =
+    static member create(?Samples,?OtherMaterials) : AssayMaterials =
         {
-            Samples = samples
-            OtherMaterials = otherMaterials       
+            Samples         = Samples
+            OtherMaterials  = OtherMaterials       
         }
 
     static member empty =
-        AssayMaterials.create None None
+        AssayMaterials.create()
 
-    static member Create(?Samples,?OtherMaterials) =
-        AssayMaterials.create Samples OtherMaterials
 
 type Assay = 
     {
@@ -51,23 +49,20 @@ type Assay =
     }
 
 
-    static member create id fileName measurementType technologyType technologyPlatform dataFiles materials characteristicCategories unitCategories processSequence comments =
+    static member create (?Id,?FileName,?MeasurementType,?TechnologyType,?TechnologyPlatform,?DataFiles,?Materials,?CharacteristicCategories,?UnitCategories,?ProcessSequence,?Comments) : Assay =
         {
-            ID                          = id
-            FileName                    = fileName
-            MeasurementType             = measurementType
-            TechnologyType              = technologyType
-            TechnologyPlatform          = technologyPlatform
-            DataFiles                   = dataFiles
-            Materials                   = materials
-            CharacteristicCategories    = characteristicCategories
-            UnitCategories              = unitCategories
-            ProcessSequence             = processSequence
-            Comments                    = comments
+            ID                          = Id
+            FileName                    = FileName
+            MeasurementType             = MeasurementType
+            TechnologyType              = TechnologyType
+            TechnologyPlatform          = TechnologyPlatform
+            DataFiles                   = DataFiles
+            Materials                   = Materials
+            CharacteristicCategories    = CharacteristicCategories
+            UnitCategories              = UnitCategories
+            ProcessSequence             = ProcessSequence
+            Comments                    = Comments
         }
 
     static member empty =
-        Assay.create None None None None None None None None None None None
-
-    static member Create (?Id,?FileName,?MeasurementType,?TechnologyType,?TechnologyPlatform,?DataFiles,?Materials,?CharacteristicChategories,?UnitCategories,?ProcessSequence,?Comments) =
-        Assay.create Id FileName MeasurementType TechnologyType TechnologyPlatform DataFiles Materials CharacteristicChategories UnitCategories ProcessSequence Comments
+        Assay.create()

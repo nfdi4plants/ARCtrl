@@ -12,25 +12,22 @@ type ProcessParameterValue =
         Unit        : OntologyAnnotation option
     }
 
-    static member create category value unit : ProcessParameterValue = 
+    static member create (?Category,?Value,?Unit) : ProcessParameterValue = 
         {
-            Category = category
-            Value = value
-            Unit = unit
+            Category    = Category
+            Value       = Value
+            Unit        = Unit
         }
 
     static member empty =
-        ProcessParameterValue.create None None None
-
-    static member Create (?Category,?Value,?Unit) = 
-        ProcessParameterValue.create Category Value Unit
+        ProcessParameterValue.create()
 
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            let category = this.Category |> Option.map (fun f -> f.NameAsString)
-            let unit = this.Unit |> Option.map (fun oa -> oa.NameAsString)
+            let category = this.Category |> Option.map (fun f -> f.GetName)
+            let unit = this.Unit |> Option.map (fun oa -> oa.GetName)
             let value = 
                 this.Value
                 |> Option.map (fun v ->
@@ -60,7 +57,12 @@ type ProcessInput =
         | ProcessInput.Material m   -> m.Name
         | ProcessInput.Data d       -> d.Name
 
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.GetName =
         this.Name
         |> Option.defaultValue ""
 
@@ -126,26 +128,23 @@ type Process =
         Comments : Comment list option
     }
 
-    static member create id name executesProtocol parameterValues performer date previousProcess nextProcess inputs outputs comments : Process= 
+    static member create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
         {       
-            ID                  = id
-            Name                = name
-            ExecutesProtocol    = executesProtocol
-            ParameterValues     = parameterValues
-            Performer           = performer
-            Date                = date
-            PreviousProcess     = previousProcess
-            NextProcess         = nextProcess
-            Inputs              = inputs
-            Outputs             = outputs
-            Comments            = comments       
+            ID                  = Id
+            Name                = Name
+            ExecutesProtocol    = ExecutesProtocol
+            ParameterValues     = ParameterValues
+            Performer           = Performer
+            Date                = Date
+            PreviousProcess     = PreviousProcess
+            NextProcess         = NextProcess
+            Inputs              = Inputs
+            Outputs             = Outputs
+            Comments            = Comments       
         }
 
     static member empty =
-        Process.create None None None None None None None None None None None
-
-    static member Create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
-        Process.create Id Name ExecutesProtocol ParameterValues Performer Date PreviousProcess NextProcess Inputs Outputs Comments
+        Process.create()
 
     interface IISAPrintable with
         member this.Print() = 

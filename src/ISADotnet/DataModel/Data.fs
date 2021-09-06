@@ -32,21 +32,24 @@ type Data =
         Comments : Comment list option
     }
 
-    static member create id name dataType comments =
+    static member create (?Id,?Name,?DataType,?Comments) : Data =
         {
-            ID      = id
-            Name    = name
-            DataType = dataType
-            Comments = comments         
+            ID          = Id
+            Name        = Name
+            DataType    = DataType
+            Comments    = Comments         
         }
 
     static member empty =
-        Data.create None None None None
+        Data.create()
 
-    static member Create (?Id,?Name,?DataType,?Comments) =
-        Data.create Id Name DataType Comments
 
+    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
     member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.GetName =
         this.Name
         |> Option.defaultValue ""
 
@@ -56,8 +59,8 @@ type Data =
         member this.PrintCompact() =
             match this.DataType with
             | Some t ->
-                sprintf "%s [%s]" this.NameAsString t.AsString 
-            | None -> sprintf "%s" this.NameAsString
+                sprintf "%s [%s]" this.GetName t.AsString 
+            | None -> sprintf "%s" this.GetName
 
 type Source = 
     {
@@ -69,20 +72,22 @@ type Source =
         Characteristics : MaterialAttributeValue list option
     }
 
-    static member create id name characteristics : Source=
+    static member create (?Id,?Name,?Characteristics) : Source =
         {
-            ID              = id
-            Name            = name
-            Characteristics = characteristics          
+            ID              = Id
+            Name            = Name
+            Characteristics = Characteristics          
         }
 
     static member empty =
-        Source.create None None None
+        Source.create ()
 
-    static member Create (?Id,?Name,?Characteristics) =
-        Source.create Id Name Characteristics
-
+    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
     member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.GetName =
         this.Name
         |> Option.defaultValue ""
 
@@ -91,7 +96,7 @@ type Source =
             this.ToString()
         member this.PrintCompact() =
             let l = this.Characteristics |> Option.defaultValue [] |> List.length
-            sprintf "%s [%i characteristics]" this.NameAsString l 
+            sprintf "%s [%i characteristics]" this.GetName l 
 
 type Sample = 
     {
@@ -107,22 +112,24 @@ type Sample =
         DerivesFrom : Source list option
     }
 
-    static member create id name characteristics factorValues derivesFrom : Sample=
+    static member create (?Id,?Name,?Characteristics,?FactorValues,?DerivesFrom) : Sample =
         {
-            ID              = id
-            Name            = name
-            Characteristics = characteristics     
-            FactorValues    = factorValues
-            DerivesFrom     = derivesFrom       
+            ID              = Id
+            Name            = Name
+            Characteristics = Characteristics     
+            FactorValues    = FactorValues
+            DerivesFrom     = DerivesFrom       
         }
 
     static member empty =
-        Sample.create None None None None None
+        Sample.create()
 
-    static member Create (?Id,?Name,?Characteristics,?FactorValues,?DerivesFrom) =
-        Sample.create Id Name Characteristics FactorValues DerivesFrom
-
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.GetName =
         this.Name
         |> Option.defaultValue ""
 
@@ -132,4 +139,4 @@ type Sample =
         member this.PrintCompact() =
             let chars = this.Characteristics |> Option.defaultValue [] |> List.length
             let facts = this.FactorValues |> Option.defaultValue [] |> List.length
-            sprintf "%s [%i characteristics; %i factors]" this.NameAsString chars facts
+            sprintf "%s [%i characteristics; %i factors]" this.GetName chars facts

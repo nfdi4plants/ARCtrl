@@ -39,22 +39,20 @@ type OntologyAnnotation =
         Comments : Comment list option
     }
 
-    static member create id name termAccessionNumber termSourceREF comments= 
+    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
         {
-            ID = id
-            Name = name 
-            TermSourceREF = termSourceREF
-            TermAccessionNumber = termAccessionNumber  
-            Comments = comments
+            ID                  = Id
+            Name                = Name 
+            TermSourceREF       = TermSourceREF
+            TermAccessionNumber = TermAccessionNumber  
+            Comments            = Comments
         }
 
     static member empty =
-        OntologyAnnotation.create None None None None None
-
-    static member Create(?Id,?Name,?TermAccessionNumber,?TermSourceREF,?Comments) =
-        OntologyAnnotation.create Id Name TermAccessionNumber TermSourceREF Comments
+        OntologyAnnotation.create()
 
     /// Returns the name of the ontology as string
+    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
     member this.NameAsString =
         this.Name
         |> Option.map (fun oa ->
@@ -66,6 +64,7 @@ type OntologyAnnotation =
         |> Option.defaultValue ""
 
     /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsStringWithNumber =       
         let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
         let name = this.NameAsString
@@ -73,15 +72,32 @@ type OntologyAnnotation =
         | Some n -> name + " #" + n
         | None -> name
 
+    /// Returns the name of the ontology as string
+    member this.GetName =
+        this.Name
+        |> Option.map (fun oa ->
+            match oa with
+            | AnnotationValue.Text s  -> s
+            | AnnotationValue.Float f -> string f
+            | AnnotationValue.Int i   -> string i
+        )
+        |> Option.defaultValue ""
+
+    /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
+        let name = this.GetName
+        match number with
+        | Some n -> name + " #" + n
+        | None -> name
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
     static member fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.create 
-            None 
-            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
-            (Option.fromValueWithDefault "" source)
-            None
+        OntologyAnnotation.create (
+            Name = AnnotationValue.fromString term,
+            TermSourceREF = accession, 
+            TermAccessionNumber = (source |> URI.fromString)
+        )
 
     /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
     static member toString (oa : OntologyAnnotation) =
@@ -94,7 +110,7 @@ type OntologyAnnotation =
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            "OA " + this.NameAsStringWithNumber
+            "OA " + this.GetNameWithNumber
 
 
 type OntologySourceReference =
@@ -111,18 +127,15 @@ type OntologySourceReference =
         Comments : Comment list option
     }
 
-    static member create description file name version comments  =
+    static member create(?Description,?File,?Name,?Version,?Comments) : OntologySourceReference =
         {
-
-            Description = description
-            File        = file
-            Name        = name
-            Version     = version
-            Comments    = comments
+        
+            Description = Description
+            File        = File
+            Name        = Name
+            Version     = Version
+            Comments    = Comments
         }
 
     static member empty =
-        OntologySourceReference.create None None None None None
-
-    static member Create(?Description,?File,?Name,?Version,?Comments) =
-        OntologySourceReference.create Description File Name Version Comments
+        OntologySourceReference.create()

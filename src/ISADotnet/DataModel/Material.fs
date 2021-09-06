@@ -10,46 +10,58 @@ type MaterialAttribute =
         CharacteristicType : OntologyAnnotation option
     
     }
-
-    static member create id characteristicType =
+        
+    static member create (?Id,?CharacteristicType) : MaterialAttribute =
         {
-            ID = id
-            CharacteristicType = characteristicType     
+            ID                  = Id
+            CharacteristicType  = CharacteristicType     
         }
 
     static member empty =
-        MaterialAttribute.create None None 
+        MaterialAttribute.create()
 
-    static member Create (?Id,?CharacteristicType) =
-        MaterialAttribute.create Id CharacteristicType
 
     /// Create a ISAJson MaterialAttribute from ISATab string entries
     static member fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.fromString term accession source
-        |> Option.fromValueWithDefault OntologyAnnotation.empty
-        |> MaterialAttribute.create None
+        let oa = OntologyAnnotation.fromString term accession source
+        MaterialAttribute.create (CharacteristicType = oa)
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
     static member toString (ma : MaterialAttribute) =
         ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
 
     /// Returns the name of the characteristic as string
+    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
     member this.NameAsString =
         this.CharacteristicType
         |> Option.map (fun oa -> oa.NameAsString)
         |> Option.defaultValue ""
 
     /// Returns the name of the characteristic with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsStringWithNumber =       
         this.CharacteristicType
         |> Option.map (fun oa -> oa.NameAsStringWithNumber)
         |> Option.defaultValue ""
 
+    /// Returns the name of the characteristic as string
+    member this.GetName =
+        this.CharacteristicType
+        |> Option.map (fun oa -> oa.GetName)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the characteristic with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        this.CharacteristicType
+        |> Option.map (fun oa -> oa.GetNameWithNumber)
+        |> Option.defaultValue ""
+
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            "OA " + this.NameAsStringWithNumber
+            "OA " + this.GetNameWithNumber
 
 type MaterialAttributeValue = 
     {
@@ -64,26 +76,23 @@ type MaterialAttributeValue =
     
     }
 
-    static member create id category value unit : MaterialAttributeValue =
+    static member create(?Id,?Category,?Value,?Unit) : MaterialAttributeValue =
         {
-            ID      = id
-            Category = category
-            Value = value
-            Unit = unit         
+            ID          = Id
+            Category    = Category
+            Value       = Value
+            Unit        = Unit         
         }
 
     static member empty =
-        MaterialAttributeValue.create None None None None
-
-    static member Create(?Id,?Category,?Value,?Unit) =
-        MaterialAttributeValue.create Id Category Value Unit
+        MaterialAttributeValue.create()
 
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            let category = this.Category |> Option.map (fun f -> f.NameAsString)
-            let unit = this.Unit |> Option.map (fun oa -> oa.NameAsString)
+            let category = this.Category |> Option.map (fun f -> f.GetName)
+            let unit = this.Unit |> Option.map (fun oa -> oa.GetName)
             let value = 
                 this.Value
                 |> Option.map (fun v ->
@@ -128,22 +137,24 @@ type Material =
         DerivesFrom : OntologyAnnotation option   
     }
 
-    static member create id name materialType characteristics derivesFrom : Material=
+    static member create(?Id,?Name,?MaterialType,?Characteristics,?DerivesFrom) : Material = 
         {
-            ID              = id
-            Name            = name
-            MaterialType    = materialType
-            Characteristics = characteristics     
-            DerivesFrom     = derivesFrom       
+            ID              = Id
+            Name            = Name
+            MaterialType    = MaterialType
+            Characteristics = Characteristics     
+            DerivesFrom     = DerivesFrom       
         }
 
     static member empty =
-        Material.create None None None None None
+        Material.create()
 
-    static member Create(?Id,?Name,?MaterialType,?Characteristics,?DerivesFrom) = 
-        Material.create Id Name MaterialType Characteristics DerivesFrom
-
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.GetName =
         this.Name
         |> Option.defaultValue ""
 
@@ -154,5 +165,5 @@ type Material =
             let chars = this.Characteristics |> Option.defaultValue [] |> List.length
             match this.MaterialType with
             | Some t ->
-                sprintf "%s [%s; %i characteristics]" this.NameAsString t.AsString chars
-            | None -> sprintf "%s [%i characteristics]" this.NameAsString chars
+                sprintf "%s [%s; %i characteristics]" this.GetName t.AsString chars
+            | None -> sprintf "%s [%i characteristics]" this.GetName chars
