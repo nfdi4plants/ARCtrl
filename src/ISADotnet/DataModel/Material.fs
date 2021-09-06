@@ -60,7 +60,6 @@ type MaterialAttribute =
         |> Option.map (fun oa -> oa.GetNameWithNumber)
         |> Option.defaultValue ""
 
-
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
@@ -90,6 +89,18 @@ type MaterialAttributeValue =
 
     static member empty =
         MaterialAttributeValue.create()
+
+    /// Returns the name of the category as string
+    member this.GetName =
+        this.Category
+        |> Option.map (fun oa -> oa.GetName)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the category with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        this.Category
+        |> Option.map (fun oa -> oa.GetNameWithNumber)
+        |> Option.defaultValue ""
 
     member this.GetValue =
         this.Value

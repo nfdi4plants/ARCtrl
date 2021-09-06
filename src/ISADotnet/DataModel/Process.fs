@@ -22,6 +22,18 @@ type ProcessParameterValue =
     static member empty =
         ProcessParameterValue.create()
 
+    /// Returns the name of the category as string
+    member this.GetName =
+        this.Category
+        |> Option.map (fun oa -> oa.GetName)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the category with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        this.Category
+        |> Option.map (fun oa -> oa.GetNameWithNumber)
+        |> Option.defaultValue ""
+
     member this.GetValue =
         this.Value
         |> Option.map (fun oa ->

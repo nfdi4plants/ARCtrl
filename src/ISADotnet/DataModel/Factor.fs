@@ -66,7 +66,7 @@ type Factor =
         |> Option.defaultValue ""
 
     /// Returns the name of the factor with the number as string (e.g. "temperature #2")
-    member this.GetNameWithNumber =       
+    member this.GetNameWithNumber =     
         this.FactorType
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
@@ -159,6 +159,18 @@ type FactorValue =
         match unit with
         | Some u    -> $"{v} {u}"
         | None      -> v
+
+    /// Returns the name of the category as string
+    member this.GetName =
+        this.Category
+        |> Option.map (fun factor -> factor.GetName)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the category with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        this.Category
+        |> Option.map (fun oa -> oa.GetNameWithNumber)
+        |> Option.defaultValue ""
 
     interface IISAPrintable with
         member this.Print() =
