@@ -99,6 +99,18 @@ type OntologyAnnotation =
             TermAccessionNumber = (source |> URI.fromString)
         )
 
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
+        let t,number = 
+            let lastIndex = term.LastIndexOf '#'
+            term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
+        OntologyAnnotation.create (
+            Name = AnnotationValue.fromString t,
+            TermSourceREF = accession, 
+            TermAccessionNumber = (source |> URI.fromString),
+            Comments = [ Comment.create(Name = "Number", Value = number) ]
+        )
+
     /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
     static member toString (oa : OntologyAnnotation) =
         oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",

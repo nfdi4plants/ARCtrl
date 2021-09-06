@@ -34,6 +34,15 @@ type Factor =
             FactorType = oa
         )
 
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromStringWithNumber (name:string) (term:string) (accession:string) (source:string) =
+        let oa =
+            OntologyAnnotation.fromStringWithNumber term accession source
+        Factor.create(
+            Name = name,
+            FactorType = oa
+        )
+
     /// Get ISATab string entries from an ISAJson Factor object
     static member toString (factor : Factor) =
         factor.FactorType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")  

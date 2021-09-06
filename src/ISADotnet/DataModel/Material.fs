@@ -20,10 +20,14 @@ type MaterialAttribute =
     static member empty =
         MaterialAttribute.create()
 
-
     /// Create a ISAJson MaterialAttribute from ISATab string entries
     static member fromString (term:string) (accession:string) (source:string) =
         let oa = OntologyAnnotation.fromString term accession source
+        MaterialAttribute.create (CharacteristicType = oa)
+
+    /// Create a ISAJson MaterialAttribute from ISATab string entries
+    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
+        let oa = OntologyAnnotation.fromStringWithNumber term accession source
         MaterialAttribute.create (CharacteristicType = oa)
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
