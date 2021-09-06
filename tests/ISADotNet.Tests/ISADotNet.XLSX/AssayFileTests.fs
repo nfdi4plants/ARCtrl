@@ -164,7 +164,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetFactorGetter" (fun () ->
 
-            let headers = ["Factor [time#2]";"Unit (#2)";"Term Source REF (PATO:0000165#2)";"Term Accession Number (PATO:0000165#2)"]
+            let headers = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
 
             let factorGetterOption = AnnotationNode.tryGetFactorGetter headers
 
@@ -174,11 +174,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome factor "FactorGetter was returned but no factor was returned"
 
-            let testComment = Comment.fromString "Number" "2"
-
-            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [testComment])
-
-            let expectedFactor = Factor.create None (Some "time") (Some testOntology) None
+            let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO"
 
             Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
             
@@ -202,7 +198,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetter" (fun () ->
 
-            let headers = ["Parameter [temperature unit#3]";"Unit (#3)";"Term Source REF (UO:0000005#3)";"Term Accession Number (UO:0000005#3)"]
+            let headers = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
 
@@ -212,11 +208,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let testComment = Comment.fromString "Number" "3"
-
-            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [testComment])
-
-            let expectedParameter = ProtocolParameter.create None (Some testOntology)
+            let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO"
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
 
@@ -309,21 +301,15 @@ let testProcessGetter =
     let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" |> Some
     let expectedCharacteristicValue = MaterialAttributeValue.create None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
 
-    let factorHeaders = ["Factor [time#2]";"Unit (#2)";"Term Source REF (PATO:0000165#2)";"Term Accession Number (PATO:0000165#2)"]
-    let expectedFactorComment = Comment.fromString "Number" "2"  
-    let expectedFactorOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [expectedFactorComment])
-    let expectedFactor = Factor.create None (Some "time") (Some expectedFactorOntology) None                
+    let factorHeaders = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
+    let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO"          
     let expectedFactorUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some    
-    let expectedFactorValue = Value.fromOptions (Some "5") None None
-    let expectedFactorValue = FactorValue.create None (Some expectedFactor) expectedFactorValue expectedFactorUnit
+    let expectedFactorValue = FactorValue.create None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
 
-    let parameterHeaders = ["Parameter [temperature unit#3]";"Unit (#3)";"Term Source REF (UO:0000005#3)";"Term Accession Number (UO:0000005#3)"]
-    let expectedParameterComment = Comment.fromString "Number" "3"
-    let expectedParameterOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [expectedParameterComment])   
-    let expectedParameter = ProtocolParameter.create None (Some expectedParameterOntology)
+    let parameterHeaders = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
+    let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO"
     let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some    
-    let expectedParameterValue = Value.fromOptions (Some "27") None None  
-    let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedParameterValue expectedParameterUnit
+    let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
 
 
     let sourceHeader = ["Source Name"]
@@ -642,25 +628,17 @@ let testAssayFileReader =
         
     let fileName = @"GreatAssay\assay.isa.xlsx"
 
-    let temperatureUnit2Comment = Comment.fromString "Number" "2"  
-    let temperatureUnit2Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature unit")) (Some "0000005") (Some "UO") (Some [temperatureUnit2Comment])
-    let temperatureUnit2 = ProtocolParameter.create None (Some temperatureUnit2Ontology)
-
     let temperatureUnit = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
 
-    let temperatureComment = Comment.fromString "Number" "2"  
-    let temperatureOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "temperature")) (Some "0000029") (Some "NCRO") (Some [temperatureComment])
-    let temperature = ProtocolParameter.create None (Some temperatureOntology)
+    let temperature = ProtocolParameter.fromString "temperature" "" ""
 
-    let peptidase = ProtocolParameter.fromString "Peptidase" "C16965" "NCIT"
+    let peptidase = ProtocolParameter.fromString "enzyme unit" "0000181" "UO"
 
-    let time1Comment = Comment.fromString "Number" "3"  
-    let time1Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000721") (Some "EFO") (Some [time1Comment])
-    let time1 = ProtocolParameter.create None (Some time1Ontology)
+    let time1 = ProtocolParameter.fromString "time unit" "0000003" "UO"
 
-    let time2Comment = Comment.fromString "Number" "4"  
-    let time2Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time")) (Some "0000165") (Some "PATO") (Some [time2Comment])
-    let time2 = Factor.create None (Some "time") (Some time2Ontology) None
+    let time2Comment = Comment.fromString "Number" "2"  
+    let time2Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time unit")) (Some "0000003") (Some "UO") (Some [time2Comment])
+    let time2 = Factor.create None (Some "time unit") (Some time2Ontology) None
 
 
     let leafSize = MaterialAttribute.fromString "leaf size" "0002637" "TO"
@@ -685,7 +663,7 @@ let testAssayFileReader =
             let expectedProtocols = 
                 [
                 Protocol.create None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None
-                Protocol.create None (Some "SecondAssay") None None None None (Some [temperatureUnit2]) None None
+                Protocol.create None (Some "SecondAssay") None None None None (Some [temperatureUnit]) None None
                 ]
 
             let expectedFactors = [time2]

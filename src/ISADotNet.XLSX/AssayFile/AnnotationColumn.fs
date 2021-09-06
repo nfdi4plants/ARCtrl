@@ -78,7 +78,7 @@ module AnnotationColumn =
     /// Parses to ColumnHeader, if the given header describes a Term Source Reference
     let tryParseTermSourceReferenceHeader (termHeader:ColumnHeader) (header:string) =
         match ColumnHeader.fromStringHeader header with
-        | h when h.Kind = "Term Source REF" && h.Number = termHeader.Number -> 
+        | h when h.Kind = "Term Source REF" (*&& h.Number = termHeader.Number*) -> 
             //match h.Term,termHeader.Term with
             //| None, None -> Some h
             //| Some t1, Some t2 when t1.Name = t2.Name -> Some h
@@ -89,7 +89,7 @@ module AnnotationColumn =
     /// Parses to ColumnHeader, if the given header describes a Term Accession Number
     let tryParseTermAccessionNumberHeader (termHeader:ColumnHeader) (header:string) =
         match ColumnHeader.fromStringHeader header with
-        | h when h.Kind = "Term Accession Number"  && h.Number = termHeader.Number -> 
+        | h when h.Kind = "Term Accession Number"  (*&& h.Number = termHeader.Number*) -> 
             //match h.Term,termHeader.Term with
             //| None, None -> Some h
             //| Some t1, Some t2 when t1.Name = t2.Name -> Some h
