@@ -119,7 +119,6 @@ type FactorValue =
         Value : Value option
         [<JsonPropertyName(@"unit")>]
         Unit : OntologyAnnotation option
-    
     }
 
     static member create(?Id,?Category,?Value,?Unit) : FactorValue =
@@ -130,9 +129,27 @@ type FactorValue =
             Unit        = Unit         
         }
 
-
     static member empty =
         FactorValue.create()
+
+    member this.GetValue =
+        this.Value
+        |> Option.map (fun oa ->
+            match oa with
+            | Value.Ontology oa  -> oa.GetName
+            | Value.Float f -> string f
+            | Value.Int i   -> string i
+            | Value.Name s  -> s
+        )
+        |> Option.defaultValue ""
+
+    member this.GetValueWithUnit =
+        let unit = 
+            this.Unit |> Option.map (fun oa -> oa.GetName)
+        let v = this.GetValue
+        match unit with
+        | Some u    -> $"{v} {u}"
+        | None      -> v
 
     interface IISAPrintable with
         member this.Print() =

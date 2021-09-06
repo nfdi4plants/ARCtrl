@@ -75,8 +75,8 @@ type OntologyAnnotation =
     /// Returns the name of the ontology as string
     member this.GetName =
         this.Name
-        |> Option.map (fun oa ->
-            match oa with
+        |> Option.map (fun av ->
+            match av with
             | AnnotationValue.Text s  -> s
             | AnnotationValue.Float f -> string f
             | AnnotationValue.Int i   -> string i
