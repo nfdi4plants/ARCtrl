@@ -33,22 +33,22 @@ type Investigation =
         Remarks     : Remark list
     }
     
-    static member create id filename identifier title description submissionDate publicReleaseDate ontologySourceReference publications contacts studies comments remarks : Investigation=
+    static member create(?Id,?FileName,?Identifier,?Title,?Description,?SubmissionDate,?PublicReleaseDate,?OntologySourceReferences,?Publications,?Contacts,?Studies,?Comments,?Remarks) : Investigation=
         {
-            ID                          = id
-            FileName                    = filename
-            Identifier                  = identifier
-            Title                       = title
-            Description                 = description
-            SubmissionDate              = submissionDate
-            PublicReleaseDate           = publicReleaseDate
-            OntologySourceReferences    = ontologySourceReference
-            Publications                = publications
-            Contacts                    = contacts
-            Studies                     = studies
-            Comments                    = comments
-            Remarks                     = remarks
+            ID                          = Id
+            FileName                    = FileName
+            Identifier                  = Identifier
+            Title                       = Title
+            Description                 = Description
+            SubmissionDate              = SubmissionDate
+            PublicReleaseDate           = PublicReleaseDate
+            OntologySourceReferences    = OntologySourceReferences
+            Publications                = Publications
+            Contacts                    = Contacts
+            Studies                     = Studies
+            Comments                    = Comments
+            Remarks                     = (Option.defaultValue [] Remarks)
         }
 
     static member empty =
-        Investigation.create None None None None None None None None None None None None [] 
+        Investigation.create ()

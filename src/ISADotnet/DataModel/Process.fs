@@ -12,22 +12,53 @@ type ProcessParameterValue =
         Unit        : OntologyAnnotation option
     }
 
-    static member create category value unit : ProcessParameterValue = 
+    static member create (?Category,?Value,?Unit) : ProcessParameterValue = 
         {
-            Category = category
-            Value = value
-            Unit = unit
+            Category    = Category
+            Value       = Value
+            Unit        = Unit
         }
 
     static member empty =
-        ProcessParameterValue.create None None None
+        ProcessParameterValue.create()
+
+    /// Returns the name of the category as string
+    member this.GetName =
+        this.Category
+        |> Option.map (fun oa -> oa.GetName)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the category with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        this.Category
+        |> Option.map (fun oa -> oa.GetNameWithNumber)
+        |> Option.defaultValue ""
+
+    member this.GetValue =
+        this.Value
+        |> Option.map (fun oa ->
+            match oa with
+            | Value.Ontology oa  -> oa.GetName
+            | Value.Float f -> string f
+            | Value.Int i   -> string i
+            | Value.Name s  -> s
+        )
+        |> Option.defaultValue ""
+
+    member this.GetValueWithUnit =
+        let unit = 
+            this.Unit |> Option.map (fun oa -> oa.GetName)
+        let v = this.GetValue
+        match unit with
+        | Some u    -> $"{v} {u}"
+        | None      -> v
 
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            let category = this.Category |> Option.map (fun f -> f.NameAsString)
-            let unit = this.Unit |> Option.map (fun oa -> oa.NameAsString)
+            let category = this.Category |> Option.map (fun f -> f.GetName)
+            let unit = this.Unit |> Option.map (fun oa -> oa.GetName)
             let value = 
                 this.Value
                 |> Option.map (fun v ->
@@ -57,7 +88,12 @@ type ProcessInput =
         | ProcessInput.Material m   -> m.Name
         | ProcessInput.Data d       -> d.Name
 
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsString =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.GetName =
         this.Name
         |> Option.defaultValue ""
 
@@ -123,23 +159,23 @@ type Process =
         Comments : Comment list option
     }
 
-    static member create id name executesProtocol parameterValues performer date previousProcess nextProcess inputs outputs comments : Process= 
+    static member create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
         {       
-            ID                  = id
-            Name                = name
-            ExecutesProtocol    = executesProtocol
-            ParameterValues     = parameterValues
-            Performer           = performer
-            Date                = date
-            PreviousProcess     = previousProcess
-            NextProcess         = nextProcess
-            Inputs              = inputs
-            Outputs             = outputs
-            Comments            = comments       
+            ID                  = Id
+            Name                = Name
+            ExecutesProtocol    = ExecutesProtocol
+            ParameterValues     = ParameterValues
+            Performer           = Performer
+            Date                = Date
+            PreviousProcess     = PreviousProcess
+            NextProcess         = NextProcess
+            Inputs              = Inputs
+            Outputs             = Outputs
+            Comments            = Comments       
         }
 
     static member empty =
-        Process.create None None None None None None None None None None None
+        Process.create()
 
     interface IISAPrintable with
         member this.Print() = 
