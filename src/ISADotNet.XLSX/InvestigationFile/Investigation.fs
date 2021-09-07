@@ -172,19 +172,27 @@ module Investigation =
         else
             failwith "emptyInvestigationFile"
    
-    let fromFile (path : string) =
+    let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) =           
+        doc
+        |> Spreadsheet.getRowsBySheetIndex 0u
+        |> fromRows 
         
-        let doc = 
-            Spreadsheet.fromFile path false
 
-        try 
-            doc
-            |> Spreadsheet.getRowsBySheetIndex 0u
-            |> fromRows 
+    let fromFile (path : string) =
+        let doc = Spreadsheet.fromFile path false
+        try
+            fromSpreadsheet doc
         finally
-        doc.Close()
+            doc.Close()
+        
+    let fromStream (stream : System.IO.Stream) =
+        let doc = Spreadsheet.fromStream stream false
+        try
+            fromSpreadsheet doc
+        finally
+            doc.Close()
 
-    
+
     let toRows (investigation:Investigation) : seq<Row> =
         let insertRemarks (remarks:Remark list) (rows:seq<Row>) = 
             let rm = remarks |> List.map Remark.toTuple |> Map.ofList 
@@ -221,9 +229,8 @@ module Investigation =
         |> Seq.mapi (fun i row -> Row.updateRowIndex (i+1 |> uint) row)
 
 
-    let toFile (path:string) (investigation:Investigation) =
-
-        let doc = Spreadsheet.initWithSST "isa_investigation" path
+    let toSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) (investigation:Investigation) =           
+        
         let sheet = Spreadsheet.tryGetSheetBySheetIndex 0u doc |> Option.get
 
         investigation
@@ -232,5 +239,18 @@ module Investigation =
             SheetData.appendRow r s
         ) sheet
         |> ignore
+        
+    let toFile (path : string) (investigation:Investigation) =
+        let doc = Spreadsheet.initWithSST "isa_investigation" path
+        try 
+            toSpreadsheet doc investigation
+        finally
+            doc.Close()
+        
+    let toStream (stream : System.IO.Stream) (investigation:Investigation) =
+        let doc = Spreadsheet.fromStream stream false
+        try
+            toSpreadsheet doc investigation
+        finally
+            doc.Close()
 
-        doc.Close()
