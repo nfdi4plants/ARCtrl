@@ -35,6 +35,18 @@
     <Compile Include="API\Assay.fs" />
     <Compile Include="API\Study.fs" />
     <Compile Include="API\Investigation.fs" />
+    <Compile Include="JsonIO\Comment.fs" />
+    <Compile Include="JsonIO\Ontology.fs" />
+    <Compile Include="JsonIO\Factor.fs" />
+    <Compile Include="JsonIO\Protocol.fs" />
+    <Compile Include="JsonIO\Data.fs" />
+    <Compile Include="JsonIO\Material.fs" />
+    <Compile Include="JsonIO\Process.fs" />
+    <Compile Include="JsonIO\Publication.fs" />
+    <Compile Include="JsonIO\Person.fs" />
+    <Compile Include="JsonIO\Assay.fs" />
+    <Compile Include="JsonIO\Study.fs" />
+    <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\IO.fs" />
   </ItemGroup>
 
