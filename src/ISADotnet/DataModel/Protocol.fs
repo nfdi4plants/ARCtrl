@@ -25,6 +25,11 @@ type ProtocolParameter =
         let oa = OntologyAnnotation.fromString term accession source
         ProtocolParameter.create(ParameterName=oa)
 
+    /// Create a ISAJson Protocol Parameter from ISATab string entries
+    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
+        let oa = OntologyAnnotation.fromStringWithNumber term accession source
+        ProtocolParameter.create(ParameterName=oa)
+
     /// Get ISATab string entries from an ISAJson ProtocolParameter object
     static member toString (pp : ProtocolParameter) =
         pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")        
