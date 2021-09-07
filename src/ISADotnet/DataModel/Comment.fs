@@ -21,10 +21,10 @@ type Comment =
             Value   = Value
         }
 
-    static member fromStrings name value =
+    static member fromString name value =
         Comment.create (Name=name,Value=value)
     
-    static member toStrings (comment : Comment) =
+    static member toString (comment : Comment) =
         Option.defaultValue "" comment.Name, Option.defaultValue "" comment.Value
 
 
