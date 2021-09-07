@@ -11,15 +11,15 @@ type StudyMaterials =
         OtherMaterials : Material list option
     }
 
-    static member create sources samples otherMaterials =
+    static member create (?Sources,?Samples,?OtherMaterials) : StudyMaterials =
         {
-            Sources = sources
-            Samples = samples
-            OtherMaterials = otherMaterials           
+            Sources         = Sources
+            Samples         = Samples
+            OtherMaterials  = OtherMaterials           
         }
 
     static member empty =
-        StudyMaterials.create None None None
+        StudyMaterials.create ()
 
 
 type Study = 
@@ -64,28 +64,27 @@ type Study =
         Comments : Comment list option
     }
 
-    static member create id filename identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors protocols materials processSequence assays factors characteristicCategories unitCategories comments : Study=
+    static member create(?Id,?FileName,?Identifier,?Title,?Description,?SubmissionDate,?PublicReleaseDate,?Publications,?Contacts,?StudyDesignDescriptors,?Protocols,?Materials,?ProcessSequence,?Assays,?Factors,?CharacteristicCategories,?UnitCategories,?Comments) : Study=
         {
-            ID                          = id
-            FileName                    = filename
-            Identifier                  = identifier
-            Title                       = title
-            Description                 = description
-            SubmissionDate              = submissionDate
-            PublicReleaseDate           = publicReleaseDate
-            Publications                = publications
-            Contacts                    = contacts
-            StudyDesignDescriptors      = studyDesignDescriptors
-            Protocols                   = protocols
-            Materials                   = materials
-            ProcessSequence             = processSequence
-            Assays                      = assays
-            Factors                     = factors
-            CharacteristicCategories    = characteristicCategories
-            UnitCategories              = unitCategories
-            Comments                    = comments
+            ID                          = Id
+            FileName                    = FileName
+            Identifier                  = Identifier
+            Title                       = Title
+            Description                 = Description
+            SubmissionDate              = SubmissionDate
+            PublicReleaseDate           = PublicReleaseDate
+            Publications                = Publications
+            Contacts                    = Contacts
+            StudyDesignDescriptors      = StudyDesignDescriptors
+            Protocols                   = Protocols
+            Materials                   = Materials
+            ProcessSequence             = ProcessSequence
+            Assays                      = Assays
+            Factors                     = Factors
+            CharacteristicCategories    = CharacteristicCategories
+            UnitCategories              = UnitCategories
+            Comments                    = Comments
         }
 
     static member empty =
-        Study.create None None None None None None None None None None None None None None None None None None 
-
+        Study.create ()

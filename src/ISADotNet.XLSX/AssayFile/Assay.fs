@@ -4,6 +4,7 @@ open System.Collections.Generic
 open FSharpSpreadsheetML
 
 open ISADotNet
+open ISADotNet.XLSX
 
 /// Functions for parsing an ISAXLSX Assay File
 ///
@@ -99,6 +100,7 @@ module AssayFile =
             fromSpreadsheet doc
         finally
             Spreadsheet.close doc
+            }
 
     /// Parses the assay file
     let fromStream (stream:#System.IO.Stream) = 

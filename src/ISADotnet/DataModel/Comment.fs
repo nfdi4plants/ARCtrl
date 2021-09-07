@@ -2,8 +2,6 @@ namespace ISADotNet
 
 open System.Text.Json.Serialization
 
-type URI = string
-
 type EMail = string
 
 type Comment = 
@@ -15,13 +13,19 @@ type Comment =
         [<JsonPropertyName(@"value")>]
         Value : string option
     }
-  
-    static member create id name value = 
+
+    static member create(?Id,?Name,?Value) : Comment =
         {
-            ID = id
-            Name = name 
-            Value = value      
+            ID      = Id
+            Name    = Name
+            Value   = Value
         }
+
+    static member fromString name value =
+        Comment.create (Name=name,Value=value)
+    
+    static member toString (comment : Comment) =
+        Option.defaultValue "" comment.Name, Option.defaultValue "" comment.Value
 
 
 
@@ -31,11 +35,11 @@ type Remark =
         Value : string
     }
     
-    static member create line value = 
+    static member create(line,value) : Remark = 
         {
             Line = line 
             Value = value      
         }
 
     static member toTuple (remark : Remark ) =
-        remark.Line,remark.Value
+        remark.Line, remark.Value

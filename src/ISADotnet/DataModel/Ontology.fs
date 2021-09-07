@@ -10,6 +10,21 @@ type AnnotationValue =
 
     static member empty = Text ""
 
+    /// Create a ISAJson Annotation value from a ISATab string entry
+    static member fromString (s : string) = 
+        try s |> int |> AnnotationValue.Int
+        with | _ -> 
+            try s |> float |> AnnotationValue.Float
+            with
+            | _ -> AnnotationValue.Text s
+
+    /// Get a ISATab string Annotation Name from a ISAJson object
+    static member toString (v : AnnotationValue) = 
+        match v with
+        | Text s -> s
+        | Int i -> string i
+        | Float f -> string f
+
 type OntologyAnnotation =
     {
         [<JsonPropertyName("@id")>]
@@ -24,19 +39,20 @@ type OntologyAnnotation =
         Comments : Comment list option
     }
 
-    static member create id name termAccessionNumber termSourceREF comments= 
+    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
         {
-            ID = id
-            Name = name 
-            TermSourceREF = termSourceREF
-            TermAccessionNumber = termAccessionNumber  
-            Comments = comments
+            ID                  = Id
+            Name                = Name 
+            TermSourceREF       = TermSourceREF
+            TermAccessionNumber = TermAccessionNumber  
+            Comments            = Comments
         }
 
     static member empty =
-        OntologyAnnotation.create None None None None None
+        OntologyAnnotation.create()
 
     /// Returns the name of the ontology as string
+    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
     member this.NameAsString =
         this.Name
         |> Option.map (fun oa ->
@@ -48,6 +64,7 @@ type OntologyAnnotation =
         |> Option.defaultValue ""
 
     /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsStringWithNumber =       
         let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
         let name = this.NameAsString
@@ -55,11 +72,57 @@ type OntologyAnnotation =
         | Some n -> name + " #" + n
         | None -> name
 
+    /// Returns the name of the ontology as string
+    member this.GetName =
+        this.Name
+        |> Option.map (fun av ->
+            match av with
+            | AnnotationValue.Text s  -> s
+            | AnnotationValue.Float f -> string f
+            | AnnotationValue.Int i   -> string i
+        )
+        |> Option.defaultValue ""
+
+    /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    member this.GetNameWithNumber =       
+        let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
+        let name = this.GetName
+        match number with
+        | Some n -> name + " #" + n
+        | None -> name
+
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromString (term:string) (accession:string) (source:string) =
+        OntologyAnnotation.create (
+            Name = AnnotationValue.fromString term,
+            TermSourceREF = accession, 
+            TermAccessionNumber = (source |> URI.fromString)
+        )
+
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
+        let t,number = 
+            let lastIndex = term.LastIndexOf '#'
+            term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
+        OntologyAnnotation.create (
+            Name = AnnotationValue.fromString t,
+            TermSourceREF = accession, 
+            TermAccessionNumber = (source |> URI.fromString),
+            Comments = [ Comment.create(Name = "Number", Value = number) ]
+        )
+
+    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
+    static member toString (oa : OntologyAnnotation) =
+        oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
+        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue "",
+        oa.TermSourceREF |> Option.defaultValue ""
+
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            "OA " + this.NameAsStringWithNumber
+            "OA " + this.GetNameWithNumber
 
 
 type OntologySourceReference =
@@ -76,15 +139,15 @@ type OntologySourceReference =
         Comments : Comment list option
     }
 
-    static member create description file name version comments  =
+    static member create(?Description,?File,?Name,?Version,?Comments) : OntologySourceReference =
         {
-
-            Description = description
-            File        = file
-            Name        = name
-            Version     = version
-            Comments    = comments
+        
+            Description = Description
+            File        = File
+            Name        = Name
+            Version     = Version
+            Comments    = Comments
         }
 
     static member empty =
-        OntologySourceReference.create None None None None None
+        OntologySourceReference.create()
