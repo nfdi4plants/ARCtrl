@@ -80,8 +80,8 @@ type ProcessInput =
     | [<SerializationOrder(0)>] Sample of Sample
     | [<SerializationOrder(0)>] Data of Data
     | [<SerializationOrder(0)>] Material of Material 
-
-    member this.Name =
+    
+    member this.TryGetName =
         match this with
         | ProcessInput.Sample s     -> s.Name
         | ProcessInput.Source s     -> s.Name
@@ -90,11 +90,11 @@ type ProcessInput =
 
     [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsString =
-        this.Name
+        this.TryGetName
         |> Option.defaultValue ""
 
     member this.GetName =
-        this.Name
+        this.TryGetName
         |> Option.defaultValue ""
 
     interface IISAPrintable with
@@ -114,15 +114,16 @@ type ProcessOutput =
     | Data of Data
     | Material of Material 
 
-    member this.Name =
+    member this.TryGetName =
         match this with
         | ProcessOutput.Sample s     -> s.Name
         | ProcessOutput.Material m   -> m.Name
         | ProcessOutput.Data d       -> d.Name
 
-    member this.NameAsString =
-        this.Name
+    member this.GetName =
+        this.TryGetName
         |> Option.defaultValue ""
+
 
     interface IISAPrintable with
         member this.Print() = 

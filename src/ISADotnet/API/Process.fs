@@ -293,6 +293,14 @@ module Process =
             |> Option.fromValueWithDefault []
         | None -> None
 
+    //let tryGetCharacteristicValuesOfInputBy (predicate : ProcessInput -> bool) (p : Process) =
+    //    match p.Inputs with
+    //    | Some is -> 
+    //        is
+    //        |> List.choose
+    //    | None -> None
+
+
 module ProcessSequence = 
 
     /// Returns the names of the protocols the given processes impelement
