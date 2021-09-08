@@ -33,22 +33,25 @@ type Investigation =
         Remarks     : Remark list
     }
     
-    static member create(?Id,?FileName,?Identifier,?Title,?Description,?SubmissionDate,?PublicReleaseDate,?OntologySourceReferences,?Publications,?Contacts,?Studies,?Comments,?Remarks) : Investigation=
+    static member make id filename identifier title description submissionDate publicReleaseDate ontologySourceReference publications contacts studies comments remarks : Investigation=
         {
-            ID                          = Id
-            FileName                    = FileName
-            Identifier                  = Identifier
-            Title                       = Title
-            Description                 = Description
-            SubmissionDate              = SubmissionDate
-            PublicReleaseDate           = PublicReleaseDate
-            OntologySourceReferences    = OntologySourceReferences
-            Publications                = Publications
-            Contacts                    = Contacts
-            Studies                     = Studies
-            Comments                    = Comments
-            Remarks                     = (Option.defaultValue [] Remarks)
+            ID                          = id
+            FileName                    = filename
+            Identifier                  = identifier
+            Title                       = title
+            Description                 = description
+            SubmissionDate              = submissionDate
+            PublicReleaseDate           = publicReleaseDate
+            OntologySourceReferences    = ontologySourceReference
+            Publications                = publications
+            Contacts                    = contacts
+            Studies                     = studies
+            Comments                    = comments
+            Remarks                     = remarks
         }
+
+    static member create(?Id,?FileName,?Identifier,?Title,?Description,?SubmissionDate,?PublicReleaseDate,?OntologySourceReferences,?Publications,?Contacts,?Studies,?Comments,?Remarks) : Investigation=
+        Investigation.make Id FileName Identifier Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
 
     static member empty =
         Investigation.create ()

@@ -100,7 +100,7 @@ module Investigation =
                         loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                     | Remark k, _  -> 
-                        loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                        loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                     | Some k, Some v when List.contains k InvestigationInfo.Labels -> 
                         loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
@@ -118,7 +118,7 @@ module Investigation =
             |> SparseMatrix.ToRows
  
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
-        Investigation.create 
+        Investigation.make 
             None 
             None 
             (Option.fromValueWithDefault "" investigationInfo.Identifier)

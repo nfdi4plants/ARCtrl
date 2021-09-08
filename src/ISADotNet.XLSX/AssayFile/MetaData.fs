@@ -55,8 +55,8 @@ module MetaData =
 
         let sheet = SheetData.empty()
 
-        let worksheetComment = Comment.create None (Some "Worksheet") None
-        let personWithComment = Person.create None None None None None None None None None None (Some [worksheetComment])
+        let worksheetComment = Comment.make None (Some "Worksheet") None
+        let personWithComment = Person.make None None None None None None None None None None (Some [worksheetComment])
             
         toRows Assay.empty [personWithComment]
         |> Seq.fold (fun s r -> 

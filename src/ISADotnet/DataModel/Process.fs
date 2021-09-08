@@ -12,12 +12,15 @@ type ProcessParameterValue =
         Unit        : OntologyAnnotation option
     }
 
-    static member create (?Category,?Value,?Unit) : ProcessParameterValue = 
+    static member make category value unit : ProcessParameterValue = 
         {
-            Category    = Category
-            Value       = Value
-            Unit        = Unit
+            Category = category
+            Value = value
+            Unit = unit
         }
+
+    static member create (?Category,?Value,?Unit) : ProcessParameterValue = 
+        ProcessParameterValue.make Category Value Unit
 
     static member empty =
         ProcessParameterValue.create()
@@ -80,8 +83,8 @@ type ProcessInput =
     | [<SerializationOrder(0)>] Sample of Sample
     | [<SerializationOrder(0)>] Data of Data
     | [<SerializationOrder(0)>] Material of Material 
-
-    member this.Name =
+    
+    member this.TryGetName =
         match this with
         | ProcessInput.Sample s     -> s.Name
         | ProcessInput.Source s     -> s.Name
@@ -90,11 +93,11 @@ type ProcessInput =
 
     [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
     member this.NameAsString =
-        this.Name
+        this.TryGetName
         |> Option.defaultValue ""
 
     member this.GetName =
-        this.Name
+        this.TryGetName
         |> Option.defaultValue ""
 
     interface IISAPrintable with
@@ -114,15 +117,16 @@ type ProcessOutput =
     | Data of Data
     | Material of Material 
 
-    member this.Name =
+    member this.TryGetName =
         match this with
         | ProcessOutput.Sample s     -> s.Name
         | ProcessOutput.Material m   -> m.Name
         | ProcessOutput.Data d       -> d.Name
 
-    member this.NameAsString =
-        this.Name
+    member this.GetName =
+        this.TryGetName
         |> Option.defaultValue ""
+
 
     interface IISAPrintable with
         member this.Print() = 
@@ -159,20 +163,23 @@ type Process =
         Comments : Comment list option
     }
 
-    static member create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
+    static member make id name executesProtocol parameterValues performer date previousProcess nextProcess inputs outputs comments : Process= 
         {       
-            ID                  = Id
-            Name                = Name
-            ExecutesProtocol    = ExecutesProtocol
-            ParameterValues     = ParameterValues
-            Performer           = Performer
-            Date                = Date
-            PreviousProcess     = PreviousProcess
-            NextProcess         = NextProcess
-            Inputs              = Inputs
-            Outputs             = Outputs
-            Comments            = Comments       
+            ID                  = id
+            Name                = name
+            ExecutesProtocol    = executesProtocol
+            ParameterValues     = parameterValues
+            Performer           = performer
+            Date                = date
+            PreviousProcess     = previousProcess
+            NextProcess         = nextProcess
+            Inputs              = inputs
+            Outputs             = outputs
+            Comments            = comments       
         }
+
+    static member create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
+        Process.make Id Name ExecutesProtocol ParameterValues Performer Date PreviousProcess NextProcess Inputs Outputs Comments
 
     static member empty =
         Process.create()

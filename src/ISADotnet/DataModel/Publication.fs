@@ -20,16 +20,19 @@ type Publication =
         Comments : Comment list option
     }
 
-    static member create (?Id,?PubMedID,?Doi,?Authors,?Title,?Status,?Comments) : Publication =
+    static member make id pubMedID doi authors title status comments =
         {
-            ID          = Id
-            PubMedID    = PubMedID
-            DOI         = Doi
-            Authors     = Authors
-            Title       = Title
-            Status      = Status
-            Comments    = Comments
+            ID          = id
+            PubMedID    = pubMedID
+            DOI         = doi
+            Authors     = authors
+            Title       = title
+            Status      = status
+            Comments    = comments
         }
+
+    static member create (?Id,?PubMedID,?Doi,?Authors,?Title,?Status,?Comments) : Publication =
+       Publication.make Id PubMedID Doi Authors Title Status Comments
 
     static member empty =
         Publication.create()

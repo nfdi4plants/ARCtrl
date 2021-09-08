@@ -14,12 +14,15 @@ type Comment =
         Value : string option
     }
 
-    static member create(?Id,?Name,?Value) : Comment =
+    static member make id name value : Comment =
         {
-            ID      = Id
-            Name    = Name
-            Value   = Value
+            ID      = id
+            Name    = name
+            Value   = value
         }
+
+    static member create(?Id,?Name,?Value) : Comment =
+        Comment.make Id Name Value
 
     static member fromString name value =
         Comment.create (Name=name,Value=value)
@@ -35,11 +38,14 @@ type Remark =
         Value : string
     }
     
-    static member create(line,value) : Remark = 
+    static member make line value  : Remark = 
         {
             Line = line 
             Value = value      
         }
+
+    static member create(line,value) : Remark = 
+        Remark.make line value
 
     static member toTuple (remark : Remark ) =
         remark.Line, remark.Value

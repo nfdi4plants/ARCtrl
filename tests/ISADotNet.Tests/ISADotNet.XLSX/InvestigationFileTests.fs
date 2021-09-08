@@ -117,23 +117,23 @@ let testStringConversions =
                 let accession = "Accession"
                 let source = "Source"
 
-                let testOntology = OntologyAnnotation.create None (Some (Text term)) (Some accession) (Some source) None
-                let ontology = OntologyAnnotation.fromString term accession source
+                let testOntology = OntologyAnnotation.make None (Some (Text term)) (Some source) (Some accession) None
+                let ontology = OntologyAnnotation.fromString term source accession
 
                 Expect.equal ontology testOntology "Ontology Annotation was not created correctly from strings"
-                Expect.equal (OntologyAnnotation.toString ontology) (term,accession,source) "Ontology Annotation was not parsed correctly to strings"
+                Expect.equal (OntologyAnnotation.toString ontology) (term,source,accession) "Ontology Annotation was not parsed correctly to strings"
 
-                let testComponent = Component.create (Some name) (Some testOntology)
-                let componentx = Component.fromString name term accession source 
+                let testComponent = Component.make (Some name) (Some testOntology)
+                let componentx = Component.fromString name term source  accession
 
                 Expect.equal componentx testComponent "Component was not created correctly from strings"
-                Expect.equal (Component.toString componentx) (name,term,accession,source) "Component was not parsed correctly to strings"
+                Expect.equal (Component.toString componentx) (name,term,source,accession) "Component was not parsed correctly to strings"
 
-                let testPParam = ProtocolParameter.create None (Some testOntology)
-                let pParam = ProtocolParameter.fromString term accession source
+                let testPParam = ProtocolParameter.make None (Some testOntology)
+                let pParam = ProtocolParameter.fromString term source accession
 
                 Expect.equal pParam testPParam "Protocol Parameter was not created correctly from strings"
-                Expect.equal (ProtocolParameter.toString pParam) (term,accession,source) "Protocol Parameter was not parsed correctly to strings"
+                Expect.equal (ProtocolParameter.toString pParam) (term,source,accession) "Protocol Parameter was not parsed correctly to strings"
             )
             testCase "EmptyString" (fun () -> 
                 let name = ""
@@ -141,19 +141,19 @@ let testStringConversions =
                 let accession = ""
                 let source = ""
 
-                let testOntology = OntologyAnnotation.create None None None None None
+                let testOntology = OntologyAnnotation.make None None None None None
                 let ontology = OntologyAnnotation.fromString term accession source
 
                 Expect.equal ontology testOntology "Empty Ontology Annotation was not created correctly from strings"
                 Expect.equal (OntologyAnnotation.toString ontology) (term,accession,source) "Empty Ontology Annotation was not parsed correctly to strings"
 
-                let testComponent = Component.create None None
+                let testComponent = Component.make None None
                 let componentx = Component.fromString name term accession source 
 
                 Expect.equal componentx testComponent "Empty Component was not created correctly from strings"
                 Expect.equal (Component.toString componentx) (name,term,accession,source) "Empty Component was not parsed correctly to strings"
 
-                let testPParam = ProtocolParameter.create None None
+                let testPParam = ProtocolParameter.make None None
                 let pParam = ProtocolParameter.fromString term accession source
 
                 Expect.equal pParam testPParam "Empty Protocol Parameter was not created correctly from strings"
@@ -299,7 +299,7 @@ let testStringConversions =
                 Expect.isSome value "Should have returned Value but returned None"
 
                 let expectedAnnotationValue = AnnotationValue.Text "Name"
-                let expectedAnnotation = OntologyAnnotation.create None (Some expectedAnnotationValue) (Some "Accession") (Some "Source") None
+                let expectedAnnotation = OntologyAnnotation.make None (Some expectedAnnotationValue) (Some "Source") (Some "Accession") None
                 let expectedValue = Value.Ontology expectedAnnotation
 
                 Expect.equal value.Value expectedValue "Value was parsed incorrectly"

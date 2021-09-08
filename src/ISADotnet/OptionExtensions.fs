@@ -1,6 +1,7 @@
 ﻿namespace ISADotNet
 
-module internal Option =
+[<RequireQualifiedAccess>]
+module Option =
  
     /// If the value matches the default, a None is returned, else a Some is returned
     let fromValueWithDefault d v =

@@ -16,12 +16,12 @@ module DesignDescriptors =
 
     let labels = [designTypeLabel;designTypeTermAccessionNumberLabel;designTypeTermSourceREFLabel]
 
-    let fromString designType typeTermAccessionNumber typeTermSourceREF comments =
-        OntologyAnnotation.create 
+    let fromString designType typeTermSourceREF typeTermAccessionNumber comments =
+        OntologyAnnotation.make 
             None 
             (Option.fromValueWithDefault "" designType |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" typeTermAccessionNumber |> Option.map URI.fromString)
             (Option.fromValueWithDefault "" typeTermSourceREF)
+            (Option.fromValueWithDefault "" typeTermAccessionNumber |> Option.map URI.fromString)
             (Option.fromValueWithDefault [] comments)
 
     let fromSparseMatrix (matrix : SparseMatrix) =
@@ -35,8 +35,8 @@ module DesignDescriptors =
 
             fromString
                 (matrix.TryGetValueDefault("",(designTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i)))
                 (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i)))
+                (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i)))
                 comments
         )
 
@@ -45,7 +45,7 @@ module DesignDescriptors =
         let mutable commentKeys = []
         designs
         |> List.iteri (fun i d ->
-            let name,accession,source = OntologyAnnotation.toString d
+            let name,source,accession = OntologyAnnotation.toString d
             do matrix.Matrix.Add ((designTypeLabel,i),                      name)
             do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   accession)
             do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         source)
@@ -75,7 +75,7 @@ module DesignDescriptors =
                     loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                 | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
                     let label = List.find (fun label -> k = prefix + label) labels

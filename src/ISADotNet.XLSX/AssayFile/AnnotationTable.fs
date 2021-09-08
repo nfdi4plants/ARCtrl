@@ -32,7 +32,7 @@ module AnnotationTable =
                 let inputGetter = 
                     fun matrix i -> 
                         let source = 
-                            Source.create
+                            Source.make
                                 None
                                 (inputNameGetter matrix i)
                                 (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
@@ -52,7 +52,7 @@ module AnnotationTable =
                                 | Some data -> data.Name
                                 | None -> None
                         let sample =
-                            Sample.create
+                            Sample.make
                                 None
                                 outputName
                                 (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
@@ -72,7 +72,7 @@ module AnnotationTable =
                         let source = 
                             inputNameGetter
                             |> Option.map (fun ing ->
-                                Sample.create
+                                Sample.make
                                     None
                                     (ing matrix i)
                                     (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
@@ -97,7 +97,7 @@ module AnnotationTable =
                                 | Some data -> data.Name
                                 | None -> None
                         let sample =
-                            Sample.create
+                            Sample.make
                                 None
                                 outputName
                                 (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
@@ -115,7 +115,7 @@ module AnnotationTable =
         factors,
         protocol,
         fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
-            Process.create 
+            Process.make 
                 None 
                 None 
                 (Some protocol) 
@@ -156,11 +156,11 @@ module AnnotationTable =
 
     /// Create a sample from a source
     let sampleOfSource (s:Source) =
-        Sample.create s.ID s.Name s.Characteristics None None
+        Sample.make s.ID s.Name s.Characteristics None None
 
     /// Create a sample from a source
     let sourceOfSample (s:Sample) =
-        Source.create s.ID s.Name s.Characteristics
+        Source.make s.ID s.Name s.Characteristics
 
 
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.

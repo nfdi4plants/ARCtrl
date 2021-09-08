@@ -47,7 +47,7 @@
     <Compile Include="JsonIO\Assay.fs" />
     <Compile Include="JsonIO\Study.fs" />
     <Compile Include="JsonIO\Investigation.fs" />
-    <Compile Include="JsonIO\IO.fs" />
+    <Compile Include="JsonIO\AssayCommonAPI.fs" />
   </ItemGroup>
 
   <ItemGroup>

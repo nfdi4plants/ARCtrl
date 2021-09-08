@@ -11,26 +11,31 @@ type ProtocolParameter =
         ParameterName : OntologyAnnotation option
     }
     
-    static member create (?Id,?ParameterName) : ProtocolParameter =
+    static member make id parameterName : ProtocolParameter= 
         {
-            ID              = Id
-            ParameterName   = ParameterName
+            ID = id
+            ParameterName = parameterName
+        
         }
+
+    static member create (?Id,?ParameterName) : ProtocolParameter =
+        ProtocolParameter.make Id ParameterName
 
     static member empty =
         ProtocolParameter.create()
 
     /// Create a ISAJson Protocol Parameter from ISATab string entries
-    static member fromString (term:string) (accession:string) (source:string) =
-        let oa = OntologyAnnotation.fromString term accession source
-        ProtocolParameter.create(ParameterName=oa)
+    static member fromString (term:string) (source:string) (accession:string) =
+        let oa = OntologyAnnotation.fromString term source accession
+        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+
 
     /// Create a ISAJson Protocol Parameter from ISATab string entries
-    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
-        let oa = OntologyAnnotation.fromStringWithNumber term accession source
-        ProtocolParameter.create(ParameterName=oa)
+    static member fromStringWithNumber (term:string) (source:string) (accession:string) =
+        let oa = OntologyAnnotation.fromStringWithNumber term source accession
+        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
-    /// Get ISATab string entries from an ISAJson ProtocolParameter object
+    /// Get ISATab string entries from an ISAJson ProtocolParameter object (name,source,accession)
     static member toString (pp : ProtocolParameter) =
         pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")        
 
@@ -74,19 +79,22 @@ type Component =
         ComponentType : OntologyAnnotation option
     }
 
-    static member create (?Name,?ComponentType) : Component =
+    static member make name componentType =
         {
-            ComponentName = Name
-            ComponentType = ComponentType
+            ComponentName = name
+            ComponentType = componentType
         }
+
+    static member create (?Name,?ComponentType) : Component =
+        Component.make Name ComponentType
 
     static member empty =
         Component.create()
     
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (name: string) (term:string) (accession:string) (source:string) =
-        let oa = OntologyAnnotation.fromString term accession source
-        Component.create(name, oa)
+    static member fromString (name: string) (term:string) (source:string) (accession:string) =
+        let oa = OntologyAnnotation.fromString term source accession
+        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Get ISATab string entries from an ISAJson Component object
     static member toString (c : Component) =
@@ -116,19 +124,21 @@ type Protocol =
         Comments :      Comment list option
     }
 
-    static member create(?Id,?Name,?ProtocolType,?Description,?Uri,?Version,?Parameters,?Components,?Comments) : Protocol =
+    static member make id name protocolType description uri version parameters components comments : Protocol= 
         {       
-            ID              = Id
-            Name            = Name
-            ProtocolType    = ProtocolType
-            Description     = Description
-            Uri             = Uri
-            Version         = Version
-            Parameters      = Parameters
-            Components      = Components
-            Comments        = Comments
+            ID              = id
+            Name            = name
+            ProtocolType    = protocolType
+            Description     = description
+            Uri             = uri
+            Version         = version
+            Parameters      = parameters
+            Components      = components
+            Comments        = comments
         }
 
+    static member create(?Id,?Name,?ProtocolType,?Description,?Uri,?Version,?Parameters,?Components,?Comments) : Protocol =
+        Protocol.make Id Name ProtocolType Description Uri Version Parameters Components Comments
 
     static member empty = 
         Protocol.create()
