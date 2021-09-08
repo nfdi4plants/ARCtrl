@@ -20,9 +20,9 @@ module Publications =
 
     let labels = [pubMedIDLabel;doiLabel;authorListLabel;titleLabel;statusLabel;statusTermAccessionNumberLabel;statusTermSourceREFLabel]
 
-    let fromString pubMedID doi author title status statursTermAccessionNumber statusTermSourceREF comments =
-        let status = OntologyAnnotation.fromString status statursTermAccessionNumber statusTermSourceREF
-        Publication.create 
+    let fromString pubMedID doi author title status statusTermSourceREF statursTermAccessionNumber comments =
+        let status = OntologyAnnotation.fromString status statusTermSourceREF statursTermAccessionNumber
+        Publication.make 
             None
             (Option.fromValueWithDefault "" pubMedID |> Option.map URI.fromString)
             (Option.fromValueWithDefault "" doi)
@@ -46,8 +46,8 @@ module Publications =
                 (matrix.TryGetValueDefault("",(authorListLabel,i)))         
                 (matrix.TryGetValueDefault("",(titleLabel,i)))                 
                 (matrix.TryGetValueDefault("",(statusLabel,i)))                
-                (matrix.TryGetValueDefault("",(statusTermAccessionNumberLabel,i)))
                 (matrix.TryGetValueDefault("",(statusTermSourceREFLabel,i)))    
+                (matrix.TryGetValueDefault("",(statusTermAccessionNumberLabel,i)))
                 comments
         )
 
@@ -56,7 +56,7 @@ module Publications =
         let mutable commentKeys = []
         publications
         |> List.iteri (fun i p ->
-            let status,accession,source = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
+            let status,source,accession = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
             do matrix.Matrix.Add ((authorListLabel,i),                  (Option.defaultValue "" p.Authors))
@@ -89,7 +89,7 @@ module Publications =
                     loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                 | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
                     let label = List.find (fun label -> k = prefix + label) labels

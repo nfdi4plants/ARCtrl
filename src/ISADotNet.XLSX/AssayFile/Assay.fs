@@ -4,7 +4,6 @@ open System.Collections.Generic
 open FSharpSpreadsheetML
 
 open ISADotNet
-open ISADotNet.XLSX
 
 /// Functions for parsing an ISAXLSX Assay File
 ///
@@ -89,10 +88,10 @@ module AssayFile =
         protocols |> Seq.toList,
         contacts,
         {assay with 
-                ProcessSequence = API.Option.fromValueWithDefault [] (processes |> Seq.toList)
-                CharacteristicCategories = API.Option.fromValueWithDefault [] characteristics
+                ProcessSequence = Option.fromValueWithDefault [] (processes |> Seq.toList)
+                CharacteristicCategories = Option.fromValueWithDefault [] characteristics
         }
-       
+
     /// Parses the assay file
     let fromFile (path:string) = 
         let doc = Spreadsheet.fromFile path false
@@ -100,7 +99,6 @@ module AssayFile =
             fromSpreadsheet doc
         finally
             Spreadsheet.close doc
-            }
 
     /// Parses the assay file
     let fromStream (stream:#System.IO.Stream) = 

@@ -28,20 +28,23 @@ type Person =
         Comments : Comment list option  
     }
 
-    static member create (?Id,?LastName,?FirstName,?MidInitials,?Email,?Phone,?Fax,?Address,?Affiliation,?Roles,?Comments) : Person =
+    static member make id lastName firstName midInitials email phone fax address affiliation roles comments : Person =
         {
-            ID          = Id
-            LastName    = LastName
-            FirstName   = FirstName
-            MidInitials = MidInitials
-            EMail       = Email
-            Phone       = Phone
-            Fax         = Fax
-            Address     = Address
-            Affiliation = Affiliation
-            Roles       = Roles
-            Comments    = Comments
+            ID = id
+            LastName = lastName
+            FirstName = firstName
+            MidInitials = midInitials
+            EMail = email
+            Phone = phone
+            Fax = fax
+            Address = address
+            Affiliation = affiliation
+            Roles = roles
+            Comments = comments
         }
+
+    static member create (?Id,?LastName,?FirstName,?MidInitials,?Email,?Phone,?Fax,?Address,?Affiliation,?Roles,?Comments) : Person =
+        Person.make Id LastName FirstName MidInitials Email Phone Fax Address Affiliation Roles Comments
 
     static member empty =
         Person.create ()

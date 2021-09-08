@@ -11,24 +11,27 @@ type MaterialAttribute =
     
     }
         
-    static member create (?Id,?CharacteristicType) : MaterialAttribute =
+    static member make id characteristicType =
         {
-            ID                  = Id
-            CharacteristicType  = CharacteristicType     
+            ID = id
+            CharacteristicType = characteristicType     
         }
+
+    static member create (?Id,?CharacteristicType) : MaterialAttribute =
+        MaterialAttribute.make Id CharacteristicType
 
     static member empty =
         MaterialAttribute.create()
 
     /// Create a ISAJson MaterialAttribute from ISATab string entries
-    static member fromString (term:string) (accession:string) (source:string) =
-        let oa = OntologyAnnotation.fromString term accession source
-        MaterialAttribute.create (CharacteristicType = oa)
+    static member fromString (term:string) (source:string) (accession:string) =
+        let oa = OntologyAnnotation.fromString term source accession
+        MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Create a ISAJson MaterialAttribute from ISATab string entries
-    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
-        let oa = OntologyAnnotation.fromStringWithNumber term accession source
-        MaterialAttribute.create (CharacteristicType = oa)
+    static member fromStringWithNumber (term:string) (source:string) (accession:string) =
+        let oa = OntologyAnnotation.fromStringWithNumber term source accession
+        MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
     static member toString (ma : MaterialAttribute) =
@@ -79,13 +82,17 @@ type MaterialAttributeValue =
     
     }
 
-    static member create(?Id,?Category,?Value,?Unit) : MaterialAttributeValue =
+    static member make id category value unit : MaterialAttributeValue =
         {
-            ID          = Id
-            Category    = Category
-            Value       = Value
-            Unit        = Unit         
+            ID      = id
+            Category = category
+            Value = value
+            Unit = unit         
         }
+
+
+    static member create(?Id,?Category,?Value,?Unit) : MaterialAttributeValue =
+        MaterialAttributeValue.make Id Category Value Unit
 
     static member empty =
         MaterialAttributeValue.create()
@@ -171,14 +178,17 @@ type Material =
         DerivesFrom : OntologyAnnotation option   
     }
 
-    static member create(?Id,?Name,?MaterialType,?Characteristics,?DerivesFrom) : Material = 
+    static member make id name materialType characteristics derivesFrom : Material=
         {
-            ID              = Id
-            Name            = Name
-            MaterialType    = MaterialType
-            Characteristics = Characteristics     
-            DerivesFrom     = DerivesFrom       
+            ID              = id
+            Name            = name
+            MaterialType    = materialType
+            Characteristics = characteristics     
+            DerivesFrom     = derivesFrom       
         }
+
+    static member create(?Id,?Name,?MaterialType,?Characteristics,?DerivesFrom) : Material = 
+        Material.make Id Name MaterialType Characteristics DerivesFrom
 
     static member empty =
         Material.create()

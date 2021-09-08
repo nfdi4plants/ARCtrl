@@ -12,12 +12,15 @@ type ProcessParameterValue =
         Unit        : OntologyAnnotation option
     }
 
-    static member create (?Category,?Value,?Unit) : ProcessParameterValue = 
+    static member make category value unit : ProcessParameterValue = 
         {
-            Category    = Category
-            Value       = Value
-            Unit        = Unit
+            Category = category
+            Value = value
+            Unit = unit
         }
+
+    static member create (?Category,?Value,?Unit) : ProcessParameterValue = 
+        ProcessParameterValue.make Category Value Unit
 
     static member empty =
         ProcessParameterValue.create()
@@ -160,20 +163,23 @@ type Process =
         Comments : Comment list option
     }
 
-    static member create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
+    static member make id name executesProtocol parameterValues performer date previousProcess nextProcess inputs outputs comments : Process= 
         {       
-            ID                  = Id
-            Name                = Name
-            ExecutesProtocol    = ExecutesProtocol
-            ParameterValues     = ParameterValues
-            Performer           = Performer
-            Date                = Date
-            PreviousProcess     = PreviousProcess
-            NextProcess         = NextProcess
-            Inputs              = Inputs
-            Outputs             = Outputs
-            Comments            = Comments       
+            ID                  = id
+            Name                = name
+            ExecutesProtocol    = executesProtocol
+            ParameterValues     = parameterValues
+            Performer           = performer
+            Date                = date
+            PreviousProcess     = previousProcess
+            NextProcess         = nextProcess
+            Inputs              = inputs
+            Outputs             = outputs
+            Comments            = comments       
         }
+
+    static member create (?Id,?Name,?ExecutesProtocol,?ParameterValues,?Performer,?Date,?PreviousProcess,?NextProcess,?Inputs,?Outputs,?Comments) : Process= 
+        Process.make Id Name ExecutesProtocol ParameterValues Performer Date PreviousProcess NextProcess Inputs Outputs Comments
 
     static member empty =
         Process.create()

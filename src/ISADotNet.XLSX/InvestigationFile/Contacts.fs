@@ -25,8 +25,8 @@ module Contacts =
     let labels = [lastNameLabel;firstNameLabel;midInitialsLabel;emailLabel;phoneLabel;faxLabel;addressLabel;affiliationLabel;rolesLabel;rolesTermAccessionNumberLabel;rolesTermSourceREFLabel]
 
     let fromString lastName firstName midInitials email phone fax address affiliation role rolesTermAccessionNumber rolesTermSourceREF comments =
-        let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermAccessionNumber rolesTermSourceREF
-        Person.create 
+        let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermSourceREF rolesTermAccessionNumber
+        Person.make 
             None 
             (Option.fromValueWithDefault "" lastName   ) 
             (Option.fromValueWithDefault "" firstName  )
@@ -66,7 +66,7 @@ module Contacts =
         let mutable commentKeys = []
         persons
         |> List.iteri (fun i p ->
-            let role,rolesTermAccessionNumber,rolesTermSourceREF = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
+            let role,rolesTermSourceREF,rolesTermAccessionNumber = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
             do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
             do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))
             do matrix.Matrix.Add ((midInitialsLabel,i),                 (Option.defaultValue ""  p.MidInitials  ))
@@ -104,7 +104,7 @@ module Contacts =
                     loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                 | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
                     let label = List.find (fun label -> k = prefix + label) labels

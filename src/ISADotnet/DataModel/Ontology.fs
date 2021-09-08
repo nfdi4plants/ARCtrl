@@ -39,14 +39,17 @@ type OntologyAnnotation =
         Comments : Comment list option
     }
 
-    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
+    static member make id name termSourceREF termAccessionNumber comments= 
         {
-            ID                  = Id
-            Name                = Name 
-            TermSourceREF       = TermSourceREF
-            TermAccessionNumber = TermAccessionNumber  
-            Comments            = Comments
+            ID = id
+            Name = name 
+            TermSourceREF = termSourceREF
+            TermAccessionNumber = termAccessionNumber  
+            Comments = comments
         }
+
+    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
+        OntologyAnnotation.make Id Name TermSourceREF TermAccessionNumber Comments
 
     static member empty =
         OntologyAnnotation.create()
@@ -92,30 +95,32 @@ type OntologyAnnotation =
         | None -> name
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromString (term:string) (accession:string) (source:string) =
-        OntologyAnnotation.create (
-            Name = AnnotationValue.fromString term,
-            TermSourceREF = accession, 
-            TermAccessionNumber = (source |> URI.fromString)
-        )
+    static member fromString (term:string) (source:string) (accession:string) =
+        OntologyAnnotation.make 
+            None 
+            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" source)
+            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
+            None
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromStringWithNumber (term:string) (accession:string) (source:string) =
+    static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let t,number = 
             let lastIndex = term.LastIndexOf '#'
             term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
-        OntologyAnnotation.create (
-            Name = AnnotationValue.fromString t,
-            TermSourceREF = accession, 
-            TermAccessionNumber = (source |> URI.fromString),
-            Comments = [ Comment.create(Name = "Number", Value = number) ]
-        )
+        OntologyAnnotation.make 
+            None 
+            (Option.fromValueWithDefault "" t |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" source)
+            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
+            (Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton))
 
-    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,accession,source)
+
+    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,source,accession)
     static member toString (oa : OntologyAnnotation) =
         oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
-        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue "",
-        oa.TermSourceREF |> Option.defaultValue ""
+        oa.TermSourceREF |> Option.defaultValue "",
+        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue ""
 
 
     interface IISAPrintable with
@@ -139,15 +144,18 @@ type OntologySourceReference =
         Comments : Comment list option
     }
 
-    static member create(?Description,?File,?Name,?Version,?Comments) : OntologySourceReference =
+    static member make description file name version comments  =
         {
-        
-            Description = Description
-            File        = File
-            Name        = Name
-            Version     = Version
-            Comments    = Comments
+
+            Description = description
+            File        = file
+            Name        = name
+            Version     = version
+            Comments    = comments
         }
+
+    static member create(?Description,?File,?Name,?Version,?Comments) : OntologySourceReference =
+        OntologySourceReference.make Description File Name Version Comments
 
     static member empty =
         OntologySourceReference.create()

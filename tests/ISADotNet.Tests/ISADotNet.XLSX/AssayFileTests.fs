@@ -52,7 +52,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "5"
-            let testOntology = OntologyAnnotation.create None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
+            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
 
 
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
@@ -66,7 +66,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "2"
-            let testOntology = OntologyAnnotation.create None None (Some (URI.fromString "1000031")) (Some "MS") (Some [testComment])
+            let testOntology = OntologyAnnotation.make None None (Some "MS") (Some (URI.fromString "1000031")) (Some [testComment])
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
@@ -116,7 +116,7 @@ let testNodeGetterFunctions =
 
             let unit = unitGetter m 0
 
-            let expectedUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" 
+            let expectedUnit = OntologyAnnotation.fromString "square centimeter" "UO" "http://purl.obolibrary.org/obo/UO_0000081"
 
             Expect.equal unit expectedUnit "Retrieved Unit is wrong"
         )
@@ -140,15 +140,15 @@ let testNodeGetterFunctions =
 
             Expect.isSome characteristic "CharacteristGetter was returned but not characteristic was returned"
 
-            let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "0002637" "TO" 
+            let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO"  "0002637"
 
             Expect.equal characteristic.Value expectedCharacteristic "Retrieved Characteristic is wrong"
 
-            let expectedUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" |> Some
+            let expectedUnit = OntologyAnnotation.fromString "square centimeter" "UO" "http://purl.obolibrary.org/obo/UO_0000081" |> Some
 
             let expectedValue = Value.fromOptions (Some "10") None None
 
-            let expectedCharacteristicValue = MaterialAttributeValue.create None (Some expectedCharacteristic) expectedValue expectedUnit
+            let expectedCharacteristicValue = MaterialAttributeValue.make None (Some expectedCharacteristic) expectedValue expectedUnit
 
             let characteristicValue = characteristicValueGetter m 0
 
@@ -174,15 +174,15 @@ let testNodeGetterFunctions =
 
             Expect.isSome factor "FactorGetter was returned but no factor was returned"
 
-            let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO"
+            let expectedFactor = Factor.fromString "time" "time" "PATO" "0000165"
 
             Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
             
-            let expectedUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some
+            let expectedUnit = OntologyAnnotation.fromString "hour" "UO" "http://purl.obolibrary.org/obo/UO_0000032" |> Some
 
             let expectedValue = Value.fromOptions (Some "5") None None
 
-            let expectedFactorValue = FactorValue.create None (Some expectedFactor) expectedValue expectedUnit
+            let expectedFactorValue = FactorValue.make None (Some expectedFactor) expectedValue expectedUnit
 
             let factorValue = factorValueGetter m 0
 
@@ -208,15 +208,15 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO"
+            let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "0000005" 
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
 
-            let expectedUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some
+            let expectedUnit = OntologyAnnotation.fromString "degree Celsius" "UO" "http://purl.obolibrary.org/obo/UO_0000027" |> Some
 
             let expectedValue = Value.fromOptions (Some "27") None None
 
-            let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedValue expectedUnit
+            let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) expectedValue expectedUnit
 
             let parameterValue = parameterValueGetter m 0
 
@@ -236,13 +236,13 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "Parameter has no TermSourceRef"
 
-            let expectedParameter = ProtocolParameter.fromString "measurement device" "0000832" "OBI" 
+            let expectedParameter = ProtocolParameter.fromString "measurement device" "OBI" "0000832"
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
             let expectedValue = Value.fromOptions (Some "Bruker NMR probe") (Some "http://purl.obolibrary.org/obo/OBI_0000561") (Some "OBI")
 
-            let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedValue None
+            let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) expectedValue None
 
             let parameterValue = parameterValueGetter m 0
 
@@ -260,13 +260,13 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "heating block" "0400108" "OBI" 
+            let expectedParameter = ProtocolParameter.fromString "heating block" "OBI" "0400108"
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
             let expectedValue = Value.fromOptions (Some "Freds old stove") None None
 
-            let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) expectedValue None
+            let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) expectedValue None
 
             let parameterValue = parameterValueGetter m 0
 
@@ -297,19 +297,19 @@ let testProcessGetter =
     let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
 
     let characteristicHeaders = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
-    let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "0002637" "TO" 
-    let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "http://purl.obolibrary.org/obo/UO_0000081" "UO" |> Some
-    let expectedCharacteristicValue = MaterialAttributeValue.create None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
+    let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO" "0002637"
+    let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "UO" "http://purl.obolibrary.org/obo/UO_0000081" |> Some
+    let expectedCharacteristicValue = MaterialAttributeValue.make None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
 
     let factorHeaders = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
-    let expectedFactor = Factor.fromString "time" "time" "0000165" "PATO"          
-    let expectedFactorUnit = OntologyAnnotation.fromString "hour" "http://purl.obolibrary.org/obo/UO_0000032" "UO" |> Some    
-    let expectedFactorValue = FactorValue.create None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
+    let expectedFactor = Factor.fromString "time" "time" "PATO" "0000165"
+    let expectedFactorUnit = OntologyAnnotation.fromString "hour" "UO"  "http://purl.obolibrary.org/obo/UO_0000032"|> Some    
+    let expectedFactorValue = FactorValue.make None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
 
     let parameterHeaders = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
-    let expectedParameter = ProtocolParameter.fromString "temperature unit" "0000005" "UO"
-    let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "http://purl.obolibrary.org/obo/UO_0000027" "UO" |> Some    
-    let expectedParameterValue = ProcessParameterValue.create (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
+    let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "0000005"
+    let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "UO" "http://purl.obolibrary.org/obo/UO_0000027"  |> Some    
+    let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
 
 
     let sourceHeader = ["Source Name"]
@@ -323,13 +323,13 @@ let testProcessGetter =
 
             let headers = sourceHeader @ characteristicHeaders @ factorHeaders @ parameterHeaders @ sampleHeader
 
-            let expectedSource = Source.create None (Some expectedSourceName) (Some [expectedCharacteristicValue])
+            let expectedSource = Source.make None (Some expectedSourceName) (Some [expectedCharacteristicValue])
             let expectedInput = ProcessInput.Source expectedSource
-            let expectedOutput = ProcessOutput.Sample (Sample.create None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) (Some [expectedSource])  )
+            let expectedOutput = ProcessOutput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) (Some [expectedSource])  )
 
-            let expectedProtocol = Protocol.create None None None None None None (Some [expectedParameter]) None None
+            let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None
 
-            let expectedProcess = Process.create None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
+            let expectedProcess = Process.make None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
             let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
 
@@ -349,14 +349,14 @@ let testProcessGetter =
                 //|> AnnotationTable.splitBySamples
                 //|> Seq.head
 
-            let expectedOutput = ProcessOutput.Sample (Sample.create None None (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
+            let expectedOutput = ProcessOutput.Sample (Sample.make None None (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
 
-            let expectedInput = ProcessInput.Sample (Sample.create None (Some expectedSampleName) (Some [expectedCharacteristicValue]) None None  )
+            let expectedInput = ProcessInput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) None None  )
 
 
-            let expectedProtocol = Protocol.create None None None None None None (Some [expectedParameter]) None None
+            let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None
 
-            let expectedProcess = Process.create None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
+            let expectedProcess = Process.make None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
             let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
 
@@ -376,49 +376,49 @@ let testProcessComparisonFunctions =
 
     let parameters = 
         [
-        ProtocolParameter.create None (Some (OntologyAnnotation.fromString "Term1" "" ""))
-        ProtocolParameter.create None (Some (OntologyAnnotation.fromString "Term2" "" ""))
+        ProtocolParameter.make None (Some (OntologyAnnotation.fromString "Term1" "" ""))
+        ProtocolParameter.make None (Some (OntologyAnnotation.fromString "Term2" "" ""))
         ]
 
     let parameterValues1 =
         [
-            ProcessParameterValue.create (Some parameters.[0]) (Value.fromOptions (Some "Value1") None None) None
-            ProcessParameterValue.create (Some parameters.[1]) (Value.fromOptions (Some "Value2") None None) None
+            ProcessParameterValue.make (Some parameters.[0]) (Value.fromOptions (Some "Value1") None None) None
+            ProcessParameterValue.make (Some parameters.[1]) (Value.fromOptions (Some "Value2") None None) None
         ]
 
     let parameterValues2 = 
         [
-            ProcessParameterValue.create (Some parameters.[0]) (Value.fromOptions (Some "Value1") None None) None
-            ProcessParameterValue.create (Some parameters.[1]) (Value.fromOptions (Some "Value3") None None) None
+            ProcessParameterValue.make (Some parameters.[0]) (Value.fromOptions (Some "Value1") None None) None
+            ProcessParameterValue.make (Some parameters.[1]) (Value.fromOptions (Some "Value3") None None) None
         ]
 
-    let characteristic =  MaterialAttribute.create None (Some (OntologyAnnotation.fromString "Term4" "" ""))
-    let characteristicValue = MaterialAttributeValue.create None (Some characteristic) (Value.fromOptions (Some "Value4") None None) None
+    let characteristic =  MaterialAttribute.make None (Some (OntologyAnnotation.fromString "Term4" "" ""))
+    let characteristicValue = MaterialAttributeValue.make None (Some characteristic) (Value.fromOptions (Some "Value4") None None) None
 
-    let factor =  Factor.create None (Some "Factor") (Some (OntologyAnnotation.fromString "Term5" "" "")) None
-    let factorValue = FactorValue.create None (Some factor) (Value.fromOptions (Some "Value5") None None) None
+    let factor =  Factor.make None (Some "Factor") (Some (OntologyAnnotation.fromString "Term5" "" "")) None
+    let factorValue = FactorValue.make None (Some factor) (Value.fromOptions (Some "Value5") None None) None
 
 
-    let protocol1 = Protocol.create None (Some "Protocol1") None None None None (Some parameters) None None
-    let protocol2 = Protocol.create None (Some "Protocol2") None None None None (Some parameters) None None
+    let protocol1 = Protocol.make None (Some "Protocol1") None None None None (Some parameters) None None
+    let protocol2 = Protocol.make None (Some "Protocol2") None None None None (Some parameters) None None
 
-    let sample1 = Sample.create None (Some "Sample1") None None None
-    let sample2 = Sample.create None (Some "Sample2") None None None
-    let sample3 = Sample.create None (Some "Sample3") None None None
-    let sample4 = Sample.create None (Some "Sample4") None None None
+    let sample1 = Sample.make None (Some "Sample1") None None None
+    let sample2 = Sample.make None (Some "Sample2") None None None
+    let sample3 = Sample.make None (Some "Sample3") None None None
+    let sample4 = Sample.make None (Some "Sample4") None None None
 
-    let source1 = Source.create None (Some "Source1") None
-    let source2 = Source.create None (Some "Source2") None
-    let source3 = Source.create None (Some "Source3") None
-    let source4 = Source.create None (Some "Source4") None
+    let source1 = Source.make None (Some "Source1") None
+    let source2 = Source.make None (Some "Source2") None
+    let source3 = Source.make None (Some "Source3") None
+    let source4 = Source.make None (Some "Source4") None
 
     testList "ProcessComparisonTests" [
         testCase "MergeProcesses" (fun () ->
 
-            let process1 = Process.create None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.create None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.create None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.create None (Some "Process4") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.make None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.make None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.make None (Some "Process4") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
 
             let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
 
@@ -434,10 +434,10 @@ let testProcessComparisonFunctions =
         )        
         testCase "MergeProcessesDifferentParams" (fun () ->
 
-            let process1 = Process.create None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.create None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.create None (Some "Process3") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.create None (Some "Process4") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.make None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.make None (Some "Process3") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.make None (Some "Process4") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
 
             let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
 
@@ -461,10 +461,10 @@ let testProcessComparisonFunctions =
         )
         testCase "MergeProcessesDifferentProtocols" (fun () ->
 
-            let process1 = Process.create None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.create None (Some "Process2") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.create None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.create None (Some "Process4") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.make None (Some "Process2") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.make None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.make None (Some "Process4") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
 
             let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
 
@@ -488,10 +488,10 @@ let testProcessComparisonFunctions =
         )
         testCase "IndexIdenticalProcessesByProtocolName" (fun () ->
 
-            let process1 = Process.create None None (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.create None None (Some protocol1) (Some parameterValues2) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.create None None (Some protocol2) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.create None None (Some protocol2) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None None (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.make None None (Some protocol1) (Some parameterValues2) None None None None (Some [Source source2]) (Some [Sample sample2]) None
+            let process3 = Process.make None None (Some protocol2) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
+            let process4 = Process.make None None (Some protocol2) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
 
             let indexedProcesses = AnnotationTable.indexRelatedProcessesByProtocolName [process1;process2;process3;process4]
 
@@ -503,17 +503,17 @@ let testProcessComparisonFunctions =
         )
         testCase "MergeSampleInfoTransformToSource" (fun () ->
             
-            let sourceWithSampleName = ProcessInput.Source (Source.create None (Some "Sample1") None)
+            let sourceWithSampleName = ProcessInput.Source (Source.make None (Some "Sample1") None)
 
-            let process1 = Process.create None None None None None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.create None None None None None None None None (Some [sourceWithSampleName]) (Some [Sample sample2]) None
+            let process1 = Process.make None None None None None None None None (Some [Source source1]) (Some [Sample sample1]) None
+            let process2 = Process.make None None None None None None None None (Some [sourceWithSampleName]) (Some [Sample sample2]) None
 
             let updatedProcesses = AnnotationTable.updateSamplesByThemselves [process1;process2]
 
             let expectedProcessSequence =
                 [
                     process1
-                    Process.create None None None None None None None None (Some ([ProcessInput.Sample sample1])) (Some [Sample sample2]) None
+                    Process.make None None None None None None None None (Some ([ProcessInput.Sample sample1])) (Some [Sample sample2]) None
                 
                 ]
 
@@ -521,11 +521,11 @@ let testProcessComparisonFunctions =
         )
         testCase "MergeSampleInfo" (fun () ->
             
-            let outputOfFirst = ProcessOutput.Sample (Sample.create None (Some "Sample1") None (Some [factorValue]) None)
-            let inputOfSecond = ProcessInput.Source (Source.create None (Some "Sample1") (Some [characteristicValue]))
+            let outputOfFirst = ProcessOutput.Sample (Sample.make None (Some "Sample1") None (Some [factorValue]) None)
+            let inputOfSecond = ProcessInput.Source (Source.make None (Some "Sample1") (Some [characteristicValue]))
 
-            let process1 = Process.create None None None None None None None None (Some [Source source1]) (Some [outputOfFirst]) None
-            let process2 = Process.create None None None None None None None None (Some [inputOfSecond]) (Some [Sample sample2]) None
+            let process1 = Process.make None None None None None None None None (Some [Source source1]) (Some [outputOfFirst]) None
+            let process2 = Process.make None None None None None None None None (Some [inputOfSecond]) (Some [Sample sample2]) None
 
             let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
 
@@ -545,7 +545,7 @@ let testProcessComparisonFunctions =
                 | [ProcessInput.Sample s] -> s
                 | _ -> failwithf "Expected a single sample for inputs but got %A" inputs
             
-            let expectedSample = Sample.create None (Some "Sample1") (Some [characteristicValue]) (Some [factorValue]) None
+            let expectedSample = Sample.make None (Some "Sample1") (Some [characteristicValue]) (Some [factorValue]) None
 
             Expect.equal inputSample outputSample "The information of the output of the first process and the input of the second process was not equalized"      
             Expect.equal outputSample expectedSample "Values were not correctly merged"
@@ -595,7 +595,7 @@ let testMetaDataFunctions =
 
             let assay,contacts = AssayFile.MetaData.fromRows rows 
 
-            let testAssay = Assays.fromString "protein expression profiling" "http://purl.obolibrary.org/obo/OBI_0000615" "OBI" "mass spectrometry" "" "OBI" "iTRAQ" "" []
+            let testAssay = Assays.fromString "protein expression profiling" "OBI" "http://purl.obolibrary.org/obo/OBI_0000615" "mass spectrometry" "OBI" "" "iTRAQ" "" []
 
             let testContact = Contacts.fromString "Leo" "Zeef" "A" "" "" "" "Oxford Road, Manchester M13 9PT, UK" "Faculty of Life Sciences, Michael Smith Building, University of Manchester" "author" "" "" [Comment.fromString "Worksheet" "Sheet3"]
                 
@@ -624,24 +624,24 @@ let testAssayFileReader =
         ]
 
     let technologyType =
-        OntologyAnnotation.fromString "mass spectrometry" "http://purl.obolibrary.org/obo/MS_1000268" "MS"
+        OntologyAnnotation.fromString "mass spectrometry" "MS" "http://purl.obolibrary.org/obo/MS_1000268"
         
     let fileName = @"GreatAssay\assay.isa.xlsx"
 
-    let temperatureUnit = ProtocolParameter.fromString "temperature unit" "0000005" "UO" 
+    let temperatureUnit = ProtocolParameter.fromString "temperature unit" "UO"  "0000005"
 
     let temperature = ProtocolParameter.fromString "temperature" "" ""
 
-    let peptidase = ProtocolParameter.fromString "enzyme unit" "0000181" "UO"
+    let peptidase = ProtocolParameter.fromString "enzyme unit" "UO" "0000181"
 
-    let time1 = ProtocolParameter.fromString "time unit" "0000003" "UO"
+    let time1 = ProtocolParameter.fromString "time unit" "UO" "0000003"
 
     let time2Comment = Comment.fromString "Number" "2"  
-    let time2Ontology = OntologyAnnotation.create None (Some (AnnotationValue.Text "time unit")) (Some "0000003") (Some "UO") (Some [time2Comment])
-    let time2 = Factor.create None (Some "time unit") (Some time2Ontology) None
+    let time2Ontology = OntologyAnnotation.make None (Some (AnnotationValue.Text "time unit")) (Some "UO") (Some "0000003") (Some [time2Comment])
+    let time2 = Factor.make None (Some "time unit") (Some time2Ontology) None
 
 
-    let leafSize = MaterialAttribute.fromString "leaf size" "0002637" "TO"
+    let leafSize = MaterialAttribute.fromString "leaf size" "TO" "0002637"
 
 
     testList "AssayFileReaderTests" [
@@ -662,8 +662,8 @@ let testAssayFileReader =
 
             let expectedProtocols = 
                 [
-                Protocol.create None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None
-                Protocol.create None (Some "SecondAssay") None None None None (Some [temperatureUnit]) None None
+                Protocol.make None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None
+                Protocol.make None (Some "SecondAssay") None None None None (Some [temperatureUnit]) None None
                 ]
 
             let expectedFactors = [time2]

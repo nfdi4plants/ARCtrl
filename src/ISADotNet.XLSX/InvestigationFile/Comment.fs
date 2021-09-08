@@ -24,7 +24,7 @@ module Comment =
         sprintf "Comment[<%s>]" k
 
     let fromString k v =
-        Comment.create 
+        Comment.make 
             None 
             (Option.fromValueWithDefault "" k) 
             (Option.fromValueWithDefault "" v)

@@ -56,7 +56,7 @@ module AnnotationColumn =
                 let ontology = 
                     if ontologySourceRegex.Success then 
                         ontologySourceRegex.Value.Split ':'
-                        |> fun o -> OntologyAnnotation.fromString ""  o.[1] o.[0]
+                        |> fun o -> OntologyAnnotation.fromString ""  o.[0] o.[1] 
                         |> fun ontology -> {ontology with Comments = numberComment}
                         |> Some
                     else None

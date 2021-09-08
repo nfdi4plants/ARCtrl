@@ -19,7 +19,7 @@ module OntologySourceReference =
     let labels = [nameLabel;fileLabel;versionLabel;descriptionLabel]
 
     let fromString description file name version comments =
-        OntologySourceReference.create
+        OntologySourceReference.make
             (Option.fromValueWithDefault "" description)
             (Option.fromValueWithDefault "" file)
             (Option.fromValueWithDefault "" name)
@@ -76,7 +76,7 @@ module OntologySourceReference =
                     loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                 | Some k, Some v when List.contains k labels -> 
                     loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)

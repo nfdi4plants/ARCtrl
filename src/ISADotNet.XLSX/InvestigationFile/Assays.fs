@@ -26,10 +26,10 @@ module Assays =
         ]
 
     
-    let fromString measurementType measurementTypeTermAccessionNumber measurementTypeTermSourceREF technologyType technologyTypeTermAccessionNumber technologyTypeTermSourceREF technologyPlatform fileName comments =
-        let measurementType = OntologyAnnotation.fromString measurementType measurementTypeTermAccessionNumber measurementTypeTermSourceREF
-        let technologyType = OntologyAnnotation.fromString technologyType technologyTypeTermAccessionNumber technologyTypeTermSourceREF
-        Assay.create 
+    let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments =
+        let measurementType = OntologyAnnotation.fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber
+        let technologyType = OntologyAnnotation.fromString technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber
+        Assay.make 
             None 
             (Option.fromValueWithDefault "" fileName)
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
@@ -53,11 +53,11 @@ module Assays =
 
             fromString
                 (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
-                (matrix.TryGetValueDefault("",(measurementTypeTermAccessionNumberLabel,i)))
                 (matrix.TryGetValueDefault("",(measurementTypeTermSourceREFLabel,i)))
+                (matrix.TryGetValueDefault("",(measurementTypeTermAccessionNumberLabel,i)))
                 (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
-                (matrix.TryGetValueDefault("",(technologyTypeTermAccessionNumberLabel,i))) 
                 (matrix.TryGetValueDefault("",(technologyTypeTermSourceREFLabel,i)))   
+                (matrix.TryGetValueDefault("",(technologyTypeTermAccessionNumberLabel,i))) 
                 (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
                 (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
                 comments
@@ -68,8 +68,8 @@ module Assays =
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
-            let measurementType,measurementAccession,measurementSource = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
-            let technologyType,technologyAccession,technologySource = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
+            let measurementType,measurementSource,measurementAccession = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
+            let technologyType,technologySource,technologyAccession = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       measurementType)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    measurementAccession)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          measurementSource)
@@ -103,7 +103,7 @@ module Assays =
                     loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                 | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
                     let label = List.find (fun label -> k = prefix + label) labels

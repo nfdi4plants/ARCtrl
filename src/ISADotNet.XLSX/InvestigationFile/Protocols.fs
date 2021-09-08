@@ -33,11 +33,11 @@ module Protocols =
         ]
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
-        let protocolType = OntologyAnnotation.fromString protocolType typeTermAccessionNumber typeTermSourceREF
-        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermAccessionNumber parametersTermSourceREF
-        let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF
+        let protocolType = OntologyAnnotation.fromString protocolType typeTermSourceREF typeTermAccessionNumber
+        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber
+        let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
-        Protocol.create 
+        Protocol.make 
             None 
             (Option.fromValueWithDefault "" name |> Option.map URI.fromString) 
             (Option.fromValueWithDefault OntologyAnnotation.empty protocolType)
@@ -81,9 +81,9 @@ module Protocols =
         let mutable commentKeys = []
         protocols
         |> List.iteri (fun i p ->
-            let protocolType,protocolAccession,protocolSource = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
-            let parameterType,parameterAccession,parameterSource = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
-            let componentName,componentType,componentAccession,componentSource = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
+            let protocolType,protocolSource,protocolAccession = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let parameterType,parameterSource,parameterAccession = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
+            let componentName,componentType,componentSource,componentAccession = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 
             do matrix.Matrix.Add ((nameLabel,i),                                (Option.defaultValue "" p.Name))
             do matrix.Matrix.Add ((protocolTypeLabel,i),                        protocolType)
@@ -124,7 +124,7 @@ module Protocols =
                     loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                 | Remark k, _  -> 
-                    loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                 | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
                     let label = List.find (fun label -> k = prefix + label) labels

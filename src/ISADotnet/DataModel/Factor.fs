@@ -14,34 +14,30 @@ type Factor =
         Comments : Comment list option
     }
 
-    static member create(?Id,?Name,?FactorType,?Comments) : Factor =
+    static member make id name factorType comments =
         {
-            ID      = Id
-            Name    = Name
-            FactorType = FactorType
-            Comments = Comments         
+            ID      = id
+            Name    = name
+            FactorType = factorType
+            Comments = comments         
         }
+
+    static member create(?Id,?Name,?FactorType,?Comments) : Factor =
+        Factor.make Id Name FactorType Comments
 
     static member empty =
         Factor.create()
 
     /// Create a ISAJson Factor from ISATab string entries
-    static member fromString (name : string) (term:string) (accession:string) (source:string) =
-        let oa =
-            OntologyAnnotation.fromString term accession source
-        Factor.create(
-            Name = name,
-            FactorType = oa
-        )
+    static member fromString (name : string) (term:string) (source:string) (accession:string) =
+        let oa = OntologyAnnotation.fromString term source accession
+        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromStringWithNumber (name:string) (term:string) (accession:string) (source:string) =
+    static member fromStringWithNumber (name:string) (term:string) (source:string) (accession:string) =
         let oa =
-            OntologyAnnotation.fromStringWithNumber term accession source
-        Factor.create(
-            Name = name,
-            FactorType = oa
-        )
+            OntologyAnnotation.fromStringWithNumber term source accession
+        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Get ISATab string entries from an ISAJson Factor object
     static member toString (factor : Factor) =
@@ -84,7 +80,7 @@ type Value =
     | [<SerializationOrder(2)>] Float of float
     | [<SerializationOrder(3)>] Name of string
 
-    static member fromOptions (value : string Option) (termAccesssion: string Option) (termSource: string Option) =
+    static member fromOptions (value : string Option) (termSource: string Option) (termAccesssion: string Option) =
         match value, termSource, termAccesssion with
         | Some value, None, None ->
             try Value.Int (int value)
@@ -130,13 +126,16 @@ type FactorValue =
         Unit : OntologyAnnotation option
     }
 
-    static member create(?Id,?Category,?Value,?Unit) : FactorValue =
+    static member make id category value unit =
         {
-            ID          = Id
-            Category    = Category
-            Value       = Value
-            Unit        = Unit         
+            ID      = id
+            Category = category
+            Value = value
+            Unit = unit         
         }
+
+    static member create(?Id,?Category,?Value,?Unit) : FactorValue =
+        FactorValue.make Id Category Value Unit
 
     static member empty =
         FactorValue.create()

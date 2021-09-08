@@ -110,7 +110,7 @@ module Study =
                         loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
 
                     | Remark k, _  -> 
-                        loop matrix (Remark.create lineNumber k :: remarks) (lineNumber + 1)
+                        loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                     | Some k, Some v when List.contains k StudyInfo.Labels -> 
                         loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
@@ -128,7 +128,7 @@ module Study =
             |> SparseMatrix.ToRows
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays protocols contacts =
-        Study.create 
+        Study.make 
             None 
             (Option.fromValueWithDefault "" studyInfo.FileName)
             (Option.fromValueWithDefault "" studyInfo.Identifier)
