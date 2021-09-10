@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="DAG.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Cyjs.NET" Version="0.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.1" />
+  </ItemGroup>
+
+</Project>
