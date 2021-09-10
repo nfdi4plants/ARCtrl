@@ -1,6 +1,5 @@
 ﻿namespace ISADotNet.XLSX.AssayFile
 
-open FSharpSpreadsheetML
 open ISADotNet
 open ISADotNet.XLSX
 open System.Text.RegularExpressions
