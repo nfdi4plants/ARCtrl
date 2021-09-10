@@ -48,7 +48,9 @@ module AssayCommonAPI =
             ||> List.map2 (fun inp out ->
                 let inpCharacteristics = API.ProcessInput.tryGetCharacteristics inp |> Option.defaultValue []
                 let outCharacteristics = API.ProcessOutput.tryGetCharacteristics out |> Option.defaultValue []
-                let characteristics = Set.intersect (set inpCharacteristics) (set outCharacteristics) |> Set.toList
+                let characteristics = 
+                    let s = Set.intersect (set inpCharacteristics) (set outCharacteristics)
+                    inpCharacteristics |> List.filter (s.Contains)
                 let factors = API.ProcessOutput.tryGetFactorValues out |> Option.defaultValue []
 
                 let inputName = inp.GetName
