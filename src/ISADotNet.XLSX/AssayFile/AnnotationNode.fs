@@ -14,9 +14,6 @@ module AnnotationNode =
     
     type NodeHeader = ColumnHeader seq
 
-    [<Literal>]
-    let OboPurlURL = @"http://purl.obolibrary.org/obo/"
-
     /// Splits the headers of an annotation table into nodes
     ///
     /// The distinction between columns and nodes is made, as some columns are just used to give additional information for other columns. These columns are grouped together as one node
@@ -93,17 +90,6 @@ module AnnotationNode =
         let category = 
             // Merge "Term Source REF" (TSR) and "Term Accession Number" (TAN) from different OntologyAnnotations
             mergeOntology valueHeader.Term category1 |> mergeOntology category2
-            // Adapt Term Accession Number to real URI with static obo-purl url and combination of tsr and tan.
-            |> Option.map (fun oa -> 
-                { oa with
-                    TermAccessionNumber = 
-                        oa.TermAccessionNumber 
-                        |> Option.map (fun tan -> 
-                            let tsr = Option.defaultValue "" oa.TermSourceREF
-                            $"{OboPurlURL}{tsr}_{tan}"
-                        )
-                }
-            )
          
         let valueGetter = 
             fun matrix i ->
