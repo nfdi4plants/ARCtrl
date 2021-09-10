@@ -1,3 +1,9 @@
+### 0.3.3+2da8c3a (Released 2021-9-10)
+* Additions:
+    * latest commit #2da8c3a
+* Bugfixes:
+    * [[#2da8c3a](https://github.com/nfdi4plants/ISADotNet/commit/2da8c3a2e73aa110b1696d41932c32dc80c91967)] fix prerelease targets
+
 ### 0.3.2+4233b78 (Released 2021-9-9)
 * Additions:
     * latest commit #4233b78
