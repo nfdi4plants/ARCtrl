@@ -54,10 +54,9 @@ let testColumnHeaderFunctions =
             let testComment = Comment.fromString "Number" "5"
             let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
 
-
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
-            Expect.equal header testHeader "Dit not parse Name correctly"
+            Expect.equal header testHeader "Did not parse Name correctly"
         )
         testCase "AccessionWithNumber" (fun () ->
 
@@ -66,7 +65,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "2"
-            let testOntology = OntologyAnnotation.make None None (Some "MS") (Some (URI.fromString "1000031")) (Some [testComment])
+            let testOntology = OntologyAnnotation.make None None (Some "MS") (Some (URI.fromString "http://purl.obolibrary.org/obo/MS_1000031")) (Some [testComment])
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
@@ -140,7 +139,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome characteristic "CharacteristGetter was returned but not characteristic was returned"
 
-            let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO"  "0002637"
+            let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO"  "http://purl.obolibrary.org/obo/TO_0002637"
 
             Expect.equal characteristic.Value expectedCharacteristic "Retrieved Characteristic is wrong"
 
@@ -174,7 +173,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome factor "FactorGetter was returned but no factor was returned"
 
-            let expectedFactor = Factor.fromString "time" "time" "PATO" "0000165"
+            let expectedFactor = Factor.fromString "time" "time" "PATO" "http://purl.obolibrary.org/obo/PATO_0000165"
 
             Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
             
@@ -208,7 +207,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "0000005" 
+            let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "http://purl.obolibrary.org/obo/UO_0000005" 
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
 
@@ -236,7 +235,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "Parameter has no TermSourceRef"
 
-            let expectedParameter = ProtocolParameter.fromString "measurement device" "OBI" "0000832"
+            let expectedParameter = ProtocolParameter.fromString "measurement device" "OBI" "http://purl.obolibrary.org/obo/OBI_0000832"
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
@@ -260,7 +259,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "heating block" "OBI" "0400108"
+            let expectedParameter = ProtocolParameter.fromString "heating block" "OBI" "http://purl.obolibrary.org/obo/OBI_0400108"
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
@@ -297,17 +296,17 @@ let testProcessGetter =
     let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
 
     let characteristicHeaders = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
-    let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO" "0002637"
+    let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO" "http://purl.obolibrary.org/obo/TO_0002637"
     let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "UO" "http://purl.obolibrary.org/obo/UO_0000081" |> Some
     let expectedCharacteristicValue = MaterialAttributeValue.make None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
 
     let factorHeaders = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
-    let expectedFactor = Factor.fromString "time" "time" "PATO" "0000165"
+    let expectedFactor = Factor.fromString "time" "time" "PATO" "http://purl.obolibrary.org/obo/PATO_0000165"
     let expectedFactorUnit = OntologyAnnotation.fromString "hour" "UO"  "http://purl.obolibrary.org/obo/UO_0000032"|> Some    
     let expectedFactorValue = FactorValue.make None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
 
     let parameterHeaders = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
-    let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "0000005"
+    let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "http://purl.obolibrary.org/obo/UO_0000005"
     let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "UO" "http://purl.obolibrary.org/obo/UO_0000027"  |> Some    
     let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
 
@@ -628,20 +627,20 @@ let testAssayFileReader =
         
     let fileName = @"GreatAssay\assay.isa.xlsx"
 
-    let temperatureUnit = ProtocolParameter.fromString "temperature unit" "UO"  "0000005"
+    let temperatureUnit = ProtocolParameter.fromString "temperature unit" "UO"  "http://purl.obolibrary.org/obo/UO_0000005"
 
     let temperature = ProtocolParameter.fromString "temperature" "" ""
 
-    let peptidase = ProtocolParameter.fromString "enzyme unit" "UO" "0000181"
+    let peptidase = ProtocolParameter.fromString "enzyme unit" "UO" "http://purl.obolibrary.org/obo/UO_0000181"
 
-    let time1 = ProtocolParameter.fromString "time unit" "UO" "0000003"
+    let time1 = ProtocolParameter.fromString "time unit" "UO" "http://purl.obolibrary.org/obo/UO_0000003"
 
     let time2Comment = Comment.fromString "Number" "2"  
-    let time2Ontology = OntologyAnnotation.make None (Some (AnnotationValue.Text "time unit")) (Some "UO") (Some "0000003") (Some [time2Comment])
+    let time2Ontology = OntologyAnnotation.make None (Some (AnnotationValue.Text "time unit")) (Some "UO") (Some "http://purl.obolibrary.org/obo/UO_0000003") (Some [time2Comment])
     let time2 = Factor.make None (Some "time unit") (Some time2Ontology) None
 
 
-    let leafSize = MaterialAttribute.fromString "leaf size" "TO" "0002637"
+    let leafSize = MaterialAttribute.fromString "leaf size" "TO" "http://purl.obolibrary.org/obo/TO_0002637"
 
 
     testList "AssayFileReaderTests" [
