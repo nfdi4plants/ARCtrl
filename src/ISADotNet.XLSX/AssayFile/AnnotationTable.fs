@@ -6,7 +6,6 @@ open ISADotNet
 /// Functions for parsing an annotation table to the described processes
 module AnnotationTable = 
 
-
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
     let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
     
@@ -162,7 +161,6 @@ module AnnotationTable =
     let sourceOfSample (s:Sample) =
         Source.make s.ID s.Name s.Characteristics
 
-
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
     /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
@@ -208,8 +206,8 @@ module AnnotationTable =
         processes
         |> Seq.map (fun p -> 
            {p with
-                    Inputs = p.Inputs |> Option.map (List.map updateInput)
-                    Outputs = p.Outputs |> Option.map (List.map updateOutput)
+                Inputs = p.Inputs |> Option.map (List.map updateInput)
+                Outputs = p.Outputs |> Option.map (List.map updateOutput)
            }
         )
 

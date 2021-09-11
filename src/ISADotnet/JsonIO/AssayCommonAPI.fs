@@ -93,7 +93,15 @@ module AssayCommonAPI =
 
         static member fromAssay (assay : Assay) = 
             assay.ProcessSequence |> Option.defaultValue []
-            |> List.groupBy (fun x -> x.Name.Value.Split '_' |> Array.item 0)
+            |> List.groupBy (fun x -> 
+                if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                    x.ExecutesProtocol.Value.Name.Value 
+                else
+                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
+                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
+                    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
+                    x.Name.Value.Remove lastUnderScoreIndex
+            )
             |> List.map (fun (name,processes) -> RowWiseSheet.fromProcesses name processes)
             |> RowWiseAssay.create (*(assay.FileName |> Option.defaultValue "")*)
 
@@ -108,8 +116,6 @@ module AssayCommonAPI =
         static member fromFile (path : string) = 
             File.ReadAllText path 
             |> RowWiseAssay.fromString
-
-
 
     type ParameterColumn = 
         {

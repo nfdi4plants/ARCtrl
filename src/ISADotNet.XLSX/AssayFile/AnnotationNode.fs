@@ -87,13 +87,16 @@ module AnnotationNode =
                     | _ -> None 
             | None -> None, fun _ _ -> None
     
-        let category = mergeOntology valueHeader.Term category1 |> mergeOntology category2 
+        let category = 
+            // Merge "Term Source REF" (TSR) and "Term Accession Number" (TAN) from different OntologyAnnotations
+            mergeOntology valueHeader.Term category1 |> mergeOntology category2
          
         let valueGetter = 
             fun matrix i ->
                 let value = 
                     match Dictionary.tryGetValue (valueHeader.HeaderString,i) matrix with
                     | Some "user-specific" -> None
+                    // Trim() should remove any accidental whitespaces at the beginning or end of a term
                     | Some v -> Some v
                     | _ -> None 
 

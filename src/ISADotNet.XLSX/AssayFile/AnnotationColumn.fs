@@ -1,12 +1,14 @@
 ﻿namespace ISADotNet.XLSX.AssayFile
 
-open FSharpSpreadsheetML
 open ISADotNet
 open ISADotNet.XLSX
 open System.Text.RegularExpressions
 
 /// Functions for parsing single column headers of an annotation table
 module AnnotationColumn =
+
+    [<Literal>]
+    let OboPurlURL = @"http://purl.obolibrary.org/obo/"
 
     /// Typed depiction of a Swate Header: Kind [TermName] (#Number, #tOntology)
     type ColumnHeader =
@@ -56,7 +58,11 @@ module AnnotationColumn =
                 let ontology = 
                     if ontologySourceRegex.Success then 
                         ontologySourceRegex.Value.Split ':'
-                        |> fun o -> OntologyAnnotation.fromString ""  o.[0] o.[1] 
+                        |> fun o -> 
+                            let tsr = o.[0]
+                            let tanNumberOnly = o.[1] 
+                            let tan = $"{OboPurlURL}{tsr}_{tanNumberOnly}"
+                            OntologyAnnotation.fromString "" tsr tan
                         |> fun ontology -> {ontology with Comments = numberComment}
                         |> Some
                     else None
