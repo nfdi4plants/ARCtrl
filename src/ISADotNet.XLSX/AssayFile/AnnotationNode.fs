@@ -97,7 +97,7 @@ module AnnotationNode =
                     match Dictionary.tryGetValue (valueHeader.HeaderString,i) matrix with
                     | Some "user-specific" -> None
                     // Trim() should remove any accidental whitespaces at the beginning or end of a term
-                    | Some v -> Some (v.Trim())
+                    | Some v -> Some v
                     | _ -> None 
 
                 // Set termAcession and termSource of the value to None if they are the same as the header. 
