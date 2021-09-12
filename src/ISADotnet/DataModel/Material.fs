@@ -125,7 +125,7 @@ type MaterialAttributeValue =
             this.Unit |> Option.map (fun oa -> oa.GetName)
         let v = this.GetValue
         match unit with
-        | Some u    -> $"{v} {u}"
+        | Some u    -> sprintf "%s %s" v u
         | None      -> v
 
     interface IISAPrintable with
