@@ -55,7 +55,7 @@ module Study =
   
         static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel;fileNameLabel]
     
-        static member FromSparseMatrix (matrix : SparseMatrix) =
+        static member FromSparseTable (matrix : SparseTable) =
         
             let i = 0
 
@@ -74,9 +74,9 @@ module Study =
                 comments
 
 
-        static member ToSparseMatrix (study: Study) =
+        static member ToSparseTable (study: Study) =
             let i = 0
-            let matrix = SparseMatrix.Create (keys = StudyInfo.Labels,length = 1)
+            let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 1)
             let mutable commentKeys = []
 
             do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" study.Identifier))
@@ -100,32 +100,32 @@ module Study =
 
       
         static member ReadStudyInfo lineNumber (en:IEnumerator<Row>) =
-            let rec loop (matrix : SparseMatrix) remarks lineNumber = 
+            let rec loop (matrix : SparseTable) remarks lineNumber = 
 
                 if en.MoveNext() then  
                     let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
                     match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
                     | Comment k, Some v -> 
-                        loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
+                        loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
 
                     | Remark k, _  -> 
                         loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                     | Some k, Some v when List.contains k StudyInfo.Labels -> 
-                        loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
+                        loop (SparseTable.AddRow k v matrix) remarks (lineNumber + 1)
 
-                    | Some k, _ -> Some k,lineNumber,remarks,StudyInfo.FromSparseMatrix matrix
-                    | _ -> None, lineNumber,remarks,StudyInfo.FromSparseMatrix matrix
+                    | Some k, _ -> Some k,lineNumber,remarks,StudyInfo.FromSparseTable matrix
+                    | _ -> None, lineNumber,remarks,StudyInfo.FromSparseTable matrix
                 else
-                    None,lineNumber,remarks,StudyInfo.FromSparseMatrix matrix
-            loop (SparseMatrix.Create()) [] lineNumber
+                    None,lineNumber,remarks,StudyInfo.FromSparseTable matrix
+            loop (SparseTable.Create()) [] lineNumber
 
     
         static member WriteStudyInfo (study : Study) =  
             study
-            |> StudyInfo.ToSparseMatrix
-            |> SparseMatrix.ToRows
+            |> StudyInfo.ToSparseTable
+            |> SparseTable.ToRows
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays protocols contacts =
         Study.make 
@@ -167,7 +167,7 @@ module Study =
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = assaysLabel -> 
-                let currentLine,lineNumber,newRemarks,assays = Assays.readAssays (Some assaysLabelPrefix) (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,assays = Assays.fromRows (Some assaysLabelPrefix) (lineNumber + 1) en       
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = protocolsLabel -> 
@@ -199,7 +199,7 @@ module Study =
             yield! Factors.writeFactors (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
 
             yield  Row.ofValues None 0u [assaysLabel]
-            yield! Assays.writeAssays (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
+            yield! Assays.toRows (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
 
             yield  Row.ofValues None 0u [protocolsLabel]
             yield! Protocols.writeProtocols (Some protocolsLabelPrefix) (Option.defaultValue [] study.Protocols)

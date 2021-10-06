@@ -47,7 +47,7 @@ module Investigation =
   
         static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel]
     
-        static member FromSparseMatrix (matrix : SparseMatrix) =
+        static member FromSparseTable (matrix : SparseTable) =
         
             let i = 0
 
@@ -65,9 +65,9 @@ module Investigation =
                 comments
 
 
-        static member ToSparseMatrix (investigation: Investigation) =
+        static member ToSparseTable (investigation: Investigation) =
             let i = 0
-            let matrix = SparseMatrix.Create (keys = InvestigationInfo.Labels,length=1)
+            let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=1)
             let mutable commentKeys = []
 
             do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" investigation.Identifier))
@@ -90,32 +90,32 @@ module Investigation =
 
       
         static member ReadInvestigationInfo lineNumber (en:IEnumerator<Row>) =
-            let rec loop (matrix : SparseMatrix) remarks lineNumber = 
+            let rec loop (matrix : SparseTable) remarks lineNumber = 
 
                 if en.MoveNext() then  
                     let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
                     match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
                     | Comment k, Some v -> 
-                        loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
+                        loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
 
                     | Remark k, _  -> 
                         loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
                     | Some k, Some v when List.contains k InvestigationInfo.Labels -> 
-                        loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
+                        loop (SparseTable.AddRow k v matrix) remarks (lineNumber + 1)
 
-                    | Some k, _ -> Some k,lineNumber,remarks,InvestigationInfo.FromSparseMatrix matrix
-                    | _ -> None, lineNumber,remarks,InvestigationInfo.FromSparseMatrix matrix
+                    | Some k, _ -> Some k,lineNumber,remarks,InvestigationInfo.FromSparseTable matrix
+                    | _ -> None, lineNumber,remarks,InvestigationInfo.FromSparseTable matrix
                 else
-                    None,lineNumber,remarks,InvestigationInfo.FromSparseMatrix matrix
-            loop (SparseMatrix.Create()) [] lineNumber
+                    None,lineNumber,remarks,InvestigationInfo.FromSparseTable matrix
+            loop (SparseTable.Create()) [] lineNumber
 
     
         static member WriteInvestigationInfo (investigation : Investigation) =  
             investigation
-            |> InvestigationInfo.ToSparseMatrix
-            |> SparseMatrix.ToRows
+            |> InvestigationInfo.ToSparseTable
+            |> SparseTable.ToRows
  
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
         Investigation.make 

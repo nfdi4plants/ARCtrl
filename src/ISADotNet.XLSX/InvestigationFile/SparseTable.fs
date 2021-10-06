@@ -1,0 +1,113 @@
+namespace ISADotNet.XLSX
+
+open ISADotNet
+open System.Collections.Generic
+open FSharpSpreadsheetML
+open DocumentFormat.OpenXml.Spreadsheet
+
+
+type SparseTable = 
+
+    {
+        Matrix : Dictionary<string*int,string>
+        Keys : string list
+        CommentKeys : string list
+        Length : int
+    }
+
+    member this.TryGetValueDefault(defaultValue,key) =
+        if this.Matrix.ContainsKey(key) then
+            this.Matrix.Item(key)
+        else
+            defaultValue
+
+    static member Create(?matrix,?keys,?commentKeys,?length) = 
+        {
+            Matrix= Option.defaultValue (Dictionary()) matrix
+            Keys = Option.defaultValue [] keys
+            CommentKeys = Option.defaultValue [] commentKeys
+            Length = Option.defaultValue 0 length
+        }
+
+    static member AddRow key (values:seq<int*string>) (matrix : SparseTable) =
+        let values = 
+            values 
+            |> Seq.map (fun (i,v) -> 
+                let i = i-1
+                matrix.Matrix.Add((key,i),v)
+                i,v
+            )
+            |> Seq.toArray
+
+        let length = 
+            if Seq.isEmpty values then 0
+            else Seq.maxBy fst values |> fst |> (+) 1
+        
+        {matrix with 
+            Keys = List.append matrix.Keys [key]
+            Length = if length > matrix.Length then length else matrix.Length
+        }
+
+    static member AddComment key (values:seq<int*string>) (matrix : SparseTable) =
+        let values = 
+            values 
+            |> Seq.map (fun (i,v) -> 
+                let i = i-1
+                matrix.Matrix.Add((key,i),v)
+                i,v
+            )
+            |> Seq.toArray
+        let length = 
+            if Seq.isEmpty values then 0
+            else Seq.maxBy fst values |> fst |> (+) 1
+        
+        {matrix with 
+            CommentKeys = List.append matrix.CommentKeys [key]
+            Length = if length > matrix.Length then length else matrix.Length
+        }
+
+    #if !FABLE
+   
+    static member FromRows(en:IEnumerator<SparseRow>,labels,lineNumber,?prefix) =
+        let prefix = match prefix with | Some p -> p + " " | None -> ""
+        let rec loop (matrix : SparseTable) remarks lineNumber = 
+
+            if en.MoveNext() then  
+                let row = en.Current |> Seq.map (fun (i,v) -> int i - 1,v)
+                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
+
+                | Comment.Comment k, Some v -> 
+                    loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
+
+                | Remark.Remark k, _  -> 
+                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
+
+                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
+                    let label = List.find (fun label -> k = prefix + label) labels
+                    loop (SparseTable.AddRow label v matrix) remarks (lineNumber + 1)
+
+                | Some k, _ -> Some k,lineNumber,remarks, matrix
+                | _ -> None, lineNumber,remarks, matrix
+            else
+                None,lineNumber,remarks, matrix
+        loop (SparseTable.Create()) [] lineNumber
+
+    static member ToSparseRows(matrix,?prefix) : SparseRow seq =
+        let prefix = match prefix with | Some p -> p + " " | None -> ""
+        seq {
+            for key in matrix.Keys do
+                (SparseRow.fromValues (prefix + key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+            for key in matrix.CommentKeys do
+                (SparseRow.fromValues (Comment.wrapCommentKey key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+        }
+
+    #endif
+
+    static member FromRows(en:string [],labels,lineNumber,?prefix) :  string option * int * Remark list *  SparseTable =
+
+        raise (System.NotImplementedException())
+
+    static member ToRows(matrix : SparseTable,?prefix) : string [] =
+
+        raise (System.NotImplementedException())
+        
