@@ -32,8 +32,10 @@ module ValueOrder =
         |> Option.bind tryGetParameterIndex
 
     let tryGetFactorIndex (factor : Factor) =
-        factor.Comments 
-        |> Option.bind tryGetIndex
+        factor.FactorType 
+        |> Option.bind (fun oa -> 
+            oa.Comments |> Option.bind tryGetIndex
+        )
       
     let tryGetFactorValueIndex (factorValue : FactorValue) =
         factorValue.Category 
@@ -111,7 +113,7 @@ module AnnotationNode =
         )
     
     /// If the headers of a node depict a value header (parameter,factor,characteristic), returns the category and a function for parsing the values of the matrix to the values
-    let tryGetValueGetter hasUnit (valueHeader : ColumnHeader) (headers:string seq) =
+    let tryGetValueGetter (columnOrder : int) hasUnit (valueHeader : ColumnHeader) (headers:string seq) =
         let category1, termAccessionGetter =
             match Seq.tryPick (tryParseTermAccessionNumberHeader valueHeader) headers with
             | Some h ->
@@ -133,10 +135,16 @@ module AnnotationNode =
                     | _ -> None 
             | None -> None, fun _ _ -> None
     
-        let category = 
+        let category =           
             // Merge "Term Source REF" (TSR) and "Term Accession Number" (TAN) from different OntologyAnnotations
             mergeOntology valueHeader.Term category1 |> mergeOntology category2
-         
+            |> Option.map (fun oa -> 
+                oa.Comments |> Option.defaultValue []
+                |> API.CommentList.add (ValueOrder.createOrderComment columnOrder)
+                |> API.OntologyAnnotation.setComments oa
+            )
+
+
         let valueGetter = 
             fun matrix i ->
                 let value = 
@@ -171,7 +179,7 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
                   
-            let category,valueGetter = tryGetValueGetter unitGetter.IsSome h headers                              
+            let category,valueGetter = tryGetValueGetter columnOrder unitGetter.IsSome h headers                              
                 
             let parameter = category |> Option.map (Some >> ProtocolParameter.make None)
 
@@ -189,11 +197,13 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
             
-            let category,valueGetter = tryGetValueGetter unitGetter.IsSome h headers    
+            let category,valueGetter = tryGetValueGetter columnOrder unitGetter.IsSome h headers    
                     
             let factor = 
                 category
-                |> Option.map (fun oa ->  Factor.make None (oa.Name |> Option.map AnnotationValue.toString) (Some oa) None)
+                |> Option.map (fun oa ->  
+                    Factor.make None (oa.Name |> Option.map AnnotationValue.toString) (Some oa) (Some [ValueOrder.createOrderComment columnOrder])
+                )
             
             factor,
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
@@ -210,7 +220,7 @@ module AnnotationNode =
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
                   
-            let category,valueGetter = tryGetValueGetter unitGetter.IsSome h headers    
+            let category,valueGetter = tryGetValueGetter columnOrder unitGetter.IsSome h headers    
                     
             let characteristic = category |> Option.map (Some >> MaterialAttribute.make None)            
             

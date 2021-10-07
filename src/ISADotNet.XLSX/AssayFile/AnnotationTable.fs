@@ -9,16 +9,21 @@ module AnnotationTable =
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
     let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
     
+        let valueNodes =
+            nodes
+            |> Seq.filter (AnnotationNode.isValueNode)
+            |> Seq.indexed
+
         let characteristics,characteristicValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetCharacteristicGetter
+            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetCharacteristicGetter i n)
             |> Seq.fold (fun (cl,cvl) (c,cv) -> c.Value :: cl, cv :: cvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let factors,factorValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetFactorGetter
+            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetFactorGetter i n)
             |> Seq.fold (fun (fl,fvl) (f,fv) -> f.Value :: fl, fv :: fvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let parameters,parameterValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetParameterGetter
+            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetParameterGetter i n)
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     

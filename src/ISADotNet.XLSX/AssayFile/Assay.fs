@@ -20,6 +20,15 @@ module AssayFile =
         |> MetaData.init metadataSheetName 
         |> Spreadsheet.close
 
+    /// Returns processes and other additional information from a sparseMatrix represntation of an assay.xlsx sheet
+    ///
+    /// processNameRoot is the sheetName (or the protocol name you want to use)
+    ///
+    /// matrixHeaders are the column headers of the table
+    ///
+    /// matrixLength is the number of rows in the sheet table
+    ///
+    /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (matrixLength:int) (sparseMatrix : Dictionary<string*int,string>) = 
         let characteristic,factors,protocol,processGetter = 
             AnnotationNode.splitIntoNodes matrixHeaders
