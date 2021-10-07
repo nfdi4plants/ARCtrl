@@ -4,6 +4,52 @@ open ISADotNet
 open ISADotNet.XLSX
 open AnnotationColumn
 
+module ValueOrder = 
+
+    let private tryInt (str:string) =
+        match System.Int32.TryParse str with
+        | true,int -> Some int
+        | _ -> None
+
+    let orderName = "ValueIndex"
+
+    let createOrderComment (index : int) =
+        Comment.fromString orderName (string index)
+
+    let tryGetIndex (comments : Comment list) =
+        comments 
+        |> API.CommentList.tryItem orderName 
+        |> Option.bind tryInt
+
+    let tryGetParameterIndex (param : ProtocolParameter) =
+        param.ParameterName 
+        |> Option.bind (fun oa -> 
+            oa.Comments |> Option.bind tryGetIndex
+        )
+
+    let tryGetParameterValueIndex (paramValue : ProcessParameterValue) =
+        paramValue.Category 
+        |> Option.bind tryGetParameterIndex
+
+    let tryGetFactorIndex (factor : Factor) =
+        factor.Comments 
+        |> Option.bind tryGetIndex
+      
+    let tryGetFactorValueIndex (factorValue : FactorValue) =
+        factorValue.Category 
+        |> Option.bind tryGetFactorIndex
+
+    let tryGetCharacteristicIndex (characteristic : MaterialAttribute) =
+        characteristic.CharacteristicType 
+        |> Option.bind (fun oa -> 
+            oa.Comments |> Option.bind tryGetIndex
+        )
+      
+    let tryGetCharacteristicValueIndex (characteristicValue : MaterialAttributeValue) =
+        characteristicValue.Category 
+        |> Option.bind tryGetCharacteristicIndex
+
+
 /// Functions for parsing nodes and node values of an annotation table
 ///
 /// The distinction between columns and nodes is made, as some columns are just used to give additional information for other columns. These columns are grouped together as one node
@@ -120,7 +166,7 @@ module AnnotationNode =
         category,valueGetter
 
     /// If the headers of a node depict a parameter, returns the parameter and a function for parsing the values of the matrix to the values of this parameter
-    let tryGetParameterGetter (headers:string seq) =
+    let tryGetParameterGetter (columnOrder : int) (headers:string seq) =
         Seq.tryPick tryParseParameterHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
@@ -138,7 +184,7 @@ module AnnotationNode =
         )
     
     /// If the headers of a node depict a factor, returns the factor and a function for parsing the values of the matrix to the values of this factor
-    let tryGetFactorGetter (headers:string seq) =
+    let tryGetFactorGetter (columnOrder : int) (headers:string seq) =
         Seq.tryPick tryParseFactorHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
@@ -159,7 +205,7 @@ module AnnotationNode =
         )
 
     /// If the headers of a node depict a characteristic, returns the characteristic and a function for parsing the values of the matrix to the values of this characteristic
-    let tryGetCharacteristicGetter (headers:string seq) =
+    let tryGetCharacteristicGetter (columnOrder : int) (headers:string seq) =
         Seq.tryPick tryParseCharacteristicsHeader headers
         |> Option.map (fun h -> 
             let unitGetter = tryGetUnitGetterFunction headers
@@ -213,3 +259,11 @@ module AnnotationNode =
             fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
                 Dictionary.tryGetValue (h.HeaderString,i) matrix
         )
+    
+    /// Returns true, if the headers contain a value node: characteristic, parameter or factor
+    let isValueNode (headers:string seq) =
+        (Seq.exists (tryParseFactorHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseCharacteristicsHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseParameterHeader >> Option.isSome) headers)
