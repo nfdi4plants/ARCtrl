@@ -6,6 +6,27 @@ open FSharpSpreadsheetML
 open DocumentFormat.OpenXml.Spreadsheet
 
 
+type SparseRow = (int * string) seq
+
+module SparseRow = 
+
+    let fromValues (v : string seq) : SparseRow = Seq.indexed v 
+    
+    let getValues (i : SparseRow) = i |> Seq.map snd
+    
+    let fromAllValues (v : string option seq) : SparseRow = 
+        Seq.indexed v 
+        |> Seq.choose (fun (i,o) -> Option.map (fun v -> i,v) o)
+    
+    let getAllValues (i : SparseRow) = 
+        let m = i |> Map.ofSeq
+        let max = i |> Seq.maxBy fst |> fst
+        Seq.init (max + 1) (fun i -> Map.tryFind i m)
+
+    let tryGetValueAt i (vs : SparseRow) =
+        vs 
+        |> Seq.tryPick (fun (index,v) -> if index = i then Some v else None)
+
 type SparseTable = 
 
     {
@@ -66,8 +87,6 @@ type SparseTable =
             Length = if length > matrix.Length then length else matrix.Length
         }
 
-    #if !FABLE
-   
     static member FromRows(en:IEnumerator<SparseRow>,labels,lineNumber,?prefix) =
         let prefix = match prefix with | Some p -> p + " " | None -> ""
         let rec loop (matrix : SparseTable) remarks lineNumber = 
@@ -92,7 +111,7 @@ type SparseTable =
                 None,lineNumber,remarks, matrix
         loop (SparseTable.Create()) [] lineNumber
 
-    static member ToSparseRows(matrix,?prefix) : SparseRow seq =
+    static member ToRows(matrix,?prefix) : SparseRow seq =
         let prefix = match prefix with | Some p -> p + " " | None -> ""
         seq {
             for key in matrix.Keys do
@@ -101,13 +120,3 @@ type SparseTable =
                 (SparseRow.fromValues (Comment.wrapCommentKey key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
         }
 
-    #endif
-
-    static member FromRows(en:string [],labels,lineNumber,?prefix) :  string option * int * Remark list *  SparseTable =
-
-        raise (System.NotImplementedException())
-
-    static member ToRows(matrix : SparseTable,?prefix) : string [] =
-
-        raise (System.NotImplementedException())
-        

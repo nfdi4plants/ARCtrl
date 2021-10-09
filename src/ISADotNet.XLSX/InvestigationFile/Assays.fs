@@ -91,7 +91,7 @@ module Assays =
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
-    let fromRows (prefix : string option) lineNumber (rows) =
+    let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
         match prefix with
         | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
         | None -> SparseTable.FromRows(rows,labels,lineNumber)

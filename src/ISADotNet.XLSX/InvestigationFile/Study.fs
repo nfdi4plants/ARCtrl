@@ -98,31 +98,11 @@ module Study =
 
             {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
-      
-        static member ReadStudyInfo lineNumber (en:IEnumerator<Row>) =
-            let rec loop (matrix : SparseTable) remarks lineNumber = 
-
-                if en.MoveNext() then  
-                    let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                    match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                    | Comment k, Some v -> 
-                        loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
-
-                    | Remark k, _  -> 
-                        loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                    | Some k, Some v when List.contains k StudyInfo.Labels -> 
-                        loop (SparseTable.AddRow k v matrix) remarks (lineNumber + 1)
-
-                    | Some k, _ -> Some k,lineNumber,remarks,StudyInfo.FromSparseTable matrix
-                    | _ -> None, lineNumber,remarks,StudyInfo.FromSparseTable matrix
-                else
-                    None,lineNumber,remarks,StudyInfo.FromSparseTable matrix
-            loop (SparseTable.Create()) [] lineNumber
-
+        static member fromRows lineNumber (rows : IEnumerator<SparseRow>) =
+            SparseTable.FromRows(rows,StudyInfo.Labels,lineNumber)
+            |> fun (s,ln,rs,sm) -> (s,ln,rs, StudyInfo.FromSparseTable sm)
     
-        static member WriteStudyInfo (study : Study) =  
+        static member toRows (study : Study) =  
             study
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
@@ -148,22 +128,22 @@ module Study =
             None
             (Option.fromValueWithDefault [] studyInfo.Comments)
 
-    let readStudy lineNumber (en:IEnumerator<Row>) = 
+    let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
 
         let rec loop lastLine (studyInfo : StudyInfo) designDescriptors publications factors assays protocols contacts remarks lineNumber =
            
             match lastLine with
 
             | Some k when k = designDescriptorsLabel -> 
-                let currentLine,lineNumber,newRemarks,designDescriptors = DesignDescriptors.readDesigns (Some designDescriptorsLabelPrefix) (lineNumber + 1) en         
+                let currentLine,lineNumber,newRemarks,designDescriptors = DesignDescriptors.fromRows (Some designDescriptorsLabelPrefix) (lineNumber + 1) en         
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = publicationsLabel -> 
-                let currentLine,lineNumber,newRemarks,publications = Publications.readPublications (Some publicationsLabelPrefix) (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,publications = Publications.fromRows (Some publicationsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = factorsLabel -> 
-                let currentLine,lineNumber,newRemarks,factors = Factors.readFactors (Some factorsLabelPrefix) (lineNumber + 1) en       
+                let currentLine,lineNumber,newRemarks,factors = Factors.fromRows (Some factorsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = assaysLabel -> 
@@ -171,39 +151,39 @@ module Study =
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = protocolsLabel -> 
-                let currentLine,lineNumber,newRemarks,protocols = Protocols.readProtocols (Some protocolsLabelPrefix) (lineNumber + 1) en  
+                let currentLine,lineNumber,newRemarks,protocols = Protocols.fromRows (Some protocolsLabelPrefix) (lineNumber + 1) en  
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | Some k when k = contactsLabel -> 
-                let currentLine,lineNumber,newRemarks,contacts = Contacts.readPersons (Some contactsLabelPrefix) (lineNumber + 1) en  
+                let currentLine,lineNumber,newRemarks,contacts = Contacts.fromRows (Some contactsLabelPrefix) (lineNumber + 1) en  
                 loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
 
             | k -> 
                 k,lineNumber,remarks, fromParts studyInfo designDescriptors publications factors assays protocols contacts
     
-        let currentLine,lineNumber,remarks,item = StudyInfo.ReadStudyInfo lineNumber en  
+        let currentLine,lineNumber,remarks,item = StudyInfo.fromRows lineNumber en  
         loop currentLine item [] [] [] [] [] [] remarks lineNumber
 
     
-    let writeStudy (study : Study) =
+    let toRows (study : Study) =
         seq {          
-            yield! StudyInfo.WriteStudyInfo study
+            yield! StudyInfo.toRows study
 
-            yield  Row.ofValues None 0u [designDescriptorsLabel]
-            yield! DesignDescriptors.writeDesigns (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
+            yield  SparseRow.fromValues [designDescriptorsLabel]
+            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
 
-            yield  Row.ofValues None 0u [publicationsLabel]
-            yield! Publications.writePublications (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
+            yield  SparseRow.fromValues[publicationsLabel]
+            yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
 
-            yield  Row.ofValues None 0u [factorsLabel]
-            yield! Factors.writeFactors (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
+            yield  SparseRow.fromValues[factorsLabel]
+            yield! Factors.toRows (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
 
-            yield  Row.ofValues None 0u [assaysLabel]
+            yield  SparseRow.fromValues[assaysLabel]
             yield! Assays.toRows (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
 
-            yield  Row.ofValues None 0u [protocolsLabel]
-            yield! Protocols.writeProtocols (Some protocolsLabelPrefix) (Option.defaultValue [] study.Protocols)
+            yield  SparseRow.fromValues[protocolsLabel]
+            yield! Protocols.toRows (Some protocolsLabelPrefix) (Option.defaultValue [] study.Protocols)
 
-            yield  Row.ofValues None 0u [contactsLabel]
-            yield! Contacts.writePersons (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
+            yield  SparseRow.fromValues[contactsLabel]
+            yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
         }

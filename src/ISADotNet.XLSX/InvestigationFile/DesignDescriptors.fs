@@ -63,33 +63,13 @@ module DesignDescriptors =
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
 
-    let readDesigns (prefix : string option) lineNumber (en:IEnumerator<Row>) =
-        let prefix = match prefix with | Some p ->  p + " " | None -> ""
-        let rec loop (matrix : SparseTable) remarks lineNumber = 
-
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
-                    let label = List.find (fun label -> k = prefix + label) labels
-                    loop (SparseTable.AddRow label v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseTable matrix
-                | _ -> None, lineNumber,remarks,fromSparseTable matrix
-            else
-                None,lineNumber,remarks,fromSparseTable matrix
-        loop (SparseTable.Create()) [] lineNumber
-
+    let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
+        match prefix with
+        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
+        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)  
     
-    
-    let writeDesigns (prefix : string option) (designs : OntologyAnnotation list) =
+    let toRows (prefix : string option) (designs : OntologyAnnotation list) =
         designs
         |> toSparseTable
         |> fun m -> 

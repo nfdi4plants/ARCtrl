@@ -65,30 +65,11 @@ module OntologySourceReference =
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
-    let readTermSources lineNumber (en:IEnumerator<Row>) =
-        let rec loop (matrix : SparseTable) remarks lineNumber = 
-
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.contains k labels -> 
-                    loop (SparseTable.AddRow k v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseTable matrix
-                | _ -> None, lineNumber,remarks,fromSparseTable matrix
-            else
-                None,lineNumber,remarks,fromSparseTable matrix
-        loop (SparseTable.Create()) [] lineNumber
-
+    let fromRows lineNumber (rows : IEnumerator<SparseRow>) =
+        SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
     
-    let writeTermSources (termSources : OntologySourceReference list) =
+    let toRows (termSources : OntologySourceReference list) =
         termSources
         |> toSparseTable
         |> fun m -> SparseTable.ToRows(m)
