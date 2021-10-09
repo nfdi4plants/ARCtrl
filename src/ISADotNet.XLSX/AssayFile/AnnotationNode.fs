@@ -4,6 +4,7 @@ open ISADotNet
 open ISADotNet.XLSX
 open AnnotationColumn
 
+
 module ValueOrder = 
 
     let private tryInt (str:string) =
@@ -51,6 +52,56 @@ module ValueOrder =
         characteristicValue.Category 
         |> Option.bind tryGetCharacteristicIndex
 
+[<AutoOpen>]
+module ValueOrderExtensions = 
+    
+    type Factor with
+        
+        /// Create a ISAJson Factor from ISATab string entries
+        static member fromStringWithValueOrder (name:string) (term:string) (source:string) (accession:string) valueIndex =
+            Factor.fromStringWithComments name term source accession [ValueOrder.createOrderComment valueIndex]
+
+        /// Create a ISAJson Factor from ISATab string entries
+        static member fromStringWithNumberValueOrder (name:string) (term:string) (source:string) (accession:string) valueIndex =
+            Factor.fromStringWithNumberAndComments name term source accession [ValueOrder.createOrderComment valueIndex]
+
+        member this.GetValueIndex() = ValueOrder.tryGetFactorIndex this |> Option.get
+
+    type FactorValue with
+
+        member this.GetValueIndex() = ValueOrder.tryGetFactorValueIndex this |> Option.get
+
+    type MaterialAttribute with
+    
+        /// Create a ISAJson characteristic from ISATab string entries
+        static member fromStringWithValueOrder (term:string) (source:string) (accession:string) valueIndex =
+            MaterialAttribute.fromStringWithComments term source accession [ValueOrder.createOrderComment valueIndex]
+
+        /// Create a ISAJson characteristic from ISATab string entries
+        static member fromStringWithNumberValueOrder (term:string) (source:string) (accession:string) valueIndex =
+            MaterialAttribute.fromStringWithNumberAndComments term source accession [ValueOrder.createOrderComment valueIndex]
+
+        member this.GetValueIndex() = ValueOrder.tryGetCharacteristicIndex this |> Option.get
+
+    type MaterialAttributeValue with
+    
+            member this.GetValueIndex() = ValueOrder.tryGetCharacteristicValueIndex this |> Option.get
+
+    type ProtocolParameter with
+    
+        /// Create a ISAJson parameter from ISATab string entries
+        static member fromStringWithValueOrder (term:string) (source:string) (accession:string) valueIndex =
+            ProtocolParameter.fromStringWithComments term source accession [ValueOrder.createOrderComment valueIndex]
+
+        /// Create a ISAJson parameter from ISATab string entries
+        static member fromStringWithNumberValueOrder (term:string) (source:string) (accession:string) valueIndex =
+            ProtocolParameter.fromStringWithNumberAndComments term source accession [ValueOrder.createOrderComment valueIndex]
+
+        member this.GetValueIndex() = ValueOrder.tryGetParameterIndex this |> Option.get
+
+    type ProcessParameterValue with
+    
+        member this.GetValueIndex() = ValueOrder.tryGetParameterValueIndex this |> Option.get
 
 /// Functions for parsing nodes and node values of an annotation table
 ///
@@ -202,7 +253,7 @@ module AnnotationNode =
             let factor = 
                 category
                 |> Option.map (fun oa ->  
-                    Factor.make None (oa.Name |> Option.map AnnotationValue.toString) (Some oa) (Some [ValueOrder.createOrderComment columnOrder])
+                    Factor.make None (oa.Name |> Option.map AnnotationValue.toString) (Some oa) None
                 )
             
             factor,
