@@ -118,7 +118,7 @@ module AnnotationTable =
         characteristics,
         factors,
         protocol,
-        fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+        fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
             Process.make 
                 None 
                 None 

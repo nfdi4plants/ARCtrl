@@ -14,11 +14,11 @@ module Process =
     /// matrixHeaders are the column headers of the table
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
-    let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<string*int,string>) = 
+    let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
         let len = 
             let mutable i = 0
             for kv in sparseMatrix do 
-                let j = kv.Key |> snd
+                let j = kv.Key |> fst
                 if j > i  then i <- j
             i + 1
         let characteristic,factors,protocol,processGetter = 
@@ -46,14 +46,14 @@ module Assay =
     /// matrixHeaders are the column headers of the table
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
-    let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<string*int,string>) = 
+    let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
         let characteristics,factors,protocols,processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
         factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
 
     /// Returns an assay from a sequence of sparseMatrix representations of assay.xlsx sheets
     ///
     /// See "fromSparseMatrix" function for parameter documentation
-    let fromSparseMatrices (sheets : (string*(string seq)*Dictionary<string*int,string>) seq) = 
+    let fromSparseMatrices (sheets : (string*(string seq)*Dictionary<int*string,string>) seq) = 
         let characteristics,factors,protocols,processes =
             sheets
             |> Seq.map (fun (name,matrixHeaders,matrix) -> Process.fromSparseMatrix name matrixHeaders matrix)
@@ -72,16 +72,20 @@ module Assay =
 
     /// Create a new ISADotNet.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
     let init metadataSheetName assayIdentifier path =
-        Spreadsheet.initWithSST assayIdentifier path
+        Spreadsheet.initWithSst assayIdentifier path
         |> MetaData.init metadataSheetName 
         |> Spreadsheet.close
 
-    /// Parses the assay file
+    /// Reads an assay from an xlsx spreadsheetdocument
+    ///
+    /// As factors and protocols are used for the investigation file, they are returned individually
+    ///
+    /// The persons from the metadata sheet are returned independently as they are not a part of the assay object
     let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) = 
         
         let sst = Spreadsheet.tryGetSharedStringTable doc
 
-        // Get the metadata from the metadata sheet
+        // Reading the "Investigation" metadata sheet. Here metadata 
         let assayMetaData,contacts = 
             Spreadsheet.tryGetSheetBySheetName "Investigation" doc
             |> Option.map (fun sheet -> 
@@ -93,7 +97,8 @@ module Assay =
                 |> fun (a,p) -> Option.defaultValue Assay.empty a, p
             )
             |> Option.defaultValue (Assay.empty,[])          
-           
+        
+        // All sheetnames in the spreadsheetDocument
         let sheetNames = 
             Spreadsheet.getWorkbookPart doc
             |> Workbook.get
@@ -108,6 +113,7 @@ module Assay =
                 | Some wsp ->
                     match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
                     | Some table -> 
+                        // Extract the sheetdata as a sparse matrix
                         let sheet = Worksheet.getSheetData wsp.Worksheet
                         let headers = Table.getColumnHeaders table
                         let m = Table.toSparseValueMatrix sst sheet table
@@ -115,12 +121,12 @@ module Assay =
                     | None -> Seq.empty
                 | None -> Seq.empty                
             )
-            |> fromSparseMatrices
+            |> fromSparseMatrices // Feed the sheets (represented as sparse matrices) into the assay parser function
             
         factors,
         protocols |> Seq.toList,
         contacts,
-        API.Update.UpdateByExisting.updateRecordType assayMetaData assay
+        API.Update.UpdateByExisting.updateRecordType assayMetaData assay // Merges the assay containing the assay meta data and the assay containing the processes retrieved from the sheets
 
     /// Parses the assay file
     let fromFile (path:string) = 

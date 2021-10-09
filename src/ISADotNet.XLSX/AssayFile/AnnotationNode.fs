@@ -135,12 +135,12 @@ module AnnotationNode =
         Seq.tryPick tryParseUnitHeader headers
         |> Option.map (fun h -> 
             let unitNameGetter matrix i = 
-                Dictionary.tryGetValue (h.HeaderString,i) matrix       
+                Dictionary.tryGetValue (i,h.HeaderString) matrix       
             let termAccessionGetter =
                 match Seq.tryPick (tryParseTermAccessionNumberHeader h) headers with
                 | Some h ->
                     fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
+                        match Dictionary.tryGetValue (i,h.HeaderString) matrix with
                         | Some "user-specific" -> None
                         | Some v -> Some v
                         | _ -> None 
@@ -149,12 +149,12 @@ module AnnotationNode =
                 match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
                 | Some h ->
                     fun matrix i -> 
-                        match Dictionary.tryGetValue (h.HeaderString,i) matrix with
+                        match Dictionary.tryGetValue (i,h.HeaderString) matrix with
                         | Some "user-specific" -> None
                         | Some v -> Some v
                         | _ -> None 
                 | None -> fun _ _ -> None
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
                 OntologyAnnotation.make 
                     None
                     (unitNameGetter matrix i |> Option.map AnnotationValue.fromString)
@@ -169,8 +169,8 @@ module AnnotationNode =
             match Seq.tryPick (tryParseTermAccessionNumberHeader valueHeader) headers with
             | Some h ->
                 h.Term,
-                fun matrix i -> 
-                    match Dictionary.tryGetValue (h.HeaderString,i) matrix with
+                fun (matrix:System.Collections.Generic.Dictionary<int*string,string>) (i:int) -> 
+                    match Dictionary.tryGetValue (i,h.HeaderString) matrix with
                     | Some "user-specific" -> None
                     | Some v -> Some v
                     | _ -> None 
@@ -180,7 +180,7 @@ module AnnotationNode =
             | Some h ->
                 h.Term,
                 fun matrix i -> 
-                    match Dictionary.tryGetValue (h.HeaderString,i) matrix with
+                    match Dictionary.tryGetValue (i,h.HeaderString) matrix with
                     | Some "user-specific" -> None
                     | Some v -> Some v
                     | _ -> None 
@@ -199,7 +199,7 @@ module AnnotationNode =
         let valueGetter = 
             fun matrix i ->
                 let value = 
-                    match Dictionary.tryGetValue (valueHeader.HeaderString,i) matrix with
+                    match Dictionary.tryGetValue (i,valueHeader.HeaderString) matrix with
                     | Some "user-specific" -> None
                     // Trim() should remove any accidental whitespaces at the beginning or end of a term
                     | Some v -> Some v
@@ -235,7 +235,7 @@ module AnnotationNode =
             let parameter = category |> Option.map (Some >> ProtocolParameter.make None)
 
             parameter,
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
                 ProcessParameterValue.make 
                     parameter
                     (valueGetter matrix i)
@@ -257,7 +257,7 @@ module AnnotationNode =
                 )
             
             factor,
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
                 FactorValue.make 
                     None
                     factor
@@ -276,7 +276,7 @@ module AnnotationNode =
             let characteristic = category |> Option.map (Some >> MaterialAttribute.make None)            
             
             characteristic,
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
                 MaterialAttributeValue.make 
                     None
                     characteristic
@@ -296,11 +296,11 @@ module AnnotationNode =
                 else None
             let numberComment = h.Number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
             
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
                 
                 Data.make
                     None
-                    (Dictionary.tryGetValue (h.HeaderString,i) matrix)
+                    (Dictionary.tryGetValue (i,h.HeaderString) matrix)
                     dataType
                     numberComment
         )
@@ -309,16 +309,16 @@ module AnnotationNode =
     let tryGetSampleNameGetter (headers:string seq) =
         Seq.tryPick tryParseSampleName headers
         |> Option.map (fun h -> 
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
-                Dictionary.tryGetValue (h.HeaderString,i) matrix
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
+                Dictionary.tryGetValue (i,h.HeaderString) matrix
         )
 
     /// If the headers of a node depict a source name, returns a function for parsing the values of the matrix to the source names
     let tryGetSourceNameGetter (headers:string seq) =
         Seq.tryPick tryParseSourceName headers
         |> Option.map (fun h -> 
-            fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
-                Dictionary.tryGetValue (h.HeaderString,i) matrix
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
+                Dictionary.tryGetValue (i,h.HeaderString) matrix
         )
     
     /// Returns true, if the headers contain a value node: characteristic, parameter or factor

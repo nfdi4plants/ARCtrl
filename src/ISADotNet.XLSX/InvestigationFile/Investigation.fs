@@ -232,7 +232,7 @@ module Investigation =
         |> ignore
         
     let toFile (path : string) (investigation:Investigation) =
-        let doc = Spreadsheet.initWithSST "isa_investigation" path
+        let doc = Spreadsheet.initWithSst "isa_investigation" path
         try 
             toSpreadsheet doc investigation
         finally
