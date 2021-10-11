@@ -44,10 +44,11 @@ module OntologySourceReference =
         )
 
     let toSparseTable (ontologySources: OntologySourceReference list) =
-        let matrix = SparseTable.Create (keys = labels,length=ontologySources.Length)
+        let matrix = SparseTable.Create (keys = labels,length=ontologySources.Length + 1)
         let mutable commentKeys = []
         ontologySources
         |> List.iteri (fun i o ->
+            let i = i + 1
             do matrix.Matrix.Add ((nameLabel,i),        (Option.defaultValue "" o.Name))
             do matrix.Matrix.Add ((fileLabel,i),        (Option.defaultValue "" o.File))
             do matrix.Matrix.Add ((versionLabel,i),     (Option.defaultValue "" o.Version))

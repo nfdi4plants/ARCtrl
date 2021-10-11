@@ -49,11 +49,18 @@ module MetaData =
             failwith "emptyInvestigationFile"
 
 
-    let rowOfSparseRow (vs : SparseRow) =
-        vs
-        |> Seq.fold (fun r (i,v) -> Row.insertValueAt None (uint32 (i+1)) v r) (Row.empty())
-
     /// Diesen Block durch JS ersetzen ----> 
+
+    /// Creates a new row from the given values.
+    let ofSparseValues rowIndex (vals : 'T option seq) =
+        let spans = Row.Spans.fromBoundaries 1u (Seq.length vals |> uint)
+        vals
+        |> Seq.mapi (fun i value -> 
+            value
+            |> Option.map (Cell.fromValue None (i + 1 |> uint) rowIndex)
+        )
+        |> Seq.choose id
+        |> Row.create rowIndex spans 
 
     /// Append an assay metadata sheet with the given sheetname to an existing assay file excel spreadsheet
     let init sheetName (doc: DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) = 
@@ -65,8 +72,10 @@ module MetaData =
             
         toRows Assay.empty [personWithComment]
         |> Seq.mapi (fun i row -> 
-            rowOfSparseRow row
-            |> Row.updateRowIndex (i+1 |> uint))
+            row
+            |> SparseRow.getAllValues
+            |> ofSparseValues (i+1 |> uint)
+        )
         |> Seq.fold (fun s r -> 
             SheetData.appendRow r s
         ) sheet

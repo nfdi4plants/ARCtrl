@@ -66,8 +66,8 @@ module Investigation =
 
 
         static member ToSparseTable (investigation: Investigation) =
-            let i = 0
-            let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=1)
+            let i = 1
+            let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=2)
             let mutable commentKeys = []
 
             do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" investigation.Identifier))
@@ -191,9 +191,16 @@ module Investigation =
 
     /// Diesen Block durch JS ersetzen ----> 
 
-    let rowOfSparseRow (vs : SparseRow) =
-        vs
-        |> Seq.fold (fun r (i,v) -> Row.insertValueAt None (uint32 (i+1)) v r) (Row.empty())
+    /// Creates a new row from the given values.
+    let ofSparseValues rowIndex (vals : 'T option seq) =
+        let spans = Row.Spans.fromBoundaries 1u (Seq.length vals |> uint)
+        vals
+        |> Seq.mapi (fun i value -> 
+            value
+            |> Option.map (Cell.fromValue None (i + 1 |> uint) rowIndex)
+        )
+        |> Seq.choose id
+        |> Row.create rowIndex spans 
 
     let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) =           
         doc
@@ -224,8 +231,10 @@ module Investigation =
         investigation
         |> toRows
         |> Seq.mapi (fun i row -> 
-            rowOfSparseRow row
-            |> Row.updateRowIndex (i+1 |> uint))
+            row
+            |> SparseRow.getAllValues
+            |> ofSparseValues (i+1 |> uint)
+            )
         |> Seq.fold (fun s r -> 
             SheetData.appendRow r s
         ) sheet

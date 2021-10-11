@@ -75,8 +75,8 @@ module Study =
 
 
         static member ToSparseTable (study: Study) =
-            let i = 0
-            let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 1)
+            let i = 1
+            let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
 
             do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" study.Identifier))

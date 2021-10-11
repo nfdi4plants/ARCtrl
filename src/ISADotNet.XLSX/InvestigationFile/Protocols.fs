@@ -77,10 +77,11 @@ module Protocols =
         )
     
     let toSparseTable (protocols: Protocol list) =
-        let matrix = SparseTable.Create (keys = labels,length=protocols.Length)
+        let matrix = SparseTable.Create (keys = labels,length=protocols.Length + 1)
         let mutable commentKeys = []
         protocols
         |> List.iteri (fun i p ->
+            let i = i + 1
             let protocolType,protocolSource,protocolAccession = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
             let parameterType,parameterSource,parameterAccession = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
             let componentName,componentType,componentSource,componentAccession = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 

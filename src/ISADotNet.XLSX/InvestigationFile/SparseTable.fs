@@ -33,6 +33,7 @@ type SparseTable =
         Matrix : Dictionary<string*int,string>
         Keys : string list
         CommentKeys : string list
+        ///Column Count
         Length : int
     }
 
@@ -51,14 +52,11 @@ type SparseTable =
         }
 
     static member AddRow key (values:seq<int*string>) (matrix : SparseTable) =
-        let values = 
-            values 
-            |> Seq.map (fun (i,v) -> 
-                let i = i-1
-                matrix.Matrix.Add((key,i),v)
-                i,v
-            )
-            |> Seq.toArray
+
+        values 
+        |> Seq.iter (fun (i,v) -> 
+            matrix.Matrix.Add((key,i),v)
+        )
 
         let length = 
             if Seq.isEmpty values then 0
@@ -70,14 +68,12 @@ type SparseTable =
         }
 
     static member AddComment key (values:seq<int*string>) (matrix : SparseTable) =
-        let values = 
-            values 
-            |> Seq.map (fun (i,v) -> 
-                let i = i-1
-                matrix.Matrix.Add((key,i),v)
-                i,v
-            )
-            |> Seq.toArray
+        
+        values 
+        |> Seq.iter (fun (i,v) -> 
+            matrix.Matrix.Add((key,i),v)
+        )
+
         let length = 
             if Seq.isEmpty values then 0
             else Seq.maxBy fst values |> fst |> (+) 1
@@ -115,8 +111,8 @@ type SparseTable =
         let prefix = match prefix with | Some p -> p + " " | None -> ""
         seq {
             for key in matrix.Keys do
-                (SparseRow.fromValues (prefix + key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+                (SparseRow.fromValues (prefix + key :: List.init (matrix.Length - 1) (fun i -> matrix.TryGetValueDefault("",(key,i + 1)))))
             for key in matrix.CommentKeys do
-                (SparseRow.fromValues (Comment.wrapCommentKey key :: List.init matrix.Length (fun i -> matrix.TryGetValueDefault("",(key,i)))))
+                (SparseRow.fromValues (Comment.wrapCommentKey key :: List.init (matrix.Length - 1) (fun i -> matrix.TryGetValueDefault("",(key,i + 1)))))
         }
 

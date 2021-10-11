@@ -41,10 +41,11 @@ module DesignDescriptors =
         )
 
     let toSparseTable (designs: OntologyAnnotation list) =
-        let matrix = SparseTable.Create (keys = labels,length=designs.Length)
+        let matrix = SparseTable.Create (keys = labels,length=designs.Length + 1)
         let mutable commentKeys = []
         designs
         |> List.iteri (fun i d ->
+            let i = i + 1
             let name,source,accession = OntologyAnnotation.toString d
             do matrix.Matrix.Add ((designTypeLabel,i),                      name)
             do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   accession)

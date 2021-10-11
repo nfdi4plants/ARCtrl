@@ -64,10 +64,11 @@ module Assays =
         )
 
     let toSparseTable (assays: Assay list) =
-        let matrix = SparseTable.Create (keys = labels,length=assays.Length)
+        let matrix = SparseTable.Create (keys = labels,length=assays.Length + 1)
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
+            let i = i + 1
             let measurementType,measurementSource,measurementAccession = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
             let technologyType,technologySource,technologyAccession = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       measurementType)

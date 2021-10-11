@@ -62,10 +62,11 @@ module Contacts =
         )
 
     let toSparseTable (persons:Person list) =
-        let matrix = SparseTable.Create (keys = labels,length=persons.Length)
+        let matrix = SparseTable.Create (keys = labels,length=persons.Length + 1)
         let mutable commentKeys = []
         persons
         |> List.iteri (fun i p ->
+            let i = i + 1
             let role,rolesTermSourceREF,rolesTermAccessionNumber = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
             do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
             do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))

@@ -44,10 +44,11 @@ module Factors =
         )
 
     let toSparseTable (factors: Factor list) =
-        let matrix = SparseTable.Create (keys = labels,length=factors.Length)
+        let matrix = SparseTable.Create (keys = labels,length=factors.Length + 1)
         let mutable commentKeys = []
         factors
         |> List.iteri (fun i f ->
+            let i = i + 1
             let factorType,source,accession = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              factorType)

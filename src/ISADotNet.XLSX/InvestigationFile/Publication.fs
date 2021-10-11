@@ -52,10 +52,11 @@ module Publications =
         )
 
     let toSparseTable (publications: Publication list) =
-        let matrix = SparseTable.Create (keys = labels,length=publications.Length)
+        let matrix = SparseTable.Create (keys = labels,length=publications.Length + 1)
         let mutable commentKeys = []
         publications
         |> List.iteri (fun i p ->
+            let i = i + 1
             let status,source,accession = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
