@@ -25,17 +25,8 @@ type Schema =
     static member NFDIBlue =
 
         {
-            VertexColor         = "#2D3E50"
-            VertexLabelColor    = "#2D3E50"
-            EdgeColor           = "#4FB3D9"
-            EdgeLabelColor      = "#425162"
-        }
-
-    static member SwateGreen =
-
-        {
-            VertexColor         = "#252423"
-            VertexLabelColor    = "#252423"
-            EdgeColor           = "#1FC2A7"
-            EdgeLabelColor      = "#2f6b82"
+            VertexColor         = "#2D3E50" //Dark blue
+            VertexLabelColor    = "#2D3E50" //Dark blue
+            EdgeColor           = "#4FB3D9" //light blue
+            EdgeLabelColor      = "#425162" //grey
         }

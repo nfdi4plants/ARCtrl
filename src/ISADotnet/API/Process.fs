@@ -40,12 +40,16 @@ module ProcessParameterValue =
 module ProcessInput =
 
     /// Returns name of processInput
-    let getName (pi : ProcessInput) =
+    let tryGetName (pi : ProcessInput) =
         match pi with
         | ProcessInput.Sample s     -> s.Name
         | ProcessInput.Source s     -> s.Name
         | ProcessInput.Material m   -> m.Name
         | ProcessInput.Data d       -> d.Name
+
+    /// Returns name of processInput
+    let getName (pi : ProcessInput) =
+        tryGetName pi |> Option.defaultValue ""
 
     /// Returns true, if given name equals name of processInput
     let nameEquals (name : string) (pi : ProcessInput) =
@@ -115,11 +119,15 @@ module ProcessInput =
 module ProcessOutput =
 
     /// Returns name of processOutput
-    let getName (po : ProcessOutput) =
+    let tryGetName (po : ProcessOutput) =
         match po with
         | ProcessOutput.Sample s     -> s.Name
         | ProcessOutput.Material m   -> m.Name
         | ProcessOutput.Data d       -> d.Name
+
+    /// Returns name of processInput
+    let getName (po : ProcessOutput) =
+        tryGetName po |> Option.defaultValue ""
 
     /// Returns true, if given name equals name of processOutput
     let nameEquals (name : string) (po : ProcessOutput) =
@@ -368,3 +376,17 @@ module ProcessSequence =
         processSequence
         |> List.collect Process.getFactors
         |> List.distinct
+
+    /// Returns the final outputs of the processSequence, which point to no further nodes
+    let getRootInputs (processSequence : Process list) =
+        let inputs = processSequence |> List.collect (fun p -> p.Inputs |> Option.defaultValue [])
+        let outputs = processSequence |> List.collect (fun p -> p.Outputs |> Option.defaultValue [] |> List.map ProcessOutput.getName) |> Set.ofList
+        inputs
+        |> List.filter (fun i -> ProcessInput.getName i |> outputs.Contains |> not)
+
+    /// Returns the initial inputs of the processSequence, to which no processPoints
+    let getFinalInputs (processSequence : Process list) =
+        let inputs = processSequence |> List.collect (fun p -> p.Inputs |> Option.defaultValue [] |> List.map ProcessInput.getName) |> Set.ofList
+        let outputs = processSequence |> List.collect (fun p -> p.Outputs |> Option.defaultValue [])
+        outputs
+        |> List.filter (fun o -> ProcessOutput.getName o |> inputs.Contains |> not)

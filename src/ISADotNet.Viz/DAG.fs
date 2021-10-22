@@ -3,6 +3,7 @@
 open ISADotNet
 open ISADotNet.API
 open Cyjs.NET
+open Cyjs.NET.Elements
 
 type DAG =
 
@@ -16,13 +17,16 @@ type DAG =
         
         let schema = Option.defaultValue ISADotNet.Viz.Schema.DefaultGrey Schema
 
+        let rootNodes = API.ProcessSequence.getRootInputs ps |> List.map ProcessInput.getName
+
         let edges = 
             ps
             |> List.collect (fun p ->
                 p.Outputs.Value
                 |> List.zip p.Inputs.Value
-                |> List.map (fun (i,o) -> ProcessInput.getName i |> Option.get,ProcessOutput.getName o |> Option.get,p.Name.Value)
+                |> List.map (fun (i,o) -> ProcessInput.getName i ,ProcessOutput.getName o ,p.Name.Value)
             )
+            |> List.append (rootNodes |> List.map (fun i -> "Root",i,""))
                           
         let cyNodes = 
             edges
