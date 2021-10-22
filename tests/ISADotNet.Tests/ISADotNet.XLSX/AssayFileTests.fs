@@ -324,7 +324,7 @@ let testProcessGetter =
 
             let expectedSource = Source.make None (Some expectedSourceName) (Some [expectedCharacteristicValue])
             let expectedInput = ProcessInput.Source expectedSource
-            let expectedOutput = ProcessOutput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) (Some [expectedSource])  )
+            let expectedOutput = ProcessOutput.Sample (Sample.make None (Some expectedSampleName) None (Some [expectedFactorValue]) (Some [expectedSource])  )
 
             let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None
 
@@ -348,7 +348,7 @@ let testProcessGetter =
                 //|> AnnotationTable.splitBySamples
                 //|> Seq.head
 
-            let expectedOutput = ProcessOutput.Sample (Sample.make None None (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
+            let expectedOutput = ProcessOutput.Sample (Sample.make None None None (Some [expectedFactorValue]) None  )
 
             let expectedInput = ProcessInput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) None None  )
 

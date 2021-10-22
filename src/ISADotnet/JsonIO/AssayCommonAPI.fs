@@ -46,11 +46,7 @@ module AssayCommonAPI =
             let parameterValues = proc.ParameterValues |> Option.defaultValue []
             (proc.Inputs.Value,proc.Outputs.Value)
             ||> List.map2 (fun inp out ->
-                let inpCharacteristics = API.ProcessInput.tryGetCharacteristics inp |> Option.defaultValue []
-                let outCharacteristics = API.ProcessOutput.tryGetCharacteristics out |> Option.defaultValue []
-                let characteristics = 
-                    let s = Set.intersect (set inpCharacteristics) (set outCharacteristics)
-                    inpCharacteristics |> List.filter (s.Contains)
+                let characteristics = API.ProcessInput.tryGetCharacteristics inp |> Option.defaultValue []
                 let factors = API.ProcessOutput.tryGetFactorValues out |> Option.defaultValue []
 
                 let inputName = inp.GetName
@@ -254,7 +250,7 @@ module AssayCommonAPI =
                 Sheets = sheets
             }
 
-        static member fromRowWiseSheet (rwa : RowWiseAssay) = 
+        static member fromRowWiseAssay (rwa : RowWiseAssay) = 
             rwa.Sheets
             |> List.map ColumnWiseSheet.fromRowWiseSheet
             |> ColumnWiseAssay.create
