@@ -61,7 +61,7 @@ module AnnotationColumn =
                         |> fun o -> 
                             let tsr = o.[0]
                             let tanNumberOnly = o.[1] 
-                            let tan = $"{OboPurlURL}{tsr}_{tanNumberOnly}"
+                            let tan = sprintf "%s%s_%s" OboPurlURL tsr tanNumberOnly//$"{OboPurlURL}{tsr}_{tanNumberOnly}"
                             OntologyAnnotation.fromString "" tsr tan
                         |> fun ontology -> {ontology with Comments = numberComment}
                         |> Some
