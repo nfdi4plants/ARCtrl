@@ -46,9 +46,7 @@ module AssayCommonAPI =
             let parameterValues = proc.ParameterValues |> Option.defaultValue []
             (proc.Inputs.Value,proc.Outputs.Value)
             ||> List.map2 (fun inp out ->
-                let inpCharacteristics = API.ProcessInput.tryGetCharacteristics inp |> Option.defaultValue []
-                let outCharacteristics = API.ProcessOutput.tryGetCharacteristics out |> Option.defaultValue []
-                let characteristics = Set.intersect (set inpCharacteristics) (set outCharacteristics) |> Set.toList
+                let characteristics = API.ProcessInput.tryGetCharacteristics inp |> Option.defaultValue []
                 let factors = API.ProcessOutput.tryGetFactorValues out |> Option.defaultValue []
 
                 let inputName = inp.GetName
@@ -93,7 +91,15 @@ module AssayCommonAPI =
 
         static member fromAssay (assay : Assay) = 
             assay.ProcessSequence |> Option.defaultValue []
-            |> List.groupBy (fun x -> x.Name.Value.Split '_' |> Array.item 0)
+            |> List.groupBy (fun x -> 
+                if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                    x.ExecutesProtocol.Value.Name.Value 
+                else
+                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
+                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
+                    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
+                    x.Name.Value.Remove lastUnderScoreIndex
+            )
             |> List.map (fun (name,processes) -> RowWiseSheet.fromProcesses name processes)
             |> RowWiseAssay.create (*(assay.FileName |> Option.defaultValue "")*)
 
@@ -108,8 +114,6 @@ module AssayCommonAPI =
         static member fromFile (path : string) = 
             File.ReadAllText path 
             |> RowWiseAssay.fromString
-
-
 
     type ParameterColumn = 
         {
@@ -246,7 +250,7 @@ module AssayCommonAPI =
                 Sheets = sheets
             }
 
-        static member fromRowWiseSheet (rwa : RowWiseAssay) = 
+        static member fromRowWiseAssay (rwa : RowWiseAssay) = 
             rwa.Sheets
             |> List.map ColumnWiseSheet.fromRowWiseSheet
             |> ColumnWiseAssay.create

@@ -1,3 +1,5 @@
+#if FAKE
+
 #r "paket:
 nuget BlackFox.Fake.BuildTask
 nuget Fake.Extensions.Release
@@ -16,7 +18,26 @@ nuget Fake.Api.Github
 nuget Fake.DotNet.Testing.Expecto 
 nuget Fake.Tools.Git //"
 
+#endif
+
 #if !FAKE
+
+#r "nuget: BlackFox.Fake.BuildTask"
+#r "nuget: Fake.Extensions.Release"
+#r "nuget: Fake.Core.Target"
+#r "nuget: Fake.Core.Process"
+#r "nuget: Fake.Core.ReleaseNotes"
+#r "nuget: Fake.IO.FileSystem"
+#r "nuget: Fake.DotNet.Cli"
+#r "nuget: Fake.DotNet.MSBuild"
+#r "nuget: Fake.DotNet.AssemblyInfoFile"
+#r "nuget: Fake.DotNet.Paket"
+#r "nuget: Fake.DotNet.FSFormatting"
+#r "nuget: Fake.DotNet.Fsi"
+#r "nuget: Fake.DotNet.NuGet"
+#r "nuget: Fake.Api.Github"
+#r "nuget: Fake.DotNet.Testing.Expecto"
+#r "nuget: Fake.Tools.Git"
 #load "./.fake/build.fsx/intellisense.fsx"
 #r "netstandard" // Temp fix for https://github.com/dotnet/fsharp/issues/5216
 #endif
@@ -102,7 +123,7 @@ module BasicTasks =
         printfn "Please enter pre-release package suffix"
         let suffix = System.Console.ReadLine()
         prereleaseSuffix <- suffix
-        prereleaseTag <- (sprintf "%s-%s" release.NugetVersion suffix)
+        prereleaseTag <- (sprintf "%i.%i.%i-%s" release.SemVer.Major release.SemVer.Minor release.SemVer.Patch suffix)
         isPrerelease <- true
     }
 
@@ -118,6 +139,14 @@ module BasicTasks =
         !! "src/**/*.*proj"
         |> Seq.iter (DotNet.build id)
     }
+
+    //let buildFable = BuildTask.create "BuildFable" [clean] {
+    //    !! "src/**/*.*proj"
+    //    |> Seq.iter (DotNet.build (fun p -> 
+    //        let properties = (("DefineConstants","FABLE") :: p.MSBuildParams.Properties)
+    //        {p with MSBuildParams = {p.MSBuildParams with Properties = properties}
+    //        }))
+    //}
 
     let copyBinaries = BuildTask.create "CopyBinaries" [clean; build] {
         let targets = 
@@ -231,6 +260,26 @@ module PackageTasks =
                                     MSBuildParams = msBuildParams
                             }
                 ))
+                "src/ISADotNet/ISADotNet.fsproj"
+                |> Fake.DotNet.DotNet.pack (fun p ->
+                    let msBuildParams =
+                        {p.MSBuildParams with 
+                            Properties = ([
+                                "PackageId", "ISADotNet.Fable"
+                                "Version",prereleaseTag
+                                "Description","Fable compliant release for the ISA compliant experimental metadata toolkit in F#. Additionally to the compiled library, it is shipped with the uncompiled code."
+                                "PackageTags","F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA Json Fable"
+                                "PackageReleaseNotes",  (release.Notes |> List.map replaceCommitLink |> String.concat "\r\n")
+                            ] @ p.MSBuildParams.Properties)
+                        }
+                    let test = p
+                    {
+                        p with 
+                            VersionSuffix = Some prereleaseSuffix
+                            MSBuildParams = msBuildParams
+                            OutputPath = Some pkgDir
+                    }
+                )
         else
             failwith "aborted"
     }

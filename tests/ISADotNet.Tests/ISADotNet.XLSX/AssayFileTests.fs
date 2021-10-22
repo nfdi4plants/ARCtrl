@@ -54,10 +54,9 @@ let testColumnHeaderFunctions =
             let testComment = Comment.fromString "Number" "5"
             let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
 
-
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
-            Expect.equal header testHeader "Dit not parse Name correctly"
+            Expect.equal header testHeader "Did not parse Name correctly"
         )
         testCase "AccessionWithNumber" (fun () ->
 
@@ -66,7 +65,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "2"
-            let testOntology = OntologyAnnotation.make None None (Some "MS") (Some (URI.fromString "1000031")) (Some [testComment])
+            let testOntology = OntologyAnnotation.make None None (Some "MS") (Some (URI.fromString "http://purl.obolibrary.org/obo/MS_1000031")) (Some [testComment])
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
@@ -94,7 +93,7 @@ let testNodeGetterFunctions =
                 if b then Some v
                 else None
 
-            let v = tryGetValue ("Unit",0) m
+            let v = tryGetValue (0,"Unit") m
 
             Expect.isSome v "Value could not be retrieved from matrix"
 
@@ -132,7 +131,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
 
-            let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetter headers
+            let characteristicGetterOption = AnnotationNode.tryGetCharacteristicGetter 0 headers
 
             Expect.isSome characteristicGetterOption "Characteristic Getter was not returned even though headers should have matched"
 
@@ -140,7 +139,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome characteristic "CharacteristGetter was returned but not characteristic was returned"
 
-            let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO"  "0002637"
+            let expectedCharacteristic = MaterialAttribute.fromStringWithValueOrder "leaf size" "TO"  "http://purl.obolibrary.org/obo/TO_0002637" 0
 
             Expect.equal characteristic.Value expectedCharacteristic "Retrieved Characteristic is wrong"
 
@@ -158,7 +157,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
 
-            let unitGetterOption = AnnotationNode.tryGetCharacteristicGetter headers
+            let unitGetterOption = AnnotationNode.tryGetCharacteristicGetter 0 headers
 
             Expect.isNone unitGetterOption "Characteristic Getter was returned even though headers should not have matched"
         )
@@ -166,7 +165,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
 
-            let factorGetterOption = AnnotationNode.tryGetFactorGetter headers
+            let factorGetterOption = AnnotationNode.tryGetFactorGetter 0 headers
 
             Expect.isSome factorGetterOption "Factor Getter was not returned even though headers should have matched"
             
@@ -174,7 +173,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome factor "FactorGetter was returned but no factor was returned"
 
-            let expectedFactor = Factor.fromString "time" "time" "PATO" "0000165"
+            let expectedFactor = Factor.fromStringWithValueOrder "time" "time" "PATO" "http://purl.obolibrary.org/obo/PATO_0000165" 0
 
             Expect.equal factor.Value expectedFactor "Retrieved Factor is wrong"
             
@@ -192,7 +191,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [square centimeter] (#h; #tUO:0000081; #u)";"Term Source REF [square centimeter] (#h; #tUO:0000081; #u)";"Term Accession Number [square centimeter] (#h; #tUO:0000081; #u)"]
 
-            let unitGetterOption = AnnotationNode.tryGetFactorGetter headers
+            let unitGetterOption = AnnotationNode.tryGetFactorGetter 0 headers
 
             Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
@@ -200,7 +199,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
 
-            let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetter 0 headers
 
             Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
             
@@ -208,7 +207,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "0000005" 
+            let expectedParameter = ProtocolParameter.fromStringWithValueOrder "temperature unit" "UO" "http://purl.obolibrary.org/obo/UO_0000005" 0
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
 
@@ -226,7 +225,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [measurement device]";"Term Source REF (OBI:0000832)";"Term Accession Number (OBI:0000832)"]
 
-            let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetter 0 headers
 
             Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
             
@@ -236,7 +235,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter.Value.ParameterName.Value.TermSourceREF "Parameter has no TermSourceRef"
 
-            let expectedParameter = ProtocolParameter.fromString "measurement device" "OBI" "0000832"
+            let expectedParameter = ProtocolParameter.fromStringWithValueOrder "measurement device" "OBI" "http://purl.obolibrary.org/obo/OBI_0000832" 0
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
@@ -252,7 +251,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Parameter [heating block]";"Term Source REF (OBI:0400108)";"Term Accession Number (OBI:0400108)"]
 
-            let parameterGetterOption = AnnotationNode.tryGetParameterGetter headers
+            let parameterGetterOption = AnnotationNode.tryGetParameterGetter 0 headers
 
             Expect.isSome parameterGetterOption "Parameter Getter was not returned even though headers should have matched"
             
@@ -260,7 +259,7 @@ let testNodeGetterFunctions =
 
             Expect.isSome parameter "ParameterGetter was returned but no parameter was returned"
 
-            let expectedParameter = ProtocolParameter.fromString "heating block" "OBI" "0400108"
+            let expectedParameter = ProtocolParameter.fromStringWithValueOrder "heating block" "OBI" "http://purl.obolibrary.org/obo/OBI_0400108" 0
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
@@ -276,7 +275,7 @@ let testNodeGetterFunctions =
 
             let headers = ["Factor [square centimeter]";"Term Source REF (UO:0000081)";"Term Accession Number (UO:0000081)"]
 
-            let unitGetterOption = AnnotationNode.tryGetParameterGetter headers
+            let unitGetterOption = AnnotationNode.tryGetParameterGetter 0 headers
 
             Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
@@ -297,17 +296,17 @@ let testProcessGetter =
     let m = Table.toSparseValueMatrix sst (Worksheet.getSheetData wsp.Worksheet) table
 
     let characteristicHeaders = ["Characteristics [leaf size]";"Unit";"Term Source REF (TO:0002637)";"Term Accession Number (TO:0002637)"]
-    let expectedCharacteristic = MaterialAttribute.fromString "leaf size" "TO" "0002637"
+    let expectedCharacteristic = MaterialAttribute.fromStringWithValueOrder "leaf size" "TO" "http://purl.obolibrary.org/obo/TO_0002637" 0
     let expectedCharacteristicUnit = OntologyAnnotation.fromString "square centimeter" "UO" "http://purl.obolibrary.org/obo/UO_0000081" |> Some
     let expectedCharacteristicValue = MaterialAttributeValue.make None (Some expectedCharacteristic) (Value.fromOptions (Some "10") None None) expectedCharacteristicUnit
 
     let factorHeaders = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
-    let expectedFactor = Factor.fromString "time" "time" "PATO" "0000165"
+    let expectedFactor = Factor.fromStringWithValueOrder "time" "time" "PATO" "http://purl.obolibrary.org/obo/PATO_0000165" 1
     let expectedFactorUnit = OntologyAnnotation.fromString "hour" "UO"  "http://purl.obolibrary.org/obo/UO_0000032"|> Some    
     let expectedFactorValue = FactorValue.make None (Some expectedFactor) (Value.fromOptions (Some "5") None None) expectedFactorUnit
 
     let parameterHeaders = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
-    let expectedParameter = ProtocolParameter.fromString "temperature unit" "UO" "0000005"
+    let expectedParameter = ProtocolParameter.fromStringWithValueOrder "temperature unit" "UO" "http://purl.obolibrary.org/obo/UO_0000005" 2
     let expectedParameterUnit = OntologyAnnotation.fromString "degree Celsius" "UO" "http://purl.obolibrary.org/obo/UO_0000027"  |> Some    
     let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) (Value.fromOptions (Some "27") None None) expectedParameterUnit
 
@@ -325,7 +324,7 @@ let testProcessGetter =
 
             let expectedSource = Source.make None (Some expectedSourceName) (Some [expectedCharacteristicValue])
             let expectedInput = ProcessInput.Source expectedSource
-            let expectedOutput = ProcessOutput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) (Some [expectedSource])  )
+            let expectedOutput = ProcessOutput.Sample (Sample.make None (Some expectedSampleName) None (Some [expectedFactorValue]) (Some [expectedSource])  )
 
             let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None
 
@@ -349,7 +348,7 @@ let testProcessGetter =
                 //|> AnnotationTable.splitBySamples
                 //|> Seq.head
 
-            let expectedOutput = ProcessOutput.Sample (Sample.make None None (Some [expectedCharacteristicValue]) (Some [expectedFactorValue]) None  )
+            let expectedOutput = ProcessOutput.Sample (Sample.make None None None (Some [expectedFactorValue]) None  )
 
             let expectedInput = ProcessInput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) None None  )
 
@@ -571,6 +570,7 @@ let testMetaDataFunctions =
                 |> Option.get
                 |> SheetData.getRows
                 |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst))
+                |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
 
             let readingSuccess = 
                 try 
@@ -592,6 +592,7 @@ let testMetaDataFunctions =
                 |> Option.get
                 |> SheetData.getRows
                 |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst))
+                |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
 
             let assay,contacts = AssayFile.MetaData.fromRows rows 
 
@@ -628,28 +629,30 @@ let testAssayFileReader =
         
     let fileName = @"GreatAssay\assay.isa.xlsx"
 
-    let temperatureUnit = ProtocolParameter.fromString "temperature unit" "UO"  "0000005"
+    let temperatureUnit = ProtocolParameter.fromStringWithValueOrder "temperature unit" "UO"  "http://purl.obolibrary.org/obo/UO_0000005" 0
+    
 
-    let temperature = ProtocolParameter.fromString "temperature" "" ""
+    let temperature = ProtocolParameter.fromStringWithValueOrder "temperature" "" "" 2
 
-    let peptidase = ProtocolParameter.fromString "enzyme unit" "UO" "0000181"
+    let peptidase = ProtocolParameter.fromStringWithValueOrder "enzyme unit" "UO" "http://purl.obolibrary.org/obo/UO_0000181" 1
 
-    let time1 = ProtocolParameter.fromString "time unit" "UO" "0000003"
+    let time1 = ProtocolParameter.fromStringWithValueOrder "time unit" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 3
 
-    let time2Comment = Comment.fromString "Number" "2"  
-    let time2Ontology = OntologyAnnotation.make None (Some (AnnotationValue.Text "time unit")) (Some "UO") (Some "0000003") (Some [time2Comment])
-    let time2 = Factor.make None (Some "time unit") (Some time2Ontology) None
+    //let time2Comment = Comment.fromString "Number" "2"  
+    //let time2Ontology = OntologyAnnotation.make None (Some (AnnotationValue.Text "time unit")) (Some "UO") (Some "http://purl.obolibrary.org/obo/UO_0000003") (Some [time2Comment])
+    let time2 = Factor.fromStringWithNumberValueOrder "time unit" "time unit#2" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 4
 
 
-    let leafSize = MaterialAttribute.fromString "leaf size" "TO" "0002637"
+    let leafSize = MaterialAttribute.fromStringWithValueOrder "leaf size" "TO" "http://purl.obolibrary.org/obo/TO_0002637" 0
 
+    let temperatureUnit2 = ProtocolParameter.fromStringWithValueOrder "temperature unit" "UO"  "http://purl.obolibrary.org/obo/UO_0000005" 1
 
     testList "AssayFileReaderTests" [
         testCase "ReaderSuccess" (fun () -> 
                        
             let readingSuccess = 
                 try 
-                    AssayFile.fromFile assayFilePath |> ignore
+                    Assay.fromFile assayFilePath |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -658,12 +661,12 @@ let testAssayFileReader =
         )
         testCase "ReadsCorrectly" (fun () ->        
             
-            let factors,protocols,persons,assay = AssayFile.fromFile assayFilePath
+            let factors,protocols,persons,assay = Assay.fromFile assayFilePath
 
             let expectedProtocols = 
                 [
                 Protocol.make None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None
-                Protocol.make None (Some "SecondAssay") None None None None (Some [temperatureUnit]) None None
+                Protocol.make None (Some "SecondAssay") None None None None (Some [temperatureUnit2]) None None
                 ]
 
             let expectedFactors = [time2]

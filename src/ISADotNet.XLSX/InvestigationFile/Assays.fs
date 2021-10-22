@@ -42,7 +42,7 @@ module Assays =
             None 
             (Option.fromValueWithDefault [] comments)
         
-    let fromSparseMatrix (matrix : SparseMatrix) =
+    let fromSparseTable (matrix : SparseTable) =
         
         List.init matrix.Length (fun i -> 
 
@@ -63,11 +63,12 @@ module Assays =
                 comments
         )
 
-    let toSparseMatrix (assays: Assay list) =
-        let matrix = SparseMatrix.Create (keys = labels,length=assays.Length)
+    let toSparseTable (assays: Assay list) =
+        let matrix = SparseTable.Create (keys = labels,length=assays.Length + 1)
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
+            let i = i + 1
             let measurementType,measurementSource,measurementAccession = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
             let technologyType,technologySource,technologyAccession = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       measurementType)
@@ -91,35 +92,16 @@ module Assays =
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
-    let readAssays (prefix : string option) lineNumber (en:IEnumerator<Row>) =
-        let prefix = match prefix with | Some p ->  p + " " | None -> ""
-        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
-
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
-                    let label = List.find (fun label -> k = prefix + label) labels
-                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
-                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
-            else
-                None,lineNumber,remarks,fromSparseMatrix matrix
-        loop (SparseMatrix.Create()) [] lineNumber
-
-    
-    let writeAssays prefix (assays : Assay list) =
+    let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
+        match prefix with
+        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
+        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
+ 
+    let toRows prefix (assays : Assay list) =
         assays
-        |> toSparseMatrix
+        |> toSparseTable
         |> fun m -> 
             match prefix with 
-            | Some prefix -> SparseMatrix.ToRows(m,prefix)
-            | None -> SparseMatrix.ToRows(m)
+            | Some prefix -> SparseTable.ToRows(m,prefix)
+            | None -> SparseTable.ToRows(m)

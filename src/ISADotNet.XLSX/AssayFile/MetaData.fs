@@ -15,40 +15,52 @@ module MetaData =
     let toRows (assay:Assay) (contacts : Person list) =
         seq {          
 
-            yield  Row.ofValues None 0u [assaysLabel]
-            yield! Assays.writeAssays (None) [assay]
+            yield  SparseRow.fromValues [assaysLabel]
+            yield! Assays.toRows (None) [assay]
 
-            yield  Row.ofValues None 0u [contactsLabel]
-            yield! Contacts.writePersons (None) contacts
+            yield  SparseRow.fromValues [contactsLabel]
+            yield! Contacts.toRows (None) contacts
         }
-        |> Seq.mapi (fun i row -> Row.updateRowIndex (i+1 |> uint) row)
+        
 
     /// Read Assay Metadata from excel rows
-    let fromRows (rows: seq<DocumentFormat.OpenXml.Spreadsheet.Row>) =
+    let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         let rec loop lastLine assays contacts lineNumber =
                
             match lastLine with
 
             | Some k when k = assaysLabel -> 
-                let currentLine,lineNumber,_,assays = Assays.readAssays None (lineNumber + 1) en       
+                let currentLine,lineNumber,_,assays = Assays.fromRows None (lineNumber + 1) en       
                 loop currentLine assays contacts lineNumber
 
             | Some k when k = contactsLabel -> 
-                let currentLine,lineNumber,_,contacts = Contacts.readPersons None (lineNumber + 1) en  
+                let currentLine,lineNumber,_,contacts = Contacts.fromRows None (lineNumber + 1) en  
                 loop currentLine assays contacts lineNumber
 
             | k -> 
                 assays |> Seq.tryHead,contacts
         
         if en.MoveNext () then
-            let currentLine = en.Current |> Row.tryGetValueAt None 1u
+            let currentLine = en.Current |> SparseRow.tryGetValueAt 0
             loop currentLine [] [] 1
             
         else
             failwith "emptyInvestigationFile"
 
 
+    /// Diesen Block durch JS ersetzen ----> 
+
+    /// Creates a new row from the given values.
+    let ofSparseValues rowIndex (vals : 'T option seq) =
+        let spans = Row.Spans.fromBoundaries 1u (Seq.length vals |> uint)
+        vals
+        |> Seq.mapi (fun i value -> 
+            value
+            |> Option.map (Cell.fromValue None (i + 1 |> uint) rowIndex)
+        )
+        |> Seq.choose id
+        |> Row.create rowIndex spans 
 
     /// Append an assay metadata sheet with the given sheetname to an existing assay file excel spreadsheet
     let init sheetName (doc: DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) = 
@@ -59,6 +71,11 @@ module MetaData =
         let personWithComment = Person.make None None None None None None None None None None (Some [worksheetComment])
             
         toRows Assay.empty [personWithComment]
+        |> Seq.mapi (fun i row -> 
+            row
+            |> SparseRow.getAllValues
+            |> ofSparseValues (i+1 |> uint)
+        )
         |> Seq.fold (fun s r -> 
             SheetData.appendRow r s
         ) sheet
@@ -71,4 +88,4 @@ module MetaData =
 
         doc
 
-
+    /// ---->  Bis hier

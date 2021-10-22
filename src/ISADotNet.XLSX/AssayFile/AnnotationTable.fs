@@ -6,20 +6,24 @@ open ISADotNet
 /// Functions for parsing an annotation table to the described processes
 module AnnotationTable = 
 
-
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
     let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
     
+        let valueNodes =
+            nodes
+            |> Seq.filter (AnnotationNode.isValueNode)
+            |> Seq.indexed
+
         let characteristics,characteristicValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetCharacteristicGetter
+            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetCharacteristicGetter i n)
             |> Seq.fold (fun (cl,cvl) (c,cv) -> c.Value :: cl, cv :: cvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let factors,factorValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetFactorGetter
+            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetFactorGetter i n)
             |> Seq.fold (fun (fl,fvl) (f,fv) -> f.Value :: fl, fv :: fvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
         let parameters,parameterValueGetters =
-            nodes |> Seq.choose AnnotationNode.tryGetParameterGetter
+            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetParameterGetter i n)
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     
@@ -55,7 +59,7 @@ module AnnotationTable =
                             Sample.make
                                 None
                                 outputName
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                                None
                                 (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                 (inputGetter matrix i |> List.distinct |> Some)
                         if data.IsSome then 
@@ -100,7 +104,7 @@ module AnnotationTable =
                             Sample.make
                                 None
                                 outputName
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                                None
                                 (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                 None
                         if data.IsSome then 
@@ -114,7 +118,7 @@ module AnnotationTable =
         characteristics,
         factors,
         protocol,
-        fun (matrix : System.Collections.Generic.Dictionary<(string * int),string>) i ->
+        fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
             Process.make 
                 None 
                 None 
@@ -162,7 +166,6 @@ module AnnotationTable =
     let sourceOfSample (s:Sample) =
         Source.make s.ID s.Name s.Characteristics
 
-
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
     /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
@@ -208,8 +211,8 @@ module AnnotationTable =
         processes
         |> Seq.map (fun p -> 
            {p with
-                    Inputs = p.Inputs |> Option.map (List.map updateInput)
-                    Outputs = p.Outputs |> Option.map (List.map updateOutput)
+                Inputs = p.Inputs |> Option.map (List.map updateInput)
+                Outputs = p.Outputs |> Option.map (List.map updateOutput)
            }
         )
 

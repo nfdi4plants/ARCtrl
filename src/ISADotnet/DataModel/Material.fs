@@ -28,9 +28,19 @@ type MaterialAttribute =
         let oa = OntologyAnnotation.fromString term source accession
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
-    /// Create a ISAJson MaterialAttribute from ISATab string entries
+    /// Create a ISAJson MaterialAttribute from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
     static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let oa = OntologyAnnotation.fromStringWithNumber term source accession
+        MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+
+    /// Create a ISAJson MaterialAttribute from string entries
+    static member fromStringWithComments (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let oa = OntologyAnnotation.fromStringWithComments term source accession comments
+        MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+
+    /// Create a ISAJson MaterialAttribute from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
@@ -125,7 +135,7 @@ type MaterialAttributeValue =
             this.Unit |> Option.map (fun oa -> oa.GetName)
         let v = this.GetValue
         match unit with
-        | Some u    -> $"{v} {u}"
+        | Some u    -> sprintf "%s %s" v u
         | None      -> v
 
     interface IISAPrintable with

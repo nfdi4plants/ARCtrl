@@ -26,7 +26,7 @@ module OntologySourceReference =
             (Option.fromValueWithDefault "" version)
             (Option.fromValueWithDefault [] comments)
 
-    let fromSparseMatrix (matrix : SparseMatrix) =
+    let fromSparseTable (matrix : SparseTable) =
         
         List.init matrix.Length (fun i -> 
 
@@ -43,11 +43,12 @@ module OntologySourceReference =
                 comments
         )
 
-    let toSparseMatrix (ontologySources: OntologySourceReference list) =
-        let matrix = SparseMatrix.Create (keys = labels,length=ontologySources.Length)
+    let toSparseTable (ontologySources: OntologySourceReference list) =
+        let matrix = SparseTable.Create (keys = labels,length=ontologySources.Length + 1)
         let mutable commentKeys = []
         ontologySources
         |> List.iteri (fun i o ->
+            let i = i + 1
             do matrix.Matrix.Add ((nameLabel,i),        (Option.defaultValue "" o.Name))
             do matrix.Matrix.Add ((fileLabel,i),        (Option.defaultValue "" o.File))
             do matrix.Matrix.Add ((versionLabel,i),     (Option.defaultValue "" o.Version))
@@ -65,30 +66,11 @@ module OntologySourceReference =
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
-    let readTermSources lineNumber (en:IEnumerator<Row>) =
-        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
-
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.contains k labels -> 
-                    loop (SparseMatrix.AddRow k v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
-                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
-            else
-                None,lineNumber,remarks,fromSparseMatrix matrix
-        loop (SparseMatrix.Create()) [] lineNumber
-
+    let fromRows lineNumber (rows : IEnumerator<SparseRow>) =
+        SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
     
-    let writeTermSources (termSources : OntologySourceReference list) =
+    let toRows (termSources : OntologySourceReference list) =
         termSources
-        |> toSparseMatrix
-        |> fun m -> SparseMatrix.ToRows(m)
+        |> toSparseTable
+        |> fun m -> SparseTable.ToRows(m)

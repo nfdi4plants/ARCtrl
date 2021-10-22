@@ -31,7 +31,7 @@ module Publications =
             (Option.fromValueWithDefault OntologyAnnotation.empty status) 
             (Option.fromValueWithDefault [] comments)
 
-    let fromSparseMatrix (matrix : SparseMatrix) =
+    let fromSparseTable (matrix : SparseTable) =
         
         List.init matrix.Length (fun i -> 
 
@@ -51,11 +51,12 @@ module Publications =
                 comments
         )
 
-    let toSparseMatrix (publications: Publication list) =
-        let matrix = SparseMatrix.Create (keys = labels,length=publications.Length)
+    let toSparseTable (publications: Publication list) =
+        let matrix = SparseTable.Create (keys = labels,length=publications.Length + 1)
         let mutable commentKeys = []
         publications
         |> List.iteri (fun i p ->
+            let i = i + 1
             let status,source,accession = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
@@ -77,35 +78,16 @@ module Publications =
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
-    let readPublications (prefix : string option) lineNumber (en:IEnumerator<Row>) =
-        let prefix = match prefix with | Some p ->  p + " " | None -> ""
-        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
+    let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
+        match prefix with
+        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
+        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
 
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
-                    let label = List.find (fun label -> k = prefix + label) labels
-                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
-                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
-            else
-                None,lineNumber,remarks,fromSparseMatrix matrix
-        loop (SparseMatrix.Create()) [] lineNumber
-
-    
-    let writePublications prefix (publications : Publication list) =
+    let toRows prefix (publications : Publication list) =
         publications
-        |> toSparseMatrix
+        |> toSparseTable
         |> fun m -> 
             match prefix with 
-            | Some prefix -> SparseMatrix.ToRows(m,prefix)
-            | None -> SparseMatrix.ToRows(m)
+            | Some prefix -> SparseTable.ToRows(m,prefix)
+            | None -> SparseTable.ToRows(m)

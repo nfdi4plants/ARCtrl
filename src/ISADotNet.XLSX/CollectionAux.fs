@@ -104,7 +104,11 @@ module internal List =
 
 module internal Dictionary =
 
-    let tryGetValue k (dict:System.Collections.Generic.Dictionary<'K,'V>) = 
+    let tryGetValue k (dict:System.Collections.Generic.Dictionary<'K,string>) = 
         let b,v = dict.TryGetValue(k)
-        if b then Some v
-        else None
+        // Only get value if 
+        if b && v.Trim() <> ""
+        then 
+            v.Trim() |> Some
+        else 
+            None

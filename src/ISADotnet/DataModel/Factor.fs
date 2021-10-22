@@ -33,11 +33,20 @@ type Factor =
         let oa = OntologyAnnotation.fromString term source accession
         Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
-    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
     static member fromStringWithNumber (name:string) (term:string) (source:string) (accession:string) =
-        let oa =
-            OntologyAnnotation.fromStringWithNumber term source accession
-        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+        let oa = OntologyAnnotation.fromStringWithNumber term source accession
+        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
+
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromStringWithComments (name:string) (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let oa = OntologyAnnotation.fromStringWithComments term source accession comments
+        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
+
+    /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromStringWithNumberAndComments (name:string) (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
+        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
     /// Get ISATab string entries from an ISAJson Factor object
     static member toString (factor : Factor) =
@@ -156,7 +165,7 @@ type FactorValue =
             this.Unit |> Option.map (fun oa -> oa.GetName)
         let v = this.GetValue
         match unit with
-        | Some u    -> $"{v} {u}"
+        | Some u    -> sprintf "%s %s" v u
         | None      -> v
 
     /// Returns the name of the category as string

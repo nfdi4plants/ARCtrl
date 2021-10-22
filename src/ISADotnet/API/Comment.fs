@@ -26,3 +26,7 @@ module CommentList =
             | _ -> None
         )
         |> Map.ofList
+  
+    /// Adds the given comment to the comment list  
+    let add (comment : Comment) (comments : Comment list) =
+        List.append comments [comment]

@@ -316,3 +316,16 @@ module JsonExtensions =
         options.Converters.Add(StringEnumConverter())
         options.Converters.Add(JsonFSharpConverter())
         options
+
+    let fromString<'T> (s:string) = 
+        JsonSerializer.Deserialize<'T>(s,options)
+
+    let toString (i:'T) = 
+        JsonSerializer.Serialize<'T>(i,options)
+
+    let fromFile<'T> (path : string) = 
+        System.IO.File.ReadAllText path 
+        |> fromString<'T>
+
+    let toFile (path : string) (i:'T) = 
+        System.IO.File.WriteAllText(path,toString i)
