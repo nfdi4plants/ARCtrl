@@ -104,17 +104,29 @@ type OntologyAnnotation =
             None
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
+    static member fromStringWithComments (term:string) (source:string) (accession:string) (comments : Comment list) =
+        OntologyAnnotation.make 
+            None 
+            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" source)
+            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
+            (Option.fromValueWithDefault [] comments)
+
+    /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
     static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let t,number = 
             let lastIndex = term.LastIndexOf '#'
             term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
-        OntologyAnnotation.make 
-            None 
-            (Option.fromValueWithDefault "" t |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" source)
-            (Option.fromValueWithDefault "" accession |> Option.map URI.fromString)
-            (Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton))
+        let numberComment = Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton)
+        OntologyAnnotation.fromStringWithComments t source accession (numberComment |> Option.defaultValue [])      
 
+    /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let t,number = 
+            let lastIndex = term.LastIndexOf '#'
+            term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
+        let numberComment = Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton)
+        OntologyAnnotation.fromStringWithComments t source accession ((numberComment |> Option.defaultValue []) @ comments)   
 
     /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,source,accession)
     static member toString (oa : OntologyAnnotation) =

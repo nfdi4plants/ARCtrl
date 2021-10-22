@@ -49,7 +49,7 @@ module Protocols =
             (Option.fromValueWithDefault [] comments)
 
 
-    let fromSparseMatrix (matrix : SparseMatrix) =
+    let fromSparseTable (matrix : SparseTable) =
         
         List.init matrix.Length (fun i -> 
 
@@ -76,11 +76,12 @@ module Protocols =
                 comments
         )
     
-    let toSparseMatrix (protocols: Protocol list) =
-        let matrix = SparseMatrix.Create (keys = labels,length=protocols.Length)
+    let toSparseTable (protocols: Protocol list) =
+        let matrix = SparseTable.Create (keys = labels,length=protocols.Length + 1)
         let mutable commentKeys = []
         protocols
         |> List.iteri (fun i p ->
+            let i = i + 1
             let protocolType,protocolSource,protocolAccession = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
             let parameterType,parameterSource,parameterAccession = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
             let componentName,componentType,componentSource,componentAccession = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
@@ -112,35 +113,16 @@ module Protocols =
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
-    let readProtocols (prefix : string option) lineNumber (en:IEnumerator<Row>) =
-        let prefix = match prefix with | Some p ->  p + " " | None -> ""
-        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
-
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
-                    let label = List.find (fun label -> k = prefix + label) labels
-                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
-                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
-            else
-                None,lineNumber,remarks,fromSparseMatrix matrix
-        loop (SparseMatrix.Create()) [] lineNumber
-
-    
-    let writeProtocols prefix (protocols : Protocol list) =
+    let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
+        match prefix with
+        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
+        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
+  
+    let toRows prefix (protocols : Protocol list) =
         protocols
-        |> toSparseMatrix
+        |> toSparseTable
         |> fun m -> 
             match prefix with 
-            | Some prefix -> SparseMatrix.ToRows(m,prefix)
-            | None -> SparseMatrix.ToRows(m)
+            | Some prefix -> SparseTable.ToRows(m,prefix)
+            | None -> SparseTable.ToRows(m)

@@ -26,7 +26,7 @@ module Factors =
             (Option.fromValueWithDefault OntologyAnnotation.empty factorType) 
             (Option.fromValueWithDefault [] comments)
 
-    let fromSparseMatrix (matrix : SparseMatrix) =
+    let fromSparseTable (matrix : SparseTable) =
         
         List.init matrix.Length (fun i -> 
 
@@ -43,11 +43,12 @@ module Factors =
                 comments
         )
 
-    let toSparseMatrix (factors: Factor list) =
-        let matrix = SparseMatrix.Create (keys = labels,length=factors.Length)
+    let toSparseTable (factors: Factor list) =
+        let matrix = SparseTable.Create (keys = labels,length=factors.Length + 1)
         let mutable commentKeys = []
         factors
         |> List.iteri (fun i f ->
+            let i = i + 1
             let factorType,source,accession = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              factorType)
@@ -67,36 +68,18 @@ module Factors =
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
 
-    let readFactors (prefix : string option) lineNumber (en:IEnumerator<Row>) =
-        let prefix = match prefix with | Some p ->  p + " " | None -> ""
-        let rec loop (matrix : SparseMatrix) remarks lineNumber = 
-
-            if en.MoveNext() then  
-                let row = en.Current |> Row.getIndexedValues None |> Seq.map (fun (i,v) -> int i - 1,v)
-                match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
-
-                | Comment k, Some v -> 
-                    loop (SparseMatrix.AddComment k v matrix) remarks (lineNumber + 1)
-
-                | Remark k, _  -> 
-                    loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
-
-                | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
-                    let label = List.find (fun label -> k = prefix + label) labels
-                    loop (SparseMatrix.AddRow label v matrix) remarks (lineNumber + 1)
-
-                | Some k, _ -> Some k,lineNumber,remarks,fromSparseMatrix matrix
-                | _ -> None, lineNumber,remarks,fromSparseMatrix matrix
-            else
-                None,lineNumber,remarks,fromSparseMatrix matrix
-        loop (SparseMatrix.Create()) [] lineNumber
+    let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
+        match prefix with
+        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
+        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
 
        
-    let writeFactors prefix (factors : Factor list) =
+    let toRows prefix (factors : Factor list) =
         factors
-        |> toSparseMatrix
+        |> toSparseTable
         |> fun m -> 
             match prefix with 
-            | Some prefix -> SparseMatrix.ToRows(m,prefix)
-            | None -> SparseMatrix.ToRows(m)
+            | Some prefix -> SparseTable.ToRows(m,prefix)
+            | None -> SparseTable.ToRows(m)
         

@@ -29,10 +29,19 @@ type ProtocolParameter =
         let oa = OntologyAnnotation.fromString term source accession
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
+    /// Create a ISAJson Protocol parameter from ISATab string entries
+    static member fromStringWithComments (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let oa = OntologyAnnotation.fromStringWithComments term source accession comments
+        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
-    /// Create a ISAJson Protocol Parameter from ISATab string entries
+    /// Create a ISAJson Protocol Parameter from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
     static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let oa = OntologyAnnotation.fromStringWithNumber term source accession
+        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+
+    /// Create a ISAJson Protocol Parameter from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
+        let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Get ISATab string entries from an ISAJson ProtocolParameter object (name,source,accession)
