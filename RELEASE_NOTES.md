@@ -1,3 +1,28 @@
+### 0.4.0+2a9311b (Released 2021-10-22)
+* Additions:
+    * latest commit #2a9311b
+    * [[#2a9311b](https://github.com/nfdi4plants/ISADotNet/commit/2a9311b3ff0eb5d4a27be114fcea5e3ef01b0608)] finalize first DAG visualization draft :sparkles:
+    * [[#e5ad37a](https://github.com/nfdi4plants/ISADotNet/commit/e5ad37af2b6fd1525fe276d28259b7e9db44e87d)] assign characterstics from assay.xlsx files only to inputs #43
+    * [[#eb985e3](https://github.com/nfdi4plants/ISADotNet/commit/eb985e3590cda6470c2e94d2b3a1943f8de1d354)] create first DAG creation function
+    * [[#a9eddd6](https://github.com/nfdi4plants/ISADotNet/commit/a9eddd65f77c8070fd8c46dbb494110a3012ff72)] add schema type for DAG
+    * [[#f60edbd](https://github.com/nfdi4plants/ISADotNet/commit/f60edbdc8e4e76c56fe726bd45feb54b90322b8a)] adjust xlsx io to FSharpSpreadsheetML 0.0.7
+    * [[#2147cb9](https://github.com/nfdi4plants/ISADotNet/commit/2147cb93f19eeb93d0441b574bd86396cd66db0a)] prepare assay xlsx file io for FABLE compatability
+    * [[#78a667c](https://github.com/nfdi4plants/ISADotNet/commit/78a667c9d2562b6e56a49e3972a5fe8a3d0c95f2)] add helper methods for assay file value ordering
+    * [[#ea12093](https://github.com/nfdi4plants/ISADotNet/commit/ea1209365ecf5012e89e8d4d1277d2c5cd5c9723)] adjust investigation.xlsx file io for FABLE compatabiity
+    * [[#9c52b6c](https://github.com/nfdi4plants/ISADotNet/commit/9c52b6c4e566b764cc0726af5f94aa56974048d0)] make assay.xlsx file reader save value column ordering
+    * [[#0b8e26e](https://github.com/nfdi4plants/ISADotNet/commit/0b8e26e37d9d2d681a213fd880d45ffaafe062b9)] add helper functions for assayFile Column Ordering
+    * [[#e1d1f1a](https://github.com/nfdi4plants/ISADotNet/commit/e1d1f1a2fdbcd7942c8f975da0f2e8b2599f5dfa)] use old formatted printing for compatibility in ISADotNet.XLSX
+    * [[#ac15be6](https://github.com/nfdi4plants/ISADotNet/commit/ac15be6ff3b3b2dab2ddff42cc6f08b094b749bf)] use old formatted printing for compatibility
+    * [[#c80ec0a](https://github.com/nfdi4plants/ISADotNet/commit/c80ec0a3fee123e84823965949894a14abf264f0)] Add check to exclude whitespaces from being valid values (Issue #37).
+    * [[#0847b38](https://github.com/nfdi4plants/ISADotNet/commit/0847b38329b73b3e3c7b14f884b91d6a43849c52)] init ISADotNet.Viz
+* Bugfixes:
+    * [[#3fd7fca](https://github.com/nfdi4plants/ISADotNet/commit/3fd7fcab56dcfce284ecc1ac98fc4e2fc76e59e1)] several fixes for xlsx io
+    * [[#edeed88](https://github.com/nfdi4plants/ISADotNet/commit/edeed88f1f6385577ce91e9a6693d35d34427c14)] Update tan issue fix (Issue #35).
+    * [[#20cff8c](https://github.com/nfdi4plants/ISADotNet/commit/20cff8ce669a69708c5f36cb926504ecf838aed6)] Update worksheet name fix (Issue #34).
+    * [[#f989114](https://github.com/nfdi4plants/ISADotNet/commit/f9891146a61ad82210efee144d7242979f779f4d)] Fix wrong term accessions (Issue #35).
+    * [[#4f851d9](https://github.com/nfdi4plants/ISADotNet/commit/4f851d9e9e62c64954a0f801a945c00593d59c75)] Fix worksheet naming bug in CommonAPI (Issue #34).
+    * [[#f88320f](https://github.com/nfdi4plants/ISADotNet/commit/f88320ff3e65f8014babfc3e3d2b748c4a782ba0)] fix rowMajorAssay to maintain value order
+
 ### 0.3.3+2da8c3a (Released 2021-9-10)
 * Additions:
     * latest commit #2da8c3a
