@@ -59,7 +59,7 @@ module AnnotationTable =
                             Sample.make
                                 None
                                 outputName
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                                None
                                 (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                 (inputGetter matrix i |> List.distinct |> Some)
                         if data.IsSome then 
@@ -104,7 +104,7 @@ module AnnotationTable =
                             Sample.make
                                 None
                                 outputName
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                                None
                                 (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                                 None
                         if data.IsSome then 
