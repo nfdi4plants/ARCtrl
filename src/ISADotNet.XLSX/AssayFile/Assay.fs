@@ -71,9 +71,9 @@ module Assay =
 /// Diesen Block durch JS ersetzen ----> 
 
     /// Create a new ISADotNet.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
-    let init metadataSheetName assayIdentifier path =
+    let init metadataSheetName assay persons assayIdentifier path =
         Spreadsheet.initWithSst assayIdentifier path
-        |> MetaData.init metadataSheetName 
+        |> MetaData.init metadataSheetName assay persons
         |> Spreadsheet.close
 
     /// Reads an assay from an xlsx spreadsheetdocument
