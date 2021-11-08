@@ -293,7 +293,8 @@ module AnnotationNode =
                 if h.Kind = "Image File" then Some DataFile.ImageFile
                 elif h.Kind = "Raw Data File" then Some DataFile.RawDataFile
                 elif h.Kind = "Derived Data File" then Some DataFile.DerivedDataFile 
-                else None
+                else Some DataFile.RawDataFile
+
             let numberComment = h.Number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
             
             fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
