@@ -106,32 +106,6 @@ module MetaData =
 
         doc
 
-     
-    module Worksheet =
-    
-        let setSheetData (sheetData : SheetData) (worksheet : Worksheet) =
-            if Worksheet.hasSheetData worksheet then
-                worksheet.RemoveChild(Worksheet.getSheetData worksheet)
-                |> ignore
-            Worksheet.addSheetData sheetData worksheet
-
-    /// Replace the sheetdata of the sheet with the given sheetname
-    let private replaceSheetData (sheetName : string) (data : SheetData) (workbookPart : WorkbookPart) =
-
-        let workbook = Workbook.getOrInit  workbookPart
-    
-        let sheets = Sheet.Sheets.getOrInit workbook
-        let id = 
-            sheets |> Sheet.Sheets.getSheets
-            |> Seq.find (fun sheet -> Sheet.getName sheet = sheetName)
-            |> Sheet.getID
-
-        WorkbookPart.getWorksheetPartById id workbookPart
-        |> Worksheet.getOrInit
-        |> Worksheet.setSheetData data
-        |> ignore 
-
-        workbookPart
 
     /// Try get assay from metadatasheet with given sheetName
     let tryGetAssay sheetName (doc : SpreadsheetDocument) = 
@@ -180,7 +154,7 @@ module MetaData =
                 |> Seq.fold (fun s r -> 
                     SheetData.appendRow r s
                 ) newSheet
-                |> fun s -> replaceSheetData sheetName s workBookPart
+                |> fun s -> WorkbookPart.replaceSheetDataByName sheetName s workBookPart
         | None -> failwithf "Metadata sheetname %s could not be found" sheetName
         |> ignore
 
@@ -208,7 +182,7 @@ module MetaData =
                 |> Seq.fold (fun s r -> 
                     SheetData.appendRow r s
                 ) newSheet
-                |> fun s -> replaceSheetData sheetName s workBookPart
+                |> fun s -> WorkbookPart.replaceSheetDataByName sheetName s workBookPart
         | None -> failwithf "Metadata sheetname %s could not be found" sheetName
         |> ignore
 
