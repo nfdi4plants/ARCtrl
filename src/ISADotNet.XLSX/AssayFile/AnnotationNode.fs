@@ -52,6 +52,42 @@ module ValueOrder =
         characteristicValue.Category 
         |> Option.bind tryGetCharacteristicIndex
 
+module ProcessInput = 
+
+    let getHeader inp =
+        match inp with
+        | ProcessInput.Sample s ->      
+            "Sample Name"
+        | ProcessInput.Source s ->      
+            "Source Name"
+        | ProcessInput.Data d when d.DataType.IsSome && d.DataType.Value = DataFile.DerivedDataFile ->        
+            "Derived Data File Name"
+        | ProcessInput.Data d when d.DataType.IsSome && d.DataType.Value = DataFile.ImageFile ->        
+            "Image File Name"
+        | ProcessInput.Data d when d.DataType.IsSome && d.DataType.Value = DataFile.RawDataFile ->        
+            "Raw Data File Name"
+        | ProcessInput.Data d ->        
+            "Data File Name"
+        | ProcessInput.Material m ->  
+            "Material Name"
+
+module ProcessOutput = 
+
+    let getHeader outp =
+        match outp with
+        | ProcessOutput.Sample s ->      
+            "Sample Name"
+        | ProcessOutput.Data d when d.DataType.IsSome && d.DataType.Value = DataFile.DerivedDataFile ->        
+            "Derived Data File Name"
+        | ProcessOutput.Data d when d.DataType.IsSome && d.DataType.Value = DataFile.ImageFile ->        
+            "Image File Name"
+        | ProcessOutput.Data d when d.DataType.IsSome && d.DataType.Value = DataFile.RawDataFile ->        
+            "Raw Data File Name"
+        | ProcessOutput.Data d ->        
+            "Data File Name"
+        | ProcessOutput.Material m ->  
+            "Material Name"
+
 [<AutoOpen>]
 module ValueOrderExtensions = 
     
@@ -65,9 +101,13 @@ module ValueOrderExtensions =
         static member fromStringWithNumberValueOrder (name:string) (term:string) (source:string) (accession:string) valueIndex =
             Factor.fromStringWithNumberAndComments name term source accession [ValueOrder.createOrderComment valueIndex]
 
+        static member getValueIndex(f) = ValueOrder.tryGetFactorIndex f |> Option.get
+
         member this.GetValueIndex() = ValueOrder.tryGetFactorIndex this |> Option.get
 
     type FactorValue with
+
+        static member getValueIndex(f) = ValueOrder.tryGetFactorValueIndex f |> Option.get
 
         member this.GetValueIndex() = ValueOrder.tryGetFactorValueIndex this |> Option.get
 
@@ -81,10 +121,14 @@ module ValueOrderExtensions =
         static member fromStringWithNumberValueOrder (term:string) (source:string) (accession:string) valueIndex =
             MaterialAttribute.fromStringWithNumberAndComments term source accession [ValueOrder.createOrderComment valueIndex]
 
+        static member getValueIndex(m) = ValueOrder.tryGetCharacteristicIndex m |> Option.get
+
         member this.GetValueIndex() = ValueOrder.tryGetCharacteristicIndex this |> Option.get
 
     type MaterialAttributeValue with
-    
+            
+            static member getValueIndex(m) = ValueOrder.tryGetCharacteristicValueIndex m |> Option.get
+
             member this.GetValueIndex() = ValueOrder.tryGetCharacteristicValueIndex this |> Option.get
 
     type ProtocolParameter with
@@ -97,10 +141,14 @@ module ValueOrderExtensions =
         static member fromStringWithNumberValueOrder (term:string) (source:string) (accession:string) valueIndex =
             ProtocolParameter.fromStringWithNumberAndComments term source accession [ValueOrder.createOrderComment valueIndex]
 
+        static member getValueIndex(p) = ValueOrder.tryGetParameterIndex p |> Option.get
+
         member this.GetValueIndex() = ValueOrder.tryGetParameterIndex this |> Option.get
 
     type ProcessParameterValue with
     
+        static member getValueIndex(p) = ValueOrder.tryGetParameterValueIndex p |> Option.get
+
         member this.GetValueIndex() = ValueOrder.tryGetParameterValueIndex this |> Option.get
 
 /// Functions for parsing nodes and node values of an annotation table
