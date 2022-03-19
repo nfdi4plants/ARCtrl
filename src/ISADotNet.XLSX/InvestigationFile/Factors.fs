@@ -2,7 +2,7 @@ namespace ISADotNet.XLSX
 
 
 open DocumentFormat.OpenXml.Spreadsheet
-open FSharpSpreadsheetML
+open FsSpreadsheet.ExcelIO
 open ISADotNet
 open ISADotNet.API
 open Comment

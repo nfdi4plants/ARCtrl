@@ -29,7 +29,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharpSpreadsheetML" Version="0.0.8" />
+    <PackageReference Include="FsSpreadsheet.ExcelIO" Version="0.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.2" />
+    <PackageReference Update="FSharp.Core" Version="6.0.1" />
   </ItemGroup>
   
   <PropertyGroup>

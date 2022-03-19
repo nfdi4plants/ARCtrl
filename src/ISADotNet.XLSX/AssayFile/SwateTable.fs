@@ -2,7 +2,7 @@
 
 open DocumentFormat.OpenXml
 open DocumentFormat.OpenXml.Packaging
-open FSharpSpreadsheetML
+open FsSpreadsheet.ExcelIO
 
 open ISADotNet.SwateCustomXml
 open ISADotNet.XLSX
