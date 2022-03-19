@@ -29,6 +29,7 @@ module Process =
         Seq.init len (processGetter sparseMatrix)
         |> AnnotationTable.mergeIdenticalProcesses
         |> AnnotationTable.indexRelatedProcessesByProtocolName
+        |> Seq.toList
 
 /// Functions for parsing an ISAXLSX Assay File
 ///
@@ -71,9 +72,9 @@ module Assay =
 /// Diesen Block durch JS ersetzen ----> 
 
     /// Create a new ISADotNet.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
-    let init metadataSheetName assay persons assayIdentifier path =
+    let init assay persons assayIdentifier path =
         Spreadsheet.initWithSst assayIdentifier path
-        |> MetaData.init metadataSheetName assay persons
+        |> MetaData.init "Assay" assay persons
         |> Spreadsheet.close
 
     /// Reads an assay from an xlsx spreadsheetdocument
@@ -85,9 +86,9 @@ module Assay =
         
         let sst = Spreadsheet.tryGetSharedStringTable doc
 
-        // Reading the "Investigation" metadata sheet. Here metadata 
+        // Reading the "Assay" metadata sheet. Here metadata 
         let assayMetaData,contacts = 
-            Spreadsheet.tryGetSheetBySheetName "Investigation" doc
+            Spreadsheet.tryGetSheetBySheetName "Assay" doc
             |> Option.map (fun sheet -> 
                 sheet
                 |> SheetData.getRows

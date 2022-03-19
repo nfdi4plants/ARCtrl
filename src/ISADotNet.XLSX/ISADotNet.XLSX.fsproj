@@ -26,6 +26,8 @@
     <Compile Include="AssayFile\MetaData.fs" />
     <Compile Include="AssayFile\SwateTable.fs" />
     <Compile Include="AssayFile\Assay.fs" />
+    <Compile Include="StudyFile\MetaData.fs" />
+    <Compile Include="StudyFile\Study.fs" />
   </ItemGroup>
 
   <ItemGroup>
