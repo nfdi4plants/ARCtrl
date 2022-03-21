@@ -5,13 +5,69 @@ open System.Text.Json.Serialization
 open System.Text.Json
 open System.IO
 
+open System.Collections.Generic
+open System.Collections
+
+
+
 module AssayCommonAPI = 
 
-    //[<AnyOf>]
-    //type NamedValue =
-    //    | [<SerializationOrder(0)>] Parameter of ProcessParameterValue
-    //    | [<SerializationOrder(1)>] Characteristic of MaterialAttributeValue
-    //    | [<SerializationOrder(2)>] Factor of FactorValue
+    [<AnyOf>]
+    type ISAValue =
+        | [<SerializationOrder(0)>] Parameter of ProcessParameterValue
+        | [<SerializationOrder(1)>] Characteristic of MaterialAttributeValue
+        | [<SerializationOrder(2)>] Factor of FactorValue
+
+        /// Returns the ontology of the category of the Value as string
+        member this.Category =
+            match this with
+            | Parameter p       -> p.Category.Value.ParameterName.Value
+            | Characteristic c  -> c.Category.Value.CharacteristicType.Value
+            | Factor f          -> f.Category.Value.FactorType.Value
+
+        ///// Returns the name of the Value as string
+        //member this.GetTableHeader =
+        //    match this with
+        //    | Parameter p       -> p.GetName
+        //    | Characteristic c  -> c.GetName
+        //    | Factor f          -> f.GetName
+
+        /// Returns the name of the Value as string
+        member this.Name = this.Category.GetName
+
+        /// Returns the name of the Value with the number as string (e.g. "temperature #2")
+        member this.NameWithNumber = this.Category.GetNameWithNumber
+    
+        /// Returns the name of the Value with the number as string (e.g. "temperature #2")
+        member this.Number = this.Category.Number
+
+        //member this.Value =
+        //    match this with
+        //    | Parameter p       -> p.GetValue
+        //    | Characteristic c  -> c.GetValue
+        //    | Factor f          -> f.GetValue
+
+        member this.ValueString =
+            match this with
+            | Parameter p       -> p.GetValue
+            | Characteristic c  -> c.GetValue
+            | Factor f          -> f.GetValue
+
+        member this.ValueWithUnit =
+            match this with
+            | Parameter p       -> p.GetValueWithUnit
+            | Characteristic c  -> c.GetValueWithUnit
+            | Factor f          -> f.GetValueWithUnit
+
+    let combineValues (characteristics : MaterialAttributeValue list) (parameters : ProcessParameterValue list) (factors : FactorValue list) : ISAValue list =
+        let l = 
+            (characteristics |> List.map Characteristic)
+            @ (parameters |> List.map Parameter)
+            @ (factors |> List.map Factor)
+        l
+
+    type IPrintable =
+       abstract member Print : unit -> unit
 
     type Row = 
         {
@@ -23,23 +79,27 @@ module AssayCommonAPI =
             InputType : string option
             [<JsonPropertyName(@"outputType")>]
             OutputType : string option
-            [<JsonPropertyName(@"parameterValues")>]
-            ParameterValues : ProcessParameterValue list
-            [<JsonPropertyName(@"characteristicValues")>]
-            CharacteristicValues : MaterialAttributeValue list
-            [<JsonPropertyName(@"factorValues")>]
-            FactorValues : FactorValue list
+            [<JsonPropertyName(@"values")>]
+            Values : ISAValue list
         }
 
-        static member create(?Input,?Output,?InputType,?OutputType,?ParamValues,?CharValues,?FactorValues) : Row=
+        static member create (?Input,?Output,?InputType,?OutputType,?Values) : Row =
+
             {
                 Input = Input |> Option.defaultValue ""
                 Output = Output |> Option.defaultValue ""
                 InputType = InputType
                 OutputType = OutputType
-                ParameterValues = ParamValues |> Option.defaultValue []
-                CharacteristicValues = CharValues |> Option.defaultValue []
-                FactorValues = FactorValues |> Option.defaultValue []
+                Values = Values |> Option.defaultValue []
+            }
+
+        static member create(?Input,?Output,?InputType,?OutputType,?CharValues,?ParamValues,?FactorValues) : Row =
+            {
+                Input = Input |> Option.defaultValue ""
+                Output = Output |> Option.defaultValue ""
+                InputType = InputType
+                OutputType = OutputType
+                Values = combineValues (CharValues |> Option.defaultValue []) (ParamValues |> Option.defaultValue []) (FactorValues |> Option.defaultValue [])
             }
 
         static member fromProcess (proc : Process) : Row list =
@@ -55,6 +115,28 @@ module AssayCommonAPI =
                 Row.create(inputName,outputName,ParamValues = parameterValues, CharValues = characteristics,FactorValues = factors)
             )
 
+        member this.Item (i : int) =
+            this.Values 
+            |> Seq.item i
+
+        member this.Item (s : string) =
+            this.Values 
+            |> List.find (fun v -> 
+                s = v.NameWithNumber || v.Name = s
+            )
+
+        member this.Item (oa : OntologyAnnotation) =
+            this.Values 
+            |> List.pick (fun v -> 
+                if v.Category = oa then Some v
+                else None
+            )
+
+        interface IEnumerable<ISAValue> with
+            member this.GetEnumerator() : System.Collections.Generic.IEnumerator<ISAValue> = (seq this.Values).GetEnumerator()
+
+        interface IEnumerable with
+            member this.GetEnumerator() = (this :> IEnumerable<ISAValue>).GetEnumerator() :> IEnumerator
 
     type RowWiseSheet = 
         {
@@ -75,6 +157,19 @@ module AssayCommonAPI =
             |> List.collect (Row.fromProcess)
             |> RowWiseSheet.create name 
 
+        member this.Item (input : string) =
+            this.Rows 
+            |> List.pick (fun r -> 
+                if r.Input = input then Some r
+                else None
+            )
+
+        interface IEnumerable<Row> with
+            member this.GetEnumerator() = (seq this.Rows).GetEnumerator()
+
+        interface IEnumerable with
+            member this.GetEnumerator() = (this :> IEnumerable<Row>).GetEnumerator() :> IEnumerator
+
     type RowWiseAssay =
         {
             //[<JsonPropertyName(@"assayName")>]
@@ -82,6 +177,12 @@ module AssayCommonAPI =
             [<JsonPropertyName(@"sheets")>]
             Sheets : RowWiseSheet list
         }
+
+        interface IEnumerable<RowWiseSheet> with
+            member this.GetEnumerator() = (Seq.ofList this.Sheets).GetEnumerator()
+
+        interface IEnumerable with
+            member this.GetEnumerator() = (this :> IEnumerable<RowWiseSheet>).GetEnumerator() :> IEnumerator
 
         static member create (*assayName*) sheets : RowWiseAssay =
             {
@@ -102,6 +203,16 @@ module AssayCommonAPI =
             )
             |> List.map (fun (name,processes) -> RowWiseSheet.fromProcesses name processes)
             |> RowWiseAssay.create (*(assay.FileName |> Option.defaultValue "")*)
+    
+        member this.Item (sheetName) =
+            this.Sheets 
+            |> List.pick (fun sheet -> 
+                if sheet.SheetName = sheetName then 
+                    Some sheet
+                else None
+            )
+
+        
 
         static member toString (rwa : RowWiseAssay) =  JsonSerializer.Serialize<RowWiseAssay>(rwa,JsonExtensions.options)
 
@@ -219,23 +330,23 @@ module AssayCommonAPI =
                 FactorColumns = factorColumns
             }
 
-        static member fromRowWiseSheet (rws : RowWiseSheet) = 
-            let parameters = 
-                rws.Rows
-                |> List.map (fun row -> row.ParameterValues)
-                |> List.transpose 
-                |> List.map ParameterColumn.fromParams
-            let characteristics = 
-                rws.Rows
-                |> List.map (fun row -> row.CharacteristicValues)
-                |> List.transpose 
-                |> List.map CharacteristicColumn.fromCharacteristics
-            let factors = 
-                rws.Rows
-                |> List.map (fun row -> row.FactorValues)
-                |> List.transpose 
-                |> List.map FactorColumn.fromFactors
-            ColumnWiseSheet.create rws.SheetName parameters characteristics factors
+        //static member fromRowWiseSheet (rws : RowWiseSheet) = 
+        //    let parameters = 
+        //        rws.Rows
+        //        |> List.map (fun row -> row.ParameterValues)
+        //        |> List.transpose 
+        //        |> List.map ParameterColumn.fromParams
+        //    let characteristics = 
+        //        rws.Rows
+        //        |> List.map (fun row -> row.CharacteristicValues)
+        //        |> List.transpose 
+        //        |> List.map CharacteristicColumn.fromCharacteristics
+        //    let factors = 
+        //        rws.Rows
+        //        |> List.map (fun row -> row.FactorValues)
+        //        |> List.transpose 
+        //        |> List.map FactorColumn.fromFactors
+        //    ColumnWiseSheet.create rws.SheetName parameters characteristics factors
 
     type ColumnWiseAssay =
         {
@@ -250,7 +361,7 @@ module AssayCommonAPI =
                 Sheets = sheets
             }
 
-        static member fromRowWiseAssay (rwa : RowWiseAssay) = 
-            rwa.Sheets
-            |> List.map ColumnWiseSheet.fromRowWiseSheet
-            |> ColumnWiseAssay.create
+        //static member fromRowWiseAssay (rwa : RowWiseAssay) = 
+        //    rwa.Sheets
+        //    |> List.map ColumnWiseSheet.fromRowWiseSheet
+        //    |> ColumnWiseAssay.create

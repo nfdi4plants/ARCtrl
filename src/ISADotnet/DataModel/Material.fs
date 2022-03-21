@@ -67,6 +67,12 @@ type MaterialAttribute =
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
+    /// Returns number of Material attribute
+    member this.Number =       
+        this.CharacteristicType
+        |> Option.bind (fun oa -> oa.Number)
+        |> Option.defaultValue ""
+
     /// Returns the name of the characteristic with the number as string (e.g. "temperature #2")
     member this.GetNameWithNumber =       
         this.CharacteristicType

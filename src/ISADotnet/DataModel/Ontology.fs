@@ -86,11 +86,14 @@ type OntologyAnnotation =
         )
         |> Option.defaultValue ""
 
+    /// Returns number of Ontology annotation
+    member this.Number =       
+        this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))       
+
     /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
     member this.GetNameWithNumber =       
-        let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
         let name = this.GetName
-        match number with
+        match this.Number with
         | Some n -> name + " #" + n
         | None -> name
 
