@@ -1,7 +1,7 @@
 ﻿module AssayFileTests
 
 
-open FSharpSpreadsheetML
+open FsSpreadsheet.ExcelIO
 open ISADotNet
 
 open Expecto

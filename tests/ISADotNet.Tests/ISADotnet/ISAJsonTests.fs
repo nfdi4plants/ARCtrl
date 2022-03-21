@@ -1,9 +1,6 @@
 ﻿module ISAJsonTests
 
-
-open FSharpSpreadsheetML
 open ISADotNet.Json
-
 
 open Expecto
 open TestingUtils

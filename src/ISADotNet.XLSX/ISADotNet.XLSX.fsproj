@@ -26,10 +26,12 @@
     <Compile Include="AssayFile\MetaData.fs" />
     <Compile Include="AssayFile\SwateTable.fs" />
     <Compile Include="AssayFile\Assay.fs" />
+    <Compile Include="StudyFile\MetaData.fs" />
+    <Compile Include="StudyFile\Study.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FSharpSpreadsheetML" Version="0.0.8" />
+    <PackageReference Include="FsSpreadsheet.ExcelIO" Version="0.0.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,7 +39,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.2" />
+    <PackageReference Update="FSharp.Core" Version="6.0.1" />
   </ItemGroup>
   
   <PropertyGroup>

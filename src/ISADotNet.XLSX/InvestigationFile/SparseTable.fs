@@ -2,9 +2,6 @@ namespace ISADotNet.XLSX
 
 open ISADotNet
 open System.Collections.Generic
-open FSharpSpreadsheetML
-open DocumentFormat.OpenXml.Spreadsheet
-
 
 type SparseRow = (int * string) seq
 

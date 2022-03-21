@@ -1,6 +1,6 @@
 ﻿module ISAXLSXInvestigationTests
 
-open FSharpSpreadsheetML
+open FsSpreadsheet.ExcelIO
 open ISADotNet
 
 open Expecto

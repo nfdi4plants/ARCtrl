@@ -1,7 +1,7 @@
 ﻿namespace ISADotNet.XLSX.AssayFile
 
 
-open FSharpSpreadsheetML
+open FsSpreadsheet.ExcelIO
 open ISADotNet
 open ISADotNet.XLSX
 
