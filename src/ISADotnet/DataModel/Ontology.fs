@@ -97,6 +97,16 @@ type OntologyAnnotation =
         | Some n -> name + " #" + n
         | None -> name
 
+    /// Returns the term source of the ontology as string
+    member this.TermSourceREFString =       
+        this.TermSourceREF
+        |> Option.defaultValue ""
+
+    /// Returns the term accession number of the ontology as string
+    member this.TermAccessionString =       
+        this.TermAccessionNumber
+        |> Option.defaultValue ""
+
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
     static member fromString (term:string) (source:string) (accession:string) =
         OntologyAnnotation.make 

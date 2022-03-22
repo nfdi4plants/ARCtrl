@@ -12,48 +12,57 @@ open System.Collections
 
 module AssayCommonAPI = 
 
+    //let private optionHandler
+
     [<AnyOf>]
     type ISAValue =
         | [<SerializationOrder(0)>] Parameter of ProcessParameterValue
         | [<SerializationOrder(1)>] Characteristic of MaterialAttributeValue
         | [<SerializationOrder(2)>] Factor of FactorValue
 
-        /// Returns the ontology of the category of the Value as string
+        /// Returns the ontology of the category of the ISAValue
         member this.Category =
             match this with
-            | Parameter p       -> p.Category.Value.ParameterName.Value
-            | Characteristic c  -> c.Category.Value.CharacteristicType.Value
-            | Factor f          -> f.Category.Value.FactorType.Value
+            | Parameter p       -> try p.Category.Value.ParameterName.Value         with | _ -> failwith $"Parameter does not contain category"
+            | Characteristic c  -> try c.Category.Value.CharacteristicType.Value    with | _ -> failwith $"Characteristic does not contain category"
+            | Factor f          -> try f.Category.Value.FactorType.Value            with | _ -> failwith $"Factor does not contain category"
 
-        ///// Returns the name of the Value as string
-        //member this.GetTableHeader =
-        //    match this with
-        //    | Parameter p       -> p.GetName
-        //    | Characteristic c  -> c.GetName
-        //    | Factor f          -> f.GetName
+        /// Returns the ontology of the unit of the ISAValue
+        member this.Unit =
+            match this with
+            | Parameter p       -> try p.Unit.Value with | _ -> failwith $"Parameter {p.GetName} does not contain unit"
+            | Characteristic c  -> try c.Unit.Value with | _ -> failwith $"Characteristic {c.GetName} does not contain unit"
+            | Factor f          -> try f.Unit.Value with | _ -> failwith $"Factor {f.GetName} does not contain unit"
+
+        /// Returns the value of the ISAValue
+        member this.Value =
+            match this with
+            | Parameter p       -> try p.Value.Value with | _ -> failwith $"Parameter {p.GetName} does not contain value"
+            | Characteristic c  -> try c.Value.Value with | _ -> failwith $"Characteristic {c.GetName} does not contain value"
+            | Factor f          -> try f.Value.Value with | _ -> failwith $"Factor {f.GetName} does not contain value"
 
         /// Returns the name of the Value as string
-        member this.Name = this.Category.GetName
+        member this.HeaderText = 
+            match this with
+            | Parameter p       -> try $"Parameter [{this.NameText}]"       with | _ -> failwith $"Parameter does not contain header"
+            | Characteristic c  -> try $"Characteristics [{this.NameText}]" with | _ -> failwith $"Characteristic does not contain header"
+            | Factor f          -> try $"Factor [{this.NameText}]"          with | _ -> failwith $"Factor does not contain header"
+
+        /// Returns the name of the Value as string
+        member this.NameText = this.Category.GetName
 
         /// Returns the name of the Value with the number as string (e.g. "temperature #2")
-        member this.NameWithNumber = this.Category.GetNameWithNumber
+        member this.NameWithNumberText = this.Category.GetNameWithNumber
     
         /// Returns the name of the Value with the number as string (e.g. "temperature #2")
         member this.Number = this.Category.Number
+      
+        /// Returns the ontology of the category of the Value as string
+        member this.UnitText = this.Unit.GetName
 
-        //member this.Value =
-        //    match this with
-        //    | Parameter p       -> p.GetValue
-        //    | Characteristic c  -> c.GetValue
-        //    | Factor f          -> f.GetValue
+        member this.ValueText = this.Value.AsString
 
-        member this.ValueString =
-            match this with
-            | Parameter p       -> p.GetValue
-            | Characteristic c  -> c.GetValue
-            | Factor f          -> f.GetValue
-
-        member this.ValueWithUnit =
+        member this.ValueWithUnitText =
             match this with
             | Parameter p       -> p.GetValueWithUnit
             | Characteristic c  -> c.GetValueWithUnit
@@ -65,9 +74,6 @@ module AssayCommonAPI =
             @ (parameters |> List.map Parameter)
             @ (factors |> List.map Factor)
         l
-
-    type IPrintable =
-       abstract member Print : unit -> unit
 
     type Row = 
         {
@@ -116,21 +122,37 @@ module AssayCommonAPI =
             )
 
         member this.Item (i : int) =
-            this.Values 
-            |> Seq.item i
+            this.Values.[i]
 
         member this.Item (s : string) =
-            this.Values 
-            |> List.find (fun v -> 
-                s = v.NameWithNumber || v.Name = s
-            )
+            let item = 
+                this.Values 
+                |> List.tryFind (fun v -> 
+                    s = v.HeaderText || s = v.NameWithNumberText || v.NameText = s
+                )
+            match item with
+            | Some i -> i
+            | None -> failwith $"Row with input \"{this.Input}\" does not contain item with name or header \"{s}\""
 
         member this.Item (oa : OntologyAnnotation) =
+            let item =
+                this.Values 
+                |> List.tryFind (fun v -> v.Category = oa)
+            match item with
+            | Some i -> i
+            | None -> failwith $"Row with input \"{this.Input}\" does not contain item with ontology \"{oa.GetName}\""
+
+        member this.ValueCount =
             this.Values 
-            |> List.pick (fun v -> 
-                if v.Category = oa then Some v
-                else None
-            )
+            |> List.length
+
+        member this.ValueNames =
+            this.Values 
+            |> List.map (fun value -> value.NameText)
+
+        member this.Headers =
+            this.Values 
+            |> List.map (fun value -> value.HeaderText)
 
         interface IEnumerable<ISAValue> with
             member this.GetEnumerator() : System.Collections.Generic.IEnumerator<ISAValue> = (seq this.Values).GetEnumerator()
@@ -157,12 +179,24 @@ module AssayCommonAPI =
             |> List.collect (Row.fromProcess)
             |> RowWiseSheet.create name 
 
+        member this.Item (i : int) =
+            this.Rows.[i]
+
         member this.Item (input : string) =
+            let row = 
+                this.Rows 
+                |> List.tryFind (fun r -> r.Input = input)
+            match row with
+            | Some r -> r
+            | None -> failwith $"Sheet \"{this.SheetName}\" does not contain row with input \"{input}\""
+
+        member this.RowCount =
             this.Rows 
-            |> List.pick (fun r -> 
-                if r.Input = input then Some r
-                else None
-            )
+            |> List.length
+
+        member this.InputNames =
+            this.Rows 
+            |> List.map (fun row -> row.Input)
 
         interface IEnumerable<Row> with
             member this.GetEnumerator() = (seq this.Rows).GetEnumerator()
@@ -172,8 +206,14 @@ module AssayCommonAPI =
 
     type RowWiseAssay =
         {
-            //[<JsonPropertyName(@"assayName")>]
-            //AssayName : string
+            [<JsonPropertyName(@"filename")>]
+            FileName : string option
+            [<JsonPropertyName(@"measurementType")>]
+            MeasurementType : OntologyAnnotation option
+            [<JsonPropertyName(@"technologyType")>]
+            TechnologyType : OntologyAnnotation option
+            [<JsonPropertyName(@"technologyPlatform")>]
+            TechnologyPlatform : string option
             [<JsonPropertyName(@"sheets")>]
             Sheets : RowWiseSheet list
         }
@@ -184,35 +224,48 @@ module AssayCommonAPI =
         interface IEnumerable with
             member this.GetEnumerator() = (this :> IEnumerable<RowWiseSheet>).GetEnumerator() :> IEnumerator
 
-        static member create (*assayName*) sheets : RowWiseAssay =
+        static member create fileName measurementType technologyType technologyPlatform sheets : RowWiseAssay =
             {
-                //AssayName = assayName
+                FileName = fileName
+                MeasurementType = measurementType
+                TechnologyType = technologyType
+                TechnologyPlatform = technologyPlatform
                 Sheets = sheets
             }
 
-        static member fromAssay (assay : Assay) = 
-            assay.ProcessSequence |> Option.defaultValue []
-            |> List.groupBy (fun x -> 
-                if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                    x.ExecutesProtocol.Value.Name.Value 
-                else
-                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
-                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
-                    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
-                    x.Name.Value.Remove lastUnderScoreIndex
-            )
-            |> List.map (fun (name,processes) -> RowWiseSheet.fromProcesses name processes)
-            |> RowWiseAssay.create (*(assay.FileName |> Option.defaultValue "")*)
+        static member fromAssay (assay : Assay) =
+            let sheets = 
+                assay.ProcessSequence |> Option.defaultValue []
+                |> List.groupBy (fun x -> 
+                    if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                        x.ExecutesProtocol.Value.Name.Value 
+                    else
+                        // Data Stewards use '_' as seperator to distinguish between protocol template types.
+                        // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
+                        let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
+                        x.Name.Value.Remove lastUnderScoreIndex
+                )
+                |> List.map (fun (name,processes) -> RowWiseSheet.fromProcesses name processes)
+            RowWiseAssay.create assay.FileName assay.MeasurementType assay.TechnologyType assay.TechnologyPlatform sheets
     
-        member this.Item (sheetName) =
-            this.Sheets 
-            |> List.pick (fun sheet -> 
-                if sheet.SheetName = sheetName then 
-                    Some sheet
-                else None
-            )
+        member this.Item (i : int) =
+            this.Sheets.[i]
 
-        
+        member this.Item (sheetName) =
+            let sheet = 
+                this.Sheets 
+                |> List.tryFind (fun sheet -> sheet.SheetName = sheetName)
+            match sheet with
+            | Some s -> s
+            | None -> failwith $"Assay \"{this.FileName}\" does not contain sheet with name \"{sheetName}\""
+
+        member this.SheetCount =
+            this.Sheets 
+            |> List.length
+
+        member this.SheetNames =
+            this.Sheets 
+            |> List.map (fun sheet -> sheet.SheetName)
 
         static member toString (rwa : RowWiseAssay) =  JsonSerializer.Serialize<RowWiseAssay>(rwa,JsonExtensions.options)
 
