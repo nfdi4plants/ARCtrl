@@ -48,72 +48,82 @@ module Study =
 
     /// Create a new ISADotNet.XLSX study file constisting of two sheets. The first has the name of the studyIdentifier and is meant to store parameters used in the study. The second stores additional study metadata
     let init study studyIdentifier path =
-        Spreadsheet.initWithSst studyIdentifier path
-        |> MetaData.init "Study" study
-        |> Spreadsheet.close
+        try 
+            Spreadsheet.initWithSst studyIdentifier path
+            |> MetaData.init "Study" study
+            |> Spreadsheet.close
+        with
+        | err -> failwithf "Could not init study file: %s" err.Message
 
     /// Reads a study from an xlsx spreadsheetdocument
     ///
     /// As factors and protocols are used for the investigation file, they are returned individually
     let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) = 
-        
-        let sst = Spreadsheet.tryGetSharedStringTable doc
+        try
+            let sst = Spreadsheet.tryGetSharedStringTable doc
 
-        // Reading the "Study" metadata sheet. Here metadata 
-        let studyMetaData = 
-            Spreadsheet.tryGetSheetBySheetName "Study" doc
-            |> Option.map (fun sheet -> 
-                sheet
-                |> SheetData.getRows
-                |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
-                |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
-                |> MetaData.fromRows
+            // Reading the "Study" metadata sheet. Here metadata 
+            let studyMetaData = 
+                Spreadsheet.tryGetSheetBySheetName "Study" doc
+                |> Option.map (fun sheet -> 
+                    sheet
+                    |> SheetData.getRows
+                    |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
+                    |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+                    |> MetaData.fromRows
                 
-            )
-            |> Option.defaultValue (Study.empty)          
+                )
+                |> Option.defaultValue (Study.empty)          
         
-        // All sheetnames in the spreadsheetDocument
-        let sheetNames = 
-            Spreadsheet.getWorkbookPart doc
-            |> Workbook.get
-            |> Sheet.Sheets.get
-            |> Sheet.Sheets.getSheets
-            |> Seq.map Sheet.getName
+            // All sheetnames in the spreadsheetDocument
+            let sheetNames = 
+                Spreadsheet.getWorkbookPart doc
+                |> Workbook.get
+                |> Sheet.Sheets.get
+                |> Sheet.Sheets.getSheets
+                |> Seq.map Sheet.getName
         
-        let study =
-            sheetNames
-            |> Seq.collect (fun sheetName ->                    
-                match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
-                | Some wsp ->
-                    match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
-                    | Some table -> 
-                        // Extract the sheetdata as a sparse matrix
-                        let sheet = Worksheet.getSheetData wsp.Worksheet
-                        let headers = Table.getColumnHeaders table
-                        let m = Table.toSparseValueMatrix sst sheet table
-                        Seq.singleton (sheetName,headers,m)     
-                    | None -> Seq.empty
-                | None -> Seq.empty                
-            )
-            |> fromSparseMatrices // Feed the sheets (represented as sparse matrices) into the study parser function
+            let study =
+                sheetNames
+                |> Seq.collect (fun sheetName ->                    
+                    match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
+                    | Some wsp ->
+                        match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
+                        | Some table -> 
+                            // Extract the sheetdata as a sparse matrix
+                            let sheet = Worksheet.getSheetData wsp.Worksheet
+                            let headers = Table.getColumnHeaders table
+                            let m = Table.toSparseValueMatrix sst sheet table
+                            Seq.singleton (sheetName,headers,m)     
+                        | None -> Seq.empty
+                    | None -> Seq.empty                
+                )
+                |> fromSparseMatrices // Feed the sheets (represented as sparse matrices) into the study parser function
             
-        API.Update.UpdateByExisting.updateRecordType studyMetaData study // Merges the study containing the sutdy meta data and the study containing the processes retrieved from the sheets
+            API.Update.UpdateByExisting.updateRecordType studyMetaData study // Merges the study containing the sutdy meta data and the study containing the processes retrieved from the sheets
+        with
+        | err -> failwithf "Could not read study from spreadsheet: %s" err.Message
 
     /// Parses the study file
-    let fromFile (path:string) = 
-        let doc = Spreadsheet.fromFile path false
+    let fromFile (path:string) =
         try
-            fromSpreadsheet doc
-        finally
-            Spreadsheet.close doc
+            let doc = Spreadsheet.fromFile path false
+            try
+                fromSpreadsheet doc
+            finally
+                Spreadsheet.close doc
+        with
+        | err -> failwithf "Could not read study from file with path \"%s\": %s" path err.Message
 
     /// Parses the study file
     let fromStream (stream:#System.IO.Stream) = 
-
-        let doc = Spreadsheet.fromStream stream false
         try
-            fromSpreadsheet doc
-        finally
-            Spreadsheet.close doc
+            let doc = Spreadsheet.fromStream stream false
+            try
+                fromSpreadsheet doc
+            finally
+                Spreadsheet.close doc
+        with
+        | err -> failwithf "Could not read study from stream: %s" err.Message
 
     /// ---->  Bis hier

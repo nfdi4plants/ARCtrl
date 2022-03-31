@@ -4,37 +4,24 @@ open FsSpreadsheet.ExcelIO
 open ISADotNet
 open ISADotNet.XLSX
 
-/// Functions for reading and writing the additional information stored in the assay metadata sheet
+/// Functions for reading and writing the additional information stored in the study metadata sheet
 module MetaData =
 
     let studiesLabel = "STUDY METADATA"
 
-    /// Write Assay Metadata to excel rows
+    /// Write Study Metadata to excel rows
     let toRows (study:Study) =
         seq {          
             yield  SparseRow.fromValues [studiesLabel]
             yield! Study.toRows study
         }
         
-    /// Read Assay Metadata from excel rows
+    /// Read Study Metadata from excel rows
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         en.MoveNext() |> ignore  
         let _,_,_,study = Study.fromRows 2 en
         study
-
-
-    ///let doc = Spreadsheet.fromFile path true  
-    ///  
-    ///MetadataSheet.overwriteWithAssayInfo "Investigation" testAssay2 doc
-    ///
-    ///MetadataSheet.overwriteWithPersons "Investigation" [person] doc
-    /// 
-    ///MetadataSheet.getPersons "Investigation" doc
-    ///
-    ///MetadataSheet.tryGetAssay "Investigation" doc
-    ///  
-    ///doc.Close()
 
     /// Diesen Block durch JS ersetzen ----> 
 
@@ -78,7 +65,7 @@ module MetaData =
         doc
 
 
-    /// Try get assay from metadatasheet with given sheetName
+    /// Try get study from metadatasheet with given sheetName
     let tryGetStudy sheetName (doc : SpreadsheetDocument) = 
         match Spreadsheet.tryGetSheetBySheetName sheetName doc with
         | Some sheet -> 
@@ -88,7 +75,7 @@ module MetaData =
             |> fromRows           
         | None -> failwithf "Metadata sheetname %s could not be found" sheetName
 
-    /// Replaces assay metadata from metadatasheet with given sheetName
+    /// Replaces study metadata from metadatasheet with given sheetName
     let overwriteWithStudyInfo sheetName study (doc : SpreadsheetDocument) = 
 
         let workBookPart = Spreadsheet.getWorkbookPart doc
