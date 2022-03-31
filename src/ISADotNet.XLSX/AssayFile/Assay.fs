@@ -65,9 +65,16 @@ module Assay =
                 Seq.append processes' processes
             ) (List.empty,List.empty,Seq.empty,Seq.empty)
 
-        let processes = AnnotationTable.updateSamplesByThemselves processes
+        let processes = AnnotationTable.updateSamplesByThemselves processes |> Seq.toList
 
-        factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+        let assay = 
+            match characteristics,processes with
+            | [],[] -> Assay.create()
+            | [],ps -> Assay.create(ProcessSequence = ps)
+            | cs,[] -> Assay.create(CharacteristicCategories = cs)
+            | cs,ps -> Assay.create(CharacteristicCategories = cs,ProcessSequence = ps)
+
+        factors,protocols,assay
 
 /// Diesen Block durch JS ersetzen ----> 
 
