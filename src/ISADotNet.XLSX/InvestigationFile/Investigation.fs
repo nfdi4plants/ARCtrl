@@ -1,6 +1,6 @@
 namespace ISADotNet.XLSX
 open DocumentFormat.OpenXml.Spreadsheet
-open FsSpreadsheet.ExcelIO
+open FSharpSpreadsheetML
 open ISADotNet
 open ISADotNet.API
 open Comment
@@ -182,7 +182,7 @@ module Investigation =
             yield  SparseRow.fromValues[contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
-            for study in (Option.defaultValue [] investigation.Studies) do
+            for study in (Option.defaultValue [Study.empty] investigation.Studies) do
                 yield  SparseRow.fromValues[studyLabel]
                 yield! Study.toRows study
         }
