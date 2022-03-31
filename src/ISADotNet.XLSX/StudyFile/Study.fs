@@ -44,7 +44,7 @@ module Study =
 
         Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = protocols, ProcessSequence = processes)
 
-/// Diesen Block durch JS ersetzen ----> 
+// Diesen Block durch JS ersetzen ----> 
 
     /// Create a new ISADotNet.XLSX study file constisting of two sheets. The first has the name of the studyIdentifier and is meant to store parameters used in the study. The second stores additional study metadata
     let init study studyIdentifier path =

@@ -113,6 +113,13 @@ type Value =
         | Float f -> string f |> Some, None, None
         | Name s -> s |> Some, None, None
 
+    member this.AsString =         
+        match this with
+        | Value.Ontology oa  -> oa.GetName
+        | Value.Float f -> string f
+        | Value.Int i   -> string i
+        | Value.Name s  -> s
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
