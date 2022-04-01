@@ -99,13 +99,19 @@ module Assay =
         try
             let sst = Spreadsheet.tryGetSharedStringTable doc
 
+            let tryIncludeSST sst cell = 
+                try 
+                    Cell.includeSharedStringValue (Option.get sst) cell
+                with | _ -> cell
+
+
             // Reading the "Assay" metadata sheet. Here metadata 
             let assayMetaData,contacts = 
                 Spreadsheet.tryGetSheetBySheetName "Assay" doc
                 |> Option.map (fun sheet -> 
                     sheet
                     |> SheetData.getRows
-                    |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
+                    |> Seq.map (Row.mapCells (tryIncludeSST sst))
                     |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
                     |> MetaData.fromRows
                     |> fun (a,p) -> Option.defaultValue Assay.empty a, p
