@@ -62,13 +62,18 @@ module Study =
         try
             let sst = Spreadsheet.tryGetSharedStringTable doc
 
+            let tryIncludeSST sst cell = 
+                try 
+                    Cell.includeSharedStringValue (Option.get sst) cell
+                with | _ -> cell
+
             // Reading the "Study" metadata sheet. Here metadata 
             let studyMetaData = 
                 match Spreadsheet.tryGetSheetBySheetName "Study" doc with
                 | Some sheet ->
                     sheet
                     |> SheetData.getRows
-                    |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
+                    |> Seq.map (Row.mapCells (tryIncludeSST sst))
                     |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
                     |> MetaData.fromRows
                 

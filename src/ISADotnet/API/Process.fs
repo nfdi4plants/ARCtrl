@@ -260,21 +260,20 @@ module Process =
 
     /// If the process implements the given characteristic, return the list of output files together with their according characteristic values of this characteristic
     let tryGetOutputsWithCharacteristicBy (predicate : MaterialAttribute -> bool) (p : Process) =
-        match p.Outputs with
-        | Some os ->
-            os
-            |> List.choose (fun o ->
-                ProcessOutput.tryGetCharacteristics o
+        match  p.Inputs, p.Outputs with
+        | Some is,Some os ->
+            List.zip is os
+            |> List.choose (fun (i,o) ->
+                ProcessInput.tryGetCharacteristics i
                 |> Option.defaultValue []
                 |> List.tryPick (fun mv -> 
                     match mv.Category with
                     | Some m when predicate m -> Some (o,mv)
                     | _ -> None
-
                 )
             )
             |> Option.fromValueWithDefault []
-        | None -> None
+        | _ -> None
 
     /// Returns the factors of the samples of the process
     let getFactors (p : Process) =
