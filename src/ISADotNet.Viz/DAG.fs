@@ -25,6 +25,7 @@ type DAG =
                 p.Outputs.Value
                 |> List.zip p.Inputs.Value
                 |> List.map (fun (i,o) -> ProcessInput.getName i ,ProcessOutput.getName o ,p.Name.Value)
+                |> List.distinct
             )
             |> List.append (rootNodes |> List.map (fun i -> "Root",i,""))
                           
