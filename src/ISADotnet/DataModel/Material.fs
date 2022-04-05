@@ -29,6 +29,7 @@ type MaterialAttribute =
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Create a ISAJson MaterialAttribute from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let oa = OntologyAnnotation.fromStringWithNumber term source accession
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
@@ -39,6 +40,7 @@ type MaterialAttribute =
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Create a ISAJson MaterialAttribute from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
         let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
@@ -48,42 +50,51 @@ type MaterialAttribute =
         ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
 
     /// Returns the name of the characteristic as string
-    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.NameAsString =
         this.CharacteristicType
         |> Option.map (fun oa -> oa.NameAsString)
         |> Option.defaultValue ""
 
     /// Returns the name of the characteristic with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.NameAsStringWithNumber =       
         this.CharacteristicType
         |> Option.map (fun oa -> oa.NameAsStringWithNumber)
         |> Option.defaultValue ""
 
     /// Returns the name of the characteristic as string
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.GetName =
         this.CharacteristicType
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
     /// Returns number of Material attribute
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.Number =       
         this.CharacteristicType
         |> Option.bind (fun oa -> oa.Number)
         |> Option.defaultValue ""
 
     /// Returns the name of the characteristic with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.GetNameWithNumber =       
         this.CharacteristicType
         |> Option.map (fun oa -> oa.GetNameWithNumber)
+        |> Option.defaultValue ""
+
+    /// Returns the name of the characteristic as string
+    member this.NameText =
+        this.CharacteristicType
+        |> Option.map (fun oa -> oa.NameText)
         |> Option.defaultValue ""
 
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            "OA " + this.GetNameWithNumber
+            "OA " + this.NameText
 
 type MaterialAttributeValue = 
     {
@@ -114,42 +125,50 @@ type MaterialAttributeValue =
         MaterialAttributeValue.create()
 
     /// Returns the name of the category as string
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.GetName =
         this.Category
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
     /// Returns the name of the category with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.GetNameWithNumber =       
         this.Category
         |> Option.map (fun oa -> oa.GetNameWithNumber)
         |> Option.defaultValue ""
 
-    member this.GetValue =
+    member this.ValueText =
         this.Value
         |> Option.map (fun oa ->
             match oa with
-            | Value.Ontology oa  -> oa.GetName
+            | Value.Ontology oa  -> oa.NameText
             | Value.Float f -> string f
             | Value.Int i   -> string i
             | Value.Name s  -> s
         )
         |> Option.defaultValue ""
 
-    member this.GetValueWithUnit =
+    [<System.Obsolete("This function is deprecated. Use the member \"ValueText\" instead.")>]
+    member this.GetValue = this.ValueText
+
+    member this.ValueWithUnitText =
         let unit = 
-            this.Unit |> Option.map (fun oa -> oa.GetName)
-        let v = this.GetValue
+            this.Unit |> Option.map (fun oa -> oa.NameText)
+        let v = this.ValueText
         match unit with
         | Some u    -> sprintf "%s %s" v u
         | None      -> v
+
+    [<System.Obsolete("This function is deprecated. Use the member \"ValueWithUnitText\" instead.")>]
+    member this.GetValueWithUnit = this.ValueWithUnitText
 
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            let category = this.Category |> Option.map (fun f -> f.GetName)
-            let unit = this.Unit |> Option.map (fun oa -> oa.GetName)
+            let category = this.Category |> Option.map (fun f -> f.NameText)
+            let unit = this.Unit |> Option.map (fun oa -> oa.NameText)
             let value = 
                 this.Value
                 |> Option.map (fun v ->
@@ -209,12 +228,17 @@ type Material =
     static member empty =
         Material.create()
 
-    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.NameAsString =
         this.Name
         |> Option.defaultValue ""
-
+        
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.GetName =
+        this.Name
+        |> Option.defaultValue ""
+
+    member this.NameText =
         this.Name
         |> Option.defaultValue ""
 
@@ -225,5 +249,5 @@ type Material =
             let chars = this.Characteristics |> Option.defaultValue [] |> List.length
             match this.MaterialType with
             | Some t ->
-                sprintf "%s [%s; %i characteristics]" this.GetName t.AsString chars
-            | None -> sprintf "%s [%i characteristics]" this.GetName chars
+                sprintf "%s [%s; %i characteristics]" this.NameText t.AsString chars
+            | None -> sprintf "%s [%i characteristics]" this.NameText chars

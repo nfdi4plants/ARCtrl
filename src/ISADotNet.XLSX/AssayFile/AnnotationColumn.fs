@@ -31,8 +31,8 @@ module AnnotationColumn =
         /// Parses a string to a column header
         static member fromStringHeader header =
                   
-            let kindPattern = @".*(?= [\[\(])"
-            let namePattern = @"(?<= \[)[^#\]]*(?=[\]#])"
+            let kindPattern = @"[^\[(]*(?= [\[\(])"
+            let namePattern = @"(?<= \[).*(?=[\]])"
             let ontologySourcePattern = @"(?<=\()\S+:[^;)#]*(?=[\)\#])"
             let numberPattern = @"(?<=#)\d+(?=[\)\]])"
 

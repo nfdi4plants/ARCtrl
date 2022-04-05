@@ -64,16 +64,17 @@ module Study =
 
             // Reading the "Study" metadata sheet. Here metadata 
             let studyMetaData = 
-                Spreadsheet.tryGetSheetBySheetName "Study" doc
-                |> Option.map (fun sheet -> 
+                match Spreadsheet.tryGetSheetBySheetName "Study" doc with
+                | Some sheet ->
                     sheet
                     |> SheetData.getRows
                     |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
                     |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
                     |> MetaData.fromRows
                 
-                )
-                |> Option.defaultValue (Study.empty)          
+                | None -> 
+                    printfn "Cannot retrieve metadata: Study file does not contain \"Study\" sheet."
+                    Study.empty        
         
             // All sheetnames in the spreadsheetDocument
             let sheetNames = 

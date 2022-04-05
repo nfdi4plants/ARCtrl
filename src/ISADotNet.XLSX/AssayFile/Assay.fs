@@ -101,16 +101,17 @@ module Assay =
 
             // Reading the "Assay" metadata sheet. Here metadata 
             let assayMetaData,contacts = 
-                Spreadsheet.tryGetSheetBySheetName "Assay" doc
-                |> Option.map (fun sheet -> 
+                match Spreadsheet.tryGetSheetBySheetName "Assay" doc with 
+                | Some sheet ->
                     sheet
                     |> SheetData.getRows
                     |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
                     |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
                     |> MetaData.fromRows
                     |> fun (a,p) -> Option.defaultValue Assay.empty a, p
-                )
-                |> Option.defaultValue (Assay.empty,[])          
+                | None -> 
+                    printfn "Cannot retrieve metadata: Assay file does not contain \"Assay\" sheet."
+                    Assay.empty,[]         
         
             // All sheetnames in the spreadsheetDocument
             let sheetNames = 

@@ -25,19 +25,29 @@ type ProcessParameterValue =
     static member empty =
         ProcessParameterValue.create()
 
+
     /// Returns the name of the category as string
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.GetName =
         this.Category
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
     /// Returns the name of the category with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.GetNameWithNumber =       
         this.Category
         |> Option.map (fun oa -> oa.GetNameWithNumber)
         |> Option.defaultValue ""
 
-    member this.GetValue =
+    /// Returns the name of the category as string
+    member this.NameText =
+        this.Category
+        |> Option.map (fun oa -> oa.NameText)
+        |> Option.defaultValue ""
+
+    member this.ValueText =
+    
         this.Value
         |> Option.map (fun oa ->
             match oa with
@@ -48,20 +58,26 @@ type ProcessParameterValue =
         )
         |> Option.defaultValue ""
 
-    member this.GetValueWithUnit =
+    [<System.Obsolete("This function is deprecated. Use the member \"ValueText\" instead.")>]
+    member this.GetValue = this.ValueText
+
+    member this.ValueWithUnitText =
         let unit = 
-            this.Unit |> Option.map (fun oa -> oa.GetName)
-        let v = this.GetValue
+            this.Unit |> Option.map (fun oa -> oa.NameText)
+        let v = this.ValueText
         match unit with
         | Some u    -> sprintf "%s %s" v u
         | None      -> v
+
+    [<System.Obsolete("This function is deprecated. Use the member \"ValueWithUnitText\" instead.")>]
+    member this.GetValueWithUnit = this.ValueWithUnitText
 
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            let category = this.Category |> Option.map (fun f -> f.GetName)
-            let unit = this.Unit |> Option.map (fun oa -> oa.GetName)
+            let category = this.Category |> Option.map (fun f -> f.NameText)
+            let unit = this.Unit |> Option.map (fun oa -> oa.NameText)
             let value = 
                 this.Value
                 |> Option.map (fun v ->
