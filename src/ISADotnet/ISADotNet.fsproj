@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
@@ -48,7 +48,12 @@
     <Compile Include="JsonIO\Assay.fs" />
     <Compile Include="JsonIO\Study.fs" />
     <Compile Include="JsonIO\Investigation.fs" />
-    <Compile Include="JsonIO\AssayCommonAPI.fs" />
+    <Compile Include="QueryModel\Value.fs" />
+    <Compile Include="QueryModel\Row.fs" />
+    <Compile Include="QueryModel\Column.fs" />
+    <Compile Include="QueryModel\ValueCollection.fs" />
+    <Compile Include="QueryModel\Sheet.fs" />
+    <Compile Include="QueryModel\Assay.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -65,8 +70,6 @@
   <ItemGroup Condition=" '$(PackageId)' == 'ISADotNet.Fable' ">
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
-
-  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="5.0.1" />

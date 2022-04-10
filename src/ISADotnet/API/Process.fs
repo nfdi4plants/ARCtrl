@@ -376,16 +376,69 @@ module ProcessSequence =
         |> List.collect Process.getFactors
         |> List.distinct
 
-    /// Returns the final outputs of the processSequence, which point to no further nodes
+    /// Returns the initial inputs final outputs of the processSequence, to which no processPoints
     let getRootInputs (processSequence : Process list) =
         let inputs = processSequence |> List.collect (fun p -> p.Inputs |> Option.defaultValue [])
         let outputs = processSequence |> List.collect (fun p -> p.Outputs |> Option.defaultValue [] |> List.map ProcessOutput.getName) |> Set.ofList
         inputs
         |> List.filter (fun i -> ProcessInput.getName i |> outputs.Contains |> not)
 
-    /// Returns the initial inputs of the processSequence, to which no processPoints
-    let getFinalInputs (processSequence : Process list) =
+    /// Returns the final outputs of the processSequence, which point to no further nodes
+    let getFinalOutputs (processSequence : Process list) =
         let inputs = processSequence |> List.collect (fun p -> p.Inputs |> Option.defaultValue [] |> List.map ProcessInput.getName) |> Set.ofList
         let outputs = processSequence |> List.collect (fun p -> p.Outputs |> Option.defaultValue [])
         outputs
         |> List.filter (fun o -> ProcessOutput.getName o |> inputs.Contains |> not)
+
+    /// Returns the initial inputs final outputs of the processSequence, to which no processPoints
+    let getRootInputOf (processSequence : Process list) (sample : string) =
+        let mappings = 
+            processSequence 
+            |> List.collect (fun p -> 
+                List.zip 
+                    (p.Outputs.Value |> List.map (fun o -> o.GetName)) 
+                    (p.Inputs.Value  |> List.map (fun i -> i.GetName))
+                |> List.distinct
+            ) 
+            |> List.groupBy fst 
+            |> List.map (fun (out,ins) -> out, ins |> List.map snd)
+            |> Map.ofList
+        let rec loop lastState state = 
+            if lastState = state then state 
+            else
+                let newState = 
+                    state 
+                    |> List.collect (fun s -> 
+                        mappings.TryFind s 
+                        |> Option.defaultValue [s]
+                    )
+                loop state newState
+        loop [] [sample]
+        
+    /// Returns the final outputs of the processSequence, which point to no further nodes
+    let getFinalOutputsOf (processSequence : Process list) (sample : string) =
+        let mappings = 
+            processSequence 
+            |> List.collect (fun p -> 
+                List.zip 
+                    (p.Inputs.Value  |> List.map (fun i -> i.GetName))
+                    (p.Outputs.Value |> List.map (fun o -> o.GetName)) 
+                |> List.distinct
+            ) 
+            |> List.groupBy fst 
+            |> List.map (fun (inp,outs) -> inp, outs |> List.map snd)
+            |> Map.ofList
+        let rec loop lastState state = 
+            if lastState = state then state 
+            else
+                let newState = 
+                    state 
+                    |> List.collect (fun s -> 
+                        mappings.TryFind s 
+                        |> Option.defaultValue [s]
+                    )
+                loop state newState
+        loop [] [sample]
+
+
+
