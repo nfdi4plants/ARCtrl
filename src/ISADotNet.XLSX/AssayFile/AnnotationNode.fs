@@ -5,53 +5,6 @@ open ISADotNet.XLSX
 open AnnotationColumn
 
 
-module ValueOrder = 
-
-    let private tryInt (str:string) =
-        match System.Int32.TryParse str with
-        | true,int -> Some int
-        | _ -> None
-
-    let orderName = "ValueIndex"
-
-    let createOrderComment (index : int) =
-        Comment.fromString orderName (string index)
-
-    let tryGetIndex (comments : Comment list) =
-        comments 
-        |> API.CommentList.tryItem orderName 
-        |> Option.bind tryInt
-
-    let tryGetParameterIndex (param : ProtocolParameter) =
-        param.ParameterName 
-        |> Option.bind (fun oa -> 
-            oa.Comments |> Option.bind tryGetIndex
-        )
-
-    let tryGetParameterValueIndex (paramValue : ProcessParameterValue) =
-        paramValue.Category 
-        |> Option.bind tryGetParameterIndex
-
-    let tryGetFactorIndex (factor : Factor) =
-        factor.FactorType 
-        |> Option.bind (fun oa -> 
-            oa.Comments |> Option.bind tryGetIndex
-        )
-      
-    let tryGetFactorValueIndex (factorValue : FactorValue) =
-        factorValue.Category 
-        |> Option.bind tryGetFactorIndex
-
-    let tryGetCharacteristicIndex (characteristic : MaterialAttribute) =
-        characteristic.CharacteristicType 
-        |> Option.bind (fun oa -> 
-            oa.Comments |> Option.bind tryGetIndex
-        )
-      
-    let tryGetCharacteristicValueIndex (characteristicValue : MaterialAttributeValue) =
-        characteristicValue.Category 
-        |> Option.bind tryGetCharacteristicIndex
-
 module ProcessInput = 
 
     let getHeader inp =
@@ -87,69 +40,6 @@ module ProcessOutput =
             "Data File Name"
         | ProcessOutput.Material m ->  
             "Material Name"
-
-[<AutoOpen>]
-module ValueOrderExtensions = 
-    
-    type Factor with
-        
-        /// Create a ISAJson Factor from ISATab string entries
-        static member fromStringWithValueOrder (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Factor.fromStringWithComments name term source accession [ValueOrder.createOrderComment valueIndex]
-
-        /// Create a ISAJson Factor from ISATab string entries
-        static member fromStringWithNumberValueOrder (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Factor.fromStringWithNumberAndComments name term source accession [ValueOrder.createOrderComment valueIndex]
-
-        static member getValueIndex(f) = ValueOrder.tryGetFactorIndex f |> Option.get
-
-        member this.GetValueIndex() = ValueOrder.tryGetFactorIndex this |> Option.get
-
-    type FactorValue with
-
-        static member getValueIndex(f) = ValueOrder.tryGetFactorValueIndex f |> Option.get
-
-        member this.GetValueIndex() = ValueOrder.tryGetFactorValueIndex this |> Option.get
-
-    type MaterialAttribute with
-    
-        /// Create a ISAJson characteristic from ISATab string entries
-        static member fromStringWithValueOrder (term:string) (source:string) (accession:string) valueIndex =
-            MaterialAttribute.fromStringWithComments term source accession [ValueOrder.createOrderComment valueIndex]
-
-        /// Create a ISAJson characteristic from ISATab string entries
-        static member fromStringWithNumberValueOrder (term:string) (source:string) (accession:string) valueIndex =
-            MaterialAttribute.fromStringWithNumberAndComments term source accession [ValueOrder.createOrderComment valueIndex]
-
-        static member getValueIndex(m) = ValueOrder.tryGetCharacteristicIndex m |> Option.get
-
-        member this.GetValueIndex() = ValueOrder.tryGetCharacteristicIndex this |> Option.get
-
-    type MaterialAttributeValue with
-            
-            static member getValueIndex(m) = ValueOrder.tryGetCharacteristicValueIndex m |> Option.get
-
-            member this.GetValueIndex() = ValueOrder.tryGetCharacteristicValueIndex this |> Option.get
-
-    type ProtocolParameter with
-    
-        /// Create a ISAJson parameter from ISATab string entries
-        static member fromStringWithValueOrder (term:string) (source:string) (accession:string) valueIndex =
-            ProtocolParameter.fromStringWithComments term source accession [ValueOrder.createOrderComment valueIndex]
-
-        /// Create a ISAJson parameter from ISATab string entries
-        static member fromStringWithNumberValueOrder (term:string) (source:string) (accession:string) valueIndex =
-            ProtocolParameter.fromStringWithNumberAndComments term source accession [ValueOrder.createOrderComment valueIndex]
-
-        static member getValueIndex(p) = ValueOrder.tryGetParameterIndex p |> Option.get
-
-        member this.GetValueIndex() = ValueOrder.tryGetParameterIndex this |> Option.get
-
-    type ProcessParameterValue with
-    
-        static member getValueIndex(p) = ValueOrder.tryGetParameterValueIndex p |> Option.get
-
-        member this.GetValueIndex() = ValueOrder.tryGetParameterValueIndex this |> Option.get
 
 /// Functions for parsing nodes and node values of an annotation table
 ///
@@ -239,7 +129,7 @@ module AnnotationNode =
             mergeOntology valueHeader.Term category1 |> mergeOntology category2
             |> Option.map (fun oa -> 
                 oa.Comments |> Option.defaultValue []
-                |> API.CommentList.add (ValueOrder.createOrderComment columnOrder)
+                |> API.CommentList.add (ValueIndex.createOrderComment columnOrder)
                 |> API.OntologyAnnotation.setComments oa
             )
 

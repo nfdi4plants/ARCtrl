@@ -66,3 +66,9 @@ type ISAValue =
         | Parameter p       -> p.ValueWithUnitText
         | Characteristic c  -> c.ValueWithUnitText
         | Factor f          -> f.ValueWithUnitText
+
+    member this.ValueIndex =
+        match this with
+        | Parameter p       -> p.GetValueIndex
+        | Characteristic c  -> c.GetValueIndex
+        | Factor f          -> f.GetValueIndex
