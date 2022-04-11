@@ -13,6 +13,7 @@
     <Compile Include="ISADotnet\APITests.fs" />
     <Compile Include="ISADotNet.XLSX\InvestigationFileTests.fs" />
     <Compile Include="ISADotNet.XLSX\AssayFileTests.fs" />
+    <Compile Include="ISADotNet.XLSX\RegexPattern.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

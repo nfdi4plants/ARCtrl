@@ -5,6 +5,9 @@ open Expecto
 [<EntryPoint>]
 let main argv =
 
+    //Regex Test
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv RegexPatternTests.testRegexPatternMatching |> ignore
+
     //XLSX IO Test
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testStringConversions |> ignore
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAXLSXInvestigationTests.testSparseTable |> ignore
