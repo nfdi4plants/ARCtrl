@@ -48,8 +48,11 @@ module Assay =
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
-        let characteristics,factors,protocols,processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
-        factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+        try 
+            let characteristics,factors,protocols,processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
+            factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+        with
+        | err -> failwithf "Could not parse sheet \"%s\": %s" processNameRoot err.Message
 
     /// Returns an assay from a sequence of sparseMatrix representations of assay.xlsx sheets
     ///
@@ -65,17 +68,27 @@ module Assay =
                 Seq.append processes' processes
             ) (List.empty,List.empty,Seq.empty,Seq.empty)
 
-        let processes = AnnotationTable.updateSamplesByThemselves processes
+        let processes = AnnotationTable.updateSamplesByThemselves processes |> Seq.toList
 
-        factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+        let assay = 
+            match characteristics,processes with
+            | [],[] -> Assay.create()
+            | [],ps -> Assay.create(ProcessSequence = ps)
+            | cs,[] -> Assay.create(CharacteristicCategories = cs)
+            | cs,ps -> Assay.create(CharacteristicCategories = cs,ProcessSequence = ps)
+
+        factors,protocols,assay
 
 /// Diesen Block durch JS ersetzen ----> 
 
     /// Create a new ISADotNet.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
     let init assay persons assayIdentifier path =
-        Spreadsheet.initWithSst assayIdentifier path
-        |> MetaData.init "Assay" assay persons
-        |> Spreadsheet.close
+        try 
+            Spreadsheet.initWithSst assayIdentifier path
+            |> MetaData.init "Assay" assay persons
+            |> Spreadsheet.close
+        with
+        | err -> failwithf "Could not init assay file: %s" err.Message
 
     /// Reads an assay from an xlsx spreadsheetdocument
     ///
@@ -83,67 +96,80 @@ module Assay =
     ///
     /// The persons from the metadata sheet are returned independently as they are not a part of the assay object
     let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) = 
-        
-        let sst = Spreadsheet.tryGetSharedStringTable doc
+        try
+            let sst = Spreadsheet.tryGetSharedStringTable doc
 
-        // Reading the "Assay" metadata sheet. Here metadata 
-        let assayMetaData,contacts = 
-            Spreadsheet.tryGetSheetBySheetName "Assay" doc
-            |> Option.map (fun sheet -> 
-                sheet
-                |> SheetData.getRows
-                |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst.Value))
-                |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
-                |> MetaData.fromRows
-                |> fun (a,p) -> Option.defaultValue Assay.empty a, p
-            )
-            |> Option.defaultValue (Assay.empty,[])          
+            let tryIncludeSST sst cell = 
+                try 
+                    Cell.includeSharedStringValue (Option.get sst) cell
+                with | _ -> cell
+
+
+            // Reading the "Assay" metadata sheet. Here metadata 
+            let assayMetaData,contacts = 
+                match Spreadsheet.tryGetSheetBySheetName "Assay" doc with 
+                | Some sheet ->
+                    sheet
+                    |> SheetData.getRows
+                    |> Seq.map (Row.mapCells (tryIncludeSST sst))
+                    |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+                    |> MetaData.fromRows
+                    |> fun (a,p) -> Option.defaultValue Assay.empty a, p
+                | None -> 
+                    printfn "Cannot retrieve metadata: Assay file does not contain \"Assay\" sheet."
+                    Assay.empty,[]         
         
-        // All sheetnames in the spreadsheetDocument
-        let sheetNames = 
-            Spreadsheet.getWorkbookPart doc
-            |> Workbook.get
-            |> Sheet.Sheets.get
-            |> Sheet.Sheets.getSheets
-            |> Seq.map Sheet.getName
+            // All sheetnames in the spreadsheetDocument
+            let sheetNames = 
+                Spreadsheet.getWorkbookPart doc
+                |> Workbook.get
+                |> Sheet.Sheets.get
+                |> Sheet.Sheets.getSheets
+                |> Seq.map Sheet.getName
         
-        let factors,protocols,assay =
-            sheetNames
-            |> Seq.collect (fun sheetName ->                    
-                match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
-                | Some wsp ->
-                    match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
-                    | Some table -> 
-                        // Extract the sheetdata as a sparse matrix
-                        let sheet = Worksheet.getSheetData wsp.Worksheet
-                        let headers = Table.getColumnHeaders table
-                        let m = Table.toSparseValueMatrix sst sheet table
-                        Seq.singleton (sheetName,headers,m)     
-                    | None -> Seq.empty
-                | None -> Seq.empty                
-            )
-            |> fromSparseMatrices // Feed the sheets (represented as sparse matrices) into the assay parser function
+            let factors,protocols,assay =
+                sheetNames
+                |> Seq.collect (fun sheetName ->                    
+                    match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
+                    | Some wsp ->
+                        match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
+                        | Some table -> 
+                            // Extract the sheetdata as a sparse matrix
+                            let sheet = Worksheet.getSheetData wsp.Worksheet
+                            let headers = Table.getColumnHeaders table
+                            let m = Table.toSparseValueMatrix sst sheet table
+                            Seq.singleton (sheetName,headers,m)     
+                        | None -> Seq.empty
+                    | None -> Seq.empty                
+                )
+                |> fromSparseMatrices // Feed the sheets (represented as sparse matrices) into the assay parser function
             
-        factors,
-        protocols |> Seq.toList,
-        contacts,
-        API.Update.UpdateByExisting.updateRecordType assayMetaData assay // Merges the assay containing the assay meta data and the assay containing the processes retrieved from the sheets
+            factors,
+            protocols |> Seq.toList,
+            contacts,
+            API.Update.UpdateByExisting.updateRecordType assayMetaData assay // Merges the assay containing the assay meta data and the assay containing the processes retrieved from the sheets
+        with
+        | err -> failwithf "Could not read assay from spreadsheet: %s" err.Message
 
     /// Parses the assay file
     let fromFile (path:string) = 
-        let doc = Spreadsheet.fromFile path false
         try
-            fromSpreadsheet doc
-        finally
-            Spreadsheet.close doc
-
+            let doc = Spreadsheet.fromFile path false
+            try
+                fromSpreadsheet doc
+            finally
+                Spreadsheet.close doc
+        with
+        | err -> failwithf "Could not read assay from file with path \"%s\": %s" path err.Message
+    
     /// Parses the assay file
     let fromStream (stream:#System.IO.Stream) = 
-
-        let doc = Spreadsheet.fromStream stream false
         try
-            fromSpreadsheet doc
-        finally
-            Spreadsheet.close doc
-
+            let doc = Spreadsheet.fromStream stream false
+            try
+                fromSpreadsheet doc
+            finally
+                Spreadsheet.close doc
+        with
+        | err -> failwithf "Could not read assay from stream: %s" err.Message
     /// ---->  Bis hier

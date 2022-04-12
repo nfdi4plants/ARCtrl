@@ -35,11 +35,13 @@ type ProtocolParameter =
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Create a ISAJson Protocol Parameter from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let oa = OntologyAnnotation.fromStringWithNumber term source accession
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Create a ISAJson Protocol Parameter from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
         let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
@@ -49,26 +51,34 @@ type ProtocolParameter =
         pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")        
 
     /// Returns the name of the parameter as string
-    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.NameAsString =
         this.ParameterName
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
     /// Returns the name of the parameter with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.NameAsStringWithNumber =       
         this.ParameterName
         |> Option.map (fun oa -> oa.GetNameWithNumber)
         |> Option.defaultValue ""
 
     /// Returns the name of the parameter as string
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
     member this.GetName =
         this.ParameterName
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
+    /// Returns the name of the parameter as string
+    member this.NameText =
+        this.ParameterName
+        |> Option.map (fun oa -> oa.NameText)
+        |> Option.defaultValue ""
+
     /// Returns the name of the parameter with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.GetNameWithNumber =       
         this.ParameterName
         |> Option.map (fun oa -> oa.GetNameWithNumber)
@@ -78,7 +88,7 @@ type ProtocolParameter =
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            "OA " + this.GetNameWithNumber
+            "OA " + this.NameText
 
 type Component = 
     {

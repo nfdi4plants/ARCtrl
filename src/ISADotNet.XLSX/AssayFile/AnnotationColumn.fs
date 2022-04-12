@@ -10,6 +10,16 @@ module AnnotationColumn =
     [<Literal>]
     let OboPurlURL = @"http://purl.obolibrary.org/obo/"
 
+    module RegexPattern =
+
+        // Pattern matches start of line and then any number of characters except newline, open bracket and open curly bracket.
+        let columnTypePattern = @"^[^[(\n]*" //@"[^\[(]*(?= [\[\(])"
+        let namePattern = @"(?<= \[).*(?=[\]])"
+        // [\w-]+ = Pattern matches any letter, number, underscore and minus, but minimum 1
+        // (:|_) = ':' or '_', latter is important for url
+        let ontologySourcePattern = "[\w-]+(:|_)[\w-]+"//@"(?<=\()\S+:[^;)#]*(?=[\)\#])"
+        let numberPattern = @"(?<=#)\d+(?=[\)\]])"
+
     /// Typed depiction of a Swate Header: Kind [TermName] (#Number, #tOntology)
     type ColumnHeader =
         {
@@ -31,15 +41,10 @@ module AnnotationColumn =
         /// Parses a string to a column header
         static member fromStringHeader header =
                   
-            let kindPattern = @".*(?= [\[\(])"
-            let namePattern = @"(?<= \[)[^#\]]*(?=[\]#])"
-            let ontologySourcePattern = @"(?<=\()\S+:[^;)#]*(?=[\)\#])"
-            let numberPattern = @"(?<=#)\d+(?=[\)\]])"
-
-            let nameRegex = Regex.Match(header,namePattern)
-            let kindRegex = Regex.Match(header,kindPattern)
-            let ontologySourceRegex = Regex.Match(header,ontologySourcePattern)
-            let numberRegex = Regex.Match(header,numberPattern)
+            let nameRegex = Regex.Match(header,RegexPattern.namePattern)
+            let columnTypePatternRegex = Regex.Match(header,RegexPattern.columnTypePattern)
+            let ontologySourceRegex = Regex.Match(header,RegexPattern.ontologySourcePattern)
+            let numberRegex = Regex.Match(header,RegexPattern.numberPattern)
 
             let number = if numberRegex.Success then Some (int numberRegex.Value) else None
             let numberComment = number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
@@ -49,11 +54,11 @@ module AnnotationColumn =
                                                                              
                 let ontology = OntologyAnnotation.fromString nameRegex.Value "" ""
 
-                ColumnHeader.create header kindRegex.Value (Some {ontology with Comments = numberComment}) number
+                ColumnHeader.create header (columnTypePatternRegex.Value.Trim()) (Some {ontology with Comments = numberComment}) number
 
             // Parsing a header of shape: Kind (#Number)
-            elif kindRegex.Success then
-                let kind = kindRegex.Value
+            elif columnTypePatternRegex.Success then
+                let kind = (columnTypePatternRegex.Value.Trim())
 
                 let ontology = 
                     if ontologySourceRegex.Success then 

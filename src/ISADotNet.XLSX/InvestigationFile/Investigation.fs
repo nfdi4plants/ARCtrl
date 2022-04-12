@@ -182,7 +182,7 @@ module Investigation =
             yield  SparseRow.fromValues[contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
-            for study in (Option.defaultValue [] investigation.Studies) do
+            for study in (Option.defaultValue [Study.empty] investigation.Studies) do
                 yield  SparseRow.fromValues[studyLabel]
                 yield! Study.toRows study
         }
@@ -202,56 +202,71 @@ module Investigation =
         |> Seq.choose id
         |> Row.create rowIndex spans 
 
-    let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) =           
-        doc
-        |> Spreadsheet.getRowsBySheetIndex 0u
-        |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
-        |> fromRows 
-        
+    let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) =  
+        try
+            doc
+            |> Spreadsheet.getRowsBySheetIndex 0u
+            |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            |> fromRows 
+        with
+        | err -> failwithf "Could not read investigation from spreadsheet: %s" err.Message
 
     let fromFile (path : string) =
-        let doc = Spreadsheet.fromFile path false
         try
-            fromSpreadsheet doc
-        finally
-            doc.Close()
-        
-    let fromStream (stream : System.IO.Stream) =
-        let doc = Spreadsheet.fromStream stream false
-        try
-            fromSpreadsheet doc
-        finally
-            doc.Close()
+            let doc = Spreadsheet.fromFile path false
+            try
+                fromSpreadsheet doc
+            finally
+                doc.Close()
+        with
+        | err -> failwithf "Could not read investigation from file with path \"%s\": %s" path err.Message
 
+    let fromStream (stream : System.IO.Stream) =
+        try
+            let doc = Spreadsheet.fromStream stream false
+            try
+                fromSpreadsheet doc
+            finally
+                doc.Close()
+        with
+        | err -> failwithf "Could not read investion from stream: %s" err.Message
 
     let toSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) (investigation:Investigation) =           
-        
-        let sheet = Spreadsheet.tryGetSheetBySheetIndex 0u doc |> Option.get
-
-        investigation
-        |> toRows
-        |> Seq.mapi (fun i row -> 
-            row
-            |> SparseRow.getAllValues
-            |> ofSparseValues (i+1 |> uint)
-            )
-        |> Seq.fold (fun s r -> 
-            SheetData.appendRow r s
-        ) sheet
-        |> ignore
-        
-    let toFile (path : string) (investigation:Investigation) =
-        let doc = Spreadsheet.initWithSst "isa_investigation" path
-        try 
-            toSpreadsheet doc investigation
-        finally
-            doc.Close()
-        
-    let toStream (stream : System.IO.Stream) (investigation:Investigation) =
-        let doc = Spreadsheet.fromStream stream false
         try
-            toSpreadsheet doc investigation
-        finally
-            doc.Close()
+            let sheet = Spreadsheet.tryGetSheetBySheetIndex 0u doc |> Option.get
+
+            investigation
+            |> toRows
+            |> Seq.mapi (fun i row -> 
+                row
+                |> SparseRow.getAllValues
+                |> ofSparseValues (i+1 |> uint)
+                )
+            |> Seq.fold (fun s r -> 
+                SheetData.appendRow r s
+            ) sheet
+            |> ignore
+        with
+        | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message
+
+    let toFile (path : string) (investigation:Investigation) =
+        try
+            let doc = Spreadsheet.initWithSst "isa_investigation" path
+            try 
+                toSpreadsheet doc investigation
+            finally
+                doc.Close()
+        with
+        | err -> failwithf "Could not write investigation to file with path \"%s\": %s" path err.Message
+
+    let toStream (stream : System.IO.Stream) (investigation:Investigation) =
+        try
+            let doc = Spreadsheet.fromStream stream false
+            try
+                toSpreadsheet doc investigation
+            finally
+                doc.Close()
+        with
+        | err -> failwithf "Could not write investion to stream: %s" err.Message
 
     /// ---->  Bis hier

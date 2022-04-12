@@ -52,11 +52,31 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "5"
-            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
+            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name#5")) None None (Some [testComment])
 
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
             Expect.equal header testHeader "Did not parse Name correctly"
+        )
+        testCase "NameWithBrackets" (fun () ->
+        
+            let headerString = "NamedHeader [Name [Stuff]]"
+        
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
+            
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Name [Stuff]" "" "" |> Some) None
+            
+            Expect.equal header testHeader "Dit not parse Name correctly"
+        )
+        testCase "NameWithHashtag" (fun () ->
+            
+            let headerString = "NamedHeader [Name#Stuff]"
+            
+            let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
+                
+            let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (OntologyAnnotation.fromString "Name#Stuff" "" "" |> Some) None
+                
+            Expect.equal header testHeader "Dit not parse Name correctly"
         )
         testCase "AccessionWithNumber" (fun () ->
 
@@ -638,10 +658,7 @@ let testAssayFileReader =
 
     let time1 = ProtocolParameter.fromStringWithValueOrder "time unit" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 3
 
-    //let time2Comment = Comment.fromString "Number" "2"  
-    //let time2Ontology = OntologyAnnotation.make None (Some (AnnotationValue.Text "time unit")) (Some "UO") (Some "http://purl.obolibrary.org/obo/UO_0000003") (Some [time2Comment])
-    let time2 = Factor.fromStringWithNumberValueOrder "time unit" "time unit#2" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 4
-
+    let time2 = Factor.fromStringWithNumberValueOrder "time unit#2" "time unit#2" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 4
 
     let leafSize = MaterialAttribute.fromStringWithValueOrder "leaf size" "TO" "http://purl.obolibrary.org/obo/TO_0002637" 0
 

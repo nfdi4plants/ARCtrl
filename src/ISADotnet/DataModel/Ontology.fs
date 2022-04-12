@@ -76,7 +76,7 @@ type OntologyAnnotation =
         | None -> name
 
     /// Returns the name of the ontology as string
-    member this.GetName =
+    member this.NameText =
         this.Name
         |> Option.map (fun av ->
             match av with
@@ -86,11 +86,17 @@ type OntologyAnnotation =
         )
         |> Option.defaultValue ""
 
+    /// Returns the name of the ontology as string
+    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
+    member this.GetName = this.NameText
+
     /// Returns number of Ontology annotation
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.Number =       
         this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))       
 
     /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.GetNameWithNumber =       
         let name = this.GetName
         match this.Number with
@@ -126,6 +132,7 @@ type OntologyAnnotation =
             (Option.fromValueWithDefault [] comments)
 
     /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     static member fromStringWithNumber (term:string) (source:string) (accession:string) =
         let t,number = 
             let lastIndex = term.LastIndexOf '#'
@@ -134,12 +141,13 @@ type OntologyAnnotation =
         OntologyAnnotation.fromStringWithComments t source accession (numberComment |> Option.defaultValue [])      
 
     /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
+    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
         let t,number = 
             let lastIndex = term.LastIndexOf '#'
             term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
         let numberComment = Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton)
-        OntologyAnnotation.fromStringWithComments t source accession ((numberComment |> Option.defaultValue []) @ comments)   
+        OntologyAnnotation.fromStringWithComments term source accession ((numberComment |> Option.defaultValue []) @ comments)   
 
     /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,source,accession)
     static member toString (oa : OntologyAnnotation) =
@@ -152,7 +160,7 @@ type OntologyAnnotation =
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
-            "OA " + this.GetNameWithNumber
+            "OA " + this.NameText
 
 
 type OntologySourceReference =
