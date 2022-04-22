@@ -15,21 +15,24 @@ module Process =
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
-        let len = 
-            let mutable i = 0
-            for kv in sparseMatrix do 
-                let j = kv.Key |> fst
-                if j > i  then i <- j
-            i + 1
-        let characteristic,factors,protocol,processGetter = 
-            AnnotationNode.splitIntoNodes matrixHeaders
-            |> AnnotationTable.getProcessGetter ({Protocol.empty with Name = Some processNameRoot}) 
-        characteristic,factors,protocol,
+        try 
+            let len = 
+                let mutable i = 0
+                for kv in sparseMatrix do 
+                    let j = kv.Key |> fst
+                    if j > i  then i <- j
+                i + 1
+            let characteristic,factors,protocol,processGetter = 
+                AnnotationNode.splitIntoNodes matrixHeaders
+                |> AnnotationTable.getProcessGetter ({Protocol.empty with Name = Some processNameRoot}) 
+            characteristic,factors,protocol,
             
-        Seq.init len (processGetter sparseMatrix)
-        |> AnnotationTable.mergeIdenticalProcesses
-        |> AnnotationTable.indexRelatedProcessesByProtocolName
-        |> Seq.toList
+            Seq.init len (processGetter sparseMatrix)
+            |> AnnotationTable.mergeIdenticalProcesses
+            |> AnnotationTable.indexRelatedProcessesByProtocolName
+            |> Seq.toList
+        with
+        | err -> failwithf "Could not parse sheet \"%s\": %s" processNameRoot err.Message
 
 /// Functions for parsing an ISAXLSX Assay File
 ///
@@ -48,11 +51,10 @@ module Assay =
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
-        try 
-            let characteristics,factors,protocols,processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
-            factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
-        with
-        | err -> failwithf "Could not parse sheet \"%s\": %s" processNameRoot err.Message
+        
+        let characteristics,factors,protocols,processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
+        factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+
 
     /// Returns an assay from a sequence of sparseMatrix representations of assay.xlsx sheets
     ///
@@ -160,7 +162,7 @@ module Assay =
             finally
                 Spreadsheet.close doc
         with
-        | err -> failwithf "Could not read assay from file with path \"%s\": %s" path err.Message
+        | err -> failwithf "Could not read assay from file with path \"%s\":\n\t %s" path err.Message
     
     /// Parses the assay file
     let fromStream (stream:#System.IO.Stream) = 
@@ -171,5 +173,5 @@ module Assay =
             finally
                 Spreadsheet.close doc
         with
-        | err -> failwithf "Could not read assay from stream: %s" err.Message
+        | err -> failwithf "Could not read assay from stream:\n\t %s" err.Message
     /// ---->  Bis hier
