@@ -20,6 +20,21 @@ type DataFile =
         | DerivedDataFile   -> "DerivedDataFileJson"
         | ImageFile         -> "ImageFileJson"
 
+    member this.IsDerivedData =
+        match this with
+        | DerivedDataFile -> true
+        | _ -> false
+
+    member this.IsRawData =
+        match this with
+        | RawDataFile -> true
+        | _ -> false
+
+    member this.IsImage =
+        match this with
+        | ImageFile -> true
+        | _ -> false
+
 type Data = 
     {
         [<JsonPropertyName(@"@id")>]

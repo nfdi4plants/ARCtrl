@@ -8,6 +8,70 @@ open System.IO
 open System.Collections.Generic
 open System.Collections
 
+type ValueCollection(values : ISAValue list) =
+    
+    member this.First = values.Head
+
+    member this.Last = values.[values.Length - 1]
+
+    member this.Item(i : int)  = values.[i]
+
+    member this.Item(category : OntologyAnnotation) = values |> List.pick (fun v -> if v.Category = category then Some v else None)
+
+    member this.Values = values
+
+    member this.Characteristics(?Name) = 
+        values
+        |> List.filter (fun v -> 
+            match Name with 
+            | Some name -> 
+                v.IsCharacteristicValue && v.NameText = name
+            | None -> 
+                v.IsCharacteristicValue
+        )
+        |> ValueCollection
+
+    member this.Parameters(?Name) = 
+        values
+        |> List.filter (fun v -> 
+            match Name with 
+            | Some name -> 
+                v.IsParameterValue && v.NameText = name
+            | None -> 
+                v.IsParameterValue
+        )
+        |> ValueCollection
+
+    member this.Factors(?Name) = 
+        values
+        |> List.filter (fun v -> 
+            match Name with 
+            | Some name -> 
+                v.IsFactorValue && v.NameText = name
+            | None -> 
+                v.IsFactorValue
+        )
+        |> ValueCollection
+
+    member this.WithCategory(category : OntologyAnnotation) = 
+        values
+        |> List.filter (fun v -> v.Category = category)
+        |> ValueCollection
+
+    member this.WithName(name : string) = 
+        values
+        |> List.filter (fun v -> v.Category.NameText = name)
+        |> ValueCollection
+
+    interface IEnumerable<ISAValue> with
+        member this.GetEnumerator() = (Seq.ofList values).GetEnumerator()
+
+    interface IEnumerable with
+        member this.GetEnumerator() = (this :> IEnumerable<ISAValue>).GetEnumerator() :> IEnumerator
+
+    static member (@) (ps1 : ValueCollection,ps2 : ValueCollection) = ps1.Values @ ps2.Values |> ValueCollection
+
+
 type IOValueCollection(values : KeyValuePair<string*string,ISAValue> list) =
 
     member this.First = values.Head

@@ -6,6 +6,64 @@ open System.Text.Json.Serialization
 open System.Collections.Generic
 open System.Collections
 
+type IOType =
+    | Source
+    | Sample
+    | Data
+    | RawData
+    | ProcessedData
+    | Material
+
+    member this.isSource =
+        match this with
+        | Source -> true
+        | _ -> false
+
+    member this.isSample =
+        match this with
+        | Sample -> true
+        | _ -> false
+    
+    member this.isData =
+        match this with
+        | Data | RawData | ProcessedData -> true
+        | _ -> false
+
+    member this.isRawData =
+        match this with
+        | RawData -> true
+        | _ -> false
+
+    member this.isProcessedData =
+        match this with
+        | ProcessedData -> true
+        | _ -> false
+
+    member this.isMaterial =
+        match this with
+        | Material -> true
+        | _ -> false
+
+    static member fromInput (inp : ProcessInput) = 
+        match inp with
+        | ProcessInput.Source s -> Source
+        | ProcessInput.Sample s -> Sample
+        | ProcessInput.Material m -> Material
+        | ProcessInput.Data d when d.DataType.IsNone                -> Data
+        | ProcessInput.Data d when d.DataType.Value.IsDerivedData   -> ProcessedData
+        | ProcessInput.Data d when d.DataType.Value.IsRawData       -> RawData
+        | ProcessInput.Data d                                       -> Data
+    
+    static member fromOutput (out : ProcessOutput) = 
+        match out with
+        | ProcessOutput.Sample s -> Sample
+        | ProcessOutput.Material m -> Material
+        | ProcessOutput.Data d when d.DataType.IsNone                -> Data
+        | ProcessOutput.Data d when d.DataType.Value.IsDerivedData   -> ProcessedData
+        | ProcessOutput.Data d when d.DataType.Value.IsRawData       -> RawData
+        | ProcessOutput.Data d                                       -> Data
+
+
 type QRow = 
     {
         [<JsonPropertyName(@"input")>]
@@ -13,9 +71,9 @@ type QRow =
         [<JsonPropertyName(@"output")>]
         Output : string
         [<JsonPropertyName(@"inputType")>]
-        InputType : string option
+        InputType : IOType option
         [<JsonPropertyName(@"outputType")>]
-        OutputType : string option
+        OutputType : IOType option
         [<JsonPropertyName(@"values")>]
         Values : ISAValue list
     }
@@ -31,14 +89,12 @@ type QRow =
         }
 
     static member create(?Input,?Output,?InputType,?OutputType,?CharValues,?ParamValues,?FactorValues) : QRow =
-        let combineValues (characteristics : MaterialAttributeValue list) (parameters : ProcessParameterValue list) (factors : FactorValue list) : ISAValue list =
-            let l = 
-                //charac
+        let combineValues (characteristics : MaterialAttributeValue list) (parameters : ProcessParameterValue list) (factors : FactorValue list) : ISAValue list =           
+            (characteristics |> List.map Characteristic)
+            @ (parameters |> List.map Parameter)
+            @ (factors |> List.map Factor)
+            |> List.sortBy (fun v -> v.ValueIndex())
 
-                (characteristics |> List.map Characteristic)
-                @ (parameters |> List.map Parameter)
-                @ (factors |> List.map Factor)
-            l
         {
             Input = Input |> Option.defaultValue ""
             Output = Output |> Option.defaultValue ""
@@ -57,7 +113,10 @@ type QRow =
             let inputName = inp.GetName
             let outputName = out.GetName
 
-            QRow.create(inputName,outputName,ParamValues = parameterValues, CharValues = characteristics,FactorValues = factors)
+            let inputType = IOType.fromInput inp
+            let outputType = IOType.fromOutput out
+
+            QRow.create(inputName, outputName, inputType, outputType, characteristics, parameterValues, factors)
         )
 
     member this.Item (i : int) =

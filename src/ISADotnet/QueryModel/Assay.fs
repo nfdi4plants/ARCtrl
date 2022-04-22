@@ -9,28 +9,14 @@ open System.Collections.Generic
 open System.Collections
 
 
-type QAssay =
-    {
-        [<JsonPropertyName(@"filename")>]
-        FileName : string option
-        [<JsonPropertyName(@"measurementType")>]
-        MeasurementType : OntologyAnnotation option
-        [<JsonPropertyName(@"technologyType")>]
-        TechnologyType : OntologyAnnotation option
-        [<JsonPropertyName(@"technologyPlatform")>]
-        TechnologyPlatform : string option
-        [<JsonPropertyName(@"sheets")>]
-        Sheets : QSheet list
-    }
+type QAssay(FileName : string option,MeasurementType : OntologyAnnotation option,TechnologyType : OntologyAnnotation option,TechnologyPlatform : string option,Sheets : QSheet list) =
 
-    static member create fileName measurementType technologyType technologyPlatform sheets : QAssay =
-        {
-            FileName = fileName
-            MeasurementType = measurementType
-            TechnologyType = technologyType
-            TechnologyPlatform = technologyPlatform
-            Sheets = sheets
-        }
+    inherit QProcessSequence(Sheets)
+
+    member this.FileName = FileName
+    member this.MeasurementType = MeasurementType
+    member this.TechnologyType = TechnologyType
+    member this.TechnologyPlatform = TechnologyPlatform
 
     static member fromAssay (assay : Assay) =
         let sheets = 
@@ -45,156 +31,31 @@ type QAssay =
                     x.Name.Value.Remove lastUnderScoreIndex
             )
             |> List.map (fun (name,processes) -> QSheet.fromProcesses name processes)
-        QAssay.create assay.FileName assay.MeasurementType assay.TechnologyType assay.TechnologyPlatform sheets
-      
-    member this.Protocol (i : int) =
-        this.Sheets.[i]
+        QAssay(assay.FileName,assay.MeasurementType,assay.TechnologyType,assay.TechnologyPlatform,sheets)
 
-    member this.Protocol (sheetName) =
-        let sheet = 
-            this.Sheets 
-            |> List.tryFind (fun sheet -> sheet.SheetName = sheetName)
-        match sheet with
-        | Some s -> s
-        | None -> failwith $"Assay \"{this.FileName}\" does not contain sheet with name \"{sheetName}\""
+    member this.Protocol (sheetName : string) =
+        base.Protocol(sheetName, $"Assay \"{this.FileName}\"")
 
-    member this.Protocols = this.Sheets
-
-    member this.ProtocolCount =
-        this.Sheets 
-        |> List.length
-
-    member this.ProtocolNames =
-        this.Sheets 
-        |> List.map (fun sheet -> sheet.SheetName)
+    member this.Protocol (index : int) =
+        base.Protocol(index, $"Assay \"{this.FileName}\"")
        
-    interface IEnumerable<QSheet> with
-        member this.GetEnumerator() = (Seq.ofList this.Sheets).GetEnumerator()
+    //interface IEnumerable<QSheet> with
+    //    member this.GetEnumerator() = (Seq.ofList this.Sheets).GetEnumerator()
 
-    interface IEnumerable with
-        member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
+    //interface IEnumerable with
+    //    member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
-    static member getRootInputs (assay : QAssay) =
-        let inputs = assay.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Input))
-        let outputs =  assay.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Output)) |> Set.ofList
-        inputs
-        |> List.filter (fun i -> outputs.Contains i |> not)
+    static member getRootInputs (assay : QAssay) = QProcessSequence.getRootInputs assay
 
     /// Returns the final outputs of the assay, which point to no further nodes
-    static member getFinalOutputs (assay : QAssay) =
-        let inputs = assay.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Input)) |> Set.ofList
-        let outputs =  assay.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Output))
-        outputs
-        |> List.filter (fun i -> inputs.Contains i |> not)
+    static member getFinalOutputs (assay : QAssay) = QProcessSequence.getFinalOutputs assay
 
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
-    static member getRootInputOf (assay : QAssay) (sample : string) =
-        let mappings = 
-            assay.Protocols 
-            |> List.collect (fun p -> 
-                p.Rows 
-                |> List.map (fun r -> r.Output,r.Input)
-                |> List.distinct
-            ) 
-            |> List.groupBy fst 
-            |> List.map (fun (out,ins) -> out, ins |> List.map snd)
-            |> Map.ofList
-        let rec loop lastState state = 
-            if lastState = state then state 
-            else
-                let newState = 
-                    state 
-                    |> List.collect (fun s -> 
-                        mappings.TryFind s 
-                        |> Option.defaultValue [s]
-                    )
-                loop state newState
-        loop [] [sample]
+    static member getRootInputOf (assay : QAssay) (sample : string) = QProcessSequence.getRootInputOf assay sample
         
     /// Returns the final outputs of the assay, which point to no further nodes
-    static member getFinalOutputsOf (assay : QAssay) (sample : string) =
-        let mappings = 
-            assay.Protocols 
-            |> List.collect (fun p -> 
-                p.Rows 
-                |> List.map (fun r -> r.Input,r.Output)
-                |> List.distinct
-            ) 
-            |> List.groupBy fst 
-            |> List.map (fun (inp,outs) -> inp, outs |> List.map snd)
-            |> Map.ofList
-        let rec loop lastState state = 
-            if lastState = state then state 
-            else
-                let newState = 
-                    state 
-                    |> List.collect (fun s -> 
-                        mappings.TryFind s 
-                        |> Option.defaultValue [s]
-                    )
-                loop state newState
-        loop [] [sample]
-
-    member this.Nearest = 
-        this.Sheets
-        |> List.collect (fun sheet -> sheet.Values |> Seq.toList)
-        |> IOValueCollection
-   
-    member this.SinkNearest = 
-        this.Sheets
-        |> List.collect (fun sheet -> 
-            sheet.Rows
-            |> List.collect (fun r ->               
-                r.Input
-                |> QAssay.getRootInputOf this |> List.distinct
-                |> List.collect (fun inp -> 
-                    r.Values
-                    |> List.map (fun v -> 
-                        KeyValuePair((inp,r.Output),v)
-                    )
-                )
-            )
-        )
-        |> IOValueCollection
-
-    member this.SourceNearest = 
-        this.Sheets
-        |> List.collect (fun sheet -> 
-            sheet.Rows
-            |> List.collect (fun r ->               
-                r.Output
-                |> QAssay.getFinalOutputsOf this |> List.distinct
-                |> List.collect (fun out -> 
-                    r.Values
-                    |> List.map (fun v -> 
-                        KeyValuePair((r.Input,out),v)
-                    )
-                )
-            )
-        )
-        |> IOValueCollection
-
-    member this.Global =
-        this.Sheets
-        |> List.collect (fun sheet -> 
-            sheet.Rows
-            |> List.collect (fun r ->  
-                let outs = r.Output |> QAssay.getFinalOutputsOf this |> List.distinct
-                let inps = r.Input |> QAssay.getRootInputOf this |> List.distinct
-                outs
-                |> List.collect (fun out -> 
-                    inps
-                    |> List.collect (fun inp ->
-                        r.Values
-                        |> List.map (fun v -> 
-                            KeyValuePair((inp,out),v)
-                        )
-                    )
-                )
-            )
-        )
-        |> IOValueCollection
+    static member getFinalOutputsOf (assay : QAssay) (sample : string) = QProcessSequence.getFinalOutputsOf assay sample
 
     static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
 
