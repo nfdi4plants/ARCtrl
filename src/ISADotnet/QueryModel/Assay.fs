@@ -52,10 +52,10 @@ type QAssay(FileName : string option,MeasurementType : OntologyAnnotation option
     static member getFinalOutputs (assay : QAssay) = QProcessSequence.getFinalOutputs assay
 
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
-    static member getRootInputOf (assay : QAssay) (sample : string) = QProcessSequence.getRootInputOf assay sample
+    static member getRootInputOf (assay : QAssay) (sample : string) = QProcessSequence.getRootInputsOfBy (fun _ -> true) sample assay 
         
     /// Returns the final outputs of the assay, which point to no further nodes
-    static member getFinalOutputsOf (assay : QAssay) (sample : string) = QProcessSequence.getFinalOutputsOf assay sample
+    static member getFinalOutputsOf (assay : QAssay) (sample : string) = QProcessSequence.getFinalOutputsOfBy (fun _ -> true) sample assay
 
     static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
 

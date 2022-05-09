@@ -63,6 +63,20 @@ type IOType =
         | ProcessOutput.Data d when d.DataType.Value.IsRawData       -> RawData
         | ProcessOutput.Data d                                       -> Data
 
+    static member reduce (ioTypes : IOType list) =
+        let comparer (iot : IOType) = 
+            match iot with
+            | Source        -> 1
+            | Sample        -> 2
+            | Material      -> 3
+            | Data          -> 4
+            | RawData       -> 5
+            | ProcessedData -> 6
+        ioTypes
+        |> List.reduce (fun a b ->
+            if comparer a > comparer b then a else b
+        )
+        
 
 type QRow = 
     {
@@ -105,19 +119,24 @@ type QRow =
 
     static member fromProcess (proc : Process) : QRow list =
         let parameterValues = proc.ParameterValues |> Option.defaultValue []
-        (proc.Inputs.Value,proc.Outputs.Value)
-        ||> List.map2 (fun inp out ->
-            let characteristics = API.ProcessInput.tryGetCharacteristics inp |> Option.defaultValue []
-            let factors = API.ProcessOutput.tryGetFactorValues out |> Option.defaultValue []
+        List.zip proc.Inputs.Value proc.Outputs.Value
+        |> List.groupBy (fun (i,o) -> i.GetName,o.GetName)
+        |> List.map (fun ((inputName,outputName),ios) ->
+            
+            let characteristics = 
+                ios |> List.collect (fst >> API.ProcessInput.tryGetCharacteristics >> (Option.defaultValue []))
+                |> List.distinct
+            let factors = 
+                ios |> List.collect (snd >> API.ProcessOutput.tryGetFactorValues >> (Option.defaultValue []))
+                |> List.distinct
 
-            let inputName = inp.GetName
-            let outputName = out.GetName
-
-            let inputType = IOType.fromInput inp
-            let outputType = IOType.fromOutput out
+            let inputType = ios |> List.map (fst >> IOType.fromInput) |> IOType.reduce
+            let outputType = ios |> List.map (snd >> IOType.fromOutput) |> IOType.reduce
 
             QRow.create(inputName, outputName, inputType, outputType, characteristics, parameterValues, factors)
+            
         )
+       
 
     member this.Item (i : int) =
         this.Values.[i]
