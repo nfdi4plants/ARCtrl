@@ -16,6 +16,8 @@ type ValueCollection(values : ISAValue list) =
 
     member this.Item(i : int)  = values.[i]
 
+    member this.Item(category : string) = values |> List.pick (fun v -> if v.Category.NameText = category then Some v else None)
+
     member this.Item(category : OntologyAnnotation) = values |> List.pick (fun v -> if v.Category = category then Some v else None)
 
     member this.Values = values
@@ -79,6 +81,8 @@ type IOValueCollection(values : KeyValuePair<string*string,ISAValue> list) =
     member this.Last = values.[values.Length - 1]
 
     member this.Item(i : int)  = values.[i]
+
+    member this.Item(category : string) = values |> List.pick (fun kv -> if kv.Value.Category.NameText = category then Some kv.Key else None)
 
     member this.Item(ioKey : string*string) = values |> List.pick (fun kv -> if ioKey = kv.Key then Some kv.Value else None)
 

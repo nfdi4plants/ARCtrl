@@ -229,6 +229,10 @@ type QProcessSequence (sheets : QSheet list) =
 
         loop (QProcessSequence.getFinalOutputs ps) []
 
+    static member getNodesOfBy (predicate : QueryModel.IOType -> bool) (sample : string) (ps : #QProcessSequence) =
+        QProcessSequence.getSubTreeOf sample ps
+        |> QProcessSequence.getNodesBy predicate
+
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
     static member getRootInputsOfBy (predicate : QueryModel.IOType -> bool) (sample : string) (ps : #QProcessSequence) =
         QProcessSequence.getSubTreeOf sample ps
@@ -374,6 +378,9 @@ type QProcessSequence (sheets : QSheet list) =
     member this.Samples() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSample) this
 
+    member this.SamplesOf(node) =
+        QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSample) node this
+
     member this.FirstSamples() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isSample) this
 
@@ -389,8 +396,14 @@ type QProcessSequence (sheets : QSheet list) =
     member this.Sources() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSource) this
 
+    member this.SourcesOf(node) =
+        QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSource) node this
+
     member this.Data() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isData) this
+
+    member this.DataOf(node) =
+        QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isData) node this
 
     member this.FirstData() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isData) this
@@ -407,6 +420,9 @@ type QProcessSequence (sheets : QSheet list) =
     member this.RawData() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isRawData) this
 
+    member this.RawDataOf(node) =
+        QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isRawData) node this
+
     member this.FirstRawData() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isRawData) this
 
@@ -421,6 +437,9 @@ type QProcessSequence (sheets : QSheet list) =
 
     member this.ProcessedData() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isProcessedData) this
+
+    member this.ProcessedDataOf(node) =
+        QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isProcessedData) node this
 
     member this.FirstProcessedData() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isProcessedData) this
@@ -445,31 +464,31 @@ type QProcessSequence (sheets : QSheet list) =
         QProcessSequence.getSucceedingValuesOf this name
 
     member this.CharacteristicsOf(name) =
-        this.ValuesOf(name).Characteristics
+        this.ValuesOf(name).Characteristics()
 
     member this.PreviousCharacteristicsOf(name) =
-        this.PreviousValuesOf(name).Characteristics
+        this.PreviousValuesOf(name).Characteristics()
 
     member this.SucceedingCharacteristicsOf(name) =
-        this.SucceedingValuesOf(name).Characteristics
+        this.SucceedingValuesOf(name).Characteristics()
 
     member this.ParametersOf(name) =
-        this.ValuesOf(name).Parameters
+        this.ValuesOf(name).Parameters()
 
     member this.PreviousParametersOf(name) =
-        this.PreviousValuesOf(name).Parameters
+        this.PreviousValuesOf(name).Parameters()
 
     member this.SucceedingParametersOf(name) =
-        this.SucceedingValuesOf(name).Parameters
+        this.SucceedingValuesOf(name).Parameters()
 
     member this.FactorsOf(name) =
-        this.ValuesOf(name).Factors
+        this.ValuesOf(name).Factors()
 
     member this.PreviousFactorsOf(name) =
-        this.PreviousValuesOf(name).Factors
+        this.PreviousValuesOf(name).Factors()
 
     member this.SucceedingFactorsOf(name) =
-        this.SucceedingValuesOf(name).Factors
+        this.SucceedingValuesOf(name).Factors()
 
     //static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
 
