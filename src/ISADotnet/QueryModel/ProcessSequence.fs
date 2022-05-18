@@ -155,7 +155,10 @@ type QProcessSequence (sheets : QSheet list) =
         |> List.collect (fun p -> 
             p.Rows 
             |> List.collect (fun r -> 
-                [if predicate r.InputType.Value then r.Input; if predicate r.OutputType.Value then  r.Output])
+                [
+                    if predicate r.InputType.Value then r.Input; 
+                    if predicate r.OutputType.Value then  r.Output
+                ])
         )
         |> List.distinct 
 

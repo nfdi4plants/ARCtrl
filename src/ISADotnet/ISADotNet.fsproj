@@ -57,6 +57,7 @@
     <Compile Include="QueryModel\Sheet.fs" />
     <Compile Include="QueryModel\ProcessSequence.fs" />
     <Compile Include="QueryModel\Assay.fs" />
+    <Compile Include="QueryModel\Study.fs" />
   </ItemGroup>
 
   <ItemGroup>
