@@ -109,11 +109,12 @@ module MetaData =
 
     /// Try get assay from metadatasheet with given sheetName
     let tryGetAssay sheetName (doc : SpreadsheetDocument) = 
+        let sst = Spreadsheet.tryGetSharedStringTable doc
         match Spreadsheet.tryGetSheetBySheetName sheetName doc with
         | Some sheet -> 
             sheet
             |> SheetData.getRows
-            |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            |> Seq.map (Row.getIndexedValues sst >> Seq.map (fun (i,v) -> (int i) - 1, v))
             |> fromRows
             |> fun (a,p) ->
                 a
@@ -121,11 +122,12 @@ module MetaData =
 
     /// Try get persons from metadatasheet with given sheetName
     let getPersons sheetName (doc : SpreadsheetDocument) = 
+        let sst = Spreadsheet.tryGetSharedStringTable doc
         match Spreadsheet.tryGetSheetBySheetName sheetName doc with
         | Some sheet -> 
             sheet
             |> SheetData.getRows
-            |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            |> Seq.map (Row.getIndexedValues sst >> Seq.map (fun (i,v) -> (int i) - 1, v))
             |> fromRows
             |> fun (a,p) ->
                 p
@@ -134,14 +136,15 @@ module MetaData =
     /// Replaces assay metadata from metadatasheet with given sheetName
     let overwriteWithAssayInfo sheetName assay (doc : SpreadsheetDocument) = 
 
+        let sst = Spreadsheet.tryGetSharedStringTable doc
         let workBookPart = Spreadsheet.getWorkbookPart doc
-        let newSheet = SheetData.empty()
-        
+        let newSheet = SheetData.empty()    
+
         match Spreadsheet.tryGetSheetBySheetName sheetName doc with
         | Some sheet -> 
             sheet
             |> SheetData.getRows
-            |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            |> Seq.map (Row.getIndexedValues sst >> Seq.map (fun (i,v) -> (int i) - 1, v))
             |> fromRows
             |> fun (_,p) ->
             
@@ -163,14 +166,15 @@ module MetaData =
     /// Replaces persons from metadatasheet with given sheetName
     let overwriteWithPersons sheetName persons (doc : SpreadsheetDocument) = 
 
+        let sst = Spreadsheet.tryGetSharedStringTable doc
         let workBookPart = Spreadsheet.getWorkbookPart doc
-        let newSheet = SheetData.empty()
-        
+        let newSheet = SheetData.empty()       
+
         match Spreadsheet.tryGetSheetBySheetName sheetName doc with
         | Some sheet -> 
             sheet
             |> SheetData.getRows
-            |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            |> Seq.map (Row.getIndexedValues sst >> Seq.map (fun (i,v) -> (int i) - 1, v))
             |> fromRows
             |> fun (a,_) ->            
                 toRows (Option.defaultValue Assay.empty a) persons

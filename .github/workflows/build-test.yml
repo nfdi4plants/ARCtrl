@@ -7,20 +7,6 @@ on:
     branches: [ developer ]
 
 jobs:
-  build-and-test-linux:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.x.x
-    - name: Restore local tools
-      run: dotnet tool restore
-    - name: Build and test
-      run: dotnet fake build -t runTests
 
   build-and-test-windows:
     

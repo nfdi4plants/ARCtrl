@@ -131,6 +131,12 @@ type MaterialAttributeValue =
         |> Option.map (fun oa -> oa.GetName)
         |> Option.defaultValue ""
 
+    /// Returns the name of the category as string
+    member this.NameText =
+        this.Category
+        |> Option.map (fun oa -> oa.GetName)
+        |> Option.defaultValue ""
+
     /// Returns the name of the category with the number as string (e.g. "temperature #2")
     [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
     member this.GetNameWithNumber =       
