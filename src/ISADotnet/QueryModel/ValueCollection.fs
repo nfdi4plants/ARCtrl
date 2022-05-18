@@ -22,6 +22,10 @@ type ValueCollection(values : ISAValue list) =
 
     member this.Values = values
 
+    member this.Filter(category : string) = values |> List.filter (fun v -> v.Category.NameText = category) |> ValueCollection
+    
+    member this.Filter(category : OntologyAnnotation) = values |> List.filter (fun v -> v.Category = category) |> ValueCollection
+
     member this.Characteristics(?Name) = 
         values
         |> List.filter (fun v -> 
@@ -65,6 +69,19 @@ type ValueCollection(values : ISAValue list) =
         |> List.filter (fun v -> v.Category.NameText = name)
         |> ValueCollection
 
+    member this.Distinct() =
+        values
+        |> List.distinct
+        |> ValueCollection
+
+    member this.Contains(category : OntologyAnnotation) =
+        values
+        |> List.exists (fun v -> v.Category = category)
+
+    member this.Contains(name : string) =
+        values
+        |> List.exists (fun v -> v.NameText = name)
+
     interface IEnumerable<ISAValue> with
         member this.GetEnumerator() = (Seq.ofList values).GetEnumerator()
 
@@ -87,6 +104,17 @@ type IOValueCollection(values : KeyValuePair<string*string,ISAValue> list) =
     member this.Item(ioKey : string*string) = values |> List.pick (fun kv -> if ioKey = kv.Key then Some kv.Value else None)
 
     member this.Item(category : OntologyAnnotation) = values |> List.pick (fun kv -> if kv.Value.Category = category then Some kv.Key else None)
+
+    member this.Values(?Name) = 
+        values 
+        |> List.choose (fun kv -> 
+            match Name with
+            | Some name -> 
+                if kv.Value.NameText = name then Some kv.Value
+                else None
+            | None -> Some kv.Value
+        )
+        |> ValueCollection
 
     member this.Characteristics(?Name) = 
         values
@@ -140,7 +168,7 @@ type IOValueCollection(values : KeyValuePair<string*string,ISAValue> list) =
         values
         |> List.groupBy (fun kv -> snd kv.Key)
                |> List.map (fun (sink,vals) -> sink, vals |> List.map (fun kv -> fst kv.Key,kv.Value))
-   
+    
     interface IEnumerable<KeyValuePair<string*string,ISAValue>> with
         member this.GetEnumerator() = (Seq.ofList values).GetEnumerator()
 

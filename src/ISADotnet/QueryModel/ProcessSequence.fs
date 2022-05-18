@@ -456,42 +456,72 @@ type QProcessSequence (sheets : QSheet list) =
     member this.LastProcessedDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isProcessedData) node this
 
-    member this.ValuesOf(name) =
-        (QProcessSequence.getPreviousValuesOf this name).Values @ (QProcessSequence.getSucceedingValuesOf this name).Values
+    member this.Values() = 
+        this.Sheets
+        |> List.collect (fun s -> s.Values.Values().Values)
         |> ValueCollection
 
-    member this.PreviousValuesOf(name) =
-        QProcessSequence.getPreviousValuesOf this name
+    member this.Values(ontology : OntologyAnnotation ) = 
+        this.Sheets
+        |> List.collect (fun s -> s.Values.Values().Filter(ontology).Values)
+        |> ValueCollection
 
-    member this.SucceedingValuesOf(name) =
-        QProcessSequence.getSucceedingValuesOf this name
+    member this.Values(name : string ) = 
+        this.Sheets
+        |> List.collect (fun s -> s.Values.Values().Filter(name).Values)
+        |> ValueCollection
 
-    member this.CharacteristicsOf(name) =
-        this.ValuesOf(name).Characteristics()
+    member this.Factors() =
+        this.Values().Factors()
 
-    member this.PreviousCharacteristicsOf(name) =
-        this.PreviousValuesOf(name).Characteristics()
+    member this.Parameters() =
+        this.Values().Parameters()
 
-    member this.SucceedingCharacteristicsOf(name) =
-        this.SucceedingValuesOf(name).Characteristics()
+    member this.Characteristics() =
+        this.Values().Characteristics()
 
-    member this.ParametersOf(name) =
-        this.ValuesOf(name).Parameters()
+    member this.ValuesOf(node) =
+        (QProcessSequence.getPreviousValuesOf this node).Values @ (QProcessSequence.getSucceedingValuesOf this node).Values
+        |> ValueCollection
 
-    member this.PreviousParametersOf(name) =
-        this.PreviousValuesOf(name).Parameters()
+    member this.PreviousValuesOf(node) =
+        QProcessSequence.getPreviousValuesOf this node
 
-    member this.SucceedingParametersOf(name) =
-        this.SucceedingValuesOf(name).Parameters()
+    member this.SucceedingValuesOf(node) =
+        QProcessSequence.getSucceedingValuesOf this node
 
-    member this.FactorsOf(name) =
-        this.ValuesOf(name).Factors()
+    member this.CharacteristicsOf(node) =
+        this.ValuesOf(node).Characteristics()
 
-    member this.PreviousFactorsOf(name) =
-        this.PreviousValuesOf(name).Factors()
+    member this.PreviousCharacteristicsOf(node) =
+        this.PreviousValuesOf(node).Characteristics()
 
-    member this.SucceedingFactorsOf(name) =
-        this.SucceedingValuesOf(name).Factors()
+    member this.SucceedingCharacteristicsOf(node) =
+        this.SucceedingValuesOf(node).Characteristics()
+
+    member this.ParametersOf(node) =
+        this.ValuesOf(node).Parameters()
+
+    member this.PreviousParametersOf(node) =
+        this.PreviousValuesOf(node).Parameters()
+
+    member this.SucceedingParametersOf(node) =
+        this.SucceedingValuesOf(node).Parameters()
+
+    member this.FactorsOf(node) =
+        this.ValuesOf(node).Factors()
+
+    member this.PreviousFactorsOf(node) =
+        this.PreviousValuesOf(node).Factors()
+
+    member this.SucceedingFactorsOf(node) =
+        this.SucceedingValuesOf(node).Factors()
+
+    member this.Contains(ontology : OntologyAnnotation) = 
+        this.Values().Contains ontology
+
+    member this.Contains(name : string) = 
+        this.Values().Contains name
 
     //static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
 
