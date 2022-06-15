@@ -1,3 +1,38 @@
+### 0.5.0+0646fa9 (Released 2022-6-15)
+* Additions:
+    * latest commit #0646fa9
+    * QueryModel
+    * Increase verbosity
+    * Fixes
+    * [[#8701a22](https://github.com/nfdi4plants/ISADotNet/commit/8701a22e9a50363fb7b95546152bffef2c44d660)] add additional methods to QueryModel
+    * [[#be34819](https://github.com/nfdi4plants/ISADotNet/commit/be348197e2b41a574ab216897a0cdc75b8c1b67a)] add study type to query model
+    * [[#8b7f1c7](https://github.com/nfdi4plants/ISADotNet/commit/8b7f1c726518f8d25b7111ac910b638fd99592a9)] improve query model value retrieval
+    * [[#ba81b27](https://github.com/nfdi4plants/ISADotNet/commit/ba81b279c52fceec9e2b756ed71b34daed77b7ef)] add Query model capabilities
+    * [[#a6470f1](https://github.com/nfdi4plants/ISADotNet/commit/a6470f1e2a58f3397b7fec94c04dc21262c8858f)] add QProcessSequence type for QueryModel
+    * [[#2a9613d](https://github.com/nfdi4plants/ISADotNet/commit/2a9613d5b6c1dc2f3b5a3fa840bbea92600f5957)] small improvement to assay xlsx reading error messaging
+    * [[#97406b5](https://github.com/nfdi4plants/ISADotNet/commit/97406b59030ff7afe9d2f7c6328f5dca86ee4ec2)] Add regex unit tests :white_check_mark:
+    * [[#0404cbf](https://github.com/nfdi4plants/ISADotNet/commit/0404cbf8741396f8196cfcf0e3d8f7f809ffebee)] Increase flexibility of regex
+    * [[#d04650f](https://github.com/nfdi4plants/ISADotNet/commit/d04650fe98edf5c20ed9a1439f5a410cb5d2e717)] move ValueIndex file from ISADotNet.XLSX into ISADotNet
+    * [[#9787518](https://github.com/nfdi4plants/ISADotNet/commit/97875186dbc35be850c9eeb3641f606aa922754d)] rework Assay query model
+    * [[#19cb0f6](https://github.com/nfdi4plants/ISADotNet/commit/19cb0f6b2da9592804f2cba95918743426dc3fd5)] adjust assay file header parsing -can now parse brackets inside brackets -now ignores numbers
+    * [[#06f1078](https://github.com/nfdi4plants/ISADotNet/commit/06f10787beafc54b489cacd9e86379b8a8a344fb)] increase assay file io fail safety
+    * [[#74b5b0f](https://github.com/nfdi4plants/ISADotNet/commit/74b5b0f63e8f50d31ebcaffa44bcbf710198f499)] increase xlsx IO verbosity
+    * [[#b3a0a64](https://github.com/nfdi4plants/ISADotNet/commit/b3a0a644f2a50fbfd920e3facf9e11eca83dbd77)] include empty study by default when writing investigation file
+    * [[#314acc0](https://github.com/nfdi4plants/ISADotNet/commit/314acc0ad0908a67a61ff642e33532ab83d905bc)] extend assay query model methods
+    * [[#372d5d9](https://github.com/nfdi4plants/ISADotNet/commit/372d5d911e2382fe80c0a5a04806bdcc2d5cb634)] start working on assay query model
+    * [[#e8e0175](https://github.com/nfdi4plants/ISADotNet/commit/e8e017592b37d6d82695b77f1dc68b255860a23e)] add study xlsx file io
+    * [[#5e27192](https://github.com/nfdi4plants/ISADotNet/commit/5e271920e73a713e43120a3ff82c7d482c21f286)] switch to FsSpreadsheet for ExcelIO
+    * [[#8c788d7](https://github.com/nfdi4plants/ISADotNet/commit/8c788d7392450d6ed892e20d1ff39f3bbf04a406)] add Process IO functions
+    * [[#269ce79](https://github.com/nfdi4plants/ISADotNet/commit/269ce799b907ad328bc35a53749b56af3853b306)] assay xlsx file reader always assumes data type for data column
+    * [[#4105894](https://github.com/nfdi4plants/ISADotNet/commit/4105894ecf720ae25200a77a68f2fcad41f67fd4)] add Assay Metadatasheet manipulation functions
+* Deletions:
+    * [[#476105e](https://github.com/nfdi4plants/ISADotNet/commit/476105e70e516cba375327b95ce9369d2cd1820f)] temporarily remove linux CI to avoid spam #38 this should definitely be looked into again at a later point
+* Bugfixes:
+    * [[#566115d](https://github.com/nfdi4plants/ISADotNet/commit/566115dcfc307472c44d4b376f3d30fff534c155)] fix assay metadatasheet not being read correctly
+    * [[#f343175](https://github.com/nfdi4plants/ISADotNet/commit/f34317502944295925c219a061e4b196c69e1639)] dag vizualization now makes edges distinct per source target pair quick fix for #52
+    * [[#d1c671d](https://github.com/nfdi4plants/ISADotNet/commit/d1c671d66348824c5f554c64f950d5470144a0d4)] fix outputByCharacterstic getter function fixes #50
+    * [[#2101589](https://github.com/nfdi4plants/ISADotNet/commit/210158982bde87b995f8f7e453c959063b7e37aa)] fix assay reading no processes as Some empty lists fixes #54
+
 ### 0.4.0+2a9311b (Released 2021-10-22)
 * Additions:
     * latest commit #2a9311b
