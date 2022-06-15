@@ -25,20 +25,20 @@ type QStudy(FileName : string option,Identifier : string option,Title : string o
     member this.Assays = Assays
 
     static member fromStudy (study : Study) =
-        let assays = study.Assays |> Option.map (List.map QAssay.fromAssay) |> Option.defaultValue []
+               
         let sheets = 
-            study.ProcessSequence |> Option.defaultValue []
-            |> List.groupBy (fun x -> 
-                if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                    x.ExecutesProtocol.Value.Name.Value 
-                else
-                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
-                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
-                    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
-                    x.Name.Value.Remove lastUnderScoreIndex
-            )
-            |> List.map (fun (name,processes) -> QSheet.fromProcesses name processes)
-            |> List.append (assays |> List.collect (fun a -> a.Protocols))
+            study.Assays 
+            |> Option.map (List.collect (fun a -> a.ProcessSequence |> Option.defaultValue []) )
+            |> Option.defaultValue []
+            |> List.append (study.ProcessSequence |> Option.defaultValue [])
+            |> QProcessSequence
+            |> Seq.toList
+
+        let assays = 
+            study.Assays 
+            |> Option.map (List.map (fun a -> QAssay.fromAssay(a,sheets)))
+            |> Option.defaultValue []
+
         QStudy(study.FileName,study.Identifier,study.Title,study.Description,study.SubmissionDate,study.PublicReleaseDate,study.Publications,study.Contacts,study.StudyDesignDescriptors,assays,sheets)
 
     member this.Protocol (sheetName : string) =

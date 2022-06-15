@@ -13,26 +13,33 @@ type QProcessSequence (sheets : QSheet list) =
 
     member this.Sheets = sheets
 
-    new (processSequence : Process list) =
-        let updateNodes (sheets : QSheet list) =
-            let mapping = 
-                sheets
-                |> List.collect (fun s -> 
-                    s.Rows
-                    |> List.collect (fun r -> [r.Input, r.InputType.Value; r.Output, r.OutputType.Value])
-                )
-                |> List.groupBy fst
-                |> List.map (fun (name,vs) -> name, vs |> List.map snd |> IOType.reduce)
-                |> Map.ofList
-            let updateRow row = 
-                {row with 
-                    InputType = Some mapping.[row.Input]
-                    OutputType = Some mapping.[row.Output]
-                }
-            sheets
-            |> List.map (fun sheet ->
-                {sheet with Rows = sheet.Rows |> List.map updateRow}
+    static member internal updateNodesAgainst (reference : QSheet list) (sheets : QSheet list) =
+        let mapping = 
+            reference
+            |> List.collect (fun s -> 
+                s.Rows
+                |> List.collect (fun r -> [r.Input, r.InputType.Value; r.Output, r.OutputType.Value])
             )
+            |> List.groupBy fst
+            |> List.map (fun (name,vs) -> name, vs |> List.map snd |> IOType.reduce)
+            |> Map.ofList
+        let updateRow row = 
+            {row with 
+                InputType = Some mapping.[row.Input]
+                OutputType = Some mapping.[row.Output]
+            }
+        sheets
+        |> List.map (fun sheet ->
+            {sheet with Rows = sheet.Rows |> List.map updateRow}
+        )
+
+    new (processSequence : Process list, ?ReferenceSheets : QSheet list) =
+        let updateNodes (sheets : QSheet list) =
+            match ReferenceSheets with
+            | Some ref ->
+                QProcessSequence.updateNodesAgainst (ref @ sheets) sheets
+            | None ->
+                QProcessSequence.updateNodesAgainst sheets sheets
         let sheets = 
             processSequence
             |> List.groupBy (fun x -> 

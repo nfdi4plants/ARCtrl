@@ -18,20 +18,21 @@ type QAssay(FileName : string option,MeasurementType : OntologyAnnotation option
     member this.TechnologyType = TechnologyType
     member this.TechnologyPlatform = TechnologyPlatform
 
-    static member fromAssay (assay : Assay) =
+    static member fromAssay (assay : Assay, ?ReferenceSheets : QSheet list) =
         let sheets = 
-            assay.ProcessSequence |> Option.defaultValue []
-            |> List.groupBy (fun x -> 
-                if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                    x.ExecutesProtocol.Value.Name.Value 
-                else
-                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
-                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
-                    let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
-                    x.Name.Value.Remove lastUnderScoreIndex
-            )
-            |> List.map (fun (name,processes) -> QSheet.fromProcesses name processes)
+            match ReferenceSheets with
+            | Some ref -> 
+                assay.ProcessSequence 
+                |> Option.defaultValue []
+                |> fun sheets -> QProcessSequence(sheets,ref)
+            | None ->
+                assay.ProcessSequence 
+                |> Option.defaultValue []
+                |> QProcessSequence
+            |> Seq.toList
+
         QAssay(assay.FileName,assay.MeasurementType,assay.TechnologyType,assay.TechnologyPlatform,sheets)
+
 
     member this.Protocol (sheetName : string) =
         base.Protocol(sheetName, $"Assay \"{this.FileName}\"")
