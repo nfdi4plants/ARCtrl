@@ -1,3 +1,9 @@
+### 0.5.1+af3dc20 (Released 2022-6-15)
+* Additions:
+    * latest commit #af3dc20
+* Bugfixes:
+    * [[#af3dc20](https://github.com/nfdi4plants/ISADotNet/commit/af3dc205d808b4eb19ad1f192b5f20fb238def94)] fix querymodel node updating
+
 ### 0.5.0+0646fa9 (Released 2022-6-15)
 * Additions:
     * latest commit #0646fa9
