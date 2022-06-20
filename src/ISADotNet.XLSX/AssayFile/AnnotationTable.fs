@@ -230,3 +230,41 @@ module AnnotationTable =
     let updateSamplesByThemselves (processes : Process seq) =
         processes
         |> updateSamplesBy processes
+
+
+module QRow =
+    open FsSpreadsheet.DSL
+
+    let toHeaderRow (r : QueryModel.QRow) =
+        try 
+            row {
+                "Source Name"
+                for v in (r.Values |> List.collect ISAValue.toHeaders) do v
+                IOType.toHeader r.OutputType.Value
+            }
+        with
+        | err -> failwithf "Could not parse headers of row: \n%s" err.Message
+
+    let toValueRow (r : QueryModel.QRow) =
+        try
+            row {
+                r.Input
+                for v in (r.Values |> List.collect ISAValue.toValues) do v
+                r.Output
+            }
+        with
+        | err -> failwithf "Could not parse values of row: \n%s" err.Message
+
+module QSheet =
+
+    open FsSpreadsheet.DSL
+
+    let toSheet (s : QueryModel.QSheet) =
+        try 
+
+            sheet s.SheetName {
+                QRow.toHeaderRow s.[0]
+                for r in s do QRow.toValueRow r
+            }
+        with
+        | err -> failwithf "Could not parse sheet %s: \n%s" s.SheetName err.Message

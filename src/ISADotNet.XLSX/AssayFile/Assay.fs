@@ -43,6 +43,8 @@ module Process =
 /// Additionally, the file can contain several sheets containing parameter tables and a sheet containing additional assay metadata
 module Assay =
 
+    open FsSpreadsheet.DSL
+
     /// Returns an assay from a sparseMatrix represntation of an assay.xlsx sheet
     ///
     /// processNameRoot is the sheetName (or the protocol name you want to use)
@@ -174,4 +176,15 @@ module Assay =
                 Spreadsheet.close doc
         with
         | err -> failwithf "Could not read assay from stream:\n\t %s" err.Message
+
+    let toFile (p : string) (assay : Assay) =
+        try
+        let a = QueryModel.QAssay.fromAssay assay
+        let wb = 
+            workbook {
+                for s in a.Sheets do QSheet.toSheet s
+            }
+        wb.Value.Parse().ToFile(p)
+        with
+        | err -> failwithf "Could not write Assay to Xlsx file in path \"%s\": \n\t%s" p err.Message
     /// ---->  Bis hier

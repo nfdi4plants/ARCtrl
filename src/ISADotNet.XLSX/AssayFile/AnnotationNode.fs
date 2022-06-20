@@ -267,3 +267,49 @@ module AnnotationNode =
         (Seq.exists (tryParseCharacteristicsHeader >> Option.isSome) headers)
         ||
         (Seq.exists (tryParseParameterHeader >> Option.isSome) headers)
+
+module ISAValue =
+
+    let toHeaders (v : QueryModel.ISAValue) =
+        try 
+            let ont =
+                if v.Category.TermSourceREF.IsSome then
+                    let shortNum = v.Category.TermAccessionNumber.Value.Split('/') |> Array.last
+                    $"{v.Category.TermSourceREF}:{shortNum}"
+                else ""
+            if v.HasUnit then
+                [v.HeaderText;"Unit";$"Term Source REF ({ont})";$"Term Accession Number ({ont})"]
+            else
+                [v.HeaderText;$"Term Source REF ({ont})";$"Term Accession Number ({ont})"]
+        with
+        | err -> failwithf "Could not parse headers of value with name %s: \n%s" v.HeaderText err.Message
+
+    let toValues (v : QueryModel.ISAValue) =    
+        try
+            if v.HasUnit then
+                [v.ValueText;v.Unit.NameText;v.Unit.TermSourceREFString;v.Unit.TermAccessionString]
+            else
+                match v.Value with
+                | Ontology oa ->
+                    [oa.NameText;oa.TermSourceREFString;oa.TermAccessionString]
+                | _ ->
+                    [v.ValueText;"";""]
+        with
+        | err -> failwithf "Could not parse headers of value with name %s: \n%s" v.HeaderText err.Message
+
+module IOType =
+
+    let toHeader (io : QueryModel.IOType) =
+        match io with
+        | QueryModel.IOType.Source ->      
+            "Source Name"
+        | QueryModel.IOType.Sample ->      
+            "Sample Name"
+        | QueryModel.IOType.RawData ->      
+            "Raw Data File"
+        | QueryModel.IOType.ProcessedData ->      
+            "Derived Data File"
+        | QueryModel.IOType.Material ->      
+            "Material Name"
+        | QueryModel.IOType.Data ->      
+            "Data File Name"

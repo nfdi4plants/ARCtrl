@@ -53,6 +53,27 @@ type ISAValue =
         | Characteristic c  -> try $"Characteristics [{this.NameText}]" with | _ -> failwith $"Characteristic does not contain header"
         | Factor f          -> try $"Factor [{this.NameText}]"          with | _ -> failwith $"Factor does not contain header"
 
+    /// Returns true, if the ISAValue has a unit
+    member this.HasUnit =
+        match this with
+        | Parameter p       -> p.Unit.IsSome
+        | Characteristic c  -> c.Unit.IsSome
+        | Factor f          -> f.Unit.IsSome
+
+    /// Returns true, if the ISAValue has a value
+    member this.HasValue =
+        match this with
+        | Parameter p       -> p.Value.IsSome
+        | Characteristic c  -> c.Value.IsSome
+        | Factor f          -> f.Value.IsSome
+
+    /// Returns true, if the ISAValue has a category
+    member this.HasCategory = 
+        match this with
+        | Parameter p       -> p.Category.IsSome
+        | Characteristic c  -> c.Category.IsSome
+        | Factor f          -> f.Category.IsSome
+
     /// Returns the name of the Value as string
     member this.NameText = this.Category.NameText
   
