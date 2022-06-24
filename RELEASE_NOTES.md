@@ -1,3 +1,10 @@
+### 0.5.2+43177ae (Released 2022-6-24)
+* Additions:
+    * latest commit #43177ae
+    * [[#20b36d5](https://github.com/nfdi4plants/ISADotNet/commit/20b36d543f15ddb38392726fc8ced60a240421b2)] update readme with querymodel examples
+    * [[#6640826](https://github.com/nfdi4plants/ISADotNet/commit/6640826dcc492c5354e7448c2dd726ae3f76e840)] add assay xlsx file writer
+    * [[#113767c](https://github.com/nfdi4plants/ISADotNet/commit/113767c95f436145a245396a8642d65538935e76)] finish up assay xlsx file writer
+
 ### 0.5.1+af3dc20 (Released 2022-6-15)
 * Additions:
     * latest commit #af3dc20
