@@ -230,3 +230,79 @@ module AnnotationTable =
     let updateSamplesByThemselves (processes : Process seq) =
         processes
         |> updateSamplesBy processes
+
+
+module QRow =
+    open FsSpreadsheet.DSL
+
+
+    let renumberHeaders (headerss : (string list) list) = 
+        
+        let counts = System.Collections.Generic.Dictionary<string, int ref>()
+        let renumberHeader num (h : string) = 
+            counts.[h] <- ref num
+            if h = "Unit" then
+                $"Unit#{num}"
+            elif h.EndsWith ")" then
+                h.Replace(")",$"#{num})")
+            elif h.EndsWith "]" then
+                h.Replace("]",$"#{num}]")
+            else h
+        headerss
+        |> List.map (fun headers ->
+            let pickResult = 
+                headers
+                |> List.choose (fun h ->
+                    match Dictionary.tryGetValue h counts with
+                    | Some count -> 
+                        count := !count + 1 
+                        Some !count
+                    | _ -> 
+                        counts.[h] <- ref 1
+                        None
+                )
+                |> function 
+                    | [] -> None
+                    | l -> List.max l |> Some
+            match pickResult with
+            | Some (count) -> 
+                headers |> List.map (renumberHeader count)
+            | _ -> 
+                headers
+        )
+
+    let toHeaderRow (r : QueryModel.QRow) =
+        try 
+            row {
+                "Source Name"
+                for v in (r.Values |> List.map ISAValue.toHeaders |> renumberHeaders |> List.concat) do v
+                IOType.toHeader r.OutputType.Value
+            }
+        with
+        | err -> failwithf "Could not parse headers of row: \n%s" err.Message
+
+    let toValueRow i (r : QueryModel.QRow) =
+        try
+            row {
+                r.Input
+                for v in (r.Values |> List.collect ISAValue.toValues) do v
+                r.Output
+            }
+        with
+        | err -> failwithf "Could not parse values of row %i: \n%s" (i+1) err.Message
+
+module QSheet =
+
+    open FsSpreadsheet.DSL
+
+    let toSheet i (s : QueryModel.QSheet) =
+        try 
+
+            sheet s.SheetName {
+                table $"annotationTable{i}" {
+                    QRow.toHeaderRow s.[0]
+                    for (i,r) in Seq.indexed s do QRow.toValueRow i r
+                }
+            }
+        with
+        | err -> failwithf "Could not parse sheet %s: \n%s" s.SheetName err.Message

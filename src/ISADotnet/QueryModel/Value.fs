@@ -46,12 +46,40 @@ type ISAValue =
         | Characteristic c  -> try c.Value.Value with | _ -> failwith $"Characteristic {c.NameText} does not contain value"
         | Factor f          -> try f.Value.Value with | _ -> failwith $"Factor {f.NameText} does not contain value"
 
+    /// Returns the value of the ISAValue
+    member this.TryValue =
+        match this with
+        | Parameter p       -> try Some p.Value.Value with | _ -> None
+        | Characteristic c  -> try Some c.Value.Value with | _ -> None
+        | Factor f          -> try Some f.Value.Value with | _ -> None
+
     /// Returns the name of the Value as string
     member this.HeaderText = 
         match this with
         | Parameter p       -> try $"Parameter [{this.NameText}]"       with | _ -> failwith $"Parameter does not contain header"
         | Characteristic c  -> try $"Characteristics [{this.NameText}]" with | _ -> failwith $"Characteristic does not contain header"
         | Factor f          -> try $"Factor [{this.NameText}]"          with | _ -> failwith $"Factor does not contain header"
+
+    /// Returns true, if the ISAValue has a unit
+    member this.HasUnit =
+        match this with
+        | Parameter p       -> p.Unit.IsSome
+        | Characteristic c  -> c.Unit.IsSome
+        | Factor f          -> f.Unit.IsSome
+
+    /// Returns true, if the ISAValue has a value
+    member this.HasValue =
+        match this with
+        | Parameter p       -> p.Value.IsSome
+        | Characteristic c  -> c.Value.IsSome
+        | Factor f          -> f.Value.IsSome
+
+    /// Returns true, if the ISAValue has a category
+    member this.HasCategory = 
+        match this with
+        | Parameter p       -> p.Category.IsSome
+        | Characteristic c  -> c.Category.IsSome
+        | Factor f          -> f.Category.IsSome
 
     /// Returns the name of the Value as string
     member this.NameText = this.Category.NameText

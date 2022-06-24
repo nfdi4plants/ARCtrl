@@ -73,12 +73,12 @@ module AnnotationNode =
         Seq.tryPick tryParseUnitHeader headers
         |> Option.map (fun h -> 
             let unitNameGetter matrix i = 
-                Dictionary.tryGetValue (i,h.HeaderString) matrix       
+                Dictionary.tryGetString (i,h.HeaderString) matrix       
             let termAccessionGetter =
                 match Seq.tryPick (tryParseTermAccessionNumberHeader h) headers with
                 | Some h ->
                     fun matrix i -> 
-                        match Dictionary.tryGetValue (i,h.HeaderString) matrix with
+                        match Dictionary.tryGetString (i,h.HeaderString) matrix with
                         | Some "user-specific" -> None
                         | Some v -> Some v
                         | _ -> None 
@@ -87,7 +87,7 @@ module AnnotationNode =
                 match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
                 | Some h ->
                     fun matrix i -> 
-                        match Dictionary.tryGetValue (i,h.HeaderString) matrix with
+                        match Dictionary.tryGetString (i,h.HeaderString) matrix with
                         | Some "user-specific" -> None
                         | Some v -> Some v
                         | _ -> None 
@@ -108,7 +108,7 @@ module AnnotationNode =
             | Some h ->
                 h.Term,
                 fun (matrix:System.Collections.Generic.Dictionary<int*string,string>) (i:int) -> 
-                    match Dictionary.tryGetValue (i,h.HeaderString) matrix with
+                    match Dictionary.tryGetString (i,h.HeaderString) matrix with
                     | Some "user-specific" -> None
                     | Some v -> Some v
                     | _ -> None 
@@ -118,7 +118,7 @@ module AnnotationNode =
             | Some h ->
                 h.Term,
                 fun matrix i -> 
-                    match Dictionary.tryGetValue (i,h.HeaderString) matrix with
+                    match Dictionary.tryGetString (i,h.HeaderString) matrix with
                     | Some "user-specific" -> None
                     | Some v -> Some v
                     | _ -> None 
@@ -137,7 +137,7 @@ module AnnotationNode =
         let valueGetter = 
             fun matrix i ->
                 let value = 
-                    match Dictionary.tryGetValue (i,valueHeader.HeaderString) matrix with
+                    match Dictionary.tryGetString (i,valueHeader.HeaderString) matrix with
                     | Some "user-specific" -> None
                     // Trim() should remove any accidental whitespaces at the beginning or end of a term
                     | Some v -> Some v
@@ -239,7 +239,7 @@ module AnnotationNode =
                 
                 Data.make
                     None
-                    (Dictionary.tryGetValue (i,h.HeaderString) matrix)
+                    (Dictionary.tryGetString (i,h.HeaderString) matrix)
                     dataType
                     numberComment
         )
@@ -249,7 +249,7 @@ module AnnotationNode =
         Seq.tryPick tryParseSampleName headers
         |> Option.map (fun h -> 
             fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
-                Dictionary.tryGetValue (i,h.HeaderString) matrix
+                Dictionary.tryGetString (i,h.HeaderString) matrix
         )
 
     /// If the headers of a node depict a source name, returns a function for parsing the values of the matrix to the source names
@@ -257,7 +257,7 @@ module AnnotationNode =
         Seq.tryPick tryParseSourceName headers
         |> Option.map (fun h -> 
             fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
-                Dictionary.tryGetValue (i,h.HeaderString) matrix
+                Dictionary.tryGetString (i,h.HeaderString) matrix
         )
     
     /// Returns true, if the headers contain a value node: characteristic, parameter or factor
@@ -267,3 +267,54 @@ module AnnotationNode =
         (Seq.exists (tryParseCharacteristicsHeader >> Option.isSome) headers)
         ||
         (Seq.exists (tryParseParameterHeader >> Option.isSome) headers)
+
+module ISAValue =
+
+    let toHeaders (v : QueryModel.ISAValue) =
+        try 
+            let ont =
+                if v.Category.TermSourceREF.IsSome then
+                    let shortNum = v.Category.TermAccessionNumber.Value.Split('/') |> Array.last
+                    $"{v.Category.TermSourceREF.Value}:{shortNum}"
+                else ""
+            if v.HasUnit then
+                [v.HeaderText;"Unit";$"Term Source REF ({ont})";$"Term Accession Number ({ont})"]
+            else
+                [v.HeaderText;$"Term Source REF ({ont})";$"Term Accession Number ({ont})"]
+        with
+        | err -> failwithf "Could not parse headers of value with name %s: \n%s" v.HeaderText err.Message
+
+    let toValues (v : QueryModel.ISAValue) =    
+        try
+            if v.HasUnit then
+                if v.HasValue then
+                    [v.ValueText;v.Unit.NameText;v.Unit.TermSourceREFString;v.Unit.TermAccessionString]
+                else 
+                    ["";v.Unit.NameText;v.Unit.TermSourceREFString;v.Unit.TermAccessionString]
+            else
+                match v.TryValue with
+                | Some (Ontology oa) ->
+                    [oa.NameText;oa.TermSourceREFString;oa.TermAccessionString]
+                | Some _ ->
+                    [v.ValueText;"";""]
+                | None ->
+                    ["";"";""]
+        with
+        | err -> failwithf "Could not parse headers of value with name %s: \n%s" v.HeaderText err.Message
+
+module IOType =
+
+    let toHeader (io : QueryModel.IOType) =
+        match io with
+        | QueryModel.IOType.Source ->      
+            "Source Name"
+        | QueryModel.IOType.Sample ->      
+            "Sample Name"
+        | QueryModel.IOType.RawData ->      
+            "Raw Data File"
+        | QueryModel.IOType.ProcessedData ->      
+            "Derived Data File"
+        | QueryModel.IOType.Material ->      
+            "Material Name"
+        | QueryModel.IOType.Data ->      
+            "Data File Name"
