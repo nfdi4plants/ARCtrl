@@ -182,7 +182,7 @@ module Assay =
         let a = QueryModel.QAssay.fromAssay assay
         let wb = 
             workbook {
-                for s in a.Sheets do QSheet.toSheet s
+                for (i,s) in List.indexed a.Sheets do QSheet.toSheet i s
             }
         wb.Value.Parse().ToFile(p)
         with

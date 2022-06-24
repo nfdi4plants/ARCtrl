@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet.ExcelIO" Version="0.1.5" />
+    <PackageReference Include="FsSpreadsheet.ExcelIO" Version="0.1.7" />
   </ItemGroup>
 
   <ItemGroup>

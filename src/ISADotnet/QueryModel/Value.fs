@@ -46,6 +46,13 @@ type ISAValue =
         | Characteristic c  -> try c.Value.Value with | _ -> failwith $"Characteristic {c.NameText} does not contain value"
         | Factor f          -> try f.Value.Value with | _ -> failwith $"Factor {f.NameText} does not contain value"
 
+    /// Returns the value of the ISAValue
+    member this.TryValue =
+        match this with
+        | Parameter p       -> try Some p.Value.Value with | _ -> None
+        | Characteristic c  -> try Some c.Value.Value with | _ -> None
+        | Factor f          -> try Some f.Value.Value with | _ -> None
+
     /// Returns the name of the Value as string
     member this.HeaderText = 
         match this with
