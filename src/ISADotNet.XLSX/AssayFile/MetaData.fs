@@ -48,6 +48,9 @@ module MetaData =
         else
             failwith "emptyInvestigationFile"
 
+    let toDSLSheet a c =
+        toRows a c 
+        |> Seq.map SparseRow.toDSLRow
 
     ///let doc = Spreadsheet.fromFile path true  
     ///  

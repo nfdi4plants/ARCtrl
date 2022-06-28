@@ -2,6 +2,7 @@ namespace ISADotNet.XLSX
 
 open ISADotNet
 open System.Collections.Generic
+open FsSpreadsheet.DSL
 
 type SparseRow = (int * string) seq
 
@@ -23,6 +24,15 @@ module SparseRow =
     let tryGetValueAt i (vs : SparseRow) =
         vs 
         |> Seq.tryPick (fun (index,v) -> if index = i then Some v else None)
+
+    let toDSLRow (vs : SparseRow) =
+
+        row {
+            for v in getAllValues vs do
+                match v with
+                | Some v -> cell {v}
+                | None -> cell {""}
+        }
 
 type SparseTable = 
 

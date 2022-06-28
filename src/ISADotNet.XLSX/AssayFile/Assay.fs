@@ -177,12 +177,15 @@ module Assay =
         with
         | err -> failwithf "Could not read assay from stream:\n\t %s" err.Message
 
-    let toFile (p : string) (assay : Assay) =
+    let toFile (p : string) (contacts : Person list) (assay : Assay) =
         try
         let a = QueryModel.QAssay.fromAssay assay
         let wb = 
             workbook {
                 for (i,s) in List.indexed a.Sheets do QSheet.toSheet i s
+                sheet "Assay" {
+                    for r in MetaData.toDSLSheet assay contacts do r
+                }
             }
         wb.Value.Parse().ToFile(p)
         with
