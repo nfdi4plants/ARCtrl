@@ -1,3 +1,9 @@
+### 0.5.3+dc96afe (Released 2022-6-29)
+* Additions:
+    * latest commit #dc96afe
+    * [[#3b4eec6](https://github.com/nfdi4plants/ISADotNet/commit/3b4eec6cc00bf01ab7d48539114140795e9dd710)] add metadata sheets to assay and study xlsx writing
+    * [[#dc96afe](https://github.com/nfdi4plants/ISADotNet/commit/dc96afe6feeca7a4ea10eee596937ff0f63a5fb5)] add QInvestigation to querymodel
+
 ### 0.5.2+43177ae (Released 2022-6-24)
 * Additions:
     * latest commit #43177ae
