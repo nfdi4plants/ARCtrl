@@ -34,6 +34,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{BF89DA8A-6
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Viz", "src\ISADotNet.Viz\ISADotNet.Viz.fsproj", "{17504B07-7966-40FE-BE31-49682EEDD18A}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ISADotNet.QueryModel", "src\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj", "{10E8D0C4-B603-41A1-BC4D-68B672188F28}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,6 +58,10 @@ Global
 		{17504B07-7966-40FE-BE31-49682EEDD18A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{17504B07-7966-40FE-BE31-49682EEDD18A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{17504B07-7966-40FE-BE31-49682EEDD18A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

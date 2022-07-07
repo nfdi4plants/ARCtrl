@@ -48,18 +48,7 @@
     <Compile Include="JsonIO\Assay.fs" />
     <Compile Include="JsonIO\Study.fs" />
     <Compile Include="JsonIO\Investigation.fs" />
-    <Compile Include="QueryModel\ValueIndex.fs" />
-    <Compile Include="QueryModel\Comment.fs" />
-    <Compile Include="QueryModel\Category.fs" />
-    <Compile Include="QueryModel\Value.fs" />
-    <Compile Include="QueryModel\Row.fs" />
-    <Compile Include="QueryModel\Column.fs" />
-    <Compile Include="QueryModel\ValueCollection.fs" />
-    <Compile Include="QueryModel\Sheet.fs" />
-    <Compile Include="QueryModel\ProcessSequence.fs" />
-    <Compile Include="QueryModel\Assay.fs" />
-    <Compile Include="QueryModel\Study.fs" />
-    <Compile Include="QueryModel\Investigation.fs" />
+    <Compile Include="ValueIndex.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -87,7 +76,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!--<PackageProjectUrl>https://fslab.org/docs-template/</PackageProjectUrl>-->
     <PackageIconUrl>https://raw.githubusercontent.com/nfdi4plants/Branding/138420e3b6f9ec9e125c1ca8840874b2be2a1262/logos/DataPLANT_logo_minimal_rounded_bg_transparent.svg</PackageIconUrl>
-    <PackageTags>F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA Json</PackageTags>
+    <PackageTags>F# FSharp dotnet .Net bioinformatics biology datascience dataplant nfdi metadata investigation study assay ISA Json</PackageTags>
     <RepositoryUrl>https://github.com/nfdi4plants/ISADotNet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <FsDocsLicenseLink>https://github.com/nfdi4plants/ISADotNet/blob/developer/LICENSE</FsDocsLicenseLink>

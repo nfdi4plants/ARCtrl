@@ -97,6 +97,6 @@ type ISAValue =
 
     member this.ValueIndex =
         match this with
-        | Parameter p       -> p.GetValueIndex
-        | Characteristic c  -> c.GetValueIndex
-        | Factor f          -> f.GetValueIndex
+        | Parameter p       -> p.GetValueIndex()
+        | Characteristic c  -> c.GetValueIndex()
+        | Factor f          -> f.GetValueIndex()

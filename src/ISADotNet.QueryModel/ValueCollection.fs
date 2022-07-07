@@ -10,6 +10,9 @@ open System.Collections
 
 type ValueCollection(values : ISAValue list) =
     
+    new (values : ISAValue seq) =
+        ValueCollection(values |> Seq.toList)
+
     member this.First = values.Head
 
     member this.Last = values.[values.Length - 1]
