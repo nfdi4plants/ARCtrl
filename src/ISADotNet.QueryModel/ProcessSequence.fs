@@ -271,7 +271,7 @@ type QProcessSequence (sheets : QSheet list) =
                     state 
                     |> List.map (fun s -> 
                         mappings.TryFind s 
-                        |> Option.map (fun r -> r.Input,r.Values)
+                        |> Option.map (fun r -> r.Input,r.Vals)
                         |> Option.defaultValue (s,[])
                     )
                     |> List.unzip
@@ -298,7 +298,7 @@ type QProcessSequence (sheets : QSheet list) =
                     state 
                     |> List.map (fun s -> 
                         mappings.TryFind s 
-                        |> Option.map (fun r -> r.Output,r.Values)
+                        |> Option.map (fun r -> r.Output,r.Vals)
                         |> Option.defaultValue (s,[])
                     )
                     |> List.unzip
@@ -307,6 +307,19 @@ type QProcessSequence (sheets : QSheet list) =
         loop [] [] [sample]
         |> ValueCollection
 
+    static member onlyValuesOfProtocol (ps : #QProcessSequence) (protocolName : string option) =
+        match protocolName with
+        | Some pn ->
+            ps.Sheets
+            |> List.map (fun s -> 
+                if s.SheetName = pn then 
+                    s
+                else 
+                    {s with Rows = s.Rows |> List.map (fun r -> {r with Vals = []})}
+            )
+            |> QProcessSequence                    
+        | None -> ps.Sheets |> QProcessSequence
+    
 
     member this.Nearest = 
         this.Sheets
@@ -322,7 +335,7 @@ type QProcessSequence (sheets : QSheet list) =
                 QProcessSequence.getRootInputsOfBy (fun _ -> true) r.Input this
                 |> List.distinct
                 |> List.collect (fun inp -> 
-                    r.Values
+                    r.Vals
                     |> List.map (fun v -> 
                         KeyValuePair((inp,r.Output),v)
                     )
@@ -340,7 +353,7 @@ type QProcessSequence (sheets : QSheet list) =
                 QProcessSequence.getFinalOutputsOfBy (fun _ -> true) r.Output this 
                 |> List.distinct
                 |> List.collect (fun out -> 
-                    r.Values
+                    r.Vals
                     |> List.map (fun v -> 
                         KeyValuePair((r.Input,out),v)
                     )
@@ -360,7 +373,7 @@ type QProcessSequence (sheets : QSheet list) =
                 |> List.collect (fun out -> 
                     inps
                     |> List.collect (fun inp ->
-                        r.Values
+                        r.Vals
                         |> List.map (fun v -> 
                             KeyValuePair((inp,out),v)
                         )
@@ -463,72 +476,75 @@ type QProcessSequence (sheets : QSheet list) =
     member this.LastProcessedDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isProcessedData) node this
 
-    member this.Values() = 
-        this.Sheets
+    member this.Values(?ProtocolName) = 
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
         |> List.collect (fun s -> s.Values.Values().Values)
         |> ValueCollection
 
-    member this.Values(ontology : OntologyAnnotation ) = 
-        this.Sheets
+    member this.Values(ontology : OntologyAnnotation, ?ProtocolName) = 
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
         |> List.collect (fun s -> s.Values.Values().Filter(ontology).Values)
         |> ValueCollection
 
-    member this.Values(name : string ) = 
-        this.Sheets
+    member this.Values(name : string, ?ProtocolName) = 
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
         |> List.collect (fun s -> s.Values.Values().Filter(name).Values)
         |> ValueCollection
 
-    member this.Factors() =
-        this.Values().Factors()
+    member this.Factors(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Factors()
 
-    member this.Parameters() =
-        this.Values().Parameters()
+    member this.Parameters(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Parameters()
 
-    member this.Characteristics() =
-        this.Values().Characteristics()
+    member this.Characteristics(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Characteristics()
 
-    member this.ValuesOf(node) =
-        (QProcessSequence.getPreviousValuesOf this node).Values @ (QProcessSequence.getSucceedingValuesOf this node).Values
+    member this.ValuesOf(node, ?ProtocolName) =
+        let ps = QProcessSequence.onlyValuesOfProtocol this ProtocolName
+        (QProcessSequence.getPreviousValuesOf ps node).Values @ (QProcessSequence.getSucceedingValuesOf ps node).Values
         |> ValueCollection
 
-    member this.PreviousValuesOf(node) =
-        QProcessSequence.getPreviousValuesOf this node
+    member this.PreviousValuesOf(node, ?ProtocolName) =
+        let ps = QProcessSequence.onlyValuesOfProtocol this ProtocolName
+        QProcessSequence.getPreviousValuesOf ps node
 
-    member this.SucceedingValuesOf(node) =
-        QProcessSequence.getSucceedingValuesOf this node
+    member this.SucceedingValuesOf(node, ?ProtocolName) =
+        let ps = QProcessSequence.onlyValuesOfProtocol this ProtocolName
+        QProcessSequence.getSucceedingValuesOf ps node
 
-    member this.CharacteristicsOf(node) =
-        this.ValuesOf(node).Characteristics()
+    member this.CharacteristicsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Characteristics()
 
-    member this.PreviousCharacteristicsOf(node) =
-        this.PreviousValuesOf(node).Characteristics()
+    member this.PreviousCharacteristicsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Characteristics()
 
-    member this.SucceedingCharacteristicsOf(node) =
-        this.SucceedingValuesOf(node).Characteristics()
+    member this.SucceedingCharacteristicsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Characteristics()
 
-    member this.ParametersOf(node) =
-        this.ValuesOf(node).Parameters()
+    member this.ParametersOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Parameters()
 
-    member this.PreviousParametersOf(node) =
-        this.PreviousValuesOf(node).Parameters()
+    member this.PreviousParametersOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Parameters()
 
-    member this.SucceedingParametersOf(node) =
-        this.SucceedingValuesOf(node).Parameters()
+    member this.SucceedingParametersOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Parameters()
 
-    member this.FactorsOf(node) =
-        this.ValuesOf(node).Factors()
+    member this.FactorsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Factors()
 
-    member this.PreviousFactorsOf(node) =
-        this.PreviousValuesOf(node).Factors()
+    member this.PreviousFactorsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Factors()
 
-    member this.SucceedingFactorsOf(node) =
-        this.SucceedingValuesOf(node).Factors()
+    member this.SucceedingFactorsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Factors()
 
-    member this.Contains(ontology : OntologyAnnotation) = 
-        this.Values().Contains ontology
+    member this.Contains(ontology : OntologyAnnotation, ?ProtocolName) = 
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains ontology
 
-    member this.Contains(name : string) = 
-        this.Values().Contains name
+    member this.Contains(name : string, ?ProtocolName) = 
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains name
 
     //static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
 

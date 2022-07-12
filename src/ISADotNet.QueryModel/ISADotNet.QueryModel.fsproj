@@ -11,9 +11,9 @@
     <Compile Include="Comment.fs" />
     <Compile Include="Category.fs" />
     <Compile Include="Value.fs" />
+    <Compile Include="ValueCollection.fs" />
     <Compile Include="Row.fs" />
     <Compile Include="Column.fs" />
-    <Compile Include="ValueCollection.fs" />
     <Compile Include="Sheet.fs" />
     <Compile Include="ProcessSequence.fs" />
     <Compile Include="Assay.fs" />

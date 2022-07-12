@@ -30,7 +30,7 @@ type QSheet =
     member this.Values = 
         this.Rows
         |> List.collect (fun r -> 
-            r.Values
+            r.Vals
             |> List.map (fun v -> 
                 KeyValuePair ((r.Input,r.Output),v)
             )
@@ -55,6 +55,18 @@ type QSheet =
     member this.InputNames =
         this.Rows 
         |> List.map (fun row -> row.Input)
+
+    member this.OutputNames =
+        this.Rows 
+        |> List.map (fun row -> row.Output)
+    
+    member this.Inputs =
+        this.Rows 
+        |> List.map (fun row -> row.Input, row.InputType)
+
+    member this.Outputs =
+        this.Rows 
+        |> List.map (fun row -> row.Output,row.OutputType)
 
     interface IEnumerable<QRow> with
         member this.GetEnumerator() = (seq this.Rows).GetEnumerator()

@@ -108,6 +108,14 @@ type IOValueCollection(values : KeyValuePair<string*string,ISAValue> list) =
 
     member this.Item(category : OntologyAnnotation) = values |> List.pick (fun kv -> if kv.Value.Category = category then Some kv.Key else None)
 
+    member this.WithInput(inp : string) = 
+        values |> List.choose (fun kv -> if (fst kv.Key) = inp then Some kv.Value else None)
+        |> ValueCollection
+
+    member this.WithOutput(inp : string) = 
+        values |> List.choose (fun kv -> if (snd kv.Key) = inp then Some kv.Value else None)
+        |> ValueCollection
+
     member this.Values(?Name) = 
         values 
         |> List.choose (fun kv -> 
