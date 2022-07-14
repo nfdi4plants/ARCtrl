@@ -13,15 +13,39 @@ type ValueCollection(values : ISAValue list) =
     new (values : ISAValue seq) =
         ValueCollection(values |> Seq.toList)
 
+    member this.TryFirst = if values.IsEmpty then None else Some this.First
+
     member this.First = values.Head
 
     member this.Last = values.[values.Length - 1]
 
     member this.Item(i : int)  = values.[i]
 
-    member this.Item(category : string) = values |> List.pick (fun v -> if v.Category.NameText = category then Some v else None)
+    member this.Item(category : string) =
+        values 
+        |> List.pick (fun v -> if v.Category.NameText = category then Some v else None)
 
-    member this.Item(category : OntologyAnnotation) = values |> List.pick (fun v -> if v.Category = category then Some v else None)
+    member this.Item(category : OntologyAnnotation) = 
+        values 
+        |> List.pick (fun v -> if v.Category = category then Some v else None)
+
+    member this.ItemWithParent(parentCategory : OntologyAnnotation) = 
+        values 
+        |> List.pick (fun v -> if v.Category.IsChildTermOf(parentCategory) then Some v else None)
+
+    member this.TryItem(i : int)  = if values.Length > i then Some values.[i] else None
+
+    member this.TryItem(category : string) = 
+        values
+        |> List.tryPick (fun v -> if v.Category.NameText = category then Some v else None)
+
+    member this.TryItem(category : OntologyAnnotation) = 
+        values 
+        |> List.tryPick (fun v -> if v.Category = category then Some v else None)
+
+    member this.TryItemWithParent(parentCategory : OntologyAnnotation) = 
+        values 
+        |> List.tryPick (fun v -> if v.Category.IsChildTermOf(parentCategory) then Some v else None)
 
     member this.Values = values
 
@@ -67,6 +91,11 @@ type ValueCollection(values : ISAValue list) =
         |> List.filter (fun v -> v.Category = category)
         |> ValueCollection
 
+    member this.WithParentCategory(parentCategory : OntologyAnnotation) = 
+        values
+        |> List.filter (fun v -> v.Category.IsChildTermOf(parentCategory))
+        |> ValueCollection
+
     member this.WithName(name : string) = 
         values
         |> List.filter (fun v -> v.Category.NameText = name)
@@ -76,6 +105,10 @@ type ValueCollection(values : ISAValue list) =
         values
         |> List.distinct
         |> ValueCollection
+
+    member this.ContainsChildOf(parentCategory : OntologyAnnotation) =
+        values
+        |> List.exists (fun v -> v.Category.IsChildTermOf(parentCategory))
 
     member this.Contains(category : OntologyAnnotation) =
         values

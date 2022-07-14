@@ -33,7 +33,9 @@ module OntologyAnnotation =
     open Annotation
 
     type OntologyAnnotation with
-    
+
+        member this.ShortAnnotation = createShortAnnotation this.TermSourceREFString this.TermAccessionString
+
         /// Translates a SwateAPI `term` into an ISADotNet `OntologyAnnotation`
         static member ofTerm (term : Term) =
             let ref,num = splitAnnotation term.Accession
@@ -42,13 +44,12 @@ module OntologyAnnotation =
 
         /// Translates an ISADotNet `OntologyAnnotation` into a SwateAPI `term`
         static member toTerm (term : OntologyAnnotation) =
-            let annotation = createShortAnnotation term.TermAccessionString term.TermAccessionString
-            TermMinimal.create term.NameText annotation
+            TermMinimal.create term.NameText term.ShortAnnotation
 
         static member isChildTerm (parent : OntologyAnnotation) (child : OntologyAnnotation) =
             Term.SearchByParent(child.NameText, 1, parent |> OntologyAnnotation.toTerm)
             |> Array.isEmpty
-            |> not
+            |> not       
 
         member this.ToTerm() =
             OntologyAnnotation.toTerm(this)
