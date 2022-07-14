@@ -52,9 +52,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Encodings.Web" Version="5.0.0" />
-    <PackageReference Include="System.Text.Json" Version="5.0.1" />
-    <PackageReference Include="FSharp.SystemTextJson" Version="0.16.6" />
+    <PackageReference Include="System.Text.Encodings.Web" Version="6.0.0" />
+    <PackageReference Include="System.Text.Json" Version="6.0.5" />
+    <PackageReference Include="FSharp.SystemTextJson" Version="0.19.13" />
   </ItemGroup>
   
   <ItemGroup>
@@ -67,7 +67,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.1" />
+    <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup> 
   
   <PropertyGroup>
