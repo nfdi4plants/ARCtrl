@@ -1,3 +1,10 @@
+### 0.5.4+262f787 (Released 2022-7-12)
+* Additions:
+    * latest commit #262f787
+    * [[#262f787](https://github.com/nfdi4plants/ISADotNet/commit/262f787b60bdcec8483132453b6aa29d96f11ac9)] improve Querymodel by adding Protocol specific functions
+    * [[#60e189f](https://github.com/nfdi4plants/ISADotNet/commit/60e189f9f9037dddd9cf8e6bcf56a2ff229f5770)] add basic ontology reasoning to QueryModel
+    * [[#1ba8b0c](https://github.com/nfdi4plants/ISADotNet/commit/1ba8b0cbf48737102cdb5247e818956f5bb20b1a)] move Querymodel into own project
+
 ### 0.5.3+dc96afe (Released 2022-6-29)
 * Additions:
     * latest commit #dc96afe
