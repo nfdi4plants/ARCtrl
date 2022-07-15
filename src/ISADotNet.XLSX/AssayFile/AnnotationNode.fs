@@ -93,12 +93,10 @@ module AnnotationNode =
                         | _ -> None 
                 | None -> fun _ _ -> None
             fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
-                OntologyAnnotation.make 
-                    None
-                    (unitNameGetter matrix i |> Option.map AnnotationValue.fromString)
-                    (termSourceGetter matrix i)
-                    (termAccessionGetter matrix i |> Option.map URI.fromString)  
-                    None
+                OntologyAnnotation.fromString 
+                    (unitNameGetter matrix i |> Option.defaultValue "")
+                    (termSourceGetter matrix i |> Option.defaultValue "")
+                    (termAccessionGetter matrix i |> Option.defaultValue "")  
         )
     
     /// If the headers of a node depict a value header (parameter,factor,characteristic), returns the category and a function for parsing the values of the matrix to the values
