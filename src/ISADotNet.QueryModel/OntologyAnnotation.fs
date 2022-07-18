@@ -41,15 +41,15 @@ module OntologyAnnotation =
             |> not       
 
         member this.IsChildTermOf(parent : OntologyAnnotation) =
-            OntologyAnnotation.isChildTerm parent this
+            OntologyAnnotation.isChildTerm(parent,this)
 
 
-        static member isChildTerm (parent : OntologyAnnotation) (child : OntologyAnnotation) =
+        static member isChildTerm (parent : OntologyAnnotation,child : OntologyAnnotation) =
             Term.SearchByParent(child.NameText, 1, parent |> OntologyAnnotation.toTerm)
             |> Array.isEmpty
             |> not       
 
-        member this.IsChildTermOf(parent : OntologyAnnotation) =
-            OntologyAnnotation.isChildTerm parent this
+        //member this.IsChildTermOf(parent : OntologyAnnotation) =
+        //    OntologyAnnotation.isChildTerm parent this
 
 

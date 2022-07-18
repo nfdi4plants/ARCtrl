@@ -1,5 +1,6 @@
 ﻿namespace ISADotNet.QueryModel
 
+open ISADotNet
 
 /// Functions for par
 module Obo =
@@ -875,17 +876,61 @@ module Obo =
             )
 
         member this.GetEquivalentOntologyAnnotations(term : ISADotNet.OntologyAnnotation) =
-            let loop (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
+            let rec loop (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
                 if equivalents.Length = lastLoop.Length then equivalents
                 else
                     let newEquivalents = 
                         equivalents
                         |> List.collect (fun t ->
-                            OboTryGetTerm
-
-
+                            match this.TryGetTerm t.AnnotationID with
+                            | Some term ->
+                                term.Xrefs
+                                |> List.map (fun xref ->
+                                    let id = OntologyAnnotation.createShortAnnotation "" xref.Name
+                                    match this.TryGetOntologyAnnotation id with
+                                    | Some oa ->
+                                        oa
+                                    | None -> 
+                                        OntologyAnnotation.fromString "" "" xref.Name
+                                )
+                            | None ->
+                                []
                         )
+                    loop newEquivalents equivalents
             loop [term] []
+            |> List.filter ((<>) term)
+
+        member this.GetEquivalentOntologyAnnotations(termId : string) =
+            OntologyAnnotation.fromAnnotationId termId         
+            |> this.GetEquivalentOntologyAnnotations
+
+        member this.GetParentOntologyAnnotations(term : ISADotNet.OntologyAnnotation) =
+            let rec loop (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
+                if equivalents.Length = lastLoop.Length then equivalents
+                else
+                    let newEquivalents = 
+                        equivalents
+                        |> List.collect (fun t ->
+                            match this.TryGetTerm t.AnnotationID with
+                            | Some term ->
+                                term.IsA
+                                |> List.map (fun isA ->
+                                    match this.TryGetOntologyAnnotation isA with
+                                    | Some oa ->
+                                        oa
+                                    | None -> 
+                                        OntologyAnnotation.fromString "" "" isA
+                                )
+                            | None ->
+                                []
+                        )
+                    loop newEquivalents equivalents
+            loop [term] []
+            |> List.filter ((<>) term)
+
+        member this.GetParentOntologyAnnotations(termId : string) =
+            OntologyAnnotation.fromAnnotationId termId         
+            |> this.GetParentOntologyAnnotations
 
     type OboTermDef = 
         {

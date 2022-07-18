@@ -16,14 +16,6 @@ module DesignDescriptors =
 
     let labels = [designTypeLabel;designTypeTermAccessionNumberLabel;designTypeTermSourceREFLabel]
 
-    let fromString designType typeTermSourceREF typeTermAccessionNumber comments =
-        OntologyAnnotation.make 
-            None 
-            (Option.fromValueWithDefault "" designType |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" typeTermSourceREF)
-            (Option.fromValueWithDefault "" typeTermAccessionNumber |> Option.map URI.fromString)
-            (Option.fromValueWithDefault [] comments)
-
     let fromSparseTable (matrix : SparseTable) =
         
         List.init matrix.Length (fun i -> 
@@ -33,7 +25,7 @@ module DesignDescriptors =
                 |> List.map (fun k -> 
                     Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
+            OntologyAnnotation.fromStringWithComments
                 (matrix.TryGetValueDefault("",(designTypeLabel,i)))
                 (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i)))
                 (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i)))

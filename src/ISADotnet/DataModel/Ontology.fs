@@ -186,6 +186,11 @@ type OntologyAnnotation =
                 None
                 (Option.fromValueWithDefault [] comments)
 
+    static member fromAnnotationId (id : string) =
+        id 
+        |> OntologyAnnotation.splitAnnotation
+        |> fun (source,num) ->
+            OntologyAnnotation.fromString "" source num
 
     /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
     [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
