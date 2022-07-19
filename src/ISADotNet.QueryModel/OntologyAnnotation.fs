@@ -34,22 +34,43 @@ module OntologyAnnotation =
         member this.ToTerm() =
             OntologyAnnotation.toTerm(this)
 
+        static member findTerm(nameOrId : string) =
+            Term.Search(nameOrId, 1).[0]
+
+        static member findTerm(nameOrId : string,ont : Obo.OboOntology) =
+            match ont.TryGetOntologyAnnotation nameOrId with
+            | Some oa ->
+                oa
+            | None ->
+                match ont.TryGetOntologyAnnotationByName nameOrId with
+                | Some oa -> oa
+                | None -> failwithf "could not find Ontology term %s in given ontology" nameOrId
 
         static member isChildTerm(parent : OntologyAnnotation,child : OntologyAnnotation,ont : Obo.OboOntology) =
-            Term.SearchByParent(child.NameText, 1, parent |> OntologyAnnotation.toTerm)
-            |> Array.isEmpty
-            |> not       
+            ont.GetParentOntologyAnnotations(child)
+            |> List.contains parent
 
         member this.IsChildTermOf(parent : OntologyAnnotation) =
             OntologyAnnotation.isChildTerm(parent,this)
-
 
         static member isChildTerm (parent : OntologyAnnotation,child : OntologyAnnotation) =
             Term.SearchByParent(child.NameText, 1, parent |> OntologyAnnotation.toTerm)
             |> Array.isEmpty
             |> not       
 
-        //member this.IsChildTermOf(parent : OntologyAnnotation) =
-        //    OntologyAnnotation.isChildTerm parent this
+        member this.IsChildTermOf(parent : OntologyAnnotation, ont : Obo.OboOntology) =
+            OntologyAnnotation.isChildTerm(parent,this,ont)
 
+        static member isEquivalentTo(term : OntologyAnnotation,targetTerm : OntologyAnnotation,ont : Obo.OboOntology) =
+            ont.GetEquivalentOntologyAnnotations(term)
+            |> List.contains targetTerm
 
+        member this.IsEquivalentTo(targetTerm : OntologyAnnotation, ont : Obo.OboOntology) =
+            OntologyAnnotation.isEquivalentTo(targetTerm,this,ont)
+
+        static member getAs (term : OntologyAnnotation, targetOntology : string, ont : Obo.OboOntology) =
+            ont.GetEquivalentOntologyAnnotations(term)
+            |> List.find (fun t -> t.TermSourceREFString = targetOntology)
+
+        member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
+            OntologyAnnotation.getAs(this,targetOntology,ont)

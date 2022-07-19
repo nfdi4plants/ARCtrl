@@ -4,6 +4,10 @@ open ISADotNet
 
 /// Functions for par
 module Obo =
+
+    let trimComment (line : string) = 
+        line.Split('!').[0].Trim()
+
     open System
 
     //Dbxref definitions take the following form:
@@ -336,7 +340,7 @@ module Obo =
             propertyValues builtIn createdBy creationDate =   
 
             if en.MoveNext() then                
-                let split = en.Current.Split([|": "|], System.StringSplitOptions.None)
+                let split = (en.Current |> trimComment).Split([|": "|], System.StringSplitOptions.None)
                 match split.[0] with
                 | "id"              -> 
                     let v = split.[1..] |> String.concat ": "
@@ -689,7 +693,7 @@ module Obo =
             is_anti_symmetric is_transitive is_metadata_tag is_class_level =   
 
             if en.MoveNext() then                
-                let split = en.Current.Split([|": "|], System.StringSplitOptions.None)
+                let split = (en.Current |> trimComment).Split([|": "|], System.StringSplitOptions.None)
                 match split.[0] with
                 | "id"              -> 
                     let v = split.[1..] |> String.concat ": "
@@ -815,7 +819,7 @@ module Obo =
                 
                 match en.MoveNext() with
                 | true ->             
-                    match en.Current with
+                    match (en.Current |> trimComment) with
                     | "[Term]"    -> let lineNumber,parsedTerm = (OboTerm.fromLines verbose en lineNumber "" "" false [] "" "" [] [] [] [] [] [] [] [] false [] [] [] false "" "")
                                      loop en (parsedTerm :: terms) typedefs lineNumber
                     | "[Typedef]" -> let lineNumber,parsedTypeDef = (OboTypeDef.fromLines verbose en lineNumber "" "" "" "" [] [] false false false false false false false)
@@ -875,9 +879,35 @@ module Obo =
                 if t.Id = id then Some (OboTerm.toOntologyAnnotation t) else None
             )
 
-        member this.GetEquivalentOntologyAnnotations(term : ISADotNet.OntologyAnnotation) =
-            let rec loop (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
+        member this.TryGetTermByName(name : string) = 
+            this.Terms
+            |> List.tryFind (fun t ->
+                t.Name = name
+            )
+
+        member this.GetTermByName(name : string) = 
+            this.Terms
+            |> List.find (fun t ->
+                t.Name = name
+            )
+
+        member this.TryGetOntologyAnnotationByName(name : string) = 
+            this.Terms
+            |> List.tryPick (fun t ->
+                if t.Name = name then Some (OboTerm.toOntologyAnnotation t) else None
+            )
+
+        member this.GetOntologyAnnotationByName(name : string) = 
+            this.Terms
+            |> List.pick (fun t ->
+                if t.Name = name then Some (OboTerm.toOntologyAnnotation t) else None
+            )
+
+        member this.GetEquivalentOntologyAnnotations(term : ISADotNet.OntologyAnnotation, ?Depth : int) =
+            
+            let rec loop depth (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
                 if equivalents.Length = lastLoop.Length then equivalents
+                elif Depth.IsSome && Depth.Value < depth then equivalents
                 else
                     let newEquivalents = 
                         equivalents
@@ -896,17 +926,23 @@ module Obo =
                             | None ->
                                 []
                         )
-                    loop newEquivalents equivalents
-            loop [term] []
+                    loop (depth + 1) (equivalents @ newEquivalents |> List.distinct) equivalents
+            loop 1 [term] []
             |> List.filter ((<>) term)
 
-        member this.GetEquivalentOntologyAnnotations(termId : string) =
-            OntologyAnnotation.fromAnnotationId termId         
-            |> this.GetEquivalentOntologyAnnotations
+        member this.GetEquivalentOntologyAnnotations(termId : string, ?Depth) =
+            match Depth with 
+            | Some d ->
+                OntologyAnnotation.fromAnnotationId termId         
+                |> fun oa -> this.GetEquivalentOntologyAnnotations(oa, d)
+            | None -> 
+                OntologyAnnotation.fromAnnotationId termId    
+                |> this.GetEquivalentOntologyAnnotations
 
-        member this.GetParentOntologyAnnotations(term : ISADotNet.OntologyAnnotation) =
-            let rec loop (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
+        member this.GetParentOntologyAnnotations(term : ISADotNet.OntologyAnnotation, ?Depth) =
+            let rec loop depth (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
                 if equivalents.Length = lastLoop.Length then equivalents
+                elif Depth.IsSome && Depth.Value < depth then equivalents
                 else
                     let newEquivalents = 
                         equivalents
@@ -924,13 +960,52 @@ module Obo =
                             | None ->
                                 []
                         )
-                    loop newEquivalents equivalents
-            loop [term] []
+                    loop (depth + 1) (equivalents @ newEquivalents |> List.distinct) equivalents
+            loop 1 [term] []
             |> List.filter ((<>) term)
 
-        member this.GetParentOntologyAnnotations(termId : string) =
-            OntologyAnnotation.fromAnnotationId termId         
-            |> this.GetParentOntologyAnnotations
+        member this.GetParentOntologyAnnotations(termId : string, ?Depth) =
+            match Depth with 
+            | Some d ->
+                OntologyAnnotation.fromAnnotationId termId         
+                |> fun oa -> this.GetParentOntologyAnnotations(oa, d)
+            | None -> 
+                OntologyAnnotation.fromAnnotationId termId    
+                |> this.GetParentOntologyAnnotations
+
+        member this.GetChildOntologyAnnotations(term : ISADotNet.OntologyAnnotation, ?Depth) =
+            let rec loop depth (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
+                if equivalents.Length = lastLoop.Length then equivalents
+                elif Depth.IsSome && Depth.Value < depth then equivalents
+                else
+                    let newEquivalents = 
+                        equivalents
+                        |> List.collect (fun t ->
+                            this.Terms
+                            |> List.choose (fun pt -> 
+                                let isChild = 
+                                    pt.IsA
+                                    |> List.exists (fun isA -> t.AnnotationID = isA)
+                                if isChild then
+                                    Some (OboTerm.toOntologyAnnotation(pt))
+                                else
+                                    None
+
+                            )
+                        )
+                    loop (depth + 1) (equivalents @ newEquivalents |> List.distinct) equivalents
+            loop 1 [term] []
+            |> List.filter ((<>) term)
+
+        member this.GetChildOntologyAnnotations(termId : string, ?Depth) =
+            match Depth with 
+            | Some d ->
+                OntologyAnnotation.fromAnnotationId termId         
+                |> fun oa -> this.GetChildOntologyAnnotations(oa, d)
+            | None -> 
+                OntologyAnnotation.fromAnnotationId termId    
+                |> this.GetChildOntologyAnnotations
+
 
     type OboTermDef = 
         {
@@ -946,7 +1021,7 @@ module Obo =
         //parseTermDef
         static member fromLines (en:Collections.Generic.IEnumerator<string>) id name isTransitive isCyclic =     
             if en.MoveNext() then                
-                let split = en.Current.Split([|": "|], System.StringSplitOptions.None)
+                let split = (en.Current |> trimComment).Split([|": "|], System.StringSplitOptions.None)
                 match split.[0] with
                 | "id"            -> OboTermDef.fromLines en (split.[1..] |> String.concat ": ") name isTransitive isCyclic
                 | "name"          -> OboTermDef.fromLines en id (split.[1..] |> String.concat ": ") isTransitive isCyclic 
@@ -971,7 +1046,7 @@ module Obo =
             seq {
                 match en.MoveNext() with
                 | true ->             
-                    match en.Current with
+                    match (en.Current |> trimComment) with
                     | "[Term]"    -> let lineNumber,parsedTerm = (OboTerm.fromLines verbose en lineNumber "" "" false [] "" "" [] [] [] [] [] [] [] [] false [] [] [] false "" "")
                                      yield parsedTerm
                                      yield! loop en lineNumber
