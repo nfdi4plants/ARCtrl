@@ -96,7 +96,16 @@ type ISAValue =
         | Factor f          -> f.ValueWithUnitText
 
     member this.ValueIndex =
+        try
+            match this with
+            | Parameter p       -> p.GetValueIndex()
+            | Characteristic c  -> c.GetValueIndex()
+            | Factor f          -> f.GetValueIndex()
+        with
+        | _ -> failwithf $"Value index could not be retrieved for value {this.NameText}"
+
+    member this.TryValueIndex =
         match this with
-        | Parameter p       -> p.GetValueIndex()
-        | Characteristic c  -> c.GetValueIndex()
-        | Factor f          -> f.GetValueIndex()
+        | Parameter p       -> p.TryGetValueIndex()
+        | Characteristic c  -> c.TryGetValueIndex()
+        | Factor f          -> f.TryGetValueIndex()

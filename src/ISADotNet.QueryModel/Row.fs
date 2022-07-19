@@ -107,7 +107,7 @@ type QRow =
             (characteristics |> List.map Characteristic)
             @ (parameters |> List.map Parameter)
             @ (factors |> List.map Factor)
-            |> List.sortBy (fun v -> v.ValueIndex)
+            |> List.sortBy (fun v -> v.TryValueIndex |> Option.defaultValue System.Int32.MaxValue)
 
         {
             Input = Input |> Option.defaultValue ""
