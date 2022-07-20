@@ -2,7 +2,7 @@
 
 open ISADotNet
 
-/// Functions for par
+/// Functions for parsing and querying an OBO ontology
 module Obo =
 
     let trimComment (line : string) = 
@@ -102,7 +102,7 @@ module Obo =
                     |> Array.toList
         }
 
-    /// obo term record type
+    /// Models the entities in an Obo Ontology
     type OboTerm = 
         {
 
@@ -275,7 +275,7 @@ module Obo =
 
         }
 
-        /// Creates an obo term record
+        /// Create an Obo Term from its field values
         static member make id name isAnonymous altIds definition comment subsets synonyms xrefs isA         
             intersectionOf unionOf disjointFrom relationships isObsolete replacedby consider propertyValues builtIn    
             createdBy creationDate = {  
@@ -304,6 +304,7 @@ module Obo =
             
         }
 
+        /// Create an Obo Term from its field values
         static member Create (id,?Name,?IsAnonymous,?AltIds,?Definition,?Comment,?Subsets,?Synonyms,?Xrefs,?IsA,         
             ?IntersectionOf,?UnionOf,?DisjointFrom,?Relationships,?IsObsolete,?Replacedby,?Consider,?PropertyValues,?BuiltIn,
             ?CreatedBy,?CreationDate) =
@@ -333,7 +334,7 @@ module Obo =
                     
                 }
 
-        /// Parses a [term] item in a recusive function
+        /// Read an Obo Term from lines in "key:value" style
         static member fromLines verbose (en:Collections.Generic.IEnumerator<string>) lineNumber 
             id name isAnonymous altIds definition comment subsets synonyms xrefs isA 
             intersectionOf unionOf disjointFrom relationships isObsolete replacedby consider 
@@ -555,6 +556,7 @@ module Obo =
                     createdBy creationDate
                 //failwithf "Unexcpected end of file."
 
+        /// Write an Obo Term to lines in "key:value" style
         static member toLines (term : OboTerm) =
             seq {
                 yield "id: " + term.Id
@@ -590,6 +592,7 @@ module Obo =
         static member ofOntologyAnnotation (term : ISADotNet.OntologyAnnotation) =
             OboTerm.Create(term.AnnotationID,term.NameText)
 
+    /// Models the relationship between OBO Terms 
     type OboTypeDef = 
         {
             ///The unique id of the current term. 
@@ -649,7 +652,8 @@ module Obo =
             // Cardinality: zero or one.
             Is_class_level : bool
         }
-
+        
+        /// Create an Obo Type Def from its field values
         static member make id domain range name inverse_of transitive_over is_cyclic is_reflexive is_symmetric 
             is_anti_symmetric is_transitive is_metadata_tag is_class_level =
 
@@ -669,6 +673,7 @@ module Obo =
                     Is_class_level      = is_class_level         
             }
 
+        /// Create an Obo Type Def from its field values
         static member Create (id,domain,range,?Name,?Inverse_of,?Transitive_over,?Is_cyclic,?Is_reflexive,?Is_symmetric,
             ?Is_anti_symmetric,?Is_transitive,?Is_metadata_tag,?Is_class_level) =
 
@@ -688,6 +693,7 @@ module Obo =
                     Is_class_level      = Option.defaultValue false Is_class_level         
                 }
 
+        /// Read an Obo Type Def from lines in "key:value" style
         static member fromLines verbose (en:Collections.Generic.IEnumerator<string>) lineNumber 
             id domain range name (inverse_of:string list) transitive_over is_cyclic is_reflexive is_symmetric 
             is_anti_symmetric is_transitive is_metadata_tag is_class_level =   
@@ -791,6 +797,7 @@ module Obo =
                     is_anti_symmetric is_transitive is_metadata_tag is_class_level
                 //failwithf "Unexcpected end of file."
 
+        /// Write an Obo Type Def to lines in "key:value" style
         static member toLines (typedef : OboTypeDef) =
             seq {
                 "id: " + typedef.Id
@@ -799,6 +806,8 @@ module Obo =
                 "name: " + typedef.Name
             }
 
+
+    /// Ontology containing Obo Terms and Obo Type Defs (OBO 1.2)
     type OboOntology =
 
         {
@@ -806,12 +815,14 @@ module Obo =
             TypeDefs : OboTypeDef list
         }
 
+
         static member create terms typedefs =
             {
                 Terms = terms
                 TypeDefs = typedefs
             }
 
+        /// Read an Obo Ontology containing term and type def stanzas from lines
         static member fromLines verbose (input:seq<string>) =         
                 
             let en = input.GetEnumerator()
@@ -829,10 +840,12 @@ module Obo =
                 
             loop en [] [] 1
 
+        /// Read an Obo Ontology containing term and type def stanzas from a file with the given path
         static member fromFile verbose (path : string) =
             System.IO.File.ReadAllLines path
             |> OboOntology.fromLines verbose
 
+        /// Write an Obo Ontology to term and type def stanzas in line form
         static member toLines (oboOntology:OboOntology) =         
             seq {
                 for term in oboOntology.Terms do
@@ -846,63 +859,77 @@ module Obo =
                     yield ""
             }
             
+        /// Write an Obo Ontology to term and type def stanzas to a file in the given path
         static member toFile (path : string) (oboOntology:OboOntology) =         
             System.IO.File.WriteAllLines(path,OboOntology.toLines oboOntology)
 
+        /// Write an Obo Ontology to term and type def stanzas in line form
         member this.ToLines() = 
             OboOntology.toLines this
 
+        /// Write an Obo Ontology to term and type def stanzas to a file in the given path
         member this.ToFile(path : string) =
             OboOntology.toFile path this
 
+        /// Find obo term by "TermSourceRef:TermAccessionNumber" style id
         member this.TryGetTerm(id : string) = 
             this.Terms
             |> List.tryFind (fun t ->
                 t.Id = id
             )
 
+        /// Find obo term by "TermSourceRef:TermAccessionNumber" style id
         member this.GetTerm(id : string) = 
             this.Terms
             |> List.find (fun t ->
                 t.Id = id
             )
 
+        /// Find obo term by "TermSourceRef:TermAccessionNumber" style id and return it as ISA OntologyAnnotation type
         member this.TryGetOntologyAnnotation(id : string) = 
             this.Terms
             |> List.tryPick (fun t ->
                 if t.Id = id then Some (OboTerm.toOntologyAnnotation t) else None
             )
 
+        /// Find obo term by "TermSourceRef:TermAccessionNumber" style id and return it as ISA OntologyAnnotation type
         member this.GetOntologyAnnotation(id : string) = 
             this.Terms
             |> List.pick (fun t ->
                 if t.Id = id then Some (OboTerm.toOntologyAnnotation t) else None
             )
 
+        /// Find obo term by it's free text name
         member this.TryGetTermByName(name : string) = 
             this.Terms
             |> List.tryFind (fun t ->
                 t.Name = name
             )
 
+        /// Find obo term by it's free text name
         member this.GetTermByName(name : string) = 
             this.Terms
             |> List.find (fun t ->
                 t.Name = name
             )
 
+        /// Find obo term by it's free text name and return it as ISA OntologyAnnotation type
         member this.TryGetOntologyAnnotationByName(name : string) = 
             this.Terms
             |> List.tryPick (fun t ->
                 if t.Name = name then Some (OboTerm.toOntologyAnnotation t) else None
             )
 
+        /// Find obo term by it's free text name and return it as ISA OntologyAnnotation type
         member this.GetOntologyAnnotationByName(name : string) = 
             this.Terms
             |> List.pick (fun t ->
                 if t.Name = name then Some (OboTerm.toOntologyAnnotation t) else None
             )
 
+        /// For a given ontology term, find all equivalent terms that are connected via XRefs
+        ///
+        /// Depth can be used to restrict the number of iterations by which neighbours of neighbours are checked
         member this.GetEquivalentOntologyAnnotations(term : ISADotNet.OntologyAnnotation, ?Depth : int) =
             
             let rec loop depth (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
@@ -930,6 +957,9 @@ module Obo =
             loop 1 [term] []
             |> List.filter ((<>) term)
 
+        /// For a given ontology term, find all equivalent terms that are connected via XRefs
+        ///
+        /// Depth can be used to restrict the number of iterations by which neighbours of neighbours are checked
         member this.GetEquivalentOntologyAnnotations(termId : string, ?Depth) =
             match Depth with 
             | Some d ->
@@ -939,6 +969,9 @@ module Obo =
                 OntologyAnnotation.fromAnnotationId termId    
                 |> this.GetEquivalentOntologyAnnotations
 
+        /// For a given ontology term, find all terms to which this term points in a "isA" relationship
+        ///
+        /// Depth can be used to restrict the number of iterations by which neighbours of neighbours are checked
         member this.GetParentOntologyAnnotations(term : ISADotNet.OntologyAnnotation, ?Depth) =
             let rec loop depth (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
                 if equivalents.Length = lastLoop.Length then equivalents
@@ -964,6 +997,9 @@ module Obo =
             loop 1 [term] []
             |> List.filter ((<>) term)
 
+        /// For a given ontology term, find all terms to which this term points in a "isA" relationship
+        ///
+        /// Depth can be used to restrict the number of iterations by which neighbours of neighbours are checked
         member this.GetParentOntologyAnnotations(termId : string, ?Depth) =
             match Depth with 
             | Some d ->
@@ -973,6 +1009,9 @@ module Obo =
                 OntologyAnnotation.fromAnnotationId termId    
                 |> this.GetParentOntologyAnnotations
 
+        /// For a given ontology term, find all terms which point to this term "isA" relationship
+        ///
+        /// Depth can be used to restrict the number of iterations by which neighbours of neighbours are checked
         member this.GetChildOntologyAnnotations(term : ISADotNet.OntologyAnnotation, ?Depth) =
             let rec loop depth (equivalents : ISADotNet.OntologyAnnotation list) (lastLoop : ISADotNet.OntologyAnnotation list) =
                 if equivalents.Length = lastLoop.Length then equivalents
@@ -997,6 +1036,9 @@ module Obo =
             loop 1 [term] []
             |> List.filter ((<>) term)
 
+        /// For a given ontology term, find all terms which point to this term "isA" relationship
+        ///
+        /// Depth can be used to restrict the number of iterations by which neighbours of neighbours are checked
         member this.GetChildOntologyAnnotations(termId : string, ?Depth) =
             match Depth with 
             | Some d ->

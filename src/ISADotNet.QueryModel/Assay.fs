@@ -8,7 +8,7 @@ open System.IO
 open System.Collections.Generic
 open System.Collections
 
-
+/// Queryable representation of an ISA Assay. Implements the QProcessSequence interface
 type QAssay(FileName : string option,MeasurementType : OntologyAnnotation option,TechnologyType : OntologyAnnotation option,TechnologyPlatform : string option,Sheets : QSheet list) =
 
     inherit QProcessSequence(Sheets)
@@ -33,18 +33,13 @@ type QAssay(FileName : string option,MeasurementType : OntologyAnnotation option
 
         QAssay(assay.FileName,assay.MeasurementType,assay.TechnologyType,assay.TechnologyPlatform,sheets)
 
-
+    /// get the protocol or sheet (in ISATab logic) with the given name
     member this.Protocol (sheetName : string) =
         base.Protocol(sheetName, $"Assay \"{this.FileName}\"")
 
+    /// get the nth protocol or sheet (in ISATab logic) 
     member this.Protocol (index : int) =
         base.Protocol(index, $"Assay \"{this.FileName}\"")
-       
-    //interface IEnumerable<QSheet> with
-    //    member this.GetEnumerator() = (Seq.ofList this.Sheets).GetEnumerator()
-
-    //interface IEnumerable with
-    //    member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
     static member getRootInputs (assay : QAssay) = QProcessSequence.getRootInputs assay
@@ -58,14 +53,18 @@ type QAssay(FileName : string option,MeasurementType : OntologyAnnotation option
     /// Returns the final outputs of the assay, which point to no further nodes
     static member getFinalOutputsOf (assay : QAssay) (sample : string) = QProcessSequence.getFinalOutputsOfBy (fun _ -> true) sample assay
 
+    /// Write to QAssay json string
     static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
 
+    /// Write to QAssay json file
     static member toFile (path : string) (rwa:QAssay) = 
         File.WriteAllText(path,QAssay.toString rwa)
 
+    /// Read from QAssay json string
     static member fromString (s:string) = 
         JsonSerializer.Deserialize<QAssay>(s,JsonExtensions.options)
 
+    /// Read from QAssay json file
     static member fromFile (path : string) = 
         File.ReadAllText path 
         |> QAssay.fromString

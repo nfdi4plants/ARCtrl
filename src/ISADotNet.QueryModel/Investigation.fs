@@ -8,7 +8,7 @@ open System.IO
 open System.Collections.Generic
 open System.Collections
 
-
+/// Queryable representation of an ISA Investigation. Implements the QProcessSequence interface
 type QInvestigation
     (
         FileName : string option,
@@ -73,14 +73,18 @@ type QInvestigation
             studies,
             sheets)
 
+
+    /// Returns the QStudy with the given name
     member this.Study(studyName : string) = 
         this.Studies
         |> List.find (fun s -> s.Identifier.Value = studyName)
         
+    /// Returns the nth QStudy
     member this.Study(i : int) = 
         this.Studies
         |> List.item i 
 
+    /// Returns the QAssay with the given name (registered in the study with the given study name)
     member this.Assay(assayName : string, ?StudyName : string) = 
         match StudyName with
         | Some sn ->
@@ -90,17 +94,13 @@ type QInvestigation
             |> List.collect (fun s -> s.Assays)
             |> List.find (fun a -> a.FileName.Value.Contains assayName)
 
+    /// get the protocol or sheet (in ISATab logic) with the given name
     member this.Protocol (sheetName : string) =
         base.Protocol(sheetName, $"Assay \"{this.FileName}\"")
 
+    /// get the nth protocol or sheet (in ISATab logic) 
     member this.Protocol (index : int) =
         base.Protocol(index, $"Assay \"{this.FileName}\"")
-       
-    //interface IEnumerable<QSheet> with
-    //    member this.GetEnumerator() = (Seq.ofList this.Sheets).GetEnumerator()
-
-    //interface IEnumerable with
-    //    member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
     static member getRootInputs (investigation : QInvestigation) = QProcessSequence.getRootInputs investigation

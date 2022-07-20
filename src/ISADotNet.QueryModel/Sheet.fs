@@ -8,6 +8,9 @@ open System.IO
 open System.Collections.Generic
 open System.Collections
 
+/// Queryable type representing a collection of processes implementing the same protocol. Or in ISAtab / ISAXLSX logic a sheet in an assay or study file.
+///
+/// Values are represented rowwise with input and output entities.
 type QSheet = 
     {
         [<JsonPropertyName(@"sheetName")>]
