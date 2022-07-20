@@ -86,9 +86,29 @@ type ValueCollection(values : ISAValue list) =
         )
         |> ValueCollection
 
+    member this.WithName(name : string) = 
+        values
+        |> List.filter (fun v -> v.Category.NameText = name)
+        |> ValueCollection
+
     member this.WithCategory(category : OntologyAnnotation) = 
         values
         |> List.filter (fun v -> v.Category = category)
+        |> ValueCollection
+
+    member this.WithEquivalentCategory(equivalentCategory : OntologyAnnotation, ont : Obo.OboOntology) = 
+        values
+        |> List.filter (fun v -> v.Category.IsEquivalentTo(equivalentCategory, ont))
+        |> ValueCollection
+
+    member this.WithChildCategory(childCategory : OntologyAnnotation) = 
+        values
+        |> List.filter (fun v -> childCategory.IsChildTermOf(v.Category))
+        |> ValueCollection
+
+    member this.WithChildCategory(childCategory : OntologyAnnotation, ont : Obo.OboOntology) = 
+        values
+        |> List.filter (fun v -> childCategory.IsChildTermOf(v.Category, ont))
         |> ValueCollection
 
     member this.WithParentCategory(parentCategory : OntologyAnnotation) = 
@@ -96,9 +116,9 @@ type ValueCollection(values : ISAValue list) =
         |> List.filter (fun v -> v.Category.IsChildTermOf(parentCategory))
         |> ValueCollection
 
-    member this.WithName(name : string) = 
+    member this.WithParentCategory(parentCategory : OntologyAnnotation, ont : Obo.OboOntology) = 
         values
-        |> List.filter (fun v -> v.Category.NameText = name)
+        |> List.filter (fun v -> v.Category.IsChildTermOf(parentCategory,ont))
         |> ValueCollection
 
     member this.Distinct() =

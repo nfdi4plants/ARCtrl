@@ -74,3 +74,54 @@ module OntologyAnnotation =
 
         member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
             OntologyAnnotation.getAs(this,targetOntology,ont)
+
+        static member tryGetAs (term : OntologyAnnotation, targetOntology : string, ont : Obo.OboOntology) =
+            ont.GetEquivalentOntologyAnnotations(term)
+            |> List.tryFind (fun t -> t.TermSourceREFString = targetOntology)
+
+        member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
+            OntologyAnnotation.tryGetAs(this,targetOntology,ont)
+
+    type Value with
+    
+        member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
+            match this with
+            | Ontology oa -> Ontology (oa.GetAs(targetOntology, ont))
+            | _ -> this
+
+        member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
+            match this with
+            | Ontology oa -> 
+                oa.TryGetAs(targetOntology, ont)
+                |> Option.map Ontology
+            | _ -> None
+
+    type ProcessParameterValue with
+    
+        member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
+            {this with Value = this.Value |> Option.map (fun v -> v.GetAs(targetOntology,ont))}
+
+        member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
+            this.Value
+            |> Option.bind (fun v -> v.TryGetAs(targetOntology,ont))
+            |> Option.map (fun v -> {this with Value = Some v})
+
+    type MaterialAttributeValue with
+    
+        member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
+            {this with Value = this.Value |> Option.map (fun v -> v.GetAs(targetOntology,ont))}
+
+        member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
+            this.Value
+            |> Option.bind (fun v -> v.TryGetAs(targetOntology,ont))
+            |> Option.map (fun v -> {this with Value = Some v})
+
+    type FactorValue with
+    
+        member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
+            {this with Value = this.Value |> Option.map (fun v -> v.GetAs(targetOntology,ont))}
+
+        member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
+            this.Value
+            |> Option.bind (fun v -> v.TryGetAs(targetOntology,ont))
+            |> Option.map (fun v -> {this with Value = Some v})

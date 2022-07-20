@@ -109,3 +109,15 @@ type ISAValue =
         | Parameter p       -> p.TryGetValueIndex()
         | Characteristic c  -> c.TryGetValueIndex()
         | Factor f          -> f.TryGetValueIndex()
+
+    member this.GetAs(targetOntology : string, ont : Obo.OboOntology) = 
+        match this with
+        | Parameter p       -> p.GetAs(targetOntology,ont) |> Parameter
+        | Characteristic c  -> c.GetAs(targetOntology,ont) |> Characteristic
+        | Factor f          -> f.GetAs(targetOntology,ont) |> Factor
+
+    member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) = 
+        match this with
+        | Parameter p       -> p.TryGetAs(targetOntology,ont) |> Option.map Parameter
+        | Characteristic c  -> c.TryGetAs(targetOntology,ont) |> Option.map Characteristic
+        | Factor f          -> f.TryGetAs(targetOntology,ont) |> Option.map Factor
