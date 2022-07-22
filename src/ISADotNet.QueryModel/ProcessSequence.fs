@@ -542,7 +542,7 @@ type QProcessSequence (sheets : QSheet list) =
     /// If a protocol name is given, returns only the values of the processes that implement this protocol
     member this.Values(ontology : OntologyAnnotation, ?ProtocolName) = 
         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
-        |> List.collect (fun s -> s.Values.Values().Filter(ontology).Values)
+        |> List.collect (fun s -> s.Values.Values().WithCategory(ontology).Values)
         |> ValueCollection
 
     /// Returns all values in the process sequence whose header matches the given name
@@ -550,7 +550,7 @@ type QProcessSequence (sheets : QSheet list) =
     /// If a protocol name is given, returns only the values of the processes that implement this protocol
     member this.Values(name : string, ?ProtocolName) = 
         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
-        |> List.collect (fun s -> s.Values.Values().Filter(name).Values)
+        |> List.collect (fun s -> s.Values.Values().WithName(name).Values)
         |> ValueCollection
 
     /// Returns all factor values in the process sequence

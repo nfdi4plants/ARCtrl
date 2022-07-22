@@ -268,6 +268,8 @@ module AnnotationNode =
 
 module ISAValue =
 
+    open ISADotNet.QueryModel
+
     let toHeaders (v : QueryModel.ISAValue) =
         try 
             let ont =
