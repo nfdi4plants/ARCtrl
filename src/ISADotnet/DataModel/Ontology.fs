@@ -216,7 +216,11 @@ type OntologyAnnotation =
     static member toString (oa : OntologyAnnotation) =
         oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
         oa.TermSourceREF |> Option.defaultValue "",
-        oa.TermAccessionNumber |> Option.map URI.toString |> Option.defaultValue ""
+        match oa.TermPath, oa.TermAccessionNumber with
+        | Some p , _ -> URI.toString p
+        | _ , Some n -> n
+        | _ -> ""
+
 
 
     interface IISAPrintable with
