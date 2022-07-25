@@ -21,6 +21,9 @@ let main argv =
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testMetaDataFunctions |> ignore
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv AssayFileTests.testAssayFileReader |> ignore
 
+    // Type and Name conversion test
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv NameAndTypeCastingTests.testComponentCasting |> ignore
+
     // Json IO Tests
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv JsonExtensionsTests.testAnyOf |> ignore
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv JsonExtensionsTests.testStringEnum |> ignore

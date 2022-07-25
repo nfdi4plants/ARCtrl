@@ -123,19 +123,25 @@ type Component =
         | Some v, None ->
             $"{v.AsString}"
         | Some v, Some u ->
-            $"{v.AsString} ({u.AnnotationID})"
+            $"{v.AsString} {u.NameText} ({u.AnnotationID})"
         | None, _ -> ""
 
     static member decomposeName (name : string) = 
         let pattern = """(?<value>\S*) \((?<ontology>[^(]*:[^)]*)\)"""
+        let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
+
         let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
-        if r.Success then
+        let unitr = System.Text.RegularExpressions.Regex.Match(name,unitPattern)
+
+        if unitr.Success then
+            let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
+            let v =  (unitr.Groups.Item "value").Value      |> Value.fromString
+            let u =  (unitr.Groups.Item "unit").Value
+            v, Some {oa with Name = (Some (AnnotationValue.Text u))}
+        elif r.Success then
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
-            if v.IsNumerical then
-                v, (Some oa)
-            else
-                Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.AsString))}, None
+            Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.AsString))}, None
         else 
             Value.Name (name), None       
 
