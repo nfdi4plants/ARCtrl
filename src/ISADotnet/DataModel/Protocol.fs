@@ -94,26 +94,61 @@ type Component =
     {
         [<JsonPropertyName(@"componentName")>]
         ComponentName : string option
+        [<JsonIgnore>]
+        ComponentValue : Value option
+        [<JsonIgnore>]
+        ComponentUnit : OntologyAnnotation option
         [<JsonPropertyName(@"componentType")>]
         ComponentType : OntologyAnnotation option
     }
 
-    static member make name componentType =
+    static member make name value unit componentType =
         {
             ComponentName = name
+            ComponentValue = value
+            ComponentUnit = unit
             ComponentType = componentType
         }
 
-    static member create (?Name,?ComponentType) : Component =
-        Component.make Name ComponentType
+    static member create (?Name,?Value,?Unit,?ComponentType) : Component =
+        Component.make Name Value Unit ComponentType
 
     static member empty =
         Component.create()
     
+    static member composeName (value : Value Option) (unit : OntologyAnnotation option) = 
+        match value,unit with
+        | Some (Value.Ontology oa), _ ->
+            $"{oa.NameText} ({oa.AnnotationID})"
+        | Some v, None ->
+            $"{v.AsString}"
+        | Some v, Some u ->
+            $"{v.AsString} ({u.AnnotationID})"
+        | None, _ -> ""
+
+    static member decomposeName (name : string) = 
+        let pattern = """(?<value>\S*) \((?<ontology>[^(]*:[^)]*)\)"""
+        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
+        if r.Success then
+            let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
+            let v =  (r.Groups.Item "value").Value      |> Value.fromString
+            if v.IsNumerical then
+                v, (Some oa)
+            else
+                Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.AsString))}, None
+        else 
+            Value.Name (name), None       
+
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (name: string) (term:string) (source:string) (accession:string) =
-        let oa = OntologyAnnotation.fromString term source accession
-        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+    static member fromString (name: string) (term:string) (source:string) (accession:string) = 
+        let cType = OntologyAnnotation.fromString term source accession |> Option.fromValueWithDefault OntologyAnnotation.empty
+        let v,u = Component.decomposeName name
+        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+        
+    static member fromOptions (value: Value option) (unit: OntologyAnnotation Option) (header:OntologyAnnotation option) = 
+        let name = Component.composeName value unit |> Option.fromValueWithDefault ""
+        Component.make name value unit header
+
 
     /// Get ISATab string entries from an ISAJson Component object
     static member toString (c : Component) =
