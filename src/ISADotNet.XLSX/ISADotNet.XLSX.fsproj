@@ -24,7 +24,6 @@
     <Compile Include="AssayFile\AnnotationNode.fs" />
     <Compile Include="AssayFile\AnnotationTable.fs" />
     <Compile Include="AssayFile\MetaData.fs" />
-    <Compile Include="AssayFile\SwateTable.fs" />
     <Compile Include="AssayFile\Assay.fs" />
     <Compile Include="StudyFile\MetaData.fs" />
     <Compile Include="StudyFile\Study.fs" />
@@ -35,11 +34,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj" />
     <ProjectReference Include="..\ISADotnet\ISADotNet.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="6.0.3" />
+    <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup>
   
   <PropertyGroup>
@@ -49,7 +49,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!--<PackageProjectUrl>https://fslab.org/docs-template/</PackageProjectUrl>-->
     <PackageIconUrl>https://raw.githubusercontent.com/nfdi4plants/Branding/138420e3b6f9ec9e125c1ca8840874b2be2a1262/logos/DataPLANT_logo_minimal_rounded_bg_transparent.svg</PackageIconUrl>
-    <PackageTags>F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA Excel XLSX Tab</PackageTags>
+    <PackageTags>F# FSharp dotnet .Net bioinformatics biology datascience dataplant nfdi metadata investigation study assay ISA Excel XLSX Tab</PackageTags>
     <RepositoryUrl>https://github.com/nfdi4plants/ISADotNet</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <FsDocsLicenseLink>https://github.com/nfdi4plants/ISADotNet/blob/developer/LICENSE</FsDocsLicenseLink>

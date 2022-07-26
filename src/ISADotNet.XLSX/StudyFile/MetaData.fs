@@ -23,6 +23,10 @@ module MetaData =
         let _,_,_,study = Study.fromRows 2 en
         study
 
+    let toDSLSheet s =
+        toRows s
+        |> Seq.map SparseRow.toDSLRow
+
     /// Diesen Block durch JS ersetzen ----> 
 
     open DocumentFormat.OpenXml.Packaging

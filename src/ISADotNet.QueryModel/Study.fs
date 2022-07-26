@@ -8,8 +8,21 @@ open System.IO
 open System.Collections.Generic
 open System.Collections
 
-
-type QStudy(FileName : string option,Identifier : string option,Title : string option,Description : string option,SubmissionDate : string option,PublicReleaseDate : string option,Publications : Publication list option,Contacts : Person list option,StudyDesignDescriptors : OntologyAnnotation list option, Assays : QAssay list, Sheets : QSheet list) =
+/// Queryable representation of an ISA Study. Implements the QProcessSequence interface
+type QStudy
+    (
+        FileName : string option,
+        Identifier : string option,
+        Title : string option,
+        Description : string option,
+        SubmissionDate : string option,
+        PublicReleaseDate : string option,
+        Publications : Publication list option,
+        Contacts : Person list option,
+        StudyDesignDescriptors : OntologyAnnotation list option, 
+        Comments : QCommentCollection, 
+        Assays : QAssay list, 
+        Sheets : QSheet list) =
 
     inherit QProcessSequence(Sheets)
 
@@ -22,16 +35,22 @@ type QStudy(FileName : string option,Identifier : string option,Title : string o
     member this.Publications = Publications
     member this.Contacts = Contacts
     member this.StudyDesignDescriptors = StudyDesignDescriptors
+    member this.Comments = Comments
     member this.Assays = Assays
 
-    static member fromStudy (study : Study) =
-               
+    static member fromStudy (study : Study, ?ReferenceSheets : QSheet list) =
+        
+        let comments = QCommentCollection(study.Comments)
+            
         let sheets = 
             study.Assays 
             |> Option.map (List.collect (fun a -> a.ProcessSequence |> Option.defaultValue []) )
             |> Option.defaultValue []
             |> List.append (study.ProcessSequence |> Option.defaultValue [])
-            |> QProcessSequence
+            |> fun s ->
+                match ReferenceSheets with
+                | Some ref -> QProcessSequence(s,ref)
+                | None -> QProcessSequence(s)
             |> Seq.toList
 
         let assays = 
@@ -39,19 +58,25 @@ type QStudy(FileName : string option,Identifier : string option,Title : string o
             |> Option.map (List.map (fun a -> QAssay.fromAssay(a,sheets)))
             |> Option.defaultValue []
 
-        QStudy(study.FileName,study.Identifier,study.Title,study.Description,study.SubmissionDate,study.PublicReleaseDate,study.Publications,study.Contacts,study.StudyDesignDescriptors,assays,sheets)
+        QStudy(study.FileName,study.Identifier,study.Title,study.Description,study.SubmissionDate,study.PublicReleaseDate,study.Publications,study.Contacts,study.StudyDesignDescriptors,comments,assays,sheets)
 
+    /// Returns the QAssay with the given name
+    member this.Assay(assayName : string) = 
+        this.Assays
+        |> List.find (fun a -> a.FileName.Value.Contains assayName)
+        
+    /// Returns the nth QAssay
+    member this.Assay(i : int) = 
+        this.Assays
+        |> List.item i 
+
+    /// get the protocol or sheet (in ISATab logic) with the given name
     member this.Protocol (sheetName : string) =
         base.Protocol(sheetName, $"Assay \"{this.FileName}\"")
 
+    /// get the nth protocol or sheet (in ISATab logic) 
     member this.Protocol (index : int) =
         base.Protocol(index, $"Assay \"{this.FileName}\"")
-       
-    //interface IEnumerable<QSheet> with
-    //    member this.GetEnumerator() = (Seq.ofList this.Sheets).GetEnumerator()
-
-    //interface IEnumerable with
-    //    member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
     /// Returns the initial inputs final outputs of the assay, to which no processPoints
     static member getRootInputs (study : QStudy) = QProcessSequence.getRootInputs study

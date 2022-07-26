@@ -89,7 +89,7 @@ type QRow =
         [<JsonPropertyName(@"outputType")>]
         OutputType : IOType option
         [<JsonPropertyName(@"values")>]
-        Values : ISAValue list
+        Vals : ISAValue list
     }
 
     static member create (?Input,?Output,?InputType,?OutputType,?Values) : QRow =
@@ -99,7 +99,7 @@ type QRow =
             Output = Output |> Option.defaultValue ""
             InputType = InputType
             OutputType = OutputType
-            Values = Values |> Option.defaultValue []
+            Vals = Values |> Option.defaultValue []
         }
 
     static member create(?Input,?Output,?InputType,?OutputType,?CharValues,?ParamValues,?FactorValues) : QRow =
@@ -107,14 +107,14 @@ type QRow =
             (characteristics |> List.map Characteristic)
             @ (parameters |> List.map Parameter)
             @ (factors |> List.map Factor)
-            |> List.sortBy (fun v -> v.ValueIndex())
+            |> List.sortBy (fun v -> v.TryValueIndex() |> Option.defaultValue System.Int32.MaxValue)
 
         {
             Input = Input |> Option.defaultValue ""
             Output = Output |> Option.defaultValue ""
             InputType = InputType
             OutputType = OutputType
-            Values = combineValues (CharValues |> Option.defaultValue []) (ParamValues |> Option.defaultValue []) (FactorValues |> Option.defaultValue [])
+            Vals = combineValues (CharValues |> Option.defaultValue []) (ParamValues |> Option.defaultValue []) (FactorValues |> Option.defaultValue [])
         }
 
     static member fromProcess (proc : Process) : QRow list =
@@ -139,11 +139,11 @@ type QRow =
        
 
     member this.Item (i : int) =
-        this.Values.[i]
+        this.Vals.[i]
 
     member this.Item (s : string) =
         let item = 
-            this.Values 
+            this.Vals 
             |> List.tryFind (fun v -> 
                 s = v.HeaderText || v.NameText = s
             )
@@ -153,26 +153,39 @@ type QRow =
 
     member this.Item (oa : OntologyAnnotation) =
         let item =
-            this.Values 
+            this.Vals 
             |> List.tryFind (fun v -> v.Category = oa)
         match item with
         | Some i -> i
-        | None -> failwith $"Row with input \"{this.Input}\" does not contain item with ontology \"{oa.GetName}\""
+        | None -> failwith $"Row with input \"{this.Input}\" does not contain item with ontology \"{oa.NameText}\""
+
 
     member this.ValueCount =
-        this.Values 
+        this.Vals 
         |> List.length
 
     member this.ValueNames =
-        this.Values 
+        this.Vals 
         |> List.map (fun value -> value.NameText)
 
     member this.Headers =
-        this.Values 
+        this.Vals 
         |> List.map (fun value -> value.HeaderText)
 
+    member this.Values() = 
+        this.Vals |> ValueCollection
+
+    member this.Factors() = 
+        this.Values().Factors()
+
+    member this.Characteristics() =
+        this.Values().Characteristics()
+
+    member this.Parameters() = 
+        this.Values().Parameters()
+
     interface IEnumerable<ISAValue> with
-        member this.GetEnumerator() : System.Collections.Generic.IEnumerator<ISAValue> = (seq this.Values).GetEnumerator()
+        member this.GetEnumerator() : System.Collections.Generic.IEnumerator<ISAValue> = (seq this.Vals).GetEnumerator()
 
     interface IEnumerable with
         member this.GetEnumerator() = (this :> IEnumerable<ISAValue>).GetEnumerator() :> IEnumerator

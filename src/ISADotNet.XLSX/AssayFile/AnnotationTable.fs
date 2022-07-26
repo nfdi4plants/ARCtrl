@@ -275,7 +275,7 @@ module QRow =
         try 
             row {
                 "Source Name"
-                for v in (r.Values |> List.map ISAValue.toHeaders |> renumberHeaders |> List.concat) do v
+                for v in (r.Vals |> List.map ISAValue.toHeaders |> renumberHeaders |> List.concat) do v
                 IOType.toHeader r.OutputType.Value
             }
         with
@@ -285,7 +285,7 @@ module QRow =
         try
             row {
                 r.Input
-                for v in (r.Values |> List.collect ISAValue.toValues) do v
+                for v in (r.Vals |> List.collect ISAValue.toValues) do v
                 r.Output
             }
         with

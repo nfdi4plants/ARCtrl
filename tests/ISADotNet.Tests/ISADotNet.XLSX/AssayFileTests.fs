@@ -52,7 +52,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "5"
-            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name#5")) None None (Some [testComment])
+            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name#5")) None None None (Some [testComment])
 
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
@@ -85,7 +85,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "2"
-            let testOntology = OntologyAnnotation.make None None (Some "MS") (Some (URI.fromString "http://purl.obolibrary.org/obo/MS_1000031")) (Some [testComment])
+            let testOntology = OntologyAnnotation.fromStringWithComments "" "MS" "http://purl.obolibrary.org/obo/MS_1000031" [testComment]
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
             Expect.equal header testHeader "Dit not parse Name correctly"

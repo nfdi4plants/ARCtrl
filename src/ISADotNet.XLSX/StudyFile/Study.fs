@@ -15,6 +15,8 @@ open ISADotNet
 /// Additionally, the file can contain several sheets containing parameter tables and a sheet containing additional study metadata
 module Study =
 
+    open FsSpreadsheet.DSL
+
     /// Returns a stuy from a sparseMatrix represntation of an study.xlsx sheet
     ///
     /// processNameRoot is the sheetName (or the protocol name you want to use)
@@ -131,5 +133,20 @@ module Study =
                 Spreadsheet.close doc
         with
         | err -> failwithf "Could not read study from stream: %s" err.Message
+
+    
+    let toFile (p : string) (study : Study) =
+        try
+        let s = QueryModel.QStudy.fromStudy study
+        let wb = 
+            workbook {
+                for (i,s) in List.indexed s.Sheets do ISADotNet.XLSX.AssayFile.QSheet.toSheet i s
+                sheet "Study" {
+                    for r in MetaData.toDSLSheet study do r
+                }
+            }
+        wb.Value.Parse().ToFile(p)
+        with
+        | err -> failwithf "Could not write Study to Xlsx file in path \"%s\": \n\t%s" p err.Message
 
     /// ---->  Bis hier

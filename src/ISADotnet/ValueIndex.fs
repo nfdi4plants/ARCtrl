@@ -66,11 +66,19 @@ module ValueIndexExtensions =
 
         member this.GetValueIndex() = ValueIndex.tryGetFactorIndex this |> Option.get
 
+        static member tryGetValueIndex(f) = ValueIndex.tryGetFactorIndex f
+
+        member this.TryGetValueIndex() = ValueIndex.tryGetFactorIndex this
+
     type FactorValue with
 
         static member getValueIndex(f) = ValueIndex.tryGetFactorValueIndex f |> Option.get
 
         member this.GetValueIndex() = ValueIndex.tryGetFactorValueIndex this |> Option.get
+
+        static member tryGetValueIndex(f) = ValueIndex.tryGetFactorValueIndex f
+
+        member this.TryGetValueIndex() = ValueIndex.tryGetFactorValueIndex this
 
     type MaterialAttribute with
     
@@ -86,11 +94,19 @@ module ValueIndexExtensions =
 
         member this.GetValueIndex() = ValueIndex.tryGetCharacteristicIndex this |> Option.get
 
+        static member tryGetValueIndex(m) = ValueIndex.tryGetCharacteristicIndex m
+        
+        member this.TryGetValueIndex() = ValueIndex.tryGetCharacteristicIndex this
+
     type MaterialAttributeValue with
             
             static member getValueIndex(m) = ValueIndex.tryGetCharacteristicValueIndex m |> Option.get
 
             member this.GetValueIndex() = ValueIndex.tryGetCharacteristicValueIndex this |> Option.get
+
+            static member tryGetValueIndex(m) = ValueIndex.tryGetCharacteristicValueIndex m
+            
+            member this.TryGetValueIndex() = ValueIndex.tryGetCharacteristicValueIndex this
 
     type ProtocolParameter with
     
@@ -106,8 +122,16 @@ module ValueIndexExtensions =
 
         member this.GetValueIndex() = ValueIndex.tryGetParameterIndex this |> Option.get
 
+        static member tryGetValueIndex(p) = ValueIndex.tryGetParameterIndex p
+        
+        member this.TryGetValueIndex() = ValueIndex.tryGetParameterIndex this
+
     type ProcessParameterValue with
     
         static member getValueIndex(p) = ValueIndex.tryGetParameterValueIndex p |> Option.get
 
         member this.GetValueIndex() = ValueIndex.tryGetParameterValueIndex this |> Option.get
+
+        static member tryGetValueIndex(p) = ValueIndex.tryGetParameterValueIndex p
+        
+        member this.TryGetValueIndex() = ValueIndex.tryGetParameterValueIndex this

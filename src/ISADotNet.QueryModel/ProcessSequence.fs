@@ -8,11 +8,14 @@ open System.IO
 open System.Collections.Generic
 open System.Collections
 
-
+/// Type representing a queryable collection of processes, which model the experimental graph
 type QProcessSequence (sheets : QSheet list) =
 
+    /// List of protocols or sheets (in ISATab) 
     member this.Sheets = sheets
 
+    /// Update the entities in the sheets against the reference. The same entity (distinct by name) can be a source in some sheet and a sample in another. 
+    /// In this case, the function will transform the source to a sample so it's the same everywhere
     static member internal updateNodesAgainst (reference : QSheet list) (sheets : QSheet list) =
         let mapping = 
             reference
@@ -33,6 +36,7 @@ type QProcessSequence (sheets : QSheet list) =
             {sheet with Rows = sheet.Rows |> List.map updateRow}
         )
 
+    /// Create a QProcessSequence object from a list of processes. The resulting sheets will be created by grouping all processes implementing the same protocol
     new (processSequence : Process list, ?ReferenceSheets : QSheet list) =
         let updateNodes (sheets : QSheet list) =
             match ReferenceSheets with
@@ -55,11 +59,12 @@ type QProcessSequence (sheets : QSheet list) =
             |> updateNodes
         QProcessSequence(sheets)
 
+    /// Create a QProcessSequence object from an assay. The resulting sheets will be created by grouping all processes implementing the same protocol
     static member fromAssay (assay : Assay) =
         
         QProcessSequence(assay.ProcessSequence |> Option.defaultValue [])
       
-
+    /// get the nth protocol or sheet (in ISATab logic) 
     member this.Protocol (i : int, ?EntityName) =
         let sheet = 
             this.Sheets 
@@ -68,6 +73,7 @@ type QProcessSequence (sheets : QSheet list) =
         | Some s -> s
         | None -> failwith $"""{EntityName |> Option.defaultValue "ProcessSequence"} does not contain sheet with index {i} """
 
+    /// get the protocol or sheet (in ISATab logic) with the given name
     member this.Protocol (sheetName, ?EntityName) =
         let sheet = 
             this.Sheets 
@@ -76,12 +82,15 @@ type QProcessSequence (sheets : QSheet list) =
         | Some s -> s
         | None -> failwith $"""{EntityName |> Option.defaultValue "ProcessSequence"} does not contain sheet with name "{sheetName}" """
 
+    /// List of protocols or sheets (in ISATab) 
     member this.Protocols = this.Sheets
 
+    /// Number of protocols or sheets (in ISATab) in the processSequence
     member this.ProtocolCount =
         this.Sheets 
         |> List.length
 
+    /// Names of the protocols or sheets (in ISATab) in the processSequence
     member this.ProtocolNames =
         this.Sheets 
         |> List.map (fun sheet -> sheet.SheetName)
@@ -92,12 +101,13 @@ type QProcessSequence (sheets : QSheet list) =
     interface IEnumerable with
         member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
-
+    /// Returns the list of all nodes (sources, samples, data) in the ProcessSequence
     static member getNodes (ps : #QProcessSequence) =
         ps.Protocols 
         |> List.collect (fun p -> p.Rows |> List.collect (fun r -> [r.Input;r.Output]))
         |> List.distinct     
 
+    /// Returns a new process sequence, only with those rows that contain either an educt or a product entity of the given node (or entity)
     static member getSubTreeOf (node : string) (ps : #QProcessSequence) =
         let rec collectForwardNodes nodes =
             let newNodes = 
@@ -143,20 +153,21 @@ type QProcessSequence (sheets : QSheet list) =
         )
         |> QProcessSequence
 
-    /// Returns the initial inputs final outputs of the assay, to which no processPoints
+    /// Returns the names of all initial inputs final outputs of the processSequence, to which no processPoints
     static member getRootInputs (ps : #QProcessSequence) =
         let inputs = ps.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Input))
         let outputs =  ps.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Output)) |> Set.ofList
         inputs
         |> List.filter (fun i -> outputs.Contains i |> not)
 
-    /// Returns the final outputs of the assay, which point to no further nodes
+    /// Returns the names of all final outputs of the processSequence, which point to no further nodes
     static member getFinalOutputs (ps : #QProcessSequence) =
         let inputs = ps.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Input)) |> Set.ofList
         let outputs =  ps.Protocols |> List.collect (fun p -> p.Rows |> List.map (fun r -> r.Output))
         outputs
         |> List.filter (fun i -> inputs.Contains i |> not)
 
+    /// Returns the names of all nodes for which the predicate reutrns true
     static member getNodesBy (predicate : QueryModel.IOType -> bool) (ps : #QProcessSequence) =
         ps.Protocols 
         |> List.collect (fun p -> 
@@ -169,6 +180,7 @@ type QProcessSequence (sheets : QSheet list) =
         )
         |> List.distinct 
 
+    /// Returns the names of all initial inputs final outputs of the processSequence, to which no processPoints, and for which the predicate returns true
     static member getRootInputsBy (predicate : QueryModel.IOType -> bool) (ps : #QProcessSequence) =
         let mappings = 
             ps.Protocols 
@@ -204,6 +216,7 @@ type QProcessSequence (sheets : QSheet list) =
 
         loop (QProcessSequence.getRootInputs ps) []
 
+    /// Returns the names of all final outputs of the processSequence, which point to no further nodes, and for which the predicate returns true
     static member getFinalOutputsBy (predicate : QueryModel.IOType -> bool) (ps : #QProcessSequence) =
         let mappings = 
             ps.Protocols 
@@ -239,22 +252,23 @@ type QProcessSequence (sheets : QSheet list) =
 
         loop (QProcessSequence.getFinalOutputs ps) []
 
-    static member getNodesOfBy (predicate : QueryModel.IOType -> bool) (sample : string) (ps : #QProcessSequence) =
-        QProcessSequence.getSubTreeOf sample ps
+    /// Returns the names of all nodes processSequence, which are connected to the given node and for which the predicate returns true
+    static member getNodesOfBy (predicate : QueryModel.IOType -> bool) (node : string) (ps : #QProcessSequence) =
+        QProcessSequence.getSubTreeOf node ps
         |> QProcessSequence.getNodesBy predicate
 
-    /// Returns the initial inputs final outputs of the assay, to which no processPoints
-    static member getRootInputsOfBy (predicate : QueryModel.IOType -> bool) (sample : string) (ps : #QProcessSequence) =
-        QProcessSequence.getSubTreeOf sample ps
+    /// Returns the initial inputs final outputs of the assay, to which no processPoints, which are connected to the given node and for which the predicate returns true
+    static member getRootInputsOfBy (predicate : QueryModel.IOType -> bool) (node : string) (ps : #QProcessSequence) =
+        QProcessSequence.getSubTreeOf node ps
         |> QProcessSequence.getRootInputsBy predicate
 
-    /// Returns the final outputs of the assay, which point to no further nodes
-    static member getFinalOutputsOfBy (predicate : QueryModel.IOType -> bool) (sample : string) (ps : #QProcessSequence) =
-        QProcessSequence.getSubTreeOf sample ps
+    /// Returns the final outputs of the assay, which point to no further nodes, which are connected to the given node and for which the predicate returns true
+    static member getFinalOutputsOfBy (predicate : QueryModel.IOType -> bool) (node : string) (ps : #QProcessSequence) =
+        QProcessSequence.getSubTreeOf node ps
         |> QProcessSequence.getFinalOutputsBy predicate
        
-     /// Returns the initial inputs final outputs of the assay, to which no processPoints
-    static member getPreviousValuesOf (ps : #QProcessSequence) (sample : string) =
+    /// Returns the previous values of the given node
+    static member getPreviousValuesOf (ps : #QProcessSequence) (node : string) =
         let mappings = 
             ps.Protocols 
             |> List.collect (fun p -> 
@@ -271,16 +285,16 @@ type QProcessSequence (sheets : QSheet list) =
                     state 
                     |> List.map (fun s -> 
                         mappings.TryFind s 
-                        |> Option.map (fun r -> r.Input,r.Values)
+                        |> Option.map (fun r -> r.Input,r.Vals)
                         |> Option.defaultValue (s,[])
                     )
                     |> List.unzip
                     |> fun (s,vs) -> s, vs |> List.concat
                 loop (newValues@values) state newState
-        loop [] [] [sample]  
+        loop [] [] [node]  
         |> ValueCollection
 
-    /// Returns the initial inputs final outputs of the assay, to which no processPoints
+    /// Returns the succeeding values of the given node
     static member getSucceedingValuesOf (ps : #QProcessSequence) (sample : string) =
         let mappings = 
             ps.Protocols 
@@ -298,7 +312,7 @@ type QProcessSequence (sheets : QSheet list) =
                     state 
                     |> List.map (fun s -> 
                         mappings.TryFind s 
-                        |> Option.map (fun r -> r.Output,r.Values)
+                        |> Option.map (fun r -> r.Output,r.Vals)
                         |> Option.defaultValue (s,[])
                     )
                     |> List.unzip
@@ -307,12 +321,27 @@ type QProcessSequence (sheets : QSheet list) =
         loop [] [] [sample]
         |> ValueCollection
 
+    /// Returns a new ProcessSequence, with only the values from the processes that implement the given protocol
+    static member onlyValuesOfProtocol (ps : #QProcessSequence) (protocolName : string option) =
+        match protocolName with
+        | Some pn ->
+            ps.Sheets
+            |> List.map (fun s -> 
+                if s.SheetName = pn then 
+                    s
+                else 
+                    {s with Rows = s.Rows |> List.map (fun r -> {r with Vals = []})}
+            )
+            |> QProcessSequence                    
+        | None -> ps.Sheets |> QProcessSequence   
 
+    /// Returns an IOValueCollection, where for each Value the closest inputs and outputs are used
     member this.Nearest = 
         this.Sheets
         |> List.collect (fun sheet -> sheet.Values |> Seq.toList)
         |> IOValueCollection
    
+    /// Returns an IOValueCollection, where for each Value the global inputs and closest outputs are used
     member this.SinkNearest = 
         this.Sheets
         |> List.collect (fun sheet -> 
@@ -322,7 +351,7 @@ type QProcessSequence (sheets : QSheet list) =
                 QProcessSequence.getRootInputsOfBy (fun _ -> true) r.Input this
                 |> List.distinct
                 |> List.collect (fun inp -> 
-                    r.Values
+                    r.Vals
                     |> List.map (fun v -> 
                         KeyValuePair((inp,r.Output),v)
                     )
@@ -331,6 +360,7 @@ type QProcessSequence (sheets : QSheet list) =
         )
         |> IOValueCollection
 
+    /// Returns an IOValueCollection, where for each Value the closest inputs and global outputs are used
     member this.SourceNearest = 
         this.Sheets
         |> List.collect (fun sheet -> 
@@ -340,7 +370,7 @@ type QProcessSequence (sheets : QSheet list) =
                 QProcessSequence.getFinalOutputsOfBy (fun _ -> true) r.Output this 
                 |> List.distinct
                 |> List.collect (fun out -> 
-                    r.Values
+                    r.Vals
                     |> List.map (fun v -> 
                         KeyValuePair((r.Input,out),v)
                     )
@@ -349,6 +379,7 @@ type QProcessSequence (sheets : QSheet list) =
         )
         |> IOValueCollection
 
+    /// Returns an IOValueCollection, where for each Value the global inputs and outputs are used
     member this.Global =
         this.Sheets
         |> List.collect (fun sheet -> 
@@ -360,7 +391,7 @@ type QProcessSequence (sheets : QSheet list) =
                 |> List.collect (fun out -> 
                     inps
                     |> List.collect (fun inp ->
-                        r.Values
+                        r.Vals
                         |> List.map (fun v -> 
                             KeyValuePair((inp,out),v)
                         )
@@ -370,174 +401,255 @@ type QProcessSequence (sheets : QSheet list) =
         )
         |> IOValueCollection
 
+    /// Returns the names of all nodes in the Process sequence
     member this.Nodes() =
         QProcessSequence.getNodes(this)
 
+    /// Returns the names of all nodes in the Process sequence
+    member this.NodesOf(node) =
+        QProcessSequence.getNodesOfBy (fun _ -> true) node this
+
+    /// Returns the names of all the input nodes in the Process sequence to which no output points
     member this.FirstNodes() = 
         QProcessSequence.getRootInputs(this)
 
+    /// Returns the names of all the output nodes in the Process sequence that point to no input
     member this.LastNodes() = 
         QProcessSequence.getFinalOutputs(this)
 
+    /// Returns the names of all the input nodes in the Process sequence to which no output points, that are connected to the given node
     member this.FirstNodesOf(node) = 
         QProcessSequence.getRootInputsOfBy (fun _ -> true) node this
 
+    /// Returns the names of all the output nodes in the Process sequence that point to no input, that are connected to the given node
     member this.LastNodesOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun _ -> true) node this
 
+    /// Returns the names of all samples in the Process sequence
     member this.Samples() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSample) this
 
+    /// Returns the names of all samples in the Process sequence, that are connected to the given node
     member this.SamplesOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSample) node this
 
+    /// Returns the names of all the input samples in the Process sequence to which no output points
     member this.FirstSamples() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isSample) this
 
+    /// Returns the names of all the output samples in the Process sequence that point to no input
     member this.LastSamples() = 
         QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isSample) this
 
+    /// Returns the names of all the input samples in the Process sequence to which no output points, that are connected to the given node
     member this.FirstSamplesOf(node) = 
         QProcessSequence.getRootInputsOfBy (fun (io : IOType) -> io.isSample) node this
 
+    /// Returns the names of all the output samples in the Process sequence that point to no input, that are connected to the given node
     member this.LastSamplesOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isSample) node this
 
+    /// Returns the names of all sources in the Process sequence
     member this.Sources() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSource) this
 
+    /// Returns the names of all sources in the Process sequence, that are connected to the given node
     member this.SourcesOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSource) node this
 
+    /// Returns the names of all data in the Process sequence
     member this.Data() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isData) this
 
+    /// Returns the names of all data in the Process sequence, that are connected to the given node
     member this.DataOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isData) node this
 
+    /// Returns the names of all the input data in the Process sequence to which no output points
     member this.FirstData() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isData) this
 
+    /// Returns the names of all the output data in the Process sequence that point to no input
     member this.LastData() = 
         QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isData) this
 
+    /// Returns the names of all the input data in the Process sequence to which no output points, that are connected to the given node
     member this.FirstDataOf(node) = 
         QProcessSequence.getRootInputsOfBy (fun (io : IOType) -> io.isData) node this
 
+    /// Returns the names of all the output data in the Process sequence that point to no input, that are connected to the given node
     member this.LastDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isData) node this
 
+    /// Returns the names of all raw data in the Process sequence
     member this.RawData() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isRawData) this
 
+    /// Returns the names of all raw data in the Process sequence, that are connected to the given node
     member this.RawDataOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isRawData) node this
 
+    /// Returns the names of all the input raw data in the Process sequence to which no output points
     member this.FirstRawData() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isRawData) this
 
+    /// Returns the names of all the output raw data in the Process sequence that point to no input
     member this.LastRawData() = 
         QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isRawData) this
     
+    /// Returns the names of all the input raw data in the Process sequence to which no output points, that are connected to the given node
     member this.FirstRawDataOf(node) = 
         QProcessSequence.getRootInputsOfBy (fun (io : IOType) -> io.isRawData) node this
 
+    /// Returns the names of all the output raw data in the Process sequence that point to no input, that are connected to the given node
     member this.LastRawDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isRawData) node this
 
+    /// Returns the names of all processed data in the Process sequence
     member this.ProcessedData() =
         QProcessSequence.getNodesBy (fun (io : IOType) -> io.isProcessedData) this
 
+    /// Returns the names of all processed data in the Process sequence, that are connected to the given node
     member this.ProcessedDataOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isProcessedData) node this
 
+    /// Returns the names of all the input processed data in the Process sequence to which no output points
     member this.FirstProcessedData() = 
         QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isProcessedData) this
 
+    /// Returns the names of all the output processed data in the Process sequence that point to no input
     member this.LastProcessedData() = 
         QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isProcessedData) this
 
+    /// Returns the names of all the input processed data in the Process sequence to which no output points, that are connected to the given node
     member this.FirstProcessedDataOf(node) = 
         QProcessSequence.getRootInputsOfBy (fun (io : IOType) -> io.isProcessedData) node this
 
+    /// Returns the names of all the output processed data in the Process sequence that point to no input, that are connected to the given node
     member this.LastProcessedDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isProcessedData) node this
 
-    member this.Values() = 
-        this.Sheets
+    /// Returns all values in the process sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Values(?ProtocolName) = 
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
         |> List.collect (fun s -> s.Values.Values().Values)
         |> ValueCollection
 
-    member this.Values(ontology : OntologyAnnotation ) = 
-        this.Sheets
-        |> List.collect (fun s -> s.Values.Values().Filter(ontology).Values)
+    /// Returns all values in the process sequence whose header matches the given category
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Values(ontology : OntologyAnnotation, ?ProtocolName) = 
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
+        |> List.collect (fun s -> s.Values.Values().WithCategory(ontology).Values)
         |> ValueCollection
 
-    member this.Values(name : string ) = 
-        this.Sheets
-        |> List.collect (fun s -> s.Values.Values().Filter(name).Values)
+    /// Returns all values in the process sequence whose header matches the given name
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Values(name : string, ?ProtocolName) = 
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Sheets
+        |> List.collect (fun s -> s.Values.Values().WithName(name).Values)
         |> ValueCollection
 
-    member this.Factors() =
-        this.Values().Factors()
+    /// Returns all factor values in the process sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Factors(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Factors()
 
-    member this.Parameters() =
-        this.Values().Parameters()
+    /// Returns all parameter values in the process sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Parameters(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Parameters()
 
-    member this.Characteristics() =
-        this.Values().Characteristics()
+    /// Returns all characteristic values in the process sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Characteristics(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Characteristics()
 
-    member this.ValuesOf(node) =
-        (QProcessSequence.getPreviousValuesOf this node).Values @ (QProcessSequence.getSucceedingValuesOf this node).Values
+    /// Returns all values in the process sequence, that are connected to the given node
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.ValuesOf(node, ?ProtocolName) =
+        let ps = QProcessSequence.onlyValuesOfProtocol this ProtocolName
+        (QProcessSequence.getPreviousValuesOf ps node).Values @ (QProcessSequence.getSucceedingValuesOf ps node).Values
         |> ValueCollection
 
-    member this.PreviousValuesOf(node) =
-        QProcessSequence.getPreviousValuesOf this node
+    /// Returns all values in the process sequence, that are connected to the given node and come before it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.PreviousValuesOf(node, ?ProtocolName) =
+        let ps = QProcessSequence.onlyValuesOfProtocol this ProtocolName
+        QProcessSequence.getPreviousValuesOf ps node
 
-    member this.SucceedingValuesOf(node) =
-        QProcessSequence.getSucceedingValuesOf this node
+    /// Returns all values in the process sequence, that are connected to the given node and come after it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.SucceedingValuesOf(node, ?ProtocolName) =
+        let ps = QProcessSequence.onlyValuesOfProtocol this ProtocolName
+        QProcessSequence.getSucceedingValuesOf ps node
 
-    member this.CharacteristicsOf(node) =
-        this.ValuesOf(node).Characteristics()
+    /// Returns all characteristic values in the process sequence, that are connected to the given node
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.CharacteristicsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Characteristics()
 
-    member this.PreviousCharacteristicsOf(node) =
-        this.PreviousValuesOf(node).Characteristics()
+    /// Returns all characteristic values in the process sequence, that are connected to the given node and come before it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.PreviousCharacteristicsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Characteristics()
 
-    member this.SucceedingCharacteristicsOf(node) =
-        this.SucceedingValuesOf(node).Characteristics()
+    /// Returns all characteristic values in the process sequence, that are connected to the given node and come after it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.SucceedingCharacteristicsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Characteristics()
 
-    member this.ParametersOf(node) =
-        this.ValuesOf(node).Parameters()
+    /// Returns all parameter values in the process sequence, that are connected to the given node 
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.ParametersOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Parameters()
 
-    member this.PreviousParametersOf(node) =
-        this.PreviousValuesOf(node).Parameters()
+    /// Returns all parameter values in the process sequence, that are connected to the given node and come before it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.PreviousParametersOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Parameters()
 
-    member this.SucceedingParametersOf(node) =
-        this.SucceedingValuesOf(node).Parameters()
+    /// Returns all parameter values in the process sequence, that are connected to the given node and come after it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.SucceedingParametersOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Parameters()
 
-    member this.FactorsOf(node) =
-        this.ValuesOf(node).Factors()
+    /// Returns all factor values in the process sequence, that are connected to the given node 
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.FactorsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Factors()
 
-    member this.PreviousFactorsOf(node) =
-        this.PreviousValuesOf(node).Factors()
+    /// Returns all factor values in the process sequence, that are connected to the given node and come before it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.PreviousFactorsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Factors()
 
-    member this.SucceedingFactorsOf(node) =
-        this.SucceedingValuesOf(node).Factors()
+    /// Returns all factor values in the process sequence, that are connected to the given node 
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol and come after it in the sequence
+    member this.SucceedingFactorsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Factors()
 
-    member this.Contains(ontology : OntologyAnnotation) = 
-        this.Values().Contains ontology
+    member this.Contains(ontology : OntologyAnnotation, ?ProtocolName) = 
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains ontology
 
-    member this.Contains(name : string) = 
-        this.Values().Contains name
+    member this.Contains(name : string, ?ProtocolName) = 
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains name
 
-    //static member toString (rwa : QAssay) =  JsonSerializer.Serialize<QAssay>(rwa,JsonExtensions.options)
-
-    //static member toFile (path : string) (rwa:QAssay) = 
-    //    File.WriteAllText(path,QAssay.toString rwa)
-
-    //static member fromString (s:string) = 
-    //    JsonSerializer.Deserialize<QAssay>(s,JsonExtensions.options)
-
-    //static member fromFile (path : string) = 
-    //    File.ReadAllText path 
-    //    |> QAssay.fromString
