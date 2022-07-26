@@ -108,12 +108,17 @@ module ProcessInput =
         | _ -> None
 
     /// If given process input contains characteristics, returns them
-    let tryGetCharacteristics (pi : ProcessInput) =
+    let tryGetCharacteristicValues (pi : ProcessInput) =
         match pi with
         | ProcessInput.Sample s     -> s.Characteristics
         | ProcessInput.Source s     -> s.Characteristics
         | ProcessInput.Material m   -> m.Characteristics
         | ProcessInput.Data _       -> None
+
+    /// If given process input contains characteristics, returns them
+    let tryGetCharacteristics (pi : ProcessInput) =
+        tryGetCharacteristicValues pi
+        |> Option.map (List.choose (fun c -> c.Category))
 
 /// Functions for handling the ProcessOutput Type
 module ProcessOutput =
@@ -174,11 +179,17 @@ module ProcessOutput =
 
 
     /// If given process output contains characteristics, returns them
-    let tryGetCharacteristics (po : ProcessOutput) =
+    let tryGetCharacteristicValues (po : ProcessOutput) =
         match po with
         | ProcessOutput.Sample s     -> s.Characteristics
         | ProcessOutput.Material m   -> m.Characteristics
         | ProcessOutput.Data _       -> None
+
+    /// If given process output contains characteristics, returns them
+    let tryGetCharacteristics (po : ProcessOutput) =
+        tryGetCharacteristicValues po
+        |> Option.map (List.choose (fun c -> c.Category))
+
 
     /// If given process output contains factors, returns them
     let tryGetFactorValues (po : ProcessOutput) =
@@ -209,6 +220,29 @@ module Process =
             |> List.choose (fun pv -> pv.Category)
         | None -> []
 
+    /// Returns the characteristics describing the inputs of the process
+    let getInputCharacteristics (p: Process) =
+        match p.Inputs with
+        | Some ins ->
+            ins 
+            |> List.collect (fun inp -> ProcessInput.tryGetCharacteristics inp |> Option.defaultValue [])
+            |> List.distinct
+        | None -> []
+
+    /// Returns the characteristics describing the outputs of the process
+    let getOutputCharacteristics (p: Process) =
+        match p.Outputs with
+        | Some outs ->
+            outs 
+            |> List.collect (fun out -> ProcessOutput.tryGetCharacteristics out |> Option.defaultValue [])
+            |> List.distinct
+        | None -> []
+
+    /// Returns the characteristics describing the inputs and outputs of the process
+    let getCharacteristics (p: Process) =
+        getInputCharacteristics p @ getOutputCharacteristics p
+        |> List.distinct
+
     /// If the process implements the given parameter, return the list of input files together with their according parameter values of this parameter
     let tryGetInputsWithParameterBy (predicate : ProtocolParameter -> bool) (p : Process) =
         match p.ParameterValues with
@@ -232,21 +266,13 @@ module Process =
             | None -> None
         | None -> None
 
-    /// Returns the characteristics of the samples of the process
-    let getCharacteristics (p : Process) =
-        let materialAttributesOfValues (mvs : (MaterialAttributeValue list) Option) = 
-            mvs |> Option.defaultValue [] |> List.choose (fun mv -> mv.Category)
-        p.Inputs |> Option.defaultValue [] |> List.collect (ProcessInput.tryGetCharacteristics >> materialAttributesOfValues)
-        |> List.append (p.Outputs |> Option.defaultValue [] |> List.collect (ProcessOutput.tryGetCharacteristics >> materialAttributesOfValues))
-        |> List.distinct
-
     /// If the process implements the given characteristic, return the list of input files together with their according characteristic values of this characteristic
     let tryGetInputsWithCharacteristicBy (predicate : MaterialAttribute -> bool) (p : Process) =
         match p.Inputs with
         | Some is ->
             is
             |> List.choose (fun i ->
-                ProcessInput.tryGetCharacteristics i
+                ProcessInput.tryGetCharacteristicValues i
                 |> Option.defaultValue []
                 |> List.tryPick (fun mv -> 
                     match mv.Category with
@@ -264,7 +290,7 @@ module Process =
         | Some is,Some os ->
             List.zip is os
             |> List.choose (fun (i,o) ->
-                ProcessInput.tryGetCharacteristics i
+                ProcessInput.tryGetCharacteristicValues i
                 |> Option.defaultValue []
                 |> List.tryPick (fun mv -> 
                     match mv.Category with
@@ -320,6 +346,12 @@ module ProcessSequence =
             )        
         )
         |> List.distinct
+        
+    /// Returns the protocols the given processes impelement
+    let getProtocols (processSequence : Process list) =
+        processSequence
+        |> List.choose (fun p -> p.ExecutesProtocol)
+        |> List.distinct
 
     /// Returns a list of the processes, containing only the ones executing a protocol for which the predicate returns true
     let filterByProtocolBy (predicate : Protocol -> bool) (processSequence : Process list) =
@@ -352,6 +384,12 @@ module ProcessSequence =
         |> List.collect Process.getParameters
         |> List.distinct
     
+    /// Returns the characteristics describing the inputs and outputs of the processssequence
+    let getCharacteristics  (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getCharacteristics
+        |> List.distinct
+
     /// If the processes contain a process implementing the given parameter, return the list of input files together with their according parameter values of this parameter
     let getInputsWithCharacteristicBy (predicate:MaterialAttribute -> bool) (processSequence : Process list) =
         processSequence

@@ -25,25 +25,24 @@ module Study =
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
-        let characteristics,factors,protocol,processes = ISADotNet.XLSX.AssayFile.Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
-        Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = [protocol], ProcessSequence = processes)
+        let processes = ISADotNet.XLSX.AssayFile.Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
+        let characteristics = API.ProcessSequence.getCharacteristics processes
+        let factors = API.ProcessSequence.getFactors processes
+        let protocols = API.ProcessSequence.getProtocols processes
+        Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = protocols, ProcessSequence = processes)
 
     /// Returns a study from a sequence of sparseMatrix representations of study.xlsx sheets
     ///
     /// See "fromSparseMatrix" function for parameter documentation
     let fromSparseMatrices (sheets : (string*(string seq)*Dictionary<int*string,string>) seq) = 
-        let characteristics,factors,protocols,processes =
+        let processes =
             sheets
-            |> Seq.map (fun (name,matrixHeaders,matrix) -> ISADotNet.XLSX.AssayFile.Process.fromSparseMatrix name matrixHeaders matrix)
-            |> Seq.fold (fun (characteristics',factors',protocols',processes') (characteristics,factors,protocol,processes) ->
-                List.append characteristics' characteristics |> List.distinct,
-                List.append factors' factors |> List.distinct,
-                List.append protocols' (List.singleton protocol),
-                List.append processes' processes
-            ) (List.empty,List.empty,List.empty,List.empty)
-
-        let processes = ISADotNet.XLSX.AssayFile.AnnotationTable.updateSamplesByThemselves processes |> Seq.toList
-
+            |> Seq.collect (fun (name,matrixHeaders,matrix) -> ISADotNet.XLSX.AssayFile.Process.fromSparseMatrix name matrixHeaders matrix)
+            |> ISADotNet.XLSX.AssayFile.AnnotationTable.updateSamplesByThemselves 
+            |> Seq.toList
+        let characteristics = API.ProcessSequence.getCharacteristics processes
+        let factors = API.ProcessSequence.getFactors processes
+        let protocols = API.ProcessSequence.getProtocols processes
         Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = protocols, ProcessSequence = processes)
 
 // Diesen Block durch JS ersetzen ----> 
