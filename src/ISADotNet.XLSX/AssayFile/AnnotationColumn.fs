@@ -125,7 +125,28 @@ module AnnotationColumn =
     /// Parses to ColumnHeader, if the given header describes a Characteristics Value
     let tryParseCharacteristicsHeader (header:string) =
         match ColumnHeader.fromStringHeader header with
-        | h when h.Kind = "Characteristics" || h.Kind = "Characteristics Value" ->
+        | h when h.Kind = "Characteristics" || h.Kind = "Characteristic" ||h.Kind = "Characteristics Value" ->
+            Some h
+        | _ -> None
+
+    /// Parses to ColumnHeader, if the given header describes a Component Value
+    let tryParseComponentHeader (header:string) =
+        match ColumnHeader.fromStringHeader header with
+        | h when h.Kind = "Component" ->
+            Some h
+        | _ -> None
+
+    /// Parses to ColumnHeader, if the given header describes a Characteristics Value
+    let tryParseProtocolREFHeader (header:string) =
+        match ColumnHeader.fromStringHeader header with
+        | h when h.Kind = "Protocol REF" ->
+            Some h
+        | _ -> None
+
+    /// Parses to ColumnHeader, if the given header describes a Characteristics Value
+    let tryParseProtocolTypeHeader (header:string) =
+        match ColumnHeader.fromStringHeader header with
+        | h when h.Kind = "Protocol Type" ->
             Some h
         | _ -> None
 

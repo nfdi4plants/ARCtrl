@@ -121,7 +121,7 @@ let testComponentCasting =
             Expect.equal actual expected "Component was not correctly composed"
 
         )
-        testCase "FromOptionsUnit" (fun () -> 
+        testCase "FromStringUnit" (fun () -> 
           
             let v = Value.Int 10 |> Some
             let u = OntologyAnnotation.fromString "degree Celsius" "UO" "123" |> Some
