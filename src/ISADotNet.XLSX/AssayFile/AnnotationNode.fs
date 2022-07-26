@@ -211,6 +211,15 @@ module AnnotationNode =
                 OntologyAnnotation.fromStringWithComments value termAccession termSource [order]
         )
 
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryGetProtocolREFGetter (columnOrder : int) (headers:string seq) =
+        Seq.tryPick tryParseProtocolREFHeader headers
+        |> Option.map (fun h -> 
+
+            fun matrix i ->
+                Dictionary.tryGetString (i,h.HeaderString) matrix |> Option.defaultValue ""
+        )
+
     /// If the headers of a node depict a parameter, returns the parameter and a function for parsing the values of the matrix to the values of this parameter
     let tryGetParameterGetter (columnOrder : int) (headers:string seq) =
         Seq.tryPick tryParseParameterHeader headers
