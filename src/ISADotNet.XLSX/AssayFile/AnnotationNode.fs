@@ -156,8 +156,8 @@ module AnnotationNode =
                         | (a,s,c) -> a,s
                 Value.fromOptions 
                     value
-                    termAccession
                     termSource
+                    termAccession
         category,valueGetter
 
     /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
@@ -208,7 +208,7 @@ module AnnotationNode =
                 let termAccession = termAccessionGetter matrix i |> Option.defaultValue ""
                 let termSource = termSourceGetter matrix i       |> Option.defaultValue ""
 
-                OntologyAnnotation.fromStringWithComments value termAccession termSource [order]
+                OntologyAnnotation.fromStringWithComments value termSource termAccession [order]
         )
 
     /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type

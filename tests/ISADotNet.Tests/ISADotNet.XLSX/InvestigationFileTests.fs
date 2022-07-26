@@ -294,7 +294,7 @@ let testStringConversions =
         testList "Value" [
             testCase "ParseOntology"(fun () ->
 
-                let value = Value.fromOptions (Some "Name") (Some "Accession") (Some "Source")
+                let value = Value.fromOptions (Some "Name") (Some "Source") (Some "Accession")
 
                 Expect.isSome value "Should have returned Value but returned None"
 

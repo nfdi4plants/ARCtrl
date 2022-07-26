@@ -116,7 +116,7 @@ type Value =
         | None, None, None -> 
             None
         | _ -> 
-            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termAccesssion) (Option.defaultValue "" termSource)
+            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termSource) (Option.defaultValue "" termAccesssion)
             |> Value.Ontology
             |> Some
 
