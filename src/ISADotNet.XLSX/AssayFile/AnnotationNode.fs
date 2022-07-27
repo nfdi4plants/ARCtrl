@@ -325,6 +325,12 @@ module AnnotationNode =
         (Seq.exists (tryParseCharacteristicsHeader >> Option.isSome) headers)
         ||
         (Seq.exists (tryParseParameterHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseComponentHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseProtocolTypeHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseProtocolREFHeader >> Option.isSome) headers)
 
 module ISAValue =
 

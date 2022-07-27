@@ -215,13 +215,29 @@ let testNodeGetterFunctions =
 
             Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
+        testCase "GetProtocolREFGetter" (fun () ->
+            
+            let headers = ["Protocol REF"]
+            
+            let refGetterOption = AnnotationNode.tryGetProtocolREFGetter 0 headers
+            
+            Expect.isSome refGetterOption "Protocol Ref Getter was not returned even though headers should have matched"
+                        
+            let protocolREFGetter = refGetterOption.Value
+
+            let expectedProtocolREF = "MyProtocol"
+            
+            let protocolREF = protocolREFGetter m 0
+            
+            Expect.equal protocolREF expectedProtocolREF "Retrieved Protocol Type was not correct"
+        )
         testCase "GetProtocolTypeGetter" (fun () ->
         
             let headers = ["Protocol Type";"Term Source REF";"Term Accession Number"]
         
             let typeGetterOption = AnnotationNode.tryGetProtocolTypeGetter 0 headers
         
-            Expect.isSome typeGetterOption "Parameter Getter was not returned even though headers should have matched"
+            Expect.isSome typeGetterOption "Protocol Type Getter was not returned even though headers should have matched"
                     
             let protocolTypeGetter = typeGetterOption.Value
 
