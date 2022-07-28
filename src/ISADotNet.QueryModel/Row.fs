@@ -124,7 +124,7 @@ type QRow =
         |> List.map (fun ((inputName,outputName),ios) ->
             
             let characteristics = 
-                ios |> List.collect (fst >> API.ProcessInput.tryGetCharacteristics >> (Option.defaultValue []))
+                ios |> List.collect (fst >> API.ProcessInput.tryGetCharacteristicValues >> (Option.defaultValue []))
                 |> List.distinct
             let factors = 
                 ios |> List.collect (snd >> API.ProcessOutput.tryGetFactorValues >> (Option.defaultValue []))

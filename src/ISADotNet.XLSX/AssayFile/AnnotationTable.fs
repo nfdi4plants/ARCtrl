@@ -7,7 +7,7 @@ open ISADotNet
 module AnnotationTable = 
 
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
-    let getProcessGetter protocolMetaData (nodes : seq<seq<string>>) =
+    let getProcessGetter (processNameRoot : string) (nodes : seq<seq<string>>) =
     
         let valueNodes =
             nodes
@@ -27,6 +27,19 @@ module AnnotationTable =
             |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
             |> fun (l1,l2) -> List.rev l1, List.rev l2
     
+        let componentGetters =
+            valueNodes 
+            |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetComponentGetter i n)
+            |> Seq.toList
+
+        let protocolTypeGetter = 
+            valueNodes 
+            |> Seq.tryPick (fun (i,n) -> AnnotationNode.tryGetProtocolTypeGetter i n)
+
+        let protocolREFGetter = 
+            valueNodes 
+            |> Seq.tryPick (fun (i,n) -> AnnotationNode.tryGetProtocolREFGetter i n)
+
         let dataFileGetter = nodes |> Seq.tryPick AnnotationNode.tryGetDataFileGetter
 
         let inputGetter,outputGetter =
@@ -113,15 +126,27 @@ module AnnotationTable =
                             [ProcessOutput.Sample sample]  
                 inputGetter,outputGetter
     
-        let protocol = {protocolMetaData with Parameters = Option.fromValueWithDefault [] parameters}
-    
-        characteristics,
-        factors,
-        protocol,
+        
+        
         fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
+
+            let pn = processNameRoot |> Option.fromValueWithDefault ""
+
+            let protocol : Protocol = 
+                Protocol.make 
+                    None
+                    (protocolREFGetter |> Option.mapOrDefault pn (fun f -> f matrix i))
+                    (protocolTypeGetter |> Option.map (fun f -> f matrix i))
+                    None
+                    None
+                    None
+                    (Option.fromValueWithDefault [] parameters)
+                    (componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
+                    None
+
             Process.make 
                 None 
-                None 
+                pn 
                 (Some protocol) 
                 (parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                 None
@@ -152,9 +177,12 @@ module AnnotationTable =
         |> Seq.collect (fun (protocol,processGroup) ->
             processGroup
             |> Seq.mapi (fun i p -> 
-                {p with Name =                         
-                        protocol.Value.Name |> Option.map (fun s -> sprintf "%s_%i" s i)
-                }
+                let name = 
+                    match p.Name with
+                    | Some n -> Some n
+                    | None | Some "" -> protocol |> Option.bind (fun p -> p.Name)
+                    |> Option.map (fun s -> sprintf "%s_%i" s i)
+                {p with Name = name}
             )
         )    
 

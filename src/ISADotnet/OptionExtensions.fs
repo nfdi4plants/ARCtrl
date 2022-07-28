@@ -14,3 +14,9 @@ module Option =
         | Some v -> f v
         | None   -> f d
         |> fromValueWithDefault d
+
+    /// Applies the function f on the value of the option if it exists, else returns the default value. 
+    let mapOrDefault (d : 'T Option) (f: 'U -> 'T) (o : 'U option) =
+        match o with
+        | Some v -> Some (f v)
+        | None   -> d

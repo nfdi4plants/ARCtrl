@@ -123,7 +123,7 @@ let testStringConversions =
                 Expect.equal ontology testOntology "Ontology Annotation was not created correctly from strings"
                 Expect.equal (OntologyAnnotation.toString ontology) (term,source,accession) "Ontology Annotation was not parsed correctly to strings"
 
-                let testComponent = Component.make (Some name) (Some testOntology)
+                let testComponent = Component.make (Some name) (Some (Value.Name name)) None (Some testOntology)
                 let componentx = Component.fromString name term source  accession
 
                 Expect.equal componentx testComponent "Component was not created correctly from strings"
@@ -147,7 +147,7 @@ let testStringConversions =
                 Expect.equal ontology testOntology "Empty Ontology Annotation was not created correctly from strings"
                 Expect.equal (OntologyAnnotation.toString ontology) (term,accession,source) "Empty Ontology Annotation was not parsed correctly to strings"
 
-                let testComponent = Component.make None None
+                let testComponent = Component.make None None None None
                 let componentx = Component.fromString name term accession source 
 
                 Expect.equal componentx testComponent "Empty Component was not created correctly from strings"
@@ -294,7 +294,7 @@ let testStringConversions =
         testList "Value" [
             testCase "ParseOntology"(fun () ->
 
-                let value = Value.fromOptions (Some "Name") (Some "Accession") (Some "Source")
+                let value = Value.fromOptions (Some "Name") (Some "Source") (Some "Accession")
 
                 Expect.isSome value "Should have returned Value but returned None"
 

@@ -22,11 +22,10 @@ module Process =
                     let j = kv.Key |> fst
                     if j > i  then i <- j
                 i + 1
-            let characteristic,factors,protocol,processGetter = 
+            let processGetter = 
                 AnnotationNode.splitIntoNodes matrixHeaders
-                |> AnnotationTable.getProcessGetter ({Protocol.empty with Name = Some processNameRoot}) 
-            characteristic,factors,protocol,
-            
+                |> AnnotationTable.getProcessGetter processNameRoot
+                     
             Seq.init len (processGetter sparseMatrix)
             |> AnnotationTable.mergeIdenticalProcesses
             |> AnnotationTable.indexRelatedProcessesByProtocolName
@@ -54,25 +53,22 @@ module Assay =
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
         
-        let characteristics,factors,protocols,processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
-        factors,protocols,Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+        let processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
+        let characteristics = API.ProcessSequence.getCharacteristics processes
+        Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
 
 
     /// Returns an assay from a sequence of sparseMatrix representations of assay.xlsx sheets
     ///
     /// See "fromSparseMatrix" function for parameter documentation
     let fromSparseMatrices (sheets : (string*(string seq)*Dictionary<int*string,string>) seq) = 
-        let characteristics,factors,protocols,processes =
+        let processes =
             sheets
-            |> Seq.map (fun (name,matrixHeaders,matrix) -> Process.fromSparseMatrix name matrixHeaders matrix)
-            |> Seq.fold (fun (characteristics',factors',protocols',processes') (characteristics,factors,protocol,processes) ->
-                List.append characteristics' characteristics |> List.distinct,
-                List.append factors' factors |> List.distinct,
-                Seq.append protocols' (Seq.singleton protocol),
-                Seq.append processes' processes
-            ) (List.empty,List.empty,Seq.empty,Seq.empty)
+            |> Seq.collect (fun (name,matrixHeaders,matrix) -> Process.fromSparseMatrix name matrixHeaders matrix)
+            |> AnnotationTable.updateSamplesByThemselves
+            |> Seq.toList
 
-        let processes = AnnotationTable.updateSamplesByThemselves processes |> Seq.toList
+        let characteristics = API.ProcessSequence.getCharacteristics processes
 
         let assay = 
             match characteristics,processes with
@@ -81,7 +77,7 @@ module Assay =
             | cs,[] -> Assay.create(CharacteristicCategories = cs)
             | cs,ps -> Assay.create(CharacteristicCategories = cs,ProcessSequence = ps)
 
-        factors,protocols,assay
+        assay
 
 /// Diesen Block durch JS ersetzen ----> 
 
@@ -131,7 +127,7 @@ module Assay =
                 |> Sheet.Sheets.getSheets
                 |> Seq.map Sheet.getName
         
-            let factors,protocols,assay =
+            let assay =
                 sheetNames
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
@@ -148,8 +144,6 @@ module Assay =
                 )
                 |> fromSparseMatrices // Feed the sheets (represented as sparse matrices) into the assay parser function
             
-            factors,
-            protocols |> Seq.toList,
             contacts,
             API.Update.UpdateByExisting.updateRecordType assayMetaData assay // Merges the assay containing the assay meta data and the assay containing the processes retrieved from the sheets
         with

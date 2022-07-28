@@ -156,9 +156,69 @@ module AnnotationNode =
                         | (a,s,c) -> a,s
                 Value.fromOptions 
                     value
-                    termAccession
                     termSource
+                    termAccession
         category,valueGetter
+
+    /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
+    let tryGetComponentGetter (columnOrder : int) (headers:string seq) =
+        Seq.tryPick tryParseComponentHeader headers
+        |> Option.map (fun h -> 
+            let unitGetter = tryGetUnitGetterFunction headers
+                  
+            let category,valueGetter = tryGetValueGetter columnOrder unitGetter.IsSome h headers                              
+                            
+            fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
+                Component.fromOptions
+                    (valueGetter matrix i)
+                    (unitGetter |> Option.map (fun f -> f matrix i))
+                    category                   
+        )
+
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryGetProtocolTypeGetter (columnOrder : int) (headers:string seq) =
+        Seq.tryPick tryParseProtocolTypeHeader headers
+        |> Option.map (fun h -> 
+
+            let order = ValueIndex.createOrderComment columnOrder
+
+            let termAccessionGetter =
+                match Seq.tryPick (tryParseTermAccessionNumberHeader h) headers with
+                | Some h ->
+                    fun matrix i -> 
+                        match Dictionary.tryGetString (i,h.HeaderString) matrix with
+                        | Some "user-specific" -> None
+                        | Some v -> Some v
+                        | _ -> None 
+                | None -> fun _ _ -> None
+
+            let termSourceGetter =
+                match Seq.tryPick (tryParseTermSourceReferenceHeader h) headers with
+                | Some h ->
+                    fun matrix i -> 
+                        match Dictionary.tryGetString (i,h.HeaderString) matrix with
+                        | Some "user-specific" -> None
+                        | Some v -> Some v
+                        | _ -> None 
+                | None -> fun _ _ -> None
+
+            fun matrix i ->
+                let value = Dictionary.tryGetString (i,h.HeaderString) matrix |> Option.defaultValue ""
+
+                let termAccession = termAccessionGetter matrix i |> Option.defaultValue ""
+                let termSource = termSourceGetter matrix i       |> Option.defaultValue ""
+
+                OntologyAnnotation.fromStringWithComments value termSource termAccession [order]
+        )
+
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryGetProtocolREFGetter (columnOrder : int) (headers:string seq) =
+        Seq.tryPick tryParseProtocolREFHeader headers
+        |> Option.map (fun h -> 
+
+            fun matrix i ->
+                Dictionary.tryGetString (i,h.HeaderString) matrix |> Option.defaultValue ""
+        )
 
     /// If the headers of a node depict a parameter, returns the parameter and a function for parsing the values of the matrix to the values of this parameter
     let tryGetParameterGetter (columnOrder : int) (headers:string seq) =
@@ -265,6 +325,12 @@ module AnnotationNode =
         (Seq.exists (tryParseCharacteristicsHeader >> Option.isSome) headers)
         ||
         (Seq.exists (tryParseParameterHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseComponentHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseProtocolTypeHeader >> Option.isSome) headers)
+        ||
+        (Seq.exists (tryParseProtocolREFHeader >> Option.isSome) headers)
 
 module ISAValue =
 

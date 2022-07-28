@@ -209,3 +209,8 @@ module Assay =
     let getFactors (assay : Assay) =
         assay.ProcessSequence
         |> Option.map ProcessSequence.getFactors
+
+    /// Returns the protocols implemented by the processes contained in this assay
+    let getProtocols (assay : Assay) =
+        assay.ProcessSequence
+        |> Option.map ProcessSequence.getProtocols

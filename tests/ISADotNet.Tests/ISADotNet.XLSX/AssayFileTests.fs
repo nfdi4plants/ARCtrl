@@ -215,6 +215,39 @@ let testNodeGetterFunctions =
 
             Expect.isNone unitGetterOption "Facotr Getter was returned even though headers should not have matched"
         )
+        testCase "GetProtocolREFGetter" (fun () ->
+            
+            let headers = ["Protocol REF"]
+            
+            let refGetterOption = AnnotationNode.tryGetProtocolREFGetter 0 headers
+            
+            Expect.isSome refGetterOption "Protocol Ref Getter was not returned even though headers should have matched"
+                        
+            let protocolREFGetter = refGetterOption.Value
+
+            let expectedProtocolREF = "MyProtocol"
+            
+            let protocolREF = protocolREFGetter m 0
+            
+            Expect.equal protocolREF expectedProtocolREF "Retrieved Protocol Type was not correct"
+        )
+        testCase "GetProtocolTypeGetter" (fun () ->
+        
+            let headers = ["Protocol Type";"Term Source REF";"Term Accession Number"]
+        
+            let typeGetterOption = AnnotationNode.tryGetProtocolTypeGetter 0 headers
+        
+            Expect.isSome typeGetterOption "Protocol Type Getter was not returned even though headers should have matched"
+                    
+            let protocolTypeGetter = typeGetterOption.Value
+
+            let comments = [ValueIndex.createOrderComment 0]
+            let expectedProtocolType = OntologyAnnotation.fromStringWithComments "Growth Protocol" "NFDI4PSO" "http://purl.obolibrary.org/obo/NFDI4PSO_1002416" comments
+        
+            let protocolType = protocolTypeGetter m 0
+        
+            Expect.equal protocolType expectedProtocolType "Retrieved Protocol Type was not correct"
+        )
         testCase "GetParameterGetter" (fun () ->
 
             let headers = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
@@ -259,13 +292,64 @@ let testNodeGetterFunctions =
 
             Expect.equal parameter.Value expectedParameter "Retrieved Parameter is wrong"
             
-            let expectedValue = Value.fromOptions (Some "Bruker NMR probe") (Some "http://purl.obolibrary.org/obo/OBI_0000561") (Some "OBI")
+            let expectedValue = Value.fromOptions (Some "Bruker NMR probe") (Some "OBI") (Some "http://purl.obolibrary.org/obo/OBI_0000561")
 
             let expectedParameterValue = ProcessParameterValue.make (Some expectedParameter) expectedValue None
 
             let parameterValue = parameterValueGetter m 0
 
             Expect.equal parameterValue expectedParameterValue "Retrieved Unitless Parameter Value was not correct"
+        )
+        testCase "GetComponentGetter" (fun () ->
+
+            let headers = ["Component [weight]";"Unit (#4)";"Term Source REF (PATO:0000128)";"Term Accession Number (PATO:0000128)"]
+
+            let parameterGetterOption = AnnotationNode.tryGetComponentGetter 0 headers
+
+            Expect.isSome parameterGetterOption "Component Getter was not returned even though headers should have matched"
+            
+            let componentGetter = parameterGetterOption.Value
+
+            let expectedName = "12 gram (UO:0000021)"
+
+            let expectedValue = Value.fromOptions (Some "12") None None
+
+            let expectedUnit = OntologyAnnotation.fromString "gram" "UO" "http://purl.obolibrary.org/obo/UO_0000021" |> Some
+
+            let comments = [ValueIndex.createOrderComment 0]
+            let expectedType = OntologyAnnotation.fromStringWithComments "weight" "PATO" "http://purl.obolibrary.org/obo/PATO_0000128" comments |> Some
+
+            let expectedComponent = Component.make (Some expectedName) expectedValue expectedUnit expectedType
+
+            let componentV = componentGetter m 0
+
+            Expect.equal componentV expectedComponent "Retrieved Component was not correct"
+        )
+        testCase "GetComponentGetterNoUnit" (fun () ->
+
+            let headers = ["Component [instrument model]";"Term Source REF (MS:1000031)";"Term Accession Number (MS:1000031)"]
+
+            let parameterGetterOption = AnnotationNode.tryGetComponentGetter 0 headers
+
+            Expect.isSome parameterGetterOption "Component Getter was not returned even though headers should have matched"
+            
+            let componentGetter = parameterGetterOption.Value
+
+            let expectedName = "Orbitrap Fusion (MS:1002416)" |> Some
+
+            let expectedValue = Value.fromOptions (Some "Orbitrap Fusion") (Some "MS") (Some "http://purl.obolibrary.org/obo/MS_1002416")
+
+            let expectedUnit = None
+
+            let comments = [ValueIndex.createOrderComment 0]
+            let expectedType = OntologyAnnotation.fromStringWithComments "instrument model" "MS" "http://purl.obolibrary.org/obo/MS_1000031" comments |> Some
+
+            let expectedComponent = Component.make expectedName expectedValue expectedUnit expectedType
+
+            let componentV = componentGetter m 0
+
+            Expect.equal componentV expectedComponent "Retrieved Component was not correct"
+
         )
         testCase "GetParameterGetterUserSpecific" (fun () ->
 
@@ -350,16 +434,20 @@ let testProcessGetter =
 
             let expectedProcess = Process.make None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
-            let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
-
-            Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
-            Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
-            Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
+            let processGetter = AnnotationTable.getProcessGetter "" (headers |> AnnotationNode.splitIntoNodes)            
 
             let processV = processGetter m 0
 
             Expect.equal processV expectedProcess "Process was retrieved incorrectly"
     
+            let characteristics =   API.Process.getCharacteristics processV
+            let factors =           API.Process.getFactors processV
+            let protocol =         processV.ExecutesProtocol.Value
+
+            Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
+            Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
+            Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
+
         )
         testCase "ProcessGetterSampleParams" (fun () ->
 
@@ -377,13 +465,17 @@ let testProcessGetter =
 
             let expectedProcess = Process.make None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
-            let characteristics,factors,protocol,processGetter = AnnotationTable.getProcessGetter Protocol.empty (headers |> AnnotationNode.splitIntoNodes)
+            let processGetter = AnnotationTable.getProcessGetter "" (headers |> AnnotationNode.splitIntoNodes)
+
+            let processV = processGetter m 0
+
+            let characteristics =   API.Process.getCharacteristics processV
+            let factors =           API.Process.getFactors processV
+            let protocol =         processV.ExecutesProtocol.Value
 
             Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
             Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
             Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
-
-            let processV = processGetter m 0
 
             Expect.equal processV expectedProcess "Process was retrieved incorrectly"
     
@@ -678,7 +770,7 @@ let testAssayFileReader =
         )
         testCase "ReadsCorrectly" (fun () ->        
             
-            let factors,protocols,persons,assay = Assay.fromFile assayFilePath
+            let persons,assay = Assay.fromFile assayFilePath
 
             let expectedProtocols = 
                 [
@@ -687,6 +779,9 @@ let testAssayFileReader =
                 ]
 
             let expectedFactors = [time2]
+
+            let factors = API.Assay.getFactors assay |> Option.defaultValue []
+            let protocols = API.Assay.getProtocols assay |> Option.defaultValue []
 
             Expect.sequenceEqual factors expectedFactors        "Factors were read incorrectly"
             Expect.sequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"

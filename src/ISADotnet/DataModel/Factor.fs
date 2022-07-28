@@ -95,6 +95,14 @@ type Value =
     | [<SerializationOrder(2)>] Float of float
     | [<SerializationOrder(3)>] Name of string
 
+    static member fromString (value : string) =
+        try Value.Int (int value)
+        with
+        | _ -> 
+            try Value.Float (float value)
+            with
+            | _ -> Value.Name value
+
     static member fromOptions (value : string Option) (termSource: string Option) (termAccesssion: string Option) =
         match value, termSource, termAccesssion with
         | Some value, None, None ->
@@ -108,7 +116,7 @@ type Value =
         | None, None, None -> 
             None
         | _ -> 
-            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termAccesssion) (Option.defaultValue "" termSource)
+            OntologyAnnotation.fromString (Option.defaultValue "" value) (Option.defaultValue "" termSource) (Option.defaultValue "" termAccesssion)
             |> Value.Ontology
             |> Some
 
@@ -125,6 +133,31 @@ type Value =
         | Value.Float f -> string f
         | Value.Int i   -> string i
         | Value.Name s  -> s
+
+    member this.IsAnOntology = 
+        match this with
+        | Ontology oa -> true
+        | _ -> false
+
+    member this.IsNumerical = 
+        match this with
+        | Int _ | Float _ -> true
+        | _ -> false
+
+    member this.IsAnInt = 
+        match this with
+        | Int _ -> true
+        | _ -> false
+
+    member this.IsAFloat = 
+        match this with
+        | Float _ -> true
+        | _ -> false
+
+    member this.IsAText = 
+        match this with
+        | Name _ -> true
+        | _ -> false
 
     interface IISAPrintable with
         member this.Print() =
