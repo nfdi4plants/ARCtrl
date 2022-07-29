@@ -125,3 +125,13 @@ module OntologyAnnotation =
             this.Value
             |> Option.bind (fun v -> v.TryGetAs(targetOntology,ont))
             |> Option.map (fun v -> {this with Value = Some v})
+
+    type Component with
+        
+        member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
+            {this with ComponentValue = this.ComponentValue |> Option.map (fun v -> v.GetAs(targetOntology,ont))}
+
+        member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
+            this.ComponentValue
+            |> Option.bind (fun v -> v.TryGetAs(targetOntology,ont))
+            |> Option.map (fun v -> {this with ComponentValue = Some v})

@@ -151,6 +151,13 @@ type Component =
         let v,u = Component.decomposeName name
         Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
         
+    /// Create a ISAJson Component from ISATab string entries
+    static member fromStringWithComments (name: string) (term:string) (source:string) (accession:string) (comments : Comment list)  = 
+        let cType = OntologyAnnotation.fromStringWithComments term source accession comments |> Option.fromValueWithDefault OntologyAnnotation.empty
+        let v,u = Component.decomposeName name
+        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+        
+
     static member fromOptions (value: Value option) (unit: OntologyAnnotation Option) (header:OntologyAnnotation option) = 
         let name = Component.composeName value unit |> Option.fromValueWithDefault ""
         Component.make name value unit header
@@ -160,6 +167,30 @@ type Component =
     static member toString (c : Component) =
         let (n,t,a) = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")
         c.ComponentName |> Option.defaultValue "",n,t,a
+
+    member this.NameText =
+        this.ComponentType
+        |> Option.map (fun c -> c.NameText)
+        |> Option.defaultValue ""
+
+    /// Returns the ontology of the category of the Value as string
+    member this.UnitText = 
+        this.ComponentUnit
+        |> Option.map (fun c -> c.NameText)
+        |> Option.defaultValue ""
+
+    member this.ValueText = 
+        this.ComponentValue
+        |> Option.map (fun c -> c.AsString)
+        |> Option.defaultValue ""
+
+    member this.ValueWithUnitText =
+        let unit = 
+            this.ComponentUnit |> Option.map (fun oa -> oa.NameText)
+        let v = this.ValueText
+        match unit with
+        | Some u    -> sprintf "%s %s" v u
+        | None      -> v
 
 
 type Protocol =

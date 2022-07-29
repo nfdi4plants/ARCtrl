@@ -571,6 +571,12 @@ type QProcessSequence (sheets : QSheet list) =
     member this.Characteristics(?ProtocolName) =
         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Characteristics()
 
+    /// Returns all components in the process sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Components(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Components()
+
     /// Returns all values in the process sequence, that are connected to the given node
     ///
     /// If a protocol name is given, returns only the values of the processes that implement this protocol
@@ -646,6 +652,25 @@ type QProcessSequence (sheets : QSheet list) =
     /// If a protocol name is given, returns only the values of the processes that implement this protocol and come after it in the sequence
     member this.SucceedingFactorsOf(node, ?ProtocolName) =
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Factors()
+
+    /// Returns all components values in the process sequence, that are connected to the given node
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.ComponentsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Components()
+
+    /// Returns all components values in the process sequence, that are connected to the given node and come before it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.PreviousComponentsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Components()
+
+    /// Returns all components values in the process sequence, that are connected to the given node and come after it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.SucceedingComponentsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Components()
+
 
     member this.Contains(ontology : OntologyAnnotation, ?ProtocolName) = 
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains ontology
