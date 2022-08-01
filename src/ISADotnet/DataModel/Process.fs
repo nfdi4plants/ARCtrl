@@ -212,4 +212,14 @@ type Process =
 
             sprintf "%s [%i Inputs -> %i Params -> %i Outputs]" name inputCount paramCount outputCount
             
+    static member composeName (processNameRoot : string) (i : int) =
+        $"{processNameRoot}_{i}"
 
+    static member decomposeName (name : string) =
+        let pattern = """(?<name>\S+)_(?<num>\d+)"""
+        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
+
+        if r.Success then
+            (r.Groups.Item "name").Value, Some ((r.Groups.Item "num").Value |> int)
+        else 
+            name, None

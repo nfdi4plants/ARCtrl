@@ -13,6 +13,15 @@ module CommentList =
             | _ -> None        
         )
 
+    /// Returns true, if the key exists in the list
+    let containsKey (key: string) (comments : Comment list) =
+        comments
+        |> List.exists (fun c -> 
+            match c.Name with
+            | Some n when n = key -> true
+            | _ -> false        
+        )
+
     /// If a comment with the given key exists in the list, return its value
     let item (key: string) (comments : Comment list) =
         (tryItem key comments).Value
@@ -30,3 +39,11 @@ module CommentList =
     /// Adds the given comment to the comment list  
     let add (comment : Comment) (comments : Comment list) =
         List.append comments [comment]
+
+    /// Add the given comment to the comment list if it doesnt exist, else replace it 
+    let set (comment : Comment) (comments : Comment list) =
+        if containsKey comment.Name.Value comments then
+            comments
+            |> List.map (fun c -> if c.Name = comment.Name then comment else c)
+        else
+            List.append comments [comment]

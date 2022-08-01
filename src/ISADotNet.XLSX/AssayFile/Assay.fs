@@ -27,9 +27,8 @@ module Process =
                 |> AnnotationTable.getProcessGetter processNameRoot
                      
             Seq.init len (processGetter sparseMatrix)
-            |> AnnotationTable.mergeIdenticalProcesses
-            |> AnnotationTable.indexRelatedProcessesByProtocolName
-            |> Seq.toList
+            |> AnnotationTable.mergeIdenticalProcesses processNameRoot
+            |> Seq.toList 
         with
         | err -> failwithf "Could not parse sheet \"%s\": %s" processNameRoot err.Message
 

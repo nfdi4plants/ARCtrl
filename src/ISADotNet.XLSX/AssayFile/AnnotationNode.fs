@@ -368,6 +368,24 @@ module ISAValue =
         with
         | err -> failwithf "Could not parse headers of value with name %s: \n%s" v.HeaderText err.Message
 
+module ProtocolType =
+
+    open ISADotNet.QueryModel
+
+    let headers =
+        [
+            "Protocol Type"
+            "Term Source REF (MS:1000031)"
+            "Term Accession Number (MS:1000031)"
+        ]
+
+    let toValues (v : OntologyAnnotation) =    
+        [
+            v.NameText
+            v.TermSourceREF |> Option.defaultValue "user-specific"
+            v.TermPath |> Option.defaultValue "user-specific"
+        ]
+
 module IOType =
 
     let toHeader (io : QueryModel.IOType) =
