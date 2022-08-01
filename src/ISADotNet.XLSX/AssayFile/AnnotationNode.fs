@@ -384,3 +384,7 @@ module IOType =
             "Material Name"
         | QueryModel.IOType.Data ->      
             "Data File Name"
+
+    let defaultInHeader = toHeader QueryModel.IOType.Source
+
+    let defaultOutHeader = toHeader QueryModel.IOType.Sample

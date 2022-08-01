@@ -262,7 +262,7 @@ module AnnotationTable =
 
 module QRow =
     open FsSpreadsheet.DSL
-
+    open ISADotNet.QueryModel
 
     let renumberHeaders (headerss : (string list) list) = 
         
@@ -299,21 +299,60 @@ module QRow =
                 headers
         )
 
-    let toHeaderRow (r : QueryModel.QRow) =
+    let toHeaderRow (rows : QueryModel.QRow list) =
         try 
+            let outputType = 
+                rows
+                |> List.fold (fun outputType r -> 
+                    match outputType,r.OutputType with
+                    | Some t1, Some t2 when t1 = t2 -> Some t1
+                    | Some t1, Some t2 -> failwithf "OutputTypes %A and %A do not match" t1 t2
+                    | None, t2 -> t2
+                    | t1, None -> t1
+                    | _ -> None
+                ) None
+                |> Option.map IOType.toHeader
+                |> Option.defaultValue IOType.defaultOutHeader 
+
+            let valueHeaders,valueMappers = 
+                rows
+                |> List.collect (fun r -> r.Vals)
+                |> List.groupBy (fun v -> v.HeaderText)
+                |> List.sortBy (fun (h,vs) -> vs |> List.choose (fun v -> v.TryValueIndex()) |> List.append [System.Int32.MaxValue] |> List.min)
+                |> List.map (fun (h,vs) -> 
+                    let v = 
+                        vs
+                        |> List.reduce (fun v1 v2 ->
+                            match v1.TryUnit,v2.TryUnit with
+                            | Some u1, Some u2 when u1 = u2 -> v1
+                            | None, None -> v1
+                            | Some u1, Some u2 -> failwithf "Units %s and %s of value with header %s do not match" u1.NameText u2.NameText h
+                            | Some u1, None -> failwithf "Units %s and None of value with header %s do not match" u1.NameText h
+                            | None, Some u2 -> failwithf "Units None and %s of value with header %s do not match" u2.NameText h
+                        )
+                    let h = ISAValue.toHeaders v
+                    let f (vs : ISAValue list) = 
+                        vs 
+                        |> List.tryPick (fun v' -> if v'.HeaderText = v.HeaderText then Some (ISAValue.toValues v') else None)
+                        |> Option.defaultValue (List.init h.Length (fun _ -> ""))
+                    h,f
+                )
+                |> List.unzip
+        
             row {
-                "Source Name"
-                for v in (r.Vals |> List.map ISAValue.toHeaders |> renumberHeaders |> List.concat) do v
-                IOType.toHeader r.OutputType.Value
+                IOType.defaultInHeader
+                for v in (valueHeaders |> renumberHeaders |> List.concat) do v
+                outputType
             }
+            ,valueMappers
         with
         | err -> failwithf "Could not parse headers of row: \n%s" err.Message
 
-    let toValueRow i (r : QueryModel.QRow) =
+    let toValueRow i (valueMappers : (ISAValue list -> string list) list) (r : QueryModel.QRow) =
         try
             row {
                 r.Input
-                for v in (r.Vals |> List.collect ISAValue.toValues) do v
+                for v in valueMappers |> List.collect (fun f -> f r.Vals) do v
                 r.Output
             }
         with
@@ -325,11 +364,11 @@ module QSheet =
 
     let toSheet i (s : QueryModel.QSheet) =
         try 
-
+            let headers,mappers = QRow.toHeaderRow s.Rows
             sheet s.SheetName {
                 table $"annotationTable{i}" {
-                    QRow.toHeaderRow s.[0]
-                    for (i,r) in Seq.indexed s do QRow.toValueRow i r
+                    headers
+                    for (i,r) in Seq.indexed s do QRow.toValueRow i mappers r
                 }
             }
         with

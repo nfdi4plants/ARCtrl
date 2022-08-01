@@ -51,6 +51,14 @@ module ISAValueExtensions =
             | Factor f          -> try f.Unit.Value          with | _ -> failwith $"Factor {f.NameText} does not contain unit"
             | Component c       -> try c.ComponentUnit.Value with | _ -> failwith $"Component {c.NameText} does not contain unit"
 
+        /// Returns the ontology of the unit of the ISAValue
+        member this.TryUnit =
+            match this with
+            | Parameter p       -> p.Unit       
+            | Characteristic c  -> c.Unit       
+            | Factor f          -> f.Unit         
+            | Component c       -> c.ComponentUnit
+
         /// Returns the value of the ISAValue
         member this.Value =
             match this with
