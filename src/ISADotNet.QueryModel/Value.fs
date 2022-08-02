@@ -32,7 +32,7 @@ module ISAValueExtensions =
 
         member this.IsComponent =
             match this with
-            | Factor _  -> true
+            | Component _  -> true
             | _         -> false
 
         /// Returns the ontology of the category of the ISAValue

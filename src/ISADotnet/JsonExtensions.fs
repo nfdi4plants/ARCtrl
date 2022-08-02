@@ -4,34 +4,6 @@ open System.Text.Json
 open System.Text.Json.Serialization
 open FSharp.Reflection
 
-/// Unions marked with this attribute will be parsed like Json Enums by the JsonSerilaizer#
-///
-/// Use StringEnumValueAttribute to give names to the enum values. 
-type StringEnumAttribute() =
-    inherit System.Attribute()
-
-/// Used on union cases of union types marked with the StringEnumAttribute
-///
-/// Sets the name of the enum value
-type StringEnumValueAttribute(s:string) =
-    inherit System.Attribute()
-    member this.Value = s
-
-/// Unions marked witht this attribute will be parsed like Json AnyOfs by the JsonSerilaizer
-///
-/// Use SerializationOrderAttribute to determine the order in which the cases should be tried to deserialize.
-type AnyOfAttribute() =
-    inherit System.Attribute()
-
-/// Used on union cases of union types marked with the AnyOfAttribute
-///
-/// As in Json AnyOfs, the case name is not given. When deserializing such a value the type has to be inferred just by parsability.
-///
-/// The serialization order attribute arranges the order, in which the cases should be deserialized. Cases with harder parsing criteria should be given lower numbers. E.g int < string
-type SerializationOrderAttribute(i:int) =
-    inherit System.Attribute()
-    member this.Rank = i
-
 /// Module containing additional Json Converters
 module JsonExtensions =
 
@@ -305,6 +277,96 @@ module JsonExtensions =
                 :?> JsonConverter
 
     
+    let private baseOptions =
+        let options = 
+            JsonSerializerOptions(
+                IgnoreNullValues=true, 
+                PropertyNamingPolicy=JsonNamingPolicy.CamelCase, 
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            )
+        options.Converters.Add(AnyOfUnionConverter())
+        options.Converters.Add(StringEnumConverter())
+        options.Converters.Add(JsonFSharpConverter())
+        options
+
+    /// Converter to serialize and deserilize components
+    type ComponentConverter<'T>(fsOptions) =
+        inherit JsonConverter<'T>()
+
+        override this.CanConvert(objectType) =     
+            typeof<Component> = objectType    
+
+
+        override __.Read(reader, t, opts) =    
+            let s = 
+                if reader.TokenType = JsonTokenType.String then 
+                    reader.GetString() 
+                elif reader.TokenType = JsonTokenType.Number then 
+                    reader.GetDouble() |> string
+                else
+                    let mutable l : (JsonTokenType*TokenValue) list = []
+                    let mutable bracket = 0
+
+                    if reader.TokenType = JsonTokenType.Number then 
+                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                    elif reader.TokenType = JsonTokenType.PropertyName then 
+                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
+                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                    elif reader.TokenType = JsonTokenType.PropertyName then 
+                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                        bracket <- bracket + 1
+                        l <- List.append l [reader.TokenType,None]
+                    else l <- List.append l [reader.TokenType,None]
+
+                    while bracket > 0 do
+                        reader.Read() |> ignore
+
+                        if reader.TokenType = JsonTokenType.Number then 
+                            l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                        elif reader.TokenType = JsonTokenType.String then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        elif reader.TokenType = JsonTokenType.PropertyName then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                            l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                        elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                            bracket <- bracket + 1
+                            l <- List.append l [reader.TokenType,None]
+                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                            bracket <- bracket - 1
+                            l <- List.append l [reader.TokenType,None]
+                        elif reader.TokenType = JsonTokenType.PropertyName then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        else l <- List.append l [reader.TokenType,None]
+                    l
+                    |> detokenizeJson
+            let c = JsonSerializer.Deserialize<Component>(s,baseOptions)
+            let v, unit =  
+                match c.ComponentName with
+                | Some c -> Component.decomposeName c |> fun (a,b) -> Some a,b
+                | Option.None -> Option.None, Option.None
+            box {c with ComponentValue = v; ComponentUnit = unit} :?> 'T
+
+        override __.Write(writer, value, opts) =
+     
+            JsonSerializer.Serialize(writer,value,baseOptions)
+
+    /// Converter to serialize and deserilize components
+    type ComponentConverter(fsOptions) =
+        inherit JsonConverterFactory()
+    
+        override _.CanConvert(typeToConvert) =
+            typeof<Component> = typeToConvert   
+        
+        override _.CreateConverter(typeToConvert, _options) =
+            typedefof<ComponentConverter<_>>
+                .MakeGenericType([|typeToConvert|])
+                .GetConstructor([|typeof<JsonFSharpOptions>|])
+                .Invoke([|fsOptions|])
+                :?> JsonConverter
+
     let options =
         let options = 
             JsonSerializerOptions(
@@ -312,6 +374,7 @@ module JsonExtensions =
                 PropertyNamingPolicy=JsonNamingPolicy.CamelCase, 
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             )
+        options.Converters.Add(ComponentConverter())
         options.Converters.Add(AnyOfUnionConverter())
         options.Converters.Add(StringEnumConverter())
         options.Converters.Add(JsonFSharpConverter())
