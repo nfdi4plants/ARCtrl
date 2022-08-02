@@ -79,7 +79,7 @@ module ISAValueExtensions =
         member this.HeaderText = 
             match this with
             | Parameter p       -> $"Parameter [{this.NameText}]"       
-            | Characteristic c  -> $"Characteristics [{this.NameText}]" 
+            | Characteristic c  -> $"Characteristic [{this.NameText}]" 
             | Factor f          -> $"Factor [{this.NameText}]"          
             | Component c       -> $"Component [{this.NameText}]" 
 

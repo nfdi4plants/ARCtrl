@@ -163,7 +163,7 @@ module AnnotationTable =
     /// Merges processes with the same parameter values, grouping the input and output files
     let mergeIdenticalProcesses processNameRoot (processes : seq<Process>) =
         processes
-        |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.ProtocolType, p.ExecutesProtocol.Value.Name, p.ParameterValues)
+        |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.ProtocolType, p.ExecutesProtocol.Value.Name, p.ParameterValues, p.ExecutesProtocol.Value.Components)
         |> Seq.mapi (fun i (_,processGroup) ->
             let p = processGroup |> Seq.choose (fun pr -> pr.ExecutesProtocol) |> Seq.toList |> Protocol.mergeIndicesToRange
             processGroup
@@ -363,15 +363,6 @@ module QSheet =
 
     open FsSpreadsheet.DSL
     open ISADotNet.QueryModel
-
-    type ProtocolDescriptor<'T> =
-        | ForAll of 'T
-        | ForSpecific of Map<int,'T>
-
-        with member this.TryGet(i) =
-                match this with
-                | ForAll x -> Some x
-                | ForSpecific m -> Map.tryFind i m
 
     let toSheet i (s : QueryModel.QSheet) =
         let hasRef,refs = 

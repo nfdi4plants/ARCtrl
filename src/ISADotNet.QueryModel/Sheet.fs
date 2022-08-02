@@ -88,6 +88,17 @@ module ProtocolExtensions =
                 OntologyAnnotation.isChildTerm(parentProtocolType,pt,obo)
             | _ -> false
 
+    
+    type ProtocolDescriptor<'T> =
+        | ForAll of 'T
+        | ForSpecific of Map<int,'T>
+
+        with member this.TryGet(i) =
+                match this with
+                | ForAll x -> Some x
+                | ForSpecific m -> Map.tryFind i m
+
+
 /// Queryable type representing a collection of processes implementing the same protocol. Or in ISAtab / ISAXLSX logic a sheet in an assay or study file.
 ///
 /// Values are represented rowwise with input and output entities.
