@@ -5,6 +5,15 @@ open FsSpreadsheet.ExcelIO
 
 open ISADotNet
 
+module Table = 
+
+    open DocumentFormat.OpenXml.Packaging
+
+    /// If a table exists, for which the predicate applied to its name returns true, gets it. Else returns None.
+    let tryGetByDisplayNameBy (predicate : string -> bool) (worksheetPart : WorksheetPart) =
+        worksheetPart.TableDefinitionParts
+        |> Seq.tryPick (fun t -> if predicate t.Table.DisplayName.Value then Some t.Table else None)
+
 module Process = 
 
     /// Returns processes and other additional information from a sparseMatrix represntation of an assay.xlsx sheet
@@ -131,7 +140,7 @@ module Assay =
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Some wsp ->
-                        match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
+                        match Table.tryGetByDisplayNameBy (fun s -> s.StartsWith "annotationTable") wsp with
                         | Some table -> 
                             // Extract the sheetdata as a sparse matrix
                             let sheet = Worksheet.getSheetData wsp.Worksheet

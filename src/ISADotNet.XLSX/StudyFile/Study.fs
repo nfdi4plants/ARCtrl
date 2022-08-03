@@ -95,7 +95,7 @@ module Study =
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Some wsp ->
-                        match Table.tryGetByNameBy (fun s -> s.StartsWith "annotationTable") wsp with
+                        match ISADotNet.XLSX.AssayFile.Table.tryGetByDisplayNameBy (fun s -> s.StartsWith "annotationTable") wsp with
                         | Some table -> 
                             // Extract the sheetdata as a sparse matrix
                             let sheet = Worksheet.getSheetData wsp.Worksheet
