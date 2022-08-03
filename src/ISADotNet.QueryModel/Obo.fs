@@ -590,7 +590,7 @@ module Obo =
 
         /// Translates an ISADotNet `OntologyAnnotation` into a OBO `term`
         static member ofOntologyAnnotation (term : ISADotNet.OntologyAnnotation) =
-            OboTerm.Create(term.AnnotationID,term.NameText)
+            OboTerm.Create(term.ShortAnnotationString,term.NameText)
 
     /// Models the relationship between OBO Terms 
     type OboTypeDef = 
@@ -939,7 +939,7 @@ module Obo =
                     let newEquivalents = 
                         equivalents
                         |> List.collect (fun t ->
-                            match this.TryGetTerm t.AnnotationID with
+                            match this.TryGetTerm t.ShortAnnotationString with
                             | Some term ->
                                 term.Xrefs
                                 |> List.map (fun xref ->
@@ -980,7 +980,7 @@ module Obo =
                     let newEquivalents = 
                         equivalents
                         |> List.collect (fun t ->
-                            match this.TryGetTerm t.AnnotationID with
+                            match this.TryGetTerm t.ShortAnnotationString with
                             | Some term ->
                                 term.IsA
                                 |> List.map (fun isA ->
@@ -1024,7 +1024,7 @@ module Obo =
                             |> List.choose (fun pt -> 
                                 let isChild = 
                                     pt.IsA
-                                    |> List.exists (fun isA -> t.AnnotationID = isA)
+                                    |> List.exists (fun isA -> t.ShortAnnotationString = isA)
                                 if isChild then
                                     Some (OboTerm.toOntologyAnnotation(pt))
                                 else

@@ -119,11 +119,11 @@ type Component =
     static member composeName (value : Value Option) (unit : OntologyAnnotation option) = 
         match value,unit with
         | Some (Value.Ontology oa), _ ->
-            $"{oa.NameText} ({oa.AnnotationID})"
+            $"{oa.NameText} ({oa.ShortAnnotationString})"
         | Some v, None ->
             $"{v.AsString}"
         | Some v, Some u ->
-            $"{v.AsString} {u.NameText} ({u.AnnotationID})"
+            $"{v.AsString} {u.NameText} ({u.ShortAnnotationString})"
         | None, _ -> ""
 
     static member decomposeName (name : string) = 

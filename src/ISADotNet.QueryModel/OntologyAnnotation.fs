@@ -17,7 +17,7 @@ module OntologyAnnotation =
 
         /// Translates an ISADotNet `OntologyAnnotation` into a SwateAPI `term`
         static member toTerm (term : OntologyAnnotation) =
-            TermMinimal.create term.NameText term.AnnotationID
+            TermMinimal.create term.NameText term.ShortAnnotationString
 
         /// Translates a OBO `term` into an ISADotNet `OntologyAnnotation`
         static member ofOboTerm (term : Obo.OboTerm) =
@@ -26,7 +26,7 @@ module OntologyAnnotation =
 
         /// Translates an ISADotNet `OntologyAnnotation` into a OBO `term`
         static member toOboTerm (term : OntologyAnnotation) =
-            Obo.OboTerm.Create(term.AnnotationID,term.NameText)
+            Obo.OboTerm.Create(term.ShortAnnotationString,term.NameText)
 
         member this.ToOboTerm() =
             OntologyAnnotation.toOboTerm this

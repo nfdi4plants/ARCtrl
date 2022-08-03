@@ -338,11 +338,7 @@ module ISAValue =
 
     let toHeaders (v : QueryModel.ISAValue) =
         try 
-            let ont =
-                if v.Category.TermSourceREF.IsSome then
-                    let shortNum = v.Category.TermAccessionNumber.Value.Split('/') |> Array.last
-                    $"{v.Category.TermSourceREF.Value}:{shortNum}"
-                else ""
+            let ont = v.Category.ShortAnnotationString
             if v.HasUnit then
                 [v.HeaderText;"Unit";$"Term Source REF ({ont})";$"Term Accession Number ({ont})"]
             else
@@ -383,7 +379,7 @@ module ProtocolType =
         [
             v.NameText
             v.TermSourceREF |> Option.defaultValue "user-specific"
-            v.TermPath |> Option.defaultValue "user-specific"
+            v.TermAccessionNumber |> Option.defaultValue "user-specific"
         ]
 
 module IOType =
