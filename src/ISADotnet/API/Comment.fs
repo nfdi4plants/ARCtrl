@@ -47,3 +47,12 @@ module CommentList =
             |> List.map (fun c -> if c.Name = comment.Name then comment else c)
         else
             List.append comments [comment]
+
+    /// Returns a new comment list where comments with the given key are filtered out
+    let dropByKey (key: string) (comments : Comment list) =
+        comments
+        |> List.filter (fun c -> 
+            match c.Name with
+            | Some n when n = key -> false
+            | _ -> true        
+        )

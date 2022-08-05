@@ -33,6 +33,8 @@ module ProtocolExtensions =
             |> Option.bind (API.CommentList.tryItem Protocol.rowIndexKeyName)
             |> Option.map (int)
 
+        static member setRowIndex i (p : Protocol) = p.SetRowIndex(i)
+
         static member rowRangeKeyName = "RowRange"
 
         static member composeRowRange (from : int) (to_ : int) =
@@ -69,12 +71,28 @@ module ProtocolExtensions =
             |> Option.bind (API.CommentList.tryItem Protocol.rowRangeKeyName)
             |> Option.map (Protocol.decomposeRowRange)
 
+        static member setRowRange (range : string) = fun (p : Protocol) -> p.SetRowRange(range)
+
+        static member setRowRange (from : int,to_ : int) = fun (p : Protocol) -> p.SetRowRange(from,to_)
+
+        static member dropRowIndex (p : Protocol) =
+            match p.Comments with 
+            | None -> p
+            | Some cs ->
+                API.CommentList.dropByKey Protocol.rowIndexKeyName cs
+                |> Option.fromValueWithDefault []
+                |> fun cs -> {p with Comments = cs}
+
         static member rangeOfIndices (i : int list) =
             Protocol.composeRowRange (List.min i) (List.max i)
 
         static member mergeIndicesToRange (ps : Protocol list) =
-            let r = ps |> List.choose (fun p -> p.TryGetRowIndex()) |> Protocol.rangeOfIndices
-            ps.[0].SetRowRange r
+            let indices = ps |> List.choose (fun p -> p.TryGetRowIndex())
+            if indices.IsEmpty then ps.[0] 
+            else
+                let r = indices |> Protocol.rangeOfIndices
+                ps.[0].SetRowRange r
+                |> Protocol.dropRowIndex
 
         member this.IsChildProtocolTypeOf(parentProtocolType : OntologyAnnotation) =
             match this.ProtocolType with

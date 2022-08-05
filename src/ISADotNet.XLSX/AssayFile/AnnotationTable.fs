@@ -162,17 +162,31 @@ module AnnotationTable =
 
     /// Merges processes with the same parameter values, grouping the input and output files
     let mergeIdenticalProcesses processNameRoot (processes : seq<Process>) =
+        let protocols = 
+            processes 
+            |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.Name.Value)
+            |> Seq.map (fun (n,ps) -> 
+                let protocols = ps |> Seq.map (fun p -> p.ExecutesProtocol.Value)
+                protocols
+                |> Seq.map (fun p -> p.ProtocolType,p.Components)
+                |> Seq.reduce (fun (pt,c) (pt',c') -> 
+                    if pt <> pt' then failwithf "For the protocol with the name %s, two different protocol Types %O and %O were given, which is not allowed" n pt pt'
+                    if c <> c' then failwithf "For the protocol with the name %s, two different component lists %O and %O were given, which is not allowed" n c c'
+                    pt,c
+                ) |> ignore
+                n,protocols |> Seq.toList |> Protocol.mergeIndicesToRange
+            )
+            |> Map.ofSeq
         processes
-        |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.ProtocolType, p.ExecutesProtocol.Value.Name, p.ParameterValues, p.ExecutesProtocol.Value.Components)
-        |> Seq.mapi (fun i (_,processGroup) ->
-            let p = processGroup |> Seq.choose (fun pr -> pr.ExecutesProtocol) |> Seq.toList |> Protocol.mergeIndicesToRange
+        |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.Name.Value, p.ParameterValues)
+        |> Seq.mapi (fun i ((name,_),processGroup) ->
             processGroup
             |> Seq.reduce (fun p1 p2 ->
                 let mergedInputs = List.append (p1.Inputs |> Option.defaultValue []) (p2.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let mergedOutputs = List.append (p1.Outputs |> Option.defaultValue []) (p2.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 {p1 with Inputs = mergedInputs; Outputs = mergedOutputs}
             )
-            |> fun pr -> {pr with ExecutesProtocol = Some p; Name = Some (Process.composeName processNameRoot i)}
+            |> fun pr -> {pr with ExecutesProtocol = Some (protocols.[name]); Name = Some (Process.composeName processNameRoot i)}
         )
 
     /// Create a sample from a source
