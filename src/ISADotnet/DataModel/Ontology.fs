@@ -26,6 +26,7 @@ type AnnotationValue =
         | Int i -> string i
         | Float f -> string f
 
+[<CustomEquality; NoComparison>]
 type OntologyAnnotation =
     {
         [<JsonPropertyName("@id")>]
@@ -125,13 +126,42 @@ type OntologyAnnotation =
         else 
             None
 
+    /// Tries to split a term id in form of `MS:1000121` into it's Term Accession Source `MS` and Term Accession Number `1000121`. 
+    static member trySplitShortAnnotation (termAccessionPath : string) =
+        let r = Regex.Match(termAccessionPath,OntologyAnnotation.shortAnnotationRegex)
+        if r.Success then 
+            Some (r.Groups.Item("ref").Value,r.Groups.Item("num").Value)
+        else 
+            None
+
+    /// Create a path in form of `http://purl.obolibrary.org/obo/MS_1000121`from it's Term Accession Source `MS` and Term Accession Number `1000121`. 
+    static member createUriAnnotation (termSourceRef : string) (termAccessionNumber : string) =
+        let r = Regex.Match(termAccessionNumber,OntologyAnnotation.ontologyTermURIRegex)
+        let r2 = Regex.Match(termAccessionNumber,OntologyAnnotation.shortAnnotationRegex)
+
+        if r.Success then
+            let termSourceRef = r.Groups.Item("ref").Value
+            let termAccessionNumber = r.Groups.Item("num").Value
+            $"http://purl.obolibrary.org/obo/{termSourceRef}_{termAccessionNumber}"
+        elif r2.Success then
+            let termSourceRef = r.Groups.Item("ref").Value
+            let termAccessionNumber = r.Groups.Item("num").Value
+            $"http://purl.obolibrary.org/obo/{termSourceRef}_{termAccessionNumber}"
+        else
+            $"http://purl.obolibrary.org/obo/{termSourceRef}_{termAccessionNumber}"
+
     /// Creates an annotation of format `TermSourceRef:TermAccessionNumber` (e.g: `MS:1000690`)
     /// 
     /// If termAccessionNumber is given in full URI form `http://purl.obolibrary.org/obo/MS_1000121`, takes last part of it. 
     static member createShortAnnotation (termSourceRef : string) (termAccessionNumber : string) =
         let r = Regex.Match(termAccessionNumber,OntologyAnnotation.ontologyTermURIRegex)
-       
+        let r2 = Regex.Match(termAccessionNumber,OntologyAnnotation.shortAnnotationRegex)
+        
         if r.Success then
+            let termSourceRef = r.Groups.Item("ref").Value
+            let termAccessionNumber = r.Groups.Item("num").Value
+            $"{termSourceRef}:{termAccessionNumber}"
+        elif r2.Success then
             let termSourceRef = r.Groups.Item("ref").Value
             let termAccessionNumber = r.Groups.Item("num").Value
             $"{termSourceRef}:{termAccessionNumber}"
@@ -197,6 +227,17 @@ type OntologyAnnotation =
                 else ""
         | None -> ""
 
+    member this.URLAnnotationString = 
+        match this.TermAccessionNumber with
+        | Some t ->
+            match OntologyAnnotation.trySplitUri t with 
+            | Some _ -> t
+            | None -> 
+                let r = System.Text.RegularExpressions.Regex.Match(t,OntologyAnnotation.shortAnnotationRegex)
+                if r.Success then t
+                else ""
+        | None -> ""
+
 
     /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,source,accession)
     static member toString (oa : OntologyAnnotation) =
@@ -210,6 +251,18 @@ type OntologyAnnotation =
         member this.PrintCompact() =
             "OA " + this.NameText
 
+    override this.Equals other =
+        match other with
+        | :? OntologyAnnotation as oa -> (this :> System.IEquatable<_>).Equals oa
+        | _ -> false
+
+    override this.GetHashCode () = (this.NameText+this.ShortAnnotationString).GetHashCode()
+
+    interface System.IEquatable<OntologyAnnotation> with
+        member this.Equals other =
+            other.ShortAnnotationString = this.ShortAnnotationString
+            &&
+            other.NameText = this.NameText
 
 type OntologySourceReference =
     {

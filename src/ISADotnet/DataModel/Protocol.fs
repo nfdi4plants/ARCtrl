@@ -127,7 +127,7 @@ type Component =
         | None, _ -> ""
 
     static member decomposeName (name : string) = 
-        let pattern = """(?<value>\S*) \((?<ontology>[^(]*:[^)]*)\)"""
+        let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
         let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
 
         let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
