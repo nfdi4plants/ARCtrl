@@ -8,6 +8,7 @@ open Expecto
 open TestingUtils
 
 open ISADotNet
+open ISADotNet.QueryModel
 open ISADotNet.XLSX
 open ISADotNet.XLSX.AssayFile
 
@@ -52,7 +53,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "5"
-            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name#5")) None None None (Some [testComment])
+            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name#5")) None None (Some [testComment])
 
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
@@ -430,7 +431,7 @@ let testProcessGetter =
             let expectedInput = ProcessInput.Source expectedSource
             let expectedOutput = ProcessOutput.Sample (Sample.make None (Some expectedSampleName) None (Some [expectedFactorValue]) (Some [expectedSource])  )
 
-            let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None
+            let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None |> Protocol.setRowIndex 0
 
             let expectedProcess = Process.make None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
@@ -461,8 +462,8 @@ let testProcessGetter =
             let expectedInput = ProcessInput.Sample (Sample.make None (Some expectedSampleName) (Some [expectedCharacteristicValue]) None None  )
 
 
-            let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None
-
+            let expectedProtocol = Protocol.make None None None None None None (Some [expectedParameter]) None None |> Protocol.setRowIndex 0
+             
             let expectedProcess = Process.make None None (Some expectedProtocol) (Some [expectedParameterValue]) None None None None (Some [expectedInput]) (Some [expectedOutput]) None
 
             let processGetter = AnnotationTable.getProcessGetter "" (headers |> AnnotationNode.splitIntoNodes)
@@ -526,12 +527,12 @@ let testProcessComparisonFunctions =
     testList "ProcessComparisonTests" [
         testCase "MergeProcesses" (fun () ->
 
-            let process1 = Process.make None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.make None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.make None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.make None (Some "Process4") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None (Some "Process_1") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source1]) (Some [ProcessOutput.Sample sample1]) None
+            let process2 = Process.make None (Some "Process_2") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source2]) (Some [ProcessOutput.Sample sample2]) None
+            let process3 = Process.make None (Some "Process_3") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source3]) (Some [ProcessOutput.Sample sample3]) None
+            let process4 = Process.make None (Some "Process_4") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source4]) (Some [ProcessOutput.Sample sample4]) None
 
-            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
+            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses "Process" [process1;process2;process3;process4]
 
             Expect.hasLength mergedProcesses 1 "Should have merged all 4 Processes as they execute with the same params"
 
@@ -545,12 +546,12 @@ let testProcessComparisonFunctions =
         )        
         testCase "MergeProcessesDifferentParams" (fun () ->
 
-            let process1 = Process.make None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.make None (Some "Process2") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.make None (Some "Process3") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.make None (Some "Process4") (Some protocol1) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None (Some "Process_1") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source1]) (Some [ProcessOutput.Sample sample1]) None
+            let process2 = Process.make None (Some "Process_2") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source2]) (Some [ProcessOutput.Sample sample2]) None
+            let process3 = Process.make None (Some "Process_3") (Some protocol1) (Some parameterValues2) None None None None (Some [ProcessInput.Source source3]) (Some [ProcessOutput.Sample sample3]) None
+            let process4 = Process.make None (Some "Process_4") (Some protocol1) (Some parameterValues2) None None None None (Some [ProcessInput.Source source4]) (Some [ProcessOutput.Sample sample4]) None
 
-            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
+            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses "Process" [process1;process2;process3;process4]
 
             Expect.hasLength mergedProcesses 2 "Processes executed with two different parameter values, therefore they should be merged to two different processes"
 
@@ -572,12 +573,12 @@ let testProcessComparisonFunctions =
         )
         testCase "MergeProcessesDifferentProtocols" (fun () ->
 
-            let process1 = Process.make None (Some "Process1") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.make None (Some "Process2") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.make None (Some "Process3") (Some protocol1) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.make None (Some "Process4") (Some protocol2) (Some parameterValues1) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None (Some "Process_1") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source1]) (Some [ProcessOutput.Sample sample1]) None
+            let process2 = Process.make None (Some "Process_2") (Some protocol2) (Some parameterValues1) None None None None (Some [ProcessInput.Source source2]) (Some [ProcessOutput.Sample sample2]) None
+            let process3 = Process.make None (Some "Process_3") (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source3]) (Some [ProcessOutput.Sample sample3]) None
+            let process4 = Process.make None (Some "Process_4") (Some protocol2) (Some parameterValues1) None None None None (Some [ProcessInput.Source source4]) (Some [ProcessOutput.Sample sample4]) None
 
-            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses [process1;process2;process3;process4]
+            let mergedProcesses = AnnotationTable.mergeIdenticalProcesses "Process" [process1;process2;process3;process4]
 
             Expect.hasLength mergedProcesses 2 "Processes executed with two different protocols, therefore they should be merged to two different processes"
 
@@ -599,16 +600,16 @@ let testProcessComparisonFunctions =
         )
         testCase "IndexIdenticalProcessesByProtocolName" (fun () ->
 
-            let process1 = Process.make None None (Some protocol1) (Some parameterValues1) None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.make None None (Some protocol1) (Some parameterValues2) None None None None (Some [Source source2]) (Some [Sample sample2]) None
-            let process3 = Process.make None None (Some protocol2) (Some parameterValues1) None None None None (Some [Source source3]) (Some [Sample sample3]) None
-            let process4 = Process.make None None (Some protocol2) (Some parameterValues2) None None None None (Some [Source source4]) (Some [Sample sample4]) None
+            let process1 = Process.make None None (Some protocol1) (Some parameterValues1) None None None None (Some [ProcessInput.Source source1]) (Some [ProcessOutput.Sample sample1]) None
+            let process2 = Process.make None None (Some protocol1) (Some parameterValues2) None None None None (Some [ProcessInput.Source source2]) (Some [ProcessOutput.Sample sample2]) None
+            let process3 = Process.make None None (Some protocol2) (Some parameterValues1) None None None None (Some [ProcessInput.Source source3]) (Some [ProcessOutput.Sample sample3]) None
+            let process4 = Process.make None None (Some protocol2) (Some parameterValues2) None None None None (Some [ProcessInput.Source source4]) (Some [ProcessOutput.Sample sample4]) None
 
-            let indexedProcesses = AnnotationTable.indexRelatedProcessesByProtocolName [process1;process2;process3;process4]
+            let indexedProcesses = AnnotationTable.mergeIdenticalProcesses "Process" [process1;process2;process3;process4]
 
             let names = indexedProcesses |> Seq.map (fun p -> Option.defaultValue "" p.Name)
 
-            let expectedNames = ["Protocol1_0";"Protocol1_1";"Protocol2_0";"Protocol2_1"]
+            let expectedNames = ["Process_0";"Process_1";"Process_2";"Process_3"]
 
             Expect.sequenceEqual names expectedNames "Processes were not indexed correctly"
         )
@@ -616,15 +617,15 @@ let testProcessComparisonFunctions =
             
             let sourceWithSampleName = ProcessInput.Source (Source.make None (Some "Sample1") None)
 
-            let process1 = Process.make None None None None None None None None (Some [Source source1]) (Some [Sample sample1]) None
-            let process2 = Process.make None None None None None None None None (Some [sourceWithSampleName]) (Some [Sample sample2]) None
+            let process1 = Process.make None None None None None None None None (Some [ProcessInput.Source source1]) (Some [ProcessOutput.Sample sample1]) None
+            let process2 = Process.make None None None None None None None None (Some [sourceWithSampleName]) (Some [ProcessOutput.Sample sample2]) None
 
             let updatedProcesses = AnnotationTable.updateSamplesByThemselves [process1;process2]
 
             let expectedProcessSequence =
                 [
                     process1
-                    Process.make None None None None None None None None (Some ([ProcessInput.Sample sample1])) (Some [Sample sample2]) None
+                    Process.make None None None None None None None None (Some ([ProcessInput.Sample sample1])) (Some [ProcessOutput.Sample sample2]) None
                 
                 ]
 
@@ -635,8 +636,8 @@ let testProcessComparisonFunctions =
             let outputOfFirst = ProcessOutput.Sample (Sample.make None (Some "Sample1") None (Some [factorValue]) None)
             let inputOfSecond = ProcessInput.Source (Source.make None (Some "Sample1") (Some [characteristicValue]))
 
-            let process1 = Process.make None None None None None None None None (Some [Source source1]) (Some [outputOfFirst]) None
-            let process2 = Process.make None None None None None None None None (Some [inputOfSecond]) (Some [Sample sample2]) None
+            let process1 = Process.make None None None None None None None None (Some [ProcessInput.Source source1]) (Some [outputOfFirst]) None
+            let process2 = Process.make None None None None None None None None (Some [inputOfSecond]) (Some [ProcessOutput.Sample sample2]) None
 
             let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
 
@@ -728,6 +729,7 @@ let testMetaDataFunctions =
 let testAssayFileReader = 
 
     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sinkDirectory = __SOURCE_DIRECTORY__ + @"/TestResult/"
     let assayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTestFile.xlsx")
 
     let expectedPersons =
@@ -774,9 +776,10 @@ let testAssayFileReader =
 
             let expectedProtocols = 
                 [
-                Protocol.make None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None
-                Protocol.make None (Some "SecondAssay") None None None None (Some [temperatureUnit2]) None None
+                Protocol.make None (Some "GreatAssay") None None None None (Some [temperatureUnit;peptidase;temperature;time1]) None None |> Protocol.setRowRange (0,2)
+                Protocol.make None (Some "SecondAssay") None None None None (Some [temperatureUnit2]) None None |> Protocol.setRowRange (0,2)
                 ]
+                
 
             let expectedFactors = [time2]
 
@@ -800,6 +803,71 @@ let testAssayFileReader =
             assay.ProcessSequence.Value
             |> Seq.map (fun p -> Option.defaultValue "" p.Name)
             |> fun names -> Expect.sequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
+
+        )
+        testCase "AroundTheWorldComponents" (fun () ->        
+
+            let xlsxFilePath = System.IO.Path.Combine(sourceDirectory,"20220802_TermCols_Assay.xlsx")
+            let jsonFilePath = System.IO.Path.Combine(sourceDirectory,"20220802_TermCols_Assay.json")
+            let xlsxOutFilePath = System.IO.Path.Combine(sinkDirectory,"20220802_TermCols_Assay.xlsx")
+
+            let ref = Json.Assay.fromFile jsonFilePath
+            let p,a = Assay.fromFile xlsxFilePath
+
+            Expect.equal a.ProcessSequence.Value.Length ref.ProcessSequence.Value.Length "Assay read from xlsx and json do not match. Process sequence does not have the same length"
+
+            (a.ProcessSequence.Value,ref.ProcessSequence.Value)
+            ||> List.iter2 (fun p refP -> 
+                Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay read from xlsx and json do not match. Protocol does not match"
+                Expect.equal p refP "Assay read from xlsx and json do not match. Process does not match"
+            ) 
+
+            Assay.toFile xlsxOutFilePath p a
+
+            let _,a' = Assay.fromFile xlsxOutFilePath
+
+
+            Expect.equal a'.ProcessSequence.Value.Length ref.ProcessSequence.Value.Length "Assay written to xlsx and read in again does no longer match json. Process sequence does not have the same length"
+
+            (a'.ProcessSequence.Value,ref.ProcessSequence.Value)
+            ||> List.iter2 (fun p refP -> 
+                Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
+                Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
+            ) 
+            Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+
+        )
+        testCase "AroundTheWorldProtocolType" (fun () ->        
+
+            let xlsxFilePath = System.IO.Path.Combine(sourceDirectory,"20220803_ProtocolType_Assay.xlsx")
+            let jsonFilePath = System.IO.Path.Combine(sourceDirectory,"20220803_ProtocolType_Assay.json")
+            let xlsxOutFilePath = System.IO.Path.Combine(sinkDirectory,"20220803_ProtocolType_Assay.xlsx")
+
+            let ref = Json.Assay.fromFile jsonFilePath
+            let p,a = Assay.fromFile xlsxFilePath
+
+            Expect.equal a.ProcessSequence.Value.Length ref.ProcessSequence.Value.Length $"Assay read from xlsx and json do not match. Process sequence does not have the same length"
+
+
+            (a.ProcessSequence.Value,ref.ProcessSequence.Value)
+            ||> List.iter2 (fun p refP -> 
+                Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay read from xlsx and json do not match. Protocol does not match"
+                Expect.equal p refP "Assay read from xlsx and json do not match. Process does not match"
+            ) 
+
+            Assay.toFile xlsxOutFilePath p a
+
+            let _,a' = Assay.fromFile xlsxOutFilePath
+
+
+            Expect.equal a'.ProcessSequence.Value.Length ref.ProcessSequence.Value.Length "Assay written to xlsx and read in again does no longer match json. Process sequence does not have the same length"
+
+            (a'.ProcessSequence.Value,ref.ProcessSequence.Value)
+            ||> List.iter2 (fun p refP -> 
+                Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
+                Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
+            ) 
+            Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         )
     ]
