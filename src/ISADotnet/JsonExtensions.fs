@@ -32,6 +32,19 @@ module JsonExtensions =
                 | _ -> false           
             )
 
+    module private RecordField = 
+
+        /// Returns Some, if the union case contains the given attribute
+        let tryGetCustomAttribute<'T> (f : System.Reflection.PropertyInfo) =
+            f.GetCustomAttributes(false)
+            |> Seq.tryPick (fun a -> 
+                try 
+                    a :?> 'T
+                    |> Some
+                with
+                | _ -> None         
+            ) 
+
 
     module private Case = 
 
@@ -130,8 +143,9 @@ module JsonExtensions =
 
 
     /// Converter to serialize and deserilize F# Union Cases to Json AnyOfs
-    type AnyOfUnionConverter<'T>(fsOptions) =
+    type AnyOfUnionBaseConverter<'T>(fsOptions) =
         inherit JsonConverter<'T>()
+
 
         override this.CanConvert(objectType) =       
             FSharp.Reflection.FSharpType.IsUnion objectType    
@@ -155,8 +169,6 @@ module JsonExtensions =
                         l <- List.append l [reader.TokenType,reader.GetString() |> String]
                     elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
                         l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
-                    elif reader.TokenType = JsonTokenType.PropertyName then 
-                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
                     elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
                         bracket <- bracket + 1
                         l <- List.append l [reader.TokenType,None]
@@ -209,7 +221,7 @@ module JsonExtensions =
                 JsonSerializer.Serialize(writer,value,opts)
 
     /// Converter to serialize and deserilize F# Union Cases to Json AnyOfs
-    type AnyOfUnionConverter(fsOptions) =
+    type AnyOfUnionBaseConverter(fsOptions) =
         inherit JsonConverterFactory()
     
         override _.CanConvert(typeToConvert) =
@@ -218,7 +230,7 @@ module JsonExtensions =
             Type.containsCustomAttribute<AnyOfAttribute> typeToConvert       
         
         override _.CreateConverter(typeToConvert, _options) =
-            typedefof<AnyOfUnionConverter<_>>
+            typedefof<AnyOfUnionBaseConverter<_>>
                 .MakeGenericType([|typeToConvert|])
                 .GetConstructor([|typeof<JsonFSharpOptions>|])
                 .Invoke([|fsOptions|])
@@ -284,11 +296,107 @@ module JsonExtensions =
                 PropertyNamingPolicy=JsonNamingPolicy.CamelCase, 
                 Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             )
-        options.Converters.Add(AnyOfUnionConverter())
+        options.Converters.Add(AnyOfUnionBaseConverter())
         options.Converters.Add(StringEnumConverter())
         options.Converters.Add(JsonFSharpConverter())
         options
 
+
+
+    /// Converter to serialize and deserilize components
+    type RecordConverter<'T>(fsOptions) =
+        inherit JsonConverter<'T>()
+
+        override this.CanConvert(objectType) =     
+            FSharp.Reflection.FSharpType.IsRecord objectType
+
+        override __.Read(reader, t, opts) =    
+
+            printfn "RECORD TEST"
+
+            let fieldNames = 
+                FSharp.Reflection.FSharpType.GetRecordFields(t)
+                |> Array.collect (fun p -> 
+                    match p |> RecordField.tryGetCustomAttribute<JsonPropertyNameAttribute> with
+                    | Option.Some n -> [|n.Name|]
+                    | Option.None ->   [|p.Name; p.Name.ToLower()|]
+                )
+                |> set
+
+            let s = 
+                if reader.TokenType = JsonTokenType.String then 
+                    reader.GetString() 
+                elif reader.TokenType = JsonTokenType.Number then 
+                    reader.GetDouble() |> string
+                else
+                    let mutable l : (JsonTokenType*TokenValue) list = []
+                    let mutable bracket = 0
+                    let mutable objectStartCount = 0
+                    
+                    printfn $"TokenType: {reader.TokenType}"
+
+                    if reader.TokenType = JsonTokenType.Number then 
+                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                    elif reader.TokenType = JsonTokenType.PropertyName then 
+                        let token = reader.TokenType
+                        let s = reader.GetString()
+                        if fieldNames.Contains(s) |> not then failwithf "Could now read json object. Type %s does not contain property named %s" t.Name s
+                        l <- List.append l [token, s |> String]
+                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
+                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                        bracket <- bracket + 1
+                        l <- List.append l [reader.TokenType,None]
+                    else l <- List.append l [reader.TokenType,None]
+
+                    while bracket > 0 do
+
+                        printfn $"insideWhile TokenType: {reader.TokenType}"
+                        printfn $"bracket: {bracket}"
+
+                        reader.Read() |> ignore
+
+                        if reader.TokenType = JsonTokenType.Number then 
+                            l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                        elif reader.TokenType = JsonTokenType.String then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        elif reader.TokenType = JsonTokenType.PropertyName then 
+                            let token = reader.TokenType
+                            let s = reader.GetString()
+                            if fieldNames.Contains(s) |> not && bracket < 2 then failwithf "Could now read json object. Type %s does not contain property named %s" t.Name s
+                            l <- List.append l [token, s |> String]
+                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                            l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                        elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                            bracket <- bracket + 1
+                            l <- List.append l [reader.TokenType,None]
+                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                            bracket <- bracket - 1
+                            l <- List.append l [reader.TokenType,None]
+                        else l <- List.append l [reader.TokenType,None]
+                    l
+                    |> detokenizeJson
+            JsonSerializer.Deserialize<'T>(s,baseOptions)
+
+        override __.Write(writer, value, opts) =
+     
+            JsonSerializer.Serialize(writer,value,baseOptions)
+
+    /// Converter to serialize and deserilize components
+    type RecordConverter(fsOptions) =
+        inherit JsonConverterFactory()
+    
+        override _.CanConvert(typeToConvert) =
+            FSharp.Reflection.FSharpType.IsRecord typeToConvert  
+        
+        override _.CreateConverter(typeToConvert, _options) =
+            typedefof<RecordConverter<_>>
+                .MakeGenericType([|typeToConvert|])
+                .GetConstructor([|typeof<JsonFSharpOptions>|])
+                .Invoke([|fsOptions|])
+                :?> JsonConverter
+
+    
     /// Converter to serialize and deserilize components
     type ComponentConverter<'T>(fsOptions) =
         inherit JsonConverter<'T>()
@@ -313,8 +421,6 @@ module JsonExtensions =
                         l <- List.append l [reader.TokenType,reader.GetString() |> String]
                     elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
                         l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
-                    elif reader.TokenType = JsonTokenType.PropertyName then 
-                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
                     elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
                         bracket <- bracket + 1
                         l <- List.append l [reader.TokenType,None]
@@ -367,6 +473,127 @@ module JsonExtensions =
                 .Invoke([|fsOptions|])
                 :?> JsonConverter
 
+    let private extendedOptions =
+        let options = 
+            JsonSerializerOptions(
+                IgnoreNullValues=true, 
+                PropertyNamingPolicy=JsonNamingPolicy.CamelCase, 
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            )
+        options.Converters.Add(ComponentConverter())
+        options.Converters.Add(AnyOfUnionBaseConverter())
+        options.Converters.Add(StringEnumConverter())
+        options.Converters.Add(JsonFSharpConverter())
+        options
+
+    let private optionsForAnyOf =
+        let options = 
+            JsonSerializerOptions(
+                IgnoreNullValues=true, 
+                PropertyNamingPolicy=JsonNamingPolicy.CamelCase, 
+                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+            )
+        options.Converters.Add(RecordConverter())
+        options.Converters.Add(ComponentConverter())
+        options.Converters.Add(AnyOfUnionBaseConverter())
+        options.Converters.Add(StringEnumConverter())
+        options.Converters.Add(JsonFSharpConverter())
+        options
+
+    /// Converter to serialize and deserilize F# Union Cases to Json AnyOfs
+    type AnyOfUnionConverter<'T>(fsOptions) =
+        inherit JsonConverter<'T>()
+
+
+        override this.CanConvert(objectType) =       
+            FSharp.Reflection.FSharpType.IsUnion objectType    
+            &&
+            Type.containsCustomAttribute<AnyOfAttribute> objectType       
+
+        override __.Read(reader, t, opts) =    
+        
+            let s = 
+                if reader.TokenType = JsonTokenType.String then 
+                    reader.GetString() 
+                elif reader.TokenType = JsonTokenType.Number then 
+                    reader.GetDouble() |> string
+                else
+                    let mutable l : (JsonTokenType*TokenValue) list = []
+                    let mutable bracket = 0
+
+                    if reader.TokenType = JsonTokenType.Number then 
+                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                    elif reader.TokenType = JsonTokenType.PropertyName then 
+                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
+                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                        bracket <- bracket + 1
+                        l <- List.append l [reader.TokenType,None]
+                    else l <- List.append l [reader.TokenType,None]
+
+                    while bracket > 0 do
+                        reader.Read() |> ignore
+
+                        if reader.TokenType = JsonTokenType.Number then 
+                            l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                        elif reader.TokenType = JsonTokenType.String then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        elif reader.TokenType = JsonTokenType.PropertyName then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                            l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                        elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                            bracket <- bracket + 1
+                            l <- List.append l [reader.TokenType,None]
+                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                            bracket <- bracket - 1
+                            l <- List.append l [reader.TokenType,None]
+                        elif reader.TokenType = JsonTokenType.PropertyName then 
+                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                        else l <- List.append l [reader.TokenType,None]
+                    l
+                    |> detokenizeJson
+
+            FSharp.Reflection.FSharpType.GetUnionCases t
+            // Sort union cases before trying to deseralize them one after one
+            |> Array.sortBy (fun case ->
+                Case.tryGetCustomAttribute<SerializationOrderAttribute> case
+                |> Option.map (fun r -> r.Rank)
+                |> Option.defaultValue 0
+            )
+            // Returns the first union case value which could be deserialized from the input string
+            |> Array.pick (fun case ->          
+                let caseType = Case.getType case
+                Serialization.tryDeserializeUnionCase s caseType optionsForAnyOf
+                |> Option.map (fun value -> FSharpValue.MakeUnion(case,[|value|]) :?> 'T)   
+            )
+                 
+
+
+        override __.Write(writer, value, opts) =
+            let (case,value) = FSharp.Reflection.FSharpValue.GetUnionFields(value,value.GetType()) 
+            if value.Length = 1 then 
+                JsonSerializer.Serialize(writer,value.[0],optionsForAnyOf)
+            else 
+                JsonSerializer.Serialize(writer,value,optionsForAnyOf)
+
+    /// Converter to serialize and deserilize F# Union Cases to Json AnyOfs
+    type AnyOfUnionConverter(fsOptions) =
+        inherit JsonConverterFactory()
+    
+        override _.CanConvert(typeToConvert) =
+            FSharp.Reflection.FSharpType.IsUnion typeToConvert    
+            &&
+            Type.containsCustomAttribute<AnyOfAttribute> typeToConvert       
+        
+        override _.CreateConverter(typeToConvert, _options) =
+            typedefof<AnyOfUnionConverter<_>>
+                .MakeGenericType([|typeToConvert|])
+                .GetConstructor([|typeof<JsonFSharpOptions>|])
+                .Invoke([|fsOptions|])
+                :?> JsonConverter
+
     let options =
         let options = 
             JsonSerializerOptions(
@@ -379,6 +606,7 @@ module JsonExtensions =
         options.Converters.Add(StringEnumConverter())
         options.Converters.Add(JsonFSharpConverter())
         options
+
 
     let fromString<'T> (s:string) = 
         JsonSerializer.Deserialize<'T>(s,options)

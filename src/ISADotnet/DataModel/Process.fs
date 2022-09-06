@@ -95,10 +95,10 @@ type ProcessParameterValue =
 [<AnyOf>]
 type ProcessInput =
     
-    | [<SerializationOrder(1)>] Source of Source
-    | [<SerializationOrder(0)>] Sample of Sample
-    | [<SerializationOrder(0)>] Data of Data
-    | [<SerializationOrder(0)>] Material of Material 
+    | [<SerializationOrder(0)>] Source of Source
+    | [<SerializationOrder(1)>] Sample of Sample
+    | [<SerializationOrder(1)>] Data of Data
+    | [<SerializationOrder(1)>] Material of Material 
     
     member this.TryGetName =
         match this with
