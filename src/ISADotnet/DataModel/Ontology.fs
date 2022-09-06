@@ -260,9 +260,14 @@ type OntologyAnnotation =
 
     interface System.IEquatable<OntologyAnnotation> with
         member this.Equals other =
-            other.ShortAnnotationString = this.ShortAnnotationString
-            &&
-            other.NameText = this.NameText
+            if this.TermAccessionNumber.IsSome && other.TermAccessionNumber.IsSome then
+                other.ShortAnnotationString = this.ShortAnnotationString
+            elif this.Name.IsSome && other.Name.IsSome then
+                other.NameText = this.NameText
+            elif this.TermAccessionNumber.IsNone && other.TermAccessionNumber.IsNone && this.Name.IsNone && other.Name.IsNone then
+                true
+            else 
+                false
 
 type OntologySourceReference =
     {
