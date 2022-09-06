@@ -586,7 +586,7 @@ module Obo =
         /// Translates a OBO `term` into an ISADotNet `OntologyAnnotation`
         static member toOntologyAnnotation (term : OboTerm) =
             let ref,num = ISADotNet.OntologyAnnotation.splitAnnotation term.Id
-            ISADotNet.OntologyAnnotation.fromString term.Name ref num
+            OntologyAnnotation.fromString term.Name ref term.Id
 
         /// Translates an ISADotNet `OntologyAnnotation` into a OBO `term`
         static member ofOntologyAnnotation (term : ISADotNet.OntologyAnnotation) =

@@ -88,19 +88,19 @@ module ProtocolExtensions =
 
         static member mergeIndicesToRange (ps : Protocol list) =
             let indices = ps |> List.choose (fun p -> p.TryGetRowIndex())
-            if indices.IsEmpty then ps.[0] 
+            if indices.IsEmpty then ps.[0]
             else
                 let r = indices |> Protocol.rangeOfIndices
                 ps.[0].SetRowRange r
                 |> Protocol.dropRowIndex
 
-        member this.IsChildProtocolTypeOf(parentProtocolType : OntologyAnnotation) =
+        member this.IsChildProtocolOf(parentProtocolType : OntologyAnnotation) =
             match this.ProtocolType with
             | Some pt ->
                 OntologyAnnotation.isChildTerm(parentProtocolType,pt)
             | _ -> false
 
-        member this.IsChildProtocolTypeOf(parentProtocolType : OntologyAnnotation, obo : Obo.OboOntology) =
+        member this.IsChildProtocolOf(parentProtocolType : OntologyAnnotation, obo : Obo.OboOntology) =
             match this.ProtocolType with
             | Some pt ->
                 OntologyAnnotation.isChildTerm(parentProtocolType,pt,obo)

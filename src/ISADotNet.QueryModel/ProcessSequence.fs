@@ -103,13 +103,13 @@ type QProcessSequence (sheets : QSheet list) =
     interface IEnumerable with
         member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
-    member this.TryGetChildProtocolTypeOf(parentProtocolType : OntologyAnnotation) =
+    member this.TryGetChildProtocolOf(parentProtocolType : OntologyAnnotation) =
         this.Sheets
         |> List.collect (fun s -> s.Protocols)
         |> List.choose (fun p -> if p.IsChildProtocolTypeOf(parentProtocolType) then Some p else None)
         |> Option.fromValueWithDefault []
 
-    member this.TryGetChildProtocolTypeOf(parentProtocolType : OntologyAnnotation, obo : Obo.OboOntology) =
+    member this.TryGetChildProtocolOf(parentProtocolType : OntologyAnnotation, obo : Obo.OboOntology) =
         this.Sheets
         |> List.collect (fun s -> s.Protocols)
         |> List.choose (fun p -> if p.IsChildProtocolTypeOf(parentProtocolType, obo) then Some p else None)

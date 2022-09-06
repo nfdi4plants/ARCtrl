@@ -82,6 +82,24 @@ module OntologyAnnotation =
         member this.TryGetAs(targetOntology : string, ont : Obo.OboOntology) =
             OntologyAnnotation.tryGetAs(this,targetOntology,ont)
 
+    type Protocol with
+        
+        static member isChildProtocolTypeOf(protocol : Protocol,parent : OntologyAnnotation) =
+            protocol.ProtocolType
+            |> Option.map (fun t -> t.IsChildTermOf(parent))
+            |> Option.defaultValue false
+
+        static member isChildProtocolTypeOf(protocol : Protocol,parent : OntologyAnnotation, ont : Obo.OboOntology) =
+            protocol.ProtocolType
+            |> Option.map (fun t -> t.IsChildTermOf(parent,ont))
+            |> Option.defaultValue false
+
+        member this.IsChildProtocolTypeOf(parent : OntologyAnnotation) =
+            Protocol.isChildProtocolTypeOf(this,parent)
+
+        member this.IsChildProtocolTypeOf(parent : OntologyAnnotation, ont : Obo.OboOntology) =
+            Protocol.isChildProtocolTypeOf(this,parent,ont)
+
     type Value with
     
         member this.GetAs(targetOntology : string, ont : Obo.OboOntology) =
