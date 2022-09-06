@@ -267,39 +267,28 @@ module QRow =
     open FsSpreadsheet.DSL
     open ISADotNet.QueryModel
 
-    let renumberHeaders (headerss : (string list) list) = 
+    let renumberHeaders (headers : string list) = 
         
         let counts = System.Collections.Generic.Dictionary<string, int ref>()
         let renumberHeader num (h : string) = 
             counts.[h] <- ref num
             if h = "Unit" then
-                $"Unit#{num}"
+                $"Unit (#{num})"
             elif h.EndsWith ")" then
                 h.Replace(")",$"#{num})")
             elif h.EndsWith "]" then
                 h.Replace("]",$"#{num}]")
             else h
-        headerss
-        |> List.map (fun headers ->
-            let pickResult = 
-                headers
-                |> List.choose (fun h ->
-                    match Dictionary.tryGetValue h counts with
-                    | Some count -> 
-                        count := !count + 1 
-                        Some !count
-                    | _ -> 
-                        counts.[h] <- ref 1
-                        None
-                )
-                |> function 
-                    | [] -> None
-                    | l -> List.max l |> Some
-            match pickResult with
-            | Some (count) -> 
-                headers |> List.map (renumberHeader count)
+        headers
+        |> List.map (fun header ->
+
+            match Dictionary.tryGetValue header counts with
+            | Some count -> 
+                count := !count + 1 
+                renumberHeader !count header
             | _ -> 
-                headers
+                counts.[header] <- ref 1
+                header
         )
 
     let toHeaderRow (hasProtocolREF : bool) (hasProtocolType : bool) (rows : QueryModel.QRow list) =
@@ -350,7 +339,7 @@ module QRow =
                     "Protocol Type"
                     "Term Source REF (MS:1000031)"
                     "Term Accession Number (MS:1000031)"
-                for v in (valueHeaders |> renumberHeaders |> List.concat) do v
+                for v in (valueHeaders |> List.concat |> renumberHeaders ) do v
                 outputType
             }
             ,valueMappers
