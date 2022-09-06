@@ -312,8 +312,6 @@ module JsonExtensions =
 
         override __.Read(reader, t, opts) =    
 
-            printfn "RECORD TEST"
-
             let fieldNames = 
                 FSharp.Reflection.FSharpType.GetRecordFields(t)
                 |> Array.collect (fun p -> 
@@ -333,8 +331,6 @@ module JsonExtensions =
                     let mutable bracket = 0
                     let mutable objectStartCount = 0
                     
-                    printfn $"TokenType: {reader.TokenType}"
-
                     if reader.TokenType = JsonTokenType.Number then 
                         l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
                     elif reader.TokenType = JsonTokenType.PropertyName then 
@@ -350,9 +346,6 @@ module JsonExtensions =
                     else l <- List.append l [reader.TokenType,None]
 
                     while bracket > 0 do
-
-                        printfn $"insideWhile TokenType: {reader.TokenType}"
-                        printfn $"bracket: {bracket}"
 
                         reader.Read() |> ignore
 
