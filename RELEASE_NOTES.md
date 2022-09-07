@@ -1,3 +1,37 @@
+### 0.6.0+2150bc9 (Released 2022-9-7)
+* Additions:
+    * latest commit #2150bc9
+    * harmonize xlsx IO with Swate 0.6.0 release
+    * add OBO ontology IO
+    * extend ontological reasoning
+    * extend components and protocol types
+    * [[#118f404](https://github.com/nfdi4plants/ISADotNet/commit/118f40478a328cb991c4c5f6603d333c26be4eaa)] add simple ontological reasoning for protocol type
+    * [[#bdf85b2](https://github.com/nfdi4plants/ISADotNet/commit/bdf85b2a27aa452730a6b54e26442d5dffdb0aa3)] adjust assay xlsx header renumbering
+    * [[#59cfdaf](https://github.com/nfdi4plants/ISADotNet/commit/59cfdafb0b3e316c6a1dbc9034a1f38574ee00b5)] small improvements to Ontology Annotation and Component type
+    * [[#94b6059](https://github.com/nfdi4plants/ISADotNet/commit/94b60592011725360045c2dd4d3fa2ea27572d65)] drop protocol rowIndex when calculating rowRange
+    * [[#4c050d1](https://github.com/nfdi4plants/ISADotNet/commit/4c050d12913eb0b99d52295b376473b2b5edfe5c)] revert term accession number changes
+    * [[#f8f94c6](https://github.com/nfdi4plants/ISADotNet/commit/f8f94c6984e807745b4ba9830c7683d7999a5d71)] add components to querymodel and assay xlsx writing
+    * [[#9b85296](https://github.com/nfdi4plants/ISADotNet/commit/9b85296754d3433b2a5f75e76b92580afde2c204)] add protocol type and protocol ref to assay and study xlsx writing
+    * [[#9cb34af](https://github.com/nfdi4plants/ISADotNet/commit/9cb34af4131bf68037517842b7c16066f19f0cb9)] add component to querymodel
+    * [[#1c66f1f](https://github.com/nfdi4plants/ISADotNet/commit/1c66f1fc7b2148fe71eb863e84703ad1b3100f38)] refactor return values of assay and study xlsx file readers
+    * [[#1a981e9](https://github.com/nfdi4plants/ISADotNet/commit/1a981e90913e95d6c1478735b11850828dedc70c)] add component and protocoltype parsers to assay xlsx table reader
+    * [[#75afe60](https://github.com/nfdi4plants/ISADotNet/commit/75afe601af2827bc8199795389609650b94d369e)] add component and protocol type parser functions
+    * [[#084cee1](https://github.com/nfdi4plants/ISADotNet/commit/084cee126af2a7902dbe31ce2f13005626bdfb76)] add component casting functions
+    * [[#ba490a3](https://github.com/nfdi4plants/ISADotNet/commit/ba490a30e20f109e113a0f15f7b6776d7ac75aad)] added inline documentation for querymodel methods
+    * [[#f2e05eb](https://github.com/nfdi4plants/ISADotNet/commit/f2e05eb0d3a756d48b4801a9f9f84c424695ce1e)] improve Querymodel documentation
+    * [[#6eb5c44](https://github.com/nfdi4plants/ISADotNet/commit/6eb5c44328d9106f0ccb1065dd3423856cc35f81)] add additional ontology helper functions to querymodel
+    * [[#11ef6b8](https://github.com/nfdi4plants/ISADotNet/commit/11ef6b8b5cadcb1243a25c0b584e62e9310d5e92)] add ontology search functions
+    * [[#99e3ebb](https://github.com/nfdi4plants/ISADotNet/commit/99e3ebb0f495fc398409a4432ed19aafff9943c2)] add isA and xref search on oboOntology
+    * [[#af680ec](https://github.com/nfdi4plants/ISADotNet/commit/af680ec225cb8c2424ea3b35e00011ce61e29652)] integrate OBO IO and reasoning
+    * [[#5ff98d8](https://github.com/nfdi4plants/ISADotNet/commit/5ff98d80b74084221dcb08460773aaa0dac91238)] extend querymodel by basic ontology logic guided querying
+* Bugfixes:
+    * [[#4b99f26](https://github.com/nfdi4plants/ISADotNet/commit/4b99f2691a37a96fab5786545adcf44e1a551dd6)] fix ontologyannotation equality for empty objects
+    * [[#e6966aa](https://github.com/nfdi4plants/ISADotNet/commit/e6966aa19d0f67bf2a71a524e082e8facb079b6d)] fix json parsing
+    * [[#d4987fe](https://github.com/nfdi4plants/ISADotNet/commit/d4987fe80d9a905659ebc0b83e6b38bd5061d802)] fix assay and study file reading tables
+    * [[#f9bd7f4](https://github.com/nfdi4plants/ISADotNet/commit/f9bd7f491a1a3a889e307d976b4275bfde9d45d6)] fix component json parsing
+    * [[#86e1b46](https://github.com/nfdi4plants/ISADotNet/commit/86e1b46ad101a61200797f90b065da295e8a47d7)] fix assay file writing issues #62 #63 #64
+    * [[#7385792](https://github.com/nfdi4plants/ISADotNet/commit/7385792344ffb81c40218d8bcb8cae911ea67ecf)] fix study and assay xlsx write error
+
 ### 0.5.4+262f787 (Released 2022-7-12)
 * Additions:
     * latest commit #262f787
