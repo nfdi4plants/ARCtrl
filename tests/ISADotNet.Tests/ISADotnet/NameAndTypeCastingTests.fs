@@ -24,7 +24,7 @@ let testComponentCasting =
         )
         testCase "ComposeNameOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString "Test" "OBO" "123" |> Value.Ontology |> Some 
+            let v = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology |> Some 
             let u = None
             let expected = "Test (OBO:123)"
 
@@ -36,7 +36,7 @@ let testComponentCasting =
         testCase "ComposeNameUnit" (fun () -> 
             
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "123" |> Some
+            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
             let expected = "10 degree Celsius (UO:123)"
 
             let actual = Component.composeName v u
@@ -64,7 +64,20 @@ let testComponentCasting =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation.fromString "Test" "OBO" "123" |> Value.Ontology
+            let expectedV = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology
+
+            let expectedU = None
+
+            Expect.equal actualV expectedV "Name was not correctly decomposed"
+            Expect.equal actualU expectedU "Unit was not correctly decomposed"
+        )
+        testCase "DecomposeNameOntologyWithSpaces" (fun () -> 
+            
+            let n = "Test This Stuff (OBO:123)"
+
+            let actualV, actualU = Component.decomposeName n
+
+            let expectedV = OntologyAnnotation.fromString "Test This Stuff" "OBO" "OBO:123" |> Value.Ontology
 
             let expectedU = None
 
@@ -81,7 +94,7 @@ let testComponentCasting =
 
             let expectedV = Value.Int 10
 
-            let expectedU = OntologyAnnotation.fromString "degree Celsius" "UO" "123" |> Some
+            let expectedU = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
 
             Expect.equal actualV expectedV "Name was not correctly decomposed"
             Expect.equal actualU expectedU "Unit was not correctly decomposed"
@@ -101,18 +114,18 @@ let testComponentCasting =
             
             let v = Value.Name "Text" |> Some
 
-            let header = OntologyAnnotation.fromString "TestCategory" "CO" "567" |> Some 
+            let header = OntologyAnnotation.fromString "TestCategory" "CO" "CO:567" |> Some 
 
             let expected = Component.make (Some "Text") v None header
 
-            let actual = Component.fromString "Text" "TestCategory" "CO" "567"
+            let actual = Component.fromString "Text" "TestCategory" "CO" "CO:567"
 
             Expect.equal actual expected "Component was not correctly composed"
 
         )
         testCase "FromStringOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString "Test" "OBO" "123" |> Value.Ontology |> Some 
+            let v = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology |> Some 
 
             let expected = Component.make (Some "Test (OBO:123)") v None None
 
@@ -124,7 +137,7 @@ let testComponentCasting =
         testCase "FromStringUnit" (fun () -> 
           
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "123" |> Some
+            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
             let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
 
             let actual = Component.fromString "10 degree Celsius (UO:123)" "" "" ""
@@ -146,7 +159,7 @@ let testComponentCasting =
             
             let v = Value.Name "Text" |> Some
 
-            let header = OntologyAnnotation.fromString "TestCategory" "CO" "567" |> Some 
+            let header = OntologyAnnotation.fromString "TestCategory" "CO" "CO:567" |> Some 
 
             let expected = Component.make (Some "Text") v None header
 
@@ -157,7 +170,7 @@ let testComponentCasting =
         )
         testCase "FromOptionsOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString "Test" "OBO" "123" |> Value.Ontology |> Some 
+            let v = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology |> Some 
 
             let expected = Component.make (Some "Test (OBO:123)") v None None
 
@@ -169,7 +182,7 @@ let testComponentCasting =
         testCase "FromOptionsUnit" (fun () -> 
           
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "123" |> Some
+            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
             let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
 
             let actual = Component.fromOptions v u None
