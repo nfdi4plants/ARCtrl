@@ -338,11 +338,7 @@ module ISAValue =
 
     let toHeaders (v : QueryModel.ISAValue) =
         try 
-            let ont =
-                if v.Category.TermSourceREF.IsSome then
-                    let shortNum = v.Category.TermAccessionNumber.Value.Split('/') |> Array.last
-                    $"{v.Category.TermSourceREF.Value}:{shortNum}"
-                else ""
+            let ont = v.Category.ShortAnnotationString
             if v.HasUnit then
                 [v.HeaderText;"Unit";$"Term Source REF ({ont})";$"Term Accession Number ({ont})"]
             else
@@ -368,6 +364,24 @@ module ISAValue =
         with
         | err -> failwithf "Could not parse headers of value with name %s: \n%s" v.HeaderText err.Message
 
+module ProtocolType =
+
+    open ISADotNet.QueryModel
+
+    let headers =
+        [
+            "Protocol Type"
+            "Term Source REF (MS:1000031)"
+            "Term Accession Number (MS:1000031)"
+        ]
+
+    let toValues (v : OntologyAnnotation) =    
+        [
+            v.NameText
+            v.TermSourceREF |> Option.defaultValue "user-specific"
+            v.TermAccessionNumber |> Option.defaultValue "user-specific"
+        ]
+
 module IOType =
 
     let toHeader (io : QueryModel.IOType) =
@@ -384,3 +398,7 @@ module IOType =
             "Material Name"
         | QueryModel.IOType.Data ->      
             "Data File Name"
+
+    let defaultInHeader = toHeader QueryModel.IOType.Source
+
+    let defaultOutHeader = toHeader QueryModel.IOType.Sample

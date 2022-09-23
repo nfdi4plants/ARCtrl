@@ -6,6 +6,8 @@ open ISADotNet
 /// Functions for parsing an annotation table to the described processes
 module AnnotationTable = 
 
+    open ISADotNet.QueryModel
+
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
     let getProcessGetter (processNameRoot : string) (nodes : seq<seq<string>>) =
     
@@ -79,7 +81,7 @@ module AnnotationTable =
                             [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
                         else 
                             [ProcessOutput.Sample sample]                      
-                (fun matrix i -> inputGetter matrix i |> List.map Source |> Some),outputGetter
+                (fun matrix i -> inputGetter matrix i |> List.map ProcessInput.Source |> Some),outputGetter
             | None ->
                 let inputNameGetter = nodes |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
                 let outputNameGetter = nodes |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
@@ -143,6 +145,7 @@ module AnnotationTable =
                     (Option.fromValueWithDefault [] parameters)
                     (componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
                     None
+                |> fun p -> p.SetRowIndex i
 
             Process.make 
                 None 
@@ -158,33 +161,33 @@ module AnnotationTable =
                 None
 
     /// Merges processes with the same parameter values, grouping the input and output files
-    let mergeIdenticalProcesses (processes : seq<Process>) =
+    let mergeIdenticalProcesses processNameRoot (processes : seq<Process>) =
+        let protocols = 
+            processes 
+            |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.Name.Value)
+            |> Seq.map (fun (n,ps) -> 
+                let protocols = ps |> Seq.map (fun p -> p.ExecutesProtocol.Value)
+                protocols
+                |> Seq.map (fun p -> p.ProtocolType,p.Components)
+                |> Seq.reduce (fun (pt,c) (pt',c') -> 
+                    if pt <> pt' then failwithf "For the protocol with the name %s, two different protocol Types %O and %O were given, which is not allowed" n pt pt'
+                    if c <> c' then failwithf "For the protocol with the name %s, two different component lists %O and %O were given, which is not allowed" n c c'
+                    pt,c
+                ) |> ignore
+                n,protocols |> Seq.toList |> Protocol.mergeIndicesToRange
+            )
+            |> Map.ofSeq
         processes
-        |> Seq.groupBy (fun p -> p.ExecutesProtocol,p.ParameterValues)
-        |> Seq.map (fun (_,processGroup) ->
+        |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.Name.Value, p.ParameterValues)
+        |> Seq.mapi (fun i ((name,_),processGroup) ->
             processGroup
             |> Seq.reduce (fun p1 p2 ->
                 let mergedInputs = List.append (p1.Inputs |> Option.defaultValue []) (p2.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let mergedOutputs = List.append (p1.Outputs |> Option.defaultValue []) (p2.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 {p1 with Inputs = mergedInputs; Outputs = mergedOutputs}
             )
+            |> fun pr -> {pr with ExecutesProtocol = Some (protocols.[name]); Name = Some (Process.composeName processNameRoot i)}
         )
-
-    /// Name processes by the protocol they execute. If more than one process executes the same protocol, additionally add an index
-    let indexRelatedProcessesByProtocolName (processes : seq<Process>) =
-        processes
-        |> Seq.groupBy (fun p -> p.ExecutesProtocol)
-        |> Seq.collect (fun (protocol,processGroup) ->
-            processGroup
-            |> Seq.mapi (fun i p -> 
-                let name = 
-                    match p.Name with
-                    | Some n -> Some n
-                    | None | Some "" -> protocol |> Option.bind (fun p -> p.Name)
-                    |> Option.map (fun s -> sprintf "%s_%i" s i)
-                {p with Name = name}
-            )
-        )    
 
     /// Create a sample from a source
     let sampleOfSource (s:Source) =
@@ -262,58 +265,98 @@ module AnnotationTable =
 
 module QRow =
     open FsSpreadsheet.DSL
+    open ISADotNet.QueryModel
 
-
-    let renumberHeaders (headerss : (string list) list) = 
+    let renumberHeaders (headers : string list) = 
         
         let counts = System.Collections.Generic.Dictionary<string, int ref>()
         let renumberHeader num (h : string) = 
             counts.[h] <- ref num
             if h = "Unit" then
-                $"Unit#{num}"
+                $"Unit (#{num})"
             elif h.EndsWith ")" then
                 h.Replace(")",$"#{num})")
             elif h.EndsWith "]" then
                 h.Replace("]",$"#{num}]")
             else h
-        headerss
-        |> List.map (fun headers ->
-            let pickResult = 
-                headers
-                |> List.choose (fun h ->
-                    match Dictionary.tryGetValue h counts with
-                    | Some count -> 
-                        count := !count + 1 
-                        Some !count
-                    | _ -> 
-                        counts.[h] <- ref 1
-                        None
-                )
-                |> function 
-                    | [] -> None
-                    | l -> List.max l |> Some
-            match pickResult with
-            | Some (count) -> 
-                headers |> List.map (renumberHeader count)
+        headers
+        |> List.map (fun header ->
+
+            match Dictionary.tryGetValue header counts with
+            | Some count -> 
+                count := !count + 1 
+                renumberHeader !count header
             | _ -> 
-                headers
+                counts.[header] <- ref 1
+                header
         )
 
-    let toHeaderRow (r : QueryModel.QRow) =
+    let toHeaderRow (hasProtocolREF : bool) (hasProtocolType : bool) (rows : QueryModel.QRow list) =
         try 
+
+            let outputType = 
+                rows
+                |> List.fold (fun outputType r -> 
+                    match outputType,r.OutputType with
+                    | Some t1, Some t2 when t1 = t2 -> Some t1
+                    | Some t1, Some t2 -> failwithf "OutputTypes %A and %A do not match" t1 t2
+                    | None, t2 -> t2
+                    | t1, None -> t1
+                    | _ -> None
+                ) None
+                |> Option.map IOType.toHeader
+                |> Option.defaultValue IOType.defaultOutHeader 
+
+            let valueHeaders,valueMappers = 
+                rows
+                |> List.collect (fun r -> r.Vals)
+                |> List.groupBy (fun v -> v.HeaderText)
+                |> List.sortBy (fun (h,vs) -> vs |> List.choose (fun v -> v.TryValueIndex()) |> List.append [System.Int32.MaxValue] |> List.min)
+                |> List.map (fun (h,vs) -> 
+                    let v = 
+                        vs
+                        |> List.reduce (fun v1 v2 ->
+                            match v1.TryUnit,v2.TryUnit with
+                            | Some u1, Some u2 when u1 = u2 -> v1
+                            | None, None -> v1
+                            | Some u1, Some u2 -> failwithf "Units %s and %s of value with header %s do not match" u1.NameText u2.NameText h
+                            | Some u1, None -> failwithf "Units %s and None of value with header %s do not match" u1.NameText h
+                            | None, Some u2 -> failwithf "Units None and %s of value with header %s do not match" u2.NameText h
+                        )
+                    let h = ISAValue.toHeaders v
+                    let f (vs : ISAValue list) = 
+                        vs 
+                        |> List.tryPick (fun v' -> if v'.HeaderText = v.HeaderText then Some (ISAValue.toValues v') else None)
+                        |> Option.defaultValue (List.init h.Length (fun _ -> ""))
+                    h,f
+                )
+                |> List.unzip
+        
             row {
-                "Source Name"
-                for v in (r.Vals |> List.map ISAValue.toHeaders |> renumberHeaders |> List.concat) do v
-                IOType.toHeader r.OutputType.Value
+                IOType.defaultInHeader
+                if hasProtocolREF then "Protocol REF"
+                if hasProtocolType then 
+                    "Protocol Type"
+                    "Term Source REF (MS:1000031)"
+                    "Term Accession Number (MS:1000031)"
+                for v in (valueHeaders |> List.concat |> renumberHeaders ) do v
+                outputType
             }
+            ,valueMappers
         with
         | err -> failwithf "Could not parse headers of row: \n%s" err.Message
 
-    let toValueRow i (r : QueryModel.QRow) =
+    let toValueRow i hasRef hasProtocolType (protocolRef : string option) (protocolType : OntologyAnnotation option) (valueMappers : (ISAValue list -> string list) list) (r : QueryModel.QRow) =
+        let protocolVals =
+            [
+                if hasRef then protocolRef |> Option.defaultValue ""
+                if hasProtocolType then yield! protocolType |> Option.map ProtocolType.toValues |> Option.defaultValue ["";"";""]
+            ]
         try
             row {
                 r.Input
-                for v in (r.Vals |> List.collect ISAValue.toValues) do v
+                for v in protocolVals do v
+                for v in valueMappers |> List.collect (fun f -> f r.Vals) do v
                 r.Output
             }
         with
@@ -322,14 +365,45 @@ module QRow =
 module QSheet =
 
     open FsSpreadsheet.DSL
+    open ISADotNet.QueryModel
 
     let toSheet i (s : QueryModel.QSheet) =
+        let hasRef,refs = 
+            if s.Protocols |> List.exists (fun p -> p.Name.IsSome && p.Name.Value <> s.SheetName) then
+                if s.Protocols.Length = 1 then
+                    true, ForAll s.Protocols.Head.Name.Value
+                else
+                    true, 
+                    s.Protocols 
+                    |> List.collect (fun p -> 
+                        let f,t = p.GetRowRange()
+                        List.init (t-f+1) (fun i -> i + f, p.Name.Value)
+                    )
+                    |> Map.ofList
+                    |> ForSpecific
+            else 
+                false, ForSpecific Map.empty
+        let hasProtocolType,protcolTypes = 
+            if s.Protocols |> List.exists (fun p -> p.ProtocolType.IsSome) then
+                if s.Protocols.Length = 1 then
+                    true, ForAll s.Protocols.Head.ProtocolType.Value
+                else
+                    true, 
+                    s.Protocols 
+                    |> List.collect (fun p -> 
+                        let f,t = p.GetRowRange()
+                        List.init (t-f+1) (fun i -> i + f, p.ProtocolType.Value)
+                    )
+                    |> Map.ofList
+                    |> ForSpecific
+            else 
+                false, ForSpecific Map.empty
         try 
-
+            let headers,mappers = QRow.toHeaderRow hasRef hasProtocolType s.Rows
             sheet s.SheetName {
                 table $"annotationTable{i}" {
-                    QRow.toHeaderRow s.[0]
-                    for (i,r) in Seq.indexed s do QRow.toValueRow i r
+                    headers
+                    for (i,r) in Seq.indexed s do QRow.toValueRow i hasRef hasProtocolType (refs.TryGet(i)) (protcolTypes.TryGet(i)) mappers r
                 }
             }
         with

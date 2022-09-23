@@ -117,7 +117,7 @@ let testStringConversions =
                 let accession = "Accession"
                 let source = "Source"
 
-                let testOntology = OntologyAnnotation.make None (Some (Text term)) (Some source) (Some accession) None None
+                let testOntology = OntologyAnnotation.make None (Some (Text term)) (Some source) (Some accession) None
                 let ontology = OntologyAnnotation.fromString term source accession
 
                 Expect.equal ontology testOntology "Ontology Annotation was not created correctly from strings"
@@ -141,7 +141,7 @@ let testStringConversions =
                 let accession = ""
                 let source = ""
 
-                let testOntology = OntologyAnnotation.make None None None None None None
+                let testOntology = OntologyAnnotation.make None None None None None
                 let ontology = OntologyAnnotation.fromString term accession source
 
                 Expect.equal ontology testOntology "Empty Ontology Annotation was not created correctly from strings"
@@ -299,7 +299,7 @@ let testStringConversions =
                 Expect.isSome value "Should have returned Value but returned None"
 
                 let expectedAnnotationValue = AnnotationValue.Text "Name"
-                let expectedAnnotation = OntologyAnnotation.make None (Some expectedAnnotationValue) (Some "Source") (Some "Accession") None None
+                let expectedAnnotation = OntologyAnnotation.make None (Some expectedAnnotationValue) (Some "Source") (Some "Accession") None
                 let expectedValue = Value.Ontology expectedAnnotation
 
                 Expect.equal value.Value expectedValue "Value was parsed incorrectly"

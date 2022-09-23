@@ -47,7 +47,9 @@ type QProcessSequence (sheets : QSheet list) =
         let sheets = 
             processSequence
             |> List.groupBy (fun x -> 
-                if x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
+                    (x.Name.Value |> Process.decomposeName |> fst)
+                elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
                     x.ExecutesProtocol.Value.Name.Value 
                 else
                     // Data Stewards use '_' as seperator to distinguish between protocol template types.
@@ -100,6 +102,18 @@ type QProcessSequence (sheets : QSheet list) =
 
     interface IEnumerable with
         member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
+
+    member this.TryGetChildProtocolOf(parentProtocolType : OntologyAnnotation) =
+        this.Sheets
+        |> List.collect (fun s -> s.Protocols)
+        |> List.choose (fun p -> if p.IsChildProtocolTypeOf(parentProtocolType) then Some p else None)
+        |> Option.fromValueWithDefault []
+
+    member this.TryGetChildProtocolOf(parentProtocolType : OntologyAnnotation, obo : Obo.OboOntology) =
+        this.Sheets
+        |> List.collect (fun s -> s.Protocols)
+        |> List.choose (fun p -> if p.IsChildProtocolTypeOf(parentProtocolType, obo) then Some p else None)
+        |> Option.fromValueWithDefault []
 
     /// Returns the list of all nodes (sources, samples, data) in the ProcessSequence
     static member getNodes (ps : #QProcessSequence) =
@@ -571,6 +585,12 @@ type QProcessSequence (sheets : QSheet list) =
     member this.Characteristics(?ProtocolName) =
         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Characteristics()
 
+    /// Returns all components in the process sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.Components(?ProtocolName) =
+        (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Components()
+
     /// Returns all values in the process sequence, that are connected to the given node
     ///
     /// If a protocol name is given, returns only the values of the processes that implement this protocol
@@ -646,6 +666,25 @@ type QProcessSequence (sheets : QSheet list) =
     /// If a protocol name is given, returns only the values of the processes that implement this protocol and come after it in the sequence
     member this.SucceedingFactorsOf(node, ?ProtocolName) =
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Factors()
+
+    /// Returns all components values in the process sequence, that are connected to the given node
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.ComponentsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).ValuesOf(node).Components()
+
+    /// Returns all components values in the process sequence, that are connected to the given node and come before it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.PreviousComponentsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).PreviousValuesOf(node).Components()
+
+    /// Returns all components values in the process sequence, that are connected to the given node and come after it in the sequence
+    ///
+    /// If a protocol name is given, returns only the values of the processes that implement this protocol
+    member this.SucceedingComponentsOf(node, ?ProtocolName) =
+         (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Components()
+
 
     member this.Contains(ontology : OntologyAnnotation, ?ProtocolName) = 
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains ontology

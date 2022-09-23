@@ -102,11 +102,12 @@ type QRow =
             Vals = Values |> Option.defaultValue []
         }
 
-    static member create(?Input,?Output,?InputType,?OutputType,?CharValues,?ParamValues,?FactorValues) : QRow =
-        let combineValues (characteristics : MaterialAttributeValue list) (parameters : ProcessParameterValue list) (factors : FactorValue list) : ISAValue list =           
+    static member create(?Input,?Output,?InputType,?OutputType,?CharValues,?ParamValues,?FactorValues,?Components) : QRow =
+        let combineValues (characteristics : MaterialAttributeValue list) (parameters : ProcessParameterValue list) (factors : FactorValue list) (components : Component list) : ISAValue list =           
             (characteristics |> List.map Characteristic)
             @ (parameters |> List.map Parameter)
             @ (factors |> List.map Factor)
+            @ (components |> List.map Component)
             |> List.sortBy (fun v -> v.TryValueIndex() |> Option.defaultValue System.Int32.MaxValue)
 
         {
@@ -114,7 +115,7 @@ type QRow =
             Output = Output |> Option.defaultValue ""
             InputType = InputType
             OutputType = OutputType
-            Vals = combineValues (CharValues |> Option.defaultValue []) (ParamValues |> Option.defaultValue []) (FactorValues |> Option.defaultValue [])
+            Vals = combineValues (CharValues |> Option.defaultValue []) (ParamValues |> Option.defaultValue []) (FactorValues |> Option.defaultValue []) (Components |> Option.defaultValue []) 
         }
 
     static member fromProcess (proc : Process) : QRow list =
@@ -129,11 +130,12 @@ type QRow =
             let factors = 
                 ios |> List.collect (snd >> API.ProcessOutput.tryGetFactorValues >> (Option.defaultValue []))
                 |> List.distinct
+            let components = proc.ExecutesProtocol |> Option.bind (fun p -> p.Components) |> Option.defaultValue []
 
             let inputType = ios |> List.map (fst >> IOType.fromInput) |> IOType.reduce
             let outputType = ios |> List.map (snd >> IOType.fromOutput) |> IOType.reduce
 
-            QRow.create(inputName, outputName, inputType, outputType, characteristics, parameterValues, factors)
+            QRow.create(inputName, outputName, inputType, outputType, characteristics, parameterValues, factors, components)
             
         )
        

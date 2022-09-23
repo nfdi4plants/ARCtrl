@@ -26,6 +26,7 @@ type AnnotationValue =
         | Int i -> string i
         | Float f -> string f
 
+[<CustomEquality; NoComparison>]
 type OntologyAnnotation =
     {
         [<JsonPropertyName("@id")>]
@@ -36,24 +37,21 @@ type OntologyAnnotation =
         TermSourceREF : string option
         [<JsonPropertyName("termAccession")>]
         TermAccessionNumber : URI option
-        [<JsonIgnore>]
-        TermPath : URI option
         [<JsonPropertyName("comments")>]
         Comments : Comment list option
     }
 
-    static member make id name termSourceREF termAccessionNumber termPath comments= 
+    static member make id name termSourceREF termAccessionNumber comments= 
         {
             ID = id
             Name = name 
             TermSourceREF = termSourceREF
             TermAccessionNumber = termAccessionNumber  
-            TermPath = termPath
             Comments = comments
         }
 
-    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?TermPath,?Comments) : OntologyAnnotation =
-        OntologyAnnotation.make Id Name TermSourceREF TermAccessionNumber TermPath Comments
+    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
+        OntologyAnnotation.make Id Name TermSourceREF TermAccessionNumber Comments
 
     static member empty =
         OntologyAnnotation.create()
@@ -117,7 +115,7 @@ type OntologyAnnotation =
         this.TermAccessionNumber
         |> Option.defaultValue ""
 
-    
+    static member shortAnnotationRegex = "(?<ref>\\w*):(?<num>\\w*)"
     static member ontologyTermURIRegex = ".*/(?<ref>\\w*)_(?<num>\\w*)"
     
     /// Tries to split a term Path in form of `http://purl.obolibrary.org/obo/MS_1000121` into it's Term Accession Source `MS` and Term Accession Number `1000121`. 
@@ -128,13 +126,42 @@ type OntologyAnnotation =
         else 
             None
 
+    /// Tries to split a term id in form of `MS:1000121` into it's Term Accession Source `MS` and Term Accession Number `1000121`. 
+    static member trySplitShortAnnotation (termAccessionPath : string) =
+        let r = Regex.Match(termAccessionPath,OntologyAnnotation.shortAnnotationRegex)
+        if r.Success then 
+            Some (r.Groups.Item("ref").Value,r.Groups.Item("num").Value)
+        else 
+            None
+
+    /// Create a path in form of `http://purl.obolibrary.org/obo/MS_1000121`from it's Term Accession Source `MS` and Term Accession Number `1000121`. 
+    static member createUriAnnotation (termSourceRef : string) (termAccessionNumber : string) =
+        let r = Regex.Match(termAccessionNumber,OntologyAnnotation.ontologyTermURIRegex)
+        let r2 = Regex.Match(termAccessionNumber,OntologyAnnotation.shortAnnotationRegex)
+
+        if r.Success then
+            let termSourceRef = r.Groups.Item("ref").Value
+            let termAccessionNumber = r.Groups.Item("num").Value
+            $"http://purl.obolibrary.org/obo/{termSourceRef}_{termAccessionNumber}"
+        elif r2.Success then
+            let termSourceRef = r.Groups.Item("ref").Value
+            let termAccessionNumber = r.Groups.Item("num").Value
+            $"http://purl.obolibrary.org/obo/{termSourceRef}_{termAccessionNumber}"
+        else
+            $"http://purl.obolibrary.org/obo/{termSourceRef}_{termAccessionNumber}"
+
     /// Creates an annotation of format `TermSourceRef:TermAccessionNumber` (e.g: `MS:1000690`)
     /// 
     /// If termAccessionNumber is given in full URI form `http://purl.obolibrary.org/obo/MS_1000121`, takes last part of it. 
     static member createShortAnnotation (termSourceRef : string) (termAccessionNumber : string) =
         let r = Regex.Match(termAccessionNumber,OntologyAnnotation.ontologyTermURIRegex)
-       
+        let r2 = Regex.Match(termAccessionNumber,OntologyAnnotation.shortAnnotationRegex)
+        
         if r.Success then
+            let termSourceRef = r.Groups.Item("ref").Value
+            let termAccessionNumber = r.Groups.Item("num").Value
+            $"{termSourceRef}:{termAccessionNumber}"
+        elif r2.Success then
             let termSourceRef = r.Groups.Item("ref").Value
             let termAccessionNumber = r.Groups.Item("num").Value
             $"{termSourceRef}:{termAccessionNumber}"
@@ -147,50 +174,30 @@ type OntologyAnnotation =
         |> fun a -> a.[0],a.[1]
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromString (term:string) (source:string) (accessionNumOrPath:string) =
-        match OntologyAnnotation.trySplitUri accessionNumOrPath with
-        | Some (source,num) ->
-            OntologyAnnotation.make 
-                None 
-                (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-                (Option.fromValueWithDefault "" source)
-                (Option.fromValueWithDefault "" num |> Option.map URI.fromString)
-                (Some accessionNumOrPath)
-                None
-        | None ->
-            OntologyAnnotation.make 
-                None 
-                (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-                (Option.fromValueWithDefault "" source)
-                (Option.fromValueWithDefault "" accessionNumOrPath |> Option.map URI.fromString)
-                None
-                None
+    static member fromString (term:string) (source:string) (accessionNumber:string) =
+       
+        OntologyAnnotation.make 
+            None 
+            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" source)
+            (Option.fromValueWithDefault "" accessionNumber)
+            None
 
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromStringWithComments (term:string) (source:string) (accessionNumOrPath:string) (comments : Comment list) =
-        match OntologyAnnotation.trySplitUri accessionNumOrPath with
-        | Some (source,num) ->
-            OntologyAnnotation.make 
-                None 
-                (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-                (Option.fromValueWithDefault "" source)
-                (Option.fromValueWithDefault "" num |> Option.map URI.fromString)
-                (Some accessionNumOrPath)
-                (Option.fromValueWithDefault [] comments)
-        | None ->
-            OntologyAnnotation.make 
-                None 
-                (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-                (Option.fromValueWithDefault "" source)
-                (Option.fromValueWithDefault "" accessionNumOrPath |> Option.map URI.fromString)
-                None
-                (Option.fromValueWithDefault [] comments)
+    static member fromStringWithComments (term:string) (source:string) (accessionNumber:string) (comments : Comment list) =
+        
+        OntologyAnnotation.make 
+            None 
+            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
+            (Option.fromValueWithDefault "" source)
+            (Option.fromValueWithDefault "" accessionNumber |> Option.map URI.fromString)
+            (Option.fromValueWithDefault [] comments)
 
     static member fromAnnotationId (id : string) =
         id 
         |> OntologyAnnotation.splitAnnotation
         |> fun (source,num) ->
-            OntologyAnnotation.fromString "" source num
+            OntologyAnnotation.fromString "" source id
 
     /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
     [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
@@ -210,18 +217,33 @@ type OntologyAnnotation =
         let numberComment = Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton)
         OntologyAnnotation.fromStringWithComments term source accession ((numberComment |> Option.defaultValue []) @ comments)   
 
-    member this.AnnotationID = OntologyAnnotation.createShortAnnotation this.TermSourceREFString this.TermAccessionString
+    member this.ShortAnnotationString = 
+        match this.TermAccessionNumber with
+        | Some t ->
+            match OntologyAnnotation.trySplitUri t with 
+            | Some (s,t) -> OntologyAnnotation.createShortAnnotation s t
+            | None -> 
+                if System.Text.RegularExpressions.Regex.Match(t,OntologyAnnotation.shortAnnotationRegex).Success then t
+                else ""
+        | None -> ""
+
+    member this.URLAnnotationString = 
+        match this.TermAccessionNumber with
+        | Some t ->
+            match OntologyAnnotation.trySplitUri t with 
+            | Some _ -> t
+            | None -> 
+                let r = System.Text.RegularExpressions.Regex.Match(t,OntologyAnnotation.shortAnnotationRegex)
+                if r.Success then t
+                else ""
+        | None -> ""
+
 
     /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,source,accession)
     static member toString (oa : OntologyAnnotation) =
         oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
         oa.TermSourceREF |> Option.defaultValue "",
-        match oa.TermPath, oa.TermAccessionNumber with
-        | Some p , _ -> URI.toString p
-        | _ , Some n -> n
-        | _ -> ""
-
-
+        oa.TermAccessionNumber |> Option.defaultValue ""
 
     interface IISAPrintable with
         member this.Print() =
@@ -229,6 +251,23 @@ type OntologyAnnotation =
         member this.PrintCompact() =
             "OA " + this.NameText
 
+    override this.Equals other =
+        match other with
+        | :? OntologyAnnotation as oa -> (this :> System.IEquatable<_>).Equals oa
+        | _ -> false
+
+    override this.GetHashCode () = (this.NameText+this.ShortAnnotationString).GetHashCode()
+
+    interface System.IEquatable<OntologyAnnotation> with
+        member this.Equals other =
+            if this.TermAccessionNumber.IsSome && other.TermAccessionNumber.IsSome then
+                other.ShortAnnotationString = this.ShortAnnotationString
+            elif this.Name.IsSome && other.Name.IsSome then
+                other.NameText = this.NameText
+            elif this.TermAccessionNumber.IsNone && other.TermAccessionNumber.IsNone && this.Name.IsNone && other.Name.IsNone then
+                true
+            else 
+                false
 
 type OntologySourceReference =
     {

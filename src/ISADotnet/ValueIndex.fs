@@ -47,8 +47,13 @@ module ValueIndex =
         characteristicValue.Category 
         |> Option.bind tryGetCharacteristicIndex
 
+    let tryGetComponentIndex (comp : Component) =
+        comp.ComponentType 
+        |> Option.bind (fun oa -> 
+            oa.Comments |> Option.bind tryGetIndex
+        )
+      
 
-    
 [<AutoOpen>]
 module ValueIndexExtensions = 
     
@@ -135,3 +140,17 @@ module ValueIndexExtensions =
         static member tryGetValueIndex(p) = ValueIndex.tryGetParameterValueIndex p
         
         member this.TryGetValueIndex() = ValueIndex.tryGetParameterValueIndex this
+
+    type Component with 
+
+        /// Create a ISAJson Factor from ISATab string entries
+        static member fromStringWithValueIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
+            Component.fromStringWithComments name term source accession [ValueIndex.createOrderComment valueIndex]
+
+        static member getValueIndex(f) = ValueIndex.tryGetComponentIndex f |> Option.get
+
+        member this.GetValueIndex() = ValueIndex.tryGetComponentIndex this |> Option.get
+
+        static member tryGetValueIndex(f) = ValueIndex.tryGetComponentIndex f
+
+        member this.TryGetValueIndex() = ValueIndex.tryGetComponentIndex this

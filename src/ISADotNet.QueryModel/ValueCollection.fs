@@ -89,6 +89,18 @@ type ValueCollection(values : ISAValue list) =
         )
         |> ValueCollection
 
+    /// Return a new ValueCollection with only the factor values
+    member this.Components(?Name) = 
+        values
+        |> List.filter (fun v -> 
+            match Name with 
+            | Some name -> 
+                v.IsComponent && v.NameText = name
+            | None -> 
+                v.IsComponent
+        )
+        |> ValueCollection
+
     /// Return a new ValueCollection with only those values, for which the predicate applied on the header return true
     member this.Filter(predicate : OntologyAnnotation -> bool) = values |> List.filter (fun v -> predicate v.Category) |> ValueCollection
 
@@ -248,6 +260,17 @@ type IOValueCollection(values : KeyValuePair<string*string,ISAValue> list) =
                 kv.Value.IsFactorValue && kv.Value.NameText = name
             | None -> 
                 kv.Value.IsFactorValue
+        )
+        |> IOValueCollection
+
+    member this.Components(?Name) = 
+        values
+        |> List.filter (fun kv -> 
+            match Name with 
+            | Some name -> 
+                kv.Value.IsComponent && kv.Value.NameText = name
+            | None -> 
+                kv.Value.IsComponent
         )
         |> IOValueCollection
 
