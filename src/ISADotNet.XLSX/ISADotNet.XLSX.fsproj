@@ -35,7 +35,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj" />
-    <ProjectReference Include="..\ISADotnet\ISADotNet.fsproj" />
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
