@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="JsonSchemaValidation.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="ISADotnet\JsonExtensionsTests.fs" />
     <Compile Include="ISADotnet\NameAndTypeCastingTests.fs" />
@@ -32,6 +33,9 @@
 
   <ItemGroup>
     <PackageReference Include="Expecto" Version="9.*" />
+    <PackageReference Include="FSharp.Data" Version="5.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="Newtonsoft.Json.Schema" Version="3.0.14" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
     <PackageReference Update="FSharp.Core" Version="6.0.5" />
