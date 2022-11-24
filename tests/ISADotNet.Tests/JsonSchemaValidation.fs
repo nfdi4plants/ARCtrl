@@ -4,16 +4,40 @@ open Expecto
 open FSharp.Data
 open NJsonSchema
 
+module ValidationError = 
+
+    open NJsonSchema.Validation
+
+    let rec isFatal (error : ValidationError) =
+        match error with
+        | :? ChildSchemaValidationError as ce -> 
+            if ce.Kind = ValidationErrorKind.ArrayItemNotValid then
+                ce.Errors.Values
+                |> Seq.exists (Seq.exists isFatal)
+            elif ce.Kind = ValidationErrorKind.NotAnyOf then
+                ce.Errors.Values
+                |> Seq.exists (Seq.exists isFatal)
+            else
+                true
+        | error -> 
+            if error.Kind = ValidationErrorKind.UriExpected then
+                false
+            elif error.Kind = ValidationErrorKind.DateTimeExpected then
+                false
+            else 
+                true
+
 module JSchema = 
 
-    let validate (schemaURL : string) (objectString : string) : (bool * seq<string>) = 
+    let validate (schemaURL : string) (objectString : string) : (bool * string []) = 
 
         let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
         let r = 
             schema.Result.Validate(objectString)
+            |> Seq.filter ValidationError.isFatal
 
         r |> Seq.length |> (=) 0,
-        r |> Seq.map (fun err -> err.ToString())
+        r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray
 
 module Expect =
 
