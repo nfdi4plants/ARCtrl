@@ -2,30 +2,23 @@
 
 open Expecto
 open FSharp.Data
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
-open Newtonsoft.Json.Schema
+open NJsonSchema
 
 module JSchema = 
 
-    let validate (schemaBaseURL : string) (schemaURL : string) (objectString : string) : (bool * #seq<string>) = 
-        let resolver = JSchemaUrlResolver()
-        let settings = JSchemaReaderSettings(Resolver = resolver,BaseUri = System.Uri(schemaBaseURL))
+    let validate (schemaURL : string) (objectString : string) : (bool * seq<string>) = 
 
-        let schemaString = Http.RequestString schemaURL
-        let schemaReader = new JsonTextReader(new System.IO.StringReader(schemaString))
+        let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
+        let r = 
+            schema.Result.Validate(objectString)
 
-        let schema = JSchema.Load(schemaReader,settings)
-        let objectJson = JObject.Parse(objectString)
-
-        objectJson.IsValid(schema)
+        r |> Seq.length |> (=) 0,
+        r |> Seq.map (fun err -> err.ToString())
 
 module Expect =
 
-    let mutable schemaBaseURL = "https://raw.githubusercontent.com/ISA-tools/isa-specs/master/source/_static/isajson/"
-    
     let matchingSchema (schemaURL : string) (objectString : string)=
-        let isValid,msg = JSchema.validate schemaBaseURL schemaURL objectString
+        let isValid,msg = JSchema.validate schemaURL objectString
         Expect.isTrue isValid (sprintf "Json Object did not match Json Schema: %A" msg)
 
     let matchingAssay (assayString : string) =
