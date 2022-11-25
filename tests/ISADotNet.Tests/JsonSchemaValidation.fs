@@ -4,37 +4,56 @@ open Expecto
 open FSharp.Data
 open NJsonSchema
 
-module ValidationError = 
+module Validation = 
 
+    open NJsonSchema
     open NJsonSchema.Validation
+    open NJsonSchema.Validation.FormatValidators
+    open Newtonsoft.Json.Linq
+    open System
 
-    let rec isFatal (error : ValidationError) =
-        match error with
-        | :? ChildSchemaValidationError as ce -> 
-            if ce.Kind = ValidationErrorKind.ArrayItemNotValid then
-                ce.Errors.Values
-                |> Seq.exists (Seq.exists isFatal)
-            elif ce.Kind = ValidationErrorKind.NotAnyOf then
-                ce.Errors.Values
-                |> Seq.exists (Seq.exists isFatal)
-            else
+    type NewUriValidator() = 
+    
+        interface IFormatValidator with
+
+            member this.Format = JsonFormatStrings.Uri
+    
+            member this.ValidationErrorKind = ValidationErrorKind.UriExpected;
+
+            member this.IsValid(value : string,  tokenType : JTokenType) = 
                 true
-        | error -> 
-            if error.Kind = ValidationErrorKind.UriExpected then
-                false
-            elif error.Kind = ValidationErrorKind.DateTimeExpected then
-                false
-            else 
+
+    type NewDateTimeValidator() = 
+    
+        interface IFormatValidator with
+
+            member this.Format = JsonFormatStrings.DateTime
+    
+            member this.ValidationErrorKind = ValidationErrorKind.UriExpected;
+
+            member this.IsValid(value : string,  tokenType : JTokenType) = 
+                true
+
+    type NewEmailValidator() = 
+    
+        interface IFormatValidator with
+
+            member this.Format = JsonFormatStrings.Email
+    
+            member this.ValidationErrorKind = ValidationErrorKind.UriExpected;
+
+            member this.IsValid(value : string,  tokenType : JTokenType) = 
                 true
 
 module JSchema = 
 
     let validate (schemaURL : string) (objectString : string) : (bool * string []) = 
-
+        let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
+        settings.AddCustomFormatValidator(Validation.NewUriValidator())
+        settings.AddCustomFormatValidator(Validation.NewDateTimeValidator())
+        settings.AddCustomFormatValidator(Validation.NewEmailValidator())
         let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
-        let r = 
-            schema.Result.Validate(objectString)
-            |> Seq.filter ValidationError.isFatal
+        let r = schema.Result.Validate(objectString,settings)
 
         r |> Seq.length |> (=) 0,
         r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray
