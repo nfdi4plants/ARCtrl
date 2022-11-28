@@ -673,7 +673,6 @@
     }
   ],
   "technologyType": {
-    "termAccession": "",
     "termSource": "OBI",
     "annotationValue": "mass spectrometry"
   },
@@ -687,8 +686,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.2-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction78" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-S-0.1-aliquot5" } ],
@@ -706,7 +704,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction5",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC85_Sulphate_0.10_External_1_1" },
       "performer": "",
@@ -721,8 +718,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.2-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction1" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.2-aliquot8" } ],
@@ -740,7 +736,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction51",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC7_Carbon_0.20_Internal_1_1" },
       "performer": "",
@@ -755,8 +750,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot3" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction74" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.2-aliquot7" } ],
@@ -774,7 +768,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction44",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC72_Nitrogen_0.20_External_3_1" },
       "performer": "",
@@ -789,8 +782,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction19" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.2-aliquot9" } ],
@@ -808,7 +800,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction34",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC17_Nitrogen_0.20_Internal_2_1" },
       "performer": "",
@@ -823,8 +814,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction81" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.1-aliquot5" } ],
@@ -842,7 +832,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction91",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC95_Ethanol_0.10_External_2_1" },
       "performer": "",
@@ -857,8 +846,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.2-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction52" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.2-aliquot9" } ],
@@ -876,7 +864,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction16",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC26_Phosphate_0.20_Internal_2_1" },
       "performer": "",
@@ -898,7 +885,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction57",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC58_Carbon_0.10_External_1_1" },
       "performer": "",
@@ -920,7 +906,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction48",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC4_Carbon_0.10_Internal_1_1" },
       "performer": "",
@@ -935,8 +920,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction20" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.1-aliquot3" } ],
@@ -954,7 +938,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction86",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC42_Ethanol_0.10_Internal_3_1" },
       "performer": "",
@@ -976,7 +959,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction27",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC10_Nitrogen_0.07_Internal_1_3" },
       "performer": "",
@@ -998,7 +980,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction25",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC80_Phosphate_0.20_External_2_1" },
       "performer": "",
@@ -1020,7 +1001,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction42",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC70_Nitrogen_0.20_External_1_1" },
       "performer": "",
@@ -1035,8 +1015,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.1-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction68" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.07-aliquot8" } ],
@@ -1054,7 +1033,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction10",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC20_Phosphate_0.07_Internal_1_1" },
       "performer": "",
@@ -1069,8 +1047,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.1-aliquot3" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction77" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.1-aliquot8" } ],
@@ -1088,7 +1065,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction30",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC13_Nitrogen_0.10_Internal_1_1" },
       "performer": "",
@@ -1103,8 +1079,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction27" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.2-aliquot8" } ],
@@ -1122,7 +1097,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction33",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC16_Nitrogen_0.20_Internal_1_1" },
       "performer": "",
@@ -1137,8 +1111,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.1-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction31" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC27_Phosphate_0.20_Internal_3_1.txt" } ],
@@ -1149,8 +1122,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.2-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction17" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC4_Carbon_0.10_Internal_1_1.txt" } ],
@@ -1161,8 +1133,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.1-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction48" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC9_Carbon_0.20_Internal_3_1.txt" } ],
@@ -1173,8 +1144,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.2-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction53" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC90_Sulphate_0.20_External_3_1.txt" } ],
@@ -1185,8 +1155,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.2-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction9" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.1-aliquot5" } ],
@@ -1204,7 +1173,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction21",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC76_Phosphate_0.10_External_1_1" },
       "performer": "",
@@ -1226,7 +1194,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction87",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC91_Ethanol_0.07_External_1_3" },
       "performer": "",
@@ -1248,7 +1215,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction19",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC73_Phosphate_0.07_External_1_2" },
       "performer": "",
@@ -1270,7 +1236,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction56",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC57_Carbon_0.07_External_3_1" },
       "performer": "",
@@ -1292,7 +1257,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction7",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC88_Sulphate_0.20_External_1_1" },
       "performer": "",
@@ -1307,8 +1271,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.1-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction39" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC5_Carbon_0.10_Internal_2_1.txt" } ],
@@ -1319,8 +1282,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.1-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction49" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC18_Nitrogen_0.20_Internal_3_1.txt" } ],
@@ -1331,8 +1293,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.2-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction35" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC94_Ethanol_0.10_External_1_1.txt" } ],
@@ -1343,8 +1304,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.1-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction90" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.07-aliquot3" } ],
@@ -1362,7 +1322,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction74",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC102_GlucoseO2_0.07_External_3_1" },
       "performer": "",
@@ -1384,7 +1343,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction28",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC11_Nitrogen_0.07_Internal_2_1" },
       "performer": "",
@@ -1406,7 +1364,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction35",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC18_Nitrogen_0.20_Internal_3_1" },
       "performer": "",
@@ -1428,7 +1385,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction6",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC86_Sulphate_0.10_External_2_1" },
       "performer": "",
@@ -1443,8 +1399,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.1-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction58" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC89_Sulphate_0.20_External_2_1.txt" } ],
@@ -1455,8 +1410,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.2-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction8" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-S-0.07-aliquot7" } ],
@@ -1474,7 +1428,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction4",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC84_Sulphate_0.07_External_3_1" },
       "performer": "",
@@ -1496,7 +1449,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction47",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC3_Carbon_0.07_Internal_3_1" },
       "performer": "",
@@ -1518,7 +1470,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction89",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC93_Ethanol_0.07_External_3_1" },
       "performer": "",
@@ -1540,7 +1491,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction65",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC48_GlucoseO2_0.07_Internal_3_1" },
       "performer": "",
@@ -1562,7 +1512,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction73",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC101_GlucoseO2_0.07_External_2_1" },
       "performer": "",
@@ -1577,8 +1526,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.2-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction44" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC16_Nitrogen_0.20_Internal_1_1.txt" } ],
@@ -1589,8 +1537,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.2-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction33" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.2-aliquot1" } ],
@@ -1608,7 +1555,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction78",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC106_GlucoseO2_0.20_External_1_1" },
       "performer": "",
@@ -1623,8 +1569,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction89" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.07-aliquot9" } ],
@@ -1642,7 +1587,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction46",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC2_Carbon_0.07_Internal_2_1" },
       "performer": "",
@@ -1657,8 +1601,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction63" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC65_Nitrogen_0.07_External_2_1.txt" } ],
@@ -1669,8 +1612,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction37" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC79_Phosphate_0.20_External_1_1.txt" } ],
@@ -1681,8 +1623,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.2-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction24" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.07-aliquot1" } ],
@@ -1700,7 +1641,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction81",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC37_Ethanol_0.07_Internal_1_3" },
       "performer": "",
@@ -1722,7 +1662,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction11",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC21_Phosphate_0.07_Internal_2_1" },
       "performer": "",
@@ -1737,8 +1676,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction54" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC1_Carbon_0.07_Internal_1_1.txt" } ],
@@ -1749,8 +1687,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction45" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.1-aliquot2" } ],
@@ -1768,7 +1705,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction85",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC41_Ethanol_0.10_Internal_2_1" },
       "performer": "",
@@ -1783,8 +1719,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction63" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC63_Carbon_0.20_External_3_1.txt" } ],
@@ -1795,8 +1730,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.2-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction62" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC91_Ethanol_0.07_External_1_1.txt" } ],
@@ -1807,8 +1741,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction87" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC60_Carbon_0.10_External_3_1.txt" } ],
@@ -1819,8 +1752,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.1-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction59" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC49_GlucoseO2_0.10_Internal_1_1.txt" } ],
@@ -1831,8 +1763,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.1-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction66" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC82_Sulphate_0.07_External_1_1.txt" } ],
@@ -1843,8 +1774,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction2" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.1-aliquot9" } ],
@@ -1862,7 +1792,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction31",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC14_Nitrogen_0.10_Internal_2_1" },
       "performer": "",
@@ -1877,8 +1806,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot3" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction83" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC3_Carbon_0.07_Internal_3_1.txt" } ],
@@ -1889,8 +1817,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction47" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.07-aliquot5" } ],
@@ -1908,7 +1835,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction54",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC55_Carbon_0.07_External_1_3" },
       "performer": "",
@@ -1930,7 +1856,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction24",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC79_Phosphate_0.20_External_1_1" },
       "performer": "",
@@ -1952,7 +1877,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction15",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC25_Phosphate_0.20_Internal_1_1" },
       "performer": "",
@@ -1967,8 +1891,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction27" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC54_GlucoseO2_0.20_Internal_3_1.txt" } ],
@@ -1979,8 +1902,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.2-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction71" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC50_GlucoseO2_0.10_Internal_2_1.txt" } ],
@@ -1991,8 +1913,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.1-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction67" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.07-aliquot1" } ],
@@ -2010,7 +1931,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction72",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC100_GlucoseO2_0.07_External_1_2" },
       "performer": "",
@@ -2032,7 +1952,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction12",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC22_Phosphate_0.10_Internal_1_1" },
       "performer": "",
@@ -2047,8 +1966,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot2" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction82" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.07-aliquot5" } ],
@@ -2066,7 +1984,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction36",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC64_Nitrogen_0.07_External_1_3" },
       "performer": "",
@@ -2081,8 +1998,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction65" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.07-aliquot7" } ],
@@ -2100,7 +2016,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction20",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC73_Phosphate_0.07_External_1_3" },
       "performer": "",
@@ -2115,8 +2030,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction54" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC1_Carbon_0.07_Internal_1_2.txt" } ],
@@ -2127,8 +2041,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction45" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC62_Carbon_0.20_External_2_1.txt" } ],
@@ -2139,8 +2052,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.2-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction61" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC47_GlucoseO2_0.07_Internal_2_1.txt" } ],
@@ -2151,8 +2063,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction64" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-/Users/eamonnmaguire/Dropbox/ISAtab" } ],
@@ -2163,8 +2074,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.07-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction4" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.1-aliquot6" } ],
@@ -2182,7 +2092,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction68",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC51_GlucoseO2_0.10_Internal_3_1" },
       "performer": "",
@@ -2197,8 +2106,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.2-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction7" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.1-aliquot5" } ],
@@ -2216,7 +2124,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction39",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC67_Nitrogen_0.10_External_1_1" },
       "performer": "",
@@ -2231,8 +2138,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction63" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.07-aliquot8" } ],
@@ -2250,7 +2156,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction45",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC1_Carbon_0.07_Internal_1_3" },
       "performer": "",
@@ -2272,7 +2177,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction80",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC108_GlucoseO2_0.20_External_3_1" },
       "performer": "",
@@ -2287,8 +2191,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.1-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction57" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC74_Phosphate_0.07_External_2_1.txt" } ],
@@ -2299,8 +2202,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction18" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.2-aliquot9" } ],
@@ -2318,7 +2220,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction52",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC8_Carbon_0.20_Internal_2_1" },
       "performer": "",
@@ -2340,7 +2241,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction59",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC60_Carbon_0.10_External_3_1" },
       "performer": "",
@@ -2362,7 +2262,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction76",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC104_GlucoseO2_0.10_External_2_1" },
       "performer": "",
@@ -2377,8 +2276,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.2-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction15" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC70_Nitrogen_0.20_External_1_1.txt" } ],
@@ -2389,8 +2287,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.2-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction42" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.2-aliquot6" } ],
@@ -2408,7 +2305,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction61",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC62_Carbon_0.20_External_2_1" },
       "performer": "",
@@ -2430,7 +2326,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction53",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC9_Carbon_0.20_Internal_3_1" },
       "performer": "",
@@ -2445,8 +2340,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction54" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.1-aliquot6" } ],
@@ -2464,7 +2358,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction92",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC96_Ethanol_0.10_External_3_1" },
       "performer": "",
@@ -2479,8 +2372,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.1-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction91" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.1-aliquot9" } ],
@@ -2498,7 +2390,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction13",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC23_Phosphate_0.10_Internal_2_1" },
       "performer": "",
@@ -2513,8 +2404,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.1-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction5" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.07-aliquot7" } ],
@@ -2532,7 +2422,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction38",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC66_Nitrogen_0.07_External_3_1" },
       "performer": "",
@@ -2547,8 +2436,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction18" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt" } ],
@@ -2559,8 +2447,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction36" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.1-aliquot3" } ],
@@ -2578,7 +2465,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction77",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC105_GlucoseO2_0.10_External_3_1" },
       "performer": "",
@@ -2593,8 +2479,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.1-aliquot3" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction86" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC40_Ethanol_0.10_Internal_1_1.txt" } ],
@@ -2605,8 +2490,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.1-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction84" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC80_Phosphate_0.20_External_2_1.txt" } ],
@@ -2617,8 +2501,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.2-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction25" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.07-aliquot4" } ],
@@ -2636,7 +2519,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction63",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC46_GlucoseO2_0.07_Internal_1_3" },
       "performer": "",
@@ -2651,8 +2533,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.2-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction34" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC6_Carbon_0.10_Internal_3_1.txt" } ],
@@ -2663,8 +2544,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.1-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction50" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC66_Nitrogen_0.07_External_3_1.txt" } ],
@@ -2675,8 +2555,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction38" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.07-aliquot5" } ],
@@ -2694,7 +2573,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction64",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC47_GlucoseO2_0.07_Internal_2_1" },
       "performer": "",
@@ -2709,8 +2587,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.2-aliquot3" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction80" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC23_Phosphate_0.10_Internal_2_1.txt" } ],
@@ -2721,8 +2598,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.1-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction13" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC11_Nitrogen_0.07_Internal_2_1.txt" } ],
@@ -2733,8 +2609,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction28" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.1-aliquot5" } ],
@@ -2752,7 +2627,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction67",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC50_GlucoseO2_0.10_Internal_2_1" },
       "performer": "",
@@ -2774,7 +2648,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction22",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC77_Phosphate_0.10_External_2_1" },
       "performer": "",
@@ -2789,8 +2662,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction81" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.2-aliquot7" } ],
@@ -2808,7 +2680,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction62",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC63_Carbon_0.20_External_3_1" },
       "performer": "",
@@ -2823,8 +2694,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.1-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction14" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.2-aliquot5" } ],
@@ -2842,7 +2712,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction60",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC61_Carbon_0.20_External_1_1" },
       "performer": "",
@@ -2857,8 +2726,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.1-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction12" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC52_GlucoseO2_0.20_Internal_1_1.txt" } ],
@@ -2869,8 +2737,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.2-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction69" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.1-aliquot10" } ],
@@ -2888,7 +2755,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction32",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC15_Nitrogen_0.10_Internal_3_1" },
       "performer": "",
@@ -2910,7 +2776,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction49",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC5_Carbon_0.10_Internal_2_1" },
       "performer": "",
@@ -2932,7 +2797,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction26",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC81_Phosphate_0.20_External_3_1" },
       "performer": "",
@@ -2947,8 +2811,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.2-aliquot2" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction79" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.2-aliquot5" } ],
@@ -2966,7 +2829,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction70",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC53_GlucoseO2_0.20_Internal_2_1" },
       "performer": "",
@@ -2988,7 +2850,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction1",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC36_Sulphate_0.20_Internal_1_3" },
       "performer": "",
@@ -3010,7 +2871,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction71",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC54_GlucoseO2_0.20_Internal_3_1" },
       "performer": "",
@@ -3032,7 +2892,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction82",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC38_Ethanol_0.07_Internal_2_1" },
       "performer": "",
@@ -3047,8 +2906,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction2" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.1-aliquot6" } ],
@@ -3066,7 +2924,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction40",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC68_Nitrogen_0.10_External_2_1" },
       "performer": "",
@@ -3081,8 +2938,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.1-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction92" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.2-aliquot6" } ],
@@ -3100,7 +2956,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction43",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC71_Nitrogen_0.20_External_2_1" },
       "performer": "",
@@ -3115,8 +2970,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction10" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC69_Nitrogen_0.10_External_3_1.txt" } ],
@@ -3127,8 +2981,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.1-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction41" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.1-aliquot4" } ],
@@ -3146,7 +2999,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction90",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC94_Ethanol_0.10_External_1_1" },
       "performer": "",
@@ -3168,7 +3020,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction55",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC56_Carbon_0.07_External_2_1" },
       "performer": "",
@@ -3183,8 +3034,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.1-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction75" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-S-0.2-aliquot6" } ],
@@ -3202,7 +3052,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction8",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC89_Sulphate_0.20_External_2_1" },
       "performer": "",
@@ -3217,8 +3066,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction46" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC41_Ethanol_0.10_Internal_2_1.txt" } ],
@@ -3229,8 +3077,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.1-aliquot2" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction85" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC76_Phosphate_0.10_External_1_1.txt" } ],
@@ -3241,8 +3088,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.1-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction21" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.07-aliquot10" } ],
@@ -3260,7 +3106,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction29",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC12_Nitrogen_0.07_Internal_3_1" },
       "performer": "",
@@ -3275,8 +3120,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.2-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction60" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC77_Phosphate_0.10_External_2_1.txt" } ],
@@ -3287,8 +3131,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.1-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction22" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-S-0.2-aliquot7" } ],
@@ -3306,7 +3149,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction9",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC90_Sulphate_0.20_External_3_1" },
       "performer": "",
@@ -3321,8 +3163,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.2-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction51" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.1-aliquot6" } ],
@@ -3340,7 +3181,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction58",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC59_Carbon_0.10_External_2_1" },
       "performer": "",
@@ -3355,8 +3195,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction72" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC78_Phosphate_0.10_External_3_1.txt" } ],
@@ -3367,8 +3206,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.1-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction23" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-E-0.1-aliquot1" } ],
@@ -3386,7 +3224,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction84",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC40_Ethanol_0.10_Internal_1_1" },
       "performer": "",
@@ -3401,8 +3238,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction36" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC68_Nitrogen_0.10_External_2_1.txt" } ],
@@ -3413,8 +3249,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.1-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction40" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC56_Carbon_0.07_External_2_1.txt" } ],
@@ -3425,8 +3260,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction55" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC26_Phosphate_0.20_Internal_2_1.txt" } ],
@@ -3437,8 +3271,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.2-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction16" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.07-aliquot5" } ],
@@ -3456,7 +3289,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction18",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC75_Phosphate_0.07_External_3_1" },
       "performer": "",
@@ -3471,8 +3303,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction45" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC57_Carbon_0.07_External_3_1.txt" } ],
@@ -3483,8 +3314,7 @@
       "inputs": [ { "@id": "#material/extract-C-0.07-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction56" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC91_Ethanol_0.07_External_1_2.txt" } ],
@@ -3495,8 +3325,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction87" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.1-aliquot7" } ],
@@ -3514,7 +3343,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction41",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC69_Nitrogen_0.10_External_3_1" },
       "performer": "",
@@ -3536,7 +3364,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction83",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC39_Ethanol_0.07_Internal_3_1" },
       "performer": "",
@@ -3551,8 +3378,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction18" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC21_Phosphate_0.07_Internal_2_1.txt" } ],
@@ -3563,8 +3389,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.07-aliquot9" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction11" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.1-aliquot4" } ],
@@ -3582,7 +3407,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction66",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC49_GlucoseO2_0.10_Internal_1_1" },
       "performer": "",
@@ -3604,7 +3428,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction75",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC103_GlucoseO2_0.10_External_1_1" },
       "performer": "",
@@ -3626,7 +3449,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction79",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC107_GlucoseO2_0.20_External_2_1" },
       "performer": "",
@@ -3641,8 +3463,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.2-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction70" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC104_GlucoseO2_0.10_External_2_1.txt" } ],
@@ -3653,8 +3474,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.1-aliquot2" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction76" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC13_Nitrogen_0.10_Internal_1_1.txt" } ],
@@ -3665,8 +3485,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.1-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction30" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC81_Phosphate_0.20_External_3_1.txt" } ],
@@ -3677,8 +3496,7 @@
       "inputs": [ { "@id": "#material/extract-P-0.2-aliquot7" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction26" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.2-aliquot10" } ],
@@ -3696,7 +3514,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction17",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC27_Phosphate_0.20_Internal_3_1" },
       "performer": "",
@@ -3711,8 +3528,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot2" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction73" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC15_Nitrogen_0.10_Internal_3_1.txt" } ],
@@ -3723,8 +3539,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.1-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction32" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-N-0.07-aliquot6" } ],
@@ -3742,7 +3557,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction37",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC65_Nitrogen_0.07_External_2_1" },
       "performer": "",
@@ -3757,8 +3571,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.1-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction6" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.1-aliquot10" } ],
@@ -3776,7 +3589,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction14",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC24_Phosphate_0.10_Internal_3_1" },
       "performer": "",
@@ -3798,7 +3610,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction3",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC83_Sulphate_0.07_External_2_1" },
       "performer": "",
@@ -3820,7 +3631,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction88",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC92_Ethanol_0.07_External_2_1" },
       "performer": "",
@@ -3835,8 +3645,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.07-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction3" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC100_GlucoseO2_0.07_External_1_1.txt" } ],
@@ -3847,8 +3656,7 @@
       "inputs": [ { "@id": "#material/extract-G-0.07-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction72" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-C-0.1-aliquot10" } ],
@@ -3866,7 +3674,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction50",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC6_Carbon_0.10_Internal_3_1" },
       "performer": "",
@@ -3881,8 +3688,7 @@
       "inputs": [ { "@id": "#material/extract-S-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction2" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC91_Ethanol_0.07_External_1_3.txt" } ],
@@ -3893,8 +3699,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot4" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction87" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-P-0.1-aliquot7" } ],
@@ -3912,7 +3717,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction23",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC78_Phosphate_0.10_External_3_1" },
       "performer": "",
@@ -3927,8 +3731,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot10" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction29" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-G-0.2-aliquot4" } ],
@@ -3946,7 +3749,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction69",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC52_GlucoseO2_0.20_Internal_1_1" },
       "performer": "",
@@ -3961,8 +3763,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot1" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction81" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_2.txt" } ],
@@ -3973,8 +3774,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction36" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC71_Nitrogen_0.20_External_2_1.txt" } ],
@@ -3985,8 +3785,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.2-aliquot6" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction43" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#data/rawspectraldatafile-JIC10_Nitrogen_0.07_Internal_1_1.txt" } ],
@@ -3997,8 +3796,7 @@
       "inputs": [ { "@id": "#material/extract-N-0.07-aliquot8" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction27" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     },
     {
       "outputs": [ { "@id": "#material/extract-S-0.07-aliquot5" } ],
@@ -4016,7 +3814,6 @@
         }
       ],
       "@id": "#process/metabolite_extraction2",
-      "date": "",
       "comments": [],
       "nextProcess": { "@id": "#process/JIC82_Sulphate_0.07_External_1_3" },
       "performer": "",
@@ -4031,8 +3828,7 @@
       "inputs": [ { "@id": "#material/extract-E-0.07-aliquot5" } ],
       "comments": [],
       "previousProcess": { "@id": "#process/metabolite_extraction88" },
-      "performer": "",
-      "date": ""
+      "performer": ""
     }
   ],
   "@id": "#assay/a_metabolome.txt",
@@ -4048,8 +3844,6 @@
     {
       "@id": "#characteristic_category/Material_Type",
       "characteristicType": {
-        "termAccession": "",
-        "termSource": "",
         "annotationValue": "Material Type"
       }
     }
