@@ -32,6 +32,10 @@ let main argv =
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAJsonTests.testAssayFile |> ignore
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv ISAJsonTests.testInvestigationFile |> ignore
 
+    // Json Schema Tests
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv JSchemaValidationTests.testProcessValidation |> ignore
+    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv JSchemaValidationTests.testProcessParameterValueValidation |> ignore
+
     // API functionality Tests
     Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv APITests.testUpdate |> ignore
     0

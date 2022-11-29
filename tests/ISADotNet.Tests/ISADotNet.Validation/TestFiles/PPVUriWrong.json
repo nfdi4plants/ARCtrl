@@ -1,0 +1,21 @@
+{
+    "category": {
+        "@id": "temperature",
+        "parameterName": {
+            "@id": "temperature",
+            "annotationValue": "temperature",
+            "termSource": "Ontobee",
+            "termAccession": "obo/NCRO_0000029",
+            "comments": []
+
+        }
+    },
+    "value": 37,
+    "unit": {
+        "@id": "degree_celcius",
+        "annotationValue": "degree Celsius",
+        "termSource": "OM2",
+        "termAccession": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius",
+        "comments": []
+    }
+}

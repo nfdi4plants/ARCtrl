@@ -1,0 +1,20 @@
+{
+    "category": {
+        "@id": "protease",
+        "parameterName": {
+            "@id": "protease",
+            "annotationValue": "Peptidase",
+            "termSource": "MS",
+            "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
+            "comments": []
+        }
+    },
+    "value": {
+        "@id": "trypsin",
+        "annotationValue": "Trypsin/P",
+        "termSource": "NCI",
+        "termAccession": "http://purl.obolibrary.org/obo/MS_1001313",
+        "comments": []
+        
+    }
+}
