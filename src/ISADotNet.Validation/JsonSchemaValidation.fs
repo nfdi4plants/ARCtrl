@@ -3,11 +3,14 @@
 module JSchema = 
    
     let validate (schemaURL : string) (objectString : string) = 
-        let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
-        let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
-        let r = schema.Result.Validate(objectString,settings)
+        try 
+            let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
+            let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
+            let r = schema.Result.Validate(objectString,settings)
 
-        ValidationResult.OfJSchemaOutput(r |> Seq.length |> (=) 0,r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray)
+            ValidationResult.OfJSchemaOutput(r |> Seq.length |> (=) 0,r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray)
+        with
+        | err -> Failed [|err.Message|]
 
     let validateAssay (assayString : string) =
         let assayUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/assay_schema.json"
