@@ -4,106 +4,90 @@ open Expecto
 open FSharp.Data
 open NJsonSchema
 
-module Validation = 
-
-    open NJsonSchema
-    open NJsonSchema.Validation
-    open NJsonSchema.Validation.FormatValidators
-    open Newtonsoft.Json.Linq
-    open System
-
-module JSchema = 
-
-    let validate (schemaURL : string) (objectString : string) : (bool * string []) = 
-        let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
-        let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
-        let r = schema.Result.Validate(objectString,settings)
-
-        r |> Seq.length |> (=) 0,
-        r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray
+open ISADotNet.Validation
 
 module Expect =
 
-    let matchingSchema (schemaURL : string) (objectString : string)=
-        let isValid,msg = JSchema.validate schemaURL objectString
-        Expect.isTrue isValid (sprintf "Json Object did not match Json Schema: %A" msg)
+
+    let matchingResult (vr : ValidationResult)=
+        Expect.isTrue vr.Success (sprintf "Json Object did not match Json Schema: %A" (vr.GetErrors()))
 
     let matchingAssay (assayString : string) =
-        let assayUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/assay_schema.json"
-        matchingSchema assayUrl assayString
+        ISADotNet.Validation.JSchema.validateAssay assayString
+        |> matchingResult
 
     let matchingComment (commentString : string) =
-        let commentUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/comment_schema.json"
-        matchingSchema commentUrl commentString
+        ISADotNet.Validation.JSchema.validateComment commentString
+        |> matchingResult
 
     let matchingData (dataString : string) =
-        let dataUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/data_schema.json"
-        matchingSchema dataUrl dataString
+        ISADotNet.Validation.JSchema.validateData dataString
+        |> matchingResult
     
     let matchingFactor (factorString : string) =
-        let factorUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/factor_schema.json"
-        matchingSchema factorUrl factorString
+        ISADotNet.Validation.JSchema.validateFactor factorString
+        |> matchingResult
 
     let matchingFactorValue (factorValueString : string) =
-        let factorValueUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/factor_value_schema.json"
-        matchingSchema factorValueUrl factorValueString
+        ISADotNet.Validation.JSchema.validateFactorValue factorValueString
+        |> matchingResult
 
     let matchingInvestigation (investigationString : string) =
-        let investigationUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/investigation_schema.json"
-        matchingSchema investigationUrl investigationString
+        ISADotNet.Validation.JSchema.validateInvestigation investigationString
+        |> matchingResult
 
     let matchingMaterialAttribute (materialAttributeString : string) =
-        let materialAttributeUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/material_attribute_schema.json"
-        matchingSchema materialAttributeUrl materialAttributeString
+        ISADotNet.Validation.JSchema.validateMaterialAttribute materialAttributeString
+        |> matchingResult
 
     let matchingMaterialAttributeValue (materialAttributeValueString : string) =
-        let materialAttributeValueUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/material_attribute_value_schema.json"
-        matchingSchema materialAttributeValueUrl materialAttributeValueString
+        ISADotNet.Validation.JSchema.validateMaterialAttributeValue materialAttributeValueString
+        |> matchingResult
 
     let matchingMaterial (materialString : string) =
-        let materialUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/material_schema.json"
-        matchingSchema materialUrl materialString
+        ISADotNet.Validation.JSchema.validateMaterial materialString
+        |> matchingResult
 
     let matchingOntologyAnnotation (ontologyAnnotationString : string) =
-        let ontologyAnnotationUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/ontology_annotation_schema.json"
-        matchingSchema ontologyAnnotationUrl ontologyAnnotationString
+        ISADotNet.Validation.JSchema.validateOntologyAnnotation ontologyAnnotationString
+        |> matchingResult
 
     let matchingOntologySourceReference (ontologySourceReferenceString : string) =
-        let ontologySourceReferenceUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/ontology_source_reference_schema.json"
-        matchingSchema ontologySourceReferenceUrl ontologySourceReferenceString
+        ISADotNet.Validation.JSchema.validateOntologySourceReference ontologySourceReferenceString
+        |> matchingResult
     
     let matchingPerson (personString : string) =
-        let personUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/person_schema.json"
-        matchingSchema personUrl personString
+        ISADotNet.Validation.JSchema.validatePerson personString
+        |> matchingResult
 
     let matchingProcessParameterValue (processParameterValueString : string) =
-        let processParameterValueUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/process_parameter_value_schema.json"
-        matchingSchema processParameterValueUrl processParameterValueString
+        ISADotNet.Validation.JSchema.validateProcessParameterValue processParameterValueString
+        |> matchingResult
 
     let matchingProcess (processString : string) =
-        let processUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/process_schema.json"
-        matchingSchema processUrl processString
+        ISADotNet.Validation.JSchema.validateProcess processString
+        |> matchingResult
 
     let matchingProtocolParameter (protocolParameterString : string) =
-        let protocolParameterUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/protocol_parameter_schema.json"
-        matchingSchema protocolParameterUrl protocolParameterString
+        ISADotNet.Validation.JSchema.validateProtocolParameter protocolParameterString
+        |> matchingResult
 
     let matchingProtocol (protocolString : string) =
-        let protocolUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/protocol_schema.json"
-        matchingSchema protocolUrl protocolString
+        ISADotNet.Validation.JSchema.validateProtocol protocolString
+        |> matchingResult
 
     let matchingPublication (publicationString : string) =
-        let publicationUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/publication_schema.json"
-        matchingSchema publicationUrl publicationString
+        ISADotNet.Validation.JSchema.validatePublication publicationString
+        |> matchingResult
 
     let matchingSample (sampleString : string) =
-        let sampleUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/sample_schema.json"
-        matchingSchema sampleUrl sampleString
+        ISADotNet.Validation.JSchema.validateSample sampleString
+        |> matchingResult
 
     let matchingSource (sourceString : string) =
-        let sourceUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/source_schema.json"
-        matchingSchema sourceUrl sourceString
+        ISADotNet.Validation.JSchema.validateSource sourceString
+        |> matchingResult
 
     let matchingStudy (studyString : string) =
-        let studyUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/master/source/_static/isajson/study_schema.json"
-        matchingSchema studyUrl studyString
+        ISADotNet.Validation.JSchema.validateStudy studyString
+        |> matchingResult

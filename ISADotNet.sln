@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30503.244
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32929.385
 MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6C30EF02-8A2F-4C2A-9FC4-4E4A125F6CE8}"
 	ProjectSection(SolutionItems) = preProject
@@ -34,7 +34,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{BF89DA8A-6
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Viz", "src\ISADotNet.Viz\ISADotNet.Viz.fsproj", "{17504B07-7966-40FE-BE31-49682EEDD18A}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ISADotNet.QueryModel", "src\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj", "{10E8D0C4-B603-41A1-BC4D-68B672188F28}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.QueryModel", "src\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj", "{10E8D0C4-B603-41A1-BC4D-68B672188F28}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ISADotNet.Validation", "src\ISADotNet.Validation\ISADotNet.Validation.fsproj", "{AC745163-53B6-4062-A3F9-9DC7FFE484CE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -62,6 +64,10 @@ Global
 		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

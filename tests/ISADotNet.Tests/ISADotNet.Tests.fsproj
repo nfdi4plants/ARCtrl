@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
 
@@ -36,11 +36,12 @@
     <PackageReference Include="FSharp.Data" Version="5.0.2" />
     <PackageReference Include="NJsonSchema" Version="10.8.0" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.*" />
-    <PackageReference Update="FSharp.Core" Version="6.0.5" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
+    <PackageReference Update="FSharp.Core" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ISADotNet.Validation\ISADotNet.Validation.fsproj" />
     <ProjectReference Include="..\..\src\ISADotNet\ISADotNet.fsproj" />
     <ProjectReference Include="..\..\src\ISADotNet.XLSX\ISADotNet.XLSX.fsproj" />
   </ItemGroup>
