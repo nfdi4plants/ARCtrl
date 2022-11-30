@@ -293,7 +293,6 @@ let testInvestigationFile =
 
             let publication =
                 Publication.make
-                    (Some "Publications/MyPublication")
                     (Some "12345678")
                     (Some "11.1111/abcdef123456789")
                     (Some "Lukas Weil, Other Gzúy")

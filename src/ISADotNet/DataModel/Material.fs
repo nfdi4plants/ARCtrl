@@ -216,7 +216,7 @@ type Material =
         [<JsonPropertyName(@"characteristics")>]
         Characteristics : MaterialAttributeValue list option
         [<JsonPropertyName(@"derivesFrom")>]
-        DerivesFrom : OntologyAnnotation option   
+        DerivesFrom : Material list option   
     }
 
     static member make id name materialType characteristics derivesFrom : Material=
