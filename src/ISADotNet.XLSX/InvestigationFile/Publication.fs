@@ -23,7 +23,6 @@ module Publications =
     let fromString pubMedID doi author title status statusTermSourceREF statursTermAccessionNumber comments =
         let status = OntologyAnnotation.fromString status statusTermSourceREF statursTermAccessionNumber
         Publication.make 
-            None
             (Option.fromValueWithDefault "" pubMedID |> Option.map URI.fromString)
             (Option.fromValueWithDefault "" doi)
             (Option.fromValueWithDefault "" author)
