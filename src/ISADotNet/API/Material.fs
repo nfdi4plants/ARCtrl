@@ -65,3 +65,35 @@ module MaterialAttributeValue =
     let getValueAsString (mv : MaterialAttributeValue) =
         tryGetValueAsString mv
         |> Option.defaultValue ""
+
+
+module Material = 
+    
+    let getUnits (m:Material) = 
+        m.Characteristics
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
+
+module Source = 
+    
+    let getUnits (s:Source) = 
+        s.Characteristics
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
+
+module Sample = 
+
+    let getCharacteristicUnits (s:Sample) =
+        s.Characteristics
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
+
+    let getFactorUnits (s:Sample) =
+        s.FactorValues
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
+
+    let getUnits (s:Sample) =
+        List.append (getCharacteristicUnits s) (getFactorUnits s)
+        
+        

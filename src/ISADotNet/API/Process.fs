@@ -120,6 +120,14 @@ module ProcessInput =
         tryGetCharacteristicValues pi
         |> Option.map (List.choose (fun c -> c.Category))
 
+    /// If given process output contains units, returns them
+    let getUnits (pi : ProcessInput) =
+        match pi with
+        | ProcessInput.Source s     -> Source.getUnits s
+        | ProcessInput.Sample s     -> Sample.getUnits s
+        | ProcessInput.Material m   -> Material.getUnits m
+        | ProcessInput.Data _       -> []
+
 /// Functions for handling the ProcessOutput Type
 module ProcessOutput =
 
@@ -197,6 +205,13 @@ module ProcessOutput =
         | ProcessOutput.Sample s     -> s.FactorValues
         | ProcessOutput.Material _   -> None
         | ProcessOutput.Data _       -> None
+
+    /// If given process output contains units, returns them
+    let getUnits (po : ProcessOutput) =
+        match po with
+        | ProcessOutput.Sample s     -> Sample.getUnits s
+        | ProcessOutput.Material m   -> Material.getUnits m
+        | ProcessOutput.Data _       -> []
 
 /// Functions for handling ISA Processes
 module Process =
@@ -325,6 +340,13 @@ module Process =
             )
             |> Option.fromValueWithDefault []
         | None -> None
+
+    let getUnits (p : Process) =
+        let paramUnits = p.ParameterValues |> Option.defaultValue [] |> List.choose (fun p -> p.Unit)
+        let inputUnits = p.Inputs |> Option.defaultValue [] |> List.collect (fun i -> ProcessInput.getUnits i)
+        let outputUnits = p.Outputs |> Option.defaultValue [] |> List.collect (fun o -> ProcessOutput.getUnits o)
+        inputUnits @ paramUnits @ outputUnits
+        
 
     //let tryGetCharacteristicValuesOfInputBy (predicate : ProcessInput -> bool) (p : Process) =
     //    match p.Inputs with
@@ -478,5 +500,7 @@ module ProcessSequence =
                 loop state newState
         loop [] [sample]
 
-
+    let getUnits (processSequence : Process list) =
+        List.collect Process.getUnits processSequence
+        
 
