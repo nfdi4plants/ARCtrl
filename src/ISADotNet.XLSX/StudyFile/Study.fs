@@ -29,7 +29,10 @@ module Study =
         let characteristics = API.ProcessSequence.getCharacteristics processes
         let factors = API.ProcessSequence.getFactors processes
         let protocols = API.ProcessSequence.getProtocols processes
-        Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = protocols, ProcessSequence = processes)
+        let units = API.ProcessSequence.getUnits processes |> List.distinct
+        Study.make None None None None None None None None None None (Option.fromValueWithDefault [] protocols) None  (Option.fromValueWithDefault [] processes) None (Option.fromValueWithDefault [] factors) (Option.fromValueWithDefault [] characteristics) (Option.fromValueWithDefault [] units) None
+
+        //Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = protocols, ProcessSequence = processes)
 
     /// Returns a study from a sequence of sparseMatrix representations of study.xlsx sheets
     ///
@@ -43,7 +46,8 @@ module Study =
         let characteristics = API.ProcessSequence.getCharacteristics processes
         let factors = API.ProcessSequence.getFactors processes
         let protocols = API.ProcessSequence.getProtocols processes
-        Study.create(CharacteristicCategories = characteristics,Factors = factors, Protocols = protocols, ProcessSequence = processes)
+        let units = API.ProcessSequence.getUnits processes |> List.distinct
+        Study.make None None None None None None None None None None (Option.fromValueWithDefault [] protocols) None  (Option.fromValueWithDefault [] processes) None (Option.fromValueWithDefault [] factors) (Option.fromValueWithDefault [] characteristics) (Option.fromValueWithDefault [] units) None
 
 // Diesen Block durch JS ersetzen ----> 
 

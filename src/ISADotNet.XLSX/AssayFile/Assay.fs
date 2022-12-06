@@ -63,8 +63,14 @@ module Assay =
         
         let processes = Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
         let characteristics = API.ProcessSequence.getCharacteristics processes
-        Assay.create(CharacteristicCategories = characteristics,ProcessSequence = Seq.toList processes)
+        let assay = 
+            match characteristics,processes with
+            | [],[] -> Assay.create()
+            | [],ps -> Assay.create(ProcessSequence = ps)
+            | cs,[] -> Assay.create(CharacteristicCategories = cs)
+            | cs,ps -> Assay.create(CharacteristicCategories = cs,ProcessSequence = ps)
 
+        assay
 
     /// Returns an assay from a sequence of sparseMatrix representations of assay.xlsx sheets
     ///
@@ -189,6 +195,21 @@ module Assay =
                     for r in MetaData.toDSLSheet assay contacts do r
                 }
             }
+        wb.Value.Parse().ToFile(p)
+        with
+        | err -> failwithf "Could not write Assay to Xlsx file in path \"%s\": \n\t%s" p err.Message
+
+    let updateFile (p : string) (contacts : Person list) (assay : Assay) =
+        try
+        let a = QueryModel.QAssay.fromAssay assay
+        let wb = 
+            workbook {
+                for (i,s) in List.indexed a.Sheets do QSheet.toSheet i s
+                sheet "Assay" {
+                    for r in MetaData.toDSLSheet assay contacts do r
+                }
+            }
+        
         wb.Value.Parse().ToFile(p)
         with
         | err -> failwithf "Could not write Assay to Xlsx file in path \"%s\": \n\t%s" p err.Message

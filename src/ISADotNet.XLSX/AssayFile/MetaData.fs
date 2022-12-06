@@ -8,7 +8,8 @@ open ISADotNet.XLSX
 /// Functions for reading and writing the additional information stored in the assay metadata sheet
 module MetaData =
 
-    let assaysLabel = "ASSAY METADATA"
+    let obsoloteAssaysLabel = "ASSAY METADATA"
+    let assaysLabel = "ASSAY"
     let contactsLabel = "ASSAY PERFORMERS"
 
     /// Write Assay Metadata to excel rows
@@ -30,7 +31,7 @@ module MetaData =
                
             match lastLine with
 
-            | Some k when k = assaysLabel -> 
+            | Some k when k = assaysLabel || k = obsoloteAssaysLabel -> 
                 let currentLine,lineNumber,_,assays = Assays.fromRows None (lineNumber + 1) en       
                 loop currentLine assays contacts lineNumber
 

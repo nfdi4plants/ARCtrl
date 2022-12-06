@@ -7,13 +7,14 @@ open ISADotNet.XLSX
 /// Functions for reading and writing the additional information stored in the study metadata sheet
 module MetaData =
 
-    let studiesLabel = "STUDY METADATA"
+    let obsoloteStudiesLabel = "STUDY METADATA"
+    let studiesLabel = "STUDY"
 
     /// Write Study Metadata to excel rows
     let toRows (study:Study) =
         seq {          
             yield  SparseRow.fromValues [studiesLabel]
-            yield! Study.toRows study
+            yield! ISADotNet.XLSX.Study.StudyInfo.toRows study
         }
         
     /// Read Study Metadata from excel rows
@@ -22,6 +23,9 @@ module MetaData =
         en.MoveNext() |> ignore  
         let _,_,_,study = Study.fromRows 2 en
         study
+        // Upper version will eventually become obsolete. Then the version below might be used
+        //let _,_,_,studyInfo = Study.StudyInfo.fromRows 2 en
+        //Study.fromParts studyInfo [] [] [] [] [] []
 
     let toDSLSheet s =
         toRows s
