@@ -18,4 +18,17 @@
     <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <Authors>nfdi4plants, Lukas Weil</Authors>
+    <Description>Validation functions for ISA compliant experimental metadata in F#.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!--<PackageProjectUrl>https://fslab.org/docs-template/</PackageProjectUrl>-->
+    <PackageIconUrl>https://raw.githubusercontent.com/nfdi4plants/Branding/138420e3b6f9ec9e125c1ca8840874b2be2a1262/logos/DataPLANT_logo_minimal_rounded_bg_transparent.svg</PackageIconUrl>
+    <PackageTags>F# FSharp dotnet .Net bioinformatics biology datascience dataplant nfdi metadata investigation study assay ISA Json Schema Validation</PackageTags>
+    <RepositoryUrl>https://github.com/nfdi4plants/ISADotNet</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <FsDocsLicenseLink>https://github.com/nfdi4plants/ISADotNet/blob/developer/LICENSE</FsDocsLicenseLink>
+    <FsDocsReleaseNotesLink>https://github.com/nfdi4plants/ISADotNet/blob/developer/RELEASE_NOTES.md</FsDocsReleaseNotesLink>
+  </PropertyGroup>
+  
 </Project>

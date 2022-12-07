@@ -1,3 +1,22 @@
+### 0.6.1+7de6163 (Released 2022-12-7)
+* Additions:
+    * latest commit #7de6163
+    * [[#477edad](https://github.com/nfdi4plants/ISADotNet/commit/477edadee8d8f5d23fefa59b5e3b9f2ec72fd92d)] Renamed src/ISADotnet to src/ISADotNet for linux build due to file name case sensitivity.
+    * [[#325cb91](https://github.com/nfdi4plants/ISADotNet/commit/325cb91d00d9870a2021f4fb37b3822820448a82)] add json schema validation functions
+    * [[#94ef9e5](https://github.com/nfdi4plants/ISADotNet/commit/94ef9e5fe136b561d4af68d4d2ef6b09efb04df1)] add isFatal check to json schema validation
+    * [[#d496857](https://github.com/nfdi4plants/ISADotNet/commit/d49685713021c6567d971cb1caf48b0bf003da46)] ease constraints of json schema validation
+    * [[#7db8fae](https://github.com/nfdi4plants/ISADotNet/commit/7db8faeea1c255261c1656f20d1b2c21590ddeb4)] validate json against json schema from HLWeil fork
+    * [[#fdf248d](https://github.com/nfdi4plants/ISADotNet/commit/fdf248dc8f34b9854d1d93069e55ac46f094571a)] move jsonSchemaValidation in its own Repo
+    * [[#5f133db](https://github.com/nfdi4plants/ISADotNet/commit/5f133db05a4fac4353dbf472d5187248a13c00fc)] update dotnet version in cli
+    * [[#8531aac](https://github.com/nfdi4plants/ISADotNet/commit/8531aac4a2816dc91a6729d19b9d368858e03a63)] add unit retrieval functions to API
+    * [[#372e07f](https://github.com/nfdi4plants/ISADotNet/commit/372e07f3579eb5de2581488620b764f6dd3ed0a5)] rename xlsx metadata headers https://github.com/nfdi4plants/arcCommander/issues/150
+* Bugfixes:
+    * [[#168890f](https://github.com/nfdi4plants/ISADotNet/commit/168890fd9f229447858442f4cc744f2e5c09bea2)] fix json schema validation use njonschema instead
+    * [[#9c66fa8](https://github.com/nfdi4plants/ISADotNet/commit/9c66fa8ae43386b161ca02623ac4c811e7d0f4cc)] fix json test files to actually adhere to json schema
+    * [[#d79605c](https://github.com/nfdi4plants/ISADotNet/commit/d79605c5afe59792d9a4a70cbb965465dbff3f2e)] fix datamodel according to json schema validation
+    * [[#8f63206](https://github.com/nfdi4plants/ISADotNet/commit/8f63206dc0de554d7d6eb6b472c4ebe9e5f7b497)] fix study xlsx reader creating empty lists #71
+    * [[#6d5ee0c](https://github.com/nfdi4plants/ISADotNet/commit/6d5ee0c665f65d79c3b6653f702551684cda8f82)] make DAG creation more robust against missing names fix #51
+
 ### 0.6.0+2150bc9 (Released 2022-9-7)
 * Additions:
     * latest commit #2150bc9
