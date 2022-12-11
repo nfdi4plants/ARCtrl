@@ -42,7 +42,7 @@ type QStudy
         
         let comments = QCommentCollection(study.Comments)
             
-        let sheets = 
+        let refSheets = 
             study.Assays 
             |> Option.map (List.collect (fun a -> a.ProcessSequence |> Option.defaultValue []) )
             |> Option.defaultValue []
@@ -53,12 +53,20 @@ type QStudy
                 | None -> QProcessSequence(s)
             |> Seq.toList
 
+        let sheets = QProcessSequence(study.ProcessSequence |> Option.defaultValue []) |> Seq.toList
+
         let assays = 
             study.Assays 
-            |> Option.map (List.map (fun a -> QAssay.fromAssay(a,sheets)))
+            |> Option.map (List.map (fun a -> QAssay.fromAssay(a,refSheets)))
             |> Option.defaultValue []
 
         QStudy(study.FileName,study.Identifier,study.Title,study.Description,study.SubmissionDate,study.PublicReleaseDate,study.Publications,study.Contacts,study.StudyDesignDescriptors,comments,assays,sheets)
+
+    member this.FullProcessSequence =        
+        this.Assays
+        |> List.collect (fun a -> a.Sheets)
+        |> List.append this.Sheets
+        |> QProcessSequence
 
     /// Returns the QAssay with the given name
     member this.Assay(assayName : string) = 
