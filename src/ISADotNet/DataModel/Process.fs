@@ -216,7 +216,7 @@ type Process =
         $"{processNameRoot}_{i}"
 
     static member decomposeName (name : string) =
-        let pattern = """(?<name>\S+)_(?<num>\d+)"""
+        let pattern = """(?<name>.+)_(?<num>\d+)"""
         let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
 
         if r.Success then
