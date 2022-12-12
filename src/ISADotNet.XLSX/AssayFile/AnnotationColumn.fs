@@ -39,8 +39,11 @@ module AnnotationColumn =
             }
 
         /// Parses a string to a column header
-        static member fromStringHeader header =
+        static member fromStringHeader (header : string) =
                   
+            let originalHeader = header
+            let header = header.Trim()
+
             let nameRegex = Regex.Match(header,RegexPattern.namePattern)
             let columnTypePatternRegex = Regex.Match(header,RegexPattern.columnTypePattern)
             let ontologySourceRegex = Regex.Match(header,RegexPattern.ontologySourcePattern)
@@ -54,7 +57,7 @@ module AnnotationColumn =
                                                                              
                 let ontology = OntologyAnnotation.fromString nameRegex.Value "" ""
 
-                ColumnHeader.create header (columnTypePatternRegex.Value.Trim()) (Some {ontology with Comments = numberComment}) number
+                ColumnHeader.create originalHeader (columnTypePatternRegex.Value.Trim()) (Some {ontology with Comments = numberComment}) number
 
             // Parsing a header of shape: Kind (#Number)
             elif columnTypePatternRegex.Success then

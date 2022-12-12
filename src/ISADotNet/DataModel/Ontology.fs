@@ -245,8 +245,6 @@ type OntologyAnnotation =
         oa.TermSourceREF |> Option.defaultValue "",
         oa.TermAccessionNumber |> Option.defaultValue ""
 
-    member this.MapName (f : string -> string) =
-        {this with Name = Option.map f this.Name}
 
     interface IISAPrintable with
         member this.Print() =
