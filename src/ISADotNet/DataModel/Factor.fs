@@ -82,6 +82,12 @@ type Factor =
         this.Name
         |> Option.defaultValue ""
 
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with FactorType = Option.map f this.FactorType}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with FactorType = Some c}
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
@@ -238,6 +244,16 @@ type FactorValue =
         this.Category
         |> Option.map (fun oa -> oa.GetNameWithNumber)
         |> Option.defaultValue ""
+
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with Category = this.Category |> Option.map (fun p -> p.MapCategory f) }
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with Category = 
+            match this.Category with
+            | Some p -> Some (p.SetCategory c)
+            | None -> Some (Factor.create(FactorType = c))
+        }
 
     interface IISAPrintable with
         member this.Print() =

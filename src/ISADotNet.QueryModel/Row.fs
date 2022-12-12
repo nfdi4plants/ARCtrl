@@ -186,6 +186,9 @@ type QRow =
     member this.Parameters() = 
         this.Values().Parameters()
 
+    member this.MapVals(f : ISAValue list -> ISAValue list) =
+        {this with Vals = f this.Vals}
+
     interface IEnumerable<ISAValue> with
         member this.GetEnumerator() : System.Collections.Generic.IEnumerator<ISAValue> = (seq this.Vals).GetEnumerator()
 

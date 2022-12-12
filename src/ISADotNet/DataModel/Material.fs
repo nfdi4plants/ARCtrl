@@ -90,6 +90,12 @@ type MaterialAttribute =
         |> Option.map (fun oa -> oa.NameText)
         |> Option.defaultValue ""
 
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with CharacteristicType = Option.map f this.CharacteristicType}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with CharacteristicType = Some c}
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
@@ -168,6 +174,16 @@ type MaterialAttributeValue =
 
     [<System.Obsolete("This function is deprecated. Use the member \"ValueWithUnitText\" instead.")>]
     member this.GetValueWithUnit = this.ValueWithUnitText
+
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with Category = this.Category |> Option.map (fun p -> p.MapCategory f) }
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with Category = 
+            match this.Category with
+            | Some p -> Some (p.SetCategory c)
+            | None -> Some (MaterialAttribute.create(CharacteristicType = c))
+        }
 
     interface IISAPrintable with
         member this.Print() =

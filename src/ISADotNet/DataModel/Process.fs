@@ -72,6 +72,16 @@ type ProcessParameterValue =
     [<System.Obsolete("This function is deprecated. Use the member \"ValueWithUnitText\" instead.")>]
     member this.GetValueWithUnit = this.ValueWithUnitText
 
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with Category = this.Category |> Option.map (fun p -> p.MapCategory f) }
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with Category = 
+            match this.Category with
+            | Some p -> Some (p.SetCategory c)
+            | None -> Some (ProtocolParameter.create(ParameterName = c))
+        }
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()

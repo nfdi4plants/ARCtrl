@@ -90,6 +90,12 @@ type ProtocolParameter =
         member this.PrintCompact() =
             "OA " + this.NameText
 
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with ParameterName = Option.map f this.ParameterName}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with ParameterName = Some c}
+
 type Component = 
     {
         [<JsonPropertyName(@"componentName")>]
@@ -191,6 +197,12 @@ type Component =
         match unit with
         | Some u    -> sprintf "%s %s" v u
         | None      -> v
+
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with ComponentType = Option.map f this.ComponentType}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with ComponentType = Some c}
 
 
 type Protocol =
