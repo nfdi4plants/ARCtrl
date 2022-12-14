@@ -639,7 +639,7 @@ let testProcessComparisonFunctions =
             let process1 = Process.make None None None None None None None None (Some [ProcessInput.Source source1]) (Some [outputOfFirst]) None
             let process2 = Process.make None None None None None None None None (Some [inputOfSecond]) (Some [ProcessOutput.Sample sample2]) None
 
-            let updatedProcesses = AnnotationTable.updateSamplesByReference [process1;process2] [process1;process2]
+            let updatedProcesses = AnnotationTable.updateSamplesByThemselves [process1;process2]
 
 
             let outputs = (Seq.head updatedProcesses).Outputs

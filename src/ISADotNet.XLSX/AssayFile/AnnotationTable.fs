@@ -253,7 +253,7 @@ module AnnotationTable =
     let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
         referenceProcesses
         |> Seq.append processes
-        |> updateSamplesBy processes
+        |> fun ref -> updateSamplesBy ref processes
 
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
