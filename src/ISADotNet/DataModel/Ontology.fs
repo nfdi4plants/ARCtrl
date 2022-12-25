@@ -57,27 +57,6 @@ type OntologyAnnotation =
         OntologyAnnotation.create()
 
     /// Returns the name of the ontology as string
-    [<System.Obsolete("This function is deprecated. Use the member \"GetName\" instead.")>]
-    member this.NameAsString =
-        this.Name
-        |> Option.map (fun oa ->
-            match oa with
-            | AnnotationValue.Text s  -> s
-            | AnnotationValue.Float f -> string f
-            | AnnotationValue.Int i   -> string i
-        )
-        |> Option.defaultValue ""
-
-    /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
-    member this.NameAsStringWithNumber =       
-        let number = this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))
-        let name = this.NameAsString
-        match number with
-        | Some n -> name + " #" + n
-        | None -> name
-
-    /// Returns the name of the ontology as string
     member this.NameText =
         this.Name
         |> Option.map (fun av ->
@@ -87,23 +66,6 @@ type OntologyAnnotation =
             | AnnotationValue.Int i   -> string i
         )
         |> Option.defaultValue ""
-
-    /// Returns the name of the ontology as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.GetName = this.NameText
-
-    /// Returns number of Ontology annotation
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.Number =       
-        this.Comments |> Option.bind (List.tryPick (fun c -> if c.Name = Some "Number" then c.Value else None))       
-
-    /// Returns the name of the ontology with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.GetNameWithNumber =       
-        let name = this.GetName
-        match this.Number with
-        | Some n -> name + " #" + n
-        | None -> name
 
     /// Returns the term source of the ontology as string
     member this.TermSourceREFString =       
@@ -198,24 +160,6 @@ type OntologyAnnotation =
         |> OntologyAnnotation.splitAnnotation
         |> fun (source,num) ->
             OntologyAnnotation.fromString "" source id
-
-    /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    static member fromStringWithNumber (term:string) (source:string) (accession:string) =
-        let t,number = 
-            let lastIndex = term.LastIndexOf '#'
-            term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
-        let numberComment = Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton)
-        OntologyAnnotation.fromStringWithComments t source accession (numberComment |> Option.defaultValue [])      
-
-    /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
-        let t,number = 
-            let lastIndex = term.LastIndexOf '#'
-            term.Remove(lastIndex).Trim(), term.Substring(lastIndex+1).Trim()
-        let numberComment = Option.fromValueWithDefault "" number |> Option.map ((fun n -> Comment.create(Name = "Number", Value = n)) >> List.singleton)
-        OntologyAnnotation.fromStringWithComments term source accession ((numberComment |> Option.defaultValue []) @ comments)   
 
     member this.ShortAnnotationString = 
         match this.TermAccessionNumber with
