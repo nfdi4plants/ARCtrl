@@ -300,9 +300,9 @@ module QRow =
             (fun i s -> 
                 i.MapCategory(fun o -> 
                     {o with Name = 
-                        o.NameText + s
-                        |> AnnotationValue.Text
-                        |> Some
+                                o.NameText + s
+                                |> AnnotationValue.Text
+                                |> Some
                     }
                 )
             )
@@ -348,9 +348,9 @@ module QRow =
                     let h = 
                         v.MapCategory(fun o -> 
                             {o with Name = 
-                                o.NameText.TrimEnd()
-                                |> AnnotationValue.Text
-                                |> Some
+                                        o.NameText.TrimEnd()
+                                        |> AnnotationValue.Text
+                                        |> Some
                             }
                         )
                         |> ISAValue.toHeaders

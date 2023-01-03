@@ -290,8 +290,6 @@ module AnnotationNode =
                 elif h.Kind = "Raw Data File" then Some DataFile.RawDataFile
                 elif h.Kind = "Derived Data File" then Some DataFile.DerivedDataFile 
                 else Some DataFile.RawDataFile
-
-            let numberComment = h.Number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
             
             fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
                 
@@ -299,7 +297,7 @@ module AnnotationNode =
                     None
                     (Dictionary.tryGetString (i,h.HeaderString) matrix)
                     dataType
-                    numberComment
+                    None
         )
 
     /// If the headers of a node depict a sample name, returns a function for parsing the values of the matrix to the sample names
