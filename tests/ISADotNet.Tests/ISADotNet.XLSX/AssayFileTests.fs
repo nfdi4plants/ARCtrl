@@ -53,7 +53,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "5"
-            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name#5")) None None (Some [testComment])
+            let testOntology = OntologyAnnotation.make None (Some (AnnotationValue.Text "Name")) None None (Some [testComment])
 
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "NamedHeader" (Some testOntology) (Some 5)
 
@@ -86,7 +86,7 @@ let testColumnHeaderFunctions =
             let header = AnnotationColumn.ColumnHeader.fromStringHeader headerString
 
             let testComment = Comment.fromString "Number" "2"
-            let testOntology = OntologyAnnotation.fromStringWithComments "" "MS" "http://purl.obolibrary.org/obo/MS_1000031" [testComment]
+            let testOntology = OntologyAnnotation.fromString "" "MS" "http://purl.obolibrary.org/obo/MS_1000031"
             let testHeader = AnnotationColumn.ColumnHeader.create headerString "Term Accession Number" (Some testOntology) (Some 2)
 
             Expect.equal header testHeader "Dit not parse Name correctly"
@@ -184,7 +184,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetFactorGetter" (fun () ->
 
-            let headers = ["Factor [time]";"Unit (#2)";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
+            let headers = ["Factor [time]";"Unit";"Term Source REF (PATO:0000165)";"Term Accession Number (PATO:0000165)"]
 
             let factorGetterOption = AnnotationNode.tryGetFactorGetter 0 headers
 
@@ -251,7 +251,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetParameterGetter" (fun () ->
 
-            let headers = ["Parameter [temperature unit]";"Unit (#3)";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
+            let headers = ["Parameter [temperature unit]";"Unit ";"Term Source REF (UO:0000005)";"Term Accession Number (UO:0000005)"]
 
             let parameterGetterOption = AnnotationNode.tryGetParameterGetter 0 headers
 
@@ -303,7 +303,7 @@ let testNodeGetterFunctions =
         )
         testCase "GetComponentGetter" (fun () ->
 
-            let headers = ["Component [weight]";"Unit (#4)";"Term Source REF (PATO:0000128)";"Term Accession Number (PATO:0000128)"]
+            let headers = ["Component [weight]";"Unit   ";"Term Source REF (PATO:0000128)";"Term Accession Number (PATO:0000128)"]
 
             let parameterGetterOption = AnnotationNode.tryGetComponentGetter 0 headers
 
@@ -752,7 +752,7 @@ let testAssayFileReader =
 
     let time1 = ProtocolParameter.fromStringWithValueIndex "time unit" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 3
 
-    let time2 = Factor.fromStringWithNumberValueIndex "time unit#2" "time unit#2" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 4
+    let time2 = Factor.fromStringWithValueIndex "time unit" "time unit" "UO" "http://purl.obolibrary.org/obo/UO_0000003" 4
 
     let leafSize = MaterialAttribute.fromStringWithValueIndex "leaf size" "TO" "http://purl.obolibrary.org/obo/TO_0002637" 0
 
