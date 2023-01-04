@@ -25,21 +25,6 @@ type ProcessParameterValue =
     static member empty =
         ProcessParameterValue.create()
 
-
-    /// Returns the name of the category as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.GetName =
-        this.Category
-        |> Option.map (fun oa -> oa.GetName)
-        |> Option.defaultValue ""
-
-    /// Returns the name of the category with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.GetNameWithNumber =       
-        this.Category
-        |> Option.map (fun oa -> oa.GetNameWithNumber)
-        |> Option.defaultValue ""
-
     /// Returns the name of the category as string
     member this.NameText =
         this.Category
@@ -51,15 +36,12 @@ type ProcessParameterValue =
         this.Value
         |> Option.map (fun oa ->
             match oa with
-            | Value.Ontology oa  -> oa.GetName
+            | Value.Ontology oa  -> oa.NameText
             | Value.Float f -> string f
             | Value.Int i   -> string i
             | Value.Name s  -> s
         )
         |> Option.defaultValue ""
-
-    [<System.Obsolete("This function is deprecated. Use the member \"ValueText\" instead.")>]
-    member this.GetValue = this.ValueText
 
     member this.ValueWithUnitText =
         let unit = 
@@ -69,8 +51,15 @@ type ProcessParameterValue =
         | Some u    -> sprintf "%s %s" v u
         | None      -> v
 
-    [<System.Obsolete("This function is deprecated. Use the member \"ValueWithUnitText\" instead.")>]
-    member this.GetValueWithUnit = this.ValueWithUnitText
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with Category = this.Category |> Option.map (fun p -> p.MapCategory f) }
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with Category = 
+                            match this.Category with
+                            | Some p -> Some (p.SetCategory c)
+                            | None -> Some (ProtocolParameter.create(ParameterName = c))
+        }
 
     interface IISAPrintable with
         member this.Print() =
@@ -106,11 +95,6 @@ type ProcessInput =
         | ProcessInput.Source s     -> s.Name
         | ProcessInput.Material m   -> m.Name
         | ProcessInput.Data d       -> d.Name
-
-    [<System.Obsolete("This function is deprecated. Use the member \"GetNameWithNumber\" instead.")>]
-    member this.NameAsString =
-        this.TryGetName
-        |> Option.defaultValue ""
 
     member this.GetName =
         this.TryGetName
@@ -216,7 +200,7 @@ type Process =
         $"{processNameRoot}_{i}"
 
     static member decomposeName (name : string) =
-        let pattern = """(?<name>\S+)_(?<num>\d+)"""
+        let pattern = """(?<name>.+)_(?<num>\d+)"""
         let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
 
         if r.Success then

@@ -10,6 +10,14 @@ type ISAValue =
     | [<SerializationOrder(2)>] Factor of FactorValue
     | [<SerializationOrder(3)>] Component of Component
 
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) = 
+        match this with
+        | Parameter         p -> p.MapCategory(f) |> Parameter
+        | Characteristic    c -> c.MapCategory(f) |> Characteristic
+        | Factor            c -> c.MapCategory(f) |> Factor
+        | Component         c -> c.MapCategory(f) |> Component
+
+
 [<AutoOpen>]
 module ISAValueExtensions = 
 

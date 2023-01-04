@@ -103,6 +103,13 @@ type QProcessSequence (sheets : QSheet list) =
     interface IEnumerable with
         member this.GetEnumerator() = (this :> IEnumerable<QSheet>).GetEnumerator() :> IEnumerator
 
+    static member merge (pss : #IEnumerable<#IEnumerable<QSheet>>) =
+        let l = 
+            Seq.concat pss
+            |> Seq.toList
+        QProcessSequence.updateNodesAgainst l l
+        |> QProcessSequence
+
     member this.TryGetChildProtocolOf(parentProtocolType : OntologyAnnotation) =
         this.Sheets
         |> List.collect (fun s -> s.Protocols)

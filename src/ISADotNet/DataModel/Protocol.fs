@@ -34,42 +34,10 @@ type ProtocolParameter =
         let oa = OntologyAnnotation.fromStringWithComments term source accession comments
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
-    /// Create a ISAJson Protocol Parameter from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    static member fromStringWithNumber (term:string) (source:string) (accession:string) =
-        let oa = OntologyAnnotation.fromStringWithNumber term source accession
-        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
-
-    /// Create a ISAJson Protocol Parameter from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    static member fromStringWithNumberAndComments (term:string) (source:string) (accession:string) (comments : Comment list) =
-        let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
-        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Get ISATab string entries from an ISAJson ProtocolParameter object (name,source,accession)
     static member toString (pp : ProtocolParameter) =
         pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")        
-
-    /// Returns the name of the parameter as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.NameAsString =
-        this.ParameterName
-        |> Option.map (fun oa -> oa.GetName)
-        |> Option.defaultValue ""
-
-    /// Returns the name of the parameter with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.NameAsStringWithNumber =       
-        this.ParameterName
-        |> Option.map (fun oa -> oa.GetNameWithNumber)
-        |> Option.defaultValue ""
-
-    /// Returns the name of the parameter as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.GetName =
-        this.ParameterName
-        |> Option.map (fun oa -> oa.GetName)
-        |> Option.defaultValue ""
 
     /// Returns the name of the parameter as string
     member this.NameText =
@@ -77,18 +45,17 @@ type ProtocolParameter =
         |> Option.map (fun oa -> oa.NameText)
         |> Option.defaultValue ""
 
-    /// Returns the name of the parameter with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.GetNameWithNumber =       
-        this.ParameterName
-        |> Option.map (fun oa -> oa.GetNameWithNumber)
-        |> Option.defaultValue ""
-
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
         member this.PrintCompact() =
             "OA " + this.NameText
+
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with ParameterName = Option.map f this.ParameterName}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with ParameterName = Some c}
 
 type Component = 
     {
@@ -191,6 +158,12 @@ type Component =
         match unit with
         | Some u    -> sprintf "%s %s" v u
         | None      -> v
+
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with ComponentType = Option.map f this.ComponentType}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with ComponentType = Some c}
 
 
 type Protocol =

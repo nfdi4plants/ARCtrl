@@ -63,10 +63,6 @@ module ValueIndexExtensions =
         static member fromStringWithValueIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
             Factor.fromStringWithComments name term source accession [ValueIndex.createOrderComment valueIndex]
 
-        /// Create a ISAJson Factor from ISATab string entries
-        static member fromStringWithNumberValueIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Factor.fromStringWithNumberAndComments name term source accession [ValueIndex.createOrderComment valueIndex]
-
         static member getValueIndex(f) = ValueIndex.tryGetFactorIndex f |> Option.get
 
         member this.GetValueIndex() = ValueIndex.tryGetFactorIndex this |> Option.get
@@ -91,10 +87,6 @@ module ValueIndexExtensions =
         static member fromStringWithValueIndex (term:string) (source:string) (accession:string) valueIndex =
             MaterialAttribute.fromStringWithComments term source accession [ValueIndex.createOrderComment valueIndex]
 
-        /// Create a ISAJson characteristic from ISATab string entries
-        static member fromStringWithNumberValueIndex (term:string) (source:string) (accession:string) valueIndex =
-            MaterialAttribute.fromStringWithNumberAndComments term source accession [ValueIndex.createOrderComment valueIndex]
-
         static member getValueIndex(m) = ValueIndex.tryGetCharacteristicIndex m |> Option.get
 
         member this.GetValueIndex() = ValueIndex.tryGetCharacteristicIndex this |> Option.get
@@ -118,10 +110,6 @@ module ValueIndexExtensions =
         /// Create a ISAJson parameter from ISATab string entries
         static member fromStringWithValueIndex (term:string) (source:string) (accession:string) valueIndex =
             ProtocolParameter.fromStringWithComments term source accession [ValueIndex.createOrderComment valueIndex]
-
-        /// Create a ISAJson parameter from ISATab string entries
-        static member fromStringWithNumberValueIndex (term:string) (source:string) (accession:string) valueIndex =
-            ProtocolParameter.fromStringWithNumberAndComments term source accession [ValueIndex.createOrderComment valueIndex]
 
         static member getValueIndex(p) = ValueIndex.tryGetParameterIndex p |> Option.get
 

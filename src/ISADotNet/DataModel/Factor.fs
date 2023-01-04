@@ -33,54 +33,24 @@ type Factor =
         let oa = OntologyAnnotation.fromString term source accession
         Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
-    /// Create a ISAJson Ontology Annotation value from string entries, where the term name can contain a # separated number. e.g: "temperature unit #2"
-    static member fromStringWithNumber (name:string) (term:string) (source:string) (accession:string) =
-        let oa = OntologyAnnotation.fromStringWithNumber term source accession
-        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
-
     /// Create a ISAJson Ontology Annotation value from ISATab string entries
     static member fromStringWithComments (name:string) (term:string) (source:string) (accession:string) (comments : Comment list) =
         let oa = OntologyAnnotation.fromStringWithComments term source accession comments
-        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
-
-    /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromStringWithNumberAndComments (name:string) (term:string) (source:string) (accession:string) (comments : Comment list) =
-        let oa = OntologyAnnotation.fromStringWithNumberAndComments term source accession comments
         Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
     /// Get ISATab string entries from an ISAJson Factor object
     static member toString (factor : Factor) =
         factor.FactorType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")  
 
-    /// Returns the name of the factor as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.NameAsString =
-        this.Name
-        |> Option.defaultValue ""
-
-    /// Returns the name of the factor with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.NameAsStringWithNumber =       
-        this.FactorType
-        |> Option.map (fun oa -> oa.GetNameWithNumber)
-        |> Option.defaultValue ""
-
-    /// Returns the name of the factor as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.GetName =
-        this.Name
-        |> Option.defaultValue ""
-
-    /// Returns the name of the factor with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.GetNameWithNumber =     
-        this.FactorType
-        |> Option.map (fun oa -> oa.NameText)
-        |> Option.defaultValue ""
-
     member this.NameText =
         this.Name
         |> Option.defaultValue ""
+
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with FactorType = Option.map f this.FactorType}
+
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with FactorType = Some c}
 
     interface IISAPrintable with
         member this.Print() =
@@ -206,9 +176,6 @@ type FactorValue =
         )
         |> Option.defaultValue ""
 
-    [<System.Obsolete("This function is deprecated. Use the member \"ValueText\" instead.")>]
-    member this.GetValue = this.ValueText
-
     member this.ValueWithUnitText =
         let unit = 
             this.Unit |> Option.map (fun oa -> oa.NameText)
@@ -217,27 +184,20 @@ type FactorValue =
         | Some u    -> sprintf "%s %s" v u
         | None      -> v
 
-    [<System.Obsolete("This function is deprecated. Use the member \"ValueWithUnitText\" instead.")>]
-    member this.GetValueWithUnit = this.ValueWithUnitText
-
     member this.NameText =
         this.Category
         |> Option.map (fun factor -> factor.NameText)
         |> Option.defaultValue ""
 
-    /// Returns the name of the category as string
-    [<System.Obsolete("This function is deprecated. Use the member \"NameText\" instead.")>]
-    member this.GetName =
-        this.Category
-        |> Option.map (fun factor -> factor.GetName)
-        |> Option.defaultValue ""
+    member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
+        {this with Category = this.Category |> Option.map (fun p -> p.MapCategory f) }
 
-    /// Returns the name of the category with the number as string (e.g. "temperature #2")
-    [<System.Obsolete("This function is deprecated. Numbering support will soon be dropped")>]
-    member this.GetNameWithNumber =       
-        this.Category
-        |> Option.map (fun oa -> oa.GetNameWithNumber)
-        |> Option.defaultValue ""
+    member this.SetCategory(c : OntologyAnnotation) =
+        {this with Category = 
+                            match this.Category with
+                            | Some p -> Some (p.SetCategory c)
+                            | None -> Some (Factor.create(FactorType = c))
+        }
 
     interface IISAPrintable with
         member this.Print() =

@@ -253,7 +253,7 @@ module AnnotationTable =
     let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
         referenceProcesses
         |> Seq.append processes
-        |> updateSamplesBy processes
+        |> fun ref -> updateSamplesBy ref processes
 
     /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
     ///
@@ -267,29 +267,51 @@ module QRow =
     open FsSpreadsheet.DSL
     open ISADotNet.QueryModel
 
-    let renumberHeaders (headers : string list) = 
+    let private getTrailingSpaces (i : int) =
+        let mutable tail = ""
+        for i = 2 to i do 
+            tail <- tail + " "
+        tail
+      
+
+    let renumberHeadersBy (f : 'T -> string) (renamer : 'T -> string -> 'T) (headers : 'T list) = 
         
         let counts = System.Collections.Generic.Dictionary<string, int ref>()
-        let renumberHeader num (h : string) = 
-            counts.[h] <- ref num
-            if h = "Unit" then
-                $"Unit (#{num})"
-            elif h.EndsWith ")" then
-                h.Replace(")",$"#{num})")
-            elif h.EndsWith "]" then
-                h.Replace("]",$"#{num}]")
-            else h
+        let renumberHeader num (h : 'T) = 
+            counts.[f h] <- ref num
+            renamer h (getTrailingSpaces num)
+
         headers
         |> List.map (fun header ->
 
-            match Dictionary.tryGetValue header counts with
+            match Dictionary.tryGetValue (f header) counts with
             | Some count -> 
                 count := !count + 1 
                 renumberHeader !count header
             | _ -> 
-                counts.[header] <- ref 1
+                counts.[f header] <- ref 1
                 header
         )
+
+    let renumberISAValueHeaders (headers : ISAValue list) =
+        headers
+        |> renumberHeadersBy 
+            (fun i -> i.HeaderText) 
+            (fun i s -> 
+                i.MapCategory(fun o -> 
+                    {o with Name = 
+                                o.NameText + s
+                                |> AnnotationValue.Text
+                                |> Some
+                    }
+                )
+            )
+
+    let renumberStringHeaders (headers : string list) =
+        headers
+        |> renumberHeadersBy 
+            (id) 
+            (fun h s -> h + s)
 
     let toHeaderRow (hasProtocolREF : bool) (hasProtocolType : bool) (rows : QueryModel.QRow list) =
         try 
@@ -323,7 +345,15 @@ module QRow =
                             | Some u1, None -> failwithf "Units %s and None of value with header %s do not match" u1.NameText h
                             | None, Some u2 -> failwithf "Units None and %s of value with header %s do not match" u2.NameText h
                         )
-                    let h = ISAValue.toHeaders v
+                    let h = 
+                        v.MapCategory(fun o -> 
+                            {o with Name = 
+                                        o.NameText.TrimEnd()
+                                        |> AnnotationValue.Text
+                                        |> Some
+                            }
+                        )
+                        |> ISAValue.toHeaders
                     let f (vs : ISAValue list) = 
                         vs 
                         |> List.tryPick (fun v' -> if v'.HeaderText = v.HeaderText then Some (ISAValue.toValues v') else None)
@@ -339,7 +369,7 @@ module QRow =
                     "Protocol Type"
                     "Term Source REF (MS:1000031)"
                     "Term Accession Number (MS:1000031)"
-                for v in (valueHeaders |> List.concat |> renumberHeaders ) do v
+                for v in (valueHeaders |> List.concat |> renumberStringHeaders ) do v
                 outputType
             }
             ,valueMappers
@@ -368,6 +398,11 @@ module QSheet =
     open ISADotNet.QueryModel
 
     let toSheet i (s : QueryModel.QSheet) =
+
+        let rows = 
+            s.Rows
+            |> List.map (fun r -> {r with Vals = QRow.renumberISAValueHeaders r.Vals})
+
         let hasRef,refs = 
             if s.Protocols |> List.exists (fun p -> p.Name.IsSome && p.Name.Value <> s.SheetName) then
                 if s.Protocols.Length = 1 then
@@ -399,11 +434,11 @@ module QSheet =
             else 
                 false, ForSpecific Map.empty
         try 
-            let headers,mappers = QRow.toHeaderRow hasRef hasProtocolType s.Rows
+            let headers,mappers = QRow.toHeaderRow hasRef hasProtocolType rows
             sheet s.SheetName {
                 table $"annotationTable{i}" {
                     headers
-                    for (i,r) in Seq.indexed s do QRow.toValueRow i hasRef hasProtocolType (refs.TryGet(i)) (protcolTypes.TryGet(i)) mappers r
+                    for (i,r) in Seq.indexed rows do QRow.toValueRow i hasRef hasProtocolType (refs.TryGet(i)) (protcolTypes.TryGet(i)) mappers r
                 }
             }
         with

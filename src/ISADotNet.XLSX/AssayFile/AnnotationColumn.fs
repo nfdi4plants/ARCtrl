@@ -15,6 +15,7 @@ module AnnotationColumn =
         // Pattern matches start of line and then any number of characters except newline, open bracket and open curly bracket.
         let columnTypePattern = @"^[^[(\n]*" //@"[^\[(]*(?= [\[\(])"
         let namePattern = @"(?<= \[).*(?=[\]])"
+        let nameNumberPattern = @"(?<= \[)[^#\]]*(?=[\]#])"
         // [\w-]+ = Pattern matches any letter, number, underscore and minus, but minimum 1
         // (:|_) = ':' or '_', latter is important for url
         let ontologySourcePattern = "[\w-]+(:|_)[\w-]+"//@"(?<=\()\S+:[^;)#]*(?=[\)\#])"
@@ -39,12 +40,17 @@ module AnnotationColumn =
             }
 
         /// Parses a string to a column header
-        static member fromStringHeader header =
+        static member fromStringHeader (header : string) =
                   
-            let nameRegex = Regex.Match(header,RegexPattern.namePattern)
+            let originalHeader = header
+            let header = header.Trim()
+
+            let numberRegex = Regex.Match(header,RegexPattern.numberPattern)
+            let nameRegex = 
+                let namePattern = if numberRegex.Success then RegexPattern.nameNumberPattern else RegexPattern.namePattern
+                Regex.Match(header,namePattern)
             let columnTypePatternRegex = Regex.Match(header,RegexPattern.columnTypePattern)
             let ontologySourceRegex = Regex.Match(header,RegexPattern.ontologySourcePattern)
-            let numberRegex = Regex.Match(header,RegexPattern.numberPattern)
 
             let number = if numberRegex.Success then Some (int numberRegex.Value) else None
             let numberComment = number |> Option.map (string >> (Comment.fromString "Number") >> List.singleton)
@@ -54,7 +60,7 @@ module AnnotationColumn =
                                                                              
                 let ontology = OntologyAnnotation.fromString nameRegex.Value "" ""
 
-                ColumnHeader.create header (columnTypePatternRegex.Value.Trim()) (Some {ontology with Comments = numberComment}) number
+                ColumnHeader.create originalHeader (columnTypePatternRegex.Value.Trim()) (Some {ontology with Comments = numberComment}) number
 
             // Parsing a header of shape: Kind (#Number)
             elif columnTypePatternRegex.Success then
@@ -72,11 +78,11 @@ module AnnotationColumn =
                         |> Some
                     else None
 
-                ColumnHeader.create header kind ontology number
+                ColumnHeader.create originalHeader kind ontology number
 
             // Parsing a header of shape: Kind
             else
-                ColumnHeader.create header header None None
+                ColumnHeader.create originalHeader header None None
         
     /// If both options have a value, updates the fields of the first ontology with the fields of the second ontology
     let mergeOntology (termSourceHeaderOntology : OntologyAnnotation Option) (termAccessionHeaderOntology : OntologyAnnotation Option) =
