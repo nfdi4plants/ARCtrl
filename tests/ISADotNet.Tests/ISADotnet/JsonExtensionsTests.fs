@@ -44,7 +44,12 @@ let testAnyOf =
 
     let intExample      = IntField 5
     let objectExample   = ObjectField {A = "I am an object"}
+    let objectBackslashExample   = ObjectField {A = "escaped\\backslash" }
+    let objectNewLineExample   = ObjectField {A = "escaped\newLine"}
     let stringExample   = StringField "I am a string"   
+    let escapedStringExample = StringField "\"string \"inside\" string\"" 
+    let escapedBackslashExample = StringField "escaped\\backslash" 
+    let newLineExample   = StringField "escaped\newLine" 
 
     testList "AnyOfTests" [
 
@@ -82,11 +87,51 @@ let testAnyOf =
 
         )
 
+        testCase "WriteAndReadEscapedString" (fun () ->
+
+            JsonSerializer.Serialize(escapedStringExample,JsonExtensions.options)
+            |> fun s -> JsonSerializer.Deserialize<AnyOfType>(s,JsonExtensions.options)
+            |> fun d -> Expect.equal d escapedStringExample "AnyOf String could not be parsed correctly"
+
+        )
+
+        testCase "WriteAndReadEscapedBackslash" (fun () ->
+
+            JsonSerializer.Serialize(escapedBackslashExample,JsonExtensions.options)
+            |> fun s -> JsonSerializer.Deserialize<AnyOfType>(s,JsonExtensions.options)
+            |> fun d -> Expect.equal d escapedBackslashExample "AnyOf String could not be parsed correctly"
+
+        )
+
+        testCase "WriteAndReadNewLine" (fun () ->
+
+            JsonSerializer.Serialize(newLineExample,JsonExtensions.options)
+            |> fun s -> JsonSerializer.Deserialize<AnyOfType>(s,JsonExtensions.options)
+            |> fun d -> Expect.equal d newLineExample "AnyOf String could not be parsed correctly"
+
+        )
+
         testCase "WriteAndReadRecordType" (fun () ->
 
             JsonSerializer.Serialize(objectExample,JsonExtensions.options)
             |> fun s -> JsonSerializer.Deserialize<AnyOfType>(s,JsonExtensions.options)
             |> fun d -> Expect.equal d objectExample "AnyOf Integer could not be parsed correctly"
+        )
+        |> testSequenced
+
+        testCase "WriteAndReadRecordTypeEscapedBackslash" (fun () ->
+
+            JsonSerializer.Serialize(objectBackslashExample,JsonExtensions.options)
+            |> fun s -> JsonSerializer.Deserialize<AnyOfType>(s,JsonExtensions.options)
+            |> fun d -> Expect.equal d objectBackslashExample "AnyOf Integer could not be parsed correctly"
+        )
+        |> testSequenced
+
+        testCase "WriteAndReadRecordTypeNewLine" (fun () ->
+
+            JsonSerializer.Serialize(objectNewLineExample,JsonExtensions.options)
+            |> fun s -> JsonSerializer.Deserialize<AnyOfType>(s,JsonExtensions.options)
+            |> fun d -> Expect.equal d objectNewLineExample "AnyOf Integer could not be parsed correctly"
         )
         |> testSequenced
 
