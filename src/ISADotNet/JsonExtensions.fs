@@ -110,6 +110,17 @@ module JsonExtensions =
         | String of string
         | Boolean of bool
 
+    let private restoreEscape (s : string) = 
+        s
+            .Replace("\\","\\\\")
+            .Replace("\n","\\n")
+            .Replace("\b","\\b")
+            .Replace("\f","\\f")
+            .Replace("\r","\\r")
+            .Replace("\t","\\t")
+            .Replace("\u","\\u")
+            .Replace("\"","\\\"")
+
     /// Serializes Json Tokens to a json string
     let private detokenizeJson (l : (JsonTokenType*TokenValue) list) = 
         let mutable elementCameBefore = false
@@ -145,18 +156,18 @@ module JsonExtensions =
 
             | (t,String v)::l when t = JsonTokenType.PropertyName && elementCameBefore -> 
                 elementCameBefore <- false
-                loop (s + sprintf ",\"%s\" : " v) l
+                loop (s + $",\"{v}\" : ") l
             | (t,String v)::l when t = JsonTokenType.PropertyName ->     
                 elementCameBefore <- false
-                loop (s + sprintf "\"%s\" : " v) l
+                loop (s + $"\"{v}\" : ") l
 
             | (t,String v)::l when t = JsonTokenType.Comment ->           loop (s) l
 
             | (t,String v)::l when t = JsonTokenType.String && elementCameBefore->  
-                loop (s + sprintf ", \"%s\"" v) l
+                loop (s + $", \"{restoreEscape v}\"") l
             | (t,String v)::l when t = JsonTokenType.String ->  
                 elementCameBefore <- true
-                loop (s + sprintf "\"%s\"" v) l
+                loop (s + $"\"{restoreEscape v}\"") l
 
             | (t,Boolean v)::l when (t = JsonTokenType.True || t = JsonTokenType.False)  && elementCameBefore ->      
                 loop (s + sprintf ", %b" v) l
@@ -188,64 +199,70 @@ module JsonExtensions =
             Type.containsCustomAttribute<AnyOfAttribute> objectType       
 
         override __.Read(reader, t, opts) =    
-        
-            let s = 
-                if reader.TokenType = JsonTokenType.String then 
-                    reader.GetString() 
-                elif reader.TokenType = JsonTokenType.Number then 
-                    reader.GetDouble() |> string
-                else
-                    let mutable l : (JsonTokenType*TokenValue) list = []
-                    let mutable bracket = 0
-
-                    if reader.TokenType = JsonTokenType.Number then 
-                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                    elif reader.TokenType = JsonTokenType.PropertyName then 
-                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
-                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
-                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
-                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
-                        bracket <- bracket + 1
-                        l <- List.append l [reader.TokenType,None]
-                    else l <- List.append l [reader.TokenType,None]
-
-                    while bracket > 0 do
-                        reader.Read() |> ignore
+            try
+                let s = 
+                    if reader.TokenType = JsonTokenType.String then 
+                        reader.GetString() |> restoreEscape
+                    elif reader.TokenType = JsonTokenType.Number then 
+                        reader.GetDouble() |> string
+                    else
+                        let mutable l : (JsonTokenType*TokenValue) list = []
+                        let mutable bracket = 0
 
                         if reader.TokenType = JsonTokenType.Number then 
                             l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                        elif reader.TokenType = JsonTokenType.String then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         elif reader.TokenType = JsonTokenType.PropertyName then 
                             l <- List.append l [reader.TokenType,reader.GetString() |> String]
-                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                        elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
                             l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
                         elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
                             bracket <- bracket + 1
                             l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
-                            bracket <- bracket - 1
-                            l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.PropertyName then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         else l <- List.append l [reader.TokenType,None]
-                    l
-                    |> detokenizeJson
 
-            FSharp.Reflection.FSharpType.GetUnionCases t
-            // Sort union cases before trying to deseralize them one after one
-            |> Array.sortBy (fun case ->
-                Case.tryGetCustomAttribute<SerializationOrderAttribute> case
-                |> Option.map (fun r -> r.Rank)
-                |> Option.defaultValue 0
-            )
-            // Returns the first union case value which could be deserialized from the input string
-            |> Array.pick (fun case ->          
-                let caseType = Case.getType case
-                Serialization.tryDeserializeUnionCase s caseType opts
-                |> Option.map (fun value -> FSharpValue.MakeUnion(case,[|value|]) :?> 'T)   
-            )
-                 
+                        while bracket > 0 do
+                            reader.Read() |> ignore
+
+                            if reader.TokenType = JsonTokenType.Number then 
+                                l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                            elif reader.TokenType = JsonTokenType.String then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                                l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                            elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                                bracket <- bracket + 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                                bracket <- bracket - 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            else l <- List.append l [reader.TokenType,None]
+                        l
+                        |> detokenizeJson
+
+                FSharp.Reflection.FSharpType.GetUnionCases t
+                // Sort union cases before trying to deseralize them one after one
+                |> Array.sortBy (fun case ->
+                    Case.tryGetCustomAttribute<SerializationOrderAttribute> case
+                    |> Option.map (fun r -> r.Rank)
+                    |> Option.defaultValue 0
+                )
+                // Returns the first union case value which could be deserialized from the input string
+                |> Array.tryPick (fun case ->          
+                    let caseType = Case.getType case
+                    Serialization.tryDeserializeUnionCase s caseType opts
+                    |> Option.map (fun value -> FSharpValue.MakeUnion(case,[|value|]) :?> 'T)   
+                )
+                |> function 
+                    | Option.Some ds -> ds
+                    | Option.None -> failwith $"Could not find a case to which the object matches: \n{s}"
+                    
+            with
+            | err -> 
+                failwith $"AnyOfUnionBaseConverterError: Could not deserialize object of type {t.Name}:\n{err.Message}"
 
 
         override __.Write(writer, value, opts) =
@@ -283,21 +300,24 @@ module JsonExtensions =
             Type.containsCustomAttribute<StringEnumAttribute> objectType       
 
         override __.Read(reader, t, opts) =    
-        
-            let s = reader.GetString()
+            try 
+                let s = reader.GetString() |> restoreEscape
             
-            FSharp.Reflection.FSharpType.GetUnionCases t
-            |> Array.pick (fun case ->
-                let caseName = 
-                    match Case.tryGetCustomAttribute<StringEnumValueAttribute> case with
-                    | Some caseName -> caseName.Value
-                    | Option.None -> case.Name
-                if s = caseName then 
-                    Some (FSharpValue.MakeUnion(case,[||]) :?> 'T)
-                else
-                    Option.None
-            )
-               
+                FSharp.Reflection.FSharpType.GetUnionCases t
+                |> Array.pick (fun case ->
+                    let caseName = 
+                        match Case.tryGetCustomAttribute<StringEnumValueAttribute> case with
+                        | Some caseName -> caseName.Value
+                        | Option.None -> case.Name
+                    if s = caseName then 
+                        Some (FSharpValue.MakeUnion(case,[||]) :?> 'T)
+                    else
+                        Option.None
+                )
+            with
+            | err -> 
+                failwith $"StringEnumConverterError: Could not deserialize object of type {t.Name}:\n{err.Message}"
+              
         override __.Write(writer, value, opts) =
             let (case,value) = FSharp.Reflection.FSharpValue.GetUnionFields(value,value.GetType()) 
             let caseName = 
@@ -346,65 +366,68 @@ module JsonExtensions =
             FSharp.Reflection.FSharpType.IsRecord objectType
 
         override __.Read(reader, t, opts) =    
+            try
+                let fieldNames = 
+                    FSharp.Reflection.FSharpType.GetRecordFields(t)
+                    |> Array.collect (fun p -> 
+                        match p |> RecordField.tryGetCustomAttribute<JsonPropertyNameAttribute> with
+                        | Option.Some n -> [|n.Name|]
+                        | Option.None ->   [|p.Name; p.Name.ToLower()|]
+                    )
+                    |> set
 
-            let fieldNames = 
-                FSharp.Reflection.FSharpType.GetRecordFields(t)
-                |> Array.collect (fun p -> 
-                    match p |> RecordField.tryGetCustomAttribute<JsonPropertyNameAttribute> with
-                    | Option.Some n -> [|n.Name|]
-                    | Option.None ->   [|p.Name; p.Name.ToLower()|]
-                )
-                |> set
-
-            let s = 
-                if reader.TokenType = JsonTokenType.String then 
-                    reader.GetString() 
-                elif reader.TokenType = JsonTokenType.Number then 
-                    reader.GetDouble() |> string
-                else
-                    let mutable l : (JsonTokenType*TokenValue) list = []
-                    let mutable bracket = 0
-                    let mutable objectStartCount = 0
+                let s = 
+                    if reader.TokenType = JsonTokenType.String then 
+                        reader.GetString() |> restoreEscape
+                    elif reader.TokenType = JsonTokenType.Number then 
+                        reader.GetDouble() |> string
+                    else
+                        let mutable l : (JsonTokenType*TokenValue) list = []
+                        let mutable bracket = 0
+                        let mutable objectStartCount = 0
                     
-                    if reader.TokenType = JsonTokenType.Number then 
-                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                    elif reader.TokenType = JsonTokenType.PropertyName then 
-                        let token = reader.TokenType
-                        let s = reader.GetString()
-                        if fieldNames.Contains(s) |> not then failwithf "Could now read json object. Type %s does not contain property named %s" t.Name s
-                        l <- List.append l [token, s |> String]
-                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
-                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
-                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
-                        bracket <- bracket + 1
-                        l <- List.append l [reader.TokenType,None]
-                    else l <- List.append l [reader.TokenType,None]
-
-                    while bracket > 0 do
-
-                        reader.Read() |> ignore
-
                         if reader.TokenType = JsonTokenType.Number then 
                             l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                        elif reader.TokenType = JsonTokenType.String then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         elif reader.TokenType = JsonTokenType.PropertyName then 
                             let token = reader.TokenType
                             let s = reader.GetString()
-                            if fieldNames.Contains(s) |> not && bracket < 2 then failwithf "Could now read json object. Type %s does not contain property named %s" t.Name s
+                            if fieldNames.Contains(s) |> not then failwithf "Could not read json object. Type %s does not contain property named %s" t.Name s
                             l <- List.append l [token, s |> String]
-                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                        elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
                             l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
                         elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
                             bracket <- bracket + 1
                             l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
-                            bracket <- bracket - 1
-                            l <- List.append l [reader.TokenType,None]
                         else l <- List.append l [reader.TokenType,None]
-                    l
-                    |> detokenizeJson
-            JsonSerializer.Deserialize<'T>(s,baseOptions)
+
+                        while bracket > 0 do
+
+                            reader.Read() |> ignore
+
+                            if reader.TokenType = JsonTokenType.Number then 
+                                l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                            elif reader.TokenType = JsonTokenType.String then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                let token = reader.TokenType
+                                let s = reader.GetString()
+                                if fieldNames.Contains(s) |> not && bracket < 2 then failwithf "Coult now read json object. Type %s does not contain property named %s" t.Name s
+                                l <- List.append l [token, s |> String]
+                            elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                                l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                            elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                                bracket <- bracket + 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                                bracket <- bracket - 1
+                                l <- List.append l [reader.TokenType,None]
+                            else l <- List.append l [reader.TokenType,None]
+                        l
+                        |> detokenizeJson
+                JsonSerializer.Deserialize<'T>(s,baseOptions)
+            with
+            | err -> 
+                failwith $"RecordConverterError: Could not deserialize object of type {t.Name}:\n{err.Message}"
 
         override __.Write(writer, value, opts) =
      
@@ -434,54 +457,58 @@ module JsonExtensions =
 
 
         override __.Read(reader, t, opts) =    
-            let s = 
-                if reader.TokenType = JsonTokenType.String then 
-                    reader.GetString() 
-                elif reader.TokenType = JsonTokenType.Number then 
-                    reader.GetDouble() |> string
-                else
-                    let mutable l : (JsonTokenType*TokenValue) list = []
-                    let mutable bracket = 0
-
-                    if reader.TokenType = JsonTokenType.Number then 
-                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                    elif reader.TokenType = JsonTokenType.PropertyName then 
-                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
-                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
-                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
-                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
-                        bracket <- bracket + 1
-                        l <- List.append l [reader.TokenType,None]
-                    else l <- List.append l [reader.TokenType,None]
-
-                    while bracket > 0 do
-                        reader.Read() |> ignore
+            try
+                let s = 
+                    if reader.TokenType = JsonTokenType.String then 
+                        reader.GetString() |> restoreEscape
+                    elif reader.TokenType = JsonTokenType.Number then 
+                        reader.GetDouble() |> string
+                    else
+                        let mutable l : (JsonTokenType*TokenValue) list = []
+                        let mutable bracket = 0
 
                         if reader.TokenType = JsonTokenType.Number then 
                             l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                        elif reader.TokenType = JsonTokenType.String then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         elif reader.TokenType = JsonTokenType.PropertyName then 
                             l <- List.append l [reader.TokenType,reader.GetString() |> String]
-                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                        elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
                             l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
                         elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
                             bracket <- bracket + 1
                             l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
-                            bracket <- bracket - 1
-                            l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.PropertyName then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         else l <- List.append l [reader.TokenType,None]
-                    l
-                    |> detokenizeJson
-            let c = JsonSerializer.Deserialize<Component>(s,baseOptions)
-            let v, unit =  
-                match c.ComponentName with
-                | Some c -> Component.decomposeName c |> fun (a,b) -> Some a,b
-                | Option.None -> Option.None, Option.None
-            box {c with ComponentValue = v; ComponentUnit = unit} :?> 'T
+
+                        while bracket > 0 do
+                            reader.Read() |> ignore
+
+                            if reader.TokenType = JsonTokenType.Number then 
+                                l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                            elif reader.TokenType = JsonTokenType.String then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                                l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                            elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                                bracket <- bracket + 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                                bracket <- bracket - 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            else l <- List.append l [reader.TokenType,None]
+                        l
+                        |> detokenizeJson
+                let c = JsonSerializer.Deserialize<Component>(s,baseOptions)
+                let v, unit =  
+                    match c.ComponentName with
+                    | Some c -> Component.decomposeName c |> fun (a,b) -> Some a,b
+                    | Option.None -> Option.None, Option.None
+                box {c with ComponentValue = v; ComponentUnit = unit} :?> 'T
+            with
+            | err -> 
+                failwith $"ComponentConverterError: Could not deserialize object of type {t.Name}:\n{err.Message}"
 
         override __.Write(writer, value, opts) =
      
@@ -539,64 +566,72 @@ module JsonExtensions =
             Type.containsCustomAttribute<AnyOfAttribute> objectType       
 
         override __.Read(reader, t, opts) =    
-        
-            let s = 
-                if reader.TokenType = JsonTokenType.String then 
-                    reader.GetString() 
-                elif reader.TokenType = JsonTokenType.Number then 
-                    reader.GetDouble() |> string
-                else
-                    let mutable l : (JsonTokenType*TokenValue) list = []
-                    let mutable bracket = 0
-
-                    if reader.TokenType = JsonTokenType.Number then 
-                        l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                    elif reader.TokenType = JsonTokenType.PropertyName then 
-                        l <- List.append l [reader.TokenType,reader.GetString() |> String]
-                    elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
-                        l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
-                    elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
-                        bracket <- bracket + 1
-                        l <- List.append l [reader.TokenType,None]
-                    else l <- List.append l [reader.TokenType,None]
-
-                    while bracket > 0 do
-                        reader.Read() |> ignore
+            try
+                let s = 
+                    if reader.TokenType = JsonTokenType.String then 
+                        let x = reader.GetString() |> restoreEscape
+                        printfn "%s" x
+                        x
+                    elif reader.TokenType = JsonTokenType.Number then 
+                        reader.GetDouble() |> string
+                    else
+                        let mutable l : (JsonTokenType*TokenValue) list = []
+                        let mutable bracket = 0
 
                         if reader.TokenType = JsonTokenType.Number then 
                             l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
-                        elif reader.TokenType = JsonTokenType.String then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         elif reader.TokenType = JsonTokenType.PropertyName then 
                             l <- List.append l [reader.TokenType,reader.GetString() |> String]
-                        elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                        elif reader.TokenType = JsonTokenType.False || reader.TokenType = JsonTokenType.True then 
                             l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
                         elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
                             bracket <- bracket + 1
                             l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
-                            bracket <- bracket - 1
-                            l <- List.append l [reader.TokenType,None]
-                        elif reader.TokenType = JsonTokenType.PropertyName then 
-                            l <- List.append l [reader.TokenType,reader.GetString() |> String]
                         else l <- List.append l [reader.TokenType,None]
-                    l
-                    |> detokenizeJson
 
-            FSharp.Reflection.FSharpType.GetUnionCases t
-            // Sort union cases before trying to deseralize them one after one
-            |> Array.sortBy (fun case ->
-                Case.tryGetCustomAttribute<SerializationOrderAttribute> case
-                |> Option.map (fun r -> r.Rank)
-                |> Option.defaultValue 0
-            )
-            // Returns the first union case value which could be deserialized from the input string
-            |> Array.pick (fun case ->          
-                let caseType = Case.getType case
-                Serialization.tryDeserializeUnionCase s caseType optionsForAnyOf
-                |> Option.map (fun value -> FSharpValue.MakeUnion(case,[|value|]) :?> 'T)   
-            )
-                 
+                        while bracket > 0 do
+                            reader.Read() |> ignore
+
+                            if reader.TokenType = JsonTokenType.Number then 
+                                l <- List.append l [reader.TokenType,reader.GetDouble() |> Number]
+                            elif reader.TokenType = JsonTokenType.String then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            elif reader.TokenType = JsonTokenType.True || reader.TokenType = JsonTokenType.False then 
+                                l <- List.append l [reader.TokenType,reader.GetBoolean() |> Boolean]
+                            elif reader.TokenType = JsonTokenType.StartArray || reader.TokenType = JsonTokenType.StartObject then 
+                                bracket <- bracket + 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.EndArray || reader.TokenType = JsonTokenType.EndObject then 
+                                bracket <- bracket - 1
+                                l <- List.append l [reader.TokenType,None]
+                            elif reader.TokenType = JsonTokenType.PropertyName then 
+                                l <- List.append l [reader.TokenType,reader.GetString() |> String]
+                            else l <- List.append l [reader.TokenType,None]
+                        l
+                        |> detokenizeJson
+
+                FSharp.Reflection.FSharpType.GetUnionCases t
+                // Sort union cases before trying to deseralize them one after one
+                |> Array.sortBy (fun case ->
+                    Case.tryGetCustomAttribute<SerializationOrderAttribute> case
+                    |> Option.map (fun r -> r.Rank)
+                    |> Option.defaultValue 0
+                )
+                // Returns the first union case value which could be deserialized from the input string
+                |> Array.tryPick (fun case ->          
+                    let caseType = Case.getType case
+                    Serialization.tryDeserializeUnionCase s caseType optionsForAnyOf
+                    |> Option.map (fun value -> FSharpValue.MakeUnion(case,[|value|]) :?> 'T)   
+                )
+                |> function 
+                    | Option.Some ds -> ds
+                    | Option.None -> failwith $"Could not find a case to which the object matches: \n{s}"
+                    
+            with
+            | err -> 
+                failwith $"AnyOfUnionConverterError: Could not deserialize object of type {t.Name}:\n{err.Message}"  
 
 
         override __.Write(writer, value, opts) =
