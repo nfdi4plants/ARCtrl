@@ -156,19 +156,21 @@ module Investigation =
    
     let toRows (investigation:Investigation) : seq<SparseRow> =
         let insertRemarks (remarks:Remark list) (rows:seq<SparseRow>) = 
-            let rm = remarks |> List.map Remark.toTuple |> Map.ofList 
-            let rec loop i l nl =
-                match Map.tryFind i rm with
-                | Some remark ->
-                     SparseRow.fromValues [wrapRemark remark] :: nl
-                    |> loop (i+1) l
-                | None -> 
-                    match l with
-                    | [] -> nl
-                    | h :: t -> 
-                        loop (i+1) t (h::nl)
-            loop 1 (rows |> List.ofSeq) []
-            |> List.rev
+            try 
+                let rm = remarks |> List.map Remark.toTuple |> Map.ofList            
+                let rec loop i l nl =
+                    match Map.tryFind i rm with
+                    | Some remark ->
+                         SparseRow.fromValues [wrapRemark remark] :: nl
+                        |> loop (i+1) l
+                    | None -> 
+                        match l with
+                        | [] -> nl
+                        | h :: t -> 
+                            loop (i+1) t (h::nl)
+                loop 1 (rows |> List.ofSeq) []
+                |> List.rev
+            with | _ -> rows |> Seq.toList
         seq {
             yield  SparseRow.fromValues[ontologySourceReferenceLabel]
             yield! OntologySourceReference.toRows (Option.defaultValue [] investigation.OntologySourceReferences)
