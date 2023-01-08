@@ -270,6 +270,17 @@ let testInvestigationFile =
             Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
         )
         |> testSequenced
+
+        testCase "HandleEmptyRemarks" (fun () ->
+
+            let json = "{}"
+            
+            let i = Investigation.fromString json
+
+            Expect.equal i.Remarks List.empty "Remark list should be an empty list."
+        )
+        |> testSequenced
+
         testCase "FullInvestigation" (fun () ->
                   
             let comment = 
