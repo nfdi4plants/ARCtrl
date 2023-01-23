@@ -4,6 +4,7 @@ open ISADotNet
 open System.Text.Json.Serialization
 
 [<AnyOf>]
+/// 
 type ISAValue =
     | [<SerializationOrder(0)>] Parameter of ProcessParameterValue
     | [<SerializationOrder(1)>] Characteristic of MaterialAttributeValue
@@ -23,21 +24,25 @@ module ISAValueExtensions =
 
     type ISAValue with
 
+        /// Returns true, if the value is a characteristic value
         member this.IsCharacteristicValue =
             match this with
             | Characteristic _  -> true
             | _                 -> false
 
+        /// Returns true, if the value is a parameter value
         member this.IsParameterValue =
             match this with
             | Parameter _   -> true
             | _             -> false
 
+        /// Returns true, if the value is a factor value
         member this.IsFactorValue =
             match this with
             | Factor _  -> true
             | _         -> false
-
+            
+        /// Returns true, if the value is a characteristic value
         member this.IsComponent =
             match this with
             | Component _  -> true
@@ -50,6 +55,14 @@ module ISAValueExtensions =
             | Characteristic c  -> try c.Category.Value.CharacteristicType.Value    with | _ -> failwith $"Characteristic does not contain category"
             | Factor f          -> try f.Category.Value.FactorType.Value            with | _ -> failwith $"Factor does not contain category"
             | Component c       -> try c.ComponentType.Value                        with | _ -> failwith $"Component does not contain category"
+
+        /// Returns the ontology of the category of the ISAValue
+        member this.TryCategory =
+            match this with
+            | Parameter p       -> p.Category |> Option.bind (fun c -> c.ParameterName)
+            | Characteristic c  -> c.Category |> Option.bind (fun c -> c.CharacteristicType)
+            | Factor f          -> f.Category |> Option.bind (fun c -> c.FactorType)
+            | Component c       -> c.ComponentType
 
         /// Returns the ontology of the unit of the ISAValue
         member this.Unit =
@@ -83,14 +96,6 @@ module ISAValueExtensions =
             | Factor f          -> try Some f.Value.Value           with | _ -> None
             | Component c       -> try Some c.ComponentValue.Value  with | _ -> None
 
-        /// Returns the name of the Value as string
-        member this.HeaderText = 
-            match this with
-            | Parameter p       -> $"Parameter [{this.NameText}]"       
-            | Characteristic c  -> $"Characteristic [{this.NameText}]" 
-            | Factor f          -> $"Factor [{this.NameText}]"          
-            | Component c       -> $"Component [{this.NameText}]" 
-
         /// Returns true, if the ISAValue has a unit
         member this.HasUnit =
             match this with
@@ -115,20 +120,58 @@ module ISAValueExtensions =
             | Factor f          -> f.Category.IsSome
             | Component c       -> c.ComponentType.IsSome
 
+        /// Returns the header of the Value as string
+        member this.HeaderText = 
+            match this with
+            | Parameter p       -> $"Parameter [{this.NameText}]"       
+            | Characteristic c  -> $"Characteristic [{this.NameText}]" 
+            | Factor f          -> $"Factor [{this.NameText}]"          
+            | Component c       -> $"Component [{this.NameText}]" 
+
+        /// Returns the header of the Value as string if it exists, else returns None
+        member this.TryHeaderText = 
+            match this with
+            | Parameter p       -> if this.HasCategory then Some $"Parameter [{this.NameText}]"         else None
+            | Characteristic c  -> if this.HasCategory then Some $"Characteristic [{this.NameText}]"    else None
+            | Factor f          -> if this.HasCategory then Some $"Factor [{this.NameText}]"            else None
+            | Component c       -> if this.HasCategory then Some $"Component [{this.NameText}]"         else None
+
         /// Returns the name of the Value as string
         member this.NameText = this.Category.NameText
   
-        /// Returns the ontology of the category of the Value as string
+        /// Returns the name of the Value as string if it exists, else returns None
+        member this.TryNameText = 
+            this.TryCategory |> Option.map (fun c -> c.NameText)
+
+        /// Returns the unit of the Value as string
         member this.UnitText = this.Unit.NameText
 
+        /// Returns the unit of the Value as string if it exists, else returns None
+        member this.TryUnitText = 
+            this.TryUnit |> Option.map (fun u -> u.NameText)
+
+        /// Returns the value of the Value as string
         member this.ValueText = this.Value.AsString
 
+        /// Returns the value of the Value as string if it exists, else returns None
+        member this.TryValueText = 
+            this.TryValue |> Option.map (fun v -> v.AsString)
+
+        /// Returns the value and unit of the Value as string
         member this.ValueWithUnitText =
             match this with
             | Parameter p       -> p.ValueWithUnitText
             | Characteristic c  -> c.ValueWithUnitText
             | Factor f          -> f.ValueWithUnitText
             | Component c       -> c.ValueWithUnitText
+
+        /// Returns the value and unit of the Value as string if it exists, else returns None
+        member this.TryValueWithUnitText =
+            match this with
+            | Parameter p       -> if this.HasValue && this.HasUnit then Some p.ValueWithUnitText else None
+            | Characteristic c  -> if this.HasValue && this.HasUnit then Some c.ValueWithUnitText else None
+            | Factor f          -> if this.HasValue && this.HasUnit then Some f.ValueWithUnitText else None
+            | Component c       -> if this.HasValue && this.HasUnit then Some c.ValueWithUnitText else None
 
         member this.ValueIndex() =
             try
