@@ -13,6 +13,7 @@
     <Compile Include="Category.fs" />
     <Compile Include="Value.fs" />
     <Compile Include="ValueCollection.fs" />
+    <Compile Include="Node.fs" />
     <Compile Include="Row.fs" />
     <Compile Include="Column.fs" />
     <Compile Include="Sheet.fs" />
