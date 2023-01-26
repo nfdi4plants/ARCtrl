@@ -1,4 +1,4 @@
-﻿namespace ISADotNet.QueryModel
+﻿namespace rec ISADotNet.QueryModel
 
 open ISADotNet
 open System.Text.Json.Serialization
@@ -858,12 +858,16 @@ type QProcessSequence (sheets : QSheet list) =
     member this.Contains(name : string, ?ProtocolName) = 
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains name
 
-/// Contains queryable ISAValues (Parameters, Factors, Characteristics)
-and QNode(Name : string, IOType : IOType, ?ParentProcessSequence : QProcessSequence) =
+/// One Node of an ISA Process Sequence (Source, Sample, Data)
+type QNode(Name : string, IOType : IOType, ?ParentProcessSequence : QProcessSequence) =
     
+    /// Returns the process sequence in which the node appears
     member this.ParentProcessSequence = ParentProcessSequence |> Option.defaultValue (QProcessSequence([]))
 
+    /// Identifying name of the node
     member this.Name = Name
+
+    /// Type of node (source, sample, data, raw data ...)
     member this.IOType : IOType = IOType
 
     interface System.IEquatable<QNode> with
@@ -885,58 +889,119 @@ and QNode(Name : string, IOType : IOType, ?ParentProcessSequence : QProcessSeque
     interface System.IComparable<QNode> with
         member this.CompareTo other = other.Name.CompareTo this.Name
 
+    /// Returns true, if the node is a source
     member this.isSource = this.IOType.isSource
 
+    /// Returns true, if the node is a sample
     member this.isSample = this.IOType.isSample
     
+    /// Returns true, if the node is a data
     member this.isData = this.IOType.isData
 
+    /// Returns true, if the node is a raw data
     member this.isRawData = this.IOType.isRawData
-
+    
+    /// Returns true, if the node is a processed data
     member this.isProcessedData = this.IOType.isProcessedData
 
+    /// Returns true, if the node is a material
     member this.isMaterial = this.IOType.isMaterial
 
-    member this.Values = this.ParentProcessSequence.ValuesOf(this)
 
-    /// Returns all values in the process sequence, that are connected to this given node and come before it in the sequence
-    member this.PreviousValues = this.ParentProcessSequence.PreviousValuesOf(this)
+[<AutoOpen>]
+module QNodeExtensions =
 
-    /// Returns all values in the process sequence, that are connected to the given node and come after it in the sequence
-    member this.SucceedingValues = this.ParentProcessSequence.SucceedingValuesOf(this)
+    type QNode with
 
-    /// Returns all characteristic values in the process sequence, that are connected to the given node
-    member this.CharacteristicsOf = this.ParentProcessSequence.CharacteristicsOf(this)
+        /// Returns all other nodes in the process sequence, that are connected to this node
+        member this.Nodes = this.ParentProcessSequence.NodesOf(this)
 
-    /// Returns all characteristic values in the process sequence, that are connected to the given node and come before it in the sequence
-    member this.PreviousCharacteristicsOf = this.ParentProcessSequence.PreviousCharacteristicsOf(this)
+        /// Returns all other nodes in the process sequence, that are connected to this node and have no more origin nodes pointing to them
+        member this.FirstNodes = this.ParentProcessSequence.FirstNodesOf(this)
 
-    /// Returns all characteristic values in the process sequence, that are connected to the given node and come after it in the sequence
-    member this.SucceedingCharacteristicsOf = this.ParentProcessSequence.SucceedingCharacteristicsOf(this)
+        /// Returns all other nodes in the process sequence, that are connected to this node and have no more sink nodes they point to
+        member this.LastNodes = this.ParentProcessSequence.LastNodesOf(this)
 
-    /// Returns all parameter values in the process sequence, that are connected to the given node
-    member this.ParametersOf = this.ParentProcessSequence.ParametersOf(this)
+        /// Returns all other samples in the process sequence, that are connected to this node
+        member this.Samples = this.ParentProcessSequence.SamplesOf(this)
 
-    /// Returns all parameter values in the process sequence, that are connected to the given node and come before it in the sequence
-    member this.PreviousParametersOf = this.ParentProcessSequence.PreviousParametersOf(this)
+        /// Returns all other samples in the process sequence, that are connected to this node and have no more origin nodes pointing to them
+        member this.FirstSamples = this.ParentProcessSequence.FirstSamplesOf(this)
+        
+        /// Returns all other samples in the process sequence, that are connected to this node and have no more sink nodes they point to
+        member this.LastSamples = this.ParentProcessSequence.LastSamplesOf(this)
 
-    /// Returns all parameter values in the process sequence, that are connected to the given node and come after it in the sequence
-    member this.SucceedingParametersOf = this.ParentProcessSequence.SucceedingParametersOf(this)
+        /// Returns all other sources in the process sequence, that are connected to this node
+        member this.Sources = this.ParentProcessSequence.SourcesOf(this)
 
-   /// Returns all factor values in the process sequence, that are connected to the given node
-    member this.FactorsOf = this.ParentProcessSequence.FactorsOf(this)
+        /// Returns all other data in the process sequence, that are connected to this node
+        member this.Data = this.ParentProcessSequence.FirstDataOf(this)
 
-    /// Returns all factor values in the process sequence, that are connected to the given node and come before it in the sequence
-    member this.PreviousFactorsOf = this.ParentProcessSequence.PreviousFactorsOf(this)
+        /// Returns all other data in the process sequence, that are connected to this node and have no more origin nodes pointing to them
+        member this.FirstData = this.ParentProcessSequence.FirstDataOf(this)
 
-    /// Returns all factor values in the process sequence, that are connected to the given node and come after it in the sequence
-    member this.SucceedingFactorsOf = this.ParentProcessSequence.SucceedingFactorsOf(this)
+        /// Returns all other data in the process sequence, that are connected to this node and have no more sink nodes they point to
+        member this.LastData = this.ParentProcessSequence.LastNodesOf(this)
 
-    /// Returns all component values in the process sequence, that are connected to the given node
-    member this.ComponentsOf = this.ParentProcessSequence.ComponentsOf(this)
+        /// Returns all other raw data in the process sequence, that are connected to this node
+        member this.RawData = this.ParentProcessSequence.RawDataOf(this)
 
-    /// Returns all component values in the process sequence, that are connected to the given node and come before it in the sequence
-    member this.PreviousComponentsOf = this.ParentProcessSequence.PreviousComponentsOf(this)
+        /// Returns all other raw data in the process sequence, that are connected to this node and have no more origin nodes pointing to them
+        member this.FirstRawData = this.ParentProcessSequence.FirstRawDataOf(this)
 
-    /// Returns all component values in the process sequence, that are connected to the given node and come after it in the sequence
-    member this.SucceedingComponentsOf = this.ParentProcessSequence.SucceedingComponentsOf(this)
+        /// Returns all other raw data in the process sequence, that are connected to this node and have no more sink nodes they point to
+        member this.LastRawData = this.ParentProcessSequence.LastRawDataOf(this)
+
+        /// Returns all other processed data in the process sequence, that are connected to this node
+        member this.ProcessedData = this.ParentProcessSequence.ProcessedDataOf(this)
+
+        /// Returns all other processed data in the process sequence, that are connected to this node and have no more sink nodes they point to
+        member this.FirstProcessedData = this.ParentProcessSequence.FirstProcessedDataOf(this)
+
+        /// Returns all other processed data in the process sequence, that are connected to this node and have no more sink nodes they point to
+        member this.LastProcessedData = this.ParentProcessSequence.LastProcessedDataOf(this)
+
+        /// Returns all values in the process sequence, that are connected to this given node
+        member this.Values = this.ParentProcessSequence.ValuesOf(this)
+
+        /// Returns all values in the process sequence, that are connected to this given node and come before it in the sequence
+        member this.PreviousValues = this.ParentProcessSequence.PreviousValuesOf(this)
+
+        /// Returns all values in the process sequence, that are connected to the given node and come after it in the sequence
+        member this.SucceedingValues = this.ParentProcessSequence.SucceedingValuesOf(this)
+
+        /// Returns all characteristic values in the process sequence, that are connected to the given node
+        member this.Characteristics = this.ParentProcessSequence.CharacteristicsOf(this)
+
+        /// Returns all characteristic values in the process sequence, that are connected to the given node and come before it in the sequence
+        member this.PreviousCharacteristics = this.ParentProcessSequence.PreviousCharacteristicsOf(this)
+
+        /// Returns all characteristic values in the process sequence, that are connected to the given node and come after it in the sequence
+        member this.SucceedingCharacteristics = this.ParentProcessSequence.SucceedingCharacteristicsOf(this)
+
+        /// Returns all parameter values in the process sequence, that are connected to the given node
+        member this.Parameters = this.ParentProcessSequence.ParametersOf(this)
+
+        /// Returns all parameter values in the process sequence, that are connected to the given node and come before it in the sequence
+        member this.PreviousParameters = this.ParentProcessSequence.PreviousParametersOf(this)
+
+        /// Returns all parameter values in the process sequence, that are connected to the given node and come after it in the sequence
+        member this.SucceedingParameters = this.ParentProcessSequence.SucceedingParametersOf(this)
+
+       /// Returns all factor values in the process sequence, that are connected to the given node
+        member this.Factors = this.ParentProcessSequence.FactorsOf(this)
+
+        /// Returns all factor values in the process sequence, that are connected to the given node and come before it in the sequence
+        member this.PreviousFactors = this.ParentProcessSequence.PreviousFactorsOf(this)
+
+        /// Returns all factor values in the process sequence, that are connected to the given node and come after it in the sequence
+        member this.SucceedingFactors = this.ParentProcessSequence.SucceedingFactorsOf(this)
+
+        /// Returns all component values in the process sequence, that are connected to the given node
+        member this.Components = this.ParentProcessSequence.ComponentsOf(this)
+
+        /// Returns all component values in the process sequence, that are connected to the given node and come before it in the sequence
+        member this.PreviousComponents = this.ParentProcessSequence.PreviousComponentsOf(this)
+
+        /// Returns all component values in the process sequence, that are connected to the given node and come after it in the sequence
+        member this.SucceedingComponents = this.ParentProcessSequence.SucceedingComponentsOf(this)
