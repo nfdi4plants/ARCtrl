@@ -1,3 +1,8 @@
+### 0.7.0+ac83329 (Released 2023-1-26)
+* Additions:
+    * latest commit #ac83329
+    * [[#ac83329](https://github.com/nfdi4plants/ISADotNet/commit/ac83329b31d4dcb69c61be5d610896522ee44eda)] impove QNode usability with documentation
+
 ### 0.6.1+7de6163 (Released 2022-12-7)
 * Additions:
     * latest commit #7de6163

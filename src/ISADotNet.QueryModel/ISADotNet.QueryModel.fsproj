@@ -21,9 +21,11 @@
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
+    <Compile Include="Linq\Query.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FsSpreadsheet" Version="0.2.1" />
     <PackageReference Include="Swate.Api" Version="0.2.0" />
   </ItemGroup>
 
