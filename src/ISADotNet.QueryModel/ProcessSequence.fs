@@ -424,24 +424,12 @@ type QProcessSequence (sheets : QSheet list) =
         |> IOValueCollection
 
     /// Returns the names of all nodes in the Process sequence
-    member this.Nodes() =
-        QProcessSequence.getNodes(this)
-
-    /// Returns the names of all nodes in the Process sequence
     member this.NodesOf(node : QNode) =
         QProcessSequence.getNodesOfBy (fun _ -> true) node.Name this
 
         /// Returns the names of all nodes in the Process sequence
     member this.NodesOf(node) =
         QProcessSequence.getNodesOfBy (fun _ -> true) node this
-
-    /// Returns the names of all the input nodes in the Process sequence to which no output points
-    member this.FirstNodes() = 
-        QProcessSequence.getRootInputs(this)
-
-    /// Returns the names of all the output nodes in the Process sequence that point to no input
-    member this.LastNodes() = 
-        QProcessSequence.getFinalOutputs(this)
 
         /// Returns the names of all the input nodes in the Process sequence to which no output points, that are connected to the given node
     member this.FirstNodesOf(node : QNode) = 
@@ -459,10 +447,6 @@ type QProcessSequence (sheets : QSheet list) =
     member this.LastNodesOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun _ -> true) node this
 
-    /// Returns the names of all samples in the Process sequence
-    member this.Samples() =
-        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSample) this
-
     /// Returns the names of all samples in the Process sequence, that are connected to the given node
     member this.SamplesOf(node : QNode) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSample) node.Name this
@@ -470,14 +454,6 @@ type QProcessSequence (sheets : QSheet list) =
         /// Returns the names of all samples in the Process sequence, that are connected to the given node
     member this.SamplesOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSample) node this
-
-    /// Returns the names of all the input samples in the Process sequence to which no output points
-    member this.FirstSamples() = 
-        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isSample) this
-
-    /// Returns the names of all the output samples in the Process sequence that point to no input
-    member this.LastSamples() = 
-        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isSample) this
 
     /// Returns the names of all the input samples in the Process sequence to which no output points, that are connected to the given node
     member this.FirstSamplesOf(node : QNode) = 
@@ -495,10 +471,6 @@ type QProcessSequence (sheets : QSheet list) =
     member this.LastSamplesOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isSample) node this
 
-    /// Returns the names of all sources in the Process sequence
-    member this.Sources() =
-        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSource) this
-
     /// Returns the names of all sources in the Process sequence, that are connected to the given node
     member this.SourcesOf(node : QNode) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSource) node.Name this
@@ -507,10 +479,6 @@ type QProcessSequence (sheets : QSheet list) =
     member this.SourcesOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isSource) node this
 
-    /// Returns the names of all data in the Process sequence
-    member this.Data() =
-        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isData) this
-
     /// Returns the names of all data in the Process sequence, that are connected to the given node
     member this.DataOf(node : QNode) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isData) node.Name this
@@ -518,14 +486,6 @@ type QProcessSequence (sheets : QSheet list) =
     /// Returns the names of all data in the Process sequence, that are connected to the given node
     member this.DataOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isData) node this
-
-    /// Returns the names of all the input data in the Process sequence to which no output points
-    member this.FirstData() = 
-        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isData) this
-
-    /// Returns the names of all the output data in the Process sequence that point to no input
-    member this.LastData() = 
-        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isData) this
 
     /// Returns the names of all the input data in the Process sequence to which no output points, that are connected to the given node
     member this.FirstDataOf(node : QNode) = 
@@ -543,10 +503,6 @@ type QProcessSequence (sheets : QSheet list) =
     member this.LastDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isData) node this
 
-    /// Returns the names of all raw data in the Process sequence
-    member this.RawData() =
-        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isRawData) this
-
     /// Returns the names of all raw data in the Process sequence, that are connected to the given node
     member this.RawDataOf(node : QNode) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isRawData) node.Name this
@@ -554,14 +510,6 @@ type QProcessSequence (sheets : QSheet list) =
     /// Returns the names of all raw data in the Process sequence, that are connected to the given node
     member this.RawDataOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isRawData) node this
-
-    /// Returns the names of all the input raw data in the Process sequence to which no output points
-    member this.FirstRawData() = 
-        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isRawData) this
-
-    /// Returns the names of all the output raw data in the Process sequence that point to no input
-    member this.LastRawData() = 
-        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isRawData) this
     
     /// Returns the names of all the input raw data in the Process sequence to which no output points, that are connected to the given node
     member this.FirstRawDataOf(node : QNode) = 
@@ -579,10 +527,6 @@ type QProcessSequence (sheets : QSheet list) =
     member this.LastRawDataOf(node) = 
         QProcessSequence.getFinalOutputsOfBy (fun (io : IOType) -> io.isRawData) node this
 
-    /// Returns the names of all processed data in the Process sequence
-    member this.ProcessedData() =
-        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isProcessedData) this
-
     /// Returns the names of all processed data in the Process sequence, that are connected to the given node
     member this.ProcessedDataOf(node : QNode) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isProcessedData) node.Name this
@@ -590,14 +534,6 @@ type QProcessSequence (sheets : QSheet list) =
     /// Returns the names of all processed data in the Process sequence, that are connected to the given node
     member this.ProcessedDataOf(node) =
         QProcessSequence.getNodesOfBy (fun (io : IOType) -> io.isProcessedData) node this
-
-    /// Returns the names of all the input processed data in the Process sequence to which no output points
-    member this.FirstProcessedData() = 
-        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isProcessedData) this
-
-    /// Returns the names of all the output processed data in the Process sequence that point to no input
-    member this.LastProcessedData() = 
-        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isProcessedData) this
 
     /// Returns the names of all the input processed data in the Process sequence to which no output points, that are connected to the given node
     member this.FirstProcessedDataOf(node : QNode) = 
@@ -851,12 +787,77 @@ type QProcessSequence (sheets : QSheet list) =
     member this.SucceedingComponentsOf(node : QNode, ?ProtocolName) =
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).SucceedingValuesOf(node).Components()
 
-
     member this.Contains(ontology : OntologyAnnotation, ?ProtocolName) = 
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains ontology
 
     member this.Contains(name : string, ?ProtocolName) = 
          (QProcessSequence.onlyValuesOfProtocol this ProtocolName).Values().Contains name
+
+type QProcessSequence with
+
+    /// Returns the names of all nodes in the Process sequence
+    member this.Nodes =
+        QProcessSequence.getNodes(this)
+
+    /// Returns the names of all the input nodes in the Process sequence to which no output points
+    member this.FirstNodes = 
+        QProcessSequence.getRootInputs(this)
+
+    /// Returns the names of all the output nodes in the Process sequence that point to no input
+    member this.LastNodes = 
+        QProcessSequence.getFinalOutputs(this)
+
+    /// Returns the names of all samples in the Process sequence
+    member this.Samples =
+        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSample) this
+
+    /// Returns the names of all the input samples in the Process sequence to which no output points
+    member this.FirstSamples = 
+        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isSample) this
+
+    /// Returns the names of all the output samples in the Process sequence that point to no input
+    member this.LastSamples = 
+        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isSample) this
+
+    /// Returns the names of all sources in the Process sequence
+    member this.Sources =
+        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isSource) this
+
+    /// Returns the names of all data in the Process sequence
+    member this.Data =
+        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isData) this
+
+    /// Returns the names of all the input data in the Process sequence to which no output points
+    member this.FirstData = 
+        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isData) this
+
+    /// Returns the names of all the output data in the Process sequence that point to no input
+    member this.LastData = 
+        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isData) this
+
+    /// Returns the names of all raw data in the Process sequence
+    member this.RawData =
+        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isRawData) this
+
+    /// Returns the names of all the input raw data in the Process sequence to which no output points
+    member this.FirstRawData = 
+        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isRawData) this
+
+    /// Returns the names of all the output raw data in the Process sequence that point to no input
+    member this.LastRawData = 
+        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isRawData) this
+    
+    /// Returns the names of all processed data in the Process sequence
+    member this.ProcessedData =
+        QProcessSequence.getNodesBy (fun (io : IOType) -> io.isProcessedData) this
+
+    /// Returns the names of all the input processed data in the Process sequence to which no output points
+    member this.FirstProcessedData = 
+        QProcessSequence.getRootInputsBy (fun (io : IOType) -> io.isProcessedData) this
+
+    /// Returns the names of all the output processed data in the Process sequence that point to no input
+    member this.LastProcessedData = 
+        QProcessSequence.getFinalOutputsBy (fun (io : IOType) -> io.isProcessedData) this
 
 /// One Node of an ISA Process Sequence (Source, Sample, Data)
 type QNode(Name : string, IOType : IOType, ?ParentProcessSequence : QProcessSequence) =
