@@ -11,7 +11,7 @@ open Helpers
 
 type ISAQueryBuilder () =
     
-    
+    // ---- Message handling ----
 
     let mutable messages = []
     let reset () = messages <- []
@@ -29,9 +29,7 @@ type ISAQueryBuilder () =
     member this.FormatError(err : string) = formatError err
     member this.FormatError(err : #System.Exception) = formatError err.Message
 
-    member _.For (source: QuerySource<'T, 'Q>, body: 'T -> QuerySource<'Result, 'Q2>) : QuerySource<'Result, 'Q> =
-        printfn $"{source}"
-        QuerySource (Seq.collect (fun x -> (body x).Source) source.Source)
+    // ---- Computation Expression Helpers ----
 
     member _.Zero () =
         QuerySource Seq.empty
@@ -42,86 +40,131 @@ type ISAQueryBuilder () =
     member _.YieldFrom (computation: QuerySource<'T, 'Q>) : QuerySource<'T, 'Q> =
         computation
 
-    // Indicates to the F# compiler that an implicit quotation is added to use of 'query'
+    member _.For (source: QuerySource<'T, 'Q>, body: 'T -> QuerySource<'Result, 'Q2>) : QuerySource<'Result, 'Q> =
+        printfn $"{source}"
+        QuerySource (Seq.collect (fun x -> (body x).Source) source.Source)
+
     member _.Quote  (quotation: Quotations.Expr<'T>) =
         quotation
 
     member _.Source (source: IEnumerable<'T>) : QuerySource<'T, System.Collections.IEnumerable> =
         QuerySource source
 
+
+    // ---- Mapping operators ----
+
+    /// Map all values in the collection using the given projection
     [<CustomOperation("select",AllowIntoPattern=true)>] 
-    member _.Select (source: QuerySource<'T, 'Q>, [<ProjectionParameter>] projection) : QuerySource<'U, 'Q> =
+    member this.Select (source: QuerySource<'T, 'Q>, [<ProjectionParameter>] projection) : QuerySource<'U, 'Q> =
         QuerySource (Seq.map projection source.Source)
 
+    /// Map all values in the collection to their value text
+    [<CustomOperation("selectValueText")>] 
+    member this.SelectValueText (source: QuerySource<ISAValue, 'Q>) : QuerySource<string, 'Q> =
+        addMessage $"get valueText"
+        this.Select(source,(fun (v : ISAValue) -> v.ValueText))
+
+    /// Map all values in the collection to their value with unit text
+    [<CustomOperation("selectValueWithUnitText")>] 
+    member this.SelectValueWithUnitText (source: QuerySource<ISAValue, 'Q>) : QuerySource<string, 'Q> =
+        addMessage $"get valueWithUnitText"
+        this.Select(source,(fun (v : ISAValue) -> v.ValueWithUnitText))
+
+    /// Map all isa values in the collection to synonymous values in the target ontology
+    [<CustomOperation("as")>] 
+    member this.As (source: QuerySource<ISAValue, 'Q>, targetOntology) : QuerySource<ISAValue, 'Q> =
+        addMessage $"as Value of target ontology"
+        this.Select(source,(fun (v : ISAValue) -> v.GetAs(targetOntology,Obo.OboOntology.create [] [])))
+
+
+    // ---- Filter operators ----
+
+    /// Returns a collection containing only the values for which the predicate returned true.
     [<CustomOperation("where")>] 
-    member _.Where (source: QuerySource<'T, 'Q>, predicate) : QuerySource<'T, 'Q> =
+    member this.Where (source: QuerySource<'T, 'Q>, predicate) : QuerySource<'T, 'Q> =
         QuerySource (Seq.filter predicate source.Source)
         
     [<CustomOperation("whereName")>] 
-    member _.WhereName (source: QuerySource<ISAValue, 'Q>, name : string) : QuerySource<ISAValue, 'Q> =
+    /// Returns a collection containing only the isa values whose category has the given name.
+    member this.WhereName (source: QuerySource<ISAValue, 'Q>, name : string) : QuerySource<ISAValue, 'Q> =
         addMessage $"with isa category header {name}"
-        QuerySource (Seq.filter (fun (v : ISAValue) -> v.NameText = name) source.Source)
+        this.Where(source,(fun (v : ISAValue) -> v.NameText = name))
 
-    [<CustomOperation("selectValueText")>] 
-    member _.SelectValueText (source: QuerySource<ISAValue, 'Q>) : QuerySource<string, 'Q> =
-        addMessage $"get valueText"
-        QuerySource (Seq.map (fun (v : ISAValue) -> v.ValueText) source.Source)
+    // ---- Value selection operators ----
 
-    //[<CustomOperation("valueText")>] 
-    //member _.ValueText (source: ISAValue) : string =
-    //    source.ValueText
+    /// Return the first item of the collection
+    [<CustomOperation("head")>] 
+    member this.Head (source: QuerySource<'T, 'Q>) =
+        addMessage $"head"
+        Seq.head source.Source
 
-    [<CustomOperation("addHeader")>] 
-    member _.AddHeader (source: QuerySource<'T, 'Q>, header : 'T) : QuerySource<'T, 'Q> =
-        addMessage $"add header {header}"
-        QuerySource (Seq.append (seq [header]) source.Source)
+    /// Return the first item of the collection. If the collection is empty, return a default Value instead
+    [<CustomOperation("headOrDefault")>] 
+    member this.HeadOrDefault (source: QuerySource<'T, 'Q>, defaultValue : 'T) =
+        addMessage $"headOrDefault {defaultValue}"
+        Seq.tryHead source.Source
+        |> Option.defaultValue defaultValue
 
-    [<CustomOperation("expression")>] 
-    member _.Expression (source: 'T) : ExpressionSource<'T> =
-        addMessage $"as expression tree"
-        ExpressionSource(source)
-
+    /// Return the last item of the collection
     [<CustomOperation("last")>] 
-    member _.Last (source: QuerySource<'T, 'Q>) =
+    member this.Last (source: QuerySource<'T, 'Q>) =
         addMessage $"last"
         Seq.last source.Source
 
+    /// Only return a value if it is the only one in the collection else fail
     [<CustomOperation("exactlyOne")>] 
-    member _.ExactlyOne (source: QuerySource<'T, 'Q>) =
+    member this.ExactlyOne (source: QuerySource<'T, 'Q>) =
         addMessage $"exactly one"
         Seq.exactlyOne source.Source
 
+    /// Only return a value if it is the only one in the collection else fail
     [<CustomOperation("exactlyN")>] 
-    member _.ExactlyN (source: QuerySource<'T, 'Q>, n : int) =
+    member this.ExactlyN (source: QuerySource<'T, 'Q>, n : int) =
         addMessage $"exactly {n}"
         let nSeq = Seq.length source.Source
         if nSeq = n then source
         else failwith $"queried sequence contained {nSeq} elements but was expected to have {n}"
 
+    [<CustomOperation("find")>] 
+    member this.Find (source: QuerySource<'T, 'Q>, predicate) =
+        addMessage $"find"
+        this.Where(source,predicate)
+        |> this.Head
+
+    
+    [<CustomOperation("addHeader")>] 
+    member this.AddHeader (source: QuerySource<'T, 'Q>, header : 'T) : QuerySource<'T, 'Q> =
+        addMessage $"add header {header}"
+        QuerySource (Seq.append (seq [header]) source.Source)
+
+
+    // ---- Additional operators ----
+
+    /// Return the number of values the collection contains.
     [<CustomOperation("count")>] 
-    member _.Count (source: QuerySource<'T, 'Q>) =
+    member this.Count (source: QuerySource<'T, 'Q>) =
         addMessage $"count"
         Seq.length source.Source
 
-    //member _.Distinct (source: QuerySource<'T, 'Q> when 'T : equality) : QuerySource<'T, 'Q> =
-    //    QuerySource (Enumerable.Distinct source.Source)
+    /// Return a collection that contains no duplicate entries.
+    [<CustomOperation("distinct")>] 
+    member _.Distinct (source: QuerySource<'T, 'Q> when 'T : equality) : QuerySource<'T, 'Q> =
+        addMessage $"distinct"
+        QuerySource (Seq.distinct source.Source)
 
-    //member _.Exists(source: QuerySource<'T, 'Q>, predicate) =
-    //    Enumerable.Any (source.Source, Func<_, _>(predicate))
+    /// Return a collection that contains no duplicate entries according to the keys returned by the projection function.
+    [<CustomOperation("distinctBy")>] 
+    member _.DistinctBy (source: QuerySource<'T, 'Q> , projection : 'T -> 'U when 'U : equality) : QuerySource<'T, 'Q> =
+        addMessage $"distinctBy"
+        QuerySource (Seq.distinctBy projection source.Source)
 
-    //member _.All (source: QuerySource<'T, 'Q>, predicate) =
-    //    Enumerable.All (source.Source, Func<_, _>(predicate))
+    /// Return true, if any value in the collection satisfies the given predicate.
+    [<CustomOperation("exists")>] 
+    member _.Exists(source: QuerySource<'T, 'Q>, predicate) =
+        addMessage $"exists"
+        Seq.exists predicate source.Source
 
-    [<CustomOperation("head")>] 
-    member _.Head (source: QuerySource<'T, 'Q>) =
-        addMessage $"head"
-        Seq.head source.Source
 
-    //member _.Find (source: QuerySource<'T, 'Q>, predicate) =
-    //    Enumerable.First (source.Source, Func<_, _>(predicate))
-
-    //member _.HeadOrDefault (source: QuerySource<'T, 'Q>) =
-    //    Enumerable.FirstOrDefault source.Source
 
     //member _.RunQueryAsValue  (q: Quotations.Expr<QuerySource<'T, IEnumerable>>) : 'T Option =
     //    try 
@@ -129,6 +172,12 @@ type ISAQueryBuilder () =
     //        |> Some
     //    with 
     //    | _ -> None
+
+    /// Return unevaluated computation expression 
+    [<CustomOperation("expression")>] 
+    member _.Expression (source: 'T) : ExpressionSource<'T> =
+        addMessage $"as expression tree"
+        ExpressionSource(source)
 
     member _.RunQueryAsValue  (q: Quotations.Expr<'T>) : 'T =
         reset()

@@ -8,6 +8,7 @@ open FsSpreadsheet.DSL
 open ISADotNet.QueryModel
 open Helpers
 
+/// Should be opened for using ISA-Value querying DSL.
 module Query =
 
     [<AutoOpen>]
@@ -44,4 +45,5 @@ module Query =
             member this.Run (q: Quotations.Expr<QuerySource<'T, IEnumerable>>) = 
                 this.RunQueryAsEnumerable q
 
+    /// Computation expression for querying ISA values.
     let isa = ISAQueryBuilder ()

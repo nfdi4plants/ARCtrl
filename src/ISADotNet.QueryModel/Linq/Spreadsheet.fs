@@ -8,20 +8,24 @@ open FsSpreadsheet.DSL
 open ISADotNet.QueryModel
 open Helpers
 
+/// Should be opened for using ISA-Value querying DSL in combindation with FsSpreadsheet DSL.
 module Spreadsheet =
 
     type CellBuilder() =
+
         inherit ISAQueryBuilder()
 
         //let mutable isOptional = false
         //let index = None
         
+        /// Returns the value or value collection as FsSpreadsheet Cells. If the expression does not evaluate, return them es Missing and Required.
         [<CustomOperation("required")>] 
         member this.Required (source) =
             this.AddMessage $"as required"
             //isOptional <- false
             source
 
+        /// Returns the value or value collection as FsSpreadsheet Cells. If the expression does not evaluate, return them es Missing and Optional.
         [<CustomOperation("optional")>] 
             member this.Optional (source: 'T)  =
                 this.AddMessage $"as optional"
@@ -101,4 +105,5 @@ module Spreadsheet =
                     | err -> seq [MissingOptional([this.FormatError err])]   
                 | Result.Error err -> seq [MissingOptional([this.FormatError err])]   
 
+    /// Computation expression for querying ISA values for consumption of FsSpreadsheet DSL.
     let cells = CellBuilder()
