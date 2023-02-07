@@ -49,7 +49,7 @@ module Investigation =
 
     /// Returns studies of an investigation
     let getStudies (investigation : Investigation) =
-        investigation.Studies
+        investigation.Studies |> Option.defaultValue []
 
     /// Applies function f on studies of an investigation
     let mapStudies (f:Study list -> Study list) (investigation: Investigation) =
@@ -90,5 +90,13 @@ module Investigation =
             Remarks = remarks }
 
     /// Update the investigation with the values of the given newInvestigation
-    let update (updateOption:API.Update.UpdateOptions) (investigation : Investigation) newInvestigation =
+    let updateBy (updateOption:API.Update.UpdateOptions) (investigation : Investigation) newInvestigation =
         updateOption.updateRecordType investigation newInvestigation
+
+    let update (investigation : Investigation) =
+        try 
+        {investigation with 
+            Studies = investigation.Studies |> Option.map (List.map Study.update)
+        }
+        with
+        | err -> failwithf $"Could not update investigation {investigation.Identifier}: \n{err.Message}"

@@ -2,6 +2,22 @@
 
 open ISADotNet
 
+module Dict = 
+
+    open System.Collections.Generic
+
+    
+    let ofSeq (s : seq<'Key*'T>) = 
+        let dict = Dictionary()
+        s
+        |> Seq.iter dict.Add
+        dict
+
+    let tryFind (key : 'Key) (dict : Dictionary<'Key,'T>) =
+        let b,v = dict.TryGetValue key
+        if b then Some v 
+        else None
+
 module Update =
 
     open System
@@ -223,3 +239,19 @@ module Update =
                 (FSharp.Reflection.FSharpValue.GetRecordFields recordType_1,FSharp.Reflection.FSharpValue.GetRecordFields recordType_2)
                 ||> Array.map2 updateOnlyByExistingAppend
                 |> fun fields -> FSharpValue.MakeRecord(typeof<'a>, fields) :?> 'a
+
+    /// Creates a union of the items of the two given lists, merges items whose keys exist in both lists using the given update function.
+    let mergeUpdateLists (updateOptions : UpdateOptions) (mapping : 'T -> 'Key) (list1 : 'T list) (list2 : 'T list) = 
+        try
+            let map1 = list1 |> List.map (fun v -> mapping v, v) |> Dict.ofSeq
+            let map2 = list2 |> List.map (fun v -> mapping v, v) |> Dict.ofSeq
+            List.append (list1 |> List.map mapping) (list2 |> List.map mapping)
+            |> List.map (fun k ->
+                match Dict.tryFind k map1, Dict.tryFind k map2 with
+                | Some v1, Some v2 -> updateOptions.updateRecordType v1 v2
+                | Some v1, None -> v1
+                | None, Some v2 -> v2
+                | None, None -> failwith "If this fails, then I don't know how to program"
+            )
+        with
+        | err -> failwith $"Could not mergeUpdate {typeof<'T>.Name} list: \n{err.Message}"
