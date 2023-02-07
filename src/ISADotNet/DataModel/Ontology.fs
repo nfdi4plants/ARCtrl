@@ -77,7 +77,7 @@ type OntologyAnnotation =
         this.TermAccessionNumber
         |> Option.defaultValue ""
 
-    static member shortAnnotationRegex = "(?<ref>\\w*):(?<num>\\w*)"
+    static member shortAnnotationRegex = "(?<ref>\\w*):(?<num>[^\\/]+)"
     static member ontologyTermURIRegex = ".*/(?<ref>\\w*)_(?<num>\\w*)"
     
     /// Tries to split a term Path in form of `http://purl.obolibrary.org/obo/MS_1000121` into it's Term Accession Source `MS` and Term Accession Number `1000121`. 
@@ -142,13 +142,13 @@ type OntologyAnnotation =
         
         let source,accessionNumber = 
             if r.Success then
-                let termSourceRef = r.Groups.Item("ref").Value
-                let termAccessionNumber = r.Groups.Item("num").Value
-                termSourceRef,$"{termSourceRef}:{termAccessionNumber}"
+                let source = r.Groups.Item("ref").Value
+                let accessionNumber = r.Groups.Item("num").Value
+                source,termAccessionNumber
             elif r2.Success then
-                let termSourceRef = r2.Groups.Item("ref").Value
-                let termAccessionNumber = r2.Groups.Item("num").Value
-                termSourceRef,$"{termSourceRef}:{termAccessionNumber}"
+                let source = r2.Groups.Item("ref").Value
+                let accessionNumber = r2.Groups.Item("num").Value
+                source,termAccessionNumber
             else
                 termSourceRef,termAccessionNumber
 
@@ -188,10 +188,10 @@ type OntologyAnnotation =
     member this.URLAnnotationString = 
         match this.TermAccessionNumber with
         | Some t ->
-            match OntologyAnnotation.trySplitUri t with 
-            | Some _ -> t
+            match OntologyAnnotation.trySplitShortAnnotation t with 
+            | Some (s,t) -> OntologyAnnotation.createUriAnnotation s t
             | None -> 
-                let r = System.Text.RegularExpressions.Regex.Match(t,OntologyAnnotation.shortAnnotationRegex)
+                let r = System.Text.RegularExpressions.Regex.Match(t,OntologyAnnotation.ontologyTermURIRegex)
                 if r.Success then t
                 else ""
         | None -> ""
@@ -203,6 +203,11 @@ type OntologyAnnotation =
         oa.TermSourceREF |> Option.defaultValue "",
         oa.TermAccessionNumber |> Option.defaultValue ""
 
+    /// Get a ISATab string entries from an ISAJson Ontology Annotation object (name,source,accession)
+    static member toStringUri (oa : OntologyAnnotation) =
+        oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue "",
+        oa.TermSourceREF |> Option.defaultValue "",
+        oa.URLAnnotationString
 
     interface IISAPrintable with
         member this.Print() =
