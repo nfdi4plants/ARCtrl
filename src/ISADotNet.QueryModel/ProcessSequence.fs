@@ -151,7 +151,7 @@ type QProcessSequence (sheets : QSheet list) =
             if newNodes = nodes then nodes
             else collectForwardNodes newNodes
 
-        let collectBackwardNodes nodes =
+        let rec collectBackwardNodes nodes =
             let newNodes = 
                 ps.Sheets
                 |> List.collect (fun sheet ->
@@ -162,7 +162,7 @@ type QProcessSequence (sheets : QSheet list) =
                 |> List.distinct
                        
             if newNodes = nodes then nodes
-            else collectForwardNodes newNodes
+            else collectBackwardNodes newNodes
 
         let forwardNodes = collectForwardNodes [node]
         let backwardNodes = collectBackwardNodes [node]
