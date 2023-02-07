@@ -939,19 +939,30 @@ module Obo =
                     let newEquivalents = 
                         equivalents
                         |> List.collect (fun t ->
-                            match this.TryGetTerm t.ShortAnnotationString with
-                            | Some term ->
-                                term.Xrefs
-                                |> List.map (fun xref ->
-                                    let id = OntologyAnnotation.createShortAnnotation "" xref.Name
-                                    match this.TryGetOntologyAnnotation id with
-                                    | Some oa ->
-                                        oa
-                                    | None -> 
-                                        OntologyAnnotation.fromString "" "" xref.Name
+                            let forward = 
+                                match this.TryGetTerm t.ShortAnnotationString with
+                                | Some term ->
+                                    term.Xrefs
+                                    |> List.map (fun xref ->
+                                        let id = OntologyAnnotation.createShortAnnotation "" xref.Name
+                                        match this.TryGetOntologyAnnotation id with
+                                        | Some oa ->
+                                            oa
+                                        | None -> 
+                                            OntologyAnnotation.fromString "" "" xref.Name
+                                    )
+                                | None ->
+                                    []
+                            let backward = 
+                                this.Terms
+                                |> List.filter (fun term ->                               
+                                    term.Xrefs
+                                    |> List.exists (fun xref ->
+                                        t.Equals(xref.Name)
+                                    )
                                 )
-                            | None ->
-                                []
+                                |> List.map (fun ot -> OboTerm.toOntologyAnnotation ot)
+                            forward @ backward
                         )
                     loop (depth + 1) (equivalents @ newEquivalents |> List.distinct) equivalents
             loop 1 [term] []
