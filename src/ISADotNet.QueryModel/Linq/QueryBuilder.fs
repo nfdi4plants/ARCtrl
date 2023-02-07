@@ -71,11 +71,16 @@ type ISAQueryBuilder () =
         this.Select(source,(fun (v : ISAValue) -> v.ValueWithUnitText))
 
     /// Map all isa values in the collection to synonymous values in the target ontology
-    [<CustomOperation("as")>] 
-    member this.As (source: QuerySource<ISAValue, 'Q>, targetOntology) : QuerySource<ISAValue, 'Q> =
+    [<CustomOperation("asValueOfOntology")>] 
+    member this.AsValueOfOntology (source: QuerySource<ISAValue, 'Q>, targetOntology) : QuerySource<ISAValue, 'Q> =
         addMessage $"as Value of target ontology"
         this.Select(source,(fun (v : ISAValue) -> v.GetAs(targetOntology,Obo.OboOntology.create [] [])))
 
+    /// Map all isa values in the collection to synonymous values in the target ontology
+    [<CustomOperation("asValueOfOntology")>] 
+    member this.AsValueOfOntology (source: QuerySource<ISAValue, 'Q>, obo : Obo.OboOntology ,targetOntology) : QuerySource<ISAValue, 'Q> =
+        addMessage $"as Value of target ontology"
+        this.Select(source,(fun (v : ISAValue) -> v.GetAs(targetOntology,obo)))
 
     // ---- Filter operators ----
 
@@ -84,11 +89,24 @@ type ISAQueryBuilder () =
     member this.Where (source: QuerySource<'T, 'Q>, predicate) : QuerySource<'T, 'Q> =
         QuerySource (Seq.filter predicate source.Source)
         
-    [<CustomOperation("whereName")>] 
     /// Returns a collection containing only the isa values whose category has the given name.
+    [<CustomOperation("whereName")>] 
     member this.WhereName (source: QuerySource<ISAValue, 'Q>, name : string) : QuerySource<ISAValue, 'Q> =
         addMessage $"with isa category header {name}"
         this.Where(source,(fun (v : ISAValue) -> v.NameText = name))
+
+    /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
+    [<CustomOperation("whereCategoryIsChildOf")>] 
+    member this.WhereCategoryIsChildOf (source: QuerySource<ISAValue, 'Q>, obo : Obo.OboOntology, category : ISADotNet.OntologyAnnotation) : QuerySource<ISAValue, 'Q> =
+        addMessage $"with parent isa category {category.NameText}"
+        this.Where(source,(fun (v : ISAValue) -> v.HasParentCategory(category,obo)))
+
+    /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
+    [<CustomOperation("whereCategoryIsChildOf")>] 
+    member this.WhereCategoryIsChildOf (source: QuerySource<ISAValue, 'Q>, category : ISADotNet.OntologyAnnotation) : QuerySource<ISAValue, 'Q> =
+        addMessage $"with parent isa category {category.NameText}"
+        this.Where(source,(fun (v : ISAValue) -> v.HasParentCategory(category)))
+
 
     // ---- Value selection operators ----
 
@@ -124,6 +142,21 @@ type ISAQueryBuilder () =
         let nSeq = Seq.length source.Source
         if nSeq = n then source
         else failwith $"queried sequence contained {nSeq} elements but was expected to have {n}"
+
+    /// Apply a function to each element in the collection, threading the result as an accumulator to the next step
+    [<CustomOperation("reduce")>] 
+    member this.Reduce (source: QuerySource<'T, 'Q>, reduction : 'T -> 'T -> 'T) =
+        addMessage $"reduce"
+        Seq.reduce reduction source.Source
+
+    /// Concatenate all string in the sequence with the given separator
+    [<CustomOperation("concat")>] 
+    member this.Concat (source: QuerySource<string, 'Q>, separator : char) =
+        addMessage $"concat with separator {separator}"
+        if source.Source = [] then ""
+        else 
+            source.Source 
+            |> Seq.reduce (fun a b -> a + string separator + b)
 
     [<CustomOperation("find")>] 
     member this.Find (source: QuerySource<'T, 'Q>, predicate) =
@@ -165,13 +198,42 @@ type ISAQueryBuilder () =
         Seq.exists predicate source.Source
 
 
+    /// ---- Protocol operators ----
 
-    //member _.RunQueryAsValue  (q: Quotations.Expr<QuerySource<'T, IEnumerable>>) : 'T Option =
-    //    try 
-    //        eval<'T> q
-    //        |> Some
-    //    with 
-    //    | _ -> None
+    /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
+    [<CustomOperation("whereSoftwareProtocol")>] 
+    member this.WhereSoftwareProtocol (source: QuerySource<QSheet, 'Q>) : QuerySource<QSheet, 'Q> =
+        addMessage $"whereSoftwareProtocol"
+        let ioTypeIsData (ioType : IOType option) =
+            match ioType with
+            | Some iot -> iot.isData
+            | None -> false
+        this.Where(
+            source,
+            (fun (v : QSheet) -> 
+                v.Inputs |> List.exists (snd >> ioTypeIsData)
+                && (v.Outputs |> List.exists (snd >> ioTypeIsData))
+            )
+        )
+
+    /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
+    [<CustomOperation("whereProtocolTypeIsChildOf")>] 
+    member this.WhereProtocolTypeIsChildOf (source: QuerySource<QSheet, 'Q>, obo : Obo.OboOntology, category : ISADotNet.OntologyAnnotation) : QuerySource<QSheet, 'Q> =
+        addMessage $"with parent isa category {category.NameText}"
+        this.Where(
+            source,
+            (fun (v : QSheet) -> v.Protocols.Head.IsChildProtocolOf(category,obo))
+        )
+
+    /// Map all values in the collection to their value with unit text
+    [<CustomOperation("selectDescriptionText")>] 
+    member this.SelectDescriptionText (source: QuerySource<QSheet, 'Q>) : QuerySource<string, 'Q> =
+        addMessage $"select Description Text"
+        this.Select(source,(fun (v : QSheet) -> 
+            match v.Protocols.Head.Description with
+            | Some d -> d
+            | None -> failwith "Protocol does not contain description")
+        )
 
     /// Return unevaluated computation expression 
     [<CustomOperation("expression")>] 

@@ -1,6 +1,7 @@
 ﻿namespace ISADotNet.QueryModel
 
 open ISADotNet
+open OntologyAnnotation
 open System.Text.Json.Serialization
 
 [<AnyOf>]
@@ -189,6 +190,16 @@ module ISAValueExtensions =
             | Characteristic c  -> c.TryGetValueIndex()
             | Factor f          -> f.TryGetValueIndex()
             | Component c       -> c.TryGetValueIndex()
+
+        member this.HasParentCategory(parentOntology : OntologyAnnotation, ont : Obo.OboOntology) = 
+            match this.TryCategory with
+            | Some oa -> oa.IsChildTermOf(parentOntology,ont)
+            | None -> false
+            
+        member this.HasParentCategory(parentOntology : OntologyAnnotation) = 
+            match this.TryCategory with
+            | Some oa -> oa.IsChildTermOf(parentOntology)
+            | None -> false
 
         member this.GetAs(targetOntology : string, ont : Obo.OboOntology) = 
             match this with

@@ -53,7 +53,7 @@ type QStudy
                 | None -> QProcessSequence(s)
             |> Seq.toList
 
-        let sheets = QProcessSequence(study.ProcessSequence |> Option.defaultValue []) |> Seq.toList
+        let sheets = QProcessSequence(study.ProcessSequence |> Option.defaultValue [],refSheets) |> Seq.toList
 
         let assays = 
             study.Assays 
