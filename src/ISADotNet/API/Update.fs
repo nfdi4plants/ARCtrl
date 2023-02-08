@@ -54,6 +54,28 @@ module Update =
             | false -> noneCase, [| |]
         FSharp.Reflection.FSharpValue.MakeUnion(relevantCase, args)
 
+    /// This function accesses the append method of the list/array module and applies it accordingly to the element type.
+    let private appendGenericListsByType l1 l2 (t:Type) =
+        let fieldT = l1.GetType()
+        // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
+        System.Reflection.Assembly
+            .GetAssembly(typeof<_ list>)
+            .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
+            .GetMethod("Append")
+            .MakeGenericMethod(t)
+            .Invoke(null, [|l1;l2|])
+
+    /// This function accesses the distinct method of the list/array module and applies it accordingly to the element type.
+    let private distinctGenericList l1 (t:Type) =
+        let fieldT = l1.GetType()
+        // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
+        System.Reflection.Assembly
+            .GetAssembly(typeof<_ list>)
+            .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
+            .GetMethod("Distinct")
+            .MakeGenericMethod(t)
+            .Invoke(null, [|l1|])
+
     /// updates oldRT with newRT by replacing all values, but appending all lists.
     ///
     /// newRTList@oldRTList
@@ -91,21 +113,13 @@ module Update =
                 /// element types are accessed differently for (list, seq) and Array. 
                 if fieldT.IsArray then fieldT.GetElementType() else
                     oldVal.GetType().GetGenericArguments() |> Array.head
-            /// This function accesses the append method of the list/array module and applies it accordingly to the element type.
-            let appendGenericListsByType l1 l2 (t:Type) =
-                // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
-                System.Reflection.Assembly
-                    .GetAssembly(typeof<_ list>)
-                    .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
-                    .GetMethod("Append")
-                    .MakeGenericMethod(t)
-                    .Invoke(null, [|l1;l2|])
             /// If the IEnumerable is a map then we just replace with the new entry.
             if isMap then 
                 newVal
             else
                 let r = 
                     appendGenericListsByType oldSeq newSeq t
+                    |> fun l -> distinctGenericList l t
                 r |> box
         /// All others do not need to be appended and can be replaced.
         | others -> 
@@ -184,21 +198,14 @@ module Update =
                 /// element types are accessed differently for (list, seq) and Array. 
                 if fieldT.IsArray then fieldT.GetElementType() else
                     oldVal.GetType().GetGenericArguments() |> Array.head
-            /// This function accesses the append method of the list/array module and applies it accordingly to the element type.
-            let appendGenericListsByType l1 l2 (t:Type) =
-                // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
-                System.Reflection.Assembly
-                    .GetAssembly(typeof<_ list>)
-                    .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
-                    .GetMethod("Append")
-                    .MakeGenericMethod(t)
-                    .Invoke(null, [|l1;l2|])
+
             /// If the IEnumerable is a map then we just replace with the new entry.
             if isMap then 
                 newVal
             else
                 let r = 
                     appendGenericListsByType oldSeq newSeq t
+                    |> fun l -> distinctGenericList l t
                 r |> box
         /// Others don't need to be checked as they have no clearly enough defined "empty" state
         | _ ->
@@ -246,6 +253,7 @@ module Update =
             let map1 = list1 |> List.map (fun v -> mapping v, v) |> Dict.ofSeq
             let map2 = list2 |> List.map (fun v -> mapping v, v) |> Dict.ofSeq
             List.append (list1 |> List.map mapping) (list2 |> List.map mapping)
+            |> List.distinct
             |> List.map (fun k ->
                 match Dict.tryFind k map1, Dict.tryFind k map2 with
                 | Some v1, Some v2 -> updateOptions.updateRecordType v1 v2
