@@ -65,9 +65,9 @@ let testUpdate =
             let shouldUpate = UpdateByExisting.updateRecordType eOld eExisting
             let shouldNotUpdate = UpdateByExisting.updateRecordType eOld eEmpty
     
-            /// eExisting is not empty and should update eOld
+            // eExisting is not empty and should update eOld
             Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateByExisting' by not updating old record type."
-            /// eEmpty is empty and should not update eOld
+            // eEmpty is empty and should not update eOld
             Expect.equal shouldNotUpdate eOld "Record Type with string failed with 'UpdateByExisting' by updating with new empty record type."
         )
     
@@ -77,7 +77,7 @@ let testUpdate =
     
             let shouldUpate = UpdateAllAppendLists.updateRecordType eOld eExisting
     
-            /// eExisting is not a list and should update by replacing eOld    
+            // eExisting is not a list and should update by replacing eOld    
             Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateAllAppendLists'"
         )
 
@@ -89,9 +89,9 @@ let testUpdate =
             let shouldUpate = UpdateByExistingAppendLists.updateRecordType eOld eExisting
             let shouldNotUpdate = UpdateByExistingAppendLists.updateRecordType eOld eEmpty
             
-            /// eExisting is not empty and should update eOld
+            // eExisting is not empty and should update eOld
             Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateByExistingAppendLists' by not updating old record type."
-            /// eEmpty is empty and should not update eOld
+            // eEmpty is empty and should not update eOld
             Expect.equal shouldNotUpdate eOld "Record Type with string failed with 'UpdateByExistingAppendLists' by updating with new empty record type."
         )
     
@@ -202,7 +202,7 @@ let testUpdate =
     
         testCase "SeqType UpdateAllAppendLists" (fun () ->
             let eOld = {
-                StringSeq = seq ["This"; "Is"; "A"; "Test"]
+                StringSeq = seq ["This"; "Is"; "a"; "Test"]
                 StringOptSeq = seq [Some "Input"; None; Some "noNone"]
             }
             let eNew = {
@@ -219,7 +219,7 @@ let testUpdate =
     
         testCase "SeqType UpdateByExistingAppendLists" (fun () ->
             let eOld = {
-                StringSeq = seq ["This"; "Is"; "A"; "Test"]
+                StringSeq = seq ["This"; "Is"; "a"; "Test"]
                 StringOptSeq = seq [Some "Input"; None; Some "noNone"]
             }
             let eNew = {
