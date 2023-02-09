@@ -23,14 +23,14 @@ module SparseRow =
 
     let tryGetValueAt i (vs : SparseRow) =
         vs 
-        |> Seq.tryPick (fun (index,v) -> if index = i then Some v else None)
+        |> Seq.tryPick (fun (index,v) -> if index = i then Option.Some v else None)
 
     let toDSLRow (vs : SparseRow) =
 
         row {
             for v in getAllValues vs do
                 match v with
-                | Some v -> cell {v}
+                | Option.Some v -> cell {v}
                 | None -> cell {""}
         }
 
@@ -92,24 +92,24 @@ type SparseTable =
 
     static member FromRows(en:IEnumerator<SparseRow>,labels,lineNumber,?prefix) =
         try
-            let prefix = match prefix with | Some p -> p + " " | None -> ""
+            let prefix = match prefix with | Option.Some p -> p + " " | None -> ""
             let rec loop (matrix : SparseTable) remarks lineNumber = 
 
                 if en.MoveNext() then  
                     let row = en.Current |> Seq.map (fun (i,v) -> int i - 1,v)
                     match Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row with
 
-                    | Comment.Comment k, Some v -> 
+                    | Comment.Comment k, Option.Some v -> 
                         loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
 
                     | Remark.Remark k, _  -> 
                         loop matrix (Remark.make lineNumber k :: remarks) (lineNumber + 1)
 
-                    | Some k, Some v when List.exists (fun label -> k = prefix + label) labels -> 
+                    | Option.Some k, Option.Some v when List.exists (fun label -> k = prefix + label) labels -> 
                         let label = List.find (fun label -> k = prefix + label) labels
                         loop (SparseTable.AddRow label v matrix) remarks (lineNumber + 1)
 
-                    | Some k, _ -> Some k,lineNumber,remarks, matrix
+                    | Option.Some k, _ -> Option.Some k,lineNumber,remarks, matrix
                     | _ -> None, lineNumber,remarks, matrix
                 else
                     None,lineNumber,remarks, matrix
@@ -118,7 +118,7 @@ type SparseTable =
         | err -> failwithf "Error parsing block in investigation file starting from line number %i: %s" lineNumber err.Message
 
     static member ToRows(matrix,?prefix) : SparseRow seq =
-        let prefix = match prefix with | Some p -> p + " " | None -> ""
+        let prefix = match prefix with | Option.Some p -> p + " " | None -> ""
         seq {
             for key in matrix.Keys do
                 (SparseRow.fromValues (prefix + key :: List.init (matrix.Length - 1) (fun i -> matrix.TryGetValueDefault("",(key,i + 1)))))
