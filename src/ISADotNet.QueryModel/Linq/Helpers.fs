@@ -14,6 +14,10 @@ module Helpers =
         member this.Source = s
 
     [<NoComparison; NoEquality; Sealed>]
+    type RequiredSource<'T>(s : 'T) =
+        member this.Source = s
+
+    [<NoComparison; NoEquality; Sealed>]
     type ExpressionSource<'T>(s : 'T) =
 
         member this.Source = s

@@ -41,7 +41,6 @@ type ISAQueryBuilder () =
         computation
 
     member _.For (source: QuerySource<'T, 'Q>, body: 'T -> QuerySource<'Result, 'Q2>) : QuerySource<'Result, 'Q> =
-        printfn $"{source}"
         QuerySource (Seq.collect (fun x -> (body x).Source) source.Source)
 
     member _.Quote  (quotation: Quotations.Expr<'T>) =
@@ -73,13 +72,13 @@ type ISAQueryBuilder () =
     /// Map all isa values in the collection to synonymous values in the target ontology
     [<CustomOperation("asValueOfOntology")>] 
     member this.AsValueOfOntology (source: QuerySource<ISAValue, 'Q>, targetOntology) : QuerySource<ISAValue, 'Q> =
-        addMessage $"as Value of target ontology"
+        addMessage $"as Value of target ontology \"{targetOntology}\""
         this.Select(source,(fun (v : ISAValue) -> v.GetAs(targetOntology,Obo.OboOntology.create [] [])))
 
     /// Map all isa values in the collection to synonymous values in the target ontology
     [<CustomOperation("asValueOfOntology")>] 
     member this.AsValueOfOntology (source: QuerySource<ISAValue, 'Q>, obo : Obo.OboOntology ,targetOntology) : QuerySource<ISAValue, 'Q> =
-        addMessage $"as Value of target ontology"
+        addMessage $"as Value of target ontology \"{targetOntology}\""
         this.Select(source,(fun (v : ISAValue) -> v.GetAs(targetOntology,obo)))
 
     // ---- Filter operators ----
@@ -92,19 +91,19 @@ type ISAQueryBuilder () =
     /// Returns a collection containing only the isa values whose category has the given name.
     [<CustomOperation("whereName")>] 
     member this.WhereName (source: QuerySource<ISAValue, 'Q>, name : string) : QuerySource<ISAValue, 'Q> =
-        addMessage $"with isa category header {name}"
+        addMessage $"with isa category header \"{name}\""
         this.Where(source,(fun (v : ISAValue) -> v.NameText = name))
 
     /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
     [<CustomOperation("whereCategoryIsChildOf")>] 
     member this.WhereCategoryIsChildOf (source: QuerySource<ISAValue, 'Q>, obo : Obo.OboOntology, category : ISADotNet.OntologyAnnotation) : QuerySource<ISAValue, 'Q> =
-        addMessage $"with parent isa category {category.NameText}"
+        addMessage $"with parent isa category \"{category.NameText}\""
         this.Where(source,(fun (v : ISAValue) -> v.HasParentCategory(category,obo)))
 
     /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
     [<CustomOperation("whereCategoryIsChildOf")>] 
     member this.WhereCategoryIsChildOf (source: QuerySource<ISAValue, 'Q>, category : ISADotNet.OntologyAnnotation) : QuerySource<ISAValue, 'Q> =
-        addMessage $"with parent isa category {category.NameText}"
+        addMessage $"with parent isa category \"{category.NameText}\""
         this.Where(source,(fun (v : ISAValue) -> v.HasParentCategory(category)))
 
 
@@ -119,7 +118,7 @@ type ISAQueryBuilder () =
     /// Return the first item of the collection. If the collection is empty, return a default Value instead
     [<CustomOperation("headOrDefault")>] 
     member this.HeadOrDefault (source: QuerySource<'T, 'Q>, defaultValue : 'T) =
-        addMessage $"headOrDefault {defaultValue}"
+        addMessage $"headOrDefault \"{defaultValue}\""
         Seq.tryHead source.Source
         |> Option.defaultValue defaultValue
 
@@ -138,10 +137,27 @@ type ISAQueryBuilder () =
     /// Only return a value if it is the only one in the collection else fail
     [<CustomOperation("exactlyN")>] 
     member this.ExactlyN (source: QuerySource<'T, 'Q>, n : int) =
-        addMessage $"exactly {n}"
+        addMessage $"exactly \"{n}\""
         let nSeq = Seq.length source.Source
         if nSeq = n then source
         else failwith $"queried sequence contained {nSeq} elements but was expected to have {n}"
+
+    /// Only return values if there are at least n values in the collection else fail
+    [<CustomOperation("atLeastN")>] 
+    member this.AtLeastN (source: QuerySource<'T, 'Q>, n : int) =
+        addMessage $"at least \"{n}\""
+        let nSeq = Seq.length source.Source
+        if nSeq >= n then source
+        else failwith $"queried sequence contained {nSeq} elements but was expected to have at least {n}"
+
+    /// Only return values if there are at most n values in the collection else fail
+    [<CustomOperation("atMostN")>] 
+    member this.AtMostN (source: QuerySource<'T, 'Q>, n : int) =
+        addMessage $"exactly \"{n}\""
+        let nSeq = Seq.length source.Source
+        if nSeq <= n then source
+        else failwith $"queried sequence contained {nSeq} elements but was expected to have at most {n}"
+
 
     /// Apply a function to each element in the collection, threading the result as an accumulator to the next step
     [<CustomOperation("reduce")>] 
@@ -152,7 +168,7 @@ type ISAQueryBuilder () =
     /// Concatenate all string in the sequence with the given separator
     [<CustomOperation("concat")>] 
     member this.Concat (source: QuerySource<string, 'Q>, separator : char) =
-        addMessage $"concat with separator {separator}"
+        addMessage $"concat with separator \"{separator}\""
         if source.Source = [] then ""
         else 
             source.Source 
@@ -167,7 +183,7 @@ type ISAQueryBuilder () =
     
     [<CustomOperation("addHeader")>] 
     member this.AddHeader (source: QuerySource<'T, 'Q>, header : 'T) : QuerySource<'T, 'Q> =
-        addMessage $"add header {header}"
+        addMessage $"add header \"{header}\""
         QuerySource (Seq.append (seq [header]) source.Source)
 
 
@@ -206,7 +222,7 @@ type ISAQueryBuilder () =
         addMessage $"whereSoftwareProtocol"
         let ioTypeIsData (ioType : IOType option) =
             match ioType with
-            | Some iot -> iot.isData
+            | Option.Some iot -> iot.isData
             | None -> false
         this.Where(
             source,
@@ -231,7 +247,7 @@ type ISAQueryBuilder () =
         addMessage $"select Description Text"
         this.Select(source,(fun (v : QSheet) -> 
             match v.Protocols.Head.Description with
-            | Some d -> d
+            | Option.Some d -> d
             | None -> failwith "Protocol does not contain description")
         )
 
@@ -249,8 +265,8 @@ type ISAQueryBuilder () =
         reset()
         let subExpr = 
             match q with
-            | Call(exprOpt, methodInfo, [subExpr]) -> Some subExpr
-            | Call(exprOpt, methodInfo, [ValueWithName(a,b,c);subExpr]) -> Some subExpr    
+            | Call(exprOpt, methodInfo, [subExpr]) -> Option.Some subExpr
+            | Call(exprOpt, methodInfo, [ValueWithName(a,b,c);subExpr]) -> Option.Some subExpr    
             | x -> 
                 printfn "could not parse option expression as it was not a call: %O" x
                 None
@@ -258,7 +274,7 @@ type ISAQueryBuilder () =
         |> Option.bind (fun subExpr -> 
             try 
                 eval<'T> subExpr
-                |> Some
+                |> Option.Some
             with 
             | _ -> None       
         )

@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="0.2.2" />
+    <PackageReference Include="FsSpreadsheet" Version="0.3.0-preview.2" />
     <PackageReference Include="Swate.Api" Version="0.2.0" />
   </ItemGroup>
 
