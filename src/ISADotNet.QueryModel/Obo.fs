@@ -211,28 +211,28 @@ module Obo =
         DisjointFrom : string list
 
         ///describes a typed relationship between this term and another term or terms. 
-        //relationship
-        //Cardinality: any.
+        ///relationship
+        ///Cardinality: any.
         ///The value of this tag should be the relationship type id, and then the id of the target term, plus, optionally, other target terms. The relationship type 
-        //name must be a relationship type name as defined in a typedef tag stanza. The [Typedef] must either occur in a document in the current parse batch, or in a 
-        //file imported via an import header tag. If the relationship type name is undefined, a parse error will be generated. If the id of the target term cannot be 
-        //resolved by the end of parsing the current batch of files, this tag describes a "dangling reference"; see the parser requirements section for information 
-        //about how a parser may handle dangling references. If a relationship is specified for a term with an is_obsolete value of true, a parse error will be generated.
-        //Parsers which support trailing modifiers may optionally parse the following trailing modifier tags for relationships:
+        ///name must be a relationship type name as defined in a typedef tag stanza. The [Typedef] must either occur in a document in the current parse batch, or in a 
+        ///file imported via an import header tag. If the relationship type name is undefined, a parse error will be generated. If the id of the target term cannot be 
+        ///resolved by the end of parsing the current batch of files, this tag describes a "dangling reference"; see the parser requirements section for information 
+        ///about how a parser may handle dangling references. If a relationship is specified for a term with an is_obsolete value of true, a parse error will be generated.
+        ///Parsers which support trailing modifiers may optionally parse the following trailing modifier tags for relationships:
 
-        //namespace <any namespace id>
-        //inferred true OR false
-        //cardinality any non-negative integer
-        //maxCardinality any non-negative integer
-        //minCardinality any non-negative integer
+        ///namespace <any namespace id>
+        ///inferred true OR false
+        ///cardinality any non-negative integer
+        ///maxCardinality any non-negative integer
+        ///minCardinality any non-negative integer
 
-        //The namespace modifier allows the relationship to be assigned its own namespace (independant of the namespace of the parent, child, or type of the relationship).
+        ///The namespace modifier allows the relationship to be assigned its own namespace (independant of the namespace of the parent, child, or type of the relationship).
 
-        //The inferred modifier indicates that the relationship was not explicitly defined by a human ontology designer, but was created automatically by a reasoner, and could be re-derived using the non-derived relationships in the ontology.
+        ///The inferred modifier indicates that the relationship was not explicitly defined by a human ontology designer, but was created automatically by a reasoner, and could be re-derived using the non-derived relationships in the ontology.
 
-        //Cardinality qualifiers can be used to specify constraints on the number of relations of the specified type any given instance can have. For example, in the stanza declaring a id: SO:0000634 ! polycistronic mRNA, we can say: relationship: has_part SO:0000316 {minCardinality=2} ! CDS which means that every instance of a transcript of this type has two or more CDS features such that they stand in a has_part relationship from the transcript.
+        ///Cardinality qualifiers can be used to specify constraints on the number of relations of the specified type any given instance can have. For example, in the stanza declaring a id: SO:0000634 ! polycistronic mRNA, we can say: relationship: has_part SO:0000316 {minCardinality=2} ! CDS which means that every instance of a transcript of this type has two or more CDS features such that they stand in a has_part relationship from the transcript.
 
-        //The semantics of a relationship tag is by default "all-some". Formally, in OWL this corresponds to an existential restriction - see the OWL section.
+        ///The semantics of a relationship tag is by default "all-some". Formally, in OWL this corresponds to an existential restriction - see the OWL section.
         Relationships : string list
 
         ///Whether or not this term is obsolete. 
@@ -564,10 +564,10 @@ module Obo =
                 yield "name: " + term.Name
                 for altid in term.AltIds do yield $"alt_id: {altid}"
                 if term.Definition = "" |> not then yield $"def: {term.Definition}"
-                for comment in term.Comment do yield $"comment: {comment}"
+                if term.Comment = "" |> not then yield $"comment: {term.Comment}"
                 for subset in term.Subsets do yield $"subset: {subset}"
                 for synonym in term.Synonyms do yield $"synonym: {synonym}"
-                for xref in term.Xrefs do yield $"xref: {xref}"
+                for xref in term.Xrefs do yield $"xref: {xref.Name}"
                 if term.BuiltIn then yield "builtin"
                 for property_value in term.PropertyValues do yield $"property_value: {property_value}"
                 for is_a in term.IsA do yield $"is_a: {is_a}"
@@ -939,19 +939,30 @@ module Obo =
                     let newEquivalents = 
                         equivalents
                         |> List.collect (fun t ->
-                            match this.TryGetTerm t.ShortAnnotationString with
-                            | Some term ->
-                                term.Xrefs
-                                |> List.map (fun xref ->
-                                    let id = OntologyAnnotation.createShortAnnotation "" xref.Name
-                                    match this.TryGetOntologyAnnotation id with
-                                    | Some oa ->
-                                        oa
-                                    | None -> 
-                                        OntologyAnnotation.fromString "" "" xref.Name
+                            let forward = 
+                                match this.TryGetTerm t.ShortAnnotationString with
+                                | Some term ->
+                                    term.Xrefs
+                                    |> List.map (fun xref ->
+                                        let id = OntologyAnnotation.createShortAnnotation "" xref.Name
+                                        match this.TryGetOntologyAnnotation id with
+                                        | Some oa ->
+                                            oa
+                                        | None -> 
+                                            OntologyAnnotation.fromString "" "" xref.Name
+                                    )
+                                | None ->
+                                    []
+                            let backward = 
+                                this.Terms
+                                |> List.filter (fun term ->                               
+                                    term.Xrefs
+                                    |> List.exists (fun xref ->
+                                        t.Equals(xref.Name)
+                                    )
                                 )
-                            | None ->
-                                []
+                                |> List.map (fun ot -> OboTerm.toOntologyAnnotation ot)
+                            forward @ backward
                         )
                     loop (depth + 1) (equivalents @ newEquivalents |> List.distinct) equivalents
             loop 1 [term] []

@@ -122,7 +122,7 @@ module Assay =
             // Reading the "Assay" metadata sheet. Here metadata 
             let assayMetaData,contacts = 
                 match Spreadsheet.tryGetSheetBySheetName "Assay" doc with 
-                | Some sheet ->
+                | Option.Some sheet ->
                     sheet
                     |> SheetData.getRows
                     |> Seq.map (Row.mapCells (tryIncludeSST sst))
@@ -145,9 +145,9 @@ module Assay =
                 sheetNames
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
-                    | Some wsp ->
+                    | Option.Some wsp ->
                         match Table.tryGetByDisplayNameBy (fun s -> s.StartsWith "annotationTable") wsp with
-                        | Some table -> 
+                        | Option.Some table -> 
                             // Extract the sheetdata as a sparse matrix
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table

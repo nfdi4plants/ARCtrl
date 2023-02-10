@@ -227,36 +227,60 @@ module Process =
         |> Option.bind (fun p -> p.Name)
         |> Option.get 
 
+    /// Returns the parameter values describing the process
+    let getParameterValues (p: Process) =
+        p.ParameterValues |> Option.defaultValue []
+
     /// Returns the parameters describing the process
     let getParameters (p: Process) =
-        match p.ParameterValues with
-        | Some paramValues ->
-            paramValues
-            |> List.choose (fun pv -> pv.Category)
-        | None -> []
+        getParameterValues p
+        |> List.choose (fun pv -> pv.Category)
 
     /// Returns the characteristics describing the inputs of the process
-    let getInputCharacteristics (p: Process) =
+    let getInputCharacteristicValues (p: Process) =
         match p.Inputs with
         | Some ins ->
             ins 
-            |> List.collect (fun inp -> ProcessInput.tryGetCharacteristics inp |> Option.defaultValue [])
+            |> List.collect (fun inp -> ProcessInput.tryGetCharacteristicValues inp |> Option.defaultValue [])
             |> List.distinct
         | None -> []
 
     /// Returns the characteristics describing the outputs of the process
-    let getOutputCharacteristics (p: Process) =
+    let getOutputCharacteristicValues (p: Process) =
         match p.Outputs with
         | Some outs ->
             outs 
-            |> List.collect (fun out -> ProcessOutput.tryGetCharacteristics out |> Option.defaultValue [])
+            |> List.collect (fun out -> ProcessOutput.tryGetCharacteristicValues out |> Option.defaultValue [])
             |> List.distinct
         | None -> []
 
+    /// Returns the characteristic values describing the inputs and outputs of the process
+    let getCharacteristicValues (p: Process) =
+        getInputCharacteristicValues p @ getOutputCharacteristicValues p
+        |> List.distinct
+
     /// Returns the characteristics describing the inputs and outputs of the process
     let getCharacteristics (p: Process) =
-        getInputCharacteristics p @ getOutputCharacteristics p
+        getCharacteristicValues p
+        |> List.choose (fun cv -> cv.Category)
         |> List.distinct
+
+    /// Returns the factor values of the samples of the process
+    let getFactorValues (p : Process) =
+        p.Outputs |> Option.defaultValue [] |> List.collect (ProcessOutput.tryGetFactorValues >> Option.defaultValue [])
+        |> List.distinct
+
+    /// Returns the factors of the samples of the process
+    let getFactors (p : Process) =
+        getFactorValues p
+        |> List.choose (fun fv -> fv.Category)
+        |> List.distinct
+
+    /// Returns the units of the process
+    let getUnits (p : Process) =
+        (getCharacteristicValues p |> List.choose (fun cv -> cv.Unit))
+        @ (getParameterValues p |> List.choose (fun pv -> pv.Unit))
+        @ (getFactorValues p |> List.choose (fun fv -> fv.Unit))
 
     /// If the process implements the given parameter, return the list of input files together with their according parameter values of this parameter
     let tryGetInputsWithParameterBy (predicate : ProtocolParameter -> bool) (p : Process) =
@@ -316,12 +340,6 @@ module Process =
             |> Option.fromValueWithDefault []
         | _ -> None
 
-    /// Returns the factors of the samples of the process
-    let getFactors (p : Process) =
-        let factorsOfValues (fvs : (FactorValue list) Option) = 
-            fvs |> Option.defaultValue [] |> List.choose (fun fv -> fv.Category)
-        p.Outputs |> Option.defaultValue [] |> List.collect (ProcessOutput.tryGetFactorValues >> factorsOfValues)
-        |> List.distinct
 
     /// If the process implements the given factor, return the list of output files together with their according factor values of this factor
     let tryGetOutputsWithFactorBy (predicate : Factor -> bool) (p : Process) =
@@ -340,13 +358,28 @@ module Process =
             )
             |> Option.fromValueWithDefault []
         | None -> None
-
-    let getUnits (p : Process) =
-        let paramUnits = p.ParameterValues |> Option.defaultValue [] |> List.choose (fun p -> p.Unit)
-        let inputUnits = p.Inputs |> Option.defaultValue [] |> List.collect (fun i -> ProcessInput.getUnits i)
-        let outputUnits = p.Outputs |> Option.defaultValue [] |> List.collect (fun o -> ProcessOutput.getUnits o)
-        inputUnits @ paramUnits @ outputUnits
         
+    let getSources (p : Process) =
+        p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.trySource
+        |> List.distinct
+
+    let getData (p : Process) =
+        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryData)
+        @
+        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryData)
+        |> List.distinct
+
+    let getSamples (p : Process) =
+        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.trySample)
+        @
+        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.trySample)
+        |> List.distinct       
+        
+    let getMaterials (p : Process) =
+        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryMaterial)
+        @
+        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryMaterial)
+        |> List.distinct
 
     //let tryGetCharacteristicValuesOfInputBy (predicate : ProcessInput -> bool) (p : Process) =
     //    match p.Inputs with
@@ -502,5 +535,25 @@ module ProcessSequence =
 
     let getUnits (processSequence : Process list) =
         List.collect Process.getUnits processSequence
+        |> List.distinct
         
+    /// Returns the data the given processes contain
+    let getData (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getData
+        |> List.distinct
 
+    let getSources (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getSources
+        |> List.distinct
+
+    let getSamples (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getSamples
+        |> List.distinct
+
+    let getMaterials (processSequence : Process list) =
+        processSequence
+        |> List.collect Process.getMaterials
+        |> List.distinct

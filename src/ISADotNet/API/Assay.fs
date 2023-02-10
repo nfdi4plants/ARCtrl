@@ -3,6 +3,14 @@ namespace ISADotNet.API
 open ISADotNet
 open Update
 
+module AssayMaterials =  
+
+    let getMaterials (am : AssayMaterials) =
+        am.OtherMaterials |> Option.defaultValue []
+        
+    let getSamples (am : AssayMaterials) =
+        am.Samples |> Option.defaultValue []
+
 module Assay =  
   
     ///// If an assay for which the predicate returns true exists in the study, gets it
@@ -67,7 +75,15 @@ module Assay =
 
     /// Returns data files of an assay
     let getData (assay : Assay) =
-        assay.DataFiles
+        let processSequenceData = 
+            assay.ProcessSequence
+            |> Option.defaultValue []
+            |> ProcessSequence.getData
+        let assayData = 
+            assay.DataFiles
+            |> Option.defaultValue []
+        Update.mergeUpdateLists UpdateByExistingAppendLists (fun (d : Data) -> d.Name) assayData processSequenceData
+        
         
     /// Applies function f on data files of an assay
     let mapData (f : Data list -> Data list) (assay : Assay) =
@@ -83,7 +99,16 @@ module Assay =
     
     /// Returns unit categories of an assay
     let getUnitCategories (assay : Assay) =
-        assay.UnitCategories
+        let processSequenceData = 
+            assay.ProcessSequence
+            |> Option.defaultValue []
+            |> ProcessSequence.getUnits
+        let assayData = 
+            assay.UnitCategories
+            |> Option.defaultValue []
+        processSequenceData @ assayData
+        |> List.distinct
+        //Update.mergeUpdateLists UpdateByExistingAppendLists (fun (d : OntologyAnnotation) -> d.Name) assayData processSequenceData
             
     /// Applies function f on unit categories of an assay
     let mapUnitCategories (f : OntologyAnnotation list -> OntologyAnnotation list) (assay : Assay) =
@@ -99,7 +124,16 @@ module Assay =
     
     /// Returns characteristic categories of an assay
     let getCharacteristics (assay : Assay) =
-        assay.CharacteristicCategories
+        let processSequenceData = 
+            assay.ProcessSequence
+            |> Option.defaultValue []
+            |> ProcessSequence.getCharacteristics
+        let assayData = 
+            assay.CharacteristicCategories
+            |> Option.defaultValue []
+        processSequenceData @ assayData
+        |> List.distinct
+        //Update.mergeUpdateLists UpdateByExistingAppendLists (fun (d : MaterialAttribute) -> d.CharacteristicType |> Option.defaultValue OntologyAnnotation.empty) assayData processSequenceData
             
     /// Applies function f on characteristic categories of an assay
     let mapCharacteristics (f : MaterialAttribute list -> MaterialAttribute list) (assay : Assay) =
@@ -147,7 +181,7 @@ module Assay =
 
     /// Returns processes of an assay
     let getProcesses (assay : Assay) =
-        assay.ProcessSequence
+        assay.ProcessSequence  |> Option.defaultValue []
                 
     /// Applies function f on processes of an assay
     let mapProcesses (f : Process list -> Process list) (assay : Assay) =
@@ -161,9 +195,35 @@ module Assay =
 
     // Materials 
 
+    let getSources (assay : Assay) = 
+        getProcesses assay
+        |> ProcessSequence.getSources
+
+    let getSamples (assay : Assay) = 
+        getProcesses assay
+        |> ProcessSequence.getSamples
+
     /// Returns materials of an assay
     let getMaterials (assay : Assay) =
-        assay.Materials
+        let processSequenceMaterials = 
+            assay.ProcessSequence
+            |> Option.defaultValue []
+            |> ProcessSequence.getMaterials
+        let processSequenceSamples =
+            assay.ProcessSequence
+            |> Option.defaultValue []
+            |> ProcessSequence.getSamples
+
+        match assay.Materials with 
+        | Some mat ->
+            let samples = 
+                Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Sample) -> s.Name) (mat.Samples |> Option.defaultValue []) processSequenceSamples
+            let materials = 
+                Update.mergeUpdateLists UpdateByExistingAppendLists (fun (m : Material) -> m.Name) (mat.OtherMaterials |> Option.defaultValue []) processSequenceMaterials
+            AssayMaterials.make (samples |> Option.fromValueWithDefault []) (materials |> Option.fromValueWithDefault [])
+        | None ->
+            AssayMaterials.make (processSequenceSamples |> Option.fromValueWithDefault []) (processSequenceMaterials |> Option.fromValueWithDefault [])
+        
                     
     /// Applies function f on materials of an assay
     let mapMaterials (f : AssayMaterials -> AssayMaterials) (assay : Assay) =
@@ -208,9 +268,22 @@ module Assay =
     /// Returns the factors implemented by the processes contained in this assay
     let getFactors (assay : Assay) =
         assay.ProcessSequence
-        |> Option.map ProcessSequence.getFactors
+        |> Option.defaultValue []
+        |> ProcessSequence.getFactors
 
     /// Returns the protocols implemented by the processes contained in this assay
     let getProtocols (assay : Assay) =
         assay.ProcessSequence
-        |> Option.map ProcessSequence.getProtocols
+        |> Option.defaultValue []
+        |> ProcessSequence.getProtocols
+
+    let update (assay : Assay) =
+        try
+            {assay with 
+                        DataFiles = getData assay |> Option.fromValueWithDefault []
+                        Materials = getMaterials assay |> Option.fromValueWithDefault AssayMaterials.empty
+                        CharacteristicCategories = getCharacteristics assay  |> Option.fromValueWithDefault []
+                        UnitCategories = getUnitCategories assay  |> Option.fromValueWithDefault []
+            }
+        with
+        | err -> failwithf $"Could not update assay {assay.FileName}: \n{err.Message}"

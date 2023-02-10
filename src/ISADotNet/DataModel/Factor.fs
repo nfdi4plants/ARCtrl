@@ -104,6 +104,26 @@ type Value =
         | Value.Int i   -> string i
         | Value.Name s  -> s
 
+    member this.AsName() =         
+        match this with
+        | Value.Name s  -> s
+        | _ -> failwith $"Value {this} is not of case name"
+
+    member this.AsInt() =         
+        match this with           
+        | Value.Int i   -> i
+        | _ -> failwith $"Value {this} is not of case int"
+
+    member this.AsFloat() = 
+        match this with
+        | Value.Float f -> f
+        | _ -> failwith $"Value {this} is not of case float"
+
+    member this.AsOntology() =         
+        match this with
+        | Value.Ontology oa  -> oa
+        | _ -> failwith $"Value {this} is not of case ontology"
+
     member this.IsAnOntology = 
         match this with
         | Ontology oa -> true
@@ -139,6 +159,7 @@ type Value =
             | Float f       -> sprintf "%f" f        
             | Name n        -> n
 
+    
 type FactorValue =
     {
         [<JsonPropertyName(@"@id")>]

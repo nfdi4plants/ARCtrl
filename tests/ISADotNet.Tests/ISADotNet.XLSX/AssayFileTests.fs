@@ -783,8 +783,8 @@ let testAssayFileReader =
 
             let expectedFactors = [time2]
 
-            let factors = API.Assay.getFactors assay |> Option.defaultValue []
-            let protocols = API.Assay.getProtocols assay |> Option.defaultValue []
+            let factors = API.Assay.getFactors assay
+            let protocols = API.Assay.getProtocols assay
 
             Expect.sequenceEqual factors expectedFactors        "Factors were read incorrectly"
             Expect.sequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"

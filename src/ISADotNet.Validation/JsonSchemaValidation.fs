@@ -2,10 +2,21 @@
 
 module JSchema = 
    
+    let tryDownloadSchema (schemaURL : string) = 
+        let rec download (tryNum) =
+            try NJsonSchema.JsonSchema.FromUrlAsync(schemaURL) 
+            with
+            | err when tryNum <= 3 -> 
+                System.Threading.Thread.Sleep(30)
+                download (tryNum + 1)
+            | err -> failwith $"Could not download schema from url {schemaURL}: \n{err.Message}"
+        download 1
+
     let validate (schemaURL : string) (objectString : string) = 
+        
         try 
             let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
-            let schema = NJsonSchema.JsonSchema.FromUrlAsync(schemaURL)
+            let schema = tryDownloadSchema schemaURL
             let r = schema.Result.Validate(objectString,settings)
 
             ValidationResult.OfJSchemaOutput(r |> Seq.length |> (=) 0,r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray)

@@ -13,6 +13,7 @@
     <Compile Include="Category.fs" />
     <Compile Include="Value.fs" />
     <Compile Include="ValueCollection.fs" />
+    <Compile Include="Node.fs" />
     <Compile Include="Row.fs" />
     <Compile Include="Column.fs" />
     <Compile Include="Sheet.fs" />
@@ -20,9 +21,14 @@
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
+    <Compile Include="Linq\Helpers.fs" />
+    <Compile Include="Linq\QueryBuilder.fs" />
+    <Compile Include="Linq\Spreadsheet.fs" />
+    <Compile Include="Linq\Query.fs" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FsSpreadsheet" Version="0.3.0-preview.2" />
     <PackageReference Include="Swate.Api" Version="0.2.0" />
   </ItemGroup>
 
@@ -31,7 +37,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="6.0.5" />
+    <PackageReference Update="FSharp.Core" Version="7.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
