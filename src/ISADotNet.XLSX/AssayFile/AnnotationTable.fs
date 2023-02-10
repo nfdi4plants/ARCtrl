@@ -285,7 +285,7 @@ module QRow =
         |> List.map (fun header ->
 
             match Dictionary.tryGetValue (f header) counts with
-            | Some count -> 
+            | Option.Some count -> 
                 count := !count + 1 
                 renumberHeader !count header
             | _ -> 
@@ -302,7 +302,7 @@ module QRow =
                     {o with Name = 
                                 o.NameText + s
                                 |> AnnotationValue.Text
-                                |> Some
+                                |> Option.Some
                     }
                 )
             )
@@ -320,11 +320,10 @@ module QRow =
                 rows
                 |> List.fold (fun outputType r -> 
                     match outputType,r.OutputType with
-                    | Some t1, Some t2 when t1 = t2 -> Some t1
-                    | Some t1, Some t2 -> failwithf "OutputTypes %A and %A do not match" t1 t2
+                    | Option.Some t1, Option.Some t2 when t1 = t2 -> Option.Some t1
+                    | Option.Some t1, Option.Some t2 -> failwithf "OutputTypes %A and %A do not match" t1 t2
                     | None, t2 -> t2
                     | t1, None -> t1
-                    | _ -> None
                 ) None
                 |> Option.map IOType.toHeader
                 |> Option.defaultValue IOType.defaultOutHeader 
@@ -339,24 +338,24 @@ module QRow =
                         vs
                         |> List.reduce (fun v1 v2 ->
                             match v1.TryUnit,v2.TryUnit with
-                            | Some u1, Some u2 when u1 = u2 -> v1
+                            | Option.Some u1, Option.Some u2 when u1 = u2 -> v1
                             | None, None -> v1
-                            | Some u1, Some u2 -> failwithf "Units %s and %s of value with header %s do not match" u1.NameText u2.NameText h
-                            | Some u1, None -> failwithf "Units %s and None of value with header %s do not match" u1.NameText h
-                            | None, Some u2 -> failwithf "Units None and %s of value with header %s do not match" u2.NameText h
+                            | Option.Some u1, Option.Some u2 -> failwithf "Units %s and %s of value with header %s do not match" u1.NameText u2.NameText h
+                            | Option.Some u1, None -> failwithf "Units %s and None of value with header %s do not match" u1.NameText h
+                            | None, Option.Some u2 -> failwithf "Units None and %s of value with header %s do not match" u2.NameText h
                         )
                     let h = 
                         v.MapCategory(fun o -> 
                             {o with Name = 
                                         o.NameText.TrimEnd()
                                         |> AnnotationValue.Text
-                                        |> Some
+                                        |> Option.Some
                             }
                         )
                         |> ISAValue.toHeaders
                     let f (vs : ISAValue list) = 
                         vs 
-                        |> List.tryPick (fun v' -> if v'.HeaderText = v.HeaderText then Some (ISAValue.toValues v') else None)
+                        |> List.tryPick (fun v' -> if v'.HeaderText = v.HeaderText then Option.Some (ISAValue.toValues v') else None)
                         |> Option.defaultValue (List.init h.Length (fun _ -> ""))
                     h,f
                 )

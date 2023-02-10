@@ -75,7 +75,7 @@ module Study =
             // Reading the "Study" metadata sheet. Here metadata 
             let studyMetaData = 
                 match Spreadsheet.tryGetSheetBySheetName "Study" doc with
-                | Some sheet ->
+                | Option.Some sheet ->
                     sheet
                     |> SheetData.getRows
                     |> Seq.map (Row.mapCells (tryIncludeSST sst))
@@ -98,9 +98,9 @@ module Study =
                 sheetNames
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
-                    | Some wsp ->
+                    | Option.Some wsp ->
                         match ISADotNet.XLSX.AssayFile.Table.tryGetByDisplayNameBy (fun s -> s.StartsWith "annotationTable") wsp with
-                        | Some table -> 
+                        | Option.Some table -> 
                             // Extract the sheetdata as a sparse matrix
                             let sheet = Worksheet.getSheetData wsp.Worksheet
                             let headers = Table.getColumnHeaders table

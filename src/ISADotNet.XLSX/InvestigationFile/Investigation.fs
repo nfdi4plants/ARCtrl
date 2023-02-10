@@ -191,7 +191,7 @@ module Investigation =
         |> insertRemarks investigation.Remarks        
         |> seq
 
-    /// Diesen Block durch JS ersetzen ----> 
+    // Diesen Block durch JS ersetzen ----> 
 
     /// Creates a new row from the given values.
     let ofSparseValues rowIndex (vals : 'T option seq) =
@@ -271,4 +271,4 @@ module Investigation =
         with
         | err -> failwithf "Could not write investion to stream: %s" err.Message
 
-    /// ---->  Bis hier
+    // ---->  Bis hier
