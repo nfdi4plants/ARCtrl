@@ -51,11 +51,13 @@ type QProcessSequence (sheets : QSheet list) =
                     (x.Name.Value |> Process.decomposeName |> fst)
                 elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
                     x.ExecutesProtocol.Value.Name.Value 
-                else
-                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
-                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.
+                elif x.Name.Value.Contains "_" then
                     let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
                     x.Name.Value.Remove lastUnderScoreIndex
+                else
+                    x.Name.Value
+                    // Data Stewards use '_' as seperator to distinguish between protocol template types.
+                    // Exmp. 1SPL01_plants, in these cases we need to find the last '_' char and remove from that index.                   
             )
             |> List.map (fun (name,processes) -> QSheet.fromProcesses name processes)
             |> updateNodes

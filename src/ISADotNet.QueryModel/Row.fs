@@ -48,7 +48,7 @@ type QRow =
 
     static member fromProcess (proc : Process) : QRow list =
         let parameterValues = proc.ParameterValues |> Option.defaultValue []
-        List.zip proc.Inputs.Value proc.Outputs.Value
+        List.zip (proc.Inputs |> Option.defaultValue [ProcessInput.Default]) (proc.Outputs |> Option.defaultValue [ProcessOutput.Default])
         |> List.groupBy (fun (i,o) -> i.GetName,o.GetName)
         |> List.map (fun ((inputName,outputName),ios) ->
             

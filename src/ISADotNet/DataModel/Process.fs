@@ -88,7 +88,7 @@ type ProcessInput =
     | [<SerializationOrder(1)>] Sample of Sample
     | [<SerializationOrder(1)>] Data of Data
     | [<SerializationOrder(1)>] Material of Material 
-    
+
     member this.TryGetName =
         match this with
         | ProcessInput.Sample s     -> s.Name
@@ -99,6 +99,8 @@ type ProcessInput =
     member this.GetName =
         this.TryGetName
         |> Option.defaultValue ""
+
+    static member Default = Source (Source.empty)
 
     interface IISAPrintable with
         member this.Print() = 
@@ -127,6 +129,7 @@ type ProcessOutput =
         this.TryGetName
         |> Option.defaultValue ""
 
+    static member Default = Sample (Sample.empty)
 
     interface IISAPrintable with
         member this.Print() = 
