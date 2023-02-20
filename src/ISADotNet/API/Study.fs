@@ -260,13 +260,15 @@ module Study =
 
     let update (study : Study) =
         try
+            let protocols = getProtocols study 
             {study with 
                         Materials  = getMaterials study |> Option.fromValueWithDefault StudyMaterials.empty
-                        Assays = study.Assays |> Option.map (List.map Assay.update)
-                        Protocols = getProtocols study |> Option.fromValueWithDefault []
+                        Assays = study.Assays |> Option.map (List.map (Assay.update >> Assay.updateProtocols protocols))
+                        Protocols = protocols |> Option.fromValueWithDefault []
                         Factors = getFactors study |> Option.fromValueWithDefault []
                         CharacteristicCategories = getCharacteristics study |> Option.fromValueWithDefault []
                         UnitCategories = getUnitCategories study |> Option.fromValueWithDefault []
+                        ProcessSequence = study.ProcessSequence |> Option.map (ProcessSequence.updateProtocols protocols)
             }
         with
         | err -> failwithf $"Could not update study {study.Identifier}: \n{err.Message}"

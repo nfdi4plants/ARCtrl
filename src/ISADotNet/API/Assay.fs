@@ -287,3 +287,9 @@ module Assay =
             }
         with
         | err -> failwithf $"Could not update assay {assay.FileName}: \n{err.Message}"
+
+    let updateProtocols (protocols : Protocol list) (assay : Assay) =
+        try
+            mapProcesses (ProcessSequence.updateProtocols protocols) assay
+        with
+        | err -> failwithf $"Could not update assay protocols {assay.FileName}: \n{err.Message}"
