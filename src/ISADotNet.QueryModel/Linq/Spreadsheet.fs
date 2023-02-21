@@ -5,8 +5,11 @@ open System.Collections
 open Microsoft.FSharp.Linq.RuntimeHelpers
 open Microsoft.FSharp.Quotations.Patterns
 open FsSpreadsheet.DSL
+open Errors
 open ISADotNet.QueryModel
 open Helpers
+open ISADotNet
+open ISADotNet.Builder
 
 /// Should be opened for using ISA-Value querying DSL in combindation with FsSpreadsheet DSL.
 module Spreadsheet =
@@ -46,7 +49,19 @@ module Spreadsheet =
                     SheetEntity.ok cell         
                 with
                 //| err when this.IsOptional -> MissingOptional([this.FormatError err])
-                | err  -> NoneRequired([this.FormatError err])               
+                | :? MissingCategoryException           as exc -> NoneRequired([message exc])
+                | :? MissingParameterException          as exc -> NoneRequired([message exc])
+                | :? MissingCharacteristicException     as exc -> NoneRequired([message exc])
+                | :? MissingFactorException             as exc -> NoneRequired([message exc])
+
+                | :? MissingProtocolException           as exc -> NoneRequired([message exc])
+                | :? MissingProtocolWithTypeException   as exc -> NoneRequired([message exc])
+                | :? ProtocolHasNoDescriptionException  as exc -> NoneRequired([message exc])
+
+                | :? MissingValueException              as exc -> NoneRequired([message exc])
+                | :? MissingUnitException               as exc -> NoneRequired([message exc])
+                | :? NoSynonymInTargOntologyException   as exc -> NoneRequired([message exc])
+                | err -> NoneRequired([message err])            
 
     [<AutoOpen>]
     module OptionCellExtensions =
@@ -67,8 +82,20 @@ module Spreadsheet =
                         let cell = CellElement(value,None)
                         SheetEntity.ok cell 
                     with 
-                    | err -> NoneOptional([this.FormatError err])   
-                | Result.Error err -> NoneOptional([this.FormatError err])   
+                    | :? MissingCategoryException           as exc -> NoneOptional([message exc])
+                    | :? MissingParameterException          as exc -> NoneOptional([message exc])
+                    | :? MissingCharacteristicException     as exc -> NoneOptional([message exc])
+                    | :? MissingFactorException             as exc -> NoneOptional([message exc])
+
+                    | :? MissingProtocolException           as exc -> NoneOptional([message exc])
+                    | :? MissingProtocolWithTypeException   as exc -> NoneOptional([message exc])
+                    | :? ProtocolHasNoDescriptionException  as exc -> NoneOptional([message exc])
+
+                    | :? MissingValueException              as exc -> NoneOptional([message exc])
+                    | :? MissingUnitException               as exc -> NoneOptional([message exc])
+                    | :? NoSynonymInTargOntologyException   as exc -> NoneOptional([message exc]) 
+                    | err -> NoneOptional([message err])   
+                | Result.Error err -> NoneOptional([message (this.FormatError err)])    
        
     [<AutoOpen>]
     module RequiredCellExtensions =
@@ -89,8 +116,20 @@ module Spreadsheet =
                         let cell = CellElement(value,None)
                         SheetEntity.ok cell 
                     with 
-                    | err -> NoneRequired([this.FormatError err])   
-                | Result.Error err -> NoneRequired([this.FormatError err])   
+                    | :? MissingCategoryException           as exc -> NoneRequired([message exc])
+                    | :? MissingParameterException          as exc -> NoneRequired([message exc])
+                    | :? MissingCharacteristicException     as exc -> NoneRequired([message exc])
+                    | :? MissingFactorException             as exc -> NoneRequired([message exc])
+
+                    | :? MissingProtocolException           as exc -> NoneRequired([message exc])
+                    | :? MissingProtocolWithTypeException   as exc -> NoneRequired([message exc])
+                    | :? ProtocolHasNoDescriptionException  as exc -> NoneRequired([message exc])
+
+                    | :? MissingValueException              as exc -> NoneRequired([message exc])
+                    | :? MissingUnitException               as exc -> NoneRequired([message exc])
+                    | :? NoSynonymInTargOntologyException   as exc -> NoneRequired([message exc])
+                    | err -> NoneRequired([message err])   
+                | Result.Error err -> NoneRequired([message (this.FormatError err)])
 
 
     [<AutoOpen>]
@@ -107,7 +146,19 @@ module Spreadsheet =
                         SheetEntity.ok cell)
                     |> Seq.toList
                 with
-                | err -> [NoneRequired([this.FormatError err])]
+                | :? MissingCategoryException           as exc -> [NoneRequired([message exc])]
+                | :? MissingParameterException          as exc -> [NoneRequired([message exc])]
+                | :? MissingCharacteristicException     as exc -> [NoneRequired([message exc])]
+                | :? MissingFactorException             as exc -> [NoneRequired([message exc])]
+                                                                  
+                | :? MissingProtocolException           as exc -> [NoneRequired([message exc])]
+                | :? MissingProtocolWithTypeException   as exc -> [NoneRequired([message exc])]
+                | :? ProtocolHasNoDescriptionException  as exc -> [NoneRequired([message exc])]
+                                                                  
+                | :? MissingValueException              as exc -> [NoneRequired([message exc])]
+                | :? MissingUnitException               as exc -> [NoneRequired([message exc])]
+                | :? NoSynonymInTargOntologyException   as exc -> [NoneRequired([message exc])]
+                | err -> [NoneRequired([message err])]  
 
     [<AutoOpen>]
     module OptionEnumerableExtensions =
@@ -131,8 +182,20 @@ module Spreadsheet =
                             SheetEntity.ok cell) 
                         |> Seq.toList
                     with 
-                    | err -> [NoneOptional([this.FormatError err])]   
-                | Result.Error err -> [NoneOptional([this.FormatError err])]   
+                    | :? MissingCategoryException           as exc -> [NoneOptional([message exc])]
+                    | :? MissingParameterException          as exc -> [NoneOptional([message exc])]
+                    | :? MissingCharacteristicException     as exc -> [NoneOptional([message exc])]
+                    | :? MissingFactorException             as exc -> [NoneOptional([message exc])]
+                                                                      
+                    | :? MissingProtocolException           as exc -> [NoneOptional([message exc])]
+                    | :? MissingProtocolWithTypeException   as exc -> [NoneOptional([message exc])]
+                    | :? ProtocolHasNoDescriptionException  as exc -> [NoneOptional([message exc])]
+                                                                      
+                    | :? MissingValueException              as exc -> [NoneOptional([message exc])]
+                    | :? MissingUnitException               as exc -> [NoneOptional([message exc])]
+                    | :? NoSynonymInTargOntologyException   as exc -> [NoneOptional([message exc])]
+                    | err -> [NoneOptional([message err])]   
+                | Result.Error err -> [NoneOptional([message (this.FormatError err)])]    
 
 
     [<AutoOpen>]
@@ -157,8 +220,102 @@ module Spreadsheet =
                             SheetEntity.ok cell)        
                         |> Seq.toList
                     with 
-                    | err -> [NoneRequired([this.FormatError err])]   
-                | Result.Error err -> [NoneRequired([this.FormatError err])]   
+                    | :? MissingCategoryException           as exc -> [NoneRequired([message exc])]
+                    | :? MissingParameterException          as exc -> [NoneRequired([message exc])]
+                    | :? MissingCharacteristicException     as exc -> [NoneRequired([message exc])]
+                    | :? MissingFactorException             as exc -> [NoneRequired([message exc])]
+                                                                      
+                    | :? MissingProtocolException           as exc -> [NoneRequired([message exc])]
+                    | :? MissingProtocolWithTypeException   as exc -> [NoneRequired([message exc])]
+                    | :? ProtocolHasNoDescriptionException  as exc -> [NoneRequired([message exc])]
+                                                                      
+                    | :? MissingValueException              as exc -> [NoneRequired([message exc])]
+                    | :? MissingUnitException               as exc -> [NoneRequired([message exc])]
+                    | :? NoSynonymInTargOntologyException   as exc -> [NoneRequired([message exc])]
+                    | err -> [NoneRequired([message err])]   
+                | Result.Error err -> [NoneRequired([message (this.FormatError err)])]   
 
     /// Computation expression for querying ISA values for consumption of FsSpreadsheet DSL.
     let cells = CellBuilder()
+
+    module ErrorHandling = 
+
+        let tryMessageToTransformation (processName : string) (ms : Message) =
+
+            ms.TryException()
+            |> Option.bind (fun e ->
+                match e with
+                | :? MissingCategoryException as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddParameter (ProcessParameterValue.create(ProtocolParameter.create(ParameterName = exc.Data0)))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    AssayTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingParameterException  as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddParameter (ProcessParameterValue.create(exc.Data0))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    AssayTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingCharacteristicException     as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddCharacteristic (MaterialAttributeValue.create(Category = exc.Data0))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    AssayTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingFactorException             as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddFactor (FactorValue.create(Category = exc.Data0))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    AssayTransformation.AddProcess processTransformation
+                    |> Option.Some
+                                                                      
+                | :? MissingProtocolException as exc ->
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName exc.Data0]
+                            ProcessTransformation.AddName exc.Data0
+                        ]
+
+                    AssayTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingProtocolWithTypeException   as exc ->                                    
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [
+                                ProtocolTransformation.AddName exc.Data0.NameText
+                                ProtocolTransformation.AddProtocolType exc.Data0
+                            ]
+                            ProcessTransformation.AddName exc.Data0.NameText
+                        ]
+
+                    AssayTransformation.AddProcess processTransformation
+                    |> Option.Some
+                //| :? ProtocolHasNoDescriptionException  as exc -> [NoneRequired([message exc])]
+                                                                      
+                //| :? MissingValueException              as exc -> [NoneRequired([message exc])]
+                //| :? MissingUnitException               as exc -> [NoneRequired([message exc])]
+                //| :? NoSynonymInTargOntologyException   as exc -> [NoneRequired([message exc])]
+                | err -> None
+    
+        )
+
+        let getTransformations  (processName : string) (mss : Message list) =
+            mss 
+            |> List.choose (tryMessageToTransformation processName)
