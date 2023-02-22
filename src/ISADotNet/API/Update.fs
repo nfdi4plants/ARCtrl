@@ -13,10 +13,25 @@ module Dict =
         |> Seq.iter dict.Add
         dict
 
+
     let tryFind (key : 'Key) (dict : Dictionary<'Key,'T>) =
         let b,v = dict.TryGetValue key
         if b then Some v 
         else None
+
+    let ofSeqWithMerge (merge : 'T -> 'T -> 'T) (s : seq<'Key*'T>) = 
+        let dict = Dictionary()
+        s
+        |> Seq.iter (fun (k,v) -> 
+            match tryFind k dict with
+            | Some v' ->                
+                dict.Remove(k) |> ignore
+                dict.Add(k,merge v' v)
+            | None ->
+                dict.Add(k,v)
+            )
+        dict
+
 
 module Update =
 
@@ -250,8 +265,8 @@ module Update =
     /// Creates a union of the items of the two given lists, merges items whose keys exist in both lists using the given update function.
     let mergeUpdateLists (updateOptions : UpdateOptions) (mapping : 'T -> 'Key) (list1 : 'T list) (list2 : 'T list) = 
         try
-            let map1 = list1 |> List.map (fun v -> mapping v, v) |> Dict.ofSeq
-            let map2 = list2 |> List.map (fun v -> mapping v, v) |> Dict.ofSeq
+            let map1 = list1 |> List.map (fun v -> mapping v, v) |> Dict.ofSeqWithMerge updateOptions.updateRecordType
+            let map2 = list2 |> List.map (fun v -> mapping v, v) |> Dict.ofSeqWithMerge updateOptions.updateRecordType
             List.append (list1 |> List.map mapping) (list2 |> List.map mapping)
             |> List.distinct
             |> List.map (fun k ->

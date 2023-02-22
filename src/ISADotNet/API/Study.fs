@@ -219,8 +219,8 @@ module Study =
             match study.Materials with
             | Some mat -> mat.Sources |> Option.defaultValue []
             | None -> []
-        Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Source) -> s.Name) assaysSources processSequenceSources
-        |> Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Source) -> s.Name) studySources
+        Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Source) -> s.Name |> Option.defaultValue "") assaysSources processSequenceSources
+        |> Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Source) -> s.Name |> Option.defaultValue "") studySources
 
     /// Returns sources of the study
     let getSamples (study : Study) =
@@ -234,8 +234,8 @@ module Study =
             match study.Materials with
             | Some mat -> mat.Samples |> Option.defaultValue []
             | None -> []
-        Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Sample) -> s.Name) assaysSamples processSequenceSamples
-        |> Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Sample) -> s.Name) studySamples
+        Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Sample) -> s.Name |> Option.defaultValue "") assaysSamples processSequenceSamples
+        |> Update.mergeUpdateLists UpdateByExistingAppendLists (fun (s : Sample) -> s.Name |> Option.defaultValue "") studySamples
 
     /// Returns materials of the study
     let getMaterials (study : Study) =
