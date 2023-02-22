@@ -240,6 +240,82 @@ module Spreadsheet =
 
     module ErrorHandling = 
 
+        let tryMessageToStudyTransformation (processName : string) (ms : Message) =
+
+            ms.TryException()
+            |> Option.bind (fun e ->
+                match e with
+                | :? MissingCategoryException as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddParameter (ProcessParameterValue.create(ProtocolParameter.create(ParameterName = exc.Data0)))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    StudyTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingParameterException  as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddParameter (ProcessParameterValue.create(exc.Data0))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    StudyTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingCharacteristicException     as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddCharacteristic (MaterialAttributeValue.create(Category = exc.Data0))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    StudyTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingFactorException             as exc -> 
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName processName]
+                            ProcessTransformation.AddFactor (FactorValue.create(Category = exc.Data0))
+                            ProcessTransformation.AddName processName
+                        ]
+
+                    StudyTransformation.AddProcess processTransformation
+                    |> Option.Some
+                                                                      
+                | :? MissingProtocolException as exc ->
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [ProtocolTransformation.AddName exc.Data0]
+                            ProcessTransformation.AddName exc.Data0
+                        ]
+
+                    StudyTransformation.AddProcess processTransformation
+                    |> Option.Some
+                | :? MissingProtocolWithTypeException   as exc ->                                    
+                    let processTransformation = 
+                        [
+                            ProcessTransformation.AddProtocol [
+                                ProtocolTransformation.AddName exc.Data0.NameText
+                                ProtocolTransformation.AddProtocolType exc.Data0
+                            ]
+                            ProcessTransformation.AddName exc.Data0.NameText
+                        ]
+
+                    StudyTransformation.AddProcess processTransformation
+                    |> Option.Some
+                //| :? ProtocolHasNoDescriptionException  as exc -> [NoneRequired([message exc])]
+                                                                      
+                //| :? MissingValueException              as exc -> [NoneRequired([message exc])]
+                //| :? MissingUnitException               as exc -> [NoneRequired([message exc])]
+                //| :? NoSynonymInTargOntologyException   as exc -> [NoneRequired([message exc])]
+                | err -> None
+    
+        )
+
         let tryMessageToTransformation (processName : string) (ms : Message) =
 
             ms.TryException()
@@ -319,3 +395,7 @@ module Spreadsheet =
         let getTransformations  (processName : string) (mss : Message list) =
             mss 
             |> List.choose (tryMessageToTransformation processName)
+
+        let getStudyformations  (processName : string) (mss : Message list) =
+            mss 
+            |> List.choose (tryMessageToStudyTransformation processName)

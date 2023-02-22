@@ -88,17 +88,17 @@ type ProcessTransformation =
 
 type AssayTransformation = 
     
+    | AddFileName of string
+
     | AddParameter of ProcessParameterValue
     | AddCharacteristic of MaterialAttributeValue
     | AddFactor of FactorValue
 
-    //| RemoveParameter of ProcessParameterValue
-    //| RemoveCharacteristic of MaterialAttributeValue
-    //| RemoveFactor of FactorValue
 
     | AddProcess of ProcessTransformation list
 
     member this.Transform(a : Assay) = 
+        
         match this with
         //| AddParameter of ProcessParameterValue
         //| AddCharacteristic of MaterialAttributeValue
@@ -119,9 +119,63 @@ type AssayTransformation =
                         |> List.fold (fun p trans -> trans.Transform(p)) Process.empty
                     processes @ [newProcess]
             {a with ProcessSequence = Some processes'}
+        | AddFileName name ->
+            {a with FileName = Some name}
 
-    //member this.Equals(A : Assay) =
-    //    match this,a.File with
-    //    | AddName n, Some n' when n = n'-> 
-    //        true
-    //    | _ -> false
+    member this.Equals(a : Assay) =
+        match this,a.FileName with
+        | AddFileName n, Some n' when n = n'-> 
+            true
+        | _ -> false
+
+type StudyTransformation = 
+    
+    | AddParameter of ProcessParameterValue
+    | AddCharacteristic of MaterialAttributeValue
+    | AddFactor of FactorValue
+
+    //| RemoveParameter of ProcessParameterValue
+    //| RemoveCharacteristic of MaterialAttributeValue
+    //| RemoveFactor of FactorValue
+
+    | AddProcess of ProcessTransformation list
+    | AddAssay of AssayTransformation list
+
+
+    member this.Transform(s : Study) = 
+        match this with
+        //| AddParameter of ProcessParameterValue
+        //| AddCharacteristic of MaterialAttributeValue
+        //| AddFactor of FactorValue
+        | AddProcess pts -> 
+            let processes = s.ProcessSequence |> Option.defaultValue []
+            let processes' = 
+                if processes |> List.exists (fun p -> pts |> List.exists (fun trans -> trans.Equals p)) then
+                    processes |> List.map (fun p ->
+                        if pts |> List.exists (fun trans -> trans.Equals p) then
+                            pts
+                            |> List.fold (fun p trans -> trans.Transform(p)) p
+                        else p
+                    )
+                else 
+                    let newProcess = 
+                        pts
+                        |> List.fold (fun p trans -> trans.Transform(p)) Process.empty
+                    processes @ [newProcess]
+            {s with ProcessSequence = Some processes'}
+        | AddAssay ats ->
+            let assays = s.Assays |> Option.defaultValue []
+            let assays' = 
+                if assays |> List.exists (fun a -> ats |> List.exists (fun trans -> trans.Equals a)) then
+                    assays |> List.map (fun a ->
+                        if ats |> List.exists (fun trans -> trans.Equals a) then
+                            ats
+                            |> List.fold (fun a trans -> trans.Transform(a)) a
+                        else a
+                    )
+                else 
+                    let newAssay = 
+                        ats
+                        |> List.fold (fun a trans -> trans.Transform(a)) Assay.empty
+                    assays @ [newAssay]
+            {s with Assays = Some assays'}
