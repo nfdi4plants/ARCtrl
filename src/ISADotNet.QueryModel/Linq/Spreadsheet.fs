@@ -5,8 +5,8 @@ open System.Collections
 open Microsoft.FSharp.Linq.RuntimeHelpers
 open Microsoft.FSharp.Quotations.Patterns
 open FsSpreadsheet.DSL
-open Errors
 open ISADotNet.QueryModel
+open Errors
 open Helpers
 open ISADotNet
 open ISADotNet.Builder

@@ -125,3 +125,48 @@ type QInvestigation
     static member fromFile (path : string) = 
         File.ReadAllText path 
         |> QInvestigation.fromString
+
+module Investigation =
+
+    open Errors
+
+    let fileName (i : QInvestigation) =
+        match i.FileName with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoFileNameException)
+    let identifier (i : QInvestigation) =
+        match i.Identifier with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoIdentifierException)
+    let title (i : QInvestigation) =
+        match i.Title with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoTitleException)
+    let description (i : QInvestigation) =
+        match i.Description with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoDescriptionException)
+    let submissionDate (i : QInvestigation) =
+        match i.SubmissionDate with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoSubmissionDateException)
+    let publicReleaseDate (i : QInvestigation) =
+        match i.PublicReleaseDate with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoPublicReleaseDateException)
+    let ontologySourceReferences (i : QInvestigation) =
+        match i.OntologySourceReferences with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoOntologySourceReferencesException)
+    let publications (i : QInvestigation) =
+        match i.Publications with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoPublicationsException)
+    let contacts (i : QInvestigation) =
+        match i.Contacts with
+        | Some v -> Ok (v)
+        | None -> Error (InvestigationHasNoContactsException)
+    let studies (i : QInvestigation) =
+        match i.Studies with
+        | []  -> Error (InvestigationHasNoStudiesException)
+        | s -> Ok (s)

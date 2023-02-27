@@ -2,7 +2,7 @@
 
 open Fake.Core
 
-let project = "arcIO.NET"
+let project = "ISADotNet"
 
 let testProjects = 
     [

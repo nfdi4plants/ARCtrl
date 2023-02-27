@@ -1,4 +1,4 @@
-﻿namespace ISADotNet.QueryModel.Linq
+﻿namespace ISADotNet.QueryModel
 
 open ISADotNet
 
@@ -44,3 +44,28 @@ module Errors =
 
     let protocolHasNoDescription (name : string) =
         raise (ProtocolHasNoDescriptionException(name))
+
+
+    exception InvestigationHasNoIDException
+    exception InvestigationHasNoFileNameException
+    exception InvestigationHasNoIdentifierException
+    exception InvestigationHasNoTitleException
+    exception InvestigationHasNoDescriptionException
+    exception InvestigationHasNoSubmissionDateException
+    exception InvestigationHasNoPublicReleaseDateException
+    exception InvestigationHasNoOntologySourceReferencesException
+    exception InvestigationHasNoPublicationsException
+    exception InvestigationHasNoContactsException
+    exception InvestigationHasNoStudiesException
+
+    exception PersonHasNoIDException
+    exception PersonHasNoLastNameException
+    exception PersonHasNoFirstNameException
+    exception PersonHasNoMidInitialsException
+    exception PersonHasNoEMailException
+    exception PersonHasNoPhoneException
+    exception PersonHasNoFaxException
+    exception PersonHasNoAddressException
+    exception PersonHasNoAffiliationException
+    exception PersonHasNoRolesException
+    exception PersonHasNoCommentsException 
