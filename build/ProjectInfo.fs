@@ -6,7 +6,7 @@ let project = "ISADotNet"
 
 let testProjects = 
     [
-        // add relative paths (from project root) to your testprojects here
+        "tests/ISADotNet.Tests/ISADotNet.Tests.fsproj"
     ]
 
 let solutionFile  = $"{project}.sln"
