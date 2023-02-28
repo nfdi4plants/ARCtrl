@@ -132,41 +132,41 @@ module Investigation =
 
     let fileName (i : QInvestigation) =
         match i.FileName with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoFileNameException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoFileNameException
     let identifier (i : QInvestigation) =
         match i.Identifier with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoIdentifierException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoIdentifierException
     let title (i : QInvestigation) =
         match i.Title with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoTitleException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoTitleException
     let description (i : QInvestigation) =
         match i.Description with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoDescriptionException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoDescriptionException
     let submissionDate (i : QInvestigation) =
         match i.SubmissionDate with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoSubmissionDateException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoSubmissionDateException
     let publicReleaseDate (i : QInvestigation) =
         match i.PublicReleaseDate with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoPublicReleaseDateException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoPublicReleaseDateException
     let ontologySourceReferences (i : QInvestigation) =
         match i.OntologySourceReferences with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoOntologySourceReferencesException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoOntologySourceReferencesException
     let publications (i : QInvestigation) =
         match i.Publications with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoPublicationsException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoPublicationsException
     let contacts (i : QInvestigation) =
         match i.Contacts with
-        | Some v -> Ok (v)
-        | None -> Error (InvestigationHasNoContactsException)
+        | Some v -> (v)
+        | None -> raise InvestigationHasNoContactsException
     let studies (i : QInvestigation) =
         match i.Studies with
-        | []  -> Error (InvestigationHasNoStudiesException)
-        | s -> Ok (s)
+        | []  -> raise InvestigationHasNoStudiesException
+        | s -> s
