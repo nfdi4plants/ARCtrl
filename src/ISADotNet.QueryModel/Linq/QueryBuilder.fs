@@ -55,11 +55,50 @@ type ISAQueryBuilder () =
     // ---- Mapping operators ----
 
     /// Map all values in the collection using the given projection
+    [<CustomOperation("map")>] 
+    member this.Map (source: QuerySource<'T, 'Q>, projection) : QuerySource<'U, 'Q> =
+        QuerySource (Seq.map projection source.Source)
+
+    /// Map all values in the collection using the given projection
     [<CustomOperation("select",AllowIntoPattern=true)>] 
     member this.Select (source: QuerySource<'T, 'Q>, [<ProjectionParameter>] projection) : QuerySource<'U, 'Q> =
         QuerySource (Seq.map projection source.Source)
 
-    /// Map all values in the collection to their value text
+
+    /// Map all isa values in the collection to their text
+    [<CustomOperation("selectText")>] 
+    member this.SelectText (source: QuerySource<OntologyAnnotation, 'Q>) : QuerySource<string, 'Q> =
+        addMessage $"get text"
+        this.Select(source,(fun (v : OntologyAnnotation) -> 
+            match v.TryNameText with
+            | Option.Some t -> t
+            | Option.None -> missingOAText(v)
+            )
+        )
+
+    /// Map all isa values in the collection to their category
+    [<CustomOperation("selectCategory")>] 
+    member this.SelectCategory (source: QuerySource<ISAValue, 'Q>) : QuerySource<OntologyAnnotation, 'Q> =
+        addMessage $"get valueText"
+        this.Select(source,(fun (v : ISAValue) -> 
+            match v.TryCategory with
+            | Option.Some t -> t
+            | Option.None -> missingCategory(OntologyAnnotation.empty)
+            )
+        )
+
+    /// Map all isa values in the collection to their value
+    [<CustomOperation("selectValue")>] 
+    member this.SelectValue (source: QuerySource<ISAValue, 'Q>) : QuerySource<Value, 'Q> =
+        addMessage $"get valueText"
+        this.Select(source,(fun (v : ISAValue) -> 
+            match v.TryValue with
+            | Option.Some t -> t
+            | Option.None -> missingValue(v.Category)
+            )
+        )
+
+    /// Map all isa values in the collection to their value text
     [<CustomOperation("selectValueText")>] 
     member this.SelectValueText (source: QuerySource<ISAValue, 'Q>) : QuerySource<string, 'Q> =
         addMessage $"get valueText"
@@ -70,7 +109,7 @@ type ISAQueryBuilder () =
             )
         )
 
-    /// Map all values in the collection to their value with unit text
+    /// Map all isa values in the collection to their value with unit text
     [<CustomOperation("selectValueWithUnitText")>] 
     member this.SelectValueWithUnitText (source: QuerySource<ISAValue, 'Q>) : QuerySource<string, 'Q> =
         addMessage $"get valueWithUnitText"
@@ -226,6 +265,15 @@ type ISAQueryBuilder () =
             source.Source 
             |> Seq.reduce (fun a b -> a + string separator + b)
 
+    /// Concatenate all string in the sequence with the given separator
+    [<CustomOperation("concat")>] 
+    member this.Concat (source: QuerySource<string, 'Q>, separator : string) =
+        addMessage $"concat with separator \"{separator}\""
+        if source.Source = [] then ""
+        else 
+            source.Source 
+            |> Seq.reduce (fun a b -> a + separator + b)
+
     [<CustomOperation("find")>] 
     member this.Find (source: QuerySource<'T, 'Q>, predicate) =
         addMessage $"find"
@@ -268,7 +316,7 @@ type ISAQueryBuilder () =
 
     /// ---- Protocol operators ----
 
-    /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
+    /// Returns a collection containing only the protocols whose inputs and outputs are data files.
     [<CustomOperation("whereSoftwareProtocol")>] 
     member this.WhereSoftwareProtocol (source: QuerySource<QSheet, 'Q>) : QuerySource<QSheet, 'Q> =
         addMessage $"whereSoftwareProtocol"
@@ -284,7 +332,7 @@ type ISAQueryBuilder () =
             )
         )
 
-    /// Returns a collection containing only the isa values whose categorys are child categories to the given parentCategory.
+    /// Returns a collection containing only the protocols whose protocol type is a child category to the given parentCategory.
     [<CustomOperation("whereProtocolTypeIsChildOf")>] 
     member this.WhereProtocolTypeIsChildOf (source: QuerySource<QSheet, 'Q>, obo : Obo.OboOntology, category : ISADotNet.OntologyAnnotation) : QuerySource<QSheet, 'Q> =
         addMessage $"with parent isa category {category.NameText}"
@@ -297,7 +345,13 @@ type ISAQueryBuilder () =
         else 
             result
 
-    /// Map all values in the collection to their value with unit text
+    /// Returns a collection containing only the protocols whose protocol type is a child category to the given parentCategory.
+    [<CustomOperation("whereProtocolTypeIsChildOf")>] 
+    member this.WhereProtocolTypeIsChildOf (source: QuerySource<QSheet, 'Q>, obo : Obo.OboOntology, name : string, sourceName : string, accessionNumber : string) : QuerySource<QSheet, 'Q> =
+        let oa = OntologyAnnotation.fromString name sourceName accessionNumber
+        this.WhereProtocolTypeIsChildOf(source,obo,oa)
+
+    /// Map all protocols in the collection to their description text
     [<CustomOperation("selectDescriptionText")>] 
     member this.SelectDescriptionText (source: QuerySource<QSheet, 'Q>) : QuerySource<string, 'Q> =
         addMessage $"select Description Text"
@@ -307,7 +361,7 @@ type ISAQueryBuilder () =
             | None -> protocolHasNoDescription(v.Protocols.Head.Name.Value)
         ))
 
-    /// Return unevaluated computation expression 
+    /// Return unevaluated expression 
     [<CustomOperation("expression")>] 
     member _.Expression (source: 'T) : ExpressionSource<'T> =
         addMessage $"as expression tree"
