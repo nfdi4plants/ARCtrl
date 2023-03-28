@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Errors.fs" />
     <Compile Include="Obo.fs" />
     <Compile Include="OntologyAnnotation.fs" />
     <Compile Include="Comment.fs" />
@@ -19,6 +20,7 @@
     <Compile Include="Sheet.fs" />
     <Compile Include="ProcessSequence.fs" />
     <Compile Include="Assay.fs" />
+    <Compile Include="Person.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
     <Compile Include="Linq\Helpers.fs" />
@@ -28,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="0.3.0-preview.2" />
+    <PackageReference Include="FsSpreadsheet" Version="0.3.0" />
     <PackageReference Include="Swate.Api" Version="0.2.0" />
   </ItemGroup>
 

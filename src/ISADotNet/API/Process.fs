@@ -381,12 +381,14 @@ module Process =
         (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryMaterial)
         |> List.distinct
 
-    //let tryGetCharacteristicValuesOfInputBy (predicate : ProcessInput -> bool) (p : Process) =
-    //    match p.Inputs with
-    //    | Some is -> 
-    //        is
-    //        |> List.choose
-    //    | None -> None
+    let updateProtocol (referenceProtocols : Protocol list) (p : Process) =
+        match p.ExecutesProtocol with
+        | Some protocol when protocol.Name.IsSome ->
+            match referenceProtocols |> List.tryFind (fun prot -> prot.Name.Value = (protocol.Name |> Option.defaultValue "")) with
+            | Some refProtocol ->
+                {p with ExecutesProtocol = Some (Update.UpdateByExistingAppendLists.updateRecordType protocol refProtocol)}
+            | _ -> p
+        | _ -> p
 
 
 module ProcessSequence = 
@@ -557,3 +559,7 @@ module ProcessSequence =
         processSequence
         |> List.collect Process.getMaterials
         |> List.distinct
+
+    let updateProtocols (protocols : Protocol list) (processSequence : Process list) =
+        processSequence
+        |> List.map (Process.updateProtocol protocols)

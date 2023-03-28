@@ -67,6 +67,16 @@ type OntologyAnnotation =
         )
         |> Option.defaultValue ""
 
+    /// Returns the name of the ontology as string
+    member this.TryNameText =
+        this.Name
+        |> Option.map (fun av ->
+            match av with
+            | AnnotationValue.Text s  -> s
+            | AnnotationValue.Float f -> string f
+            | AnnotationValue.Int i   -> string i
+        )
+
     /// Returns the term source of the ontology as string
     member this.TermSourceREFString =       
         this.TermSourceREF

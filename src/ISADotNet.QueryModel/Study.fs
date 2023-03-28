@@ -109,3 +109,75 @@ type QStudy
     static member fromFile (path : string) = 
         File.ReadAllText path 
         |> QStudy.fromString
+
+module Study =
+
+    open Errors
+
+    let fileName (s : QStudy) = 
+        match s.FileName with
+        | Some v -> v
+        | None -> raise StudyHasNoFileNameException
+    let identifier (s : QStudy) = 
+        match s.Identifier with
+        | Some v -> v
+        | None -> raise StudyHasNoIdentifierException
+    let title (s : QStudy) = 
+        match s.Title with
+        | Some v -> v
+        | None -> raise StudyHasNoTitleException
+    let description (s : QStudy) = 
+        match s.Description with
+        | Some v -> v
+        | None -> raise StudyHasNoDescriptionException
+    let submissionDate (s : QStudy) = 
+        match s.SubmissionDate with
+        | Some v -> v
+        | None -> raise StudyHasNoSubmissionDateException
+    let publicReleaseDate (s : QStudy) = 
+        match s.PublicReleaseDate with
+        | Some v -> v
+        | None -> raise StudyHasNoPublicReleaseDateException
+    let publications (s : QStudy) = 
+        match s.Publications with
+        | Some v -> v
+        | None -> raise StudyHasNoPublicationsException
+    let contacts (s : QStudy) = 
+        match s.Contacts with
+        | Some v -> v
+        | None -> raise StudyHasNoContactsException
+    let designDescriptors (s : QStudy) = 
+        match s.StudyDesignDescriptors with
+        | Some v -> v
+        | None -> raise StudyHasNoDesignDescriptorsException
+    let protocols (s : QStudy) = 
+        match s.Protocols with
+        | [] -> raise StudyHasNoProtocolsException
+        | v -> v
+    //let materials (s : QStudy) = 
+    //    match s.Materials with
+    //    | Some v -> v
+    //    | None -> raise StudyHasNoMaterialsException
+    //let fileName (s : QStudy) = 
+    //    match s.Protocols with
+    //    | Some v -> v
+    //    | None -> raise StudyHasNoProcessSequenceException
+    let assays (s : QStudy) = 
+        match s.Assays with
+        | [] -> raise StudyHasNoAssaysException
+        | v -> v
+    //let factors (s : QStudy) = 
+    //    let f = s.Factors()
+    //    if f.IsEmpty then raise StudyHasNoFactorsException
+    //let CharacteristicCategories (s : QStudy) = 
+    //    match s.FileName with
+    //    | Some v -> v
+    //    | None -> raise StudyHasNoCharacteristicCategoriesException
+    //let fileName (s : QStudy) = 
+    //    match s.FileName with
+    //    | Some v -> v
+    //    | None -> raise StudyHasNoUnitCategoriesException
+    //let fileName (s : QStudy) = 
+    //    match s.FileName with
+    //    | Some v -> v
+    //    | None -> raise StudyHasNoStudyHasNoCommentsExceptionException

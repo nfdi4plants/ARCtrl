@@ -6,7 +6,10 @@ open Microsoft.FSharp.Linq.RuntimeHelpers
 open Microsoft.FSharp.Quotations.Patterns
 open FsSpreadsheet.DSL
 open ISADotNet.QueryModel
+open Errors
 open Helpers
+open ISADotNet
+open ISADotNet.Builder
 
 /// Should be opened for using ISA-Value querying DSL in combindation with FsSpreadsheet DSL.
 module Spreadsheet =
@@ -43,10 +46,22 @@ module Spreadsheet =
                 try 
                     let value = eval<'T> q |> FsSpreadsheet.DataType.InferCellValue
                     let cell = CellElement(value,None)
-                    SheetEntity.ok cell         
+                    SheetEntity.some cell         
                 with
                 //| err when this.IsOptional -> MissingOptional([this.FormatError err])
-                | err  -> NoneRequired([this.FormatError err])               
+                | :? MissingCategoryException           as exc -> NoneRequired([message exc])
+                | :? MissingParameterException          as exc -> NoneRequired([message exc])
+                | :? MissingCharacteristicException     as exc -> NoneRequired([message exc])
+                | :? MissingFactorException             as exc -> NoneRequired([message exc])
+
+                | :? MissingProtocolException           as exc -> NoneRequired([message exc])
+                | :? MissingProtocolWithTypeException   as exc -> NoneRequired([message exc])
+                | :? ProtocolHasNoDescriptionException  as exc -> NoneRequired([message exc])
+
+                | :? MissingValueException              as exc -> NoneRequired([message exc])
+                | :? MissingUnitException               as exc -> NoneRequired([message exc])
+                | :? NoSynonymInTargOntologyException   as exc -> NoneRequired([message exc])
+                | err -> NoneRequired([message err])            
 
     [<AutoOpen>]
     module OptionCellExtensions =
@@ -65,10 +80,22 @@ module Spreadsheet =
                     try 
                         let value = eval<'T> subExpr |> FsSpreadsheet.DataType.InferCellValue
                         let cell = CellElement(value,None)
-                        SheetEntity.ok cell 
+                        SheetEntity.some cell 
                     with 
-                    | err -> NoneOptional([this.FormatError err])   
-                | Result.Error err -> NoneOptional([this.FormatError err])   
+                    | :? MissingCategoryException           as exc -> NoneOptional([message exc])
+                    | :? MissingParameterException          as exc -> NoneOptional([message exc])
+                    | :? MissingCharacteristicException     as exc -> NoneOptional([message exc])
+                    | :? MissingFactorException             as exc -> NoneOptional([message exc])
+
+                    | :? MissingProtocolException           as exc -> NoneOptional([message exc])
+                    | :? MissingProtocolWithTypeException   as exc -> NoneOptional([message exc])
+                    | :? ProtocolHasNoDescriptionException  as exc -> NoneOptional([message exc])
+
+                    | :? MissingValueException              as exc -> NoneOptional([message exc])
+                    | :? MissingUnitException               as exc -> NoneOptional([message exc])
+                    | :? NoSynonymInTargOntologyException   as exc -> NoneOptional([message exc]) 
+                    | err -> NoneOptional([message err])   
+                | Result.Error err -> NoneOptional([message (this.FormatError err)])    
        
     [<AutoOpen>]
     module RequiredCellExtensions =
@@ -87,10 +114,22 @@ module Spreadsheet =
                     try 
                         let value = eval<'T> subExpr |> FsSpreadsheet.DataType.InferCellValue
                         let cell = CellElement(value,None)
-                        SheetEntity.ok cell 
+                        SheetEntity.some cell 
                     with 
-                    | err -> NoneRequired([this.FormatError err])   
-                | Result.Error err -> NoneRequired([this.FormatError err])   
+                    | :? MissingCategoryException           as exc -> NoneRequired([message exc])
+                    | :? MissingParameterException          as exc -> NoneRequired([message exc])
+                    | :? MissingCharacteristicException     as exc -> NoneRequired([message exc])
+                    | :? MissingFactorException             as exc -> NoneRequired([message exc])
+
+                    | :? MissingProtocolException           as exc -> NoneRequired([message exc])
+                    | :? MissingProtocolWithTypeException   as exc -> NoneRequired([message exc])
+                    | :? ProtocolHasNoDescriptionException  as exc -> NoneRequired([message exc])
+
+                    | :? MissingValueException              as exc -> NoneRequired([message exc])
+                    | :? MissingUnitException               as exc -> NoneRequired([message exc])
+                    | :? NoSynonymInTargOntologyException   as exc -> NoneRequired([message exc])
+                    | err -> NoneRequired([message err])   
+                | Result.Error err -> NoneRequired([message (this.FormatError err)])
 
 
     [<AutoOpen>]
@@ -104,10 +143,22 @@ module Spreadsheet =
                     |> Seq.map (fun v ->                     
                         let value = v |> FsSpreadsheet.DataType.InferCellValue
                         let cell = CellElement(value,None)
-                        SheetEntity.ok cell)
+                        SheetEntity.some cell)
                     |> Seq.toList
                 with
-                | err -> [NoneRequired([this.FormatError err])]
+                | :? MissingCategoryException           as exc -> [NoneRequired([message exc])]
+                | :? MissingParameterException          as exc -> [NoneRequired([message exc])]
+                | :? MissingCharacteristicException     as exc -> [NoneRequired([message exc])]
+                | :? MissingFactorException             as exc -> [NoneRequired([message exc])]
+                                                                  
+                | :? MissingProtocolException           as exc -> [NoneRequired([message exc])]
+                | :? MissingProtocolWithTypeException   as exc -> [NoneRequired([message exc])]
+                | :? ProtocolHasNoDescriptionException  as exc -> [NoneRequired([message exc])]
+                                                                  
+                | :? MissingValueException              as exc -> [NoneRequired([message exc])]
+                | :? MissingUnitException               as exc -> [NoneRequired([message exc])]
+                | :? NoSynonymInTargOntologyException   as exc -> [NoneRequired([message exc])]
+                | err -> [NoneRequired([message err])]  
 
     [<AutoOpen>]
     module OptionEnumerableExtensions =
@@ -128,11 +179,23 @@ module Spreadsheet =
                         |> Seq.map (fun v ->                     
                             let value = v |> FsSpreadsheet.DataType.InferCellValue
                             let cell = CellElement(value,None)
-                            SheetEntity.ok cell) 
+                            SheetEntity.some cell) 
                         |> Seq.toList
                     with 
-                    | err -> [NoneOptional([this.FormatError err])]   
-                | Result.Error err -> [NoneOptional([this.FormatError err])]   
+                    | :? MissingCategoryException           as exc -> [NoneOptional([message exc])]
+                    | :? MissingParameterException          as exc -> [NoneOptional([message exc])]
+                    | :? MissingCharacteristicException     as exc -> [NoneOptional([message exc])]
+                    | :? MissingFactorException             as exc -> [NoneOptional([message exc])]
+                                                                      
+                    | :? MissingProtocolException           as exc -> [NoneOptional([message exc])]
+                    | :? MissingProtocolWithTypeException   as exc -> [NoneOptional([message exc])]
+                    | :? ProtocolHasNoDescriptionException  as exc -> [NoneOptional([message exc])]
+                                                                      
+                    | :? MissingValueException              as exc -> [NoneOptional([message exc])]
+                    | :? MissingUnitException               as exc -> [NoneOptional([message exc])]
+                    | :? NoSynonymInTargOntologyException   as exc -> [NoneOptional([message exc])]
+                    | err -> [NoneOptional([message err])]   
+                | Result.Error err -> [NoneOptional([message (this.FormatError err)])]    
 
 
     [<AutoOpen>]
@@ -154,11 +217,23 @@ module Spreadsheet =
                         |> Seq.map (fun v ->                     
                             let value = v |> FsSpreadsheet.DataType.InferCellValue
                             let cell = CellElement(value,None)
-                            SheetEntity.ok cell)        
+                            SheetEntity.some cell)        
                         |> Seq.toList
                     with 
-                    | err -> [NoneRequired([this.FormatError err])]   
-                | Result.Error err -> [NoneRequired([this.FormatError err])]   
+                    | :? MissingCategoryException           as exc -> [NoneRequired([message exc])]
+                    | :? MissingParameterException          as exc -> [NoneRequired([message exc])]
+                    | :? MissingCharacteristicException     as exc -> [NoneRequired([message exc])]
+                    | :? MissingFactorException             as exc -> [NoneRequired([message exc])]
+                                                                      
+                    | :? MissingProtocolException           as exc -> [NoneRequired([message exc])]
+                    | :? MissingProtocolWithTypeException   as exc -> [NoneRequired([message exc])]
+                    | :? ProtocolHasNoDescriptionException  as exc -> [NoneRequired([message exc])]
+                                                                      
+                    | :? MissingValueException              as exc -> [NoneRequired([message exc])]
+                    | :? MissingUnitException               as exc -> [NoneRequired([message exc])]
+                    | :? NoSynonymInTargOntologyException   as exc -> [NoneRequired([message exc])]
+                    | err -> [NoneRequired([message err])]   
+                | Result.Error err -> [NoneRequired([message (this.FormatError err)])]   
 
     /// Computation expression for querying ISA values for consumption of FsSpreadsheet DSL.
     let cells = CellBuilder()
