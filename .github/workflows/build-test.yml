@@ -21,4 +21,4 @@ jobs:
     - name: Restore local tools
       run: dotnet tool restore
     - name: Build and test
-      run: dotnet fake build -t runTests
+      run: dotnet run --project ./build/Build.fsproj runTests
