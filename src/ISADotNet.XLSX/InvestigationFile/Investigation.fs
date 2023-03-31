@@ -141,7 +141,10 @@ module Investigation =
 
             | Some k when k = studyLabel -> 
                 let currentLine,lineNumber,newRemarks,study = Study.fromRows (lineNumber + 1) en  
-                loop currentLine ontologySourceReferences investigationInfo publications contacts (study::studies) (List.append remarks newRemarks) lineNumber
+                if study = Study.empty then
+                    loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
+                else 
+                    loop currentLine ontologySourceReferences investigationInfo publications contacts (study::studies) (List.append remarks newRemarks) lineNumber
 
             | k -> 
                 fromParts investigationInfo ontologySourceReferences publications contacts (List.rev studies) remarks
@@ -233,6 +236,10 @@ module Investigation =
         with
         | err -> failwithf "Could not read investion from stream: %s" err.Message
 
+    let fromBytes (bytes : byte []) =
+        use memoryStream = new System.IO.MemoryStream(bytes)
+        fromStream memoryStream
+
     let toSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) (investigation:Investigation) =           
         try
             let sheet = Spreadsheet.tryGetSheetBySheetIndex 0u doc |> Option.get
@@ -263,12 +270,19 @@ module Investigation =
 
     let toStream (stream : System.IO.Stream) (investigation:Investigation) =
         try
-            let doc = Spreadsheet.fromStream stream false
+            let doc = FsSpreadsheet.ExcelIO.Spreadsheet.initWithSstOnStream "isa_investigation" stream 
             try
                 toSpreadsheet doc investigation
+
+                FsSpreadsheet.ExcelIO.Spreadsheet.saveChanges doc |> ignore
             finally
                 doc.Close()
         with
         | err -> failwithf "Could not write investion to stream: %s" err.Message
+
+    let toBytes (investigation) =
+        use memoryStream = new System.IO.MemoryStream()
+        toStream memoryStream investigation
+        memoryStream.ToArray()
 
     // ---->  Bis hier

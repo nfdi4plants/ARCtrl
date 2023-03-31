@@ -62,6 +62,12 @@ let testInvestigationFile =
         )
         |> testSequenced
 
+        testCase "ReaderIgnoresEmptyStudy" (fun () -> 
+            let bytes = Investigation.toBytes Investigation.empty
+            let i = Investigation.fromBytes bytes
+            Expect.isFalse i.Studies.IsSome "Empty study in investigation should be read to None, but here is Some"
+        )
+
         testCase "ReaderSuccessEmpty" (fun () -> 
             
             let readingSuccess = 
