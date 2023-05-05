@@ -11,8 +11,8 @@
     <Compile Include="Ontology.fs" />
     <Compile Include="Factor.fs" />
     <Compile Include="Protocol.fs" />
-    <Compile Include="Data.fs" />
     <Compile Include="Material.fs" />
+    <Compile Include="Data.fs" />
     <Compile Include="Process.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="Person.fs" />

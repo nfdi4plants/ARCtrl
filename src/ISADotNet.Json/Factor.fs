@@ -60,7 +60,7 @@ module Factor =
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "FactorType")
-            tryInclude "comments" GEncode.string (oa |> tryGetPropertyValue "Comments")
+            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

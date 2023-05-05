@@ -57,7 +57,8 @@ module GEncode =
         name,
         match value with
             | Some (:? seq<obj> as os) -> 
-                if Seq.isEmpty os then Encode.nil
-                else Seq.map encoder os |> Encode.seq
+                //if Seq.isEmpty os then Encode.nil
+                //else 
+                Seq.map encoder os |> Encode.seq
             | Some (o) -> encoder o
             | _ -> Encode.nil
