@@ -15,31 +15,18 @@ initializeContext()
 open BasicTasks
 open TestTasks
 open PackageTasks
-open DocumentationTasks
 open ReleaseTasks
 
-/// Full release of nuget package, git tag, and documentation for the stable version.
+/// Full release of nuget package for the prerelease version.
 let _release = 
     BuildTask.createEmpty 
         "Release" 
-        [clean; build; runTests; pack; buildDocs; createTag; publishNuget; releaseDocs]
-
-/// Full release of nuget package, git tag, and documentation for the prerelease version.
-let _preRelease = 
-    BuildTask.createEmpty 
-        "PreRelease" 
-        [setPrereleaseTag; clean; build; runTests; packPrerelease; buildDocsPrerelease; createPrereleaseTag; publishNugetPrerelease; prereleaseDocs]
-
-/// Full release of nuget package for the prerelease version.
-let _releaseNoDocs = 
-    BuildTask.createEmpty 
-        "ReleaseNoDocs" 
         [clean; build; runTests; pack; createTag; publishNuget;]
 
 /// Full release of nuget package for the prerelease version.
-let _preReleaseNoDocs = 
+let _preRelease = 
     BuildTask.createEmpty 
-        "PreReleaseNoDocs" 
+        "PreRelease" 
         [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease]
 
 ReleaseNotesTasks.updateReleaseNotes |> ignore
