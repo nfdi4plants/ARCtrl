@@ -57,6 +57,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup> 
   

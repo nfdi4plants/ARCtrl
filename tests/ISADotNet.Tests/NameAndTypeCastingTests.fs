@@ -1,14 +1,14 @@
 ﻿module NameAndTypeCastingTests
 
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
-open TestingUtils
+#endif
 open ISADotNet
-open System.Text.Json
 
 
-
-[<Tests>]
-let testComponentCasting =
+let main =
 
     testList "ComponentCastingTests" [
         testCase "ComposeNameText" (fun () -> 

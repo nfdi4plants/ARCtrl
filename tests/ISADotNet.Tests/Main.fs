@@ -1,11 +1,22 @@
 ﻿module ISADotnet.Tests
 
 open ISADotNet
+
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
 
-[<EntryPoint>]
-let main argv =
+[<Tests>]
+#endif
+let all = testList "All" [
+    APITests.main
+    NameAndTypeCastingTests.main
+]
 
-    // API functionality Tests
-    Tests.runTestsWithCLIArgs [Tests.CLIArguments.Sequenced] argv APITests.testUpdate |> ignore
-    0
+let [<EntryPoint>] main argv = 
+    #if FABLE_COMPILER
+    Mocha.runTests all
+    #else
+    Tests.runTestsWithCLIArgs [] argv all
+    #endif
