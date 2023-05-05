@@ -19,6 +19,7 @@ module AnnotationValue =
             Encode.int i
         | :? AnnotationValue as AnnotationValue.Text s -> 
             Encode.string s
+        | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<AnnotationValue> =
         fun s json ->
@@ -32,20 +33,44 @@ module AnnotationValue =
                     | Ok s -> Ok (AnnotationValue.Text s)
                     | Error e -> Error e
 
-//module OntologySourceReference =
 
-//    let fromString (s:string) = 
-//        JsonSerializer.Deserialize<OntologySourceReference>(s,JsonExtensions.options)
+module OntologySourceReference = 
 
-//    let toString (oa:OntologySourceReference) = 
-//        JsonSerializer.Serialize<OntologySourceReference>(oa,JsonExtensions.options)
+    let encoder (options : ConverterOptions) (osr : obj) = 
+        [
+            tryInclude "description" GEncode.string (osr |> tryGetPropertyValue "Description")
+            tryInclude "file" GEncode.string (osr |> tryGetPropertyValue "File")
+            tryInclude "name" GEncode.string (osr |> tryGetPropertyValue "Name")
+            tryInclude "version" GEncode.string (osr |> tryGetPropertyValue "Version")
+            tryInclude "comments" GEncode.string (osr |> tryGetPropertyValue "Comments")
+        ]
+        |> GEncode.choose
+        |> Encode.object
 
-//    let fromFile (path : string) = 
-//        File.ReadAllText path 
-//        |> fromString
+    let decoder (options : ConverterOptions) : Decoder<OntologySourceReference> =
+        Decode.object (fun get ->
+            {
+                Description = get.Optional.Field "description" GDecode.uri
+                File = get.Optional.Field "file" Decode.string
+                Name = get.Optional.Field "name" Decode.string
+                Version = get.Optional.Field "version" Decode.string
+                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
+            }
+        )
 
-//    let toFile (path : string) (oa:OntologySourceReference) = 
-//        File.WriteAllText(path,toString oa)
+    let fromString (s:string) = 
+        GDecode.fromString (decoder (ConverterOptions())) s        
+
+    let toString (oa:OntologySourceReference) = 
+        encoder (ConverterOptions()) oa
+        |> Encode.toString 2
+
+    let fromFile (path : string) = 
+        File.ReadAllText path 
+        |> fromString
+
+    let toFile (path : string) (osr:OntologySourceReference) = 
+        File.WriteAllText(path,toString osr)
 
 module OntologyAnnotation =  
 
@@ -55,7 +80,7 @@ module OntologyAnnotation =
             tryInclude "name" (AnnotationValue.encoder options) (oa |> tryGetPropertyValue "Name")
             tryInclude "termSource" GEncode.string (oa |> tryGetPropertyValue "TermSourceREF")
             tryInclude "termAccession" GEncode.string (oa |> tryGetPropertyValue "TermAccessionNumber")
-            //tryInclude "comments" GEncode.string (oa |> tryGetPropertyValue "Comments")
+            tryInclude "comments" GEncode.string (oa |> tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -67,8 +92,7 @@ module OntologyAnnotation =
                 Name = get.Optional.Field "name" (AnnotationValue.decoder options)
                 TermSourceREF = get.Optional.Field "termSource" Decode.string
                 TermAccessionNumber = get.Optional.Field "termAccession" Decode.string
-                Comments = None // get.Optional.Field "comments" (Comment.decoder options)
-
+                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
             }
         )
 

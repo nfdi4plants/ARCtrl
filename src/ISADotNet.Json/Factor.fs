@@ -11,11 +11,40 @@ open GEncode
 
 module Value = 
 
+    let encoder (options : ConverterOptions) (value : obj) = 
+        match value with
+        | :? Value as Value.Float f -> 
+            Encode.float f
+        | :? Value as Value.Int i -> 
+            Encode.int i
+        | :? Value as Value.Name s -> 
+            Encode.string s
+        | :? Value as Value.Ontology s -> 
+            OntologyAnnotation.encoder options s
+        | _ -> Encode.nil
+
+    let decoder (options : ConverterOptions) : Decoder<Value> =
+        fun s json ->
+            match Decode.int s json with
+            | Ok i -> Ok (Value.Int i)
+            | Error _ -> 
+                match Decode.float s json with
+                | Ok f -> Ok (Value.Float f)
+                | Error _ -> 
+                    match OntologyAnnotation.decoder options s json with
+                    | Ok f -> Ok (Value.Ontology f)
+                    | Error _ -> 
+                        match Decode.string s json with
+                        | Ok s -> Ok (Value.Name s)
+                        | Error e -> Error e
+
+
     let fromString (s:string) = 
-        JsonSerializer.Deserialize<Value>(s,JsonExtensions.options)
+        GDecode.fromString (decoder (ConverterOptions())) s        
 
     let toString (v:Value) = 
-        JsonSerializer.Serialize<Value>(v,JsonExtensions.options)
+        encoder (ConverterOptions()) v
+        |> Encode.toString 2
 
     let fromFile (path : string) = 
         File.ReadAllText path 
@@ -26,11 +55,32 @@ module Value =
 
 module Factor =  
 
+    let encoder (options : ConverterOptions) (oa : obj) = 
+        [
+            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
+            tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "FactorType")
+            tryInclude "comments" GEncode.string (oa |> tryGetPropertyValue "Comments")
+        ]
+        |> GEncode.choose
+        |> Encode.object
+
+    let decoder (options : ConverterOptions) : Decoder<Factor> =
+        Decode.object (fun get ->
+            {
+                ID = get.Optional.Field "@id" GDecode.uri
+                Name = get.Optional.Field "name" Decode.string
+                FactorType = get.Optional.Field "factorType" (OntologyAnnotation.decoder options)
+                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
+            }
+        )
+
     let fromString (s:string) = 
-        JsonSerializer.Deserialize<Factor>(s,JsonExtensions.options)
+        GDecode.fromString (decoder (ConverterOptions())) s
 
     let toString (f:Factor) = 
-        JsonSerializer.Serialize<Factor>(f,JsonExtensions.options)
+        encoder (ConverterOptions()) f
+        |> Encode.toString 2
 
     let fromFile (path : string) = 
         File.ReadAllText path 
@@ -42,11 +92,32 @@ module Factor =
 
 module FactorValue =
 
+    let encoder (options : ConverterOptions) (oa : obj) = 
+        [
+            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            tryInclude "category" (Factor.encoder options) (oa |> tryGetPropertyValue "Category")
+            tryInclude "value" (Value.encoder options) (oa |> tryGetPropertyValue "Value")
+            tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Unit")
+        ]
+        |> GEncode.choose
+        |> Encode.object
+
+    let decoder (options : ConverterOptions) : Decoder<FactorValue> =
+        Decode.object (fun get ->
+            {
+                ID = get.Optional.Field "@id" GDecode.uri
+                Category = get.Optional.Field "category" (Factor.decoder options)
+                Value = get.Optional.Field "value" (Value.decoder options)
+                Unit = get.Optional.Field "unit" (OntologyAnnotation.decoder options)
+            }
+        )
+
     let fromString (s:string) = 
-        JsonSerializer.Deserialize<FactorValue>(s,JsonExtensions.options)
+        GDecode.fromString (decoder (ConverterOptions())) s
 
     let toString (f:FactorValue) = 
-        JsonSerializer.Serialize<FactorValue>(f,JsonExtensions.options)
+        encoder (ConverterOptions()) f
+        |> Encode.toString 2
 
     let fromFile (path : string) = 
         File.ReadAllText path 

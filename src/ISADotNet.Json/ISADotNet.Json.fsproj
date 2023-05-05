@@ -4,6 +4,9 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ConverterOptions.fs" />
+    <Compile Include="Decode.fs" />
+    <Compile Include="GEncode.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="Ontology.fs" />
     <Compile Include="Factor.fs" />
@@ -16,6 +19,10 @@
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Thoth.Json" Version="10.1.0" />
+    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />

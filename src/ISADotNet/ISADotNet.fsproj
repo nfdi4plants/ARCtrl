@@ -43,9 +43,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Remove="obj\**" />
     <EmbeddedResource Remove="JsonIO\**" />
-    <EmbeddedResource Remove="obj\**" />
   </ItemGroup>
 
   <ItemGroup />
@@ -63,7 +61,7 @@
   </ItemGroup> 
   
   <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Kevin Frey</Authors>
+     <Authors>nfdi4plants, Lukas Weil, Kevin Frey</Authors>
     <Description>ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in the dotnet environment.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <!--<PackageProjectUrl>https://fslab.org/docs-template/</PackageProjectUrl>-->

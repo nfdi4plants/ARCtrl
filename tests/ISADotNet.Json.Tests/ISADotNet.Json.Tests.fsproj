@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="JsonSchemaValidation.fs" />
     <Compile Include="JSchemaValidationTests.fs" />
     <Compile Include="ISAJsonTests.fs" />
     <Compile Include="JsonExtensionsTests.fs" />
-    <Compile Include="JsonSchemaValidation.fs" />
-    <Compile Include="Sample.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -25,5 +25,6 @@
 	<ItemGroup>
 		<!--Also includes ISADotNet-->
 		<ProjectReference Include="..\..\src\ISADotNet.Json\ISADotNet.Json.fsproj" />
+		<ProjectReference Include="..\..\src\ISADotNet.Validation\ISADotNet.Validation.fsproj" />
 	</ItemGroup>
 </Project>
