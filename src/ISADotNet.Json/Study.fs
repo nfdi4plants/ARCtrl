@@ -1,8 +1,13 @@
 namespace ISADotNet.Json
 
+#if FABLE_COMPILER
+open Thoth.Json
+#else
+open Thoth.Json.Net
+#endif
 open ISADotNet
-open System.Text.Json
 open System.IO
+open GEncode
 
 module Study =
     
