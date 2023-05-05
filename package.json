@@ -1,0 +1,49 @@
+{
+  "name": "isadotnet",
+  "version": "0.7.0",
+  "description": "ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files written in dotnet.",
+  "type": "module",
+  "scripts": {
+    "pretest": "dotnet fable tests/ISADotNet.Tests -o tests/ISADotNet.JsNativeTests/fable",
+    "test": "mocha tests/ISADotNet.JsNativeTests/fable",
+    "posttest": "mocha tests/ISADotNet.JsNativeTests",
+    "test:live": "mocha --watch --parallel tests/ISADotNet.JsNativeTests/fable",
+    "testnative:live": "mocha --watch --parallel tests/ISADotNet.JsNativeTests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nfdi4plants/ISADotNet.git"
+  },
+  "keywords": [
+    "F#",
+    "FSharp",
+    "dotnet",
+    ".Net",
+    "bioinformatics",
+    "biology",
+    "datascience",
+    "dataplant",
+    "nfdi",
+    "metadata",
+    "investigation",
+    "study",
+    "assay",
+    "ISA",
+    "Json"
+  ],
+  "author": "Lukas Weil",
+  "contributors": [
+    "Lukas Weil",
+    "Kevin Frey",
+    "Florian Wetzels",
+    "Oliver Maus"
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nfdi4plants/ISADotNet/issues"
+  },
+  "homepage": "https://github.com/nfdi4plants/ISADotNet#readme",
+  "devDependencies": {
+    "mocha": "^10.2.0"
+  }
+}
