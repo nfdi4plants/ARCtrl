@@ -1,13 +1,8 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
-
-
 type ProtocolParameter = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"parameterName")>]
         ParameterName : OntologyAnnotation option
     }
     
@@ -59,13 +54,9 @@ type ProtocolParameter =
 
 type Component = 
     {
-        [<JsonPropertyName(@"componentName")>]
         ComponentName : string option
-        [<JsonIgnore>]
         ComponentValue : Value option
-        [<JsonIgnore>]
         ComponentUnit : OntologyAnnotation option
-        [<JsonPropertyName(@"componentType")>]
         ComponentType : OntologyAnnotation option
     }
 
@@ -168,23 +159,14 @@ type Component =
 
 type Protocol =
     {       
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"name")>]
         Name :          string option
-        [<JsonPropertyName(@"protocolType")>]
         ProtocolType :  OntologyAnnotation option
-        [<JsonPropertyName(@"description")>]
         Description :   string option
-        [<JsonPropertyName(@"uri")>]
         Uri :           URI option
-        [<JsonPropertyName(@"version")>]
         Version :       string option
-        [<JsonPropertyName(@"parameters")>]
         Parameters :    ProtocolParameter list option
-        [<JsonPropertyName(@"components")>]
         Components :    Component list option
-        [<JsonPropertyName(@"comments")>]
         Comments :      Comment list option
     }
 

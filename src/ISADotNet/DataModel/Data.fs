@@ -1,14 +1,10 @@
 namespace ISADotNet
 
-open System.Text.Json
-open System.Text.Json.Serialization
-
-[<StringEnum>]
 type DataFile =
 
-    | [<StringEnumValue("Raw Data File")>]      RawDataFile // "Raw Data File"
-    | [<StringEnumValue("Derived Data File")>]  DerivedDataFile // "Derived Data File"
-    | [<StringEnumValue("Image File")>]         ImageFile // "Image File"
+    | RawDataFile // "Raw Data File"
+    | DerivedDataFile // "Derived Data File"
+    | ImageFile // "Image File"
 
     static member RawDataFileJson       = "Raw Data File"
     static member DerivedDataFileJson   = "Derived Data File"
@@ -37,13 +33,9 @@ type DataFile =
 
 type Data = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"name")>]
         Name : string option
-        [<JsonPropertyName(@"type")>]
         DataType : DataFile option
-        [<JsonPropertyName(@"comments")>]
         Comments : Comment list option
     }
 
@@ -76,11 +68,8 @@ type Data =
 
 type Source = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"name")>]
         Name : string option
-        [<JsonPropertyName(@"characteristics")>]
         Characteristics : MaterialAttributeValue list option
     }
 
@@ -110,15 +99,10 @@ type Source =
 
 type Sample = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"name")>]
         Name : string option
-        [<JsonPropertyName(@"characteristics")>]
         Characteristics : MaterialAttributeValue list option
-        [<JsonPropertyName(@"factorValues")>]
         FactorValues : FactorValue list option
-        [<JsonPropertyName(@"derivesFrom")>]
         DerivesFrom : Source list option
     }
 
