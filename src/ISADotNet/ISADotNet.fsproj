@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="JsonAttributes.fs" />
     <Compile Include="OptionExtensions.fs" />
     <Compile Include="Printer.fs" />
     <Compile Include="DataModel\URI.fs" />
@@ -23,7 +22,6 @@
     <Compile Include="DataModel\Study.fs" />
     <Compile Include="DataModel\Investigation.fs" />
     <Compile Include="DataModel\SwateCustomXml.fs" />
-    <Compile Include="JsonExtensions.fs" />
     <Compile Include="API\Update.fs" />
     <Compile Include="API\Comment.fs" />
     <Compile Include="API\Ontology.fs" />
@@ -37,38 +35,25 @@
     <Compile Include="API\Assay.fs" />
     <Compile Include="API\Study.fs" />
     <Compile Include="API\Investigation.fs" />
-    <Compile Include="JsonIO\Comment.fs" />
-    <Compile Include="JsonIO\Ontology.fs" />
-    <Compile Include="JsonIO\Factor.fs" />
-    <Compile Include="JsonIO\Protocol.fs" />
-    <Compile Include="JsonIO\Data.fs" />
-    <Compile Include="JsonIO\Material.fs" />
-    <Compile Include="JsonIO\Process.fs" />
-    <Compile Include="JsonIO\Publication.fs" />
-    <Compile Include="JsonIO\Person.fs" />
-    <Compile Include="JsonIO\Assay.fs" />
-    <Compile Include="JsonIO\Study.fs" />
-    <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />
     <Compile Include="Builder\Transform.fs" />
     <Compile Include="ValueIndex.fs" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="System.Text.Encodings.Web" Version="7.0.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.2" />
-    <PackageReference Include="FSharp.SystemTextJson" Version="1.1.23" />
-  </ItemGroup>
   
   <ItemGroup>
     <Content Remove="obj\**" />
+    <EmbeddedResource Remove="JsonIO\**" />
     <EmbeddedResource Remove="obj\**" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="JsonIO\**" />
   </ItemGroup>
 
   <ItemGroup>

@@ -6,7 +6,22 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <Compile Include="Comment.fs" />
+    <Compile Include="Ontology.fs" />
+    <Compile Include="Factor.fs" />
+    <Compile Include="Protocol.fs" />
+    <Compile Include="Data.fs" />
+    <Compile Include="Material.fs" />
+    <Compile Include="Process.fs" />
+    <Compile Include="Publication.fs" />
+    <Compile Include="Person.fs" />
+    <Compile Include="Assay.fs" />
+    <Compile Include="Study.fs" />
+    <Compile Include="Investigation.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,5 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
-
 type EMail = string
 
 type Comment = 
