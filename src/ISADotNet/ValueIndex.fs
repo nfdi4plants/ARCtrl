@@ -1,5 +1,7 @@
 ﻿namespace ISADotNet
 
+open ISADotNet.API
+
 module ValueIndex = 
 
     let private tryInt (str:string) =
@@ -14,7 +16,7 @@ module ValueIndex =
 
     let tryGetIndex (comments : Comment list) =
         comments 
-        |> API.CommentList.tryItem orderName 
+        |> CommentList.tryItem orderName 
         |> Option.bind tryInt
 
     let tryGetParameterIndex (param : ProtocolParameter) =

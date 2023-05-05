@@ -14,6 +14,10 @@
     <PackageReference Include="NJsonSchema" Version="10.8.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
+  </ItemGroup>
+
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil</Authors>
     <Description>Validation functions for ISA compliant experimental metadata in F#.</Description>

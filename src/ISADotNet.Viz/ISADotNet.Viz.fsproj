@@ -19,6 +19,10 @@
     <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
+  </ItemGroup>
+
   <PropertyGroup>
   	<Authors>nfdi4plants, Lukas Weil</Authors>
   	<Description>Visualization extensions for ISA compliant experimental metadata toolkit in F#. This project helps visualize the experimental workflow described in the experiment metadata.</Description>

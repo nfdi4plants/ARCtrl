@@ -36,6 +36,10 @@
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
+  </ItemGroup>
   
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey</Authors>
