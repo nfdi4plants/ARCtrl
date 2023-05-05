@@ -10,7 +10,7 @@ open System.IO
 [<Tests>]
 let testProcessValidation =     
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
 
     testList "ProcessValidationTests" [
 
@@ -68,7 +68,7 @@ let testProcessValidation =
 [<Tests>]
 let testProcessParameterValueValidation =     
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
 
     testList "ProcessParameterValueValidationTests" [
 

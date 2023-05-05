@@ -46,7 +46,7 @@ module JsonExtensions =
 [<Tests>]
 let testProtocolFile =
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
     let referenceProtocolFilePath = System.IO.Path.Combine(sourceDirectory,"ProtocolTestFile.json")
     let outputProtocolFilePath = System.IO.Path.Combine(sinkDirectory,"new.ProtocolTestFile.json")
@@ -104,7 +104,7 @@ let testProtocolFile =
 [<Tests>]
 let testProcessFile =
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
     let referenceProcessFilePath = System.IO.Path.Combine(sourceDirectory,"ProcessTestFile.json")
     let outputProcessFilePath = System.IO.Path.Combine(sinkDirectory,"new.ProcessTestFile.json")
@@ -173,7 +173,7 @@ let testProcessFile =
 [<Tests>]
 let testAssayFile =
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
     let referenceAssayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTestFile.json")
     let outputAssayFilePath = System.IO.Path.Combine(sinkDirectory,"new.AssayTestFile.json")
@@ -242,7 +242,7 @@ let testAssayFile =
 [<Tests>]
 let testInvestigationFile = 
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
     let referenceInvestigationFilePath = System.IO.Path.Combine(sourceDirectory,"InvestigationTestFile.json")
     let outputInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new.InvestigationTestFile.json")
