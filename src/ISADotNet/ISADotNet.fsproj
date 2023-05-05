@@ -67,7 +67,7 @@
     <EmbeddedResource Remove="obj\**" />
   </ItemGroup>
 
-  <ItemGroup Condition=" '$(PackageId)' == 'ISADotNet.Fable' ">
+  <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
 

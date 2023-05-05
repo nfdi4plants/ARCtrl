@@ -34,11 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj" />
-    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.0" />
   </ItemGroup>
   

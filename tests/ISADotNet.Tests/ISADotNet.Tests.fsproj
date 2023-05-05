@@ -43,7 +43,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ISADotNet.Validation\ISADotNet.Validation.fsproj" />
-    <ProjectReference Include="..\..\src\ISADotNet\ISADotNet.fsproj" />
     <ProjectReference Include="..\..\src\ISADotNet.XLSX\ISADotNet.XLSX.fsproj" />
   </ItemGroup>
 
