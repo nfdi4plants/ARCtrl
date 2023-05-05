@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
+    <ProjectReference Include="..\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj" />
   </ItemGroup>
   
   <PropertyGroup>
