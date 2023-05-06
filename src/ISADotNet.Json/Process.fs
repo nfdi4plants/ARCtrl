@@ -135,7 +135,7 @@ module Process =
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "executesProtocol" (Protocol.encoder options) (oa |> tryGetPropertyValue "ExecutesProtocol")
-            tryInclude "parametersValues" (ProcessParameterValue.encoder options) (oa |> tryGetPropertyValue "ParameterValues")
+            tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> tryGetPropertyValue "ParameterValues")
             tryInclude "performer" GEncode.string (oa |> tryGetPropertyValue "Performer")
             tryInclude "date" GEncode.string (oa |> tryGetPropertyValue "Date")
             tryInclude "previousProcess" (encoder options) (oa |> tryGetPropertyValue "PreviousProcess")
@@ -153,7 +153,7 @@ module Process =
                 ID = get.Optional.Field "@id" GDecode.uri
                 Name = get.Optional.Field "name" Decode.string
                 ExecutesProtocol = get.Optional.Field "executesProtocol" (Protocol.decoder options)
-                ParameterValues = get.Optional.Field "parametersValues" (Decode.list (ProcessParameterValue.decoder options))
+                ParameterValues = get.Optional.Field "parameterValues" (Decode.list (ProcessParameterValue.decoder options))
                 Performer = get.Optional.Field "performer" Decode.string
                 Date = get.Optional.Field "date" Decode.string
                 PreviousProcess = get.Optional.Field "previousProcess" (decoder options)

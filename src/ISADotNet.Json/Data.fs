@@ -39,7 +39,7 @@ module Data =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "name")
+            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "type" (DataFile.encoder options) (oa |> tryGetPropertyValue "DataType")
             tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
         ]
@@ -47,15 +47,21 @@ module Data =
         |> Encode.object
 
     let rec decoder (options : ConverterOptions) : Decoder<Data> =
-        Decode.object (fun get ->
-            {
-                ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "name" Decode.string
-                DataType = get.Optional.Field "type" (DataFile.decoder options)
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
-            }
+        
+        fun s json -> 
+            if GDecode.hasUnknownFields ["@id";"name";"type";"comments"] json then 
+                Error (DecoderError("Unknown fields in Data", ErrorReason.BadPrimitive(s,Encode.nil)))
+            else
+
+                Decode.object (fun get ->
+                    {
+                        ID = get.Optional.Field "@id" GDecode.uri
+                        Name = get.Optional.Field "name" Decode.string
+                        DataType = get.Optional.Field "type" (DataFile.decoder options)
+                        Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
+                    }
             
-        )
+                )  s json
 
     let fromString (s:string) = 
         GDecode.fromString (decoder (ConverterOptions())) s
@@ -77,20 +83,25 @@ module Source =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "name")
+            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")        ]
         |> GEncode.choose
         |> Encode.object
 
     let rec decoder (options : ConverterOptions) : Decoder<Source> =
-        Decode.object (fun get ->
-            {
-                ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "name" Decode.string
-                Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-            }
+        fun s json -> 
+        if GDecode.hasUnknownFields ["@id";"name";"characteristics"] json then 
+                Error (DecoderError("Unknown fields in Source", ErrorReason.BadPrimitive(s,Encode.nil)))
+            else
+            Decode.object (fun get ->
             
-        )
+                    {
+                        ID = get.Optional.Field "@id" GDecode.uri
+                        Name = get.Optional.Field "name" Decode.string
+                        Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
+                    } 
+            
+            ) s json
 
     let fromString (s:string) = 
         GDecode.fromString (decoder (ConverterOptions())) s
@@ -111,7 +122,7 @@ module Sample =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "name")
+            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")
             tryInclude "factorValues" (FactorValue.encoder options) (oa |> tryGetPropertyValue "FactorValues")
             tryInclude "derivesFrom" (Source.encoder options) (oa |> tryGetPropertyValue "DerivesFrom")
@@ -120,16 +131,20 @@ module Sample =
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Sample> =
-        Decode.object (fun get ->
-            {
-                ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "name" Decode.string
-                Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-                FactorValues = get.Optional.Field "factorValues" (Decode.list (FactorValue.decoder options))
-                DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (Source.decoder options))
-            }
+        fun s json -> 
+            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom"] json then 
+                Error (DecoderError("Unknown fields in Sample", ErrorReason.BadPrimitive(s,Encode.nil)))
+            else
+                Decode.object (fun get ->
+                    {
+                        ID = get.Optional.Field "@id" GDecode.uri
+                        Name = get.Optional.Field "name" Decode.string
+                        Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
+                        FactorValues = get.Optional.Field "factorValues" (Decode.list (FactorValue.decoder options))
+                        DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (Source.decoder options))
+                    }
             
-        )
+                ) s json
 
     let fromString (s:string) = 
         GDecode.fromString (decoder (ConverterOptions())) s

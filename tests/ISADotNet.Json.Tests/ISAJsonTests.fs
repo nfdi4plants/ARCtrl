@@ -9,7 +9,19 @@ open Expecto
 open TestingUtils
 open JsonSchemaValidation
 
+open Newtonsoft.Json
+open Newtonsoft.Json.Linq
+
+
 module JsonExtensions =
+
+
+    let deepEquals (acturalJson : string) expectedJson = 
+        
+        let jToken1 = JsonConvert.DeserializeObject<JObject> acturalJson 
+        let jToken2 = JsonConvert.DeserializeObject<JObject> expectedJson
+        let equals = JToken.DeepEquals(jToken1,jToken2)
+        Expect.isTrue equals $"Json expected \"{expectedJson}\", bot got \"{acturalJson}\" did not match."
 
     let private f2 i = 
         if i < 10 then sprintf "0%i" i
@@ -42,6 +54,34 @@ module JsonExtensions =
         let fromInts year month day hour minute = 
             let d = System.DateTime(year,month,day,hour,minute,0)
             d.ToJsonDateTimeString()
+
+
+[<Tests>]
+let testProcessInput =
+
+    testList "ProcessInputTests" [
+        testCase "ReadMaterial" (fun () -> 
+            
+            let s = 
+                """
+                {
+                "@id": "#material/extract-C-0.07-aliquot10",
+                "characteristics": [],
+                "name": "extract-C-0.07-aliquot10",
+                "type": "Extract Name"
+                }
+                """
+
+            let result = ProcessInput.fromString s
+
+            let expected = 
+                Material.create("#material/extract-C-0.07-aliquot10","extract-C-0.07-aliquot10",MaterialType.ExtractName,Characteristics = [])
+                |> ProcessInput.Material
+            Expect.equal result expected ""
+
+        )
+
+    ]
 
 [<Tests>]
 let testProtocolFile =
@@ -148,24 +188,157 @@ let testProcessFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
+            let i = 
+                System.IO.File.ReadAllText referenceProcessFilePath 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let o = 
+                System.IO.File.ReadAllText outputProcessFilePath 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.sequenceEqual o i "Written process file does not match read process file"
+        )
+        |> testSequenced
+    ]
+
+[<Tests>]
+let testPersonFile =
+
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
+    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
+    let referencePersonFilePath = System.IO.Path.Combine(sourceDirectory,"PersonTestFile.json")
+    let outputPersonFilePath = System.IO.Path.Combine(sinkDirectory,"new.PersonTestFile.json")
+
+    testList "PersonJsonTests" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    Person.fromFile referencePersonFilePath |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        )
+
+        testCase "WriterSuccess" (fun () ->
+
+            let a = Person.fromFile referencePersonFilePath
+
+            let writingSuccess = 
+                try 
+                    Person.toFile outputPersonFilePath a
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        testCase "WriterSchemaCorrectness" (fun () ->
+
+            let a = Person.fromFile referencePersonFilePath
+
+            let s = Person.toString a
+
+            Expect.matchingPerson s
+        )
+
+        testCase "OutputMatchesInput" (fun () ->
+
             let extractWords (json:string) = 
                 json.Split([|'{';'}';'[';']';',';':'|])
                 |> Array.map (fun s -> s.Trim())
                 |> Array.filter ((<>) "")
 
             let i = 
-                System.IO.File.ReadAllText referenceProcessFilePath 
+                System.IO.File.ReadAllText referencePersonFilePath 
                 |> extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
-                System.IO.File.ReadAllText outputProcessFilePath 
+                System.IO.File.ReadAllText outputPersonFilePath 
                 |> extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written process file does not match read process file"
+            Expect.sequenceEqual o i "Written person file does not match read person file"
+        )
+        |> testSequenced
+    ]
+
+[<Tests>]
+let testPublicationFile =
+
+    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
+    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
+    let referencePublicationFilePath = System.IO.Path.Combine(sourceDirectory,"PublicationTestFile.json")
+    let outputPublicationFilePath = System.IO.Path.Combine(sinkDirectory,"new.PublicationTestFile.json")
+
+    testList "PublicationJsonTests" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    Publication.fromFile referencePublicationFilePath |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        )
+
+        testCase "WriterSuccess" (fun () ->
+
+            let a = Publication.fromFile referencePublicationFilePath
+
+            let writingSuccess = 
+                try 
+                    Publication.toFile outputPublicationFilePath a
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        testCase "WriterSchemaCorrectness" (fun () ->
+
+            let a = Publication.fromFile referencePublicationFilePath
+
+            let s = Publication.toString a
+
+            Expect.matchingPublication s
+        )
+
+        testCase "OutputMatchesInput" (fun () ->
+
+            let extractWords (json:string) = 
+                json.Split([|'{';'}';'[';']';',';':'|])
+                |> Array.map (fun s -> s.Trim())
+                |> Array.filter ((<>) "")
+
+            let i = 
+                System.IO.File.ReadAllText referencePublicationFilePath 
+                |> extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let o = 
+                System.IO.File.ReadAllText outputPublicationFilePath 
+                |> extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.sequenceEqual o i "Written Publication file does not match read publication file"
         )
         |> testSequenced
     ]
@@ -217,24 +390,19 @@ let testAssayFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let extractWords (json:string) = 
-                json.Split([|'{';'}';'[';']';',';':'|])
-                |> Array.map (fun s -> s.Trim())
-                |> Array.filter ((<>) "")
-
             let i = 
                 System.IO.File.ReadAllText referenceAssayFilePath 
-                |> extractWords
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
                 System.IO.File.ReadAllText outputAssayFilePath 
-                |> extractWords
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written assay file does not match read investigation file"
+            Expect.sequenceEqual o i "Written assay file does not match read assay file"
         )
         |> testSequenced
     ]
@@ -285,20 +453,17 @@ let testInvestigationFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let extractWords (json:string) = 
-                json.Split([|'{';'}';'[';']';',';':'|])
-                |> Array.map (fun s -> s.Trim())
-                |> Array.filter ((<>) "")
+            
 
             let i = 
                 System.IO.File.ReadAllText referenceInvestigationFilePath 
-                |> extractWords
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
                 System.IO.File.ReadAllText outputInvestigationFilePath 
-                |> extractWords
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
@@ -648,6 +813,24 @@ let testInvestigationFile =
             let s = Investigation.toString investigation
 
             Expect.matchingInvestigation s
+
+
+            let reReadInvestigation = Investigation.fromString s
+            let reWrittenInvestigation = Investigation.toString reReadInvestigation
+
+            let i = 
+                s 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let o = 
+                reWrittenInvestigation
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
 
         )
         |> testSequenced

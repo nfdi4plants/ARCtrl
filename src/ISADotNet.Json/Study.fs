@@ -15,7 +15,7 @@ module StudyMaterials =
         [
             tryInclude "sources" (Sample.encoder options) (oa |> tryGetPropertyValue "Sources")
             tryInclude "samples" (Sample.encoder options) (oa |> tryGetPropertyValue "Samples")
-            tryInclude "OtherMaterials" (Material.encoder options) (oa |> tryGetPropertyValue "OtherMaterials")
+            tryInclude "otherMaterials" (Material.encoder options) (oa |> tryGetPropertyValue "OtherMaterials")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -25,7 +25,7 @@ module StudyMaterials =
             {
                 Sources = get.Optional.Field "sources" (Decode.list (Source.decoder options))
                 Samples = get.Optional.Field "samples" (Decode.list (Sample.decoder options))
-                OtherMaterials = get.Optional.Field "OtherMaterials" (Decode.list (Material.decoder options))
+                OtherMaterials = get.Optional.Field "otherMaterials" (Decode.list (Material.decoder options))
             }
         )
 
@@ -43,7 +43,7 @@ module Study =
             tryInclude "submissionDate" GEncode.string (oa |> tryGetPropertyValue "SubmissionDate")
             tryInclude "publicReleaseDate" GEncode.string (oa |> tryGetPropertyValue "PublicReleaseDate")
             tryInclude "publications" (Publication.encoder options) (oa |> tryGetPropertyValue "Publications")
-            tryInclude "contacts" (Person.encoder options) (oa |> tryGetPropertyValue "Contacts")
+            tryInclude "people" (Person.encoder options) (oa |> tryGetPropertyValue "Contacts")
             tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "StudyDesignDescriptors")
             tryInclude "protocols" (Protocol.encoder options) (oa |> tryGetPropertyValue "Protocols")
             tryInclude "materials" (StudyMaterials.encoder options) (oa |> tryGetPropertyValue "Materials")
@@ -68,7 +68,7 @@ module Study =
                 SubmissionDate = get.Optional.Field "submissionDate" Decode.string
                 PublicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string
                 Publications = get.Optional.Field "publications" (Decode.list (Publication.decoder options))
-                Contacts = get.Optional.Field "contacts" (Decode.list (Person.decoder options))
+                Contacts = get.Optional.Field "people" (Decode.list (Person.decoder options))
                 StudyDesignDescriptors = get.Optional.Field "studyDesignDescriptors" (Decode.list (OntologyAnnotation.decoder options))
                 Protocols = get.Optional.Field "protocols" (Decode.list (Protocol.decoder options))
                 Materials = get.Optional.Field "materials" (StudyMaterials.decoder options)

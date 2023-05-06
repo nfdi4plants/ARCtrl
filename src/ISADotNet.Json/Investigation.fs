@@ -23,7 +23,7 @@ module Investigation =
             tryInclude "publicReleaseDate" GEncode.string (oa |> tryGetPropertyValue "PublicReleaseDate")
             tryInclude "ontologySourceReferences" (OntologySourceReference.encoder options) (oa |> tryGetPropertyValue "OntologySourceReferences")
             tryInclude "publications" (Publication.encoder options) (oa |> tryGetPropertyValue "Publications")
-            tryInclude "contacts" (Person.encoder options) (oa |> tryGetPropertyValue "Contacts")
+            tryInclude "people" (Person.encoder options) (oa |> tryGetPropertyValue "Contacts")
             tryInclude "studies" (Study.encoder options) (oa |> tryGetPropertyValue "Studies")
             tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
         ]
@@ -42,7 +42,7 @@ module Investigation =
                 PublicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string
                 OntologySourceReferences = get.Optional.Field "ontologySourceReferences" (Decode.list (OntologySourceReference.decoder options))
                 Publications = get.Optional.Field "publications" (Decode.list (Publication.decoder options))
-                Contacts = get.Optional.Field "contacts" (Decode.list (Person.decoder options))
+                Contacts = get.Optional.Field "people" (Decode.list (Person.decoder options))
                 Studies = get.Optional.Field "studies" (Decode.list (Study.decoder options))
                 Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
                 Remarks = []

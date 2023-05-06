@@ -15,7 +15,7 @@ module AssayMaterials =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "samples" (Sample.encoder options) (oa |> tryGetPropertyValue "Samples")
-            tryInclude "OtherMaterials" (Material.encoder options) (oa |> tryGetPropertyValue "OtherMaterials")
+            tryInclude "otherMaterials" (Material.encoder options) (oa |> tryGetPropertyValue "OtherMaterials")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -24,7 +24,7 @@ module AssayMaterials =
         Decode.object (fun get ->
             {
                 Samples = get.Optional.Field "samples" (Decode.list (Sample.decoder options))
-                OtherMaterials = get.Optional.Field "OtherMaterials" (Decode.list (Material.decoder options))
+                OtherMaterials = get.Optional.Field "otherMaterials" (Decode.list (Material.decoder options))
             }
         )
 

@@ -4,9 +4,11 @@
 open Thoth.Json
 #else
 open Thoth.Json.Net
+open Newtonsoft.Json.Linq
 #endif
 
 open ISADotNet
+open Fable.Core
 
 module GDecode =
 
@@ -24,5 +26,14 @@ module GDecode =
         match Decode.fromString decoder s with
         | Ok a -> a
         | Error e -> failwith (sprintf "Error decoding string: %s" e)
+   
+    let getFieldNames (json : JsonValue) = 
+        match json with
+        | :? JObject as json -> 
+            json.Properties()
+            |> Seq.map (fun x -> x.Name)
+        | _ -> Seq.empty
 
-
+    let hasUnknownFields (knownFields : string list) (json : JsonValue) = 
+        getFieldNames json
+        |> Seq.exists (fun x -> not (knownFields |> Seq.contains x))

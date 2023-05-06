@@ -42,7 +42,7 @@ module OntologySourceReference =
             tryInclude "file" GEncode.string (osr |> tryGetPropertyValue "File")
             tryInclude "name" GEncode.string (osr |> tryGetPropertyValue "Name")
             tryInclude "version" GEncode.string (osr |> tryGetPropertyValue "Version")
-            tryInclude "comments" GEncode.string (osr |> tryGetPropertyValue "Comments")
+            tryInclude "comments" (Comment.encoder options) (osr |> tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -77,10 +77,10 @@ module OntologyAnnotation =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
-            tryInclude "name" (AnnotationValue.encoder options) (oa |> tryGetPropertyValue "Name")
+            tryInclude "annotationValue" (AnnotationValue.encoder options) (oa |> tryGetPropertyValue "Name")
             tryInclude "termSource" GEncode.string (oa |> tryGetPropertyValue "TermSourceREF")
             tryInclude "termAccession" GEncode.string (oa |> tryGetPropertyValue "TermAccessionNumber")
-            tryInclude "comments" GEncode.string (oa |> tryGetPropertyValue "Comments")
+            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -89,7 +89,7 @@ module OntologyAnnotation =
         Decode.object (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "name" (AnnotationValue.decoder options)
+                Name = get.Optional.Field "annotationValue" (AnnotationValue.decoder options)
                 TermSourceREF = get.Optional.Field "termSource" Decode.string
                 TermAccessionNumber = get.Optional.Field "termAccession" Decode.string
                 Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               

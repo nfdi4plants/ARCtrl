@@ -102,25 +102,28 @@ module Material =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "name")
+            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "type" (MaterialType.encoder options) (oa |> tryGetPropertyValue "MaterialType")
-            tryInclude "characteristics" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Characteristics")
+            tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")
             tryInclude "derivesFrom" (encoder options) (oa |> tryGetPropertyValue "DerivesFrom")
         ]
         |> GEncode.choose
         |> Encode.object
 
     let rec decoder (options : ConverterOptions) : Decoder<Material> =
-        Decode.object (fun get ->
-            {
-                ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "name" Decode.string
-                MaterialType = get.Optional.Field "type" (MaterialType.decoder options)
-                Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-                DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (decoder options))
-            }
-            
-        )
+        fun s json ->
+            if GDecode.hasUnknownFields ["@id";"name";"type";"characteristics";"derivesFrom"] json then
+                Error (DecoderError("Unknown fields in material", ErrorReason.BadPrimitive(s,Encode.nil)))
+            else
+                Decode.object (fun get ->
+                    {
+                        ID = get.Optional.Field "@id" GDecode.uri
+                        Name = get.Optional.Field "name" Decode.string
+                        MaterialType = get.Optional.Field "type" (MaterialType.decoder options)
+                        Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
+                        DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (decoder options))
+                    }
+                ) s json
 
     let fromString (s:string) = 
         GDecode.fromString (decoder (ConverterOptions())) s

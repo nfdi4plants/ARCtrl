@@ -58,7 +58,7 @@ module Factor =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
+            tryInclude "factorName" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "FactorType")
             tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
         ]
@@ -69,7 +69,7 @@ module Factor =
         Decode.object (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "name" Decode.string
+                Name = get.Optional.Field "factorName" Decode.string
                 FactorType = get.Optional.Field "factorType" (OntologyAnnotation.decoder options)
                 Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
             }

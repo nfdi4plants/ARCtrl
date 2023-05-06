@@ -17,6 +17,8 @@
 
   <ItemGroup>
     <PackageReference Include="Expecto" Version="9.*" />
+    <PackageReference Include="Json.Net" Version="1.0.33" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
     <PackageReference Update="FSharp.Core" Version="6.*" />
