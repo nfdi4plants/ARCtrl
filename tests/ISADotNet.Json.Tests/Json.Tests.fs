@@ -354,6 +354,65 @@ let testProtocolFile =
         )
     ]
 
+// let testProtocolFileLD =
+
+//     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
+//     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
+//     let referenceProtocolFilePath = System.IO.Path.Combine(sourceDirectory,"ProtocolTestFile.json")
+//     let outputProtocolFilePath = System.IO.Path.Combine(sinkDirectory,"new.ProtocolTestFile.json")
+//     let referenceProtocolFilePathLD = System.IO.Path.Combine(sourceDirectory,"ProtocolTestFile.jsonld")
+//     let outputProtocolFilePathLD = System.IO.Path.Combine(sinkDirectory,"new.ProtocolTestFile.jsonld")
+
+//     testList "ProtocolJsonTests" [
+//         testCase "ReaderSuccess" (fun () -> 
+            
+//             let readingSuccess = 
+//                 try 
+//                     Protocol.fromFile referenceProtocolFilePathLD |> ignore
+//                     Result.Ok "DidRun"
+//                 with
+//                 | err -> Result.Ok(sprintf "Reading the test json-ld file failed: %s" err.Message)
+
+//             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+//         )
+
+//         testCase "WriterSuccess" (fun () ->
+
+//             let p = Protocol.fromFile referenceProtocolFilePathLD
+
+
+
+//             let writingSuccess = 
+//                 try 
+//                     Protocol.toFileLD outputProtocolFilePathLD p
+//                     Result.Ok "DidRun"
+//                 with
+//                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+
+//             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+//         )
+
+//         // testCase "WriterSchemaCorrectness" (fun () ->
+
+//         //     let p = Protocol.fromFile referenceProtocolFilePath
+
+//         //     let s = Protocol.toString p
+
+//         //     Expect.matchingProtocol s
+//         // )
+
+//         testCase "OutputMatchesInput" (fun () ->
+
+//             let i = Protocol.fromFile referenceProtocolFilePathLD
+
+//             let o = Protocol.fromFile outputProtocolFilePathLD
+
+//             Expect.equal o i "Written protocol file does not match read protocol file"
+//         )
+//         |> testSequenced
+//     ]
+
 let testProcessFile =
 
     testList "Process" [
@@ -1033,7 +1092,8 @@ let main =
         testDecode
         testOntoloyAnnotation
         testProcessInput     
-        testProtocolFile
+        testProtocolFile     
+        // testProtocolFileLD
         testProcessFile
         testPersonFile
         testPublicationFile

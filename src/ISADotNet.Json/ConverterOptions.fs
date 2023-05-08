@@ -2,11 +2,12 @@
 
 type ConverterOptions() = 
 
-    member this.x = 1
+    let mutable setID = false
+    let mutable includeType = false
 
-    //let mutable setID = false
-    //let mutable includeType = false
-
-    //member this.SetID with
-    //    get() = setID
-    //    and set(setId) = setID <- setId
+    member this.SetID with
+        get() = setID
+        and set(setId) = setID <- setId
+    member this.IncludeType with
+        get() = includeType
+        and set(iT) = includeType <- iT
