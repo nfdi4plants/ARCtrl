@@ -21,7 +21,6 @@
     <Compile Include="DataModel\Assay.fs" />
     <Compile Include="DataModel\Study.fs" />
     <Compile Include="DataModel\Investigation.fs" />
-    <Compile Include="DataModel\SwateCustomXml.fs" />
     <Compile Include="API\Fable.fs" />
     <Compile Include="API\Update.fs" />
     <Compile Include="API\Comment.fs" />
