@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="NameAndTypeCastingTests.fs" />
-    <Compile Include="APITests.fs" />
+    <Compile Include="DataModel.Tests.fs" />
+    <Compile Include="Update.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-﻿module APITests
+﻿module Update.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -7,7 +7,6 @@ open Expecto
 #endif
 
 open ISADotNet.API
-open ISADotNet
 open Update
 
 module TestTypes = 

@@ -10,8 +10,8 @@ open Expecto
 [<Tests>]
 #endif
 let all = testSequenced <| testList "All" [
-    APITests.main
-    NameAndTypeCastingTests.main
+    Update.Tests.main
+    DataModel.Tests.main
 ]
 
 

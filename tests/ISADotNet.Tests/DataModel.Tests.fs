@@ -1,4 +1,4 @@
-﻿module NameAndTypeCastingTests
+﻿module DataModel.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -190,7 +190,4 @@ let main =
             Expect.equal actual expected "Component was not correctly composed"
 
         )
-
-
-
     ]
