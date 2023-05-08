@@ -9,10 +9,11 @@ open Expecto
 
 [<Tests>]
 #endif
-let all = testList "All" [
+let all = testSequenced <| testList "All" [
     APITests.main
     NameAndTypeCastingTests.main
 ]
+
 
 let [<EntryPoint>] main argv = 
     #if FABLE_COMPILER

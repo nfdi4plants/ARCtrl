@@ -33,11 +33,14 @@ module Dict =
         dict
 
 open Fable.Core
+open Fable.Core.JsInterop
+
 
 module Update =
 
     open System
     open Microsoft.FSharp.Reflection
+
 
     module ValueOfGenericObj =
 
@@ -63,6 +66,35 @@ module Update =
         else
             ValueOfGenericObj.get a
     
+    /// Get the type of the IEnumerable elements. E.g. for Array<'T> it would be 'T
+    let isMapType (v:obj) =
+        #if FABLE_COMPILER
+            Fable.isMap_generic v
+        #else 
+        let t = v.GetType()
+        // Maps are IEnumerables but are not easily to append. TODO(?)
+        let genericMap = typeof<Map<_,_>>
+        t.Name = genericMap.Name
+        #endif
+
+    let isListType (v:obj) =
+        #if FABLE_COMPILER
+            Fable.isList_generic v
+        #else 
+        v.GetType().Name.StartsWith "FSharpList`1"
+        #endif
+
+    /// Get the type of the IEnumerable elements. E.g. for Array<'T> it would be 'T
+    let enumGetInnerType (v:obj) =
+        #if FABLE_COMPILER
+            typeof<obj>
+        #else 
+        let t = v.GetType()
+        if t.IsArray then t.GetElementType() else
+            t.GetGenericArguments() |> Array.head
+        #endif
+
+    /// Create an option value of the given type. E.g. for int it would be Some 1
     let inline makeOptionValue typey v isSome =
         let optionType = typeof<unit option>.GetGenericTypeDefinition().MakeGenericType([|typey|])
         let cases = FSharp.Reflection.FSharpType.GetUnionCases(optionType)
@@ -76,8 +108,10 @@ module Update =
         FSharp.Reflection.FSharpValue.MakeUnion(relevantCase, args)
 
     /// This function accesses the append method of the list/array module and applies it accordingly to the element type.
-    [<Emit("$1.concat($2)")>]
     let inline appendGenericListsByType l1 l2 (t:Type) =
+        #if FABLE_COMPILER
+            Fable.append_generic l1 l2
+        #else
         let fieldT = l1.GetType()
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
@@ -86,17 +120,13 @@ module Update =
             .GetMethod("Append")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1;l2|])
-
-    module DistinctGenericList =
-        
-        [<Literal>]
-        let rawJs = """$1.filter(function onlyUnique(value, index, array) {
-  return array.indexOf(value) === index;
-})"""
+        #endif
 
     /// This function accesses the distinct method of the list/array module and applies it accordingly to the element type.
-    [<Emit(DistinctGenericList.rawJs)>]
     let inline distinctGenericList l1 (t:Type) =
+        #if FABLE_COMPILER
+            Fable.distinct_generic l1
+        #else
         let fieldT = l1.GetType()
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
@@ -105,12 +135,12 @@ module Update =
             .GetMethod("Distinct")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1|])
+        #endif
 
     /// updates oldRT with newRT by replacing all values, but appending all lists.
     ///
     /// newRTList@oldRTList
     let rec updateAppend (oldVal: obj) (newVal:obj) = 
-        
         // match all field Values and try to cast them to types.
         match oldVal with
         // Strings are IEnumerable Chars but should not be appenden. So these have to be handled first.
@@ -133,22 +163,15 @@ module Update =
         | :? System.Collections.IEnumerable -> 
             let oldSeq = oldVal :?> System.Collections.IEnumerable
             let newSeq = newVal :?> System.Collections.IEnumerable
-            let fieldT = oldVal.GetType()
             // Maps are IEnumerables but are not easily to append. TODO(?)
-            let isMap =
-                let genericMap = typeof<Map<_,_>>
-                fieldT.Name = genericMap.Name
             // t is the type of the IEnumerable elements.
-            let t =
-                // element types are accessed differently for (list, seq) and Array. 
-                if fieldT.IsArray then fieldT.GetElementType() else
-                    oldVal.GetType().GetGenericArguments() |> Array.head
+            let innerType = enumGetInnerType oldVal
             // If the IEnumerable is a map then we just replace with the new entry.
-            if isMap then 
+            if isMapType oldVal then 
                 newVal
             else
-                appendGenericListsByType oldSeq newSeq t
-                |> fun l -> distinctGenericList l t
+                appendGenericListsByType oldSeq newSeq innerType
+                |> fun l -> distinctGenericList l innerType
         // All others do not need to be appended and can be replaced.
         | others -> 
             newVal
@@ -216,23 +239,16 @@ module Update =
         | :? System.Collections.IEnumerable -> 
             let oldSeq = oldVal
             let newSeq = newVal
-            let fieldT = oldVal.GetType()
-            // Maps are IEnumerables but are not easily to append. TODO(?)
-            let isMap =
-                let genericMap = typeof<Map<_,_>>
-                fieldT.Name = genericMap.Name
-            // t is the type of the IEnumerable elements.
-            let t =
-                // element types are accessed differently for (list, seq) and Array. 
-                if fieldT.IsArray then fieldT.GetElementType() else
-                    oldVal.GetType().GetGenericArguments() |> Array.head
+
+            // innterType is the type of the IEnumerable elements.
+            let innerType = enumGetInnerType oldVal
             // If the IEnumerable is a map then we just replace with the new entry.
-            if isMap then 
+            if isMapType oldVal then 
                 newVal
             else
                 let r = 
-                    appendGenericListsByType oldSeq newSeq t
-                    |> fun l -> distinctGenericList l t
+                    appendGenericListsByType oldSeq newSeq innerType
+                    |> fun l -> distinctGenericList l innerType
                 r |> box
         // Others don't need to be checked as they have no clearly enough defined "empty" state
         | _ ->
