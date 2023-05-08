@@ -1,6 +1,23 @@
-﻿module ISADotNet.Json
+﻿module ISADotNet.Json.Tests
+
+
+
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
 
-[<EntryPoint>]
-let main argv =
-    Tests.runTestsInAssembly defaultConfig argv
+[<Tests>]
+#endif
+let all = testSequenced <| testList "All" [
+    ISAJsonTests.main
+    JSchemaValidationTests.main
+]
+
+
+let [<EntryPoint>] main argv = 
+    #if FABLE_COMPILER
+    Mocha.runTests all
+    #else
+    Tests.runTestsWithCLIArgs [] argv all
+    #endif

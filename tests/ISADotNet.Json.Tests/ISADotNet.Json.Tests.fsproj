@@ -25,6 +25,7 @@
   <ItemGroup>
     <PackageReference Include="Expecto" Version="9.*" />
     <PackageReference Include="Json.Net" Version="1.0.33" />
+    <PackageReference Include="Fable.Mocha" Version="2.16.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />

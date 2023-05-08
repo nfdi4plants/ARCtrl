@@ -11,6 +11,11 @@ let FableTestPath_input = "tests/ISADotNet.Tests"
 [<Literal>]
 let FableTestPath_output = "tests/ISADotNet.JsNativeTests/fable"
 
+[<Literal>]
+let JsonFableTestPath_input = "tests/ISADotNet.Json.Tests"
+[<Literal>]
+let JsonFableTestPath_output = "tests/ISADotNet.Json.JsNativeTests/fable"
+
 [<AutoOpen>]
 module private Helper =
 
@@ -111,6 +116,8 @@ module private Helper =
     let cleanFable = BuildTask.create "cleanFable" [clean; build] {
         System.IO.Directory.CreateDirectory FableTestPath_output |> ignore
         run dotnet "fable clean --yes" FableTestPath_output
+        System.IO.Directory.CreateDirectory JsonFableTestPath_output |> ignore
+        run dotnet "fable clean --yes" JsonFableTestPath_output
     }
 
 module RunTests = 

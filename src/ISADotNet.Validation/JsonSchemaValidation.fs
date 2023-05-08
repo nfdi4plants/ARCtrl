@@ -2,15 +2,20 @@
 
 module JSchema = 
    
+#if FABLE_COMPILER
+    let validate (schemaURL : string) (objectString : string) = 
+        ValidationResult.Ok
+#else
+
     let tryDownloadSchema (schemaURL : string) = 
-        let rec download (tryNum) =
-            try NJsonSchema.JsonSchema.FromUrlAsync(schemaURL) 
-            with
-            | err when tryNum <= 3 -> 
-                System.Threading.Thread.Sleep(30)
-                download (tryNum + 1)
-            | err -> failwith $"Could not download schema from url {schemaURL}: \n{err.Message}"
-        download 1
+            let rec download (tryNum) =
+                try NJsonSchema.JsonSchema.FromUrlAsync(schemaURL) 
+                with
+                | err when tryNum <= 3 -> 
+                    System.Threading.Thread.Sleep(30)
+                    download (tryNum + 1)
+                | err -> failwith $"Could not download schema from url {schemaURL}: \n{err.Message}"
+            download 1
 
     let validate (schemaURL : string) (objectString : string) = 
         
@@ -22,7 +27,7 @@ module JSchema =
             ValidationResult.OfJSchemaOutput(r |> Seq.length |> (=) 0,r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray)
         with
         | err -> Failed [|err.Message|]
-
+#endif 
     let validateAssay (assayString : string) =
         let assayUrl = "https://raw.githubusercontent.com/HLWeil/isa-specs/anyof/source/_static/isajson/assay_schema.json"
         validate assayUrl assayString

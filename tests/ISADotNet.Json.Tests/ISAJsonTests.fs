@@ -5,23 +5,18 @@ open ISADotNet
 open ISADotNet.Json
 
 
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
+
+#endif
+
 open TestingUtils
 open JsonSchemaValidation
 
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
-
-
 module JsonExtensions =
 
-
-    let deepEquals (acturalJson : string) expectedJson = 
-        
-        let jToken1 = JsonConvert.DeserializeObject<JObject> acturalJson 
-        let jToken2 = JsonConvert.DeserializeObject<JObject> expectedJson
-        let equals = JToken.DeepEquals(jToken1,jToken2)
-        Expect.isTrue equals $"Json expected \"{expectedJson}\", bot got \"{acturalJson}\" did not match."
 
     let private f2 i = 
         if i < 10 then sprintf "0%i" i
@@ -55,8 +50,6 @@ module JsonExtensions =
             let d = System.DateTime(year,month,day,hour,minute,0)
             d.ToJsonDateTimeString()
 
-
-[<Tests>]
 let testProcessInput =
 
     testList "ProcessInputTests" [
@@ -83,13 +76,7 @@ let testProcessInput =
 
     ]
 
-[<Tests>]
 let testProtocolFile =
-
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referenceProtocolFilePath = System.IO.Path.Combine(sourceDirectory,"ProtocolTestFile.json")
-    let outputProtocolFilePath = System.IO.Path.Combine(sinkDirectory,"new.ProtocolTestFile.json")
 
     testList "ProtocolJsonTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -108,8 +95,6 @@ let testProtocolFile =
         testCase "WriterSuccess" (fun () ->
 
             let p = Protocol.fromString TestFiles.Protocol.protocol
-
-
 
             let writingSuccess = 
                 try 
@@ -153,13 +138,7 @@ let testProtocolFile =
         |> testSequenced
     ]
 
-[<Tests>]
 let testProcessFile =
-
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referenceProcessFilePath = System.IO.Path.Combine(sourceDirectory,"ProcessTestFile.json")
-    let outputProcessFilePath = System.IO.Path.Combine(sinkDirectory,"new.ProcessTestFile.json")
 
     testList "ProcessJsonTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -216,18 +195,12 @@ let testProcessFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written process file does not match read process file"
+            mySequenceEqual o i "Written process file does not match read process file"
         )
         |> testSequenced
     ]
 
-[<Tests>]
 let testPersonFile =
-
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referencePersonFilePath = System.IO.Path.Combine(sourceDirectory,"PersonTestFile.json")
-    let outputPersonFilePath = System.IO.Path.Combine(sinkDirectory,"new.PersonTestFile.json")
 
     testList "PersonJsonTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -284,18 +257,12 @@ let testPersonFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written person file does not match read person file"
+            mySequenceEqual o i "Written person file does not match read person file"
         )
         |> testSequenced
     ]
 
-[<Tests>]
 let testPublicationFile =
-
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referencePublicationFilePath = System.IO.Path.Combine(sourceDirectory,"PublicationTestFile.json")
-    let outputPublicationFilePath = System.IO.Path.Combine(sinkDirectory,"new.PublicationTestFile.json")
 
     testList "PublicationJsonTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -352,18 +319,12 @@ let testPublicationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written Publication file does not match read publication file"
+            mySequenceEqual o i "Written Publication file does not match read publication file"
         )
         |> testSequenced
     ]
 
-[<Tests>]
 let testAssayFile =
-
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referenceAssayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayTestFile.json")
-    let outputAssayFilePath = System.IO.Path.Combine(sinkDirectory,"new.AssayTestFile.json")
 
     testList "AssayJsonTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -420,18 +381,12 @@ let testAssayFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written assay file does not match read assay file"
+            mySequenceEqual o i "Written assay file does not match read assay file"
         )
         |> testSequenced
     ]
 
-[<Tests>]
 let testInvestigationFile = 
-
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-    let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-    let referenceInvestigationFilePath = System.IO.Path.Combine(sourceDirectory,"InvestigationTestFile.json")
-    let outputInvestigationFilePath = System.IO.Path.Combine(sinkDirectory,"new.InvestigationTestFile.json")
 
     testList "InvestigationJsonTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -487,7 +442,7 @@ let testInvestigationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
+            mySequenceEqual o i "Written investigation file does not match read investigation file"
         )
         |> testSequenced
 
@@ -850,8 +805,19 @@ let testInvestigationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
+            mySequenceEqual o i "Written investigation file does not match read investigation file"
 
         )
         |> testSequenced
+    ]
+
+let main = 
+    testList "APITests" [
+        testProcessInput     
+        testProtocolFile
+        testProcessFile
+        testPersonFile
+        testPublicationFile
+        testAssayFile
+        testInvestigationFile
     ]

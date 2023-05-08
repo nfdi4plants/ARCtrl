@@ -7,6 +7,7 @@ let project = "ISADotNet"
 let testProjects = 
     [
         "tests/ISADotNet.Tests"
+        "tests/ISADotNet.Json.Tests"
     ]
 
 let solutionFile  = $"{project}.sln"

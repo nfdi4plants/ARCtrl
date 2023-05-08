@@ -354,3 +354,4 @@ MigrationBackup/
 pkg/
 tmp/
 /tests/ISADotNet.JsNativeTests/fable/**/*.js
+/tests/ISADotNet.Json.JsNativeTests/fable/**/*.js

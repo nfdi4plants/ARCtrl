@@ -1,13 +1,16 @@
 ﻿module JSchemaValidationTests
 
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
+
+#endif
 open TestingUtils
 open ISADotNet
-open System.Text.Json
 open ISADotNet.Validation
 open System.IO
 
-[<Tests>]
 let testProcessValidation =     
 
     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
@@ -17,8 +20,6 @@ let testProcessValidation =
         testCase "ProcessDateCorrect" (fun () -> 
             
             let vr = JSchema.validateProcess TestFiles.Validation.processDate
-
-            let vr = JSchema.validateProcess p
 
             Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -44,8 +45,6 @@ let testProcessValidation =
             
             let vr = JSchema.validateProcess TestFiles.Validation.processAdditionalField
 
-            let vr = JSchema.validateProcess p
-
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
         )
@@ -54,14 +53,11 @@ let testProcessValidation =
             
             let vr = JSchema.validateProcess TestFiles.Validation.processBroken
 
-            let vr = JSchema.validateProcess p
-
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
         )
     ]
 
-[<Tests>]
 let testProcessParameterValueValidation =     
 
     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
@@ -88,8 +84,6 @@ let testProcessParameterValueValidation =
             
             let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUriWrong
 
-            let vr = JSchema.validateProcessParameterValue p
-
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
             
         )
@@ -109,4 +103,10 @@ let testProcessParameterValueValidation =
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
         )
+    ]
+
+let main = 
+    testList "APITests" [
+        testProcessValidation
+        testProcessParameterValueValidation
     ]
