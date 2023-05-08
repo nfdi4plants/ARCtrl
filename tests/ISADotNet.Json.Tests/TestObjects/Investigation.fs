@@ -1,4 +1,9 @@
-{
+﻿module TestFiles.Investigation
+
+let investigation =
+
+    """
+    {
   "submissionDate": "2007-04-30",
   "people": [
     {
@@ -15863,3 +15868,5 @@
   "identifier": "BII-I-1",
   "title": "Growth control of the eukaryote cell: a systems biology study in yeast"
 }
+
+    """

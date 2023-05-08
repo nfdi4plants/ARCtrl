@@ -16,7 +16,7 @@ let testProcessValidation =
 
         testCase "ProcessDateCorrect" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"ProcessDate.json"))
+            let vr = JSchema.validateProcess TestFiles.Validation.processDate
 
             let vr = JSchema.validateProcess p
 
@@ -26,9 +26,7 @@ let testProcessValidation =
 
         testCase "ProcessDateTimeCorrect" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"ProcessDateTime.json"))
-
-            let vr = JSchema.validateProcess p
+            let vr = JSchema.validateProcess TestFiles.Validation.processDateTime
 
             Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -36,9 +34,7 @@ let testProcessValidation =
 
         testCase "ProcessDateWrong" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"ProcessDateWrong.json"))
-
-            let vr = JSchema.validateProcess p
+            let vr = JSchema.validateProcess TestFiles.Validation.processDateWrong
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -46,7 +42,7 @@ let testProcessValidation =
 
         testCase "ProcessAdditionalField" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"ProcessAdditionalField.json"))
+            let vr = JSchema.validateProcess TestFiles.Validation.processAdditionalField
 
             let vr = JSchema.validateProcess p
 
@@ -56,7 +52,7 @@ let testProcessValidation =
 
         testCase "ProcessBroken" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"ProcessBroken.json"))
+            let vr = JSchema.validateProcess TestFiles.Validation.processBroken
 
             let vr = JSchema.validateProcess p
 
@@ -74,9 +70,7 @@ let testProcessParameterValueValidation =
 
         testCase "PPVUnit" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"PPVUnit.json"))
-
-            let vr = JSchema.validateProcessParameterValue p
+            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUnit
 
             Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -84,9 +78,7 @@ let testProcessParameterValueValidation =
 
         testCase "PPVOntology" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"PPVOntology.json"))
-
-            let vr = JSchema.validateProcessParameterValue p
+            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvOntology
 
             Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -94,7 +86,7 @@ let testProcessParameterValueValidation =
 
         testCase "PPVUriWrong" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"PPVUriWrong.json"))
+            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUriWrong
 
             let vr = JSchema.validateProcessParameterValue p
 
@@ -104,9 +96,7 @@ let testProcessParameterValueValidation =
 
         testCase "PPVAdditionalField" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"PPVAdditionalField.json"))
-
-            let vr = JSchema.validateProcessParameterValue p
+            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvAdditionalField
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -114,9 +104,7 @@ let testProcessParameterValueValidation =
 
         testCase "PPVBroken" (fun () -> 
             
-            let p = File.ReadAllText(Path.Combine(sourceDirectory,"PPVBroken.json"))
-
-            let vr = JSchema.validateProcessParameterValue p
+            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvBroken
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 

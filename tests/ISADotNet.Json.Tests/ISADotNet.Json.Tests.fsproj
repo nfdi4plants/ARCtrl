@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TestObjects\Validation.fs" />
+    <Compile Include="TestObjects\Protocol.fs" />
+    <Compile Include="TestObjects\Investigation.fs" />
+    <Compile Include="TestObjects\Assay.fs" />
+    <Compile Include="TestObjects\Person.fs" />
+    <Compile Include="TestObjects\Process.fs" />
+    <Compile Include="TestObjects\Publication.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="JsonSchemaValidation.fs" />
     <Compile Include="JSchemaValidationTests.fs" />

@@ -96,7 +96,7 @@ let testProtocolFile =
             
             let readingSuccess = 
                 try 
-                    Protocol.fromFile referenceProtocolFilePath |> ignore
+                    Protocol.fromString TestFiles.Protocol.protocol |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -107,13 +107,13 @@ let testProtocolFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Protocol.fromFile referenceProtocolFilePath
+            let p = Protocol.fromString TestFiles.Protocol.protocol
 
 
 
             let writingSuccess = 
                 try 
-                    Protocol.toFile outputProtocolFilePath p
+                    Protocol.toString p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
@@ -123,7 +123,7 @@ let testProtocolFile =
 
         testCase "WriterSchemaCorrectness" (fun () ->
 
-            let p = Protocol.fromFile referenceProtocolFilePath
+            let p = Protocol.fromString TestFiles.Protocol.protocol
 
             let s = Protocol.toString p
 
@@ -132,9 +132,21 @@ let testProtocolFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let i = Protocol.fromFile referenceProtocolFilePath
+            let o = 
+                Protocol.fromString TestFiles.Protocol.protocol
+                |> Protocol.toString
 
-            let o = Protocol.fromFile outputProtocolFilePath
+            let i = 
+                TestFiles.Protocol.protocol
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let o = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
             Expect.equal o i "Written protocol file does not match read protocol file"
         )
@@ -154,7 +166,7 @@ let testProcessFile =
             
             let readingSuccess = 
                 try 
-                    Process.fromFile referenceProcessFilePath |> ignore
+                    Process.fromString TestFiles.Process.process' |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -165,11 +177,11 @@ let testProcessFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromFile referenceProcessFilePath
+            let p = Process.fromString TestFiles.Process.process'
 
             let writingSuccess = 
                 try 
-                    Process.toFile outputProcessFilePath p
+                    Process.toString p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
@@ -179,7 +191,7 @@ let testProcessFile =
 
         testCase "WriterSchemaCorrectness" (fun () ->
 
-            let p = Process.fromFile referenceProcessFilePath
+            let p = Process.fromString TestFiles.Process.process'
 
             let s = Process.toString p
 
@@ -188,14 +200,18 @@ let testProcessFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
+            let o =
+                Process.fromString TestFiles.Process.process'
+                |> Process.toString
+
             let i = 
-                System.IO.File.ReadAllText referenceProcessFilePath 
+                TestFiles.Process.process'
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
-                System.IO.File.ReadAllText outputProcessFilePath 
+                o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -218,7 +234,7 @@ let testPersonFile =
             
             let readingSuccess = 
                 try 
-                    Person.fromFile referencePersonFilePath |> ignore
+                    Person.fromString TestFiles.Person.person |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -229,11 +245,11 @@ let testPersonFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Person.fromFile referencePersonFilePath
+            let a = Person.fromString TestFiles.Person.person
 
             let writingSuccess = 
                 try 
-                    Person.toFile outputPersonFilePath a
+                    Person.toString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
@@ -243,7 +259,7 @@ let testPersonFile =
 
         testCase "WriterSchemaCorrectness" (fun () ->
 
-            let a = Person.fromFile referencePersonFilePath
+            let a = Person.fromString TestFiles.Person.person
 
             let s = Person.toString a
 
@@ -252,20 +268,19 @@ let testPersonFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let extractWords (json:string) = 
-                json.Split([|'{';'}';'[';']';',';':'|])
-                |> Array.map (fun s -> s.Trim())
-                |> Array.filter ((<>) "")
+            let o = 
+                Person.fromString TestFiles.Person.person
+                |> Person.toString
 
             let i = 
-                System.IO.File.ReadAllText referencePersonFilePath 
-                |> extractWords
+                TestFiles.Person.person
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
-                System.IO.File.ReadAllText outputPersonFilePath 
-                |> extractWords
+                o
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
@@ -287,7 +302,7 @@ let testPublicationFile =
             
             let readingSuccess = 
                 try 
-                    Publication.fromFile referencePublicationFilePath |> ignore
+                    Publication.fromString TestFiles.Publication.publication |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -298,11 +313,11 @@ let testPublicationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Publication.fromFile referencePublicationFilePath
+            let a = Publication.fromString TestFiles.Publication.publication
 
             let writingSuccess = 
                 try 
-                    Publication.toFile outputPublicationFilePath a
+                    Publication.toString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
@@ -312,7 +327,7 @@ let testPublicationFile =
 
         testCase "WriterSchemaCorrectness" (fun () ->
 
-            let a = Publication.fromFile referencePublicationFilePath
+            let a = Publication.fromString TestFiles.Publication.publication
 
             let s = Publication.toString a
 
@@ -321,20 +336,19 @@ let testPublicationFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let extractWords (json:string) = 
-                json.Split([|'{';'}';'[';']';',';':'|])
-                |> Array.map (fun s -> s.Trim())
-                |> Array.filter ((<>) "")
+            let o = 
+                Publication.fromString TestFiles.Publication.publication
+                |> Publication.toString
 
             let i = 
-                System.IO.File.ReadAllText referencePublicationFilePath 
-                |> extractWords
+                TestFiles.Publication.publication
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
-                System.IO.File.ReadAllText outputPublicationFilePath 
-                |> extractWords
+                o
+                |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
@@ -356,7 +370,7 @@ let testAssayFile =
             
             let readingSuccess = 
                 try 
-                    Assay.fromFile referenceAssayFilePath |> ignore
+                    Assay.fromString TestFiles.Assay.assay |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -367,11 +381,11 @@ let testAssayFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Assay.fromFile referenceAssayFilePath
+            let a = Assay.fromString TestFiles.Assay.assay
 
             let writingSuccess = 
                 try 
-                    Assay.toFile outputAssayFilePath a
+                    Assay.toString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
@@ -381,7 +395,7 @@ let testAssayFile =
 
         testCase "WriterSchemaCorrectness" (fun () ->
 
-            let a = Assay.fromFile referenceAssayFilePath
+            let a = Assay.fromString TestFiles.Assay.assay
 
             let s = Assay.toString a
 
@@ -390,14 +404,18 @@ let testAssayFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
+            let o = 
+                Assay.fromString TestFiles.Assay.assay
+                |> Assay.toString
+
             let i = 
-                System.IO.File.ReadAllText referenceAssayFilePath 
+                TestFiles.Assay.assay
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
-                System.IO.File.ReadAllText outputAssayFilePath 
+                o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -420,7 +438,7 @@ let testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    Investigation.fromFile referenceInvestigationFilePath |> ignore
+                    Investigation.fromString TestFiles.Investigation.investigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -430,11 +448,11 @@ let testInvestigationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let i = Investigation.fromFile referenceInvestigationFilePath
+            let i = Investigation.fromString TestFiles.Investigation.investigation
 
             let writingSuccess = 
                 try 
-                    Investigation.toFile outputInvestigationFilePath i
+                    Investigation.toString i |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
@@ -444,7 +462,7 @@ let testInvestigationFile =
 
         testCase "WriterSchemaCorrectness" (fun () ->
 
-            let i = Investigation.fromFile referenceInvestigationFilePath
+            let i = Investigation.fromString TestFiles.Investigation.investigation
 
             let s = Investigation.toString i
 
@@ -453,16 +471,18 @@ let testInvestigationFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            
+            let o = 
+                Investigation.fromString TestFiles.Investigation.investigation
+                |> Investigation.toString
 
             let i = 
-                System.IO.File.ReadAllText referenceInvestigationFilePath 
+                TestFiles.Investigation.investigation
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
             let o = 
-                System.IO.File.ReadAllText outputInvestigationFilePath 
+                o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst

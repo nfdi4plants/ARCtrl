@@ -1,4 +1,8 @@
-{
+﻿module TestFiles.Person
+
+let person = 
+    """
+    {
   "phone": "",
   "firstName": "Juan",
   "address": "Oxford Road, Manchester M13 9PT, UK",
@@ -20,3 +24,5 @@
   ],
   "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
 }
+    """
+

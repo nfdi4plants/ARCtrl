@@ -1,4 +1,9 @@
-{
+﻿module TestFiles.Process
+
+let process' = 
+
+    """
+    {
     "@id": "#process/standard_trypsin_digestion",
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
@@ -13,7 +18,7 @@
             "comments": []
         },
         "description": "The isolated proteins get solubilized. Given protease is added and the solution is heated to a given temperature. After a given amount of time, the digestion is stopped by adding a denaturation agent.",
-        "uri": "http://madeUpProtocolWebsize.org/protein_digestion"
+        "uri": "http://madeUpProtocolWebsize.org/protein_digestion",
         "version": "1.0.0",
         "parameters": [
             {
@@ -165,3 +170,4 @@
     "comments": []
 
 }
+    """
