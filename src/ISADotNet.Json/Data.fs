@@ -70,12 +70,12 @@ module Data =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:Data) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:Data) = 
+    //    File.WriteAllText(path,toString m)
 
 
 module Source = 
@@ -110,12 +110,12 @@ module Source =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:Source) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:Source) = 
+    //    File.WriteAllText(path,toString m)
 
 module Sample = 
     
@@ -153,9 +153,9 @@ module Sample =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:Sample) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:Sample) = 
+    //    File.WriteAllText(path,toString m)

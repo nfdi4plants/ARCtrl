@@ -37,12 +37,12 @@ module ProcessParameterValue =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:ProcessParameterValue) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:ProcessParameterValue) = 
+    //    File.WriteAllText(path,toString p)
 
 /// Functions for handling the ProcessInput Type
 module ProcessInput =
@@ -81,12 +81,12 @@ module ProcessInput =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:ProcessInput) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:ProcessInput) = 
+    //    File.WriteAllText(path,toString m)
 
 /// Functions for handling the ProcessOutput Type
 module ProcessOutput =
@@ -120,12 +120,12 @@ module ProcessOutput =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:ProcessInput) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:ProcessInput) = 
+    //    File.WriteAllText(path,toString m)
 
 
 module Process =    
@@ -171,12 +171,12 @@ module Process =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:Process) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:Process) = 
+    //    File.WriteAllText(path,toString p)
 
 module ProcessSequence = 
 
@@ -189,9 +189,9 @@ module ProcessSequence =
         |> Encode.list
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:Process list) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:Process list) = 
+    //    File.WriteAllText(path,toString p)

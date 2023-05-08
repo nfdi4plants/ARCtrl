@@ -28,11 +28,15 @@ module GDecode =
         | Error e -> failwith (sprintf "Error decoding string: %s" e)
    
     let getFieldNames (json : JsonValue) = 
+        #if FABLE_COMPILER 
+            seq [""]
+        #else
         match json with
         | :? JObject as json -> 
             json.Properties()
             |> Seq.map (fun x -> x.Name)
         | _ -> Seq.empty
+        #endif
 
     let hasUnknownFields (knownFields : string list) (json : JsonValue) = 
         getFieldNames json

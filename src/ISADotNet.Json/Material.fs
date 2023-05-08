@@ -53,12 +53,12 @@ module MaterialAttribute =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:MaterialAttribute) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:MaterialAttribute) = 
+    //    File.WriteAllText(path,toString m)
 
 module MaterialAttributeValue =
 
@@ -89,12 +89,12 @@ module MaterialAttributeValue =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:MaterialAttributeValue) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:MaterialAttributeValue) = 
+    //    File.WriteAllText(path,toString m)
 
 
 module Material = 
@@ -132,9 +132,9 @@ module Material =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (m:Material) = 
-        File.WriteAllText(path,toString m)
+    //let toFile (path : string) (m:Material) = 
+    //    File.WriteAllText(path,toString m)

@@ -53,9 +53,9 @@ module Person =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:Person) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:Person) = 
+    //    File.WriteAllText(path,toString p)

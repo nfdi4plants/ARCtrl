@@ -46,12 +46,12 @@ module Value =
         encoder (ConverterOptions()) v
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (v:Value) = 
-        File.WriteAllText(path,toString v)
+    //let toFile (path : string) (v:Value) = 
+    //    File.WriteAllText(path,toString v)
 
 module Factor =  
 
@@ -82,12 +82,12 @@ module Factor =
         encoder (ConverterOptions()) f
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (f:Factor) = 
-        File.WriteAllText(path,toString f)
+    //let toFile (path : string) (f:Factor) = 
+    //    File.WriteAllText(path,toString f)
 
 
 module FactorValue =
@@ -119,9 +119,9 @@ module FactorValue =
         encoder (ConverterOptions()) f
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (f:FactorValue) = 
-        File.WriteAllText(path,toString f)
+    //let toFile (path : string) (f:FactorValue) = 
+    //    File.WriteAllText(path,toString f)

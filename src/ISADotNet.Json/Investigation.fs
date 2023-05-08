@@ -56,9 +56,9 @@ module Investigation =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:Investigation) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:Investigation) = 
+    //    File.WriteAllText(path,toString p)

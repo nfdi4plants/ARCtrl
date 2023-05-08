@@ -33,12 +33,12 @@ module ProtocolParameter =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:ProtocolParameter) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:ProtocolParameter) = 
+    //    File.WriteAllText(path,toString p)
 
 module Component =
 
@@ -76,12 +76,12 @@ module Component =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:Component) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:Component) = 
+    //    File.WriteAllText(path,toString p)
 
 module Protocol =    
 
@@ -122,9 +122,9 @@ module Protocol =
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (p:Protocol) = 
-        File.WriteAllText(path,toString p)
+    //let toFile (path : string) (p:Protocol) = 
+    //    File.WriteAllText(path,toString p)

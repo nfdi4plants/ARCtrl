@@ -37,9 +37,9 @@ module Comment =
         encoder (ConverterOptions()) c
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (c:Comment) = 
-        File.WriteAllText(path,toString c)
+    //let toFile (path : string) (c:Comment) = 
+    //    File.WriteAllText(path,toString c)

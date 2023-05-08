@@ -65,12 +65,12 @@ module OntologySourceReference =
         encoder (ConverterOptions()) oa
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (osr:OntologySourceReference) = 
-        File.WriteAllText(path,toString osr)
+    //let toFile (path : string) (osr:OntologySourceReference) = 
+    //    File.WriteAllText(path,toString osr)
 
 module OntologyAnnotation =  
 
@@ -103,9 +103,9 @@ module OntologyAnnotation =
         encoder (ConverterOptions()) oa
         |> Encode.toString 2
 
-    let fromFile (path : string) = 
-        File.ReadAllText path 
-        |> fromString
+    //let fromFile (path : string) = 
+    //    File.ReadAllText path 
+    //    |> fromString
 
-    let toFile (path : string) (oa:OntologyAnnotation) = 
-        File.WriteAllText(path,toString oa)
+    //let toFile (path : string) (oa:OntologyAnnotation) = 
+    //    File.WriteAllText(path,toString oa)
