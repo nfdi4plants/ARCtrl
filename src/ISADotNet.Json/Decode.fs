@@ -31,10 +31,10 @@ module GDecode =
     let getFieldNamesFable (json : JsonValue) = jsNative
 
     let getFieldNames (json : JsonValue) = 
-        Fable.print json
+        //Fable.print json
         #if FABLE_COMPILER 
         let r = getFieldNamesFable json
-        Fable.print r
+        //Fable.print r
         r
         #else
         match json with
