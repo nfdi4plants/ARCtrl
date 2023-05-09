@@ -101,14 +101,14 @@ module Result =
         | Ok m -> m
         | Error m -> m
 
-let private firstDiff s1 s2 =
+let firstDiff s1 s2 =
   let s1 = Seq.append (Seq.map Some s1) (Seq.initInfinite (fun _ -> None))
   let s2 = Seq.append (Seq.map Some s2) (Seq.initInfinite (fun _ -> None))
   Seq.mapi2 (fun i s p -> i,s,p) s1 s2
   |> Seq.find (function |_,Some s,Some p when s=p -> false |_-> true)
 
 /// Expects the `actual` sequence to equal the `expected` one.
-let mySequenceEqual actual expected message =
+let inline mySequenceEqual actual expected message =
   match firstDiff actual expected with
   | _,None,None -> ()
   | i,Some a, Some e ->

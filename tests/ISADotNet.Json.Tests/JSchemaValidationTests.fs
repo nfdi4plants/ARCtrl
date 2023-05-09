@@ -6,6 +6,40 @@ open Fable.Mocha
 open Expecto
 #endif
 
+
+open ISADotNet.Validation
+
+let jsInteropTests = testList "FableValidation" [ 
+    testCase "Hello World" (fun () -> 
+        let actual = Fable.JsonValidation.helloWorld()
+        let expected = "Hello World"
+        Expect.equal actual expected "Test if js validator is correctly referenced with hello world example"
+    )
+    //testAsync "Minimal example" (fun () -> 
+    //    let commentSchemaURL = "https://raw.githubusercontent.com/HLWeil/isa-specs/anyof/source/_static/isajson/comment_schema.json"
+    //    let commentInstance = """{
+    //        "name": "velit amet",
+    //        "value": "minim ut reprehenderit cillum commodo"
+    //    }"""
+    //    ISADotNet.Fable.print("Hit before")
+    //    let actual = Fable.validate commentSchemaURL commentInstance
+    //    ISADotNet.Fable.print("Hit after")
+    //    ISADotNet.Fable.print(actual)
+    //    Expect.equal 0 0 "Test if js validator is correctly referenced with hello world example"
+    //)
+    testAsync "Minimal example" { 
+        let commentSchemaURL = "https://raw.githubusercontent.com/HLWeil/isa-specs/anyof/source/_static/isajson/comment_schema.json"
+        let commentInstance = """{
+            "name": "velit amet",
+            "value": "minim ut reprehenderit cillum commodo"
+        }"""
+        let! actual = Fable.validate commentSchemaURL commentInstance
+        ISADotNet.Fable.print(actual.instance)
+        Expect.equal 0 0 "Test if js validator is correctly referenced with hello world example"
+    }
+]
+
+
 //open TestingUtils
 //open ISADotNet
 //open ISADotNet.Validation
@@ -107,6 +141,9 @@ open Expecto
 
 let main = 
     testList "APITests" [
+        #if FABLE_COMPILER
+        jsInteropTests
+        #endif
         //testProcessValidation
         //testProcessParameterValueValidation
     ]

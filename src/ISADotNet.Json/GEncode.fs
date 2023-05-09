@@ -11,7 +11,7 @@ open Fable.Core
 module GEncode = 
 
     
-    [<Emit("$0[$1]")>]
+    [<Emit("$1[$0]")>]
     let getFieldFable (name : string) (object : 'T) = jsNative
 
     let inline tryGetPropertyValue (name : string) (object : 'T) =
