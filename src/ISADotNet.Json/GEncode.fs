@@ -6,27 +6,18 @@ open Thoth.Json
 open Thoth.Json.Net
 #endif
 
+open Fable.Core
+
 module GEncode = 
 
-    //let (|SomeObj|_|) =
-    //    // create generalized option type
-    //    let ty = typedefof<option<_>>
-    //    fun (a:obj) ->
-    //        // Check for nulls otherwise 'a.GetType()' would fail
-    //        if isNull a 
-    //        then 
-    //            None 
-    //        else
-    //            let aty = a.GetType()
-    //            // Get option'.Value
-    //            let v = aty.GetProperty("Value")
-    //            if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
-    //                // return value if existing
-    //                Some(v.GetValue(a, [| |]))
-    //            else 
-    //                None
+    
+    [<Emit("$0[$1]")>]
+    let getFieldFable (name : string) (object : 'T) = jsNative
 
     let inline tryGetPropertyValue (name : string) (object : 'T) =
+        #if FABLE_COMPILER
+            getFieldFable name object
+        #else
         let property = 
             FSharp.Reflection.FSharpType.GetRecordFields(object.GetType())
             |> Array.tryFind (fun property -> property.Name.Contains name)
@@ -40,6 +31,7 @@ module GEncode =
             | o -> 
                 Some o
         )
+        #endif
 
     let inline string (value : obj) = 
         match value with

@@ -121,19 +121,19 @@ let testProtocolFile =
                 Protocol.fromString TestFiles.Protocol.protocol
                 |> Protocol.toString
 
-            let i = 
+            let expected = 
                 TestFiles.Protocol.protocol
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            let o = 
+            let actual = 
                 o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.equal o i "Written protocol file does not match read protocol file"
+            Expect.equal actual expected "Written protocol file does not match read protocol file"
         )
         |> testSequenced
     ]
@@ -183,19 +183,19 @@ let testProcessFile =
                 Process.fromString TestFiles.Process.process'
                 |> Process.toString
 
-            let i = 
+            let expected = 
                 TestFiles.Process.process'
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            let o = 
+            let actual = 
                 o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual o i "Written process file does not match read process file"
+            mySequenceEqual actual expected "Written process file does not match read process file"
         )
         |> testSequenced
     ]
@@ -245,19 +245,19 @@ let testPersonFile =
                 Person.fromString TestFiles.Person.person
                 |> Person.toString
 
-            let i = 
+            let expected = 
                 TestFiles.Person.person
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            let o = 
+            let actual = 
                 o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual o i "Written person file does not match read person file"
+            mySequenceEqual actual expected "Written person file does not match read person file"
         )
         |> testSequenced
     ]
@@ -307,19 +307,19 @@ let testPublicationFile =
                 Publication.fromString TestFiles.Publication.publication
                 |> Publication.toString
 
-            let i = 
+            let expected = 
                 TestFiles.Publication.publication
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            let o = 
+            let actual = 
                 o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual o i "Written Publication file does not match read publication file"
+            mySequenceEqual actual expected "Written Publication file does not match read publication file"
         )
         |> testSequenced
     ]
@@ -369,19 +369,19 @@ let testAssayFile =
                 Assay.fromString TestFiles.Assay.assay
                 |> Assay.toString
 
-            let i = 
+            let expected = 
                 TestFiles.Assay.assay
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            let o = 
+            let actual = 
                 o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual o i "Written assay file does not match read assay file"
+            mySequenceEqual actual expected "Written assay file does not match read assay file"
         )
         |> testSequenced
     ]
@@ -430,19 +430,19 @@ let testInvestigationFile =
                 Investigation.fromString TestFiles.Investigation.investigation
                 |> Investigation.toString
 
-            let i = 
+            let expected = 
                 TestFiles.Investigation.investigation
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            let o = 
+            let actual = 
                 o
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual o i "Written investigation file does not match read investigation file"
+            mySequenceEqual actual expected "Written investigation file does not match read investigation file"
         )
         |> testSequenced
 
