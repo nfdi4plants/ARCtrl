@@ -121,6 +121,7 @@ type AssayTransformation =
             {a with ProcessSequence = Some processes'}
         | AddFileName name ->
             {a with FileName = Some name}
+        | x -> failwithf "Builder failed: Case %O Not implemented" x
 
     member this.Equals(a : Assay) =
         match this,a.FileName with
@@ -179,3 +180,4 @@ type StudyTransformation =
                         |> List.fold (fun a trans -> trans.Transform(a)) Assay.empty
                     assays @ [newAssay]
             {s with Assays = Some assays'}
+        | x -> failwithf "Builder failed: Case %O Not implemented" x

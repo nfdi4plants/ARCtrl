@@ -1,13 +1,11 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
 open System.Text.RegularExpressions
 
-[<AnyOf>]
 type AnnotationValue = 
-    | [<SerializationOrder(2)>]Text of string
-    | [<SerializationOrder(1)>]Float of float
-    | [<SerializationOrder(0)>]Int of int
+    | Text of string
+    | Float of float
+    | Int of int
 
     static member empty = Text ""
 
@@ -29,15 +27,10 @@ type AnnotationValue =
 [<CustomEquality; NoComparison>]
 type OntologyAnnotation =
     {
-        [<JsonPropertyName("@id")>]
         ID : URI option
-        [<JsonPropertyName("annotationValue")>]
         Name : AnnotationValue option
-        [<JsonPropertyName("termSource")>]
         TermSourceREF : string option
-        [<JsonPropertyName("termAccession")>]
         TermAccessionNumber : URI option
-        [<JsonPropertyName("comments")>]
         Comments : Comment list option
     }
 
@@ -254,15 +247,10 @@ type OntologyAnnotation =
 
 type OntologySourceReference =
     {
-        [<JsonPropertyName("description")>]
         Description : string option
-        [<JsonPropertyName("file")>]
         File : string option
-        [<JsonPropertyName("name")>]
         Name : string option
-        [<JsonPropertyName("version")>]
         Version : string option
-        [<JsonPropertyName("comments")>]
         Comments : Comment list option
     }
 

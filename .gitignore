@@ -353,3 +353,4 @@ MigrationBackup/
 # Custom ignored files
 pkg/
 tmp/
+/tests/ISADotNet.JsNativeTests/fable/**/*.js

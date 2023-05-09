@@ -2,16 +2,10 @@
   "version": 1,
   "isRoot": true,
   "tools": {
-    "fake-cli": {
-      "version": "5.20.3",
+    "fable": {
+      "version": "4.1.3",
       "commands": [
-        "fake"
-      ]
-    },
-    "fsharp.formatting.commandtool": {
-      "version": "8.0.1",
-      "commands": [
-        "fsdocs"
+        "fable"
       ]
     }
   }

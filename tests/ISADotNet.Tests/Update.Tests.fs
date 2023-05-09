@@ -1,9 +1,12 @@
-﻿module APITests
+﻿module Update.Tests
 
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
+#endif
 
 open ISADotNet.API
-open TestingUtils
 open Update
 
 module TestTypes = 
@@ -53,10 +56,214 @@ module TestTypes =
 
 open TestTypes
 
-[<Tests>]
-let testUpdate = 
+let genericFableTests = 
+    testList "GenericFableTests" [
+        //Test whether the fable generic is list function can detect a list
+        testCase "IsList" (fun () -> 
+            let l = [1;2;3]
+            let isList = Update.isListType l
+            Expect.isTrue isList "IsList failed with list"
+        )
+        //Test whether the fable generic is list function can detect an array
+        testCase "IsArray" (fun () -> 
+            let l = [|1;2;3|]
+            let isList = Update.isListType l
+            Expect.isFalse isList "IsList failed with array"
+        )
+        //Test whether the fable generic is list function can detect a seq
+        testCase "IsSeq" (fun () -> 
+            let l = seq {1;2;3}
+            let isList = Update.isListType l
+            Expect.isFalse isList "IsList failed with seq"
+        )
+        testCase "IsListEmpty" (fun () -> 
+            let l = []
+            let isList = Update.isListType l
+            Expect.isTrue isList "IsList failed with empty list"
+        )
+        testCase "IsArrayEmpty" (fun () -> 
+            let l = [||]
+            let isList = Update.isListType l
+            Expect.isFalse isList "IsList failed with empty array"
+        )
+        testCase "IsSeqEmpty" (fun () -> 
+            let l = seq {()}
+            let isList = Update.isListType l
+            Expect.isFalse isList "IsList failed with empty seq"
+        )
+        testCase "AppendList" (fun () -> 
+            let l1 = [1;2;3]
+            let l2 = [4;5;6]
+            let t = typeof<int>
+            let l3 = Update.appendGenericListsByType l1 l2 t
+            let expected = [1;2;3;4;5;6]
+            Expect.equal l3 expected "AppendList failed"
+        )
+        testCase "AppendArray" (fun () -> 
+            let l1 = [|1;2;3|]
+            let l2 = [|4;5;6|]
+            let t = typeof<int>
+            let l3 = Update.appendGenericListsByType l1 l2 t
+            let expected = [|1;2;3;4;5;6|]
+            Expect.equal l3 expected "AppendArray failed"
+        )
+        testCase "AppendSeq" (fun () -> 
+            let l1 = seq [1;2;3]
+            let l2 = seq [4;5;6]
+            let t = typeof<int>
+            let l3 = Update.appendGenericListsByType l1 l2 t
+            let expected = seq [1;2;3;4;5;6]
+            Expect.equal l3 expected "AppendSeq failed"
+        )
+        testCase "AppendListEmpty" (fun () -> 
+            let l1 : int list = []
+            let l2 : int list = []
+            let t = typeof<int>
+            let l3 = Update.appendGenericListsByType l1 l2 t
+            let expected : int list = []
+            Expect.equal l3 expected "AppendListEmpty failed"
+        )
+        testCase "AppendArrayEmpty" (fun () -> 
+            let l1 : int array = [||]
+            let l2 : int array = [||]
+            let t = typeof<int>
+            let l3 = Update.appendGenericListsByType l1 l2 t
+            let expected : int array = [||]
+            Expect.equal l3 expected "AppendArrayEmpty failed"
+        )
+        testCase "AppendSeqEmpty" (fun () -> 
+            let l1 : int seq = seq []
+            let l2 : int seq = seq []
+            let t = typeof<int>
+            let l3 = Update.appendGenericListsByType l1 l2 t
+            let expected : int seq = seq []
+            Expect.equal l3 expected "AppendSeqEmpty failed"
+        )
+        testCase "DistinctList" (fun () -> 
+            let l1 = [1;2;3;1;2;3]
+            let t = typeof<int>
+            let l2 = Update.distinctGenericList l1 t
+            let expected = [1;2;3]
+            Expect.equal l2 expected "DistinctList failed"
+        )
+        testCase "DistinctArray" (fun () -> 
+            let l1 = [|1;2;3;1;2;3|]
+            let t = typeof<int>
+            let l2 = Update.distinctGenericList l1 t
+            let expected = [|1;2;3|]
+            Expect.equal l2 expected "DistinctArray failed"
+        )
+        testCase "DistinctSeq" (fun () -> 
+            let l1 = seq [1;2;3;1;2;3]
+            let t = typeof<int>
+            let l2 = Update.distinctGenericList l1 t
+            let expected = seq [1;2;3]
+            Expect.equal l2 expected "DistinctSeq failed"
+        )
+        testCase "DistinctListEmpty" (fun () -> 
+            let l1 : int list = []
+            let t = typeof<int>
+            let l2 = Update.distinctGenericList l1 t
+            let expected : int list = []
+            Expect.equal l2 expected "DistinctListEmpty failed"
+        )
+        testCase "DistinctArrayEmpty" (fun () -> 
+            let l1 : int array = [||]
+            let t = typeof<int>
+            let l2 = Update.distinctGenericList l1 t
+            let expected : int array = [||]
+            Expect.equal l2 expected "DistinctArrayEmpty failed"
+        )
+        testCase "DistinctSeqEmpty" (fun () -> 
+            let l1 : int seq = seq []
+            let t = typeof<int>
+            let l2 = Update.distinctGenericList l1 t
+            let expected : int seq = seq []
+            Expect.equal l2 expected "DistinctSeqEmpty failed"
+        )
+        // Test whether the Update.isMapType correctly detects a that a list is not a map
+        testCase "IsMapList" (fun () -> 
+            let l = [1;2;3]
+            let isMap = Update.isMapType l
+            Expect.isFalse isMap "IsMap failed with list"
+        )
+        // Test whether the Update.isMapType correctly detects a that a array is not a map
+        testCase "IsMapArray" (fun () -> 
+            let l = [|1;2;3|]
+            let isMap = Update.isMapType l
+            Expect.isFalse isMap "IsMap failed with array"
+        )
+        // Test whether the Update.isMapType correctly detects a that a seq is not a map
+        testCase "IsMapSeq" (fun () -> 
+            let l = seq [1;2;3]
+            let isMap = Update.isMapType l
+            Expect.isFalse isMap "IsMap failed with seq"
+        )
+        // Test whether the Update.isMapType correctly detects a that a map is  a map
+        testCase "IsMapMap" (fun () -> 
+            let l = Map.ofList [1,2;3,4]
+            let isMap = Update.isMapType l
+            Expect.isTrue isMap "IsMap failed with map"
+        )
+        // Test whether the Update.isMapType correctly detects that an empty map is  a map
+        testCase "IsMapMapEmpty" (fun () -> 
+            let l = Map.empty
+            let isMap = Update.isMapType l
+            Expect.isTrue isMap "IsMap failed with map"
+        )
+        
 
+    ]
+
+let updateTests = 
     testList "UpdateTests" [
+
+        testCase "appendGenericArray" (fun () ->
+            let a1 = [|1;2;3|] |> box
+            let a2 = [|4;5;6|] |> box
+
+            let a3 = appendGenericListsByType a1 a2 typeof<int>
+            let expected = [|1;2;3;4;5;6|] |> box
+
+            let m = $"{a1}"
+            Expect.equal a3 expected m //"appendGenericArray failed"          
+        )
+        testCase "appendGenericArrayEmpty" (fun () ->
+            let a1 = [|1;2;3|] |> box
+            let a2 = ([||] : int array) |> box
+
+            let a3 = appendGenericListsByType a1 a2 typeof<int>
+            let expected = [|1;2;3|] |> box
+
+            let m = $"{a1}"
+            Expect.equal a3 expected m //"appendGenericArray failed"          
+        )
+        testCase "appendGenericList" (fun () ->
+            let l1 = [1;2;3] |> box
+            let l2 = [4;5;6] |> box
+            let l3 = appendGenericListsByType l1 l2 typeof<int>
+            let expected = [1;2;3;4;5;6] |> box
+            let m = $"{l1}"
+            Expect.equal l3 expected m //"appendGenericList failed"          
+        )
+        testCase "appendGenericListEmpty" (fun () ->
+            let l1 = [1;2;3] |> box
+            let l2 = ([] : int list) |> box
+            let l3 = appendGenericListsByType l1 l2 typeof<int>
+            let expected = [1;2;3] |> box
+            let m = $"{l1}"
+            Expect.equal l3 expected m //"appendGenericList failed"          
+        )
+        testCase "appendGenericSeq" (fun () ->
+            let l1 = seq [1;2;3] |> box
+            let l2 = seq [4;5;6] |> box
+            let l3 = appendGenericListsByType l1 l2 typeof<int>
+            let expected = seq [1;2;3;4;5;6] |> box
+            let m = $"{l1}"
+            Expect.equal l3 expected m //"appendGenericList failed"          
+        )
+
+
         testCase "StringType UpdateByExisting" (fun () ->
             let eOld = {StringField = "Hello"}
             let eExisting = {StringField = "New Hello"}
@@ -65,9 +272,9 @@ let testUpdate =
             let shouldUpate = UpdateByExisting.updateRecordType eOld eExisting
             let shouldNotUpdate = UpdateByExisting.updateRecordType eOld eEmpty
     
-            // eExisting is not empty and should update eOld
+             //eExisting is not empty and should update eOld
             Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateByExisting' by not updating old record type."
-            // eEmpty is empty and should not update eOld
+             //eEmpty is empty and should not update eOld
             Expect.equal shouldNotUpdate eOld "Record Type with string failed with 'UpdateByExisting' by updating with new empty record type."
         )
     
@@ -77,7 +284,7 @@ let testUpdate =
     
             let shouldUpate = UpdateAllAppendLists.updateRecordType eOld eExisting
     
-            // eExisting is not a list and should update by replacing eOld    
+             //eExisting is not a list and should update by replacing eOld    
             Expect.equal shouldUpate eExisting "Record Type with string failed with 'UpdateAllAppendLists'"
         )
 
@@ -101,7 +308,7 @@ let testUpdate =
     
             let shouldUpate = UpdateByExisting.updateRecordType eOld eExisting
 
-            /// eExisting is not empty and should update eOld
+            // eExisting is not empty and should update eOld
             Expect.equal shouldUpate  eExisting "IntType failed with 'UpdateByExisting'"
         )
     
@@ -111,7 +318,7 @@ let testUpdate =
     
             let shouldUpate = UpdateAllAppendLists.updateRecordType eOld eExisting
     
-            /// eExisting is not a list and should update by replacing eOld
+            // eExisting is not a list and should update by replacing eOld
             Expect.equal shouldUpate eExisting "Record Type with int failed with 'UpdateAllAppendLists'"
         )
     
@@ -127,7 +334,7 @@ let testUpdate =
     
             let update = UpdateByExisting.updateRecordType eOld eNew
     
-            /// new IntList is empty and should not update
+            // new IntList is empty and should not update
             Expect.equal update.IntList eOld.IntList "ListType UpdateByExisting; failed by updating by empty list"
             Expect.equal update.StringList eNew.StringList "ListType UpdateByExisting; failed by not updating StringList"
         )
@@ -143,10 +350,9 @@ let testUpdate =
             }
     
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
-    
-            /// new IntList is empty and should not update
-            Expect.sequenceEqual update.IntList (List.append eOld.IntList eNew.IntList) "ListType UpdateAllAppendLists; failed by not correctly appending IntList"
-            Expect.sequenceEqual update.StringList (List.append eOld.StringList eNew.StringList) "ListType UpdateAllAppendLists; failed by not correctly appending StringList"
+            // new IntList is empty and should not update
+            TestingUtils.mySequenceEqual update.IntList (List.append eOld.IntList eNew.IntList) "ListType UpdateAllAppendLists; failed by not correctly appending IntList"
+            TestingUtils.mySequenceEqual update.StringList (List.append eOld.StringList eNew.StringList) "ListType UpdateAllAppendLists; failed by not correctly appending StringList"
         )
     
         testCase "ArrayType UpdateByExisting" (fun () ->
@@ -161,7 +367,7 @@ let testUpdate =
     
             let update = UpdateByExisting.updateRecordType eOld eNew
     
-            /// new IntList is empty and should not update
+            // new IntList is empty and should not update
             Expect.equal update.FloatArray eOld.FloatArray "ArrayType UpdateByExisting; failed by updating by empty list"
             Expect.equal update.StringArray eNew.StringArray "ArrayType UpdateByExisting; failed by not updating StringList"
         )
@@ -178,9 +384,9 @@ let testUpdate =
     
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
     
-            /// new IntList is empty and should not update
-            Expect.sequenceEqual update.FloatArray (Array.append eOld.FloatArray eNew.FloatArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending IntList"
-            Expect.sequenceEqual update.StringArray (Array.append eOld.StringArray eNew.StringArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending StringList"
+            // new IntList is empty and should not update
+            TestingUtils.mySequenceEqual update.FloatArray (Array.append eOld.FloatArray eNew.FloatArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending IntList"
+            TestingUtils.mySequenceEqual update.StringArray (Array.append eOld.StringArray eNew.StringArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending StringList"
         )
     
         testCase "SeqType UpdateByExisting" (fun () ->
@@ -195,7 +401,7 @@ let testUpdate =
     
             let update = UpdateByExisting.updateRecordType eOld eNew
     
-            /// new IntList is empty and should not update
+            // new IntList is empty and should not update
             Expect.equal update.StringOptSeq eOld.StringOptSeq "SeqType UpdateByExisting; failed by updating by empty list"
             Expect.equal update.StringSeq eNew.StringSeq "SeqType UpdateByExisting; failed by not updating StringList"
         )
@@ -212,9 +418,9 @@ let testUpdate =
     
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
     
-            /// Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
-            Expect.sequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
-            Expect.sequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
+            // Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
+            TestingUtils.mySequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
+            TestingUtils.mySequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
         )
     
         testCase "SeqType UpdateByExistingAppendLists" (fun () ->
@@ -229,9 +435,9 @@ let testUpdate =
     
             let update = UpdateByExistingAppendLists.updateRecordType eOld eNew
     
-            /// Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
-            Expect.sequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
-            Expect.sequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
+            // Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
+            TestingUtils.mySequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
+            TestingUtils.mySequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
         )
 
         testCase "RecordTypeType UpdateByExisting" (fun () ->
@@ -244,7 +450,7 @@ let testUpdate =
     
             let update = UpdateByExisting.updateRecordType eOld eNew
     
-            /// record types will never be checked if they are empty or not, so they will always be replaced
+            // record types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.StringType eNew.StringType "RecordTypeType UpdateByExisting"
         )
     
@@ -258,7 +464,7 @@ let testUpdate =
     
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
     
-            /// record types will never be checked if they have lists to append or not, so they will always be replaced
+            // record types will never be checked if they have lists to append or not, so they will always be replaced
             Expect.equal update.StringType eNew.StringType "RecordTypeType UpdateAllAppendLists"
         )
     
@@ -272,7 +478,7 @@ let testUpdate =
     
             let update = UpdateByExisting.updateRecordType eOld eNew
     
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.MapField eNew.MapField "MapType UpdateByExisting"
         )
     
@@ -286,7 +492,7 @@ let testUpdate =
     
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
     
-            /// record types will never be checked if they have lists to append or not, so they will always be replaced
+            // record types will never be checked if they have lists to append or not, so they will always be replaced
             Expect.equal update.MapField eNew.MapField "MapType UpdateAllAppendLists"
         )
     
@@ -304,7 +510,7 @@ let testUpdate =
             let update = UpdateByExisting.updateRecordType eOld eNew
             let updateEmpty = UpdateByExisting.updateRecordType eOld eNewEmpty
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.OptionalString  eNew.OptionalString "Optional string was not updated correctly"
             Expect.equal updateEmpty.OptionalString eOld.OptionalString "Optional string was updated with empty value even though \"UpdateByExisting\" option is used"
         )
@@ -323,7 +529,7 @@ let testUpdate =
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
             let updateEmpty = UpdateAllAppendLists.updateRecordType eOld eNewEmpty
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.OptionalString  eNew.OptionalString "Optional string was not updated correctly"
             Expect.equal updateEmpty.OptionalString eNewEmpty.OptionalString "Optional string was not updated with empty value even though \"UpdateAllAppendLists\" option is used"
         )
@@ -342,7 +548,7 @@ let testUpdate =
             let update = UpdateByExisting.updateRecordType eOld eNew
             let updateEmpty = UpdateByExisting.updateRecordType eOld eNewEmpty
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.OptionalList  eNew.OptionalList "Optional List was not updated correctly"
             Expect.equal updateEmpty.OptionalList eOld.OptionalList "Optional List was updated with empty value even though \"UpdateByExisting\" option is used"
         )
@@ -361,55 +567,74 @@ let testUpdate =
             let update = UpdateAll.updateRecordType eOld eNew
             let updateEmpty = UpdateAll.updateRecordType eOld eNewEmpty
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.OptionalList  eNew.OptionalList "Optional List was not updated correctly"
             Expect.equal updateEmpty.OptionalList eNewEmpty.OptionalList "Optional List was not updated with empty value even though \"UpdateAll\" option is used"
         )
 
         testCase "OptionalListType UpdateAllAppendLists" (fun () ->
             let eOld = {
-                OptionalList = Some ["Value"]
+                OptionalList = Some ["MyValue"]
             }
             let eNew = {
                 OptionalList = Some ["NewValue"]
+            }
+    
+            let update = UpdateAllAppendLists.updateRecordType eOld eNew
+            let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
+
+            // map types will never be checked if they are empty or not, so they will always be replaced
+            TestingUtils.mySequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
+        )
+
+        testCase "OptionalListType UpdateAllAppendListsEmpty" (fun () ->
+            // Object type is ignored in javascript so eOld passed as an IEnumerable in the update function
+            // There the append method does not work, as eNewEmpty is an undefined object (= null) and not an empty list
+            // Therefore we need to check if the new List is a null and if so, return the old list
+            let eOld = {
+                OptionalList = Some ["MyValue"]
             }
             let eNewEmpty = {
                 OptionalList = None         
             }
     
-            let update = UpdateAllAppendLists.updateRecordType eOld eNew
             let updateEmpty = UpdateAllAppendLists.updateRecordType eOld eNewEmpty
-            let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
-            Expect.sequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
             Expect.equal updateEmpty.OptionalList eOld.OptionalList "Optional List was updated with empty value even though \"UpdateAllAppendLists\" option is used"
         )
 
         testCase "OptionalListType UpdateByExistingAppendLists" (fun () ->
             let eOld = {
-                OptionalList = Some ["Value"]
+                OptionalList = Some ["MyValue"]
             }
             let eNew = {
                 OptionalList = Some ["NewValue"]
+            }
+
+            let update = UpdateByExistingAppendLists.updateRecordType eOld eNew
+            let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
+
+            // map types will never be checked if they are empty or not, so they will always be replaced
+            TestingUtils.mySequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
+        )
+
+        testCase "OptionalListType UpdateByExistingAppendListsEmpty" (fun () ->
+            let eOld = {
+                OptionalList = Some ["MyValue"]
             }
             let eNewEmpty = {
                 OptionalList = None         
             }
     
-            let update = UpdateByExistingAppendLists.updateRecordType eOld eNew
             let updateEmpty = UpdateByExistingAppendLists.updateRecordType eOld eNewEmpty
-            let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
-            Expect.sequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
             Expect.equal updateEmpty.OptionalList eOld.OptionalList "Optional List was updated with empty value even though \"UpdateByExistingAppendLists\" option is used"
         )
 
 
         testCase "OptionalRecordTypeType UpdateByExisting" (fun () ->
             let eOld = {
-                OptionalRecordType = Some {StringField = "Value"}
+                OptionalRecordType = Some {StringField = "MyValue"}
             }
             let eNew = {
                 OptionalRecordType = Some {StringField = "NewValue"}
@@ -421,14 +646,14 @@ let testUpdate =
             let update = UpdateByExisting.updateRecordType eOld eNew
             let updateEmpty = UpdateByExisting.updateRecordType eOld eNewEmpty
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.OptionalRecordType  eNew.OptionalRecordType "Optional Record Type was not updated correctly"
             Expect.equal updateEmpty.OptionalRecordType eOld.OptionalRecordType "Optional Record Type was updated with empty value even though \"UpdateByExisting\" option is used"
         )
 
         testCase "OptionalRecordTypeType UpdateAllAppendLists" (fun () ->
             let eOld = {
-                OptionalRecordType = Some {StringField = "Value"}
+                OptionalRecordType = Some {StringField = "MyValue"}
             }
             let eNew = {
                 OptionalRecordType = Some {StringField = "NewValue"}
@@ -436,13 +661,19 @@ let testUpdate =
             let eNewEmpty = {
                 OptionalRecordType = None         
             }
-    
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
             let updateEmpty = UpdateAllAppendLists.updateRecordType eOld eNewEmpty
 
-            /// map types will never be checked if they are empty or not, so they will always be replaced
+            // map types will never be checked if they are empty or not, so they will always be replaced
             Expect.equal update.OptionalRecordType  eNew.OptionalRecordType "Optional Record Type was not updated correctly"
             Expect.equal updateEmpty.OptionalRecordType eNewEmpty.OptionalRecordType "Optional Record Type was not updated with empty value even though \"UpdateAllAppendLists\" option is used"
         )
     ]
-    
+
+let main = 
+    testList "APITests" [
+        genericFableTests
+        updateTests
+
+        
+    ]

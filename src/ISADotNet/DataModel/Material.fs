@@ -1,12 +1,8 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
-
 type MaterialAttribute = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"characteristicType")>]
         CharacteristicType : OntologyAnnotation option
     
     }
@@ -57,13 +53,9 @@ type MaterialAttribute =
 
 type MaterialAttributeValue = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"category")>]
         Category : MaterialAttribute option
-        [<JsonPropertyName(@"value")>]
         Value : Value option
-        [<JsonPropertyName(@"unit")>]
         Unit : OntologyAnnotation option
     
     }
@@ -137,10 +129,9 @@ type MaterialAttributeValue =
             | None, Some value -> value
             | None, None -> ""
 
-[<StringEnumAttribute>]
 type MaterialType =
-    | [<StringEnumValue("Extract Name")>]           ExtractName // "Extract Name"
-    | [<StringEnumValue("Labeled Extract Name")>]   LabeledExtractName // "Labeled Extract Name"
+    | ExtractName // "Extract Name"
+    | LabeledExtractName // "Labeled Extract Name"
 
     static member create t =
         if t = "Extract Name" then ExtractName
@@ -155,15 +146,10 @@ type MaterialType =
 
 type Material = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"name")>]
         Name : string option
-        [<JsonPropertyName(@"type")>]
         MaterialType : MaterialType option
-        [<JsonPropertyName(@"characteristics")>]
         Characteristics : MaterialAttributeValue list option
-        [<JsonPropertyName(@"derivesFrom")>]
         DerivesFrom : Material list option   
     }
 

@@ -32,32 +32,70 @@ module Dict =
             )
         dict
 
+open Fable.Core
+open Fable.Core.JsInterop
+
 
 module Update =
 
     open System
     open Microsoft.FSharp.Reflection
 
+
+    module ValueOfGenericObj =
+
+        [<Emit("$1")>]
+        let get (a:obj) = 
+            let ty = typedefof<option<_>>
+            let aty = a.GetType()
+            // Get option'.Value
+            let v = aty.GetProperty("Value")
+            if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
+                // return value if existing
+                Some(v.GetValue(a, [| |]))
+            else 
+                None
+
     /// matches if the matched object can be parsed to Some 'a and returns it.
-    let private (|SomeObj|_|) =
+    let inline (|SomeObj|_|) (a:obj) =
         // create generalized option type
-        let ty = typedefof<option<_>>
-        fun (a:obj) ->
-            // Check for nulls otherwise 'a.GetType()' would fail
-            if isNull a 
-            then 
-                None 
-            else
-                let aty = a.GetType()
-                // Get option'.Value
-                let v = aty.GetProperty("Value")
-                if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
-                    // return value if existing
-                    Some(v.GetValue(a, [| |]))
-                else 
-                    None
+        // Check for nulls otherwise 'a.GetType()' would fail
+        if isNull a 
+        then 
+            None 
+        else
+            ValueOfGenericObj.get a
     
-    let private makeOptionValue typey v isSome =
+    /// Get the type of the IEnumerable elements. E.g. for Array<'T> it would be 'T
+    let isMapType (v:obj) =
+        #if FABLE_COMPILER
+            Fable.isMap_generic v
+        #else 
+        let t = v.GetType()
+        // Maps are IEnumerables but are not easily to append. TODO(?)
+        let genericMap = typeof<Map<_,_>>
+        t.Name = genericMap.Name
+        #endif
+
+    let isListType (v:obj) =
+        #if FABLE_COMPILER
+            Fable.isList_generic v
+        #else 
+        v.GetType().Name.StartsWith "FSharpList`1"
+        #endif
+
+    /// Get the type of the IEnumerable elements. E.g. for Array<'T> it would be 'T
+    let enumGetInnerType (v:obj) =
+        #if FABLE_COMPILER
+            typeof<obj>
+        #else 
+        let t = v.GetType()
+        if t.IsArray then t.GetElementType() else
+            t.GetGenericArguments() |> Array.head
+        #endif
+
+    /// Create an option value of the given type. E.g. for int it would be Some 1
+    let inline makeOptionValue typey v isSome =
         let optionType = typeof<unit option>.GetGenericTypeDefinition().MakeGenericType([|typey|])
         let cases = FSharp.Reflection.FSharpType.GetUnionCases(optionType)
         let cases = cases |> Array.partition (fun x -> x.Name = "Some")
@@ -70,7 +108,10 @@ module Update =
         FSharp.Reflection.FSharpValue.MakeUnion(relevantCase, args)
 
     /// This function accesses the append method of the list/array module and applies it accordingly to the element type.
-    let private appendGenericListsByType l1 l2 (t:Type) =
+    let inline appendGenericListsByType l1 l2 (t:Type) =
+        #if FABLE_COMPILER
+            Fable.append_generic l1 l2
+        #else
         let fieldT = l1.GetType()
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
@@ -79,9 +120,13 @@ module Update =
             .GetMethod("Append")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1;l2|])
+        #endif
 
     /// This function accesses the distinct method of the list/array module and applies it accordingly to the element type.
-    let private distinctGenericList l1 (t:Type) =
+    let inline distinctGenericList l1 (t:Type) =
+        #if FABLE_COMPILER
+            Fable.distinct_generic l1
+        #else
         let fieldT = l1.GetType()
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
@@ -90,12 +135,12 @@ module Update =
             .GetMethod("Distinct")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1|])
+        #endif
 
     /// updates oldRT with newRT by replacing all values, but appending all lists.
     ///
     /// newRTList@oldRTList
-    let rec private updateAppend (oldVal: obj) (newVal:obj) = 
-        
+    let rec updateAppend (oldVal: obj) (newVal:obj) = 
         // match all field Values and try to cast them to types.
         match oldVal with
         // Strings are IEnumerable Chars but should not be appenden. So these have to be handled first.
@@ -116,33 +161,24 @@ module Update =
                 newVal
         // Match all IEnumarables, like list, array, seq. These should be appended.
         | :? System.Collections.IEnumerable -> 
-            let oldSeq = oldVal
-            let newSeq = newVal
-            let fieldT = oldVal.GetType()
+            let oldSeq = oldVal :?> System.Collections.IEnumerable
+            let newSeq = newVal :?> System.Collections.IEnumerable
             // Maps are IEnumerables but are not easily to append. TODO(?)
-            let isMap =
-                let genericMap = typeof<Map<_,_>>
-                fieldT.Name = genericMap.Name
             // t is the type of the IEnumerable elements.
-            let t =
-                // element types are accessed differently for (list, seq) and Array. 
-                if fieldT.IsArray then fieldT.GetElementType() else
-                    oldVal.GetType().GetGenericArguments() |> Array.head
+            let innerType = enumGetInnerType oldVal
             // If the IEnumerable is a map then we just replace with the new entry.
-            if isMap then 
+            if isMapType oldVal then 
                 newVal
             else
-                let r = 
-                    appendGenericListsByType oldSeq newSeq t
-                    |> fun l -> distinctGenericList l t
-                r |> box
+                appendGenericListsByType oldSeq newSeq innerType
+                |> fun l -> distinctGenericList l innerType
         // All others do not need to be appended and can be replaced.
         | others -> 
             newVal
 
 
     /// updates oldRT with newRT by replacing all values, but only if the new value is not empty.
-    let rec private updateOnlyByExisting (oldVal: obj) (newVal:obj) =      
+    let rec updateOnlyByExisting (oldVal: obj) (newVal:obj) =      
         
         // try to cast values to types to check for isEmpty according to type.
         match oldVal with 
@@ -176,7 +212,7 @@ module Update =
             newVal
         
     /// updates oldRT with newRT by replacing all values, but only if the new value is not empty.
-    let rec private updateOnlyByExistingAppend (oldVal: obj) (newVal:obj) =      
+    let rec updateOnlyByExistingAppend (oldVal: obj) (newVal:obj) =      
         
         // try to cast values to types to check for isEmpty according to type.
         match oldVal with 
@@ -203,24 +239,16 @@ module Update =
         | :? System.Collections.IEnumerable -> 
             let oldSeq = oldVal
             let newSeq = newVal
-            let fieldT = oldVal.GetType()
-            // Maps are IEnumerables but are not easily to append. TODO(?)
-            let isMap =
-                let genericMap = typeof<Map<_,_>>
-                fieldT.Name = genericMap.Name
-            // t is the type of the IEnumerable elements.
-            let t =
-                // element types are accessed differently for (list, seq) and Array. 
-                if fieldT.IsArray then fieldT.GetElementType() else
-                    oldVal.GetType().GetGenericArguments() |> Array.head
 
+            // innterType is the type of the IEnumerable elements.
+            let innerType = enumGetInnerType oldVal
             // If the IEnumerable is a map then we just replace with the new entry.
-            if isMap then 
+            if isMapType oldVal then 
                 newVal
             else
                 let r = 
-                    appendGenericListsByType oldSeq newSeq t
-                    |> fun l -> distinctGenericList l t
+                    appendGenericListsByType oldSeq newSeq innerType
+                    |> fun l -> distinctGenericList l innerType
                 r |> box
         // Others don't need to be checked as they have no clearly enough defined "empty" state
         | _ ->
@@ -245,7 +273,7 @@ module Update =
 
 
         /// This function will update recordType_1 with the values given in recordType_2 as specified by UpdateOption.
-        member this.updateRecordType (recordType_1:'a) (recordType_2:'a) =    
+        member inline this.updateRecordType (recordType_1:'a) (recordType_2:'a) =    
             match this with
             | UpdateAll ->
                 recordType_2
@@ -263,7 +291,7 @@ module Update =
                 |> fun fields -> FSharpValue.MakeRecord(typeof<'a>, fields) :?> 'a
 
     /// Creates a union of the items of the two given lists, merges items whose keys exist in both lists using the given update function.
-    let mergeUpdateLists (updateOptions : UpdateOptions) (mapping : 'T -> 'Key) (list1 : 'T list) (list2 : 'T list) = 
+    let inline mergeUpdateLists (updateOptions : UpdateOptions) (mapping : 'T -> 'Key) (list1 : 'T list) (list2 : 'T list) = 
         try
             let map1 = list1 |> List.map (fun v -> mapping v, v) |> Dict.ofSeqWithMerge updateOptions.updateRecordType
             let map2 = list2 |> List.map (fun v -> mapping v, v) |> Dict.ofSeqWithMerge updateOptions.updateRecordType

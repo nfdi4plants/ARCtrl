@@ -1,16 +1,10 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
-
 type Factor = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"factorName")>]
         Name : string option
-        [<JsonPropertyName(@"factorType")>]
         FactorType : OntologyAnnotation option
-        [<JsonPropertyName(@"comments")>]
         Comments : Comment list option
     }
 
@@ -58,12 +52,11 @@ type Factor =
         member this.PrintCompact() =
             "OA " + this.NameText
 
-[<AnyOf>]
 type Value =
-    | [<SerializationOrder(0)>] Ontology of OntologyAnnotation
-    | [<SerializationOrder(1)>] Int of int
-    | [<SerializationOrder(2)>] Float of float
-    | [<SerializationOrder(3)>] Name of string
+    | Ontology of OntologyAnnotation
+    | Int of int
+    | Float of float
+    | Name of string
 
     static member fromString (value : string) =
         try Value.Int (int value)
@@ -162,13 +155,9 @@ type Value =
     
 type FactorValue =
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"category")>]
         Category : Factor option
-        [<JsonPropertyName(@"value")>]
         Value : Value option
-        [<JsonPropertyName(@"unit")>]
         Unit : OntologyAnnotation option
     }
 

@@ -11,33 +11,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		build.sh = build.sh
 		.config\dotnet-tools.json = .config\dotnet-tools.json
 		global.json = global.json
+		package.json = package.json
+		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet", "src\ISADotNet\ISADotNet.fsproj", "{9E483227-E440-4E2E-AB42-A349FAE90EF2}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.XLSX", "src\ISADotNet.XLSX\ISADotNet.XLSX.fsproj", "{43498867-CEEE-4B1B-986E-A72514BE5CB7}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Tests", "tests\ISADotNet.Tests\ISADotNet.Tests.fsproj", "{52533526-F0CF-4200-A8BC-7D3453B7858E}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{BF89DA8A-6623-409E-9902-E90D6327AE97}"
-	ProjectSection(SolutionItems) = preProject
-		docs\1_fsharp-code-example.fsx = docs\1_fsharp-code-example.fsx
-		docs\2_inline-references.fsx = docs\2_inline-references.fsx
-		docs\3_notebooks.fsx = docs\3_notebooks.fsx
-		docs\AddPrinters.fsx = docs\AddPrinters.fsx
-		docs\Home.fsx = docs\Home.fsx
-		docs\index.fsx = docs\index.fsx
-		docs\VisualizeAssayGraph.fsx = docs\VisualizeAssayGraph.fsx
-	EndProjectSection
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Viz", "src\ISADotNet.Viz\ISADotNet.Viz.fsproj", "{17504B07-7966-40FE-BE31-49682EEDD18A}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.QueryModel", "src\ISADotNet.QueryModel\ISADotNet.QueryModel.fsproj", "{10E8D0C4-B603-41A1-BC4D-68B672188F28}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Validation", "src\ISADotNet.Validation\ISADotNet.Validation.fsproj", "{AC745163-53B6-4062-A3F9-9DC7FFE484CE}"
-EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Build", "build\Build.fsproj", "{FD9BB9F2-D4D7-4045-9AF7-5498B602E28E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{D9A16EAC-E6EB-43E4-A7F5-31A06CDCE25A}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet", "src\ISADotNet\ISADotNet.fsproj", "{C2480583-B022-4EE8-A25C-7FD7DFB69077}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Validation", "src\ISADotNet.Validation\ISADotNet.Validation.fsproj", "{17AED45A-571E-4D14-9BAB-6D6B1E6AC3F8}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Viz", "src\ISADotNet.Viz\ISADotNet.Viz.fsproj", "{D62016A5-CBE1-40B6-807D-5FAD8FC62467}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{1C70FABC-B459-4437-AFA6-551C911D5442}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISADotNet.Tests", "tests\ISADotNet.Tests\ISADotNet.Tests.fsproj", "{E9D22F21-87F6-44EB-9B11-15FD8AB7E10B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -45,37 +36,35 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{9E483227-E440-4E2E-AB42-A349FAE90EF2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9E483227-E440-4E2E-AB42-A349FAE90EF2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9E483227-E440-4E2E-AB42-A349FAE90EF2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9E483227-E440-4E2E-AB42-A349FAE90EF2}.Release|Any CPU.Build.0 = Release|Any CPU
-		{43498867-CEEE-4B1B-986E-A72514BE5CB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{43498867-CEEE-4B1B-986E-A72514BE5CB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{43498867-CEEE-4B1B-986E-A72514BE5CB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{43498867-CEEE-4B1B-986E-A72514BE5CB7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{52533526-F0CF-4200-A8BC-7D3453B7858E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{52533526-F0CF-4200-A8BC-7D3453B7858E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{52533526-F0CF-4200-A8BC-7D3453B7858E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{52533526-F0CF-4200-A8BC-7D3453B7858E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{17504B07-7966-40FE-BE31-49682EEDD18A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{17504B07-7966-40FE-BE31-49682EEDD18A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{17504B07-7966-40FE-BE31-49682EEDD18A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{17504B07-7966-40FE-BE31-49682EEDD18A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10E8D0C4-B603-41A1-BC4D-68B672188F28}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AC745163-53B6-4062-A3F9-9DC7FFE484CE}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FD9BB9F2-D4D7-4045-9AF7-5498B602E28E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FD9BB9F2-D4D7-4045-9AF7-5498B602E28E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD9BB9F2-D4D7-4045-9AF7-5498B602E28E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD9BB9F2-D4D7-4045-9AF7-5498B602E28E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C2480583-B022-4EE8-A25C-7FD7DFB69077}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C2480583-B022-4EE8-A25C-7FD7DFB69077}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C2480583-B022-4EE8-A25C-7FD7DFB69077}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C2480583-B022-4EE8-A25C-7FD7DFB69077}.Release|Any CPU.Build.0 = Release|Any CPU
+		{17AED45A-571E-4D14-9BAB-6D6B1E6AC3F8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{17AED45A-571E-4D14-9BAB-6D6B1E6AC3F8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{17AED45A-571E-4D14-9BAB-6D6B1E6AC3F8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{17AED45A-571E-4D14-9BAB-6D6B1E6AC3F8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D62016A5-CBE1-40B6-807D-5FAD8FC62467}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D62016A5-CBE1-40B6-807D-5FAD8FC62467}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D62016A5-CBE1-40B6-807D-5FAD8FC62467}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D62016A5-CBE1-40B6-807D-5FAD8FC62467}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E9D22F21-87F6-44EB-9B11-15FD8AB7E10B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E9D22F21-87F6-44EB-9B11-15FD8AB7E10B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E9D22F21-87F6-44EB-9B11-15FD8AB7E10B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E9D22F21-87F6-44EB-9B11-15FD8AB7E10B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C2480583-B022-4EE8-A25C-7FD7DFB69077} = {D9A16EAC-E6EB-43E4-A7F5-31A06CDCE25A}
+		{17AED45A-571E-4D14-9BAB-6D6B1E6AC3F8} = {D9A16EAC-E6EB-43E4-A7F5-31A06CDCE25A}
+		{D62016A5-CBE1-40B6-807D-5FAD8FC62467} = {D9A16EAC-E6EB-43E4-A7F5-31A06CDCE25A}
+		{E9D22F21-87F6-44EB-9B11-15FD8AB7E10B} = {1C70FABC-B459-4437-AFA6-551C911D5442}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F4FA3718-6BBE-44B3-A581-3309B3967A0A}

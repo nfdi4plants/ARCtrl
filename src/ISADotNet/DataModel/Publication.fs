@@ -1,20 +1,13 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
 
 type Publication = 
     {
-        [<JsonPropertyName(@"pubMedID")>]
         PubMedID : URI option
-        [<JsonPropertyName(@"doi")>]
         DOI : string option
-        [<JsonPropertyName(@"authorList")>]
         Authors : string option
-        [<JsonPropertyName(@"title")>]
         Title : string option
-        [<JsonPropertyName(@"status")>]
         Status : OntologyAnnotation option
-        [<JsonPropertyName(@"comments")>]
         Comments : Comment list option
     }
 

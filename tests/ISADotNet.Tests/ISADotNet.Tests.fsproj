@@ -7,47 +7,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="JsonSchemaValidation.fs" />
+    <EmbeddedResource Remove="ISADotnet\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="ISADotnet\JsonExtensionsTests.fs" />
-    <Compile Include="ISADotnet\NameAndTypeCastingTests.fs" />
-    <Compile Include="ISADotnet\ISAJsonTests.fs" />
-    <Compile Include="ISADotnet\APITests.fs" />
-    <Compile Include="ISADotNet.Validation\JSchemaValidationTests.fs" />
-    <Compile Include="ISADotNet.XLSX\InvestigationFileTests.fs" />
-    <Compile Include="ISADotNet.XLSX\AssayFileTests.fs" />
-    <Compile Include="ISADotNet.XLSX\RegexPattern.fs" />
+    <Compile Include="DataModel.Tests.fs" />
+    <Compile Include="Update.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="ISADotnet\TestFiles\AssayTestFile.json" />
-    <Content Include="ISADotnet\TestFiles\InvestigationTestFile.json" />
-    <Content Include="ISADotnet\TestFiles\ProcessTestFile.json" />
-    <Content Include="ISADotnet\TestFiles\ProtocolTestFile.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="ISADotnet\TestFiles\empty_isa.investigation.xlsx" />
-    <None Include="ISADotnet\TestFiles\isa.investigation.xlsx" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Expecto" Version="9.*" />
-    <PackageReference Include="FSharp.Data" Version="5.0.2" />
-    <PackageReference Include="NJsonSchema" Version="10.8.0" />
+    <PackageReference Include="Fable.Mocha" Version="2.16.0" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.0" />
     <PackageReference Update="FSharp.Core" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ISADotNet.Validation\ISADotNet.Validation.fsproj" />
+	  <!--Also includes ISADotNet-->
     <ProjectReference Include="..\..\src\ISADotNet\ISADotNet.fsproj" />
-    <ProjectReference Include="..\..\src\ISADotNet.XLSX\ISADotNet.XLSX.fsproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ISADotNet.Validation\TestFiles\" />
   </ItemGroup>
 </Project>

@@ -4,8 +4,6 @@ ISA compliant experimental metadata toolkit in F#
 The library contains types and functionality for creating and working on experimental metadata in ISA format. 
 Additionally, the types can easily be written to and read from `Json` files in [ISAJson format](https://isa-specs.readthedocs.io/en/latest/isajson.html) and Microsoft `Excel` files in [ISATab format](https://isa-specs.readthedocs.io/en/latest/isatab.html).
 
-
-
 # Installation
 
 The `ISADotNet` nuget package can be found [here](https://www.nuget.org/packages/ISADotNet/)

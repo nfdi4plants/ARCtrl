@@ -1,16 +1,11 @@
 namespace ISADotNet
 
-open System.Text.Json.Serialization
-
 type EMail = string
 
 type Comment = 
     {
-        [<JsonPropertyName(@"@id")>]
         ID : URI option
-        [<JsonPropertyName(@"name")>]
         Name : string option
-        [<JsonPropertyName(@"value")>]
         Value : string option
     }
 
