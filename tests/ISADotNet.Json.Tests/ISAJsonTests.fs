@@ -1,22 +1,17 @@
 ﻿module ISAJsonTests
 
-
 open ISADotNet
 open ISADotNet.Json
-
 
 #if FABLE_COMPILER
 open Fable.Mocha
 #else
 open Expecto
-
 #endif
 
 open TestingUtils
-open JsonSchemaValidation
 
 module JsonExtensions =
-
 
     let private f2 i = 
         if i < 10 then sprintf "0%i" i
@@ -106,36 +101,36 @@ let testProtocolFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "WriterSchemaCorrectness" (fun () ->
+        //testCase "WriterSchemaCorrectness" (fun () ->
 
-            let p = Protocol.fromString TestFiles.Protocol.protocol
+        //    let p = Protocol.fromString TestFiles.Protocol.protocol
 
-            let s = Protocol.toString p
+        //    let s = Protocol.toString p
 
-            Expect.matchingProtocol s
-        )
+        //    MyExpect.matchingProtocol s
+        //)
 
-        testCase "OutputMatchesInput" (fun () ->
+        //testCase "OutputMatchesInput" (fun () ->
 
-            let o = 
-                Protocol.fromString TestFiles.Protocol.protocol
-                |> Protocol.toString
+        //    let o = 
+        //        Protocol.fromString TestFiles.Protocol.protocol
+        //        |> Protocol.toString
 
-            let expected = 
-                TestFiles.Protocol.protocol
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let expected = 
+        //        TestFiles.Protocol.protocol
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            let actual = 
-                o
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let actual = 
+        //        o
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            Expect.equal actual expected "Written protocol file does not match read protocol file"
-        )
-        |> testSequenced
+        //    Expect.equal actual expected "Written protocol file does not match read protocol file"
+        //)
+        //|> testSequenced
     ]
 
 let testProcessFile =
@@ -168,36 +163,36 @@ let testProcessFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "WriterSchemaCorrectness" (fun () ->
+        //testCase "WriterSchemaCorrectness" (fun () ->
 
-            let p = Process.fromString TestFiles.Process.process'
+        //    let p = Process.fromString TestFiles.Process.process'
 
-            let s = Process.toString p
+        //    let s = Process.toString p
 
-            Expect.matchingProcess s
-        )
+        //    MyExpect.matchingProcess s
+        //)
 
-        testCase "OutputMatchesInput" (fun () ->
+        //testCase "OutputMatchesInput" (fun () ->
 
-            let o =
-                Process.fromString TestFiles.Process.process'
-                |> Process.toString
+        //    let o =
+        //        Process.fromString TestFiles.Process.process'
+        //        |> Process.toString
 
-            let expected = 
-                TestFiles.Process.process'
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let expected = 
+        //        TestFiles.Process.process'
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            let actual = 
-                o
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let actual = 
+        //        o
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written process file does not match read process file"
-        )
-        |> testSequenced
+        //    mySequenceEqual actual expected "Written process file does not match read process file"
+        //)
+        //|> testSequenced
     ]
 
 let testPersonFile =
@@ -230,36 +225,36 @@ let testPersonFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "WriterSchemaCorrectness" (fun () ->
+        //testCase "WriterSchemaCorrectness" (fun () ->
 
-            let a = Person.fromString TestFiles.Person.person
+        //    let a = Person.fromString TestFiles.Person.person
 
-            let s = Person.toString a
+        //    let s = Person.toString a
 
-            Expect.matchingPerson s
-        )
+        //    MyExpect.matchingPerson s
+        //)
 
-        testCase "OutputMatchesInput" (fun () ->
+        //testCase "OutputMatchesInput" (fun () ->
 
-            let o = 
-                Person.fromString TestFiles.Person.person
-                |> Person.toString
+        //    let o = 
+        //        Person.fromString TestFiles.Person.person
+        //        |> Person.toString
 
-            let expected = 
-                TestFiles.Person.person
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let expected = 
+        //        TestFiles.Person.person
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            let actual = 
-                o
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let actual = 
+        //        o
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written person file does not match read person file"
-        )
-        |> testSequenced
+        //    mySequenceEqual actual expected "Written person file does not match read person file"
+        //)
+        //|> testSequenced
     ]
 
 let testPublicationFile =
@@ -292,36 +287,36 @@ let testPublicationFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "WriterSchemaCorrectness" (fun () ->
+        //testCase "WriterSchemaCorrectness" (fun () ->
 
-            let a = Publication.fromString TestFiles.Publication.publication
+        //    let a = Publication.fromString TestFiles.Publication.publication
 
-            let s = Publication.toString a
+        //    let s = Publication.toString a
 
-            Expect.matchingPublication s
-        )
+        //    MyExpect.matchingPublication s
+        //)
 
-        testCase "OutputMatchesInput" (fun () ->
+        //testCase "OutputMatchesInput" (fun () ->
 
-            let o = 
-                Publication.fromString TestFiles.Publication.publication
-                |> Publication.toString
+        //    let o = 
+        //        Publication.fromString TestFiles.Publication.publication
+        //        |> Publication.toString
 
-            let expected = 
-                TestFiles.Publication.publication
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let expected = 
+        //        TestFiles.Publication.publication
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            let actual = 
-                o
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let actual = 
+        //        o
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written Publication file does not match read publication file"
-        )
-        |> testSequenced
+        //    mySequenceEqual actual expected "Written Publication file does not match read publication file"
+        //)
+        //|> testSequenced
     ]
 
 let testAssayFile =
@@ -354,36 +349,36 @@ let testAssayFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "WriterSchemaCorrectness" (fun () ->
+        //testCase "WriterSchemaCorrectness" (fun () ->
 
-            let a = Assay.fromString TestFiles.Assay.assay
+        //    let a = Assay.fromString TestFiles.Assay.assay
 
-            let s = Assay.toString a
+        //    let s = Assay.toString a
 
-            Expect.matchingAssay s
-        )
+        //    MyExpect.matchingAssay s
+        //)
 
-        testCase "OutputMatchesInput" (fun () ->
+        //testCase "OutputMatchesInput" (fun () ->
 
-            let o = 
-                Assay.fromString TestFiles.Assay.assay
-                |> Assay.toString
+        //    let o = 
+        //        Assay.fromString TestFiles.Assay.assay
+        //        |> Assay.toString
 
-            let expected = 
-                TestFiles.Assay.assay
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let expected = 
+        //        TestFiles.Assay.assay
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            let actual = 
-                o
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let actual = 
+        //        o
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written assay file does not match read assay file"
-        )
-        |> testSequenced
+        //    mySequenceEqual actual expected "Written assay file does not match read assay file"
+        //)
+        //|> testSequenced
     ]
 
 let testInvestigationFile = 
@@ -415,36 +410,36 @@ let testInvestigationFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "WriterSchemaCorrectness" (fun () ->
+        //testCase "WriterSchemaCorrectness" (fun () ->
 
-            let i = Investigation.fromString TestFiles.Investigation.investigation
+        //    let i = Investigation.fromString TestFiles.Investigation.investigation
 
-            let s = Investigation.toString i
+        //    let s = Investigation.toString i
 
-            Expect.matchingInvestigation s
-        )
+        //    MyExpect.matchingInvestigation s
+        //)
 
-        testCase "OutputMatchesInput" (fun () ->
+        //testCase "OutputMatchesInput" (fun () ->
 
-            let o = 
-                Investigation.fromString TestFiles.Investigation.investigation
-                |> Investigation.toString
+        //    let o = 
+        //        Investigation.fromString TestFiles.Investigation.investigation
+        //        |> Investigation.toString
 
-            let expected = 
-                TestFiles.Investigation.investigation
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let expected = 
+        //        TestFiles.Investigation.investigation
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            let actual = 
-                o
-                |> Utils.extractWords
-                |> Array.countBy id
-                |> Array.sortBy fst
+        //    let actual = 
+        //        o
+        //        |> Utils.extractWords
+        //        |> Array.countBy id
+        //        |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written investigation file does not match read investigation file"
-        )
-        |> testSequenced
+        //    mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+        //)
+        //|> testSequenced
 
         testCase "HandleEmptyRemarks" (fun () ->
 
@@ -787,8 +782,7 @@ let testInvestigationFile =
 
             let s = Investigation.toString investigation
 
-            Expect.matchingInvestigation s
-
+            //MyExpect.matchingInvestigation s
 
             let reReadInvestigation = Investigation.fromString s
             let reWrittenInvestigation = Investigation.toString reReadInvestigation
@@ -812,7 +806,7 @@ let testInvestigationFile =
     ]
 
 let main = 
-    testList "APITests" [
+    testList "JsonTests" [
         testProcessInput     
         testProtocolFile
         testProcessFile

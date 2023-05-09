@@ -15,16 +15,14 @@
     <Compile Include="TestObjects\Process.fs" />
     <Compile Include="TestObjects\Publication.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="JsonSchemaValidation.fs" />
     <Compile Include="JSchemaValidationTests.fs" />
     <Compile Include="ISAJsonTests.fs" />
-    <Compile Include="JsonExtensionsTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Expecto" Version="9.*" />
-    <PackageReference Include="Json.Net" Version="1.0.33" />
+    <!--<PackageReference Include="Json.Net" Version="1.0.33" />-->
     <PackageReference Include="Fable.Mocha" Version="2.16.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
@@ -35,6 +33,6 @@
 	<ItemGroup>
 		<!--Also includes ISADotNet-->
 		<ProjectReference Include="..\..\src\ISADotNet.Json\ISADotNet.Json.fsproj" />
-		<ProjectReference Include="..\..\src\ISADotNet.Validation\ISADotNet.Validation.fsproj" />
+		<!--<ProjectReference Include="..\..\src\ISADotNet.Validation\ISADotNet.Validation.fsproj" />-->
 	</ItemGroup>
 </Project>

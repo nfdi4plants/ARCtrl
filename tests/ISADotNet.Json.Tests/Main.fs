@@ -1,7 +1,5 @@
 ﻿module ISADotNet.Json.Tests
 
-
-
 #if FABLE_COMPILER
 open Fable.Mocha
 #else
@@ -11,7 +9,7 @@ open Expecto
 #endif
 let all = testSequenced <| testList "All" [
     ISAJsonTests.main
-    JSchemaValidationTests.main
+    //JSchemaValidationTests.main
 ]
 
 

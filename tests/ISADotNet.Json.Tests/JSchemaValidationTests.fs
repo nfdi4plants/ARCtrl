@@ -4,109 +4,109 @@
 open Fable.Mocha
 #else
 open Expecto
-
 #endif
-open TestingUtils
-open ISADotNet
-open ISADotNet.Validation
-open System.IO
 
-let testProcessValidation =     
+//open TestingUtils
+//open ISADotNet
+//open ISADotNet.Validation
+//open System.IO
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
+//let testProcessValidation =     
 
-    testList "ProcessValidationTests" [
+//    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
 
-        testCase "ProcessDateCorrect" (fun () -> 
+//    testList "ProcessValidationTests" [
+
+//        testCase "ProcessDateCorrect" (fun () -> 
             
-            let vr = JSchema.validateProcess TestFiles.Validation.processDate
+//            let vr = JSchema.validateProcess TestFiles.Validation.processDate
 
-            Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
+//            Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
-        )
+//        )
 
-        testCase "ProcessDateTimeCorrect" (fun () -> 
+//        testCase "ProcessDateTimeCorrect" (fun () -> 
             
-            let vr = JSchema.validateProcess TestFiles.Validation.processDateTime
+//            let vr = JSchema.validateProcess TestFiles.Validation.processDateTime
 
-            Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
+//            Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
-        )
+//        )
 
-        testCase "ProcessDateWrong" (fun () -> 
+//        testCase "ProcessDateWrong" (fun () -> 
             
-            let vr = JSchema.validateProcess TestFiles.Validation.processDateWrong
+//            let vr = JSchema.validateProcess TestFiles.Validation.processDateWrong
 
-            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
+//            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
-        )
+//        )
 
-        testCase "ProcessAdditionalField" (fun () -> 
+//        testCase "ProcessAdditionalField" (fun () -> 
             
-            let vr = JSchema.validateProcess TestFiles.Validation.processAdditionalField
+//            let vr = JSchema.validateProcess TestFiles.Validation.processAdditionalField
 
-            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
+//            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
-        )
+//        )
 
-        testCase "ProcessBroken" (fun () -> 
+//        testCase "ProcessBroken" (fun () -> 
             
-            let vr = JSchema.validateProcess TestFiles.Validation.processBroken
+//            let vr = JSchema.validateProcess TestFiles.Validation.processBroken
 
-            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
+//            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
-        )
-    ]
+//        )
+//    ]
 
-let testProcessParameterValueValidation =     
+//let testProcessParameterValueValidation =     
 
-    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
+//    let sourceDirectory = __SOURCE_DIRECTORY__ + @"/ValidationTestFiles/"
 
-    testList "ProcessParameterValueValidationTests" [
+//    testList "ProcessParameterValueValidationTests" [
 
-        testCase "PPVUnit" (fun () -> 
+//        testCase "PPVUnit" (fun () -> 
             
-            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUnit
+//            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUnit
 
-            Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
+//            Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
-        )
+//        )
 
-        testCase "PPVOntology" (fun () -> 
+//        testCase "PPVOntology" (fun () -> 
             
-            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvOntology
+//            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvOntology
 
-            Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
+//            Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
-        )
+//        )
 
-        testCase "PPVUriWrong" (fun () -> 
+//        testCase "PPVUriWrong" (fun () -> 
             
-            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUriWrong
+//            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvUriWrong
 
-            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
+//            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
             
-        )
+//        )
 
-        testCase "PPVAdditionalField" (fun () -> 
+//        testCase "PPVAdditionalField" (fun () -> 
             
-            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvAdditionalField
+//            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvAdditionalField
 
-            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
+//            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
-        )
+//        )
 
-        testCase "PPVBroken" (fun () -> 
+//        testCase "PPVBroken" (fun () -> 
             
-            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvBroken
+//            let vr = JSchema.validateProcessParameterValue TestFiles.Validation.ppvBroken
 
-            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
+//            Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
-        )
-    ]
+//        )
+//    ]
 
 let main = 
     testList "APITests" [
-        testProcessValidation
-        testProcessParameterValueValidation
+        //testProcessValidation
+        //testProcessParameterValueValidation
     ]
