@@ -1,4 +1,4 @@
-﻿module TestFiles.Validation 
+﻿module TestObjects.Validation 
 
 let processDateWrong = 
     """

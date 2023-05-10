@@ -1,7 +1,8 @@
-﻿module ISAJsonTests
+﻿module Json.Tests
 
 open ISADotNet
 open ISADotNet.Json
+open ISADotNet
 
 #if FABLE_COMPILER
 open Fable.Core
@@ -51,7 +52,7 @@ module JsonExtensions =
 
 let testEncode =
 
-    testList "EncodeTests" [
+    testList "Encode" [
         testCase "tryGetPropertyValueExists" (fun () -> 
             
             let oa = ISADotNet.OntologyAnnotation.fromString "MyAnnotation" "ABC:123" "ABC" 
@@ -107,7 +108,7 @@ let testEncode =
 
 let testDecode =
 
-    testList "DecodeTests" [
+    testList "Decode" [
         testCase "getFieldNames" (fun () -> 
             
             let s = 
@@ -133,11 +134,11 @@ let testDecode =
     ]
 
 let testOntoloyAnnotation =
-    testList "OntologyAnnotationTests" [
+    testList "OntologyAnnotation" [
         
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromString TestFiles.OntologyAnnotation.peptidase
+                let result = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidase
 
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
@@ -148,11 +149,11 @@ let testOntoloyAnnotation =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString TestFiles.OntologyAnnotation.peptidase
+                let o_read_in = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidase
                 let o_out = OntologyAnnotation.toString o_read_in
 
                 let expected = 
-                    TestFiles.OntologyAnnotation.peptidase
+                    TestObjects.OntologyAnnotation.peptidase
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -166,11 +167,11 @@ let testOntoloyAnnotation =
 
 let testProcessInput =
 
-    testList "ProcessInputTests" [
+    testList "ProcessInput" [
         testList "Source" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestFiles.ProcessInput.source
+                let result = ProcessInput.fromString TestObjects.ProcessInput.source
 
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
@@ -181,11 +182,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.source
+                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.source
                 let o_out = ProcessInput.toString o_read_in
 
                 let expected = 
-                    TestFiles.ProcessInput.source
+                    TestObjects.ProcessInput.source
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -198,7 +199,7 @@ let testProcessInput =
         testList "Material" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestFiles.ProcessInput.material
+                let result = ProcessInput.fromString TestObjects.ProcessInput.material
 
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
@@ -210,11 +211,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.material
+                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.material
                 let o_out = ProcessInput.toString o_read_in
 
                 let expected = 
-                    TestFiles.ProcessInput.material
+                    TestObjects.ProcessInput.material
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -227,7 +228,7 @@ let testProcessInput =
         testList "Data" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestFiles.ProcessInput.data
+                let result = ProcessInput.fromString TestObjects.ProcessInput.data
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
                 Expect.isTrue (API.ProcessInput.isData result) "Result is not a data"
@@ -235,11 +236,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.data
+                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.data
                     let o_out = ProcessInput.toString o_read_in
 
                     let expected = 
-                        TestFiles.ProcessInput.data
+                        TestObjects.ProcessInput.data
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -252,7 +253,7 @@ let testProcessInput =
         testList "Sample" [
             testCase "ReaderSuccessSimple" (fun () -> 
            
-                let result = ProcessInput.fromString TestFiles.ProcessInput.sampleSimple
+                let result = ProcessInput.fromString TestObjects.ProcessInput.sampleSimple
 
                 let expectedDerivesFrom = [Source.create("#source/source-culture8")]
 
@@ -265,11 +266,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInputSimple" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.sampleSimple
+                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.sampleSimple
                     let o_out = ProcessInput.toString o_read_in
 
                     let expected = 
-                        TestFiles.ProcessInput.sampleSimple
+                        TestObjects.ProcessInput.sampleSimple
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -283,7 +284,7 @@ let testProcessInput =
 
 let testProtocolFile =
 
-    testList "ProtocolJsonTests" [
+    testList "Protocol" [
         testCase "ReaderRunning" (fun () -> 
             let readingSuccess = 
                 try 
@@ -295,7 +296,7 @@ let testProtocolFile =
         )
         testCase "ReaderSuccess" (fun () -> 
             
-            let protocol = Protocol.fromString TestFiles.Protocol.protocol
+            let protocol = Protocol.fromString TestObjects.Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual = protocol.Name 
             Expect.isSome actual "Should be some"
@@ -304,7 +305,7 @@ let testProtocolFile =
 
         testCase "WriterRunning" (fun () ->
 
-            let p = Protocol.fromString TestFiles.Protocol.protocol
+            let p = Protocol.fromString TestObjects.Protocol.protocol
 
             let writingSuccess = 
                 try 
@@ -318,7 +319,7 @@ let testProtocolFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let p = Protocol.fromString TestFiles.Protocol.protocol
+            let p = Protocol.fromString TestObjects.Protocol.protocol
 
             let s = Protocol.toString p
 
@@ -329,7 +330,7 @@ let testProtocolFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let o_read_in = Protocol.fromString TestFiles.Protocol.protocol
+            let o_read_in = Protocol.fromString TestObjects.Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
@@ -338,7 +339,7 @@ let testProtocolFile =
             let o = o_read_in |> Protocol.toString
 
             let expected = 
-                TestFiles.Protocol.protocol
+                TestObjects.Protocol.protocol
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -355,12 +356,12 @@ let testProtocolFile =
 
 let testProcessFile =
 
-    testList "ProcessJsonTests" [
+    testList "Process" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Process.fromString TestFiles.Process.process' |> ignore
+                    Process.fromString TestObjects.Process.process' |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -371,7 +372,7 @@ let testProcessFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromString TestFiles.Process.process'
+            let p = Process.fromString TestObjects.Process.process'
 
             let writingSuccess = 
                 try 
@@ -385,7 +386,7 @@ let testProcessFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let p = Process.fromString TestFiles.Process.process'
+            let p = Process.fromString TestObjects.Process.process'
 
             let s = Process.toString p
 
@@ -397,11 +398,11 @@ let testProcessFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o =
-                Process.fromString TestFiles.Process.process'
+                Process.fromString TestObjects.Process.process'
                 |> Process.toString
 
             let expected = 
-                TestFiles.Process.process'
+                TestObjects.Process.process'
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -418,12 +419,12 @@ let testProcessFile =
 
 let testPersonFile =
 
-    testList "PersonJsonTests" [
+    testList "Person" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Person.fromString TestFiles.Person.person |> ignore
+                    Person.fromString TestObjects.Person.person |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -434,7 +435,7 @@ let testPersonFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Person.fromString TestFiles.Person.person
+            let a = Person.fromString TestObjects.Person.person
 
             let writingSuccess = 
                 try 
@@ -448,7 +449,7 @@ let testPersonFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Person.fromString TestFiles.Person.person
+            let a = Person.fromString TestObjects.Person.person
 
             let s = Person.toString a
 
@@ -460,11 +461,11 @@ let testPersonFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Person.fromString TestFiles.Person.person
+                Person.fromString TestObjects.Person.person
                 |> Person.toString
 
             let expected = 
-                TestFiles.Person.person
+                TestObjects.Person.person
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -481,12 +482,12 @@ let testPersonFile =
 
 let testPublicationFile =
 
-    testList "PublicationJsonTests" [
+    testList "Publication" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Publication.fromString TestFiles.Publication.publication |> ignore
+                    Publication.fromString TestObjects.Publication.publication |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -497,7 +498,7 @@ let testPublicationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Publication.fromString TestFiles.Publication.publication
+            let a = Publication.fromString TestObjects.Publication.publication
 
             let writingSuccess = 
                 try 
@@ -511,7 +512,7 @@ let testPublicationFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Publication.fromString TestFiles.Publication.publication
+            let a = Publication.fromString TestObjects.Publication.publication
 
             let s = Publication.toString a
 
@@ -523,11 +524,11 @@ let testPublicationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Publication.fromString TestFiles.Publication.publication
+                Publication.fromString TestObjects.Publication.publication
                 |> Publication.toString
 
             let expected = 
-                TestFiles.Publication.publication
+                TestObjects.Publication.publication
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -544,12 +545,12 @@ let testPublicationFile =
 
 let testAssayFile =
 
-    testList "AssayJsonTests" [
+    testList "Assay" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Assay.fromString TestFiles.Assay.assay |> ignore
+                    Assay.fromString TestObjects.Assay.assay |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -560,7 +561,7 @@ let testAssayFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Assay.fromString TestFiles.Assay.assay
+            let a = Assay.fromString TestObjects.Assay.assay
 
             let writingSuccess = 
                 try 
@@ -574,7 +575,7 @@ let testAssayFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Assay.fromString TestFiles.Assay.assay
+            let a = Assay.fromString TestObjects.Assay.assay
 
             let s = Assay.toString a
 
@@ -586,11 +587,11 @@ let testAssayFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Assay.fromString TestFiles.Assay.assay
+                Assay.fromString TestObjects.Assay.assay
                 |> Assay.toString
 
             let expected = 
-                TestFiles.Assay.assay
+                TestObjects.Assay.assay
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -607,12 +608,12 @@ let testAssayFile =
 
 let testInvestigationFile = 
 
-    testList "InvestigationJsonTests" [
+    testList "Investigation" [
         testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Investigation.fromString TestFiles.Investigation.investigation |> ignore
+                    Investigation.fromString TestObjects.Investigation.investigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
@@ -622,7 +623,7 @@ let testInvestigationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let i = Investigation.fromString TestFiles.Investigation.investigation
+            let i = Investigation.fromString TestObjects.Investigation.investigation
 
             let writingSuccess = 
                 try 
@@ -636,7 +637,7 @@ let testInvestigationFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let i = Investigation.fromString TestFiles.Investigation.investigation
+            let i = Investigation.fromString TestObjects.Investigation.investigation
 
             let s = Investigation.toString i
 
@@ -648,11 +649,11 @@ let testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Investigation.fromString TestFiles.Investigation.investigation
+                Investigation.fromString TestObjects.Investigation.investigation
                 |> Investigation.toString
 
             let expected = 
-                TestFiles.Investigation.investigation
+                TestObjects.Investigation.investigation
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1027,7 +1028,7 @@ let testInvestigationFile =
     ]
 
 let main = 
-    testList "JsonTests" [
+    testList "Json" [
         testEncode
         testDecode
         testOntoloyAnnotation

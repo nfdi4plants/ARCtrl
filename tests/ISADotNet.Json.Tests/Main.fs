@@ -8,7 +8,7 @@ open Expecto
 [<Tests>]
 #endif
 let all = testSequenced <| testList "All" [
-    ISAJsonTests.main
+    Json.Tests.main
     JsonSchema.Tests.main
 ]
 

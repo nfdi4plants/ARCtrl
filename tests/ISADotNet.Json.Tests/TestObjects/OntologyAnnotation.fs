@@ -1,4 +1,4 @@
-﻿module TestFiles.OntologyAnnotation
+﻿module TestObjects.OntologyAnnotation
     
 let peptidase = 
     """{

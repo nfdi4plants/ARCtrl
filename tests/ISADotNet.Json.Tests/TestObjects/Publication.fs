@@ -1,4 +1,4 @@
-﻿module TestFiles.Publication
+﻿module TestObjects.Publication
 
 let publication =
 

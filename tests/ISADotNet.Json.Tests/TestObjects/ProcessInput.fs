@@ -1,4 +1,4 @@
-﻿module TestFiles.ProcessInput 
+﻿module TestObjects.ProcessInput 
 
 let sampleSimple = 
     """

@@ -1,4 +1,4 @@
-﻿module TestFiles.Assay
+﻿module TestObjects.Assay
 
 let assay =
     """

@@ -44,7 +44,7 @@ let tests_Process =
 
         testAsync "ProcessDateCorrect" { 
             
-            let! vr = Validation.validateProcess TestFiles.Validation.processDate
+            let! vr = Validation.validateProcess TestObjects.Validation.processDate
 
             Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -52,7 +52,7 @@ let tests_Process =
 
         testAsync "ProcessDateTimeCorrect" {
             
-            let! vr = Validation.validateProcess TestFiles.Validation.processDateTime
+            let! vr = Validation.validateProcess TestObjects.Validation.processDateTime
 
             Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -60,7 +60,7 @@ let tests_Process =
 
         testAsync "ProcessDateWrong" {
             
-            let! vr = Validation.validateProcess TestFiles.Validation.processDateWrong
+            let! vr = Validation.validateProcess TestObjects.Validation.processDateWrong
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -68,7 +68,7 @@ let tests_Process =
 
         testAsync "ProcessAdditionalField" {
             
-            let! vr = Validation.validateProcess TestFiles.Validation.processAdditionalField
+            let! vr = Validation.validateProcess TestObjects.Validation.processAdditionalField
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -76,7 +76,7 @@ let tests_Process =
 
         testAsync "ProcessBroken" {
             
-            let! vr = Validation.validateProcess TestFiles.Validation.processBroken
+            let! vr = Validation.validateProcess TestObjects.Validation.processBroken
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -89,7 +89,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVUnit" { 
             
-            let! vr = Validation.validateProcessParameterValue TestFiles.Validation.ppvUnit
+            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvUnit
 
             Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -97,7 +97,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVOntology" { 
             
-            let! vr = Validation.validateProcessParameterValue TestFiles.Validation.ppvOntology
+            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvOntology
 
             Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -105,7 +105,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVUriWrong" { 
             
-            let! vr = Validation.validateProcessParameterValue TestFiles.Validation.ppvUriWrong
+            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvUriWrong
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
             
@@ -113,7 +113,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVAdditionalField" { 
             
-            let! vr = Validation.validateProcessParameterValue TestFiles.Validation.ppvAdditionalField
+            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvAdditionalField
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -121,7 +121,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVBroken" { 
             
-            let! vr = Validation.validateProcessParameterValue TestFiles.Validation.ppvBroken
+            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvBroken
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 

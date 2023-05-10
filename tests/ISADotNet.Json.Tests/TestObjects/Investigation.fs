@@ -1,4 +1,4 @@
-﻿module TestFiles.Investigation
+﻿module TestObjects.Investigation
 
 let investigation =
 

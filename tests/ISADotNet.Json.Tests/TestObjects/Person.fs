@@ -1,4 +1,4 @@
-﻿module TestFiles.Person
+﻿module TestObjects.Person
 
 let person = 
     """
