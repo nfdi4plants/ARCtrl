@@ -1,4 +1,4 @@
-﻿namespace ISADotNet.Validation
+﻿namespace ISADotNet
 
 module JsonSchemaUrls =
     
@@ -62,13 +62,11 @@ module JsonSchemaUrls =
     [<LiteralAttribute>]
     let Study = "https://raw.githubusercontent.com/HLWeil/isa-specs/anyof/source/_static/isajson/study_schema.json"
 
+open ISADotNet.Validation
+
+#if !FABLE_COMPILER
 module JSchema = 
    
-#if FABLE_COMPILER
-    let validate (schemaURL : string) (objectString : string) = 
-        ValidationResult.Ok
-#else
-
     let tryDownloadSchema (schemaURL : string) = 
         let rec download (tryNum) =
             try NJsonSchema.JsonSchema.FromUrlAsync(schemaURL) 
@@ -78,18 +76,33 @@ module JSchema =
                 download (tryNum + 1)
             | err -> failwith $"Could not download schema from url {schemaURL}: \n{err.Message}"
         download 1
+#endif
+
+module Validation =
 
     let validate (schemaURL : string) (objectString : string) = 
-        
-        try 
-            let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
-            let schema = tryDownloadSchema schemaURL
-            let r = schema.Result.Validate(objectString,settings)
+        async {
+            try 
+                #if FABLE_COMPILER
+                let! isValid, errorList = Fable.validate (schemaURL) (objectString)
+                #else
+                let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
+                let schema = JSchema.tryDownloadSchema schemaURL
+                let r = schema.Result.Validate(objectString,settings)
+                let isValid = (Seq.length r) = 0
+                let errorList = 
+                    r  
+                    |> Seq.map (fun err -> err.ToString()) 
+                    |> Seq.toArray
+                #endif 
+                // if you change isValid and errorList remember to check for fable compatibility.
+                // for exmaple must use same name as in `let! isValid, errorList =...`
+                return ValidationResult.OfJSchemaOutput(isValid, errorList)
+            with
+            | err -> 
+                return Failed [|err.Message|]
+        }
 
-            ValidationResult.OfJSchemaOutput(r |> Seq.length |> (=) 0,r |> Seq.map (fun err -> err.ToString()) |> Seq.toArray)
-        with
-        | err -> Failed [|err.Message|]
-#endif 
     let validateAssay (assayString : string) = validate JsonSchemaUrls.Assay assayString
 
     let validateComment (commentString : string) = validate JsonSchemaUrls.Comment commentString

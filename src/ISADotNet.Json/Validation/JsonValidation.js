@@ -32,24 +32,29 @@ const personInstance = `{
   }`
 
 function resolveUrl(baseurl, relative) {
-    parts = baseurl.split('/');
-    parts.pop();
-    baseurl = parts.join('/');
-    baseurl = baseurl + relative
-    let newUrl = new URL(baseurl)
-    return newUrl;
+    try {
+        let parts = '';
+        parts = baseurl.split('/');
+        parts.pop();
+        baseurl = parts.join('/');
+        baseurl = baseurl + relative
+        let newUrl = new URL(baseurl)
+        return newUrl;
+    } catch (error) {
+        console.error("Unable to resolve reference schema url: ", error)
+    }
 }
 
 function getSchema(nextSchema, callback) {
     let rawData = '';
-    console.log("Get next ref:", nextSchema)
+    // console.log("Get next ref:", nextSchema)
     https.get(nextSchema, res => {
         res.on('data', chunk => { rawData += chunk }) 
         res.on('end', () => { 
             try {
                 const schemaParsed = JSON.parse(rawData);
                 callback(schemaParsed)
-                console.log("Finish:", nextSchema)
+                // console.log("Finish:", nextSchema)
             } catch (e) {
                 console.error(e.message);
             }
@@ -67,77 +72,47 @@ function validateAgainstSchema(instance, schemaUrl) {
     const instanceParsed = JSON.parse(instance)
     var v = new Validator();
     return new Promise((resolve, reject) => {
-      https.get(schemaUrl, res => {
-        let data = '';
-  
-        // A chunk of data has been received
-        res.on('data', chunk => { data += chunk });
-  
-        // The whole response has been received
-        res.on('end', () => {
-          try {
-            const schemaParsed = JSON.parse(data);
-            v.addSchema(schemaParsed);
-            function importNextSchema(){
-                let nextSchema = v.unresolvedRefs.shift();
-                if(!nextSchema){ 
-                    let validation = v.validate(instanceParsed, schemaParsed);
-                    resolve(validation);
-                } else {
-                    const nextSchemaUrl = resolveUrl(schemaUrl, nextSchema).href
-                    getSchema(nextSchemaUrl, function(schema){
-                        v.addSchema(schema, nextSchema)
-                        importNextSchema();
-                    });
+        https.get(schemaUrl, res => {
+            let data = '';
+            // console.log("[JS] Start")
+            // A chunk of data has been received
+            res.on('data', chunk => { data += chunk });
+            
+            // The whole response has been received
+            res.on('end', () => {
+                try {
+                    // console.log("[JS] parse schema")
+                    const schemaParsed = JSON.parse(data);
+                    // console.log("[JS] add main parse schema")
+                    v.addSchema(schemaParsed);
+                    // console.log("[JS] start import ref schema")
+                    function importNextSchema(){
+                        let nextSchema = v.unresolvedRefs.shift();
+                        // console.log("[JS] start resolving ref schema")
+                        if(!nextSchema){ 
+                            // console.log("[JS] start validate")
+                            let validation = v.validate(instanceParsed, schemaParsed);
+                            // console.log("[JS] finish validate")
+                            resolve(validation);
+                        } else {
+                            const nextSchemaUrl = resolveUrl(schemaUrl, nextSchema).href
+                            getSchema(nextSchemaUrl, function(schema){
+                                // console.log("[JS] get ref schema:", schema)
+                                v.addSchema(schema, nextSchema)
+                                importNextSchema();
+                            });
+                        }
+                    }
+                    importNextSchema()
+                } catch (e) {
+                    reject(e);
                 }
-            }
-            importNextSchema()
-          } catch (e) {
-            reject(e);
-          }
+            });
+        }).on('error', err => {
+            reject(err);
         });
-      }).on('error', err => {
-        reject(err);
-      });
     });
 }
-
-//   function validateAgainstSchema(instance, schemaUrl) {
-//     const instanceParsed = JSON.parse(instance)
-//     var v = new Validator();
-//     let rawData = '';
-//     https.get(schemaUrl, res => {
-
-//         res.on('data', chunk => { rawData += chunk }) 
-
-//         res.on('end', () => {
-//             try {
-//                 const schemaParsed = JSON.parse(rawData);
-//                 v.addSchema(schemaParsed);
-//                 console.log("[Init Schema]")
-//                 function importNextSchema(){
-//                     let nextSchema = v.unresolvedRefs.shift();
-//                     if(!nextSchema){ 
-//                         console.log("[Start Validation]");
-//                         let validation = v.validate(instanceParsed, schemaParsed);
-//                         result = validation
-//                         console.log("[Result]", result);
-//                     } else {
-//                         const nextSchemaUrl = resolveUrl(schemaUrl, nextSchema).href
-//                         getSchema(nextSchemaUrl, function(schema){
-//                             v.addSchema(schema, nextSchema)
-//                             importNextSchema();
-//                         });
-//                     }
-//                 }
-//                 importNextSchema()
-//             } catch (e) {
-//                 console.error(e.message);
-//             }
-//         })
-//     }) 
-//     return result
-// };
 
 function helloWorld () {
     return "Hello World"
