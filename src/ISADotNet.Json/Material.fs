@@ -76,8 +76,8 @@ module MaterialAttributeValue =
     
     let genID (m:MaterialAttributeValue) = 
         match m.ID with
-            | Some id -> URI.toString id
-            | None -> "#EmptyMaterialAttributeValue"
+        | Some id -> URI.toString id
+        | None -> "#EmptyMaterialAttributeValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

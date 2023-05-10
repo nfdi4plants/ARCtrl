@@ -38,10 +38,10 @@ module OntologySourceReference =
     
     let genID (o:OntologySourceReference) = 
         match o.File with
-            | Some f -> f
-            | None -> match o.Name with
-                        | Some n -> n
-                        | None -> "#DummyOntologySourceRef"
+        | Some f -> f
+        | None -> match o.Name with
+                  | Some n -> n
+                  | None -> "#DummyOntologySourceRef"
 
     let encoder (options : ConverterOptions) (osr : obj) = 
         [
@@ -90,12 +90,12 @@ module OntologyAnnotation =
     
     let genID (o:OntologyAnnotation) = 
         match o.ID with
-            | Some id -> URI.toString id
-            | None -> match o.TermAccessionNumber with
-                        | Some ta -> URI.toString ta
-                        | None -> match o.TermSourceREF with
-                                    | Some r -> "#" + r
-                                    | None -> "#DummyOntologySourceRef"
+        | Some id -> URI.toString id
+        | None -> match o.TermAccessionNumber with
+                  | Some ta -> URI.toString ta
+                  | None -> match o.TermSourceREF with
+                            | Some r -> "#" + r
+                            | None -> "#DummyOntologySourceRef"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

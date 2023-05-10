@@ -57,10 +57,10 @@ module Factor =
     
     let genID (f:Factor) = 
         match f.ID with
-            | Some id -> URI.toString id
-            | None -> match f.Name with
-                        | Some n -> "#Factor_" + n
-                        | None -> "#EmptyFactor"
+        | Some id -> URI.toString id
+        | None -> match f.Name with
+                  | Some n -> "#Factor_" + n
+                  | None -> "#EmptyFactor"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
@@ -108,8 +108,8 @@ module FactorValue =
     
     let genID (fv:FactorValue) = 
         match fv.ID with
-            | Some id -> URI.toString id
-            | None -> "#EmptyFactorValue"
+        | Some id -> URI.toString id
+        | None -> "#EmptyFactorValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

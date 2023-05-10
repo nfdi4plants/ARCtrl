@@ -32,10 +32,10 @@ module Assay =
     
     let genID (a:Assay) = 
         match a.ID with
-            | Some id -> URI.toString id
-            | None -> match a.FileName with
-                        | Some n -> n
-                        | None -> "#EmptyAssay"
+        | Some id -> URI.toString id
+        | None -> match a.FileName with
+                  | Some n -> n
+                  | None -> "#EmptyAssay"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

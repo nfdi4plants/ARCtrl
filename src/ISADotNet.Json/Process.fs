@@ -12,14 +12,9 @@ open GEncode
 module ProcessParameterValue =
     
     let genID (p:ProcessParameterValue) = 
-        "#Dummy"
-        // match (p.Value,p.Category) with
-        //     | (Some v, Some c) -> match v with
-        //                             | Int vI -> ""
-        //                             | Float vF -> ""
-        //                             | Name n -> ""
-        //                             | Ontology o -> ""
-        //     | _ -> "#EmptyMaterialAttribute"
+        match (p.Value,p.Category) with
+        | (Some v, Some c) -> "#Param_" + (API.ProtocolParameter.getNameAsStringWithNumber c) + (API.Value.toString v)
+        | _ -> "#EmptyMaterialAttribute"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
 

@@ -14,10 +14,10 @@ module Comment =
     
     let genID (c:Comment) = 
         match c.ID with
-            | Some id -> URI.toString id
-            | None -> match c.Name with
-                        | Some n -> "#Comment_" + n
-                        | None -> "#EmptyComment"
+        | Some id -> URI.toString id
+        | None -> match c.Name with
+                  | Some n -> "#Comment_" + n
+                  | None -> "#EmptyComment"
 
     let encoder (options : ConverterOptions) (comment : obj) = 
         [

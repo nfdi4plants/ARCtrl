@@ -12,8 +12,8 @@ module ProtocolParameter =
     
     let genID (pp:ProtocolParameter) = 
         match pp.ID with
-            | Some id -> URI.toString id
-            | None -> "#EmptyProtocolParameter"
+        | Some id -> URI.toString id
+        | None -> "#EmptyProtocolParameter"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
@@ -56,8 +56,8 @@ module Component =
     
     let genID (c:Component) = 
         match c.ComponentName with
-            | Some cn -> "#Component_" + cn
-            | None -> "#EmptyComponent"
+        | Some cn -> "#Component_" + cn
+        | None -> "#EmptyComponent"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
@@ -111,12 +111,12 @@ module Protocol =
     
     let genID (p:Protocol) = 
         match p.ID with
-            | Some id -> URI.toString id
-            | None -> match p.Uri with
-                        | Some u -> URI.toString u
-                        | None -> match p.Name with
-                                    | Some n -> "#Protocol_" + n
-                                    | None -> "#EmptyComponent" 
+        | Some id -> URI.toString id
+        | None -> match p.Uri with
+                  | Some u -> URI.toString u
+                  | None -> match p.Name with
+                            | Some n -> "#Protocol_" + n
+                            | None -> "#EmptyComponent" 
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

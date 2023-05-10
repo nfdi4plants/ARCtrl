@@ -13,12 +13,12 @@ module Publication =
     
     let genID (p:Publication) = 
         match p.DOI with
-            | Some doi -> doi
-            | None -> match p.PubMedID with
-                        | Some id -> URI.toString id
-                        | None -> match p.Title with
-                                    | Some t -> "#Pub_" + t
-                                    | None -> "#EmptyPublication"
+        | Some doi -> doi
+        | None -> match p.PubMedID with
+                  | Some id -> id
+                  | None -> match p.Title with
+                            | Some t -> "#Pub_" + t
+                            | None -> "#EmptyPublication"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
