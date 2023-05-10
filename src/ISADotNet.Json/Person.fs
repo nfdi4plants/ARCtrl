@@ -9,11 +9,34 @@ open ISADotNet
 open System.IO
 open GEncode
 
-module Person =    
+module Person =   
+    
+    let genID (p:Person) = 
+        match p.ID with
+        | Some id -> URI.toString id
+        | None -> 
+            let ol = if p.Comments.IsNone then []
+                     else match p.Comments with
+                          | Some cl -> cl |> List.choose (fun c -> match (c.Name,c.Value) with
+                                                                   | (Some n,Some v) -> if (n="orcid" || n="Orcid" || n="ORCID") then Some v else None
+                                                                   | _ -> None )
+                          | None -> []
+            match ol with
+            | head::tail -> head
+            | [] -> match p.EMail with
+                    | Some e -> e.ToString()
+                    | None -> match (p.FirstName,p.MidInitials,p.LastName) with 
+                              | (Some fn,Some mn,Some ln) -> "#" + fn.Replace(" ","_") + "_" + mn.Replace(" ","_") + "_" + ln.Replace(" ","_")
+                              | (Some fn,None,Some ln) -> "#" + fn.Replace(" ","_") + "_" + ln.Replace(" ","_")
+                              | (None,None,Some ln) -> "#" + ln.Replace(" ","_")
+                              | (Some fn,None,None) -> "#" + fn.Replace(" ","_")
+                              | _ -> "#EmptyPerson"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Person |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Person"
             tryInclude "firstName" GEncode.string (oa |> tryGetPropertyValue "FirstName")
             tryInclude "lastName" GEncode.string (oa |> tryGetPropertyValue "LastName")
             tryInclude "midInitials" GEncode.string (oa |> tryGetPropertyValue "MidInitials")
@@ -51,6 +74,11 @@ module Person =
 
     let toString (p:Person) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (p:Person) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

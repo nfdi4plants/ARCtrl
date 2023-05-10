@@ -10,9 +10,20 @@ open System.IO
 open GEncode
 
 module Publication =    
+    
+    let genID (p:Publication) = 
+        match p.DOI with
+            | Some doi -> doi
+            | None -> match p.PubMedID with
+                        | Some id -> URI.toString id
+                        | None -> match p.Title with
+                                    | Some t -> "#Pub_" + t
+                                    | None -> "#EmptyPublication"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
+            if options.SetID then "@id", GEncode.string (oa :?> Publication |> genID)
+            if options.IncludeType then "@type", GEncode.string "Publication"
             tryInclude "pubMedID" GEncode.string (oa |> tryGetPropertyValue "PubMedID")
             tryInclude "doi" GEncode.string (oa |> tryGetPropertyValue "DOI")
             tryInclude "authorList" GEncode.string (oa |> tryGetPropertyValue "Authors")
@@ -41,6 +52,11 @@ module Publication =
 
     let toString (p:Publication) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (p:Publication) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
