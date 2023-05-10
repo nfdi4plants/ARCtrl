@@ -34,4 +34,15 @@
   <ItemGroup>
     <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
   </ItemGroup>
+
+  <!-- Add source files to "fable" folder in Nuget package -->
+  <ItemGroup>
+  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  </ItemGroup>
+  <PropertyGroup>
+  	<NpmDependencies>
+  		<NpmPackage Name="jsonschema" Version="1.1.0" ResolutionStrategy="Max" />
+  		<NpmPackage Name="fable-library" Version="1.4.1" ResolutionStrategy="Max" />
+  	</NpmDependencies>
+  </PropertyGroup>
 </Project>
