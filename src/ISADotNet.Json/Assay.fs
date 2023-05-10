@@ -29,11 +29,19 @@ module AssayMaterials =
         )
 
 module Assay = 
+    
+    let genID (a:Assay) = 
+        match a.ID with
+            | Some id -> URI.toString id
+            | None -> match a.FileName with
+                        | Some n -> n
+                        | None -> "#EmptyAssay"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Assay |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Assay"
             tryInclude "filename" GEncode.string (oa |> tryGetPropertyValue "FileName")
             tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "MeasurementType")
             tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "TechnologyType")
@@ -70,6 +78,11 @@ module Assay =
 
     let toString (p:Assay) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (a:Assay) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

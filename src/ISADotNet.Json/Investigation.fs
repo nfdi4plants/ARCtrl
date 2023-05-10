@@ -11,10 +11,22 @@ open GEncode
 
 module Investigation =
     
+    
+    let genID (i:Investigation) = 
+        match i.ID with
+        | Some id -> URI.toString id
+        | None -> match i.FileName with
+                  | Some n -> n
+                  | None -> match i.Identifier with
+                            | Some id -> "#Study_" + id
+                            | None -> match i.Title with
+                                      | Some t -> "#Study_" + t
+                                      | None -> "#EmptyStudy"
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Investigation |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Investigation"
             tryInclude "filename" GEncode.string (oa |> tryGetPropertyValue "FileName")
             tryInclude "identifier" GEncode.string (oa |> tryGetPropertyValue "Identifier")
             tryInclude "title" GEncode.string (oa |> tryGetPropertyValue "Title")
@@ -54,6 +66,11 @@ module Investigation =
 
     let toString (p:Investigation) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (i:Investigation) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) i
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

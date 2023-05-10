@@ -32,10 +32,22 @@ module StudyMaterials =
 
 module Study =
     
+    let genID (s:Study) = 
+        match s.ID with
+        | Some id -> URI.toString id
+        | None -> match s.FileName with
+                  | Some n -> n
+                  | None -> match s.Identifier with
+                            | Some id -> "#Study_" + id
+                            | None -> match s.Title with
+                                      | Some t -> "#Study_" + t
+                                      | None -> "#EmptyStudy"
+    
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Study |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Study"
             tryInclude "filename" GEncode.string (oa |> tryGetPropertyValue "FileName")
             tryInclude "identifier" GEncode.string (oa |> tryGetPropertyValue "Identifier")
             tryInclude "title" GEncode.string (oa |> tryGetPropertyValue "Title")
@@ -86,6 +98,11 @@ module Study =
 
     let toString (p:Study) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (s:Study) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) s
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
