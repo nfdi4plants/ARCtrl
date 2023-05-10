@@ -9,7 +9,7 @@ open Expecto
 #endif
 let all = testSequenced <| testList "All" [
     ISAJsonTests.main
-    JSchemaValidationTests.main
+    JsonSchema.Tests.main
 ]
 
 

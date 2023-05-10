@@ -15,7 +15,7 @@
     <Compile Include="TestObjects\Process.fs" />
     <Compile Include="TestObjects\Publication.fs" />
     <Compile Include="Utils.fs" />
-    <Compile Include="JSchemaValidationTests.fs" />
+    <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="ISAJsonTests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
