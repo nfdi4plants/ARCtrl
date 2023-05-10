@@ -2,7 +2,15 @@
 
 open Expecto
 open ISADotNet.Json
-   
+
+module Async = 
+
+    let map (f : 'U -> 'T) (a : Async<'U>) =
+        async {
+            let! a' =  a
+            return f a'           
+        }
+
 module Utils = 
 
     let extractWords (json:string) = 
@@ -16,88 +24,92 @@ module Utils =
         |> Array.countBy id
         |> Array.sortBy fst
 
-//    let matchingResult (vr : ValidationResult)=
+//module MyExpect =
+
+ 
+
+//    let matchingResult (vr : ValidationTypes.ValidationResult)=
 //        Expect.isTrue vr.Success (sprintf "Json Object did not match Json Schema: %A" (vr.GetErrors()))
 
 //    let matchingAssay (assayString : string) =
-//        ISADotNet.Validation.JSchema.validateAssay assayString
-//        |> matchingResult
+//        Validation.validateAssay assayString
+//        |> Async.map matchingResult
 
 //    let matchingComment (commentString : string) =
-//        ISADotNet.Validation.JSchema.validateComment commentString
-//        |> matchingResult
+//        Validation.validateComment commentString
+//        |> Async.map matchingResult
 
 //    let matchingData (dataString : string) =
-//        ISADotNet.Validation.JSchema.validateData dataString
-//        |> matchingResult
+//        Validation.validateData dataString
+//        |> Async.map matchingResult
     
 //    let matchingFactor (factorString : string) =
-//        ISADotNet.Validation.JSchema.validateFactor factorString
-//        |> matchingResult
+//        Validation.validateFactor factorString
+//        |> Async.map matchingResult
 
 //    let matchingFactorValue (factorValueString : string) =
-//        ISADotNet.Validation.JSchema.validateFactorValue factorValueString
-//        |> matchingResult
+//        Validation.validateFactorValue factorValueString
+//        |> Async.map matchingResult
 
 //    let matchingInvestigation (investigationString : string) =
-//        ISADotNet.Validation.JSchema.validateInvestigation investigationString
-//        |> matchingResult
+//        Validation.validateInvestigation investigationString
+//        |> Async.map matchingResult
 
 //    let matchingMaterialAttribute (materialAttributeString : string) =
-//        ISADotNet.Validation.JSchema.validateMaterialAttribute materialAttributeString
-//        |> matchingResult
+//        Validation.validateMaterialAttribute materialAttributeString
+//        |> Async.map matchingResult
 
 //    let matchingMaterialAttributeValue (materialAttributeValueString : string) =
-//        ISADotNet.Validation.JSchema.validateMaterialAttributeValue materialAttributeValueString
-//        |> matchingResult
+//        Validation.validateMaterialAttributeValue materialAttributeValueString
+//        |> Async.map matchingResult
 
 //    let matchingMaterial (materialString : string) =
-//        ISADotNet.Validation.JSchema.validateMaterial materialString
-//        |> matchingResult
+//        Validation.validateMaterial materialString
+//        |> Async.map matchingResult
 
 //    let matchingOntologyAnnotation (ontologyAnnotationString : string) =
-//        ISADotNet.Validation.JSchema.validateOntologyAnnotation ontologyAnnotationString
-//        |> matchingResult
+//        Validation.validateOntologyAnnotation ontologyAnnotationString
+//        |> Async.map matchingResult
 
 //    let matchingOntologySourceReference (ontologySourceReferenceString : string) =
-//        ISADotNet.Validation.JSchema.validateOntologySourceReference ontologySourceReferenceString
-//        |> matchingResult
+//        Validation.validateOntologySourceReference ontologySourceReferenceString
+//        |> Async.map matchingResult
     
 //    let matchingPerson (personString : string) =
-//        ISADotNet.Validation.JSchema.validatePerson personString
-//        |> matchingResult
+//        Validation.validatePerson personString
+//        |> Async.map matchingResult
 
 //    let matchingProcessParameterValue (processParameterValueString : string) =
-//        ISADotNet.Validation.JSchema.validateProcessParameterValue processParameterValueString
-//        |> matchingResult
+//        Validation.validateProcessParameterValue processParameterValueString
+//        |> Async.map matchingResult
 
 //    let matchingProcess (processString : string) =
-//        ISADotNet.Validation.JSchema.validateProcess processString
-//        |> matchingResult
+//        Validation.validateProcess processString
+//        |> Async.map matchingResult
 
 //    let matchingProtocolParameter (protocolParameterString : string) =
-//        ISADotNet.Validation.JSchema.validateProtocolParameter protocolParameterString
-//        |> matchingResult
+//        Validation.validateProtocolParameter protocolParameterString
+//        |> Async.map matchingResult
 
 //    let matchingProtocol (protocolString : string) =
-//        ISADotNet.Validation.JSchema.validateProtocol protocolString
-//        |> matchingResult
+//        Validation.validateProtocol protocolString
+//        |> Async.map matchingResult
 
 //    let matchingPublication (publicationString : string) =
-//        ISADotNet.Validation.JSchema.validatePublication publicationString
-//        |> matchingResult
+//        Validation.validatePublication publicationString
+//        |> Async.map matchingResult
 
 //    let matchingSample (sampleString : string) =
-//        ISADotNet.Validation.JSchema.validateSample sampleString
-//        |> matchingResult
+//        Validation.validateSample sampleString
+//        |> Async.map matchingResult
 
 //    let matchingSource (sourceString : string) =
-//        ISADotNet.Validation.JSchema.validateSource sourceString
-//        |> matchingResult
+//        Validation.validateSource sourceString
+//        |> Async.map matchingResult
 
 //    let matchingStudy (studyString : string) =
-//        ISADotNet.Validation.JSchema.validateStudy studyString
-//        |> matchingResult
+//        Validation.validateStudy studyString
+//        |> Async.map matchingResult
 
 module Result =
 

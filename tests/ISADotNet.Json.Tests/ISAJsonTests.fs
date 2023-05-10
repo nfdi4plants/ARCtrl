@@ -159,8 +159,6 @@ let testOntoloyAnnotation =
                     o_out
                     |> Utils.wordFrequency
 
-                Fable.print(o_out)
-
                 Expect.equal actual expected "Written processInput does not match read process input"
             )
     ]
@@ -278,8 +276,6 @@ let testProcessInput =
                         o_out
                         |> Utils.wordFrequency
 
-                    Fable.print(o_out)
-
                     Expect.equal actual expected "Written processInput does not match read process input"
             )
         ]
@@ -320,40 +316,41 @@ let testProtocolFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        //testCase "WriterSchemaCorrectness" (fun () ->
+        testAsync "WriterSchemaCorrectness" {
 
-        //    let p = Protocol.fromString TestFiles.Protocol.protocol
+            let p = Protocol.fromString TestFiles.Protocol.protocol
 
-        //    let s = Protocol.toString p
+            let s = Protocol.toString p
 
-        //    MyExpect.matchingProtocol s
-        //)
+            let! validation = Validation.validateProtocol s
 
-        //testCase "OutputMatchesInput" (fun () ->
+            Expect.isTrue validation.Success $"Protocol did not match schema: {validation.GetErrors()}"
+        }
 
-        //    let o_read_in = Protocol.fromString TestFiles.Protocol.protocol
-        //    let exptected_name = "peptide_digestion"
-        //    let actual_name = o_read_in.Name
-        //    Expect.isSome actual_name "Should be some"
-        //    Expect.equal actual_name (Some exptected_name) "Name exists"
+        testCase "OutputMatchesInput" (fun () ->
 
-        //    let o = o_read_in |> Protocol.toString
+            let o_read_in = Protocol.fromString TestFiles.Protocol.protocol
+            let exptected_name = "peptide_digestion"
+            let actual_name = o_read_in.Name
+            Expect.isSome actual_name "Should be some"
+            Expect.equal actual_name (Some exptected_name) "Name exists"
 
-        //    let expected = 
-        //        TestFiles.Protocol.protocol
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o = o_read_in |> Protocol.toString
 
-        //    let actual = 
-        //        o
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let expected = 
+                TestFiles.Protocol.protocol
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    Expect.equal actual expected "Written protocol file does not match read protocol file"
-        //)
-        //|> testSequenced
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.equal actual expected "Written protocol file does not match read protocol file"
+        )
     ]
 
 let testProcessFile =
@@ -386,36 +383,37 @@ let testProcessFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        //testCase "WriterSchemaCorrectness" (fun () ->
+        testAsync "WriterSchemaCorrectness" {
 
-        //    let p = Process.fromString TestFiles.Process.process'
+            let p = Process.fromString TestFiles.Process.process'
 
-        //    let s = Process.toString p
+            let s = Process.toString p
 
-        //    MyExpect.matchingProcess s
-        //)
+            let! validation = Validation.validateProcess s
 
-        //testCase "OutputMatchesInput" (fun () ->
+            Expect.isTrue validation.Success $"Process did not match schema: {validation.GetErrors()}"
+        }
 
-        //    let o =
-        //        Process.fromString TestFiles.Process.process'
-        //        |> Process.toString
+        testCase "OutputMatchesInput" (fun () ->
 
-        //    let expected = 
-        //        TestFiles.Process.process'
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o =
+                Process.fromString TestFiles.Process.process'
+                |> Process.toString
 
-        //    let actual = 
-        //        o
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let expected = 
+                TestFiles.Process.process'
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    mySequenceEqual actual expected "Written process file does not match read process file"
-        //)
-        //|> testSequenced
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written process file does not match read process file"
+        )
     ]
 
 let testPersonFile =
@@ -448,36 +446,37 @@ let testPersonFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        //testCase "WriterSchemaCorrectness" (fun () ->
+        testAsync "WriterSchemaCorrectness" {
 
-        //    let a = Person.fromString TestFiles.Person.person
+            let a = Person.fromString TestFiles.Person.person
 
-        //    let s = Person.toString a
+            let s = Person.toString a
 
-        //    MyExpect.matchingPerson s
-        //)
+            let! validation = Validation.validatePerson s
 
-        //testCase "OutputMatchesInput" (fun () ->
+            Expect.isTrue validation.Success $"Person did not match schema: {validation.GetErrors()}"
+        }
 
-        //    let o = 
-        //        Person.fromString TestFiles.Person.person
-        //        |> Person.toString
+        testCase "OutputMatchesInput" (fun () ->
 
-        //    let expected = 
-        //        TestFiles.Person.person
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o = 
+                Person.fromString TestFiles.Person.person
+                |> Person.toString
 
-        //    let actual = 
-        //        o
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let expected = 
+                TestFiles.Person.person
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    mySequenceEqual actual expected "Written person file does not match read person file"
-        //)
-        //|> testSequenced
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written person file does not match read person file"
+        )
     ]
 
 let testPublicationFile =
@@ -510,36 +509,37 @@ let testPublicationFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        //testCase "WriterSchemaCorrectness" (fun () ->
+        testAsync "WriterSchemaCorrectness" {
 
-        //    let a = Publication.fromString TestFiles.Publication.publication
+            let a = Publication.fromString TestFiles.Publication.publication
 
-        //    let s = Publication.toString a
+            let s = Publication.toString a
 
-        //    MyExpect.matchingPublication s
-        //)
+            let! validation = Validation.validatePublication s
 
-        //testCase "OutputMatchesInput" (fun () ->
+            Expect.isTrue validation.Success $"Publication did not match schema: {validation.GetErrors()}"
+        }
 
-        //    let o = 
-        //        Publication.fromString TestFiles.Publication.publication
-        //        |> Publication.toString
+        testCase "OutputMatchesInput" (fun () ->
 
-        //    let expected = 
-        //        TestFiles.Publication.publication
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o = 
+                Publication.fromString TestFiles.Publication.publication
+                |> Publication.toString
 
-        //    let actual = 
-        //        o
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let expected = 
+                TestFiles.Publication.publication
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    mySequenceEqual actual expected "Written Publication file does not match read publication file"
-        //)
-        //|> testSequenced
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written Publication file does not match read publication file"
+        )
     ]
 
 let testAssayFile =
@@ -572,36 +572,37 @@ let testAssayFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        //testCase "WriterSchemaCorrectness" (fun () ->
+        testAsync "WriterSchemaCorrectness" {
 
-        //    let a = Assay.fromString TestFiles.Assay.assay
+            let a = Assay.fromString TestFiles.Assay.assay
 
-        //    let s = Assay.toString a
+            let s = Assay.toString a
 
-        //    MyExpect.matchingAssay s
-        //)
+            let! validation = Validation.validateAssay s
 
-        //testCase "OutputMatchesInput" (fun () ->
+            Expect.isTrue validation.Success $"Assay did not match schema: {validation.GetErrors()}"
+        }
 
-        //    let o = 
-        //        Assay.fromString TestFiles.Assay.assay
-        //        |> Assay.toString
+        testCase "OutputMatchesInput" (fun () ->
 
-        //    let expected = 
-        //        TestFiles.Assay.assay
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o = 
+                Assay.fromString TestFiles.Assay.assay
+                |> Assay.toString
 
-        //    let actual = 
-        //        o
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let expected = 
+                TestFiles.Assay.assay
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    mySequenceEqual actual expected "Written assay file does not match read assay file"
-        //)
-        //|> testSequenced
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written assay file does not match read assay file"
+        )
     ]
 
 let testInvestigationFile = 
@@ -633,37 +634,37 @@ let testInvestigationFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        //testCase "WriterSchemaCorrectness" (fun () ->
+        testAsync "WriterSchemaCorrectness" {
 
-        //    let i = Investigation.fromString TestFiles.Investigation.investigation
+            let i = Investigation.fromString TestFiles.Investigation.investigation
 
-        //    let s = Investigation.toString i
+            let s = Investigation.toString i
 
-        //    MyExpect.matchingInvestigation s
-        //)
+            let! validation = Validation.validateInvestigation s
 
-        //testCase "OutputMatchesInput" (fun () ->
+            Expect.isTrue validation.Success $"Investigation did not match schema: {validation.GetErrors()}"
+        }
 
-        //    let o = 
-        //        Investigation.fromString TestFiles.Investigation.investigation
-        //        |> Investigation.toString
+        testCase "OutputMatchesInput" (fun () ->
 
-        //    let expected = 
-        //        TestFiles.Investigation.investigation
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o = 
+                Investigation.fromString TestFiles.Investigation.investigation
+                |> Investigation.toString
 
-        //    let actual = 
-        //        o
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let expected = 
+                TestFiles.Investigation.investigation
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    mySequenceEqual actual expected "Written investigation file does not match read investigation file"
-        //)
-        //|> testSequenced
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
+            mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+        )
         testCase "HandleEmptyRemarks" (fun () ->
 
             let json = "{}"
@@ -672,360 +673,357 @@ let testInvestigationFile =
 
             Expect.equal i.Remarks List.empty "Remark list should be an empty list."
         )
-        |> testSequenced
-
-        //testCase "FullInvestigation" (fun () ->
+        testCase "FullInvestigation" (fun () ->
                   
-        //    let comment = 
-        //        Comment.make (Some "MyComment") (Some "Key") (Some "Value")
+            let comment = 
+                Comment.make (Some "MyComment") (Some "Key") (Some "Value")
 
-        //    let ontologySourceReference =
-        //        OntologySourceReference.make
-        //            (Some "bla bla")
-        //            (Some "filePath.txt")
-        //            (Some "OO")
-        //            (Some "1.3.3")
-        //            (Some [comment])
+            let ontologySourceReference =
+                OntologySourceReference.make
+                    (Some "bla bla")
+                    (Some "filePath.txt")
+                    (Some "OO")
+                    (Some "1.3.3")
+                    (Some [comment])
 
-        //    let publicationStatus = 
-        //        OntologyAnnotation.make 
-        //            (Some "OntologyTerm/Published")
-        //            (Some (AnnotationValue.Text "published"))
-        //            (Some "pso")
-        //            (Some "http://purl.org/spar/pso/published")
-        //            (Some [comment])
+            let publicationStatus = 
+                OntologyAnnotation.make 
+                    (Some "OntologyTerm/Published")
+                    (Some (AnnotationValue.Text "published"))
+                    (Some "pso")
+                    (Some "http://purl.org/spar/pso/published")
+                    (Some [comment])
 
-        //    let publication =
-        //        Publication.make
-        //            (Some "12345678")
-        //            (Some "11.1111/abcdef123456789")
-        //            (Some "Lukas Weil, Other Gzúy")
-        //            (Some "Fair is great")
-        //            (Some publicationStatus)
-        //            (Some [comment])
+            let publication =
+                Publication.make
+                    (Some "12345678")
+                    (Some "11.1111/abcdef123456789")
+                    (Some "Lukas Weil, Other Gzúy")
+                    (Some "Fair is great")
+                    (Some publicationStatus)
+                    (Some [comment])
 
-        //    let role = 
-        //        OntologyAnnotation.make 
-        //            (Some "OntologyTerm/SoftwareDeveloperRole")
-        //            (Some (AnnotationValue.Text "software developer role"))
-        //            (Some "swo")
-        //            (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
-        //            (Some [comment])
+            let role = 
+                OntologyAnnotation.make 
+                    (Some "OntologyTerm/SoftwareDeveloperRole")
+                    (Some (AnnotationValue.Text "software developer role"))
+                    (Some "swo")
+                    (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
+                    (Some [comment])
 
-        //    let person =
-        //        Person.make
-        //            (Some "Persons/LukasWeil")
-        //            (Some "Weil")
-        //            (Some "Lukas")
-        //            (Some "H")
-        //            (Some "weil@email.com")
-        //            (Some "0123 456789")
-        //            (Some "9876 543210")
-        //            (Some "fantasyStreet 23, 123 Town")
-        //            (Some "Universiteee")
-        //            (Some [role])
-        //            (Some [comment])
+            let person =
+                Person.make
+                    (Some "Persons/LukasWeil")
+                    (Some "Weil")
+                    (Some "Lukas")
+                    (Some "H")
+                    (Some "weil@email.com")
+                    (Some "0123 456789")
+                    (Some "9876 543210")
+                    (Some "fantasyStreet 23, 123 Town")
+                    (Some "Universiteee")
+                    (Some [role])
+                    (Some [comment])
 
-        //    let characteristic = 
-        //        MaterialAttribute.make 
-        //            (Some "Characteristic/Organism")
-        //            (Some (
-        //                OntologyAnnotation.make
-        //                    (Some "OntologyTerm/Organism")
-        //                    (Some (AnnotationValue.Text "organism"))
-        //                    (Some "obi")
-        //                    (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-        //                    (Some [comment])
-        //            ))
+            let characteristic = 
+                MaterialAttribute.make 
+                    (Some "Characteristic/Organism")
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/Organism")
+                            (Some (AnnotationValue.Text "organism"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0100026")
+                            (Some [comment])
+                    ))
 
-        //    let characteristicValue = 
-        //        MaterialAttributeValue.make 
-        //            (Some "CharacteristicValue/Arabidopsis")
-        //            (Some characteristic)
-        //            (Some (
-        //                OntologyAnnotation.make
-        //                    (Some "OntologyTerm/Organism")
-        //                    (Some (AnnotationValue.Text "Arabidopsis thaliana"))
-        //                    (Some "obi")
-        //                    (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-        //                    (Some [comment])
-        //                |> Value.Ontology
-        //            ))
-        //            None
+            let characteristicValue = 
+                MaterialAttributeValue.make 
+                    (Some "CharacteristicValue/Arabidopsis")
+                    (Some characteristic)
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/Organism")
+                            (Some (AnnotationValue.Text "Arabidopsis thaliana"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0100026")
+                            (Some [comment])
+                        |> Value.Ontology
+                    ))
+                    None
 
-        //    let studyDesignDescriptor = 
-        //        OntologyAnnotation.make
-        //            (Some "OntologyTerm/TimeSeries")
-        //            (Some (AnnotationValue.Text "Time Series Analysis"))
-        //            (Some "ncit")
-        //            (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
-        //            (Some [comment])
+            let studyDesignDescriptor = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/TimeSeries")
+                    (Some (AnnotationValue.Text "Time Series Analysis"))
+                    (Some "ncit")
+                    (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
+                    (Some [comment])
 
-        //    let protocolType = 
-        //        OntologyAnnotation.make
-        //            (Some "OntologyTerm/GrowthProtocol")
-        //            (Some (AnnotationValue.Text "growth protocol"))
-        //            (Some "dfbo")
-        //            (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
-        //            (Some [comment])
+            let protocolType = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/GrowthProtocol")
+                    (Some (AnnotationValue.Text "growth protocol"))
+                    (Some "dfbo")
+                    (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
+                    (Some [comment])
 
-        //    let parameter = 
-        //        ProtocolParameter.make
-        //            (Some "Parameter/Temperature")
-        //            (Some (
-        //                OntologyAnnotation.make
-        //                    (Some "OntologyTerm/Temperature")
-        //                    (Some (AnnotationValue.Text "temperature unit"))
-        //                    (Some "uo")
-        //                    (Some "http://purl.obolibrary.org/obo/UO_0000005")
-        //                    (Some [comment])
-        //            ))
+            let parameter = 
+                ProtocolParameter.make
+                    (Some "Parameter/Temperature")
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/Temperature")
+                            (Some (AnnotationValue.Text "temperature unit"))
+                            (Some "uo")
+                            (Some "http://purl.obolibrary.org/obo/UO_0000005")
+                            (Some [comment])
+                    ))
 
-        //    let parameterUnit =              
-        //        OntologyAnnotation.make
-        //            (Some "OntologyTerm/DegreeCelsius")
-        //            (Some (AnnotationValue.Text "degree celsius"))
-        //            (Some "uo")
-        //            (Some "http://purl.obolibrary.org/obo/UO_0000027")
-        //            (Some [comment])
+            let parameterUnit =              
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/DegreeCelsius")
+                    (Some (AnnotationValue.Text "degree celsius"))
+                    (Some "uo")
+                    (Some "http://purl.obolibrary.org/obo/UO_0000027")
+                    (Some [comment])
 
-        //    let parameterValue = 
-        //        ProcessParameterValue.make
-        //            (Some parameter)
-        //            (Some (Value.Int 20))
-        //            (Some parameterUnit)
+            let parameterValue = 
+                ProcessParameterValue.make
+                    (Some parameter)
+                    (Some (Value.Int 20))
+                    (Some parameterUnit)
 
-        //    let protocolComponent =
-        //        Component.make
-        //            (Some "PCR instrument")
-        //            (Some (
-        //                OntologyAnnotation.make
-        //                    (Some "OntologyTerm/RTPCR")
-        //                    (Some (AnnotationValue.Text "real-time PCR machine"))
-        //                    (Some "obi")
-        //                    (Some "http://purl.obolibrary.org/obo/OBI_0001110")
-        //                    (Some [comment])
-        //                |> Value.Ontology
-        //            ))
-        //            None
-        //            (Some (
-        //                OntologyAnnotation.make
-        //                    (Some "OntologyTerm/PCR")
-        //                    (Some (AnnotationValue.Text "PCR instrument"))
-        //                    (Some "obi")
-        //                    (Some "http://purl.obolibrary.org/obo/OBI_0000989")
-        //                    (Some [comment])
-        //            ))
+            let protocolComponent =
+                Component.make
+                    (Some "PCR instrument")
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/RTPCR")
+                            (Some (AnnotationValue.Text "real-time PCR machine"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0001110")
+                            (Some [comment])
+                        |> Value.Ontology
+                    ))
+                    None
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/PCR")
+                            (Some (AnnotationValue.Text "PCR instrument"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0000989")
+                            (Some [comment])
+                    ))
                 
-        //    let protocol = 
-        //        Protocol.make 
-        //            (Some "Protocol/MyProtocol")
-        //            (Some "MyProtocol")
-        //            (Some protocolType)
-        //            (Some "bla bla bla\nblabbbbblaaa")
-        //            (Some "http://nfdi4plants.org/protocols/MyProtocol")
-        //            (Some "1.2.3")
-        //            (Some [parameter])
-        //            (Some [protocolComponent])                   
-        //            (Some [comment])
+            let protocol = 
+                Protocol.make 
+                    (Some "Protocol/MyProtocol")
+                    (Some "MyProtocol")
+                    (Some protocolType)
+                    (Some "bla bla bla\nblabbbbblaaa")
+                    (Some "http://nfdi4plants.org/protocols/MyProtocol")
+                    (Some "1.2.3")
+                    (Some [parameter])
+                    (Some [protocolComponent])                   
+                    (Some [comment])
 
-        //    let factor = 
-        //        Factor.make 
-        //                (Some "Factor/Time")
-        //                (Some "Time")
-        //                (Some (
-        //                    OntologyAnnotation.make
-        //                        (Some "OntologyTerm/Time")
-        //                        (Some (AnnotationValue.Text "time"))
-        //                        (Some "pato")
-        //                        (Some "http://purl.obolibrary.org/obo/PATO_0000165")
-        //                        (Some [comment])
-        //                ))
-        //                (Some [comment])
+            let factor = 
+                Factor.make 
+                        (Some "Factor/Time")
+                        (Some "Time")
+                        (Some (
+                            OntologyAnnotation.make
+                                (Some "OntologyTerm/Time")
+                                (Some (AnnotationValue.Text "time"))
+                                (Some "pato")
+                                (Some "http://purl.obolibrary.org/obo/PATO_0000165")
+                                (Some [comment])
+                        ))
+                        (Some [comment])
 
-        //    let factorUnit = 
-        //        OntologyAnnotation.make
-        //            (Some "OntologyTerm/Hour")
-        //            (Some (AnnotationValue.Text "hour"))
-        //            (Some "uo")
-        //            (Some "http://purl.obolibrary.org/obo/UO_0000032")
-        //            (Some [comment])
+            let factorUnit = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/Hour")
+                    (Some (AnnotationValue.Text "hour"))
+                    (Some "uo")
+                    (Some "http://purl.obolibrary.org/obo/UO_0000032")
+                    (Some [comment])
                     
 
-        //    let factorValue = 
-        //        FactorValue.make
-        //            (Some "FactorValue/4hours")
-        //            (Some factor)
-        //            (Some (Value.Float 4.5))
-        //            (Some factorUnit)
+            let factorValue = 
+                FactorValue.make
+                    (Some "FactorValue/4hours")
+                    (Some factor)
+                    (Some (Value.Float 4.5))
+                    (Some factorUnit)
 
-        //    let source =
-        //        Source.make
-        //            (Some "Source/MySource")
-        //            (Some "MySource")
-        //            (Some [characteristicValue])
+            let source =
+                Source.make
+                    (Some "Source/MySource")
+                    (Some "MySource")
+                    (Some [characteristicValue])
 
-        //    let sample = 
-        //        Sample.make
-        //            (Some "Sample/MySample")
-        //            (Some "MySample")
-        //            (Some [characteristicValue])
-        //            (Some [factorValue])
-        //            (Some [source])
+            let sample = 
+                Sample.make
+                    (Some "Sample/MySample")
+                    (Some "MySample")
+                    (Some [characteristicValue])
+                    (Some [factorValue])
+                    (Some [source])
 
-        //    let data = 
-        //        Data.make
-        //            (Some "Data/MyData")
-        //            (Some "MyData")
-        //            (Some DataFile.DerivedDataFile)
-        //            (Some [comment])
+            let data = 
+                Data.make
+                    (Some "Data/MyData")
+                    (Some "MyData")
+                    (Some DataFile.DerivedDataFile)
+                    (Some [comment])
         
-        //    let material = 
-        //        Material.make
-        //            (Some "Material/MyMaterial")
-        //            (Some "MyMaterial")
-        //            (Some MaterialType.ExtractName)
-        //            (Some [characteristicValue])
-        //            None
+            let material = 
+                Material.make
+                    (Some "Material/MyMaterial")
+                    (Some "MyMaterial")
+                    (Some MaterialType.ExtractName)
+                    (Some [characteristicValue])
+                    None
 
-        //    let derivedMaterial = 
-        //        Material.make
-        //            (Some "Material/MyDerivedMaterial")
-        //            (Some "MyDerivedMaterial")
-        //            (Some MaterialType.LabeledExtractName)
-        //            (Some [characteristicValue])
-        //            (Some [material])
+            let derivedMaterial = 
+                Material.make
+                    (Some "Material/MyDerivedMaterial")
+                    (Some "MyDerivedMaterial")
+                    (Some MaterialType.LabeledExtractName)
+                    (Some [characteristicValue])
+                    (Some [material])
 
-        //    let studyMaterials = 
-        //        StudyMaterials.make
-        //            (Some [source])
-        //            (Some [sample])
-        //            (Some [material;derivedMaterial])
+            let studyMaterials = 
+                StudyMaterials.make
+                    (Some [source])
+                    (Some [sample])
+                    (Some [material;derivedMaterial])
 
-        //    let studyProcess = 
-        //        Process.make
-        //            (Some "Process/MyProcess1")
-        //            (Some "MyProcess1")
-        //            (Some protocol)
-        //            (Some [parameterValue])
-        //            (Some "Lukas While")
-        //            (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
-        //            None
-        //            (Some (Process.create (Id = "Process/MyProcess2")))
-        //            (Some [ProcessInput.Source source])
-        //            (Some [ProcessOutput.Sample sample])
-        //            (Some [comment])
+            let studyProcess = 
+                Process.make
+                    (Some "Process/MyProcess1")
+                    (Some "MyProcess1")
+                    (Some protocol)
+                    (Some [parameterValue])
+                    (Some "Lukas While")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
+                    None
+                    (Some (Process.create (Id = "Process/MyProcess2")))
+                    (Some [ProcessInput.Source source])
+                    (Some [ProcessOutput.Sample sample])
+                    (Some [comment])
 
-        //    let assayProcess =
-        //        Process.make
-        //            (Some "Process/MyProcess2")
-        //            (Some "MyProcess2")
-        //            (Some protocol)
-        //            (Some [parameterValue])
-        //            (Some "Lukas While")
-        //            (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
-        //            (Some (Process.create (Id = "Process/MyProcess1")))
-        //            None
-        //            (Some [ProcessInput.Sample sample])
-        //            (Some [ProcessOutput.Data data])
-        //            (Some [comment])
+            let assayProcess =
+                Process.make
+                    (Some "Process/MyProcess2")
+                    (Some "MyProcess2")
+                    (Some protocol)
+                    (Some [parameterValue])
+                    (Some "Lukas While")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
+                    (Some (Process.create (Id = "Process/MyProcess1")))
+                    None
+                    (Some [ProcessInput.Sample sample])
+                    (Some [ProcessOutput.Data data])
+                    (Some [comment])
 
 
-        //    let measurementType = 
-        //        OntologyAnnotation.make
-        //            (Some "OntologyTerm/LFQuantification")
-        //            (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
-        //            (Some "ncit")
-        //            (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
-        //            (Some [comment])
+            let measurementType = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/LFQuantification")
+                    (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
+                    (Some "ncit")
+                    (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
+                    (Some [comment])
 
-        //    let technologyType = 
-        //        OntologyAnnotation.make
-        //            (Some "OntologyTerm/TOF")
-        //            (Some (AnnotationValue.Text "Time-of-Flight"))
-        //            (Some "ncit")
-        //            (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
-        //            (Some [comment])
+            let technologyType = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/TOF")
+                    (Some (AnnotationValue.Text "Time-of-Flight"))
+                    (Some "ncit")
+                    (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
+                    (Some [comment])
 
-        //    let assayMaterials =
-        //        AssayMaterials.make
-        //            (Some [sample])
-        //            (Some [material;derivedMaterial])
+            let assayMaterials =
+                AssayMaterials.make
+                    (Some [sample])
+                    (Some [material;derivedMaterial])
 
-        //    let assay = 
-        //        Assay.make
-        //            (Some "Assay/MyAssay")
-        //            (Some "MyAssay/isa.assay.xlsx")
-        //            (Some measurementType)
-        //            (Some technologyType)
-        //            (Some "Mass spectrometry platform")
-        //            (Some [data])
-        //            (Some assayMaterials)                   
-        //            (Some [characteristic])
-        //            (Some [parameterUnit;factorUnit])
-        //            (Some [assayProcess])
-        //            (Some [comment])
+            let assay = 
+                Assay.make
+                    (Some "Assay/MyAssay")
+                    (Some "MyAssay/isa.assay.xlsx")
+                    (Some measurementType)
+                    (Some technologyType)
+                    (Some "Mass spectrometry platform")
+                    (Some [data])
+                    (Some assayMaterials)                   
+                    (Some [characteristic])
+                    (Some [parameterUnit;factorUnit])
+                    (Some [assayProcess])
+                    (Some [comment])
 
-        //    let study = 
-        //        Study.make 
-        //            (Some "Study/MyStudy")
-        //            (Some "MyStudy/isa.study.xlsx")
-        //            (Some "MyStudy")
-        //            (Some "bla bla bla")
-        //            (Some "bla bla bla\nblabbbbblaaa")
-        //            (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
-        //            (Some (JsonExtensions.Date.fromInts 2020 10 20))                   
-        //            (Some [publication])
-        //            (Some [person])
-        //            (Some [studyDesignDescriptor])
-        //            (Some [protocol])
-        //            (Some studyMaterials)
-        //            (Some [studyProcess])
-        //            (Some [assay])
-        //            (Some [factor])
-        //            (Some [characteristic])
-        //            (Some [parameterUnit;factorUnit])
-        //            (Some [comment])
+            let study = 
+                Study.make 
+                    (Some "Study/MyStudy")
+                    (Some "MyStudy/isa.study.xlsx")
+                    (Some "MyStudy")
+                    (Some "bla bla bla")
+                    (Some "bla bla bla\nblabbbbblaaa")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
+                    (Some (JsonExtensions.Date.fromInts 2020 10 20))                   
+                    (Some [publication])
+                    (Some [person])
+                    (Some [studyDesignDescriptor])
+                    (Some [protocol])
+                    (Some studyMaterials)
+                    (Some [studyProcess])
+                    (Some [assay])
+                    (Some [factor])
+                    (Some [characteristic])
+                    (Some [parameterUnit;factorUnit])
+                    (Some [comment])
 
-        //    let investigation = 
-        //        Investigation.make 
-        //            (Some "Investigations/MyInvestigation")
-        //            (Some "isa.investigation.xlsx")
-        //            (Some "MyInvestigation")
-        //            (Some "bla bla bla")
-        //            (Some "bla bla bla\nblabbbbblaaa")
-        //            (Some (JsonExtensions.DateTime.fromInts 2020 3 15 18 23))
-        //            (Some (JsonExtensions.Date.fromInts 2020 4 3))                   
-        //            (Some [ontologySourceReference])
-        //            (Some [publication])
-        //            (Some [person])
-        //            (Some [study])
-        //            (Some [comment])
-        //            ([Remark.make 0 "hallo"])
+            let investigation = 
+                Investigation.make 
+                    (Some "Investigations/MyInvestigation")
+                    (Some "isa.investigation.xlsx")
+                    (Some "MyInvestigation")
+                    (Some "bla bla bla")
+                    (Some "bla bla bla\nblabbbbblaaa")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 3 15 18 23))
+                    (Some (JsonExtensions.Date.fromInts 2020 4 3))                   
+                    (Some [ontologySourceReference])
+                    (Some [publication])
+                    (Some [person])
+                    (Some [study])
+                    (Some [comment])
+                    ([Remark.make 0 "hallo"])
 
-        //    let s = Investigation.toString investigation
+            let s = Investigation.toString investigation
 
-        //    //MyExpect.matchingInvestigation s
+            //MyExpect.matchingInvestigation s
 
-        //    let reReadInvestigation = Investigation.fromString s
-        //    let reWrittenInvestigation = Investigation.toString reReadInvestigation
+            let reReadInvestigation = Investigation.fromString s
+            let reWrittenInvestigation = Investigation.toString reReadInvestigation
 
-        //    let i = 
-        //        s 
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let i = 
+                s 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    let o = 
-        //        reWrittenInvestigation
-        //        |> Utils.extractWords
-        //        |> Array.countBy id
-        //        |> Array.sortBy fst
+            let o = 
+                reWrittenInvestigation
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //    mySequenceEqual o i "Written investigation file does not match read investigation file"
+            mySequenceEqual o i "Written investigation file does not match read investigation file"
 
-        //)
-        //|> testSequenced
+        )
     ]
 
 let main = 
