@@ -7,6 +7,7 @@ open Thoth.Json.Net
 #endif
 
 open Fable.Core
+open Fable.Core.JsInterop
 
 module GEncode = 
 
@@ -14,6 +15,7 @@ module GEncode =
     [<Emit("$1[$0]")>]
     let getFieldFable (name : string) (object : 'T) = jsNative
 
+    /// Try to get a property value from a record by its name 
     let inline tryGetPropertyValue (name : string) (object : 'T) =
         #if FABLE_COMPILER
             getFieldFable name object
@@ -45,12 +47,38 @@ module GEncode =
             else Some (k,v)
         )
 
-    let inline tryInclude name (encoder : obj -> JsonValue) (value : obj option) = 
+    /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
+    ///
+    /// If the object is a sequence, encode each element using the given encoder and return the resulting sequence
+    let tryInclude name (encoder : obj -> JsonValue) (value : obj option) = 
         name,
         match value with
-            | Some (:? seq<obj> as os) -> 
-                //if Seq.isEmpty os then Encode.nil
-                //else 
-                Seq.map encoder os |> Encode.seq
-            | Some (o) -> encoder o
-            | _ -> Encode.nil
+        #if FABLE_COMPILER
+        | Some (:? System.Collections.IEnumerable as v) ->                  
+            !!Seq.map encoder v |> Encode.seq
+        #else
+        | Some(:? seq<obj> as os) ->                 
+            Seq.map encoder os |> Encode.seq
+        #endif
+        | Some(o) -> encoder o
+        | _ -> Encode.nil
+
+
+    // This seems to fail because due to dotnet not able to match the boxed lists against nongeneric System.Collections.IEnumerable
+    //
+    // ->    ///// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
+    // ->    /////
+    // ->    ///// If the object is a sequence, encode each element using the given encoder and return the resulting sequence
+    // ->    //let tryInclude name (encoder : obj -> JsonValue) (value : obj option) = 
+    // ->    //    name,
+    // ->    //    match value with
+    // ->    //    | Some(:? System.Collections.IEnumerable as v) ->          
+    // ->    //        let os = 
+    // ->    //            #if FABLE_COMPILER
+    // ->    //            !!v
+    // ->    //            #else
+    // ->    //            v |> Seq.cast<obj>
+    // ->    //            #endif
+    // ->    //        Seq.map encoder os |> Encode.seq
+    // ->    //    | Some(o) -> encoder o
+    // ->    //    | _ -> Encode.nil

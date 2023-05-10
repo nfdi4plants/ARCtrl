@@ -1,4 +1,4 @@
-﻿namespace ISADotNet.Validation
+﻿namespace ISADotNet.Json
 
 module Fable =
 

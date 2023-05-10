@@ -1,4 +1,4 @@
-﻿namespace ISADotNet.Validation
+﻿module ISADotNet.Json.ValidationTypes
 
 type ValidationResult = 
     | Ok

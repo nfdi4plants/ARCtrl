@@ -123,7 +123,7 @@ let testDecode =
            
             let result = 
                 match v with 
-                | Ok v -> GDecode.getFieldNames v
+                | Result.Ok v -> GDecode.getFieldNames v
                 | Error e -> failwith e
             
             let expected = ["@id";"characteristics";"name";"type"]
@@ -132,30 +132,157 @@ let testDecode =
         )
     ]
 
+let testOntoloyAnnotation =
+    testList "OntologyAnnotationTests" [
+        
+            testCase "ReaderSuccess" (fun () -> 
+           
+                let result = OntologyAnnotation.fromString TestFiles.OntologyAnnotation.peptidase
+
+
+                let comment = Comment.create(Name = "comment",Value = "This is a comment")
+                let expected = 
+                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [comment])
+                
+                Expect.equal result expected "Source did not match"
+            )
+            testCase "WriterOutputMatchesInput" (fun () -> 
+            
+                let o_read_in = OntologyAnnotation.fromString TestFiles.OntologyAnnotation.peptidase
+                let o_out = OntologyAnnotation.toString o_read_in
+
+                let expected = 
+                    TestFiles.OntologyAnnotation.peptidase
+                    |> Utils.wordFrequency
+
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
+
+                Fable.print(o_out)
+
+                Expect.equal actual expected "Written processInput does not match read process input"
+            )
+    ]
+
+
 let testProcessInput =
 
     testList "ProcessInputTests" [
-        testCase "ReadMaterial" (fun () -> 
+        testList "Source" [
+            testCase "ReaderSuccess" (fun () -> 
+           
+                let result = ProcessInput.fromString TestFiles.ProcessInput.source
+
+                let expected = 
+                    Source.create("#source/source-culture8","source-culture8")
+                
+                Expect.isTrue (API.ProcessInput.isSource result) "Result is not a source"
+
+                Expect.equal (API.ProcessInput.trySource result).Value expected "Source did not match"
+            )
+            testCase "WriterOutputMatchesInput" (fun () -> 
             
-            let s = 
-                """
-                {
-                "@id": "#material/extract-C-0.07-aliquot10",
-                "characteristics": [],
-                "name": "extract-C-0.07-aliquot10",
-                "type": "Extract Name"
-                }
-                """
+                let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.source
+                let o_out = ProcessInput.toString o_read_in
 
-            let result = ProcessInput.fromString s
+                let expected = 
+                    TestFiles.ProcessInput.source
+                    |> Utils.wordFrequency
 
-            let expected = 
-                Material.create("#material/extract-C-0.07-aliquot10","extract-C-0.07-aliquot10",MaterialType.ExtractName,Characteristics = [])
-                |> ProcessInput.Material
-            Expect.equal result expected ""
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
 
-        )
+                Expect.equal actual expected "Written processInput does not match read process input"
+            )
+        ]
+        testList "Material" [
+            testCase "ReaderSuccess" (fun () -> 
+           
+                let result = ProcessInput.fromString TestFiles.ProcessInput.material
 
+                let expected = 
+                    Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
+
+                Expect.isTrue (API.ProcessInput.isMaterial result) "Result is not a material"
+
+                Expect.equal (API.ProcessInput.tryMaterial result).Value expected "Material did not match"
+
+            )
+            testCase "WriterOutputMatchesInput" (fun () -> 
+            
+                let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.material
+                let o_out = ProcessInput.toString o_read_in
+
+                let expected = 
+                    TestFiles.ProcessInput.material
+                    |> Utils.wordFrequency
+
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
+
+                Expect.equal actual expected "Written processInput does not match read process input"
+            )
+        ]
+        testList "Data" [
+            testCase "ReaderSuccess" (fun () -> 
+           
+                let result = ProcessInput.fromString TestFiles.ProcessInput.data
+                let expected = 
+                    Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
+                Expect.isTrue (API.ProcessInput.isData result) "Result is not a data"
+                Expect.equal (API.ProcessInput.tryData result).Value expected "Data did not match"
+            )
+            testCase "WriterOutputMatchesInput" (fun () -> 
+            
+                    let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.data
+                    let o_out = ProcessInput.toString o_read_in
+
+                    let expected = 
+                        TestFiles.ProcessInput.data
+                        |> Utils.wordFrequency
+
+                    let actual = 
+                        o_out
+                        |> Utils.wordFrequency
+
+                    Expect.equal actual expected "Written processInput does not match read process input"
+            )
+        ]
+        testList "Sample" [
+            testCase "ReaderSuccessSimple" (fun () -> 
+           
+                let result = ProcessInput.fromString TestFiles.ProcessInput.sampleSimple
+
+                let expectedDerivesFrom = [Source.create("#source/source-culture8")]
+
+                let expected = 
+                    Sample.create("#sample/sample-P-0.1-aliquot7","sample-P-0.1-aliquot7", DerivesFrom = expectedDerivesFrom)
+
+                Expect.isTrue (API.ProcessInput.isSample result) "Result is not a sample"
+
+                Expect.equal (API.ProcessInput.trySample result).Value expected "Sample did not match"
+            )
+            testCase "WriterOutputMatchesInputSimple" (fun () -> 
+            
+                    let o_read_in = ProcessInput.fromString TestFiles.ProcessInput.sampleSimple
+                    let o_out = ProcessInput.toString o_read_in
+
+                    let expected = 
+                        TestFiles.ProcessInput.sampleSimple
+                        |> Utils.wordFrequency
+
+                    let actual = 
+                        o_out
+                        |> Utils.wordFrequency
+
+                    Fable.print(o_out)
+
+                    Expect.equal actual expected "Written processInput does not match read process input"
+            )
+        ]
     ]
 
 let testProtocolFile =
@@ -905,6 +1032,7 @@ let main =
     testList "JsonTests" [
         testEncode
         testDecode
+        testOntoloyAnnotation
         testProcessInput     
         testProtocolFile
         testProcessFile

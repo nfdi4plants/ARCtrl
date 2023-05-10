@@ -1,4 +1,6 @@
-﻿namespace ISADotNet
+﻿namespace ISADotNet.Json
+
+open ValidationTypes
 
 module JsonSchemaUrls =
     
@@ -61,8 +63,6 @@ module JsonSchemaUrls =
 
     [<LiteralAttribute>]
     let Study = "https://raw.githubusercontent.com/HLWeil/isa-specs/anyof/source/_static/isajson/study_schema.json"
-
-open ISADotNet.Validation
 
 #if !FABLE_COMPILER
 module JSchema = 

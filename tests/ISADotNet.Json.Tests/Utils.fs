@@ -1,6 +1,7 @@
 ﻿module TestingUtils
 
 open Expecto
+open ISADotNet.Json
    
 module Utils = 
 
@@ -9,7 +10,11 @@ module Utils =
         |> Array.map (fun s -> s.Trim())
         |> Array.filter ((<>) "")
 
-//module MyExpect =
+    let wordFrequency (json:string) = 
+        json
+        |> extractWords
+        |> Array.countBy id
+        |> Array.sortBy fst
 
 //    let matchingResult (vr : ValidationResult)=
 //        Expect.isTrue vr.Success (sprintf "Json Object did not match Json Schema: %A" (vr.GetErrors()))

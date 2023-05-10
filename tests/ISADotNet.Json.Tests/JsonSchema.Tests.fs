@@ -6,7 +6,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISADotNet.Validation
+open ISADotNet.Json
 
 let tests_FableBindings = testList "FableBindings" [ 
     testCase "Hello World" (fun () -> 
