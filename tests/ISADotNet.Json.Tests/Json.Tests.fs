@@ -354,64 +354,77 @@ let testProtocolFile =
         )
     ]
 
-// let testProtocolFileLD =
+let testProtocolFileLD =
 
-//     let sourceDirectory = __SOURCE_DIRECTORY__ + @"/JsonIOTestFiles/"
-//     let sinkDirectory = System.IO.Directory.CreateDirectory(__SOURCE_DIRECTORY__ + @"/TestResult/").FullName
-//     let referenceProtocolFilePath = System.IO.Path.Combine(sourceDirectory,"ProtocolTestFile.json")
-//     let outputProtocolFilePath = System.IO.Path.Combine(sinkDirectory,"new.ProtocolTestFile.json")
-//     let referenceProtocolFilePathLD = System.IO.Path.Combine(sourceDirectory,"ProtocolTestFile.jsonld")
-//     let outputProtocolFilePathLD = System.IO.Path.Combine(sinkDirectory,"new.ProtocolTestFile.jsonld")
+    testList "Protocol" [
+        testCase "ReaderRunning" (fun () -> 
+            let readingSuccess = 
+                try 
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
-//     testList "ProtocolJsonTests" [
-//         testCase "ReaderSuccess" (fun () -> 
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        )
+        testCase "ReaderSuccess" (fun () -> 
             
-//             let readingSuccess = 
-//                 try 
-//                     Protocol.fromFile referenceProtocolFilePathLD |> ignore
-//                     Result.Ok "DidRun"
-//                 with
-//                 | err -> Result.Ok(sprintf "Reading the test json-ld file failed: %s" err.Message)
+            let protocol = Protocol.fromString TestObjects.Protocol.protocolLD
+            let exptected_name = "peptide_digestion"
+            let actual = protocol.Name 
+            Expect.isSome actual "Should be some"
+            Expect.equal actual (Some exptected_name) ""
+        )
 
-//             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        testCase "WriterRunning" (fun () ->
 
-//         )
+            let p = Protocol.fromString TestObjects.Protocol.protocol
 
-//         testCase "WriterSuccess" (fun () ->
+            let writingSuccess = 
+                try 
+                    Protocol.toStringLD p |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
 
-//             let p = Protocol.fromFile referenceProtocolFilePathLD
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
 
+        // testAsync "WriterSchemaCorrectness" {
 
+        //     let p = Protocol.fromString TestObjects.Protocol.protocol
 
-//             let writingSuccess = 
-//                 try 
-//                     Protocol.toFileLD outputProtocolFilePathLD p
-//                     Result.Ok "DidRun"
-//                 with
-//                 | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+        //     let s = Protocol.toString p
 
-//             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
-//         )
+        //     let! validation = Validation.validateProtocol s
 
-//         // testCase "WriterSchemaCorrectness" (fun () ->
+        //     Expect.isTrue validation.Success $"Protocol did not match schema: {validation.GetErrors()}"
+        // }
 
-//         //     let p = Protocol.fromFile referenceProtocolFilePath
+        // testCase "OutputMatchesInput" (fun () ->
 
-//         //     let s = Protocol.toString p
+        //     let o_read_in = Protocol.fromString TestObjects.Protocol.protocol
+        //     let exptected_name = "peptide_digestion"
+        //     let actual_name = o_read_in.Name
+        //     Expect.isSome actual_name "Should be some"
+        //     Expect.equal actual_name (Some exptected_name) "Name exists"
 
-//         //     Expect.matchingProtocol s
-//         // )
+        //     let o = o_read_in |> Protocol.toString
 
-//         testCase "OutputMatchesInput" (fun () ->
+        //     let expected = 
+        //         TestObjects.Protocol.protocol
+        //         |> Utils.extractWords
+        //         |> Array.countBy id
+        //         |> Array.sortBy fst
 
-//             let i = Protocol.fromFile referenceProtocolFilePathLD
+        //     let actual = 
+        //         o
+        //         |> Utils.extractWords
+        //         |> Array.countBy id
+        //         |> Array.sortBy fst
 
-//             let o = Protocol.fromFile outputProtocolFilePathLD
-
-//             Expect.equal o i "Written protocol file does not match read protocol file"
-//         )
-//         |> testSequenced
-//     ]
+        //     Expect.equal actual expected "Written protocol file does not match read protocol file"
+        // )
+    ]
 
 let testProcessFile =
 
