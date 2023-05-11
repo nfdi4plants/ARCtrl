@@ -16,11 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="6.0.5" />
+    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ISADotNet\ISADotNet.fsproj" />
+    <PackageReference Update="FSharp.Core" Version="6.0.5" />
   </ItemGroup>
 
   <PropertyGroup>

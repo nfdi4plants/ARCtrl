@@ -4,6 +4,11 @@
   "description": "ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files written in dotnet.",
   "type": "module",
   "scripts": {
+    "pretestJson": "dotnet fable tests/ISADotNet.Json.Tests -o tests/ISADotNet.Json.JsNativeTests/fable",
+    "testJson": "mocha tests/ISADotNet.Json.JsNativeTests/fable",
+    "posttestJson": "mocha tests/ISADotNet.Json.JsNativeTests",
+    "testJson:live": "mocha --watch --parallel tests/ISADotNet.Json.JsNativeTests/fable",
+    "testJsonnative:live": "mocha --watch --parallel tests/ISADotNet.Json.JsNativeTests",
     "pretest": "dotnet fable tests/ISADotNet.Tests -o tests/ISADotNet.JsNativeTests/fable",
     "test": "mocha tests/ISADotNet.JsNativeTests/fable",
     "posttest": "mocha tests/ISADotNet.JsNativeTests",
@@ -47,6 +52,7 @@
     "mocha": "^10.2.0"
   },
   "dependencies": {
-    "fable-library": "^1.1.0"
+    "fable-library": "^1.1.0",
+    "jsonschema": "^1.4.1"
   }
 }

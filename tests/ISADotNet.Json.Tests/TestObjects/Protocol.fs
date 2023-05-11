@@ -1,4 +1,9 @@
-{
+﻿module TestObjects.Protocol
+
+let protocol =
+
+    """
+    {
     "@id": "#protocols/peptide_digestion",
     "name": "peptide_digestion",
 
@@ -71,3 +76,4 @@
     "comments": []
 
 }
+    """

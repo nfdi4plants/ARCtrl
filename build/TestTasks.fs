@@ -11,6 +11,11 @@ let FableTestPath_input = "tests/ISADotNet.Tests"
 [<Literal>]
 let FableTestPath_output = "tests/ISADotNet.JsNativeTests/fable"
 
+[<Literal>]
+let JsonFableTestPath_input = "tests/ISADotNet.Json.Tests"
+[<Literal>]
+let JsonFableTestPath_output = "tests/ISADotNet.Json.JsNativeTests/fable"
+
 [<AutoOpen>]
 module private Helper =
 
@@ -111,6 +116,8 @@ module private Helper =
     let cleanFable = BuildTask.create "cleanFable" [clean; build] {
         System.IO.Directory.CreateDirectory FableTestPath_output |> ignore
         run dotnet "fable clean --yes" FableTestPath_output
+        System.IO.Directory.CreateDirectory JsonFableTestPath_output |> ignore
+        run dotnet "fable clean --yes" JsonFableTestPath_output
     }
 
 module RunTests = 
@@ -120,6 +127,7 @@ module RunTests =
     /// check package.json in root for behavior
     let runTestsJs = BuildTask.create "runTestsJS" [clean; cleanFable; build] {
         run npm "test" ""
+        run npm "run testJson" ""
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {
@@ -156,8 +164,10 @@ module WatchTests =
 
     let private fableTestsProcesses =
         [
-            "[Fable Core]", dotnet $"fable watch {FableTestPath_input} -o {FableTestPath_output} --run npm run test:live" "."
-            "[Mocha JsNative]", npm $"run testnative:live" "."
+            "[ISADotNet Fable]", dotnet $"fable watch {FableTestPath_input} -o {FableTestPath_output} --run npm run test:live" "."
+            "[ISADotNet Mocha]", npm $"run testnative:live" "."
+            "[ISADotNet.Json Fable]", dotnet $"fable watch {JsonFableTestPath_input} -o {JsonFableTestPath_output} --run npm run testJson:live" "."
+            "[ISADotNet.Json Mocha]", npm $"run testJsonnative:live" "."
         ]
 
     let allTest = dotnetTestsProcesses@fableTestsProcesses

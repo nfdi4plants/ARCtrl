@@ -1,3 +1,7 @@
+﻿module TestObjects.Assay
+
+let assay =
+    """
 {
   "measurementType": {
     "termAccession": "http://purl.obolibrary.org/obo/OBI_0000366",
@@ -4501,3 +4505,4 @@
   "technologyPlatform": "LC-MS/MS",
   "filename": "a_metabolome.txt"
 }
+    """
