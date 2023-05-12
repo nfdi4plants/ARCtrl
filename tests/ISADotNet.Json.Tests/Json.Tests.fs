@@ -164,6 +164,52 @@ let testOntoloyAnnotation =
             )
     ]
 
+let testOntoloyAnnotationLD =
+    testList "OntologyAnnotationLD" [
+        
+            testCase "ReaderSuccess" (fun () -> 
+           
+                let result = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidaseLD
+
+
+                let comment = Comment.create(Name = "comment",Value = "This is a comment")
+                let expected = 
+                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [comment])
+                
+                Expect.equal result expected "Source did not match"
+            )
+            testCase "WriterOutputMatchesInputGivenIDs" (fun () -> 
+            
+                let o_read_in = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidase
+                let o_out = OntologyAnnotation.toStringLD o_read_in
+
+                let expected = 
+                    TestObjects.OntologyAnnotation.peptidaseLD
+                    |> Utils.wordFrequency
+
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
+
+                Expect.equal actual expected "Written processInput does not match read process input"
+            )
+            testCase "WriterOutputMatchesInputDefaultIDs" (fun () -> 
+            
+                let o_read_in = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidaseWithoutIds
+                let o_out = OntologyAnnotation.toStringLD o_read_in
+
+                let expected = 
+                    TestObjects.OntologyAnnotation.peptidaseWithDefaultLD
+                    |> Utils.wordFrequency
+
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
+
+                Expect.equal actual expected "Written processInput does not match read process input"
+            )
+    ]
+
 
 let testProcessInput =
 
@@ -1129,6 +1175,7 @@ let main =
         testEncode
         testDecode
         testOntoloyAnnotation
+        testOntoloyAnnotationLD
         testProcessInput     
         testProtocolFile     
         testProtocolFileLD
