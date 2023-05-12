@@ -59,7 +59,7 @@ module Factor =
         match f.ID with
         | Some id -> URI.toString id
         | None -> match f.Name with
-                  | Some n -> "#Factor_" + n
+                  | Some n -> "#Factor_" + n.Replace(" ","_")
                   | None -> "#EmptyFactor"
 
     let encoder (options : ConverterOptions) (oa : obj) = 

@@ -127,7 +127,7 @@ module Material =
         match m.ID with
             | Some id -> URI.toString id
             | None -> match m.Name with
-                        | Some n -> "#" + n
+                        | Some n -> "#Material_" + n.Replace(" ","_")
                         | None -> "#EmptyMaterial"
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 

@@ -40,7 +40,7 @@ module OntologySourceReference =
         match o.File with
         | Some f -> f
         | None -> match o.Name with
-                  | Some n -> n
+                  | Some n -> "#OntologySourceRef_" + n.Replace(" ","_")
                   | None -> "#DummyOntologySourceRef"
 
     let encoder (options : ConverterOptions) (osr : obj) = 
@@ -94,8 +94,8 @@ module OntologyAnnotation =
         | None -> match o.TermAccessionNumber with
                   | Some ta -> URI.toString ta
                   | None -> match o.TermSourceREF with
-                            | Some r -> "#" + r
-                            | None -> "#DummyOntologySourceRef"
+                            | Some r -> "#" + r.Replace(" ","_")
+                            | None -> "#DummyOntologyAnnotation"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

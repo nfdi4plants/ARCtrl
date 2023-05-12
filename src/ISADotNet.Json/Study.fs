@@ -36,11 +36,11 @@ module Study =
         match s.ID with
         | Some id -> URI.toString id
         | None -> match s.FileName with
-                  | Some n -> n
+                  | Some n -> "#Study" + n.Replace(" ","_")
                   | None -> match s.Identifier with
-                            | Some id -> "#Study_" + id
+                            | Some id -> "#Study_" + id.Replace(" ","_")
                             | None -> match s.Title with
-                                      | Some t -> "#Study_" + t
+                                      | Some t -> "#Study_" + t.Replace(" ","_")
                                       | None -> "#EmptyStudy"
     
     let encoder (options : ConverterOptions) (oa : obj) = 

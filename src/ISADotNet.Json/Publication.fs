@@ -17,7 +17,7 @@ module Publication =
         | None -> match p.PubMedID with
                   | Some id -> id
                   | None -> match p.Title with
-                            | Some t -> "#Pub_" + t
+                            | Some t -> "#Pub_" + t.Replace(" ","_")
                             | None -> "#EmptyPublication"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 

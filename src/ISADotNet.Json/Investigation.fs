@@ -16,11 +16,11 @@ module Investigation =
         match i.ID with
         | Some id -> URI.toString id
         | None -> match i.FileName with
-                  | Some n -> n
+                  | Some n -> "#Study_" + n.Replace(" ","_")
                   | None -> match i.Identifier with
-                            | Some id -> "#Study_" + id
+                            | Some id -> "#Study_" + id.Replace(" ","_")
                             | None -> match i.Title with
-                                      | Some t -> "#Study_" + t
+                                      | Some t -> "#Study_" + t.Replace(" ","_")
                                       | None -> "#EmptyStudy"
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

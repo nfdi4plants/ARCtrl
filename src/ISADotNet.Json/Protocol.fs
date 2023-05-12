@@ -58,7 +58,7 @@ module Component =
     
     let genID (c:Component) = 
         match c.ComponentName with
-        | Some cn -> "#Component_" + cn
+        | Some cn -> "#Component_" + cn.Replace(" ","_")
         | None -> "#EmptyComponent"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
@@ -117,7 +117,7 @@ module Protocol =
         | None -> match p.Uri with
                   | Some u -> URI.toString u
                   | None -> match p.Name with
-                            | Some n -> "#Protocol_" + n
+                            | Some n -> "#Protocol_" + n.Replace(" ","_")
                             | None -> "#EmptyComponent" 
 
     let encoder (options : ConverterOptions) (oa : obj) = 

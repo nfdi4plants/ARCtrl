@@ -13,7 +13,7 @@ module ProcessParameterValue =
     
     let genID (p:ProcessParameterValue) = 
         match (p.Value,p.Category) with
-        | (Some v, Some c) -> "#Param_" + (API.ProtocolParameter.getNameAsStringWithNumber c) + (API.Value.toString v)
+        | (Some v, Some c) -> "#Param_" + (API.ProtocolParameter.getNameAsStringWithNumber c).Replace(" ","_") + (API.Value.toString v).Replace(" ","_")
         | _ -> "#EmptyMaterialAttribute"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
@@ -146,7 +146,7 @@ module Process =
         match p.ID with
             | Some id -> URI.toString id
             | None -> match p.Name with
-                        | Some n -> "#" + n
+                        | Some n -> "#Process_" + n.Replace(" ","_")
                         | None -> "#EmptyProcess"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
