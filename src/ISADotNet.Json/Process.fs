@@ -93,6 +93,10 @@ module ProcessInput =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
+    let toStringLD (m:ProcessInput) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) m
+        |> Encode.toString 2
+
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
     //    |> fromString

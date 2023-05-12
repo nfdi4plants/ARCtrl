@@ -40,7 +40,7 @@ module Data =
         match d.ID with
         | Some id -> URI.toString id
         | None -> match d.Name with
-                  | Some n -> "#Data_" + n.Replace(" ","_")
+                  | Some n -> n
                   | None -> "#EmptyData"
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 
@@ -48,7 +48,6 @@ module Data =
             if options.SetID then "@id", GEncode.string (oa :?> Data |> genID)
                 else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Data"
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "type" (DataFile.encoder options) (oa |> tryGetPropertyValue "DataType")
             tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
