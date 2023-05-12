@@ -16,7 +16,7 @@ module Comment =
         match c.ID with
         | Some id -> URI.toString id
         | None -> match c.Name with
-                  | Some n -> "#Comment_" + n
+                  | Some n -> "#Comment_" + n.Replace(" ","_") + if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
                   | None -> "#EmptyComment"
 
     let encoder (options : ConverterOptions) (comment : obj) = 
