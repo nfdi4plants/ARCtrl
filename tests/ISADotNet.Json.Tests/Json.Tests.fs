@@ -356,7 +356,7 @@ let testProtocolFile =
 
 let testProtocolFileLD =
 
-    testList "Protocol" [
+    testList "ProtocolLD" [
         testCase "ReaderRunning" (fun () -> 
             let readingSuccess = 
                 try 
@@ -400,30 +400,55 @@ let testProtocolFileLD =
         //     Expect.isTrue validation.Success $"Protocol did not match schema: {validation.GetErrors()}"
         // }
 
-        // testCase "OutputMatchesInput" (fun () ->
+        testCase "OutputMatchesInputGivenIDs" (fun () ->
 
-        //     let o_read_in = Protocol.fromString TestObjects.Protocol.protocol
-        //     let exptected_name = "peptide_digestion"
-        //     let actual_name = o_read_in.Name
-        //     Expect.isSome actual_name "Should be some"
-        //     Expect.equal actual_name (Some exptected_name) "Name exists"
+            let o_read_in = Protocol.fromString TestObjects.Protocol.protocol
+            let exptected_name = "peptide_digestion"
+            let actual_name = o_read_in.Name
+            Expect.isSome actual_name "Should be some"
+            Expect.equal actual_name (Some exptected_name) "Name exists"
 
-        //     let o = o_read_in |> Protocol.toString
+            let o = o_read_in |> Protocol.toStringLD
 
-        //     let expected = 
-        //         TestObjects.Protocol.protocol
-        //         |> Utils.extractWords
-        //         |> Array.countBy id
-        //         |> Array.sortBy fst
+            let expected = 
+                TestObjects.Protocol.protocolLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //     let actual = 
-        //         o
-        //         |> Utils.extractWords
-        //         |> Array.countBy id
-        //         |> Array.sortBy fst
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-        //     Expect.equal actual expected "Written protocol file does not match read protocol file"
-        // )
+            Expect.equal actual expected "Written protocol file does not match read protocol file"
+        )
+
+        testCase "OutputMatchesInputDefaultIDs" (fun () ->
+
+            let o_read_in = Protocol.fromString TestObjects.Protocol.protocolWithoutIds
+            let exptected_name = "peptide_digestion"
+            let actual_name = o_read_in.Name
+            Expect.isSome actual_name "Should be some"
+            Expect.equal actual_name (Some exptected_name) "Name exists"
+
+            let o = o_read_in |> Protocol.toStringLD
+
+            let expected = 
+                TestObjects.Protocol.protocolWithDefaultLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.equal actual expected "Written protocol file does not match read protocol file"
+        )
     ]
 
 let testProcessFile =
@@ -1106,7 +1131,7 @@ let main =
         testOntoloyAnnotation
         testProcessInput     
         testProtocolFile     
-        // testProtocolFileLD
+        testProtocolFileLD
         testProcessFile
         testPersonFile
         testPublicationFile
