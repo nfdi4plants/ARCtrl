@@ -13,7 +13,9 @@ module ProtocolParameter =
     let genID (pp:ProtocolParameter) = 
         match pp.ID with
         | Some id -> URI.toString id
-        | None -> "#EmptyProtocolParameter"
+        | None -> match pp.ParameterName with
+                  | Some n when not n.ID.IsNone -> "#Param_" + n.ID.Value
+                  | _ -> "#EmptyProtocolParameter"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
