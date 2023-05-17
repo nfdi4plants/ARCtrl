@@ -118,7 +118,7 @@ module Protocol =
                   | Some u -> URI.toString u
                   | None -> match p.Name with
                             | Some n -> "#Protocol_" + n.Replace(" ","_")
-                            | None -> "#EmptyComponent" 
+                            | None -> "#EmptyProtocol" 
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [

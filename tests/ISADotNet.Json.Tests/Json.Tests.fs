@@ -737,6 +737,93 @@ let testProcessFile =
         )
     ]
 
+let testProcessFileLD =
+
+    testList "ProcessLD" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    Process.fromString TestObjects.Process.processLD |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        )
+
+        testCase "WriterSuccess" (fun () ->
+
+            let p = Process.fromString TestObjects.Process.processLD
+
+            let writingSuccess = 
+                try 
+                    Process.toStringLD p |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        // testAsync "WriterSchemaCorrectness" {
+
+        //     let p = Process.fromString TestObjects.Process.process'
+
+        //     let s = Process.toString p
+
+        //     let! validation = Validation.validateProcess s
+
+        //     Expect.isTrue validation.Success $"Process did not match schema: {validation.GetErrors()}"
+        // }
+
+        testCase "OutputMatchesInputGivenIDs" (fun () ->
+
+            let o =
+                Process.fromString TestObjects.Process.process'
+                |> Process.toStringLD
+
+            let expected = 
+                TestObjects.Process.processLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written process file does not match read process file"
+        )
+
+        testCase "OutputMatchesInputDefaultLD" (fun () ->
+
+            let o =
+                Process.fromString TestObjects.Process.processWithoutIDs
+                |> Process.toStringLD
+
+            let expected = 
+                TestObjects.Process.processWithDefaultLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            printfn "%A" expected
+            printfn "%A" actual
+
+            mySequenceEqual actual expected "Written process file does not match read process file"
+        )
+    ]
+
 let testPersonFile =
 
     testList "Person" [
@@ -1358,6 +1445,7 @@ let main =
         testProtocolFile     
         testProtocolFileLD
         testProcessFile
+        testProcessFileLD
         testPersonFile
         testPublicationFile
         testAssayFile
