@@ -1030,6 +1030,69 @@ let testPublicationFile =
         )
     ]
 
+let testPublicationFileLD =
+
+    testList "PublicationLD" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    Publication.fromString TestObjects.Publication.publicationLD |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        )
+
+        testCase "WriterSuccess" (fun () ->
+
+            let a = Publication.fromString TestObjects.Publication.publication
+
+            let writingSuccess = 
+                try 
+                    Publication.toStringLD a |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        // testAsync "WriterSchemaCorrectness" {
+
+        //     let a = Publication.fromString TestObjects.Publication.publication
+
+        //     let s = Publication.toString a
+
+        //     let! validation = Validation.validatePublication s
+
+        //     Expect.isTrue validation.Success $"Publication did not match schema: {validation.GetErrors()}"
+        // }
+
+        testCase "OutputMatchesInput" (fun () ->
+
+            let o = 
+                Publication.fromString TestObjects.Publication.publication
+                |> Publication.toStringLD
+
+            let expected = 
+                TestObjects.Publication.publicationLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written Publication file does not match read publication file"
+        )
+    ]
+
 let testAssayFile =
 
     testList "Assay" [
@@ -1529,6 +1592,7 @@ let main =
         testPersonFile
         testPersonFileLD
         testPublicationFile
+        testPublicationFileLD
         testAssayFile
         testInvestigationFile
     ]
