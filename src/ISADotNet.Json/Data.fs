@@ -58,7 +58,7 @@ module Data =
     let rec decoder (options : ConverterOptions) : Decoder<Data> =
         
         fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"type";"comments"] json then 
+            if GDecode.hasUnknownFields ["@id";"name";"type";"comments";"@type"] json then 
                 Error (DecoderError("Unknown fields in Data", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
 
@@ -113,7 +113,7 @@ module Source =
 
     let rec decoder (options : ConverterOptions) : Decoder<Source> =
         fun s json -> 
-        if GDecode.hasUnknownFields ["@id";"name";"characteristics"] json then 
+        if GDecode.hasUnknownFields ["@id";"name";"characteristics";"@type"] json then 
                 Error (DecoderError("Unknown fields in Source", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
             Decode.object (fun get ->
@@ -169,7 +169,7 @@ module Sample =
 
     let decoder (options : ConverterOptions) : Decoder<Sample> =
         fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom"] json then 
+            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"] json then 
                 Error (DecoderError("Unknown fields in Sample", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
                 Decode.object (fun get ->

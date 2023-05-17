@@ -145,7 +145,7 @@ module Material =
 
     let rec decoder (options : ConverterOptions) : Decoder<Material> =
         fun s json ->
-            if GDecode.hasUnknownFields ["@id";"name";"type";"characteristics";"derivesFrom"] json then
+            if GDecode.hasUnknownFields ["@id";"@type";"name";"type";"characteristics";"derivesFrom"] json then
                 Error (DecoderError("Unknown fields in material", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
                 Decode.object (fun get ->
