@@ -816,10 +816,6 @@ let testProcessFileLD =
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
-
-            printfn "%A" expected
-            printfn "%A" actual
-
             mySequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
@@ -873,6 +869,90 @@ let testPersonFile =
 
             let expected = 
                 TestObjects.Person.person
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written person file does not match read person file"
+        )
+    ]
+
+let testPersonFileLD =
+
+    testList "PersonLD" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    Person.fromString TestObjects.Person.personLD |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        )
+
+        testCase "WriterSuccess" (fun () ->
+
+            let a = Person.fromString TestObjects.Person.person
+
+            let writingSuccess = 
+                try 
+                    Person.toStringLD a |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Ok(sprintf "Writing the test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        // testAsync "WriterSchemaCorrectness" {
+
+        //     let a = Person.fromString TestObjects.Person.person
+
+        //     let s = Person.toString a
+
+        //     let! validation = Validation.validatePerson s
+
+        //     Expect.isTrue validation.Success $"Person did not match schema: {validation.GetErrors()}"
+        // }
+
+        testCase "OutputMatchesInputGivenID" (fun () ->
+
+            let o = 
+                Person.fromString TestObjects.Person.person
+                |> Person.toStringLD
+
+            let expected = 
+                TestObjects.Person.personLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written person file does not match read person file"
+        )
+
+        testCase "OutputMatchesInputDefaultLD" (fun () ->
+
+            let o = 
+                Person.fromString TestObjects.Person.personWithoutID
+                |> Person.toStringLD
+
+            let expected = 
+                TestObjects.Person.personWithDefaultLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1447,6 +1527,7 @@ let main =
         testProcessFile
         testProcessFileLD
         testPersonFile
+        testPersonFileLD
         testPublicationFile
         testAssayFile
         testInvestigationFile
