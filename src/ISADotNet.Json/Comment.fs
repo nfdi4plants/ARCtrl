@@ -11,10 +11,19 @@ open System.IO
 open GEncode
 
 module Comment = 
+    
+    let genID (c:Comment) = 
+        match c.ID with
+        | Some id -> URI.toString id
+        | None -> match c.Name with
+                  | Some n -> "#Comment_" + n.Replace(" ","_") + if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
+                  | None -> "#EmptyComment"
 
     let encoder (options : ConverterOptions) (comment : obj) = 
         [
-            tryInclude "@id" GEncode.string (comment |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (comment :?> Comment |> genID)
+                else tryInclude "@id" GEncode.string (comment |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Comment"
             tryInclude "name" GEncode.string (comment |> tryGetPropertyValue "Name")
             tryInclude "value" GEncode.string (comment |> tryGetPropertyValue "Value")
         ]
@@ -35,6 +44,11 @@ module Comment =
 
     let toString (c:Comment) = 
         encoder (ConverterOptions()) c
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (c:Comment) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) c
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

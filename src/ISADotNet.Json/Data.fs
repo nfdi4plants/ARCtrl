@@ -36,9 +36,18 @@ module DataFile =
 
 module Data = 
     
+    let genID (d:Data) = 
+        match d.ID with
+        | Some id -> URI.toString id
+        | None -> match d.Name with
+                  | Some n -> n
+                  | None -> "#EmptyData"
+    
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Data |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Data"
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "type" (DataFile.encoder options) (oa |> tryGetPropertyValue "DataType")
             tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
@@ -49,7 +58,7 @@ module Data =
     let rec decoder (options : ConverterOptions) : Decoder<Data> =
         
         fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"type";"comments"] json then 
+            if GDecode.hasUnknownFields ["@id";"name";"type";"comments";"@type"] json then 
                 Error (DecoderError("Unknown fields in Data", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
 
@@ -69,6 +78,11 @@ module Data =
     let toString (m:Data) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (d:Data) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) d
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -80,9 +94,18 @@ module Data =
 
 module Source = 
     
+    let genID (s:Source) = 
+        match s.ID with
+        | Some id -> URI.toString id
+        | None -> match s.Name with
+                  | Some n -> "#Source_" + n.Replace(" ","_")
+                  | None -> "#EmptySource"
+    
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Source |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Source"
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")        ]
         |> GEncode.choose
@@ -90,7 +113,7 @@ module Source =
 
     let rec decoder (options : ConverterOptions) : Decoder<Source> =
         fun s json -> 
-        if GDecode.hasUnknownFields ["@id";"name";"characteristics"] json then 
+        if GDecode.hasUnknownFields ["@id";"name";"characteristics";"@type"] json then 
                 Error (DecoderError("Unknown fields in Source", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
             Decode.object (fun get ->
@@ -109,6 +132,11 @@ module Source =
     let toString (m:Source) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (s:Source) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -119,9 +147,18 @@ module Source =
 
 module Sample = 
     
+    let genID (s:Sample) = 
+        match s.ID with
+        | Some id -> URI.toString id
+        | None -> match s.Name with
+                  | Some n -> "#Sample_" + n.Replace(" ","_")
+                  | None -> "#EmptySample"
+    
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Sample |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Sample"
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")
             tryInclude "factorValues" (FactorValue.encoder options) (oa |> tryGetPropertyValue "FactorValues")
@@ -132,7 +169,7 @@ module Sample =
 
     let decoder (options : ConverterOptions) : Decoder<Sample> =
         fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom"] json then 
+            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"] json then 
                 Error (DecoderError("Unknown fields in Sample", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
                 Decode.object (fun get ->
@@ -151,6 +188,11 @@ module Sample =
 
     let toString (m:Sample) = 
         encoder (ConverterOptions()) m
+        |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (s:Sample) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) s
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

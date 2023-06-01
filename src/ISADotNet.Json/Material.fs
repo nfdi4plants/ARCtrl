@@ -29,10 +29,17 @@ module MaterialType =
 
 
 module MaterialAttribute =
+    
+    let genID (m:MaterialAttribute) = 
+        match m.ID with
+            | Some id -> URI.toString id
+            | None -> "#EmptyMaterialAttribute"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> MaterialAttribute |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "MaterialAttribute"
             tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "CharacteristicType")
         ]
         |> GEncode.choose
@@ -52,6 +59,11 @@ module MaterialAttribute =
     let toString (m:MaterialAttribute) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (m:MaterialAttribute) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) m
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -61,10 +73,17 @@ module MaterialAttribute =
     //    File.WriteAllText(path,toString m)
 
 module MaterialAttributeValue =
+    
+    let genID (m:MaterialAttributeValue) = 
+        match m.ID with
+        | Some id -> URI.toString id
+        | None -> "#EmptyMaterialAttributeValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> MaterialAttributeValue |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "MaterialAttributeValue"
             tryInclude "category" (MaterialAttribute.encoder options) (oa |> tryGetPropertyValue "Category")
             tryInclude "value" (Value.encoder options) (oa |> tryGetPropertyValue "Value")
             tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Unit")
@@ -88,6 +107,11 @@ module MaterialAttributeValue =
     let toString (m:MaterialAttributeValue) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (m:MaterialAttributeValue) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) m
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -99,9 +123,18 @@ module MaterialAttributeValue =
 
 module Material = 
     
+    let genID (m:Material) = 
+        match m.ID with
+            | Some id -> URI.toString id
+            | None -> match m.Name with
+                        | Some n -> "#Material_" + n.Replace(" ","_")
+                        | None -> "#EmptyMaterial"
+    
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Material |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Material"
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "type" (MaterialType.encoder options) (oa |> tryGetPropertyValue "MaterialType")
             tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")
@@ -112,7 +145,7 @@ module Material =
 
     let rec decoder (options : ConverterOptions) : Decoder<Material> =
         fun s json ->
-            if GDecode.hasUnknownFields ["@id";"name";"type";"characteristics";"derivesFrom"] json then
+            if GDecode.hasUnknownFields ["@id";"@type";"name";"type";"characteristics";"derivesFrom"] json then
                 Error (DecoderError("Unknown fields in material", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
                 Decode.object (fun get ->
@@ -130,6 +163,11 @@ module Material =
 
     let toString (m:Material) = 
         encoder (ConverterOptions()) m
+        |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (m:Material) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) m
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

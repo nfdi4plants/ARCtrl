@@ -1,5 +1,1739 @@
 ﻿module TestObjects.Investigation
 
+let investigationLD = 
+  """
+{
+  "@id": "Investigations/MyInvestigation",
+  "@type": "Investigation",
+  "filename": "isa.investigation.xlsx",
+  "identifier": "MyInvestigation",
+  "title": "bla bla bla",
+  "description": "bla bla bla\nblabbbbblaaa",
+  "submissionDate": "2020-03-15T18:23:00.0Z",
+  "publicReleaseDate": "2020-04-03",
+  "ontologySourceReferences": [
+    {
+      "@id": "filePath.txt",
+      "@type": "OntologySourceReference",
+      "description": "bla bla",
+      "file": "filePath.txt",
+      "name": "OO",
+      "version": "1.3.3",
+      "comments": [
+        {
+          "@id": "MyComment",
+          "@type": "Comment",
+          "name": "Key",
+          "value": "Value"
+        }
+      ]
+    }
+  ],
+  "publications": [
+    {
+      "@id": "11.1111/abcdef123456789",
+      "@type": "Publication",
+      "pubMedID": "12345678",
+      "doi": "11.1111/abcdef123456789",
+      "authorList": "Lukas Weil, Other Gzúy",
+      "title": "Fair is great",
+      "status": {
+        "@id": "OntologyTerm/Published",
+        "@type": "OntologyAnnotation",
+        "annotationValue": "published",
+        "termSource": "pso",
+        "termAccession": "http://purl.org/spar/pso/published",
+        "comments": [
+          {
+            "@id": "MyComment",
+            "@type": "Comment",
+            "name": "Key",
+            "value": "Value"
+          }
+        ]
+      },
+      "comments": [
+        {
+          "@id": "MyComment",
+          "@type": "Comment",
+          "name": "Key",
+          "value": "Value"
+        }
+      ]
+    }
+  ],
+  "people": [
+    {
+      "@id": "Persons/LukasWeil",
+      "@type": "Person",
+      "firstName": "Lukas",
+      "lastName": "Weil",
+      "midInitials": "H",
+      "email": "weil@email.com",
+      "phone": "0123 456789",
+      "fax": "9876 543210",
+      "address": "fantasyStreet 23, 123 Town",
+      "affiliation": "Universiteee",
+      "roles": [
+        {
+          "@id": "OntologyTerm/SoftwareDeveloperRole",
+          "@type": "OntologyAnnotation",
+          "annotationValue": "software developer role",
+          "termSource": "swo",
+          "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "comments": [
+        {
+          "@id": "MyComment",
+          "@type": "Comment",
+          "name": "Key",
+          "value": "Value"
+        }
+      ]
+    }
+  ],
+  "studies": [
+    {
+      "@id": "Study/MyStudy",
+      "@type": "Study",
+      "filename": "MyStudy/isa.study.xlsx",
+      "identifier": "MyStudy",
+      "title": "bla bla bla",
+      "description": "bla bla bla\nblabbbbblaaa",
+      "submissionDate": "2020-10-05T03:03:00.0Z",
+      "publicReleaseDate": "2020-10-20",
+      "publications": [
+        {
+          "@id": "11.1111/abcdef123456789",
+          "@type": "Publication",
+          "pubMedID": "12345678",
+          "doi": "11.1111/abcdef123456789",
+          "authorList": "Lukas Weil, Other Gzúy",
+          "title": "Fair is great",
+          "status": {
+            "@id": "OntologyTerm/Published",
+            "@type": "OntologyAnnotation",
+            "annotationValue": "published",
+            "termSource": "pso",
+            "termAccession": "http://purl.org/spar/pso/published",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "people": [
+        {
+          "@id": "Persons/LukasWeil",
+          "@type": "Person",
+          "firstName": "Lukas",
+          "lastName": "Weil",
+          "midInitials": "H",
+          "email": "weil@email.com",
+          "phone": "0123 456789",
+          "fax": "9876 543210",
+          "address": "fantasyStreet 23, 123 Town",
+          "affiliation": "Universiteee",
+          "roles": [
+            {
+              "@id": "OntologyTerm/SoftwareDeveloperRole",
+              "@type": "OntologyAnnotation",
+              "annotationValue": "software developer role",
+              "termSource": "swo",
+              "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            }
+          ],
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "studyDesignDescriptors": [
+        {
+          "@id": "OntologyTerm/TimeSeries",
+          "@type": "OntologyAnnotation",
+          "annotationValue": "Time Series Analysis",
+          "termSource": "ncit",
+          "termAccession": "http://purl.obolibrary.org/obo/NCIT_C18235",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "protocols": [
+        {
+          "@id": "Protocol/MyProtocol",
+          "@type": "Protocol",
+          "name": "MyProtocol",
+          "protocolType": {
+            "@id": "OntologyTerm/GrowthProtocol",
+            "@type": "OntologyAnnotation",
+            "annotationValue": "growth protocol",
+            "termSource": "dfbo",
+            "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "description": "bla bla bla\nblabbbbblaaa",
+          "uri": "http://nfdi4plants.org/protocols/MyProtocol",
+          "version": "1.2.3",
+          "parameters": [
+            {
+              "@id": "Parameter/Temperature",
+              "@type": "ProtocolParameter",
+              "parameterName": {
+                "@id": "OntologyTerm/Temperature",
+                "@type": "OntologyAnnotation",
+                "annotationValue": "temperature unit",
+                "termSource": "uo",
+                "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            }
+          ],
+          "components": [
+            {
+              "@id": "#Component_PCR_instrument",
+              "@type": "Component",
+              "componentName": "PCR instrument",
+              "componentType": {
+                "@id": "OntologyTerm/PCR",
+                "@type": "OntologyAnnotation",
+                "annotationValue": "PCR instrument",
+                "termSource": "obi",
+                "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            }
+          ],
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "materials": {
+        "sources": [
+          {
+            "@id": "Source/MySource",
+            "@type": "Source",
+            "name": "MySource",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": "MaterialAttributeValue",
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": "MaterialAttribute",
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "samples": [
+          {
+            "@id": "Sample/MySample",
+            "@type": "Sample",
+            "name": "MySample",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": "MaterialAttributeValue",
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": "MaterialAttribute",
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "factorValues": [
+              {
+                "@id": "FactorValue/4hours",
+                "@type": "FactorValue",
+                "category": {
+                  "@id": "Factor/Time",
+                  "@type": "Factor",
+                  "factorName": "Time",
+                  "factorType": {
+                    "@id": "OntologyTerm/Time",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "time",
+                    "termSource": "pato",
+                    "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  },
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                },
+                "value": 4.5,
+                "unit": {
+                  "@id": "OntologyTerm/Hour",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "hour",
+                  "termSource": "uo",
+                  "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "derivesFrom": [
+              {
+                "@id": "Source/MySource",
+                "@type": "Source",
+                "name": "MySource",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": "MaterialAttributeValue",
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": "MaterialAttribute",
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "otherMaterials": [
+          {
+            "@id": "Material/MyMaterial",
+            "@type": "Material",
+            "name": "MyMaterial",
+            "type": "Extract Name",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": "MaterialAttributeValue",
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": "MaterialAttribute",
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "@id": "Material/MyDerivedMaterial",
+            "@type": "Material",
+            "name": "MyDerivedMaterial",
+            "type": "Labeled Extract Name",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": "MaterialAttributeValue",
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": "MaterialAttribute",
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "derivesFrom": [
+              {
+                "@id": "Material/MyMaterial",
+                "@type": "Material",
+                "name": "MyMaterial",
+                "type": "Extract Name",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": "MaterialAttributeValue",
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": "MaterialAttribute",
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "processSequence": [
+        {
+          "@id": "Process/MyProcess1",
+          "@type": "Process",
+          "name": "MyProcess1",
+          "executesProtocol": {
+            "@id": "Protocol/MyProtocol",
+            "@type": "Protocol",
+            "name": "MyProtocol",
+            "protocolType": {
+              "@id": "OntologyTerm/GrowthProtocol",
+              "@type": "OntologyAnnotation",
+              "annotationValue": "growth protocol",
+              "termSource": "dfbo",
+              "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            },
+            "description": "bla bla bla\nblabbbbblaaa",
+            "uri": "http://nfdi4plants.org/protocols/MyProtocol",
+            "version": "1.2.3",
+            "parameters": [
+              {
+                "@id": "Parameter/Temperature",
+                "@type": "ProtocolParameter",
+                "parameterName": {
+                  "@id": "OntologyTerm/Temperature",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "temperature unit",
+                  "termSource": "uo",
+                  "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "components": [
+              {
+                "@id": "#Component_PCR_instrument",
+                "@type": "Component",
+                "componentName": "PCR instrument",
+                "componentType": {
+                  "@id": "OntologyTerm/PCR",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "PCR instrument",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "parameterValues": [
+            {
+              "category": {
+                "@id": "Parameter/Temperature",
+                "@type": "ProtocolParameter",
+                "parameterName": {
+                  "@id": "OntologyTerm/Temperature",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "temperature unit",
+                  "termSource": "uo",
+                  "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              },
+              "value": 20,
+              "unit": {
+                "@id": "OntologyTerm/DegreeCelsius",
+                "@type": "OntologyAnnotation",
+                "annotationValue": "degree celsius",
+                "termSource": "uo",
+                "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            }
+          ],
+          "performer": "Lukas While",
+          "date": "2020-10-05T03:03:00.0Z",
+          "nextProcess": {
+            "@id": "Process/MyProcess2",
+            "@type": "Process"
+          },
+          "inputs": [
+            {
+              "@id": "Source/MySource",
+              "name": "MySource",
+              "characteristics": [
+                {
+                  "@id": "CharacteristicValue/Arabidopsis",
+                  "@type": "MaterialAttributeValue",
+                  "category": {
+                    "@id": "Characteristic/Organism",
+                    "@type": "MaterialAttribute",
+                    "characteristicType": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "organism",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  },
+                  "value": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "Arabidopsis thaliana",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                }
+              ]
+            }
+          ],
+          "outputs": [
+            {
+              "@id": "Sample/MySample",
+              "@type": "Sample",
+              "name": "MySample",
+              "characteristics": [
+                {
+                  "@id": "CharacteristicValue/Arabidopsis",
+                  "@type": "MaterialAttributeValue",
+                  "category": {
+                    "@id": "Characteristic/Organism",
+                    "@type": "MaterialAttribute",
+                    "characteristicType": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "organism",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  },
+                  "value": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "Arabidopsis thaliana",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "factorValues": [
+                {
+                  "@id": "FactorValue/4hours",
+                  "@type": "FactorValue",
+                  "category": {
+                    "@id": "Factor/Time",
+                    "@type": "Factor",
+                    "factorName": "Time",
+                    "factorType": {
+                      "@id": "OntologyTerm/Time",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "time",
+                      "termSource": "pato",
+                      "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    },
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  },
+                  "value": 4.5,
+                  "unit": {
+                    "@id": "OntologyTerm/Hour",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "hour",
+                    "termSource": "uo",
+                    "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "derivesFrom": [
+                {
+                  "@id": "Source/MySource",
+                  "@type": "Source",
+                  "name": "MySource",
+                  "characteristics": [
+                    {
+                      "@id": "CharacteristicValue/Arabidopsis",
+                      "@type": "MaterialAttributeValue",
+                      "category": {
+                        "@id": "Characteristic/Organism",
+                        "@type": "MaterialAttribute",
+                        "characteristicType": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "annotationValue": "organism",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      },
+                      "value": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "Arabidopsis thaliana",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ],
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "assays": [
+        {
+          "@id": "Assay/MyAssay",
+          "@type": "Assay",
+          "filename": "MyAssay/isa.assay.xlsx",
+          "measurementType": {
+            "@id": "OntologyTerm/LFQuantification",
+            "@type": "OntologyAnnotation",
+            "annotationValue": "LC/MS Label-Free Quantification",
+            "termSource": "ncit",
+            "termAccession": "http://purl.obolibrary.org/obo/NCIT_C161813",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "technologyType": {
+            "@id": "OntologyTerm/TOF",
+            "@type": "OntologyAnnotation",
+            "annotationValue": "Time-of-Flight",
+            "termSource": "ncit",
+            "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70698",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "technologyPlatform": "Mass spectrometry platform",
+          "dataFiles": [
+            {
+              "@id": "Data/MyData",
+              "name": "MyData",
+              "type": "Derived Data File",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            }
+          ],
+          "materials": {
+            "samples": [
+              {
+                "@id": "Sample/MySample",
+                "@type": "Sample",
+                "name": "MySample",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": "MaterialAttributeValue",
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": "MaterialAttribute",
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "factorValues": [
+                  {
+                    "@id": "FactorValue/4hours",
+                    "@type": "FactorValue",
+                    "category": {
+                      "@id": "Factor/Time",
+                      "@type": "Factor",
+                      "factorName": "Time",
+                      "factorType": {
+                        "@id": "OntologyTerm/Time",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "time",
+                        "termSource": "pato",
+                        "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      },
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    },
+                    "value": 4.5,
+                    "unit": {
+                      "@id": "OntologyTerm/Hour",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "hour",
+                      "termSource": "uo",
+                      "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "derivesFrom": [
+                  {
+                    "@id": "Source/MySource",
+                    "@type": "Source",
+                    "name": "MySource",
+                    "characteristics": [
+                      {
+                        "@id": "CharacteristicValue/Arabidopsis",
+                        "@type": "MaterialAttributeValue",
+                        "category": {
+                          "@id": "Characteristic/Organism",
+                          "@type": "MaterialAttribute",
+                          "characteristicType": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "annotationValue": "organism",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        },
+                        "value": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "annotationValue": "Arabidopsis thaliana",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "otherMaterials": [
+              {
+                "@id": "Material/MyMaterial",
+                "@type": "Material",
+                "name": "MyMaterial",
+                "type": "Extract Name",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": "MaterialAttributeValue",
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": "MaterialAttribute",
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "@id": "Material/MyDerivedMaterial",
+                "@type": "Material",
+                "name": "MyDerivedMaterial",
+                "type": "Labeled Extract Name",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": "MaterialAttributeValue",
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": "MaterialAttribute",
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "derivesFrom": [
+                  {
+                    "@id": "Material/MyMaterial",
+                    "@type": "Material",
+                    "name": "MyMaterial",
+                    "type": "Extract Name",
+                    "characteristics": [
+                      {
+                        "@id": "CharacteristicValue/Arabidopsis",
+                        "@type": "MaterialAttributeValue",
+                        "category": {
+                          "@id": "Characteristic/Organism",
+                          "@type": "MaterialAttribute",
+                          "characteristicType": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "annotationValue": "organism",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        },
+                        "value": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "annotationValue": "Arabidopsis thaliana",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          "characteristicCategories": [
+            {
+              "@id": "Characteristic/Organism",
+              "@type": "MaterialAttribute",
+              "characteristicType": {
+                "@id": "OntologyTerm/Organism",
+                "@type": "OntologyAnnotation",
+                "annotationValue": "organism",
+                "termSource": "obi",
+                "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            }
+          ],
+          "unitCategories": [
+            {
+              "@id": "OntologyTerm/DegreeCelsius",
+              "@type": "OntologyAnnotation",
+              "annotationValue": "degree celsius",
+              "termSource": "uo",
+              "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            },
+            {
+              "@id": "OntologyTerm/Hour",
+              "@type": "OntologyAnnotation",
+              "annotationValue": "hour",
+              "termSource": "uo",
+              "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            }
+          ],
+          "processSequence": [
+            {
+              "@id": "Process/MyProcess2",
+              "@type": "Process",
+              "name": "MyProcess2",
+              "executesProtocol": {
+                "@id": "Protocol/MyProtocol",
+                "@type": "Protocol",
+                "name": "MyProtocol",
+                "protocolType": {
+                  "@id": "OntologyTerm/GrowthProtocol",
+                  "@type": "OntologyAnnotation",
+                  "annotationValue": "growth protocol",
+                  "termSource": "dfbo",
+                  "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                },
+                "description": "bla bla bla\nblabbbbblaaa",
+                "uri": "http://nfdi4plants.org/protocols/MyProtocol",
+                "version": "1.2.3",
+                "parameters": [
+                  {
+                    "@id": "Parameter/Temperature",
+                    "@type": "ProtocolParameter",
+                    "parameterName": {
+                      "@id": "OntologyTerm/Temperature",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "temperature unit",
+                      "termSource": "uo",
+                      "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "components": [
+                  {
+                    "@id": "#Component_PCR_instrument",
+                    "@type": "Component",
+                    "componentName": "PCR instrument",
+                    "componentType": {
+                      "@id": "OntologyTerm/PCR",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "PCR instrument",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              },
+              "parameterValues": [
+                {
+                  "category": {
+                    "@id": "Parameter/Temperature",
+                    "@type": "ProtocolParameter",
+                    "parameterName": {
+                      "@id": "OntologyTerm/Temperature",
+                      "@type": "OntologyAnnotation",
+                      "annotationValue": "temperature unit",
+                      "termSource": "uo",
+                      "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  },
+                  "value": 20,
+                  "unit": {
+                    "@id": "OntologyTerm/DegreeCelsius",
+                    "@type": "OntologyAnnotation",
+                    "annotationValue": "degree celsius",
+                    "termSource": "uo",
+                    "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "performer": "Lukas While",
+              "date": "2020-10-05T03:03:00.0Z",
+              "previousProcess": {
+                "@id": "Process/MyProcess1",
+                "@type": "Process"
+              },
+              "inputs": [
+                {
+                  "@id": "Sample/MySample",
+                  "@type": "Sample",
+                  "name": "MySample",
+                  "characteristics": [
+                    {
+                      "@id": "CharacteristicValue/Arabidopsis",
+                      "@type": "MaterialAttributeValue",
+                      "category": {
+                        "@id": "Characteristic/Organism",
+                        "@type": "MaterialAttribute",
+                        "characteristicType": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "annotationValue": "organism",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      },
+                      "value": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "Arabidopsis thaliana",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "factorValues": [
+                    {
+                      "@id": "FactorValue/4hours",
+                      "@type": "FactorValue",
+                      "category": {
+                        "@id": "Factor/Time",
+                        "@type": "Factor",
+                        "factorName": "Time",
+                        "factorType": {
+                          "@id": "OntologyTerm/Time",
+                          "@type": "OntologyAnnotation",
+                          "annotationValue": "time",
+                          "termSource": "pato",
+                          "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        },
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      },
+                      "value": 4.5,
+                      "unit": {
+                        "@id": "OntologyTerm/Hour",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "hour",
+                        "termSource": "uo",
+                        "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "derivesFrom": [
+                    {
+                      "@id": "Source/MySource",
+                      "@type": "Source",
+                      "name": "MySource",
+                      "characteristics": [
+                        {
+                          "@id": "CharacteristicValue/Arabidopsis",
+                          "@type": "MaterialAttributeValue",
+                          "category": {
+                            "@id": "Characteristic/Organism",
+                            "@type": "MaterialAttribute",
+                            "characteristicType": {
+                              "@id": "OntologyTerm/Organism",
+                              "@type": "OntologyAnnotation",
+                              "annotationValue": "organism",
+                              "termSource": "obi",
+                              "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                              "comments": [
+                                {
+                                  "@id": "MyComment",
+                                  "@type": "Comment",
+                                  "name": "Key",
+                                  "value": "Value"
+                                }
+                              ]
+                            }
+                          },
+                          "value": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "annotationValue": "Arabidopsis thaliana",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "outputs": [
+                {
+                  "@id": "Data/MyData",
+                  "name": "MyData",
+                  "type": "Derived Data File",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              ],
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            }
+          ],
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "factors": [
+        {
+          "@id": "Factor/Time",
+          "@type": "Factor",
+          "factorName": "Time",
+          "factorType": {
+            "@id": "OntologyTerm/Time",
+            "@type": "OntologyAnnotation",
+            "annotationValue": "time",
+            "termSource": "pato",
+            "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "name": "Key",
+                "@type": "Comment",
+                "value": "Value"
+              }
+            ]
+          },
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "characteristicCategories": [
+        {
+          "@id": "Characteristic/Organism",
+          "@type": "MaterialAttribute",
+          "characteristicType": {
+            "@id": "OntologyTerm/Organism",
+            "@type": "OntologyAnnotation",
+            "annotationValue": "organism",
+            "termSource": "obi",
+            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          }
+        }
+      ],
+      "unitCategories": [
+        {
+          "@id": "OntologyTerm/DegreeCelsius",
+          "@type": "OntologyAnnotation",
+          "annotationValue": "degree celsius",
+          "termSource": "uo",
+          "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        },
+        {
+          "@id": "OntologyTerm/Hour",
+          "@type": "OntologyAnnotation",
+          "annotationValue": "hour",
+          "termSource": "uo",
+          "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "comments": [
+        {
+          "@id": "MyComment",
+          "@type": "Comment",
+          "name": "Key",
+          "value": "Value"
+        }
+      ]
+    }
+  ],
+  "comments": [
+    {
+      "@id": "MyComment",
+      "@type": "Comment",
+      "name": "Key",
+      "value": "Value"
+    }
+  ]
+}
+  """
+
 let investigation =
 
     """

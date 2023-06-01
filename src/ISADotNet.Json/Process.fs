@@ -10,10 +10,17 @@ open System.IO
 open GEncode
 
 module ProcessParameterValue =
+    
+    let genID (p:ProcessParameterValue) = 
+        match (p.Value,p.Category) with
+        | (Some v, Some c) -> "#Param_" + (API.ProtocolParameter.getNameAsStringWithNumber c).Replace(" ","_") + "_" + (API.Value.toString v).Replace(" ","_")
+        | _ -> "#EmptyMaterialAttribute"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
 
         [
+            if options.SetID then "@id", GEncode.string (oa :?> ProcessParameterValue |> genID)
+            if options.IncludeType then "@type", GEncode.string "ProcessParameterValue"
             tryInclude "category" (ProtocolParameter.encoder options) (oa |> tryGetPropertyValue "Category")
             tryInclude "value" (Value.encoder options) (oa |> tryGetPropertyValue "Value")
             tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Unit")
@@ -35,6 +42,11 @@ module ProcessParameterValue =
 
     let toString (p:ProcessParameterValue) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (p:ProcessParameterValue) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -79,6 +91,10 @@ module ProcessInput =
 
     let toString (m:ProcessInput) = 
         encoder (ConverterOptions()) m
+        |> Encode.toString 2
+
+    let toStringLD (m:ProcessInput) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) m
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -129,10 +145,19 @@ module ProcessOutput =
 
 
 module Process =    
+    
+    let genID (p:Process) = 
+        match p.ID with
+            | Some id -> URI.toString id
+            | None -> match p.Name with
+                        | Some n -> "#Process_" + n.Replace(" ","_")
+                        | None -> "#EmptyProcess"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Process |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Process"
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "executesProtocol" (Protocol.encoder options) (oa |> tryGetPropertyValue "ExecutesProtocol")
             tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> tryGetPropertyValue "ParameterValues")
@@ -170,6 +195,11 @@ module Process =
     let toString (p:Process) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (p:Process) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -186,6 +216,13 @@ module ProcessSequence =
     let toString (p:Process list) = 
         p
         |> List.map (Process.encoder (ConverterOptions()))
+        |> Encode.list
+        |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (p:Process list) = 
+        p
+        |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true)))
         |> Encode.list
         |> Encode.toString 2
 

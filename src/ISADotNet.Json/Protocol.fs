@@ -9,10 +9,19 @@ open ISADotNet
 open System.IO
 open GEncode
 module ProtocolParameter =
+    
+    let genID (pp:ProtocolParameter) = 
+        match pp.ID with
+        | Some id -> URI.toString id
+        | None -> match pp.ParameterName with
+                  | Some n when not n.ID.IsNone -> "#Param_" + n.ID.Value
+                  | _ -> "#EmptyProtocolParameter"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> ProtocolParameter |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "ProtocolParameter"
             tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "ParameterName")
         ]
         |> GEncode.choose
@@ -32,6 +41,11 @@ module ProtocolParameter =
     let toString (p:ProtocolParameter) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (p:ProtocolParameter) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -41,9 +55,16 @@ module ProtocolParameter =
     //    File.WriteAllText(path,toString p)
 
 module Component =
+    
+    let genID (c:Component) = 
+        match c.ComponentName with
+        | Some cn -> "#Component_" + cn.Replace(" ","_")
+        | None -> "#EmptyComponent"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
+            if options.SetID then "@id", GEncode.string (oa :?> Component |> genID)
+            if options.IncludeType then "@type", GEncode.string "Component"
             tryInclude "componentName" GEncode.string (oa |> tryGetPropertyValue "ComponentName")
             tryInclude "componentType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "ComponentType")
         ]
@@ -75,6 +96,11 @@ module Component =
     let toString (p:Component) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (p:Component) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -83,11 +109,22 @@ module Component =
     //let toFile (path : string) (p:Component) = 
     //    File.WriteAllText(path,toString p)
 
-module Protocol =    
+module Protocol =   
+    
+    let genID (p:Protocol) = 
+        match p.ID with
+        | Some id -> URI.toString id
+        | None -> match p.Uri with
+                  | Some u -> URI.toString u
+                  | None -> match p.Name with
+                            | Some n -> "#Protocol_" + n.Replace(" ","_")
+                            | None -> "#EmptyProtocol" 
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.SetID then "@id", GEncode.string (oa :?> Protocol |> genID)
+                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.string "Protocol"
             tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
             tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "ProtocolType")
             tryInclude "description" GEncode.string (oa |> tryGetPropertyValue "Description")
@@ -120,6 +157,11 @@ module Protocol =
 
     let toString (p:Protocol) = 
         encoder (ConverterOptions()) p
+        |> Encode.toString 2
+    
+    /// exports in json-ld format
+    let toStringLD (p:Protocol) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
