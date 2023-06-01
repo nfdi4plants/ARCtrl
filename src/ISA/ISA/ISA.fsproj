@@ -38,6 +38,15 @@
     <Compile Include="JsonTypes\StudyMaterials.fs" />
     <Compile Include="JsonTypes\Study.fs" />
     <Compile Include="JsonTypes\Investigation.fs" />
+    <Compile Include="ARCTypes\Regex.fs" />
+    <Compile Include="ARCTypes\BuildingBlockTypes.fs" />
+    <Compile Include="ARCTypes\CompositeHeader.fs" />
+    <Compile Include="ARCTypes\CompositeCell.fs" />
+    <Compile Include="ARCTypes\ARCTable.fs" />
+    <Compile Include="ARCTypes\ARCProcessSequence.fs" />
+    <Compile Include="ARCTypes\ARCAssay.fs" />
+    <Compile Include="ARCTypes\ARCStudy.fs" />
+    <Compile Include="ARCTypes\ARCInvestigation.fs" />
     <Compile Include="API\Fable.fs" />
     <Compile Include="API\Update.fs" />
     <Compile Include="API\Comment.fs" />
@@ -62,8 +71,6 @@
   <ItemGroup>
     <EmbeddedResource Remove="JsonIO\**" />
   </ItemGroup>
-
-  <ItemGroup />
 
   <ItemGroup>
     <Content Remove="JsonIO\**" />
