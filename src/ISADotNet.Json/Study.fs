@@ -13,7 +13,7 @@ module StudyMaterials =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "sources" (Sample.encoder options) (oa |> tryGetPropertyValue "Sources")
+            tryInclude "sources" (Source.encoder options) (oa |> tryGetPropertyValue "Sources")
             tryInclude "samples" (Sample.encoder options) (oa |> tryGetPropertyValue "Samples")
             tryInclude "otherMaterials" (Material.encoder options) (oa |> tryGetPropertyValue "OtherMaterials")
         ]
