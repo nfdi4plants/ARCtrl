@@ -2,28 +2,6 @@ namespace ISA
 
 open System.Text.RegularExpressions
 
-type AnnotationValue = 
-    | Text of string
-    | Float of float
-    | Int of int
-
-    static member empty = Text ""
-
-    /// Create a ISAJson Annotation value from a ISATab string entry
-    static member fromString (s : string) = 
-        try s |> int |> AnnotationValue.Int
-        with | _ -> 
-            try s |> float |> AnnotationValue.Float
-            with
-            | _ -> AnnotationValue.Text s
-
-    /// Get a ISATab string Annotation Name from a ISAJson object
-    static member toString (v : AnnotationValue) = 
-        match v with
-        | Text s -> s
-        | Int i -> string i
-        | Float f -> string f
-
 [<CustomEquality; NoComparison>]
 type OntologyAnnotation =
     {
@@ -243,29 +221,3 @@ type OntologyAnnotation =
                 true
             else 
                 false
-
-
-type OntologySourceReference =
-    {
-        Description : string option
-        File : string option
-        Name : string option
-        Version : string option
-        Comments : Comment list option
-    }
-
-    static member make description file name version comments  =
-        {
-
-            Description = description
-            File        = file
-            Name        = name
-            Version     = version
-            Comments    = comments
-        }
-
-    static member create(?Description,?File,?Name,?Version,?Comments) : OntologySourceReference =
-        OntologySourceReference.make Description File Name Version Comments
-
-    static member empty =
-        OntologySourceReference.create()
