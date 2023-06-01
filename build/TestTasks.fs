@@ -7,14 +7,14 @@ open ProjectInfo
 open BasicTasks
 
 [<Literal>]
-let FableTestPath_input = "tests/ISADotNet.Tests"
+let FableTestPath_input = "tests/ISA/ISA.Tests"
 [<Literal>]
-let FableTestPath_output = "tests/ISADotNet.JsNativeTests/fable"
+let FableTestPath_output = "tests/ISA/ISA.JsNativeTests/fable"
 
 [<Literal>]
-let JsonFableTestPath_input = "tests/ISADotNet.Json.Tests"
+let JsonFableTestPath_input = "tests/ISA/ISA.Json.Tests"
 [<Literal>]
-let JsonFableTestPath_output = "tests/ISADotNet.Json.JsNativeTests/fable"
+let JsonFableTestPath_output = "tests/ISA/ISA.Json.JsNativeTests/fable"
 
 [<AutoOpen>]
 module private Helper =
@@ -126,6 +126,7 @@ module RunTests =
     /// npm test consists of `test` and `pretest`
     /// check package.json in root for behavior
     let runTestsJs = BuildTask.create "runTestsJS" [clean; cleanFable; build] {
+        //run npm "test --prefix ./src/ISA" ""
         run npm "test" ""
         run npm "run testJson" ""
     }

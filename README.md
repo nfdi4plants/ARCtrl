@@ -1,148 +1,476 @@
-# ISADotNet
+# ARCtrl
+Top level ARC DataModel and API function descriptions.
 
-[![Build and test](https://github.com/nfdi4plants/ISADotNet/actions/workflows/build-test.yml/badge.svg?branch=developer)](https://github.com/nfdi4plants/ISADotNet/actions/workflows/build-test.yml)
+- [ARCtrl](#arctrl)
+  - [Jargon/Nomenclature](#jargonnomenclature)
+  - [Contracts](#contracts)
+  - [API Design](#api-design)
+  - [Top level overview](#top-level-overview)
+  - [Stack](#stack)
+    - [FileSystem.DataModel](#filesystemdatamodel)
+      - [FilesystemTree](#filesystemtree)
+      - [History](#history)
+- [Libraries](#libraries)
+  - [Design choices](#design-choices)
+    - [Fable compatibility as top priority](#fable-compatibility-as-top-priority)
+    - [ISA datamodel](#isa-datamodel)
+      - [Requirements](#requirements)
+      - [Mögliche Lösungen:\*\*](#mögliche-lösungen)
 
-ISA compliant experimental metadata toolkit in F#
 
-The library contains types and functionality for creating and working on experimental metadata in ISA format. 
-Additionally, the types can easily be written to and read from `Json` files in [ISAJson format](https://isa-specs.readthedocs.io/en/latest/isajson.html) and Microsoft `Excel` files in [ISATab format](https://isa-specs.readthedocs.io/en/latest/isatab.html).
+## Jargon/Nomenclature
 
-# Installation
+In general, a distinction is made between `DataModel`s,  `API`s, and `Tools`:
+- `DataModel`s are the data structures which represent the ARC or it's respective parts in memory. They are serializable and can be used as data exchange format between tool implementations:
+  - `FileSystem.DataModel`: Represents the file system structure of an ARC. All files and their path relative to the arc root folder are contained here.
+  - `ISA.DataModel`: Represents the experimental metadata of the ARC that is stored in the ISA-XLSX format (investigation, studies and assays).
+  - `CWL.DataModel`: Represents the workflow definitions of the ARC in the CWL format.
+- `API`s are static methods on the `DataModel` types that perfrom operations on the `DataModel`s. Often, these are CRUD-like operations, and are aimed to be be composable. 
+  
+  **Example**: A `ARC.addAssay` function has to do several things:
+  - Add a new assay to the `ISA.DataModel`
+  - Add a new assay to the `FileSystem.DataModel`
+  it should therefore combine the respective functions of `ISA API` and `FileSystem API` to achieve this.
 
-![Nuget](https://img.shields.io/nuget/v/ISADotNet?logo=Nuget)
+- `Tools` or `Clients` are user-facing software such as Swate, ARCitect, or the ARCCommander. They should ideally compose their functionality from the `API`s and work with an in-memory representation of the ARC via `DataModel`s. There are operations such as IO for reading/writing actual files to the file system, which are not part of the `API`s, but rather part of the `Tools`.
 
-The `ISADotNet` nuget package can be found [here](https://www.nuget.org/packages/ISADotNet/)
+## Contracts
 
-The `ISADotNet.XLSX` nuget package can be found [here](https://www.nuget.org/packages/ISADotNet.XLSX/)
+The ARC stack exclusively works with the in-memory representations of the ARC. 
+In order to keep the in-memory ARC datamodel and the filesystem synchronized, the ARC.Core stack uses the concept of `Contracts`.
 
-Adding a package reference via dotnet:
-`dotnet add package ISADotNet --version 0.1.0`
+Each contract is a single IO operation representing one change to the ARC. 
+The operation contained in a contract does not use the datamodel objects, but rather uses `data transfer objects`,  which include for example the `json` representation as string and the `FsSpreadsheet` representation of the ISA.xlsx files. 
 
-Adding a package reference in F# interactive:
-`#r "nuget: ISADotNet, 0.1.0"`
+This intermediate conversion from the datamodel object to the data transfer object is important, as this step is the most complex and variable.
 
-# What is ISA?
+```mermaid
+flowchart TD
 
-ISA is a specification for annotation of research data. The metadata in nested in three different layers: <b>I</b>nvestigation, <b>S</b>tudy and <b>A</b>ssay.
+arc[ARC Datamodel]
 
-Around these three main entities, the following abstract datamodel is specified:
+subgraph Contract
+    obj[Data Transfer Object]
+    type[DTO Type]
+    path[Path]
+    crud[CRUDE]
+end
 
-![Abstract Datamodel](https://isa-specs.readthedocs.io/en/latest/_images/isa_model_1_ccoded.png)
-Source: https://isa-specs.readthedocs.io/en/latest/_images/isa_model_1_ccoded.png
+js[/Javascript IO\]
+dotnet[/Dotnet IO\]
+any[/Any IO\]
 
-Additional Info: https://isa-specs.readthedocs.io/en/latest/isamodel.html
+arc  <--> Contract
+Contract <-- IO --> any
+Contract <-- IO --> dotnet
+Contract <-- IO --> js
 
-# Usage
 
-## Querymodel
+style dotnet fill:#8C71E3,stroke:#3A0EC6,stroke-width:2px,color: black
+style Contract stroke:#007B00,stroke-width:2px
 
-The querymodel is used to intuitively retreive information from the ISA metadata. 
+style js fill:#C1AD09,stroke:#EFD81D,stroke-width:2px,color: black
+
+style arc fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style any fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style obj fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style type fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style crud fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style path fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+```
+
+Besides the data transfer object, the contract also contains the path where the file system manipulation should be executed and the kind of the operation (`C`reate, `R`ead, `U`pdate, `D`elete, `E`xecute).
+
+- **CREATE**: represents file creation on a certain location relative to the ARC root. If the file exists, it is overwritten.
+   **Examples:** 
+    - Create `README.md` with default content
+    - Create new assay file (with associated content via `DataTransferObject.FsSpreadsheet`)
+    - Create empty `.gitkeep` file
+  
+- **READ**: represents instructions are used to transfer information from the filesystem into the ARC datamodel. For this, the ARC API returns a `READ` contract to the user or tool, which then fulfills the contract by reading the file as a DTO from the specified path and returning the filled out contract to the API. The API then handles the inclusion of the information into the datamodel. 
+
+
+  Example: initate ARC Datamodel from filesystem:
+  ```mermaid
+  sequenceDiagram
+
+  participant Filesystem
+  participant Client
+  participant ARCAPI
+  
+  Note over Client,ARCAPI: API.getReadContracts
+  Client->>ARCAPI: filepaths
+  ARCAPI->>Client: contracts
+  
+  Note over Client,Filesystem: File.read
+  Client->>Filesystem: filepath
+  Filesystem->>Client: DTO
+  
+  Note over Client,ARCAPI: API.createARCfromContracts
+  Client->>ARCAPI: fullfilled Contracts
+  ARCAPI->>Client: ARC datamodel
+  ```
+  
+  Fullfilling a READ contract means to read the file in the specified path   and filling the contract with the resulting DTO.
+  
+  ```mermaid
+  flowchart TD
+  
+  obj[Data Transfer Object]
+  
+  subgraph Contract
+      type[DTO Type]
+      path[Path]
+      crud[READ]
+  end
+  
+  subgraph A[Fullfilled Contract]
+      fobj[Data Transfer Object]
+      ftype[DTO Type]
+      fpath[Path]
+      fcrud[READ]
+  end
+  
+  obj --> A
+  Contract --> A
+  ```
+
+- **UPDATE**: represents manipulation of **existing** files in the ARC. It is important to distinct this operation from **CREATE**, as the DataTransferObjects can not handle all possible file content. 
+For example: styling, plots, etc. in spreadsheet files that are not modelled in our metadata models.
+    **Examples:**
+    - Add a new `Person` to an existing Study
+    - Add a new row to the `AnnotationTable` in an existing assay file, while keeping user content such as plots intact.
+    
+- **DELETE** does exactly what you think it does.
+- **EXECUTE**: represents instructions for running a cli-tool with a given name and arguments. As the ARC API does not have information about absolute paths, the tool name should be executable as is. E.g. in Windows by adding it to the PATH.
+
+## API Design
+
+Command syntax should be inspired by ArcCommander commands, as they are already well established and known to the power user base.
+See syntax : https://nfdi4plants.github.io/arcCommander-docs/docs/01GeneralCLIStructure.html
+See selection: https://nfdi4plants.github.io/arcCommander-docs/docs/02SubcommandVerbs.html
+
+## Top level overview
+
+In the following, the dependency graph of the proposed arcAPI toolstack can be seen:
+
+```mermaid
+flowchart TD
+
+%% ----- Nodes ------
+
+
+subgraph ARC
+    arc[ARC]
+    
+    subgraph ISA
+        isaj[ISA.Json]
+        isax[ISA.Spreadsheet]      
+        isaa[ISA]
+    end
+    subgraph FileSystem
+        fs[FileSystem]
+    end
+    subgraph CWL
+        cwl[CWL]
+    end
+end
+
+subgraph DataTransferObject
+    fsspread[FsSpreadsheet]
+    thoth["Thoth.Json (string)"]
+end
+
+subgraph IO
+    node[node.fs]   
+    fsspreadx[FsSpreadsheet.ExcelIO]   
+    excelJS[exceljs]
+    systemio[System.IO]
+end
+
+
+%% ----- Edges ------
+
+
+%% Arc
+arc --> ISA
+arc --> FileSystem
+arc --> CWL
+
+%% ISA
+isaj --> isaa
+isax --> isaa
+isaj --> thoth
+
+isax --> fsspread
+
+%% ------ Tools ---------
+
+subgraph Tools
+    arcdotnet[/arcIO.NET\]
+    arcitect[[ARCitect]]
+    arccom[[arcCommander]]
+    swate[[Swate]]
+end 
+
+%% ----- Edges ------
+
+Tools --> ARC
+
+arcdotnet --> fsspreadx
+arcdotnet --> systemio
+arcitect --> excelJS
+arcitect --> node
+arccom --> arcdotnet
+
+
+fsspreadx -.-> fsspread
+systemio -.-> thoth
+excelJS -.-> fsspread
+node -.-> thoth
+
+%% ----- Styling ------
+
+%% dotnet
+style Tools stroke:#3A0EC6,stroke-width:2px
+style fsspreadx fill:#8C71E3,stroke:#3A0EC6,stroke-width:2px,color: black
+style arcdotnet fill:#8C71E3,stroke:#3A0EC6,stroke-width:2px,color: black
+style arccom fill:#8C71E3,stroke:#3A0EC6,stroke-width:2px,color: black
+style systemio fill:#8C71E3,stroke:#3A0EC6,stroke-width:2px,color: black
+
+%% javascript
+style excelJS fill:#C1AD09,stroke:#EFD81D,stroke-width:2px,color: black
+style arcitect fill:#C1AD09,stroke:#EFD81D,stroke-width:2px,color: black
+style swate fill:#C1AD09,stroke:#EFD81D,stroke-width:2px,color: black
+style node fill:#C1AD09,stroke:#EFD81D,stroke-width:2px,color: black
+
+
+%% fable
+style ARC stroke:#007B00,stroke-width:2px
+style ISA stroke:#007B00,stroke-width:2px
+style FileSystem stroke:#007B00,stroke-width:2px
+style CWL stroke:#007B00,stroke-width:2px
+style DataTransferObject stroke:#007B00,stroke-width:2px
+
+style fsspread fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style isax fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style isaa fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style isaj fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style arc fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style fs fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style cwl fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+style thoth fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
+```
+
+## Stack
+
+```mermaid
+classDiagram 
+
+class arc["ARC"] {
+    ISA
+    CWL
+    FileSystem
+}
+class isa["ISA"] {
+    Investigation [Tab]
+    Studies [Tab]
+    Assays [Tab]
+}
+class file ["FileSystem"] {
+    - FileSystemTree
+    - History
+}
+class cwl["CWL"] {
+    CommandlineTool?
+    Workflows
+}
+
+arc <|-- isa
+arc <|-- cwl
+arc <|-- file
+
+```
+
+### FileSystem.DataModel
+
+#### FilesystemTree
 
 ```fsharp
-
-#r @"nuget: ISADotNet.XLSX"
-
-open ISADotNet
-
-
-let _,_,persons,a = ISADotNet.XLSX.AssayFile.Assay.fromFile assayPath
-
-let qa = QueryModel.QAssay.fromAssay a
-
+type FileSystem =
+    | File of string
+    | Folder of FileSystem list
 ```
 
-### Retreiving values:
+#### History
+
+```mermaid
+classDiagram
+
+class commit ["Commit"] {
+    Hash
+    UserName
+    UserEmail
+    Date
+    Message
+}
+```
+
+- commit history metadata (literally `git log`)
+  - git log --date=local --pretty=format:'%H, %an, %ae, %ad, "%s"'
+
+# Libraries
+
+Mockups for each library are in the `ARC` folder. They contain API/Domain stubs to draft and test the new library designs.
+
+## Design choices
+
+### Fable compatibility as top priority
+
+All libraries should be Fable compatible, and produce javascript/typescript code that is ergonomic to use in a js/ts environment, therefore:
+- we use classes with static members over nested modules
+- we use the `[<AttachMembers>]` fable attribute for each class
+  - Using overloads with the `[<AttachMembers>]` attribute will make js functions shadow itself. Never use this!
+- we use the `[<NamedParams(n)>]` fable attribute for all optional parameters in static methods that use tupled, named params.
+- we use `Array<'T>` for all collections in F#, since they get transpiled to native js arrays.
+- we use the `[<Erase>]` fable attribute for union cases that contain data 
+    ```fsharp
+     [<Erase>] type X = | Y of string | Z of int
+    ```
+- we use the `[<StringEnum>]` for unions that contain no data (e.g.)
+    ```fsharp
+     [<StringEnum>] type YesOrNo = | Yes | No
+    ```
+    
+**Example:**
 
 ```fsharp
-let firstValue = qa.Values().First
+[<AttachMembers>]
+type Study = 
+    {
+        Identifier : string option
+        Assays : Assay array option
+    }
 
-firstValue.NameText
-firstValue.ValueText
-```
--> 
-```
-val it: string = "Sample type"
-
-val it: string = "cell culture"
-```
-
-### Retreiving nodes:
-
-```fsharp
-qa.Sources().Head
-qa.FirstSamples().Head
-qa.FirstData().Head
-qa.LastData().Head
-```
--> 
+    [<NamedParams>]
+    static member create (?Identifier, ?Assays : Assay array) = 
+        {
+            Identifier = Identifier
+            Assays = Assays
+        }
 ```
 
-val it: string = "001_uncult_8°"
+will become the following javascript code:
 
-val it: string = "001-007_uncult_8°_son"
-
-val it: string = "20210913_1558_001.mzml"
-
-val it: string = "20210913_1558_001.mzml"
+```javascript
+export class Study extends Record {
+    constructor(Identifier, Assays) {
+        super();
+        this.Identifier = Identifier;
+        this.Assays = Assays;
+    }
+    static create({ Identifier, Assays }) {
+        return new Study(Identifier, Assays);
+    }
 ```
 
-### Nodes as anchors:
+and the following typescript code:
 
-```fsharp
-let nodeOfInterest = qa.Samples().[5]
+```typescript
+export class Study extends Record implements IEquatable<Study>, IComparable<Study> {
+    readonly Identifier: Option<string>;
+    readonly Assays: Option<Assay[]>;
+    constructor(Identifier: Option<string>, Assays: Option<Assay[]>) {
+        super();
+        this.Identifier = Identifier;
+        this.Assays = Assays;
+    }
+    static create({ Identifier, Assays }: {Identifier?: string, Assays?: Assay[] }): Study {
+        return new Study(Identifier, Assays);
+    }
+```
 
-qa.FirstProcessedDataOf(nodeOfInterest)
-```
-->
-```
-val nodeOfInterest: string = "008-014_uncult_22°_ext"
+### ISA datamodel
 
-val it: string list =
-  ["20210913_1558_021.mzml"; "20210913_1558_022.mzml";
-   "20210913_1558_023.mzml"; "20210913_1558_024.mzml";
-   "20210913_1558_025.mzml"; "20210913_1558_026.mzml";
-   "20210913_1558_027.mzml"; "20210913_1558_028.mzml";
-   "20210913_1558_029.mzml"; "20210913_1558_030.mzml";
-   "20210913_1558_031.mzml"; "20210913_1558_032.mzml";
-   "20210913_1558_033.mzml"; "20210913_1558_034.mzml";
-   "20210913_1558_035.mzml"; "20210913_1558_036.mzml";
-   "20210913_1558_037.mzml"; "20210913_1558_038.mzml";
-   "20210913_1558_039.mzml"; "20210913_1558_040.mzml"]
-```
-----
-```fsharp
-qa.SourcesOf(nodeOfInterest)
-```
-->
-```
-val it: string list =
-  ["008_uncult_22°"; "009_uncult_22°"; "010_uncult_22°"; "011_uncult_22°";
-   "012_uncult_22°"; "013_uncult_22°"; "014_uncult_22°"]
-```
-----
-```fsharp
-qa.PreviousCharacteristicsOf(nodeOfInterest)
-    .Item("Organism")
-    .ValueText
-```
-->
-```
-val it: string = "Chlamydomonas rheinhardtii"
-```
-----
-```fsharp
-qa.SucceedingParametersOf(nodeOfInterest)
-|> Seq.map (fun p -> p.HeaderText,p.ValueText)
-|> Seq.take 5
-|> Seq.toList
-```
-->
-```
-val it: (string * string) list =
-  [("Parameter [Library strategy]", "Illumina library prep");
-   ("Parameter [Library Selection]", "cDNA");
-   ("Parameter [Library layout]", "single-end");
-   ("Parameter [Library preparation kit]",
-    "CleanTag® Small RNA Library Prep Kit");
-   ("Parameter [Library preparation kit version]", "3")]
+#### Requirements
+1. MUST be parseable to a full representation of valid ISA-json
+2. MUST contain structural information of isa tables (ISA-Tab and ISA-XLSX)
+3. MUST allow for low level api calls (e.g. addParameterValue should be intuitive)
+4. SHOULD be performant enough for use in GUI applications
+
+
+#### Mögliche Lösungen:**
+
+1. **Bestehendes ISA Schema nutzen**
+    - Komplette strukturinformation via ISA comments (ISA assay spreadsheet json als comment auf Assay typ) 
+    - Potentielle erweiterung für ISA schema -> ISA 2.0, schon direkt mit 1.0 compatibility lösung über comments
+    - aus ISA json vs. XLSX wird ein uniformes format
+    - Machen wir eh schon so -> kein extra arbeitsaufwand
+    - import/export von standard ISA Json möglich
+    
+2. 'Structural' Metadata field on `ArcDataModel`
+    - superset von ISA wird verhindert, wir können das einfach in unserem schema machen
+    - problem: ISA json bleibt fallback für kommunikation mit externen tools
+   
+
+
+```mermaid
+flowchart TD
+
+
+subgraph ISAModel
+
+    person[Person]
+    publication[Publication]
+
+    ppv[Parameter Value]
+    cv[Characteristic Value]
+    fv[Factor Value]
+
+    table[ArcTable<br><i>= Process + Protocol</i>]
+
+    assay[ArcAssay]
+    study[ArcStudy]
+    investigation[ArcInvestigation]
+
+end 
+
+table --> ppv
+table --> cv
+table --> fv
+
+assay --> table
+study --> table
+
+study --> assay
+investigation --> study
+
+study --> person
+investigation --> person
+study --> publication
+investigation --> publication
+
+subgraph Legend
+    json
+    tab
+end
+
+%% Colorscheme
+%% https://paletton.com/#uid=33m0E0kqOtKgGDvlJvDu0oyxCjs
+
+style json fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+style tab fill:#F04D63,stroke:#BA0C24,stroke-width:2px,color: black
+
+style ppv fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+style fv fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+style cv fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+style person fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+style publication fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+
+style table fill:#F04D63,stroke:#BA0C24,stroke-width:4px,color: black
+style assay stroke:#BA0C24,stroke-width:2px
+style study stroke:#BA0C24,stroke-width:2px
+style investigation stroke:#BA0C24,stroke-width:2px
+
+
 ```

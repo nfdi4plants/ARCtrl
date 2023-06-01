@@ -1,58 +1,36 @@
 {
-  "name": "isadotnet",
-  "version": "0.7.0",
-  "description": "ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files written in dotnet.",
+  "name": "arcapi",
+  "version": "1.0.0",
+  "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
   "scripts": {
-    "pretestJson": "dotnet fable tests/ISADotNet.Json.Tests -o tests/ISADotNet.Json.JsNativeTests/fable",
-    "testJson": "mocha tests/ISADotNet.Json.JsNativeTests/fable",
-    "posttestJson": "mocha tests/ISADotNet.Json.JsNativeTests",
-    "testJson:live": "mocha --watch --parallel tests/ISADotNet.Json.JsNativeTests/fable",
-    "testJsonnative:live": "mocha --watch --parallel tests/ISADotNet.Json.JsNativeTests",
-    "pretest": "dotnet fable tests/ISADotNet.Tests -o tests/ISADotNet.JsNativeTests/fable",
-    "test": "mocha tests/ISADotNet.JsNativeTests/fable",
-    "posttest": "mocha tests/ISADotNet.JsNativeTests",
-    "test:live": "mocha --watch --parallel tests/ISADotNet.JsNativeTests/fable",
-    "testnative:live": "mocha --watch --parallel tests/ISADotNet.JsNativeTests"
+    "fable-js": "dotnet fable ./src/ARC -o ./js",
+    "fable-ts": "dotnet fable ./src/ARC -o ./ts --lang ts",
+    "pretestJson": "dotnet fable tests/ISA/ISA.Json.Tests -o tests/ISA/ISA.Json.JsNativeTests/fable",
+    "testJson": "mocha tests/ISA/ISA.Json.JsNativeTests/fable",
+    "posttestJson": "mocha tests/ISA/ISA.Json.JsNativeTests",
+    "testJson:live": "mocha --watch --parallel tests/ISA/ISA.Json.JsNativeTests/fable",
+    "testJsonnative:live": "mocha --watch --parallel tests/ISA/ISA.Json.JsNativeTests",
+    "pretest": "dotnet fable tests/ISA/ISA.Tests -o tests/ISA/ISA.JsNativeTests/fable",
+    "test": "mocha tests/ISA/ISA.JsNativeTests/fable",
+    "posttest": "mocha tests/ISA/ISA.JsNativeTests",
+    "test:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests/fable",
+    "testnative:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nfdi4plants/ISADotNet.git"
+    "url": "git+https://github.com/nfdi4plants/arcAPI.git"
   },
-  "keywords": [
-    "F#",
-    "FSharp",
-    "dotnet",
-    ".Net",
-    "bioinformatics",
-    "biology",
-    "datascience",
-    "dataplant",
-    "nfdi",
-    "metadata",
-    "investigation",
-    "study",
-    "assay",
-    "ISA",
-    "Json"
-  ],
-  "author": "Lukas Weil",
-  "contributors": [
-    "Lukas Weil",
-    "Kevin Frey",
-    "Florian Wetzels",
-    "Oliver Maus"
-  ],
-  "license": "MIT",
+  "author": "",
+  "license": "ISC",
   "bugs": {
-    "url": "https://github.com/nfdi4plants/ISADotNet/issues"
+    "url": "https://github.com/nfdi4plants/arcAPI/issues"
   },
-  "homepage": "https://github.com/nfdi4plants/ISADotNet#readme",
+  "homepage": "https://github.com/nfdi4plants/arcAPI#readme",
+  "dependencies": {
+    "fable-library": "^1.1.1"
+  },
   "devDependencies": {
     "mocha": "^10.2.0"
-  },
-  "dependencies": {
-    "fable-library": "^1.1.0",
-    "jsonschema": "^1.4.1"
   }
 }

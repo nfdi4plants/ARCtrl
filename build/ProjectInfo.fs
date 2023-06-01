@@ -2,12 +2,12 @@
 
 open Fake.Core
 
-let project = "ISADotNet"
+let project = "ARCtrl"
 
 let testProjects = 
     [
-        "tests/ISADotNet.Tests"
-        "tests/ISADotNet.Json.Tests"
+        "tests/ISA/ISA.Tests"
+        "tests/ISA/ISA.Json.Tests"
     ]
 
 let solutionFile  = $"{project}.sln"

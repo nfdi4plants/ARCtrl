@@ -1,0 +1,25 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="ARCPath.fs" />
+    <Compile Include="ARC.fs" />
+    <Compile Include="ARCStrich.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="[4.0.0]" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ArcContract\Contract.fsproj" />
+    <ProjectReference Include="..\CWL\CWL.fsproj" />
+    <ProjectReference Include="..\FileSystem\FileSystem.fsproj" />
+    <ProjectReference Include="..\ISA\ISA\ISA.fsproj" />
+  </ItemGroup>
+
+</Project>
