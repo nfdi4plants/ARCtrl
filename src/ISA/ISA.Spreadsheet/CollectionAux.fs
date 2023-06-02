@@ -1,4 +1,4 @@
-﻿namespace ISA.XLSX
+﻿namespace ISA.Spreadsheet
 
         
 module internal Seq = 

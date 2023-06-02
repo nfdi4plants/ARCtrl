@@ -1,9 +1,9 @@
-﻿namespace ISA.XLSX.AssayFile
+﻿namespace ISA.Spreadsheet.AssayFile
 
 
 open FsSpreadsheet.ExcelIO
 open ISA
-open ISA.XLSX
+open ISA.Spreadsheet
 
 /// Functions for reading and writing the additional information stored in the assay metadata sheet
 module MetaData =

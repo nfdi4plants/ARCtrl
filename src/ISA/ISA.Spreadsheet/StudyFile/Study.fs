@@ -1,4 +1,4 @@
-﻿namespace ISA.XLSX.StudyFile
+﻿namespace ISA.Spreadsheet.StudyFile
 
 open System.Collections.Generic
 open FsSpreadsheet.ExcelIO
@@ -25,7 +25,7 @@ module Study =
     ///
     /// sparseMatrix is a sparse representation of the sheet table, with the first part of the key being the column header and the second part being a zero based row index
     let fromSparseMatrix (processNameRoot:string) matrixHeaders (sparseMatrix : Dictionary<int*string,string>) = 
-        let processes = ISA.XLSX.AssayFile.Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
+        let processes = ISA.Spreadsheet.AssayFile.Process.fromSparseMatrix processNameRoot matrixHeaders sparseMatrix
         let characteristics = API.ProcessSequence.getCharacteristics processes
         let factors = API.ProcessSequence.getFactors processes
         let protocols = API.ProcessSequence.getProtocols processes
@@ -40,8 +40,8 @@ module Study =
     let fromSparseMatrices (sheets : (string*(string seq)*Dictionary<int*string,string>) seq) = 
         let processes =
             sheets
-            |> Seq.collect (fun (name,matrixHeaders,matrix) -> ISA.XLSX.AssayFile.Process.fromSparseMatrix name matrixHeaders matrix)
-            |> ISA.XLSX.AssayFile.AnnotationTable.updateSamplesByThemselves 
+            |> Seq.collect (fun (name,matrixHeaders,matrix) -> ISA.Spreadsheet.AssayFile.Process.fromSparseMatrix name matrixHeaders matrix)
+            |> ISA.Spreadsheet.AssayFile.AnnotationTable.updateSamplesByThemselves 
             |> Seq.toList
         let characteristics = API.ProcessSequence.getCharacteristics processes
         let factors = API.ProcessSequence.getFactors processes
@@ -51,7 +51,7 @@ module Study =
 
 // Diesen Block durch JS ersetzen ----> 
 
-    /// Create a new ISA.XLSX study file constisting of two sheets. The first has the name of the studyIdentifier and is meant to store parameters used in the study. The second stores additional study metadata
+    /// Create a new ISA.Spreadsheet study file constisting of two sheets. The first has the name of the studyIdentifier and is meant to store parameters used in the study. The second stores additional study metadata
     let init study studyIdentifier path =
         try 
             Spreadsheet.initWithSst studyIdentifier path
@@ -99,7 +99,7 @@ module Study =
                 |> Seq.collect (fun sheetName ->                    
                     match Spreadsheet.tryGetWorksheetPartBySheetName sheetName doc with
                     | Option.Some wsp ->
-                        match ISA.XLSX.AssayFile.Table.tryGetByDisplayNameBy (fun s -> s.StartsWith "annotationTable") wsp with
+                        match ISA.Spreadsheet.AssayFile.Table.tryGetByDisplayNameBy (fun s -> s.StartsWith "annotationTable") wsp with
                         | Option.Some table -> 
                             // Extract the sheetdata as a sparse matrix
                             let sheet = Worksheet.getSheetData wsp.Worksheet
@@ -143,7 +143,7 @@ module Study =
         let s = QueryModel.QStudy.fromStudy study
         let wb = 
             workbook {
-                for (i,s) in List.indexed s.Sheets do ISA.XLSX.AssayFile.QSheet.toSheet i s
+                for (i,s) in List.indexed s.Sheets do ISA.Spreadsheet.AssayFile.QSheet.toSheet i s
                 sheet "Study" {
                     for r in MetaData.toDSLSheet study do r
                 }

@@ -1,6 +1,6 @@
-﻿namespace ISA.XLSX.AssayFile
+﻿namespace ISA.Spreadsheet.AssayFile
 
-open ISA.XLSX
+open ISA.Spreadsheet
 open ISA
 
 /// Functions for parsing an annotation table to the described processes

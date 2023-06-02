@@ -1,7 +1,7 @@
-﻿namespace ISA.XLSX.AssayFile
+﻿namespace ISA.Spreadsheet.AssayFile
 
 open ISA
-open ISA.XLSX
+open ISA.Spreadsheet
 open AnnotationColumn
 
 

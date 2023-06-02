@@ -1,8 +1,5 @@
-namespace ISA.XLSX
+namespace ISA.Spreadsheet
 
-
-open DocumentFormat.OpenXml.Spreadsheet
-open FsSpreadsheet.ExcelIO
 open ISA
 open ISA.API
 open Comment

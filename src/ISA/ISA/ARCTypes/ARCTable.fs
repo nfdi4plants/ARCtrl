@@ -12,10 +12,6 @@ type ArcTable =
         Values : System.Collections.Generic.Dictionary<int*int,CompositeCell>  
     }
 
-    //static member insertData 
-
-
-
     static member insertParameterValue (t : ArcTable) (p : ProcessParameterValue) : ArcTable = 
         raise (System.NotImplementedException())
 

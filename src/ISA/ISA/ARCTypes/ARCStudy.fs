@@ -3,7 +3,7 @@
 open Fable.Core
 
 [<AttachMembers>]
-type Study = 
+type ARCStudy = 
     {
         Identifier : string option
         Assays : Assay array option
@@ -20,7 +20,7 @@ type Study =
         raise (System.NotImplementedException())
 
     static member updateAssayByID (assay : Assay) (assayIdentifier : string) (study : Study) : Study = 
-        Study.tryGetAssayByID assayIdentifier study |> ignore
+        ARCStudy.tryGetAssayByID assayIdentifier study |> ignore
         raise (System.NotImplementedException())
 
     static member addAssay (assay : Assay) (study : Study) : Study = 

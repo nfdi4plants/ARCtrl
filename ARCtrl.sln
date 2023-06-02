@@ -104,6 +104,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA.Json.JsNativeTests", "I
 		tests\ISA\ISA.Json.JsNativeTests\Main.js = tests\ISA\ISA.Json.JsNativeTests\Main.js
 	EndProjectSection
 EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet", "src\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj", "{11BF1BF9-5448-481B-9D8B-4430D107D703}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -146,6 +148,10 @@ Global
 		{04789F17-3DC2-4A09-848D-376E5D269740}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04789F17-3DC2-4A09-848D-376E5D269740}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04789F17-3DC2-4A09-848D-376E5D269740}.Release|Any CPU.Build.0 = Release|Any CPU
+		{11BF1BF9-5448-481B-9D8B-4430D107D703}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{11BF1BF9-5448-481B-9D8B-4430D107D703}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{11BF1BF9-5448-481B-9D8B-4430D107D703}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{11BF1BF9-5448-481B-9D8B-4430D107D703}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -169,6 +175,7 @@ Global
 		{04789F17-3DC2-4A09-848D-376E5D269740} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{716E386A-0D75-4994-9501-F3098C8E456F} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{BC8F5361-E1D8-4DCA-B6DD-CD866404AB96} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
+		{11BF1BF9-5448-481B-9D8B-4430D107D703} = {C61B3F43-2255-4585-9110-F8AB74F02654}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}

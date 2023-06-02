@@ -3,7 +3,7 @@
 open Fable.Core
 
 [<AttachMembers>]
-type Investigation = 
+type ARCInvestigation = 
 
     {Studies : Study array option}
 
@@ -15,21 +15,21 @@ type Investigation =
         raise (System.NotImplementedException())
 
     static member updateStudyByID (study : Study) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
-        Investigation.tryGetStudyByID studyIdentifier investigation |> ignore
+        ARCInvestigation.tryGetStudyByID studyIdentifier investigation |> ignore
         raise (System.NotImplementedException())
 
     static member addStudy (study : Study) (investigation : Investigation) : Investigation = 
         raise (System.NotImplementedException())
 
     static member addAssay (assay : Assay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
-        match Investigation.tryGetStudyByID studyIdentifier investigation with
+        match ARCInvestigation.tryGetStudyByID studyIdentifier investigation with
         | Some s ->
-             Study.addAssay |> ignore
-             Investigation.updateStudyByID |> ignore
+             ARCStudy.addAssay |> ignore
+             ARCInvestigation.updateStudyByID |> ignore
 
         | None ->
              Study.create |> ignore
-             Investigation.addStudy |> ignore
+             ARCInvestigation.addStudy |> ignore
         raise (System.NotImplementedException())
 
 

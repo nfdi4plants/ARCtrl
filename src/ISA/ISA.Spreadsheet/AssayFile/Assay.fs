@@ -1,4 +1,4 @@
-﻿namespace ISA.XLSX.AssayFile
+﻿namespace ISA.Spreadsheet.AssayFile
 
 open System.Collections.Generic
 open FsSpreadsheet.ExcelIO
@@ -95,7 +95,7 @@ module Assay =
 
 /// Diesen Block durch JS ersetzen ----> 
 
-    /// Create a new ISA.XLSX assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
+    /// Create a new ISA.Spreadsheet assay file constisting of two sheets. The first has the name of the assayIdentifier and is meant to store parameters used in the assay. The second stores additional assay metadata
     let init assay persons assayIdentifier path =
         try 
             Spreadsheet.initWithSst assayIdentifier path

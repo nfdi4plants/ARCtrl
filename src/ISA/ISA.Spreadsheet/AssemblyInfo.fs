@@ -2,7 +2,7 @@
 namespace System
 open System.Reflection
 
-[<assembly: AssemblyTitleAttribute("ISA.XLSX")>]
+[<assembly: AssemblyTitleAttribute("ISA.Spreadsheet")>]
 [<assembly: AssemblyProductAttribute("ISA")>]
 [<assembly: AssemblyDescriptionAttribute("ISA compliant experimental metadata toolkit in F#")>]
 [<assembly: AssemblyVersionAttribute("0.0.4")>]
@@ -11,7 +11,7 @@ open System.Reflection
 do ()
 
 module internal AssemblyVersionInformation =
-    let [<Literal>] AssemblyTitle = "ISA.XLSX"
+    let [<Literal>] AssemblyTitle = "ISA.Spreadsheet"
     let [<Literal>] AssemblyProduct = "ISA"
     let [<Literal>] AssemblyDescription = "ISA compliant experimental metadata toolkit in F#"
     let [<Literal>] AssemblyVersion = "0.0.4"

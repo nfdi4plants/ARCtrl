@@ -1,11 +1,9 @@
-namespace ISA.XLSX
+namespace ISA.Spreadsheet
 
-open DocumentFormat.OpenXml.Spreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet
 open ISA
 open ISA.API
-open Comment
-open Remark
+
 open System.Collections.Generic
 
 module OntologySourceReference = 

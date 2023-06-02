@@ -1,8 +1,8 @@
-﻿namespace ISA.XLSX.StudyFile
+﻿namespace ISA.Spreadsheet.StudyFile
 
 open FsSpreadsheet.ExcelIO
 open ISA
-open ISA.XLSX
+open ISA.Spreadsheet
 
 /// Functions for reading and writing the additional information stored in the study metadata sheet
 module MetaData =
@@ -14,7 +14,7 @@ module MetaData =
     let toRows (study:Study) =
         seq {          
             yield  SparseRow.fromValues [studiesLabel]
-            yield! ISA.XLSX.Study.StudyInfo.toRows study
+            yield! ISA.Spreadsheet.Study.StudyInfo.toRows study
         }
         
     /// Read Study Metadata from excel rows
