@@ -1,6 +1,5 @@
 ﻿namespace ISA
 
-
 type ArcTable = 
     {
         Name : string
