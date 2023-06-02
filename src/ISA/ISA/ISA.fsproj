@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Url.fs" />
+    <Compile Include="Regex.fs" />
     <Compile Include="OptionExtensions.fs" />
     <Compile Include="Printer.fs" />
     <Compile Include="JsonTypes\URI.fs" />
@@ -38,8 +40,6 @@
     <Compile Include="JsonTypes\StudyMaterials.fs" />
     <Compile Include="JsonTypes\Study.fs" />
     <Compile Include="JsonTypes\Investigation.fs" />
-    <Compile Include="ARCTypes\Regex.fs" />
-    <Compile Include="ARCTypes\BuildingBlockTypes.fs" />
     <Compile Include="ARCTypes\CompositeHeader.fs" />
     <Compile Include="ARCTypes\CompositeCell.fs" />
     <Compile Include="ARCTypes\ARCTable.fs" />
