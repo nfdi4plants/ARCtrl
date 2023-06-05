@@ -88,11 +88,11 @@ module OntologySourceReference =
 
 module OntologyAnnotation =  
     
-    let genID (o:OntologyAnnotation) = 
+    let genID (o:OntologyAnnotation) : string = 
         match o.ID with
-        | Some id -> URI.toString id
+        | Some id -> id 
         | None -> match o.TermAccessionNumber with
-                  | Some ta -> URI.toString ta
+                  | Some ta -> ta
                   | None -> match o.TermSourceREF with
                             | Some r -> "#" + r.Replace(" ","_")
                             | None -> "#DummyOntologyAnnotation"

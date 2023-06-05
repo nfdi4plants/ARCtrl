@@ -1,7 +1,5 @@
 namespace ISA
 
-open System.Text.RegularExpressions
-
 [<CustomEquality; NoComparison>]
 type OntologyAnnotation =
     {
@@ -66,7 +64,7 @@ type OntologyAnnotation =
     /// Create a ISAJson Ontology Annotation value from ISATab string entries, will try to reduce `termAccessionNumber` with regex matching.
     ///
     /// Exmp. 1: http://purl.obolibrary.org/obo/GO_000001 --> GO:000001
-    static member fromString (term:string, ?termSourceRef:string, ?termAccessionString:string) =
+    static member fromString (term:string, ?termSourceRef:string, ?termAccessionString:string, ?comments : Comment list) =
 
         let termAccession = 
             if termAccessionString.IsSome then
@@ -83,17 +81,7 @@ type OntologyAnnotation =
             (Some term |> Option.map AnnotationValue.fromString)
             (termSourceRef)
             (termAccession)
-            None
-
-    /// Create a ISAJson Ontology Annotation value from string entries
-    static member fromStringWithComments (term:string) (source:string) (accessionNumber:string) (comments : Comment list) =
-
-        OntologyAnnotation.make 
-            None 
-            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" source)
-            (Option.fromValueWithDefault "" accessionNumber)
-            (Option.fromValueWithDefault [] comments)
+            (comments)
 
     /// Will always be created without `OntologyAnnotion.Name`
     static member fromTermAccession (termAccession : string) =

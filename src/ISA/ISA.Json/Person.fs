@@ -11,9 +11,9 @@ open GEncode
 
 module Person =   
     
-    let genID (p:Person) = 
+    let genID (p:Person) : string = 
         match p.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> 
             let orcid = match p.Comments with
                         | Some cl -> cl |> List.tryPick (fun c ->

@@ -12,9 +12,9 @@ open GEncode
 module Investigation =
     
     
-    let genID (i:Investigation) = 
+    let genID (i:Investigation) : string = 
         match i.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match i.FileName with
                   | Some n -> "#Study_" + n.Replace(" ","_")
                   | None -> match i.Identifier with

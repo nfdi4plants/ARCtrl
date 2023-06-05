@@ -63,7 +63,7 @@ module ValueIndexExtensions =
         
         /// Create a ISAJson Factor from ISATab string entries
         static member fromStringWithValueIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Factor.fromStringWithComments name term source accession [ValueIndex.createOrderComment valueIndex]
+            Factor.fromString (name, term, source, accession, [ValueIndex.createOrderComment valueIndex])
 
         static member getValueIndex(f) = ValueIndex.tryGetFactorIndex f |> Option.get
 
@@ -87,7 +87,7 @@ module ValueIndexExtensions =
     
         /// Create a ISAJson characteristic from ISATab string entries
         static member fromStringWithValueIndex (term:string) (source:string) (accession:string) valueIndex =
-            MaterialAttribute.fromStringWithComments term source accession [ValueIndex.createOrderComment valueIndex]
+            MaterialAttribute.fromString (term, source, accession, [ValueIndex.createOrderComment valueIndex])
 
         static member getValueIndex(m) = ValueIndex.tryGetCharacteristicIndex m |> Option.get
 
@@ -111,7 +111,7 @@ module ValueIndexExtensions =
     
         /// Create a ISAJson parameter from ISATab string entries
         static member fromStringWithValueIndex (term:string) (source:string) (accession:string) valueIndex =
-            ProtocolParameter.fromStringWithComments term source accession [ValueIndex.createOrderComment valueIndex]
+            ProtocolParameter.fromString (term, source, accession, [ValueIndex.createOrderComment valueIndex])
 
         static member getValueIndex(p) = ValueIndex.tryGetParameterIndex p |> Option.get
 
@@ -135,7 +135,7 @@ module ValueIndexExtensions =
 
         /// Create a ISAJson Factor from ISATab string entries
         static member fromStringWithValueIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Component.fromStringWithComments name term source accession [ValueIndex.createOrderComment valueIndex]
+            Component.fromString (name, term, source, accession, [ValueIndex.createOrderComment valueIndex])
 
         static member getValueIndex(f) = ValueIndex.tryGetComponentIndex f |> Option.get
 

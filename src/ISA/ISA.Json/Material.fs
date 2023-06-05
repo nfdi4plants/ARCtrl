@@ -30,9 +30,9 @@ module MaterialType =
 
 module MaterialAttribute =
     
-    let genID (m:MaterialAttribute) = 
+    let genID (m:MaterialAttribute) : string = 
         match m.ID with
-            | Some id -> URI.toString id
+            | Some id -> id
             | None -> "#EmptyMaterialAttribute"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
@@ -74,9 +74,9 @@ module MaterialAttribute =
 
 module MaterialAttributeValue =
     
-    let genID (m:MaterialAttributeValue) = 
+    let genID (m:MaterialAttributeValue) : string = 
         match m.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> "#EmptyMaterialAttributeValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
@@ -123,9 +123,9 @@ module MaterialAttributeValue =
 
 module Material = 
     
-    let genID (m:Material) = 
+    let genID (m:Material) : string = 
         match m.ID with
-            | Some id -> URI.toString id
+            | Some id -> id
             | None -> match m.Name with
                         | Some n -> "#Material_" + n.Replace(" ","_")
                         | None -> "#EmptyMaterial"

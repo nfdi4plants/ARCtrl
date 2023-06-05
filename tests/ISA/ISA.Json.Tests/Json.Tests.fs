@@ -55,7 +55,7 @@ let testEncode =
     testList "Encode" [
         testCase "tryGetPropertyValueExists" (fun () -> 
             
-            let oa = ISA.OntologyAnnotation.fromString "MyAnnotation" "ABC:123" "ABC" 
+            let oa = ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC") 
                 
             let field = "Name" 
 
@@ -72,7 +72,7 @@ let testEncode =
 
         testCase "tryGetPropertyValueMissing" (fun () -> 
             
-            let oa = ISA.OntologyAnnotation.fromString "MyAnnotation" "ABC:123" "ABC" 
+            let oa = ISA.OntologyAnnotation.fromString("MyAnnotation", "ABC:123", "ABC") 
                 
             let field = "FantasyValue" 
 
@@ -84,7 +84,7 @@ let testEncode =
         testCase "tryGetPropertyValueSequence" (fun () ->
             
             let comments = [ISA.Comment.fromString "k1" "v1"; ISA.Comment.fromString "k2" "vv"]
-            let oa = ISA.OntologyAnnotation.fromStringWithComments "MyAnnotation" "ABC:123" "ABC" comments
+            let oa = ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC", comments)
 
             let field = "Comments" 
 

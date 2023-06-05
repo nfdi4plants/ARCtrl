@@ -30,9 +30,9 @@ module AssayMaterials =
 
 module Assay = 
     
-    let genID (a:Assay) = 
+    let genID (a:Assay) : string = 
         match a.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match a.FileName with
                   | Some n -> n
                   | None -> "#EmptyAssay"

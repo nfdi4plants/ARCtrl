@@ -36,9 +36,9 @@ module DataFile =
 
 module Data = 
     
-    let genID (d:Data) = 
+    let genID (d:Data) : string = 
         match d.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match d.Name with
                   | Some n -> n
                   | None -> "#EmptyData"
@@ -94,9 +94,9 @@ module Data =
 
 module Source = 
     
-    let genID (s:Source) = 
+    let genID (s:Source) : string = 
         match s.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match s.Name with
                   | Some n -> "#Source_" + n.Replace(" ","_")
                   | None -> "#EmptySource"
@@ -147,9 +147,9 @@ module Source =
 
 module Sample = 
     
-    let genID (s:Sample) = 
+    let genID (s:Sample) : string = 
         match s.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match s.Name with
                   | Some n -> "#Sample_" + n.Replace(" ","_")
                   | None -> "#EmptySample"

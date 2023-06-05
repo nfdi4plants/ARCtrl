@@ -10,9 +10,9 @@ open System.IO
 open GEncode
 module ProtocolParameter =
     
-    let genID (pp:ProtocolParameter) = 
+    let genID (pp:ProtocolParameter) : string = 
         match pp.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match pp.ParameterName with
                   | Some n when not n.ID.IsNone -> "#Param_" + n.ID.Value
                   | _ -> "#EmptyProtocolParameter"
@@ -111,11 +111,11 @@ module Component =
 
 module Protocol =   
     
-    let genID (p:Protocol) = 
+    let genID (p:Protocol) : string = 
         match p.ID with
-        | Some id -> URI.toString id
+        | Some id -> id 
         | None -> match p.Uri with
-                  | Some u -> URI.toString u
+                  | Some u -> u
                   | None -> match p.Name with
                             | Some n -> "#Protocol_" + n.Replace(" ","_")
                             | None -> "#EmptyProtocol" 

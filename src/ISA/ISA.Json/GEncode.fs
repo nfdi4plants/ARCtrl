@@ -11,7 +11,6 @@ open Fable.Core.JsInterop
 
 module GEncode = 
 
-    
     [<Emit("$1[$0]")>]
     let getFieldFable (name : string) (object : 'T) = jsNative
 
@@ -35,6 +34,7 @@ module GEncode =
         )
         #endif
 
+    /// TODO: Do you really want to shadow the "string" core function? 
     let inline string (value : obj) = 
         match value with
         | :? string as s -> Encode.string s

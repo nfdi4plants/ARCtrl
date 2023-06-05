@@ -1,6 +1,5 @@
 ﻿namespace ISA
 
-
 type Component = 
     {
         ComponentName : string option
@@ -23,16 +22,19 @@ type Component =
     static member empty =
         Component.create()
     
+    /// TODO: What does this function do @HLWeil? When is it meant to be used?
     static member composeName (value : Value Option) (unit : OntologyAnnotation option) = 
         match value,unit with
         | Some (Value.Ontology oa), _ ->
-            $"{oa.NameText} ({oa.ShortAnnotationString})"
+            $"{oa.NameText} ({oa.TermAccessionShort})"
         | Some v, None ->
             $"{v.AsString}"
         | Some v, Some u ->
-            $"{v.AsString} {u.NameText} ({u.ShortAnnotationString})"
+            $"{v.AsString} {u.NameText} ({u.TermAccessionShort})"
         | None, _ -> ""
 
+    /// TODO: What does this function do @HLWeil? When is it meant to be used?
+    /// TODO: Move regex to regex module
     static member decomposeName (name : string) = 
         let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
         let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
@@ -41,39 +43,31 @@ type Component =
         let unitr = System.Text.RegularExpressions.Regex.Match(name,unitPattern)
 
         if unitr.Success then
-            let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
+            let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAccession 
             let v =  (unitr.Groups.Item "value").Value      |> Value.fromString
             let u =  (unitr.Groups.Item "unit").Value
             v, Some {oa with Name = (Some (AnnotationValue.Text u))}
         elif r.Success then
-            let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
+            let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAccession 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
             Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.AsString))}, None
         else 
             Value.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (name: string) (term:string) (source:string) (accession:string) = 
-        let cType = OntologyAnnotation.fromString term source accession |> Option.fromValueWithDefault OntologyAnnotation.empty
+    static member fromString (name: string, term:string, source:string, accession:string, ?comments : Comment list) = 
+        let cType = OntologyAnnotation.fromString (term, source, accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
         let v,u = Component.decomposeName name
         Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
         
-    /// Create a ISAJson Component from ISATab string entries
-    static member fromStringWithComments (name: string) (term:string) (source:string) (accession:string) (comments : Comment list)  = 
-        let cType = OntologyAnnotation.fromStringWithComments term source accession comments |> Option.fromValueWithDefault OntologyAnnotation.empty
-        let v,u = Component.decomposeName name
-        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
-        
-
     static member fromOptions (value: Value option) (unit: OntologyAnnotation Option) (header:OntologyAnnotation option) = 
         let name = Component.composeName value unit |> Option.fromValueWithDefault ""
         Component.make name value unit header
 
-
     /// Get ISATab string entries from an ISAJson Component object
     static member toString (c : Component) =
-        let (n,t,a) = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")
-        c.ComponentName |> Option.defaultValue "",n,t,a
+        let oa = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
+        c.ComponentName |> Option.defaultValue "", oa
 
     member this.NameText =
         this.ComponentType

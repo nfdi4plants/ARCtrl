@@ -12,11 +12,13 @@ open GEncode
 
 module Comment = 
     
-    let genID (c:Comment) = 
+    let genID (c:Comment) : string = 
         match c.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match c.Name with
-                  | Some n -> "#Comment_" + n.Replace(" ","_") + if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
+                  | Some n -> 
+                    let v = if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
+                    "#Comment_" + n.Replace(" ","_") + v
                   | None -> "#EmptyComment"
 
     let encoder (options : ConverterOptions) (comment : obj) = 

@@ -23,13 +23,8 @@ type Factor =
         Factor.create()
 
     /// Create a ISAJson Factor from ISATab string entries
-    static member fromString (name : string) (term:string) (source:string) (accession:string) =
-        let oa = OntologyAnnotation.fromString (term, source, accession)
-        Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
-
-    /// Create a ISAJson Ontology Annotation value from ISATab string entries
-    static member fromStringWithComments (name:string) (term:string) (source:string) (accession:string) (comments : Comment list) =
-        let oa = OntologyAnnotation.fromStringWithComments term source accession comments
+    static member fromString (name : string, term:string, source:string, accession:string, ?comments : Comment list) =
+        let oa = OntologyAnnotation.fromString (term, source, accession, ?comments = comments)
         Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
     /// Get ISATab string entries from an ISAJson Factor object

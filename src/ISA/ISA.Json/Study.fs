@@ -32,9 +32,9 @@ module StudyMaterials =
 
 module Study =
     
-    let genID (s:Study) = 
+    let genID (s:Study) : string = 
         match s.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> match s.FileName with
                   | Some n -> "#Study" + n.Replace(" ","_")
                   | None -> match s.Identifier with

@@ -55,9 +55,9 @@ module Value =
 
 module Factor =  
     
-    let genID (f:Factor) = 
+    let genID (f:Factor) : string = 
         match f.ID with
-        | Some id -> URI.toString id
+        | Some id -> id 
         | None -> match f.Name with
                   | Some n -> "#Factor_" + n.Replace(" ","_")
                   | None -> "#EmptyFactor"
@@ -106,9 +106,9 @@ module Factor =
 
 module FactorValue =
     
-    let genID (fv:FactorValue) = 
+    let genID (fv:FactorValue) : string = 
         match fv.ID with
-        | Some id -> URI.toString id
+        | Some id -> id
         | None -> "#EmptyFactorValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 

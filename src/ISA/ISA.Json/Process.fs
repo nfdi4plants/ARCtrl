@@ -146,9 +146,9 @@ module ProcessOutput =
 
 module Process =    
     
-    let genID (p:Process) = 
+    let genID (p:Process) : string = 
         match p.ID with
-            | Some id -> URI.toString id
+            | Some id -> id
             | None -> match p.Name with
                         | Some n -> "#Process_" + n.Replace(" ","_")
                         | None -> "#EmptyProcess"
