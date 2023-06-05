@@ -66,17 +66,23 @@ type OntologyAnnotation =
     /// Create a ISAJson Ontology Annotation value from ISATab string entries, will try to reduce `termAccessionNumber` with regex matching.
     ///
     /// Exmp. 1: http://purl.obolibrary.org/obo/GO_000001 --> GO:000001
-    static member fromString (term:string) (termSourceRef:string) (termAccessionNumber:string) =
-        let regexResult = 
-            Regex.tryGetTermAccessionString termAccessionNumber
+    static member fromString (term:string, ?termSourceRef:string, ?termAccessionString:string) =
 
-        let nextTermAccessionNumber = regexResult |> Option.defaultValue termAccessionNumber
+        let termAccession = 
+            if termAccessionString.IsSome then
+                let termAccessionString = termAccessionString.Value
+                let regexResult = Regex.tryGetTermAccessionString termAccessionString
+                regexResult 
+                |> Option.defaultValue termAccessionString
+                |> Some 
+            else
+                None
 
         OntologyAnnotation.make 
             None 
-            (Option.fromValueWithDefault "" term |> Option.map AnnotationValue.fromString)
-            (Option.fromValueWithDefault "" termSourceRef)
-            (Option.fromValueWithDefault "" nextTermAccessionNumber)
+            (Some term |> Option.map AnnotationValue.fromString)
+            (termSourceRef)
+            (termAccession)
             None
 
     /// Create a ISAJson Ontology Annotation value from string entries
@@ -96,7 +102,7 @@ type OntologyAnnotation =
         |> Option.get 
         |> fun r ->
             let accession = r.IdSpace + ":" + r.LocalId
-            OntologyAnnotation.fromString "" r.IdSpace accession
+            OntologyAnnotation.fromString ("", r.IdSpace, accession)
 
     /// Parses any value in `TermAccessionString` to term accession format "idspace:localid". Exmp.: "MS:000001".
     ///

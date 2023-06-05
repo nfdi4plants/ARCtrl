@@ -78,16 +78,16 @@ type CompositeHeader =
 
     with 
 
-    static member deprecatedIOHeaderWarning (s : string) = ""
-
-    // This feels strange as the new input and output are no longer part of CompositeHeaders
-    static member getDeprecationWarning headers = 
-        headers
-        |> List.choose (fun i ->
-            match i with 
-            | FreeText s when s = "Sample" -> Some <| CompositeHeader.deprecatedIOHeaderWarning s
-            | _ -> None   
-        )
+    /// TODO: Where should we put this?
+    /// If we want to find deprecated columns we would need to iterate over all columns (including first and last).
+    /// This feels strange as the new input and output are no longer part of CompositeHeaders
+    member this.isDeprecated = 
+        match this with 
+        | FreeText s when s.ToLower() = "sample name" -> true
+        | FreeText s when s.ToLower() = "source name" -> true
+        | FreeText s when s.ToLower() = "data file name" -> true
+        | FreeText s when s.ToLower() = "derived data file" -> true
+        | _ -> false   
 
     /// <summary>
     /// Is true if this Building Block type is a TermColumn.
@@ -149,29 +149,29 @@ type CompositeHeader =
         | Date                  -> "Date"
         | FreeText str          -> str
 
-    // Regex duplication must be solved first
     /// <summary>
     /// Tries to create a BuildingBlockType from a given string. Returns `None` if none match.
     /// </summary>
-    //static member tryOfString str =
-    //    match str with
-    //    | "Parameter" | "Parameter Value"   -> Some Parameter
-    //    | "Factor" | "Factor Value"         -> Some Factor
-    //    // "Characteristics" deprecated in v0.6.0
-    //    | "Characteristics" | "Characteristic" | "Characteristics Value" -> Some Characteristic
-    //    | "Component"           -> Some Component
-    //    | "Sample Name"         -> Some Sample         
-    //    | "Data File Name"      -> Some Data
-    //    | "Raw Data File"       -> Some RawDataFile
-    //    | "Derived Data File"   -> Some DerivedDataFile
-    //    | "Source Name"         -> Some Source
-    //    | "Protocol Type"       -> Some ProtocolType
-    //    | "Protocol REF"        -> Some ProtocolREF
-    //    | anythingElse          -> Some <| Freetext anythingElse
-
-    /// <summary>
-    /// Creates a BuildingBlockType from a given string.
-    /// </summary>
-    //static member ofString str =
-    //    BuildingBlockType.tryOfString str
-    //    |> function Some bbt -> bbt | None -> failwith $"Error: Unable to parse '{str}' to BuildingBlockType!"
+    static member ofHeaderString (str: string) =
+        match str.Trim() with
+        // Is term column
+        | Regex.Aux.Regex Regex.Pattern.TermColumnPattern value ->
+            let columnType = value.Groups.["termcolumntype"].Value
+            let termName = value.Groups.["termname"].Value
+            match columnType with
+            | "Parameter" 
+            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString termName)
+            | "Factor" 
+            | "Factor Value"                -> Factor (OntologyAnnotation.fromString termName)
+            | "Characteristics" // "Characteristics" deprecated in v0.6.0
+            | "Characteristic" 
+            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString termName)
+            | "Component"                   -> Component (OntologyAnnotation.fromString termName)
+            | _                             -> FreeText str
+        | "Date"                    -> Date
+        | "Protocol Description"    -> ProtocolDescription
+        | "Protocol Uri"            -> ProtocolUri
+        | "Protocol Version"        -> ProtocolVersion
+        | "Protocol Type"           -> ProtocolType
+        | "Protocol REF"            -> ProtocolREF
+        | anyelse                   -> FreeText anyelse

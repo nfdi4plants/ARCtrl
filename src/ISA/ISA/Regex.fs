@@ -45,6 +45,18 @@ module Pattern =
     [<LiteralAttribute>]
     let IOTypePattern = @"(Input|Output)\s\[(?<iotype>\w+?)\]"
 
+    /// This pattern matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
+    ///
+    /// Captures column type as named group: "termcolumntype" (e.g. Component, Characteristic .. ).
+    ///
+    /// Captures term name as named group: "termname" (e.g. instrument model).
+    ///
+    /// Exmp. 1: Parameter [instrument model] --> termcolumntype: Parameter; termname: instrument model
+    ///
+    /// Exmp. 2: Characteristic [species] --> termcolumntype: Characteristic; termname: species
+    [<LiteralAttribute>]
+    let TermColumnPattern = @"/(?<termcolumntype>.+)\s\[(?<termname>.+)\]/gm"
+
 module Aux =
     
     open System.Text.RegularExpressions
@@ -59,6 +71,7 @@ open Pattern
 open Aux
 open System
 open System.Text.RegularExpressions
+    
 
 /// <summary>
 /// This function can be used to extract `IDSPACE:LOCALID` (or: `Term Accession`) from Swate header strings or obofoundry conform URI strings.

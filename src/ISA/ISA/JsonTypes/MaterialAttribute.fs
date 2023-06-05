@@ -21,7 +21,7 @@ type MaterialAttribute =
 
     /// Create a ISAJson MaterialAttribute from ISATab string entries
     static member fromString (term:string) (source:string) (accession:string) =
-        let oa = OntologyAnnotation.fromString term source accession
+        let oa = OntologyAnnotation.fromString (term, source, accession)
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 
     /// Create a ISAJson MaterialAttribute from string entries
@@ -31,7 +31,7 @@ type MaterialAttribute =
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
     static member toString (ma : MaterialAttribute) =
-        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")    
+        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}  
 
     /// Returns the name of the characteristic as string
     member this.NameText =
