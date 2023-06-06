@@ -2,9 +2,13 @@
 
 type Component = 
     {
+        // TODO: Maybe remove as field and add as member?
         ComponentName : string option
+        /// This can be the main column value of the component column. (e.g. "SCIEX instrument model" as `OntologyAnnotation`; 14;..)
         ComponentValue : Value option
+        /// This can be the unit describing a non `OntologyAnnotation` value in `ComponentValue`. (e.g. "degree celcius")
         ComponentUnit : OntologyAnnotation option
+        /// This can be the component column header (e.g. "instrument model")
         ComponentType : OntologyAnnotation option
     }
 
@@ -22,7 +26,11 @@ type Component =
     static member empty =
         Component.create()
     
-    /// TODO: What does this function do @HLWeil? When is it meant to be used?
+    /// This function creates a string containing 
+    ///
+    /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
+    /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
+    /// Without this string composition we loose the ontology information for the header value.
     static member composeName (value : Value Option) (unit : OntologyAnnotation option) = 
         match value,unit with
         | Some (Value.Ontology oa), _ ->
@@ -33,8 +41,11 @@ type Component =
             $"{v.AsString} {u.NameText} ({u.TermAccessionShort})"
         | None, _ -> ""
 
-    /// TODO: What does this function do @HLWeil? When is it meant to be used?
-    /// TODO: Move regex to regex module
+    /// This function parses the given Component header string format into the ISA-JSON Component type
+    ///
+    /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
+    /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
+    /// Without this string composition we loose the ontology information for the header value.
     static member decomposeName (name : string) = 
         let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
         let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
@@ -55,10 +66,14 @@ type Component =
             Value.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (name: string, term:string, source:string, accession:string, ?comments : Comment list) = 
-        let cType = OntologyAnnotation.fromString (term, source, accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
-        let v,u = Component.decomposeName name
-        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+    static member fromString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : Comment list) = 
+        let cType = OntologyAnnotation.fromString (?term = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
+        match name with
+        | Some n -> 
+            let v,u = Component.decomposeName n
+            Component.make (name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+        | None ->
+            Component.make None None None cType
         
     static member fromOptions (value: Value option) (unit: OntologyAnnotation Option) (header:OntologyAnnotation option) = 
         let name = Component.composeName value unit |> Option.fromValueWithDefault ""

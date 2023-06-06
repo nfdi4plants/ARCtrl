@@ -27,7 +27,11 @@ In general, a distinction is made between `DataModel`s,  `API`s, and `Tools`:
 
 - `Tools` or `Clients` are user-facing software such as Swate, ARCitect, or the ARCCommander. They should ideally compose their functionality from the `API`s and work with an in-memory representation of the ARC via `DataModel`s. There are operations such as IO for reading/writing actual files to the file system, which are not part of the `API`s, but rather part of the `Tools`.
 
+## Local Setup
 
+1. `dotnet tool restore`
+2. `npm install` in *root*.
+3. `npm install` in *src/ISA*
 
 ## API Design
 

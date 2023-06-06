@@ -61,14 +61,18 @@ type OntologyAnnotation =
     static member createUriAnnotation (termSourceRef : string) (termAccessionNumber : string) =
         $"{Url.OntobeeOboPurl}{termSourceRef}_{termAccessionNumber}"
 
+    ///<summary>
     /// Create a ISAJson Ontology Annotation value from ISATab string entries, will try to reduce `termAccessionNumber` with regex matching.
     ///
     /// Exmp. 1: http://purl.obolibrary.org/obo/GO_000001 --> GO:000001
-    static member fromString (term:string, ?termSourceRef:string, ?termAccessionString:string, ?comments : Comment list) =
+    ///</summary>
+    ///<param name="tsr">Term source reference</param>
+    ///<param name="tan">Term accession number</param>
+    static member fromString (?term:string, ?tsr:string, ?tan:string, ?comments : Comment list) =
 
         let termAccession = 
-            if termAccessionString.IsSome then
-                let termAccessionString = termAccessionString.Value
+            if tan.IsSome then
+                let termAccessionString = tan.Value
                 let regexResult = Regex.tryGetTermAccessionString termAccessionString
                 regexResult 
                 |> Option.defaultValue termAccessionString
@@ -78,8 +82,8 @@ type OntologyAnnotation =
 
         OntologyAnnotation.make 
             None 
-            (Some term |> Option.map AnnotationValue.fromString)
-            (termSourceRef)
+            (term |> Option.map AnnotationValue.fromString)
+            (tsr)
             (termAccession)
             (comments)
 

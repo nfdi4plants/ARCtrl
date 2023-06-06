@@ -1,8 +1,6 @@
 ﻿namespace ISA
 
 open Fable.Core
-
-// TODO: Do we need FreeText of string on this one too? Do we want to allow other IOTypes?
 type IOType =
     | Source
     | Sample
@@ -10,11 +8,23 @@ type IOType =
     | RawData
     | ProcessedData
     | Material
+    // Do we need FreeText of string on this one too? Do we want to allow other IOTypes?
+    // For now: yes
+    | FreeText of string
 
     with
 
-    member this.asInput = $"Input [{this}]"
-    member this.asOutput = $"Output [{this}]"
+    member this.asInput = 
+        let stringCreate x = $"Input [{x}]"
+        match this with
+        | FreeText s -> stringCreate s
+        | anyelse -> stringCreate anyelse
+    member this.asOutput = 
+        let stringCreate x = $"Output [{x}]"
+        match this with
+        | FreeText s -> stringCreate s
+        | anyelse -> stringCreate anyelse
+        
 
     /// Used to match exact string to IOType
     ///
@@ -72,9 +82,8 @@ type CompositeHeader =
     | Performer
     | Date
     | FreeText of string
-
-    //| Input of IOType
-    //| Output of IOType
+    | Input of IOType
+    | Output of IOType
 
     with 
 
@@ -147,6 +156,8 @@ type CompositeHeader =
         | ProtocolVersion       -> "Protocol Version"
         | Performer             -> "Performer"
         | Date                  -> "Date"
+        | Input io              -> io.asInput
+        | Output io             -> io.asOutput
         | FreeText str          -> str
 
     /// <summary>
@@ -174,4 +185,6 @@ type CompositeHeader =
         | "Protocol Version"        -> ProtocolVersion
         | "Protocol Type"           -> ProtocolType
         | "Protocol REF"            -> ProtocolREF
+        | input when input.ToLower().StartsWith "input"     -> failwith "not implemented yet"
+        | output when output.ToLower().StartsWith "output"  -> failwith "not implemented yet"
         | anyelse                   -> FreeText anyelse

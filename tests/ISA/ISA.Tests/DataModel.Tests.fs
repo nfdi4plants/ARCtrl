@@ -106,7 +106,7 @@ let main =
 
             let expected = Component.make (Some "Text") v None None
 
-            let actual = Component.fromString ("Text", "", "", "")
+            let actual = Component.fromString ("Text")
 
             Expect.equal actual expected "Component was not correctly composed"
         )
@@ -129,7 +129,7 @@ let main =
 
             let expected = Component.make (Some "Test (OBO:123)") v None None
 
-            let actual = Component.fromString ("Test (OBO:123)", "", "", "")
+            let actual = Component.fromString ("Test (OBO:123)")
 
             Expect.equal actual expected "Component was not correctly composed"
 
@@ -140,7 +140,7 @@ let main =
             let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
             let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
 
-            let actual = Component.fromString ("10 degree Celsius (UO:123)", "", "", "")
+            let actual = Component.fromString ("10 degree Celsius (UO:123)")
 
             Expect.equal actual expected "Component was not correctly composed"
 

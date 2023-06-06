@@ -45,6 +45,14 @@ module Pattern =
     [<LiteralAttribute>]
     let IOTypePattern = @"(Input|Output)\s\[(?<iotype>\w+?)\]"
 
+    /// This pattern is used to match both Input and Output columns and capture the IOType as `iotype` group.
+    [<LiteralAttribute>]
+    let InputPattern = @"Input\s\[(?<iotype>\w+?)\]"
+
+    /// This pattern is used to match both Input and Output columns and capture the IOType as `iotype` group.
+    [<LiteralAttribute>]
+    let OutputPattern = @"Output\s\[(?<iotype>\w+?)\]"
+
     /// This pattern matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
     ///
     /// Captures column type as named group: "termcolumntype" (e.g. Component, Characteristic .. ).
