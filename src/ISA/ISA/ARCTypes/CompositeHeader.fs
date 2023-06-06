@@ -1,43 +1,68 @@
 ﻿namespace ISA
 
 open Fable.Core
+
+// TODO: This type is not very nice to use from javascript
+// Example: `Source.asInput` --> `(new IOType(0, [])).asInput`
+[<AttachMembers>]
 type IOType =
     | Source
     | Sample
-    | Data
-    | RawData
-    | ProcessedData
+    | RawDataFile
+    | DerivedDataFile
+    | ImageFile
     | Material
     // Do we need FreeText of string on this one too? Do we want to allow other IOTypes?
     // For now: yes
     | FreeText of string
 
-    with
+    // This is used for example in Swate to programmatically create Options for adding building blocks.
+    // Having this member here, guarantees the any new IOTypes are implemented in tools.
+    /// This member is used to iterate over all existing `IOType`s (excluding FreeText case).
+    static member All = [|
+        Source
+        Sample
+        RawDataFile
+        DerivedDataFile
+        ImageFile
+        Material
+    |]
 
     member this.asInput = 
-        let stringCreate x = $"Input [{x}]"
+        let stringCreate x = $"Input [{x.ToString()}]"
         match this with
         | FreeText s -> stringCreate s
         | anyelse -> stringCreate anyelse
     member this.asOutput = 
-        let stringCreate x = $"Output [{x}]"
+        let stringCreate x = $"Output [{x.ToString()}]"
         match this with
         | FreeText s -> stringCreate s
         | anyelse -> stringCreate anyelse
-        
 
-    /// Used to match exact string to IOType
+    override this.ToString() =
+        match this with
+        | Source            -> "Source Name" 
+        | Sample            -> "Sample Name" 
+        | RawDataFile       -> "Raw Data File"
+        | DerivedDataFile   -> "Derived Data File"
+        | ImageFile         -> "Image File"
+        | Material          -> "Material" 
+        | FreeText s        -> s
+
+    /// Used to match only(!) IOType string to IOType (without Input/Output). This matching is case sensitive.
     ///
     /// Exmp. 1: "Source" --> Source
+    ///
+    /// Exmp. 2: "raw data file" -> RawDataFile
     static member ofString (str: string) =  
         match str with
-        | "Source"          -> Source
-        | "Sample"          -> Sample
-        | "Data"            -> Data
-        | "RawData"         -> RawData
-        | "ProcessedData"   -> ProcessedData
-        | "Material"        -> Material
-        | anyelse           -> failwith $"Unable to parse '{anyelse}' to IOType."
+        | "Source" | "Source Name"                  -> Source
+        | "Sample" | "Sample Name"                  -> Sample
+        | "RawDataFile" | "Raw Data File"           -> RawDataFile
+        | "DerivedDataFile" | "Derived Data File"   -> DerivedDataFile
+        | "ImageFile" | "Image File"                -> ImageFile
+        | "Material"                                -> Material
+        | _                                         -> FreeText str // use str to not store `str.ToLower()`
 
     /// Used to match Input/Output annotation table header to IOType
     ///
@@ -47,21 +72,6 @@ type IOType =
         | Some s -> IOType.ofString s |> Some
         | None -> None
 
-    /// Used to match Input/Output annotation table header to IOType
-    ///
-    /// Exmp. 1: "Input [Source]" --> Some Source
-    static member ofHeaderString (str: string) = 
-        match Regex.tryParseIOTypeHeader str |> Option.map (fun x -> IOType.ofString x) with
-        | Some iotype -> iotype
-        | None -> failwith $"Unable to parse '{str}' to existing IOType."
-
-    // There might be a better implementation for this?
-    static member headerIsIOType (str: string) = 
-        match IOType.tryOfHeaderString str with
-        | Some _ -> true
-        | None -> false
-        
-
 /// <summary>
 /// Model of the different types of Building Blocks in an ARC Annotation Table.
 /// </summary>
@@ -69,7 +79,7 @@ type IOType =
 type CompositeHeader = 
     // term
     | Component         of OntologyAnnotation
-    | Characteristic    of OntologyAnnotation
+    | Characteristics   of OntologyAnnotation
     | Factor            of OntologyAnnotation
     | Parameter         of OntologyAnnotation
     // featured
@@ -81,16 +91,70 @@ type CompositeHeader =
     | ProtocolREF
     | Performer
     | Date
-    | FreeText of string
+    // single - io type
     | Input of IOType
     | Output of IOType
+    // single - fallback
+    | FreeText of string
 
     with 
 
-    /// TODO: Where should we put this?
-    /// If we want to find deprecated columns we would need to iterate over all columns (including first and last).
-    /// This feels strange as the new input and output are no longer part of CompositeHeaders
-    member this.isDeprecated = 
+    override this.ToString() =
+        match this with
+        | Parameter oa          -> $"Parameter [{oa.NameText}]"
+        | Factor oa             -> $"Factor [{oa.NameText}]"
+        | Characteristics oa     -> $"Characteristics [{oa.NameText}]"
+        | Component oa          -> $"Component [{oa.NameText}]"
+        | ProtocolType          -> "Protocol Type" 
+        | ProtocolREF           -> "Protocol REF"
+        | ProtocolDescription   -> "Protocol Description"
+        | ProtocolUri           -> "Protocol Uri"
+        | ProtocolVersion       -> "Protocol Version"
+        | Performer             -> "Performer"
+        | Date                  -> "Date"
+        | Input io              -> io.asInput
+        | Output io             -> io.asOutput
+        | FreeText str          -> str
+
+    /// <summary>
+    /// Tries to create a `CompositeHeader` from a given string.
+    /// </summary>
+    static member OfHeaderString (str: string) =
+        match str.Trim() with
+        // Is term column
+        | Regex.Aux.Regex Regex.Pattern.TermColumnPattern r ->
+            let columnType = r.Groups.["termcolumntype"].Value
+            let termName = r.Groups.["termname"].Value
+            match columnType with
+            | "Parameter" 
+            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString termName)
+            | "Factor" 
+            | "Factor Value"                -> Factor (OntologyAnnotation.fromString termName)
+            | "Characteristic" 
+            | "Characteristics" // "Characteristics" deprecated in v0.6.0
+            | "Characteristics Value"       -> Characteristics (OntologyAnnotation.fromString termName)
+            | "Component"                   -> Component (OntologyAnnotation.fromString termName)
+            // TODO: Is this what we intend?
+            | _                             -> FreeText str
+        | Regex.Aux.Regex Regex.Pattern.InputPattern r ->
+            let iotype = r.Groups.["iotype"].Value
+            Input <| IOType.ofString (iotype)
+        | Regex.Aux.Regex Regex.Pattern.OutputPattern r ->
+            let iotype = r.Groups.["iotype"].Value
+            Output <| IOType.ofString (iotype)
+        | "Date"                    -> Date
+        | "Protocol Description"    -> ProtocolDescription
+        | "Protocol Uri"            -> ProtocolUri
+        | "Protocol Version"        -> ProtocolVersion
+        | "Protocol Type"           -> ProtocolType
+        | "Protocol REF"            -> ProtocolREF
+        | input when input.ToLower().StartsWith "input"     -> failwith "not implemented yet"
+        | output when output.ToLower().StartsWith "output"  -> failwith "not implemented yet"
+        | anyelse                   -> FreeText anyelse
+
+
+    /// Returns true if column is deprecated
+    member this.IsDeprecated = 
         match this with 
         | FreeText s when s.ToLower() = "sample name" -> true
         | FreeText s when s.ToLower() = "source name" -> true
@@ -106,7 +170,7 @@ type CompositeHeader =
     /// </summary>
     member this.IsTermColumn =
         match this with 
-        | Parameter _ | Factor _| Characteristic _| Component _
+        | Parameter _ | Factor _| Characteristics _| Component _
         | ProtocolType -> true 
         | anythingElse -> false
 
@@ -126,8 +190,14 @@ type CompositeHeader =
     /// </summary>
     member this.IsSingleColumn =
         match this with 
-        //| Input _ | Output _ 
+        | Input _ | Output _ 
         | ProtocolREF | ProtocolDescription | ProtocolUri | ProtocolVersion | Performer | Date -> true 
+        | anythingElse -> false
+
+    ///
+    member this.IsIOType =
+        match this with 
+        | Input io | Output io -> true 
         | anythingElse -> false
 
     /// <summary>
@@ -142,49 +212,3 @@ type CompositeHeader =
             | anyelse -> failwith $"Tried matching {anyelse} in getFeaturedColumnAccession, but is not a featured column."
         else
             failwith $"'{this}' is not listed as featured column type! No referenced accession available."
-
-    override this.ToString() =
-        match this with
-        | Parameter oa          -> $"Parameter [{oa.NameText}]"
-        | Factor oa             -> $"Factor [{oa.NameText}]"
-        | Characteristic oa     -> $"Characteristics [{oa.NameText}]"
-        | Component oa          -> $"Component [{oa.NameText}]"
-        | ProtocolType          -> "Protocol Type" 
-        | ProtocolREF           -> "Protocol REF"
-        | ProtocolDescription   -> "Protocol Description"
-        | ProtocolUri           -> "Protocol Uri"
-        | ProtocolVersion       -> "Protocol Version"
-        | Performer             -> "Performer"
-        | Date                  -> "Date"
-        | Input io              -> io.asInput
-        | Output io             -> io.asOutput
-        | FreeText str          -> str
-
-    /// <summary>
-    /// Tries to create a BuildingBlockType from a given string. Returns `None` if none match.
-    /// </summary>
-    static member ofHeaderString (str: string) =
-        match str.Trim() with
-        // Is term column
-        | Regex.Aux.Regex Regex.Pattern.TermColumnPattern value ->
-            let columnType = value.Groups.["termcolumntype"].Value
-            let termName = value.Groups.["termname"].Value
-            match columnType with
-            | "Parameter" 
-            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString termName)
-            | "Factor" 
-            | "Factor Value"                -> Factor (OntologyAnnotation.fromString termName)
-            | "Characteristics" // "Characteristics" deprecated in v0.6.0
-            | "Characteristic" 
-            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString termName)
-            | "Component"                   -> Component (OntologyAnnotation.fromString termName)
-            | _                             -> FreeText str
-        | "Date"                    -> Date
-        | "Protocol Description"    -> ProtocolDescription
-        | "Protocol Uri"            -> ProtocolUri
-        | "Protocol Version"        -> ProtocolVersion
-        | "Protocol Type"           -> ProtocolType
-        | "Protocol REF"            -> ProtocolREF
-        | input when input.ToLower().StartsWith "input"     -> failwith "not implemented yet"
-        | output when output.ToLower().StartsWith "output"  -> failwith "not implemented yet"
-        | anyelse                   -> FreeText anyelse

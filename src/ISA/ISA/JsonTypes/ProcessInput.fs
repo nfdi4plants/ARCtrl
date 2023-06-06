@@ -1,7 +1,7 @@
 ﻿namespace ISA
 
 
-
+[<RequireQualifiedAccess>]
 type ProcessInput =
     
     | Source of Source

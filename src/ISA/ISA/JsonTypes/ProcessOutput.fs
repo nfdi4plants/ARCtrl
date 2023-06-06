@@ -1,5 +1,6 @@
 ﻿namespace ISA
 
+[<RequireQualifiedAccess>]
 type ProcessOutput =
     | Sample of Sample
     | Data of Data
