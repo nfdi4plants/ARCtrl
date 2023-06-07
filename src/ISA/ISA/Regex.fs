@@ -90,16 +90,8 @@ open System.Text.RegularExpressions
 /// </summary>
 let tryParseTermAccession (str:string) =
     match str.Trim() with
-    | Regex TermAccessionPattern value ->
-        let idspace = value.Groups.["idspace"].Value
-        let localid = value.Groups.["localid"].Value
-        {|IdSpace = idspace; LocalId = localid|}
-        |> Some
-    | Regex TermAccessionPatternURI value ->
-        let idspace = value.Groups.["idspace"].Value
-        let localid = value.Groups.["localid"].Value
-        {|IdSpace = idspace; LocalId = localid|}
-        |> Some
+    | Regex TermAccessionPattern value 
+    | Regex TermAccessionPatternURI value 
     | Regex TermAccessionPatternURI_lessRestrictive value ->
         let idspace = value.Groups.["idspace"].Value
         let localid = value.Groups.["localid"].Value

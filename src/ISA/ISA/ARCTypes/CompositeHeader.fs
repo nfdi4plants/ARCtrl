@@ -2,9 +2,8 @@
 
 open Fable.Core
 
-// TODO: This type is not very nice to use from javascript
-// Example: `Source.asInput` --> `(new IOType(0, [])).asInput`
 [<AttachMembers>]
+[<RequireQualifiedAccess>]
 type IOType =
     | Source
     | Sample
@@ -76,10 +75,11 @@ type IOType =
 /// Model of the different types of Building Blocks in an ARC Annotation Table.
 /// </summary>
 [<AttachMembers>]
+[<RequireQualifiedAccess>]
 type CompositeHeader = 
     // term
     | Component         of OntologyAnnotation
-    | Characteristics   of OntologyAnnotation
+    | Characteristic   of OntologyAnnotation
     | Factor            of OntologyAnnotation
     | Parameter         of OntologyAnnotation
     // featured
@@ -103,7 +103,7 @@ type CompositeHeader =
         match this with
         | Parameter oa          -> $"Parameter [{oa.NameText}]"
         | Factor oa             -> $"Factor [{oa.NameText}]"
-        | Characteristics oa     -> $"Characteristics [{oa.NameText}]"
+        | Characteristic oa     -> $"Characteristic [{oa.NameText}]"
         | Component oa          -> $"Component [{oa.NameText}]"
         | ProtocolType          -> "Protocol Type" 
         | ProtocolREF           -> "Protocol REF"
@@ -139,8 +139,8 @@ type CompositeHeader =
             | "Factor" 
             | "Factor Value"                -> Factor (OntologyAnnotation.fromString termName)
             | "Characteristic" 
-            | "Characteristics" // "Characteristics" deprecated in v0.6.0
-            | "Characteristics Value"       -> Characteristics (OntologyAnnotation.fromString termName)
+            | "Characteristics"
+            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString termName)
             | "Component"                   -> Component (OntologyAnnotation.fromString termName)
             // TODO: Is this what we intend?
             | _                             -> FreeText str
@@ -171,14 +171,14 @@ type CompositeHeader =
     /// </summary>
     member this.IsTermColumn =
         match this with 
-        | Parameter _ | Factor _| Characteristics _| Component _
+        | Parameter _ | Factor _| Characteristic _| Component _
         | ProtocolType -> true 
         | anythingElse -> false
 
     /// <summary>
     /// Is true if the Building Block type is a FeaturedColumn. 
     ///
-    /// A FeaturedColumn can be abstracted by Parameter/Factor/Characteristics and describes one common usecase of either.
+    /// A FeaturedColumn can be abstracted by Parameter/Factor/Characteristic and describes one common usecase of either.
     /// Such a block will contain TSR and TAN and can be used for directed Term search.
     /// </summary>
     member this.IsFeaturedColumn =

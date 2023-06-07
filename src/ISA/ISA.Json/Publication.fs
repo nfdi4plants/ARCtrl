@@ -7,7 +7,6 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module Publication =    
     
@@ -24,12 +23,12 @@ module Publication =
         [
             if options.SetID then "@id", GEncode.string (oa :?> Publication |> genID)
             if options.IncludeType then "@type", GEncode.string "Publication"
-            tryInclude "pubMedID" GEncode.string (oa |> tryGetPropertyValue "PubMedID")
-            tryInclude "doi" GEncode.string (oa |> tryGetPropertyValue "DOI")
-            tryInclude "authorList" GEncode.string (oa |> tryGetPropertyValue "Authors")
-            tryInclude "title" GEncode.string (oa |> tryGetPropertyValue "Title")
-            tryInclude "status" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Status")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "pubMedID" GEncode.string (oa |> GEncode.tryGetPropertyValue "PubMedID")
+            GEncode.tryInclude "doi" GEncode.string (oa |> GEncode.tryGetPropertyValue "DOI")
+            GEncode.tryInclude "authorList" GEncode.string (oa |> GEncode.tryGetPropertyValue "Authors")
+            GEncode.tryInclude "title" GEncode.string (oa |> GEncode.tryGetPropertyValue "Title")
+            GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Status")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

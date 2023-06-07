@@ -26,7 +26,7 @@ type Component =
     static member empty =
         Component.create()
     
-    /// This function creates a string containing 
+    /// This function creates a string containing full isa term triplet information about the component
     ///
     /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
     /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 

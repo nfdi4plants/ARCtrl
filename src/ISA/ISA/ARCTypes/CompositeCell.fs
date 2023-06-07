@@ -3,6 +3,7 @@
 open Fable.Core
 
 [<AttachMembers>]
+[<RequireQualifiedAccess>]
 type CompositeCell = 
     /// ISA-TAB term columns as ontology annotation.
     ///
@@ -17,7 +18,7 @@ type CompositeCell =
 
     member this.isUnitized = match this with | Unitized _ -> true | _ -> false
     member this.isTerm = match this with | Term _ -> true | _ -> false
-    member this.isFreetext = match this with | FreeText _ -> true | _ -> false
+    member this.isFreeText = match this with | FreeText _ -> true | _ -> false
 
     /// FreeText string will be converted to unit term name.
     ///
@@ -36,7 +37,7 @@ type CompositeCell =
         | Unitized (_,unit) -> CompositeCell.Term unit
         | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(Name = AnnotationValue.Text text))
     /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
-    member this.toFreetextCell() =
+    member this.toFreeTextCell() =
         match this with
         | FreeText _ -> this
         | Term term -> FreeText(term.NameText)
@@ -50,7 +51,7 @@ type CompositeCell =
         match this with
         | Term c -> c
         | _ -> failwith "Not a Swate TermCell."
-    member this.AsFreetext =
+    member this.AsFreeText =
         match this with
         | FreeText c -> c
         | _ -> failwith "Not a Swate TermCell."
