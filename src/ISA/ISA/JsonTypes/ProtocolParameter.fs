@@ -59,7 +59,7 @@ type ProtocolParameter =
         pp.TryNameText
 
     /// Returns the name of the paramater as string
-    static member getNameAsString (pp : ProtocolParameter) =
+    static member getNameText (pp : ProtocolParameter) =
         ProtocolParameter.tryGetNameText pp
         |> Option.defaultValue ""
 

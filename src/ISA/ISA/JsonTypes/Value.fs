@@ -39,7 +39,7 @@ type Value =
         | Float f -> string f |> Some, None, None
         | Name s -> s |> Some, None, None
 
-    member this.AsString =         
+    member this.Text =         
         match this with
         | Value.Ontology oa  -> oa.NameText
         | Value.Float f -> string f
@@ -102,4 +102,4 @@ type Value =
             | Name n        -> n
 
     static member getText (v: Value) =
-        v.AsName()
+        v.Text

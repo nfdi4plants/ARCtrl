@@ -1,5 +1,7 @@
 ﻿namespace ISA.Aux
 
+open ISA
+
 module Dict = 
 
     open System.Collections.Generic

@@ -8,7 +8,7 @@ open Expecto
 open ISA
 
 
-let main =
+let componentCastingTests =
 
     testList "ComponentCastingTests" [
         testCase "ComposeNameText" (fun () -> 
@@ -190,4 +190,58 @@ let main =
             Expect.equal actual expected "Component was not correctly composed"
 
         )
+    ]
+
+
+let valueTests = 
+
+    testList "ValueTests" [
+        testCase "FromStringInt" (fun () -> 
+            
+            let expected = Value.Int 10
+            let actual = Value.fromString "10"
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+        testCase "FromStringFloat" (fun () -> 
+            
+            let expected = Value.Float 10.0
+            let actual = Value.fromString "10.0"
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+        testCase "FromStringText" (fun () -> 
+            
+            let expected = Value.Name "Test"
+            let actual = Value.fromString "Test"
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+        testCase "ToStringInt" (fun () -> 
+            
+            let expected = "10"
+            let actual = Value.getText (Value.Int 10)
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+        testCase "ToStringFloat" (fun () -> 
+            
+            let expected = "10"
+            let actual = Value.getText (Value.Float 10.0)
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+        testCase "ToStringText" (fun () -> 
+            
+            let expected = "Test"
+            let actual = Value.getText (Value.Name "Test")
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+        testCase "ToStringOntology" (fun () -> 
+            
+            let expected = "Test"
+            let actual = Value.getText (OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology)
+            Expect.equal actual expected "Value was not correctly composed"
+        )
+    ]
+
+let main =
+    testList "DataModelTests" [
+        componentCastingTests
+        valueTests
     ]
