@@ -7,7 +7,6 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module Value = 
 
@@ -57,7 +56,7 @@ module Factor =
     
     let genID (f:Factor) : string = 
         match f.ID with
-        | Some id -> id 
+        | Some id -> URI.toString id 
         | None -> match f.Name with
                   | Some n -> "#Factor_" + n.Replace(" ","_")
                   | None -> "#EmptyFactor"
@@ -65,11 +64,11 @@ module Factor =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Factor |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Factor"
-            tryInclude "factorName" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "FactorType")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "factorName" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorType")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -108,17 +107,17 @@ module FactorValue =
     
     let genID (fv:FactorValue) : string = 
         match fv.ID with
-        | Some id -> id
+        | Some id -> URI.toString id
         | None -> "#EmptyFactorValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> FactorValue |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "FactorValue"
-            tryInclude "category" (Factor.encoder options) (oa |> tryGetPropertyValue "Category")
-            tryInclude "value" (Value.encoder options) (oa |> tryGetPropertyValue "Value")
-            tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Unit")
+            GEncode.tryInclude "category" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
+            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
         ]
         |> GEncode.choose
         |> Encode.object

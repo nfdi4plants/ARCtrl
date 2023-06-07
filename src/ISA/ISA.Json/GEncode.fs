@@ -9,6 +9,7 @@ open Thoth.Json.Net
 open Fable.Core
 open Fable.Core.JsInterop
 
+[<RequireQualifiedAccess>]
 module GEncode = 
 
     [<Emit("$1[$0]")>]
@@ -34,7 +35,6 @@ module GEncode =
         )
         #endif
 
-    /// TODO: Do you really want to shadow the "string" core function? 
     let inline string (value : obj) = 
         match value with
         | :? string as s -> Encode.string s

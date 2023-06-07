@@ -7,7 +7,6 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module DataFile = 
 
@@ -38,7 +37,7 @@ module Data =
     
     let genID (d:Data) : string = 
         match d.ID with
-        | Some id -> id
+        | Some id -> URI.toString id
         | None -> match d.Name with
                   | Some n -> n
                   | None -> "#EmptyData"
@@ -46,11 +45,11 @@ module Data =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Data |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Data"
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "type" (DataFile.encoder options) (oa |> tryGetPropertyValue "DataType")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "type" (DataFile.encoder options) (oa |> GEncode.tryGetPropertyValue "DataType")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -96,7 +95,7 @@ module Source =
     
     let genID (s:Source) : string = 
         match s.ID with
-        | Some id -> id
+        | Some id -> URI.toString id
         | None -> match s.Name with
                   | Some n -> "#Source_" + n.Replace(" ","_")
                   | None -> "#EmptySource"
@@ -104,10 +103,10 @@ module Source =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Source |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Source"
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")        ]
+            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -157,12 +156,12 @@ module Sample =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Sample |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Sample"
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")
-            tryInclude "factorValues" (FactorValue.encoder options) (oa |> tryGetPropertyValue "FactorValues")
-            tryInclude "derivesFrom" (Source.encoder options) (oa |> tryGetPropertyValue "DerivesFrom")
+            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
+            GEncode.tryInclude "factorValues" (FactorValue.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorValues")
+            GEncode.tryInclude "derivesFrom" (Source.encoder options) (oa |> GEncode.tryGetPropertyValue "DerivesFrom")
         ]
         |> GEncode.choose
         |> Encode.object

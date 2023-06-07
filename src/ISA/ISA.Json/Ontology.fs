@@ -7,7 +7,6 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module AnnotationValue =
 
@@ -47,11 +46,11 @@ module OntologySourceReference =
         [
             if options.SetID then "@id", GEncode.string (osr :?> OntologySourceReference |> genID)
             if options.IncludeType then "@type", GEncode.string "OntologySourceReference"
-            tryInclude "description" GEncode.string (osr |> tryGetPropertyValue "Description")
-            tryInclude "file" GEncode.string (osr |> tryGetPropertyValue "File")
-            tryInclude "name" GEncode.string (osr |> tryGetPropertyValue "Name")
-            tryInclude "version" GEncode.string (osr |> tryGetPropertyValue "Version")
-            tryInclude "comments" (Comment.encoder options) (osr |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "description" GEncode.string (osr |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "file" GEncode.string (osr |> GEncode.tryGetPropertyValue "File")
+            GEncode.tryInclude "name" GEncode.string (osr |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "version" GEncode.string (osr |> GEncode.tryGetPropertyValue "Version")
+            GEncode.tryInclude "comments" (Comment.encoder options) (osr |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -90,7 +89,7 @@ module OntologyAnnotation =
     
     let genID (o:OntologyAnnotation) : string = 
         match o.ID with
-        | Some id -> id 
+        | Some id -> URI.toString id 
         | None -> match o.TermAccessionNumber with
                   | Some ta -> ta
                   | None -> match o.TermSourceREF with
@@ -100,12 +99,12 @@ module OntologyAnnotation =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> OntologyAnnotation |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "OntologyAnnotation"
-            tryInclude "annotationValue" (AnnotationValue.encoder options) (oa |> tryGetPropertyValue "Name")
-            tryInclude "termSource" GEncode.string (oa |> tryGetPropertyValue "TermSourceREF")
-            tryInclude "termAccession" GEncode.string (oa |> tryGetPropertyValue "TermAccessionNumber")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "annotationValue" (AnnotationValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "termSource" GEncode.string (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
+            GEncode.tryInclude "termAccession" GEncode.string (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

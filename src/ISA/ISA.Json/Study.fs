@@ -7,15 +7,14 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module StudyMaterials = 
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            tryInclude "sources" (Source.encoder options) (oa |> tryGetPropertyValue "Sources")
-            tryInclude "samples" (Sample.encoder options) (oa |> tryGetPropertyValue "Samples")
-            tryInclude "otherMaterials" (Material.encoder options) (oa |> tryGetPropertyValue "OtherMaterials")
+            GEncode.tryInclude "sources" (Source.encoder options) (oa |> GEncode.tryGetPropertyValue "Sources")
+            GEncode.tryInclude "samples" (Sample.encoder options) (oa |> GEncode.tryGetPropertyValue "Samples")
+            GEncode.tryInclude "otherMaterials" (Material.encoder options) (oa |> GEncode.tryGetPropertyValue "OtherMaterials")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -34,7 +33,7 @@ module Study =
     
     let genID (s:Study) : string = 
         match s.ID with
-        | Some id -> id
+        | Some id -> URI.toString id
         | None -> match s.FileName with
                   | Some n -> "#Study" + n.Replace(" ","_")
                   | None -> match s.Identifier with
@@ -46,25 +45,25 @@ module Study =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Study |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Study"
-            tryInclude "filename" GEncode.string (oa |> tryGetPropertyValue "FileName")
-            tryInclude "identifier" GEncode.string (oa |> tryGetPropertyValue "Identifier")
-            tryInclude "title" GEncode.string (oa |> tryGetPropertyValue "Title")
-            tryInclude "description" GEncode.string (oa |> tryGetPropertyValue "Description")
-            tryInclude "submissionDate" GEncode.string (oa |> tryGetPropertyValue "SubmissionDate")
-            tryInclude "publicReleaseDate" GEncode.string (oa |> tryGetPropertyValue "PublicReleaseDate")
-            tryInclude "publications" (Publication.encoder options) (oa |> tryGetPropertyValue "Publications")
-            tryInclude "people" (Person.encoder options) (oa |> tryGetPropertyValue "Contacts")
-            tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "StudyDesignDescriptors")
-            tryInclude "protocols" (Protocol.encoder options) (oa |> tryGetPropertyValue "Protocols")
-            tryInclude "materials" (StudyMaterials.encoder options) (oa |> tryGetPropertyValue "Materials")
-            tryInclude "processSequence" (Process.encoder options) (oa |> tryGetPropertyValue "ProcessSequence")
-            tryInclude "assays" (Assay.encoder options) (oa |> tryGetPropertyValue "Assays")            
-            tryInclude "factors" (Factor.encoder options) (oa |> tryGetPropertyValue "Factors")
-            tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> tryGetPropertyValue "CharacteristicCategories")            
-            tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "UnitCategories")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "filename" GEncode.string (oa |> GEncode.tryGetPropertyValue "FileName")
+            GEncode.tryInclude "identifier" GEncode.string (oa |> GEncode.tryGetPropertyValue "Identifier")
+            GEncode.tryInclude "title" GEncode.string (oa |> GEncode.tryGetPropertyValue "Title")
+            GEncode.tryInclude "description" GEncode.string (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "submissionDate" GEncode.string (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
+            GEncode.tryInclude "publicReleaseDate" GEncode.string (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
+            GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
+            GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
+            GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
+            GEncode.tryInclude "protocols" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "Protocols")
+            GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
+            GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
+            GEncode.tryInclude "assays" (Assay.encoder options) (oa |> GEncode.tryGetPropertyValue "Assays")            
+            GEncode.tryInclude "factors" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Factors")
+            GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")            
+            GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

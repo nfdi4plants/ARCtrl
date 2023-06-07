@@ -19,6 +19,7 @@ type OntologyAnnotation =
             Comments = comments
         }
 
+    /// This function creates the type exactly as given. If you want a more streamlined approach use `OntologyAnnotation.fromString`.
     static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
         OntologyAnnotation.make Id Name TermSourceREF TermAccessionNumber Comments
 

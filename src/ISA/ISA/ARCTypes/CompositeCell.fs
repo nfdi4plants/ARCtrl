@@ -1,49 +1,38 @@
 ﻿namespace ISA
 
-// TODO: The design principles say we should use Erase for js compilation. This would also 
-
-//[<Erase>]
-//[<AttachMembersAttribute>]
-// FABLE: Erased unions with multiple cases cannot have more than one field: Test.CompositeCell
-//type CompositeCell = 
-//    | Term of string
-//    | Freetext of {| t: string; f: float |}
-//    | WithUnit of {| t: string; b: bool |}
-
-//    member this.getString =
-//        match this with
-//        | Term s -> s
-//        | Freetext t -> t.t
-//        | WithUnit t -> t.t
-
-//let test_t = Term ("Test me")
-//let test_f = Freetext {|t = "Test me"; f = 12.|}
-
-//test_t.getString |> printfn "%A" // Does return "undefined"
-
-// if we erase we cannot use members
-
 type CompositeCell = 
+    /// ISA-TAB term columns
+    ///
+    /// https://isa-specs.readthedocs.io/en/latest/isatab.html#ontology-annotations
     | Term of OntologyAnnotation
+    /// Single columns like Input, Output, ProtocolREF, ..
     | FreeText of string
+    /// ISA-TAB unit columns
+    ///
+    /// https://isa-specs.readthedocs.io/en/latest/isatab.html#unit
     | Unit of string*OntologyAnnotation
 
     member this.isUnit = match this with | Unit _ -> true | _ -> false
     member this.isTerm = match this with | Term _ -> true | _ -> false
     member this.isFreetext = match this with | FreeText _ -> true | _ -> false
 
+    /// FreeText string will be converted to unit term name.
+    ///
+    /// Term will be converted to unit term.
     member this.toUnitCell() =
         match this with
         | Unit _ -> this
         | FreeText text -> CompositeCell.Unit ("", OntologyAnnotation.create(Name = AnnotationValue.Text text))
         | Term term -> CompositeCell.Unit ("", term)
-    /// Will drop value from unit
+    /// FreeText string will be converted to term name.
+    ///
+    /// Unit term will be converted to term and unit value is dropped.
     member this.toTermCell() =
         match this with
         | Term _ -> this
         | Unit (_,unit) -> CompositeCell.Term unit
         | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(Name = AnnotationValue.Text text))
-    /// Will always keep `OntologyAnnotation.NameText` from Term or WithUnit.
+    /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
     member this.toFreetextCell() =
         match this with
         | FreeText _ -> this

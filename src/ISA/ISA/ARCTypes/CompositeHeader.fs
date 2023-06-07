@@ -184,6 +184,16 @@ type CompositeHeader =
         match this with | ProtocolType -> true | anythingElse -> false
 
     /// <summary>
+    /// This function sets the associated term accession for featured columns. 
+    /// 
+    /// It contains the hardcoded term accessions.
+    /// </summary>
+    member this.GetFeaturedColumnAccession =
+        match this with
+        | ProtocolType -> "DPBO:1000161"
+        | anyelse -> failwith $"Tried matching {anyelse} in getFeaturedColumnAccession, but is not a featured column."
+
+    /// <summary>
     /// Is true if the Building Block type is parsed to a single column. 
     ///
     /// This can be any input, output column, as well as for example: `ProtocolREF` and `Performer` with FreeText body cells.
@@ -199,16 +209,3 @@ type CompositeHeader =
         match this with 
         | Input io | Output io -> true 
         | anythingElse -> false
-
-    /// <summary>
-    /// This function sets the associated term accession for featured columns. 
-    /// 
-    /// It contains the hardcoded term accessions.
-    /// </summary>
-    member this.GetFeaturedColumnAccession =
-        if this.IsFeaturedColumn then
-            match this with
-            | ProtocolType -> "DPBO:1000161"
-            | anyelse -> failwith $"Tried matching {anyelse} in getFeaturedColumnAccession, but is not a featured column."
-        else
-            failwith $"'{this}' is not listed as featured column type! No referenced accession available."

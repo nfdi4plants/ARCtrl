@@ -7,14 +7,13 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module Investigation =
     
     
     let genID (i:Investigation) : string = 
         match i.ID with
-        | Some id -> id
+        | Some id -> URI.toString id
         | None -> match i.FileName with
                   | Some n -> "#Study_" + n.Replace(" ","_")
                   | None -> match i.Identifier with
@@ -25,19 +24,19 @@ module Investigation =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Investigation |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Investigation"
-            tryInclude "filename" GEncode.string (oa |> tryGetPropertyValue "FileName")
-            tryInclude "identifier" GEncode.string (oa |> tryGetPropertyValue "Identifier")
-            tryInclude "title" GEncode.string (oa |> tryGetPropertyValue "Title")
-            tryInclude "description" GEncode.string (oa |> tryGetPropertyValue "Description")
-            tryInclude "submissionDate" GEncode.string (oa |> tryGetPropertyValue "SubmissionDate")
-            tryInclude "publicReleaseDate" GEncode.string (oa |> tryGetPropertyValue "PublicReleaseDate")
-            tryInclude "ontologySourceReferences" (OntologySourceReference.encoder options) (oa |> tryGetPropertyValue "OntologySourceReferences")
-            tryInclude "publications" (Publication.encoder options) (oa |> tryGetPropertyValue "Publications")
-            tryInclude "people" (Person.encoder options) (oa |> tryGetPropertyValue "Contacts")
-            tryInclude "studies" (Study.encoder options) (oa |> tryGetPropertyValue "Studies")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "filename" GEncode.string (oa |> GEncode.tryGetPropertyValue "FileName")
+            GEncode.tryInclude "identifier" GEncode.string (oa |> GEncode.tryGetPropertyValue "Identifier")
+            GEncode.tryInclude "title" GEncode.string (oa |> GEncode.tryGetPropertyValue "Title")
+            GEncode.tryInclude "description" GEncode.string (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "submissionDate" GEncode.string (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
+            GEncode.tryInclude "publicReleaseDate" GEncode.string (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
+            GEncode.tryInclude "ontologySourceReferences" (OntologySourceReference.encoder options) (oa |> GEncode.tryGetPropertyValue "OntologySourceReferences")
+            GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
+            GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
+            GEncode.tryInclude "studies" (Study.encoder options) (oa |> GEncode.tryGetPropertyValue "Studies")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
