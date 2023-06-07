@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Url.fs" />
+    <Compile Include="Regex.fs" />
     <Compile Include="OptionExtensions.fs" />
     <Compile Include="Printer.fs" />
     <Compile Include="JsonTypes\URI.fs" />
@@ -38,15 +40,6 @@
     <Compile Include="JsonTypes\StudyMaterials.fs" />
     <Compile Include="JsonTypes\Study.fs" />
     <Compile Include="JsonTypes\Investigation.fs" />
-    <Compile Include="ARCTypes\Regex.fs" />
-    <Compile Include="ARCTypes\BuildingBlockTypes.fs" />
-    <Compile Include="ARCTypes\CompositeHeader.fs" />
-    <Compile Include="ARCTypes\CompositeCell.fs" />
-    <Compile Include="ARCTypes\ARCTable.fs" />
-    <Compile Include="ARCTypes\ARCProcessSequence.fs" />
-    <Compile Include="ARCTypes\ARCAssay.fs" />
-    <Compile Include="ARCTypes\ARCStudy.fs" />
-    <Compile Include="ARCTypes\ARCInvestigation.fs" />
     <Compile Include="API\Fable.fs" />
     <Compile Include="API\Update.fs" />
     <Compile Include="API\Comment.fs" />
@@ -61,6 +54,13 @@
     <Compile Include="API\Assay.fs" />
     <Compile Include="API\Study.fs" />
     <Compile Include="API\Investigation.fs" />
+    <Compile Include="ARCTypes\CompositeHeader.fs" />
+    <Compile Include="ARCTypes\CompositeCell.fs" />
+    <Compile Include="ARCTypes\ARCTable.fs" />
+    <Compile Include="ARCTypes\ARCProcessSequence.fs" />
+    <Compile Include="ARCTypes\ARCAssay.fs" />
+    <Compile Include="ARCTypes\ARCStudy.fs" />
+    <Compile Include="ARCTypes\ARCInvestigation.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />

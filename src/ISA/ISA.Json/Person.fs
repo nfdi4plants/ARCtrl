@@ -7,11 +7,10 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module Person =   
     
-    let genID (p:Person) = 
+    let genID (p:Person) : string = 
         match p.ID with
         | Some id -> URI.toString id
         | None -> 
@@ -35,18 +34,18 @@ module Person =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Person |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Person"
-            tryInclude "firstName" GEncode.string (oa |> tryGetPropertyValue "FirstName")
-            tryInclude "lastName" GEncode.string (oa |> tryGetPropertyValue "LastName")
-            tryInclude "midInitials" GEncode.string (oa |> tryGetPropertyValue "MidInitials")
-            tryInclude "email" GEncode.string (oa |> tryGetPropertyValue "EMail")
-            tryInclude "phone" GEncode.string (oa |> tryGetPropertyValue "Phone")
-            tryInclude "fax" GEncode.string (oa |> tryGetPropertyValue "Fax")
-            tryInclude "address" GEncode.string (oa |> tryGetPropertyValue "Address")
-            tryInclude "affiliation" GEncode.string (oa |> tryGetPropertyValue "Affiliation")
-            tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Roles")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "firstName" GEncode.string (oa |> GEncode.tryGetPropertyValue "FirstName")
+            GEncode.tryInclude "lastName" GEncode.string (oa |> GEncode.tryGetPropertyValue "LastName")
+            GEncode.tryInclude "midInitials" GEncode.string (oa |> GEncode.tryGetPropertyValue "MidInitials")
+            GEncode.tryInclude "email" GEncode.string (oa |> GEncode.tryGetPropertyValue "EMail")
+            GEncode.tryInclude "phone" GEncode.string (oa |> GEncode.tryGetPropertyValue "Phone")
+            GEncode.tryInclude "fax" GEncode.string (oa |> GEncode.tryGetPropertyValue "Fax")
+            GEncode.tryInclude "address" GEncode.string (oa |> GEncode.tryGetPropertyValue "Address")
+            GEncode.tryInclude "affiliation" GEncode.string (oa |> GEncode.tryGetPropertyValue "Affiliation")
+            GEncode.tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Roles")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

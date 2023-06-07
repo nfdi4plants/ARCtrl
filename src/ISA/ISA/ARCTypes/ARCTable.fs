@@ -1,13 +1,8 @@
 ﻿namespace ISA
 
-
 type ArcTable = 
     {
         Name : string
-        InputHeader : IOType
-        Inputs : string []
-        OutputHeader : IOType
-        Outputs : string []
         ValueHeaders : CompositeHeader []
         Values : System.Collections.Generic.Dictionary<int*int,CompositeCell>  
     }

@@ -24,7 +24,7 @@ let main =
         )
         testCase "ComposeNameOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology |> Some 
+            let v = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
             let u = None
             let expected = "Test (OBO:123)"
 
@@ -36,7 +36,7 @@ let main =
         testCase "ComposeNameUnit" (fun () -> 
             
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
+            let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
             let expected = "10 degree Celsius (UO:123)"
 
             let actual = Component.composeName v u
@@ -64,7 +64,7 @@ let main =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology
+            let expectedV = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology
 
             let expectedU = None
 
@@ -77,7 +77,7 @@ let main =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation.fromString "Test This Stuff" "OBO" "OBO:123" |> Value.Ontology
+            let expectedV = OntologyAnnotation.fromString ("Test This Stuff", "OBO", "OBO:123") |> Value.Ontology
 
             let expectedU = None
 
@@ -94,7 +94,7 @@ let main =
 
             let expectedV = Value.Int 10
 
-            let expectedU = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
+            let expectedU = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
 
             Expect.equal actualV expectedV "Name was not correctly decomposed"
             Expect.equal actualU expectedU "Unit was not correctly decomposed"
@@ -106,7 +106,7 @@ let main =
 
             let expected = Component.make (Some "Text") v None None
 
-            let actual = Component.fromString "Text" "" "" ""
+            let actual = Component.fromString ("Text")
 
             Expect.equal actual expected "Component was not correctly composed"
         )
@@ -114,22 +114,22 @@ let main =
             
             let v = Value.Name "Text" |> Some
 
-            let header = OntologyAnnotation.fromString "TestCategory" "CO" "CO:567" |> Some 
+            let header = OntologyAnnotation.fromString ("TestCategory", "CO", "CO:567") |> Some 
 
             let expected = Component.make (Some "Text") v None header
 
-            let actual = Component.fromString "Text" "TestCategory" "CO" "CO:567"
+            let actual = Component.fromString ("Text", "TestCategory", "CO", "CO:567")
 
             Expect.equal actual expected "Component was not correctly composed"
 
         )
         testCase "FromStringOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology |> Some 
+            let v = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
 
             let expected = Component.make (Some "Test (OBO:123)") v None None
 
-            let actual = Component.fromString "Test (OBO:123)" "" "" ""
+            let actual = Component.fromString ("Test (OBO:123)")
 
             Expect.equal actual expected "Component was not correctly composed"
 
@@ -137,10 +137,10 @@ let main =
         testCase "FromStringUnit" (fun () -> 
           
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
+            let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
             let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
 
-            let actual = Component.fromString "10 degree Celsius (UO:123)" "" "" ""
+            let actual = Component.fromString ("10 degree Celsius (UO:123)")
 
             Expect.equal actual expected "Component was not correctly composed"
 
@@ -159,7 +159,7 @@ let main =
             
             let v = Value.Name "Text" |> Some
 
-            let header = OntologyAnnotation.fromString "TestCategory" "CO" "CO:567" |> Some 
+            let header = OntologyAnnotation.fromString ("TestCategory", "CO", "CO:567") |> Some 
 
             let expected = Component.make (Some "Text") v None header
 
@@ -170,7 +170,7 @@ let main =
         )
         testCase "FromOptionsOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString "Test" "OBO" "OBO:123" |> Value.Ontology |> Some 
+            let v = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
 
             let expected = Component.make (Some "Test (OBO:123)") v None None
 
@@ -182,7 +182,7 @@ let main =
         testCase "FromOptionsUnit" (fun () -> 
           
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString "degree Celsius" "UO" "UO:123" |> Some
+            let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
             let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
 
             let actual = Component.fromOptions v u None

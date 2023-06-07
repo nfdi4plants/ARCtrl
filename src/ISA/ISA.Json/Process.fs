@@ -7,7 +7,6 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module ProcessParameterValue =
     
@@ -21,9 +20,9 @@ module ProcessParameterValue =
         [
             if options.SetID then "@id", GEncode.string (oa :?> ProcessParameterValue |> genID)
             if options.IncludeType then "@type", GEncode.string "ProcessParameterValue"
-            tryInclude "category" (ProtocolParameter.encoder options) (oa |> tryGetPropertyValue "Category")
-            tryInclude "value" (Value.encoder options) (oa |> tryGetPropertyValue "Value")
-            tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Unit")
+            GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
+            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -146,7 +145,7 @@ module ProcessOutput =
 
 module Process =    
     
-    let genID (p:Process) = 
+    let genID (p:Process) : string = 
         match p.ID with
             | Some id -> URI.toString id
             | None -> match p.Name with
@@ -156,18 +155,18 @@ module Process =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Process |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Process"
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "executesProtocol" (Protocol.encoder options) (oa |> tryGetPropertyValue "ExecutesProtocol")
-            tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> tryGetPropertyValue "ParameterValues")
-            tryInclude "performer" GEncode.string (oa |> tryGetPropertyValue "Performer")
-            tryInclude "date" GEncode.string (oa |> tryGetPropertyValue "Date")
-            tryInclude "previousProcess" (encoder options) (oa |> tryGetPropertyValue "PreviousProcess")
-            tryInclude "nextProcess" (encoder options) (oa |> tryGetPropertyValue "NextProcess")
-            tryInclude "inputs" (ProcessInput.encoder options) (oa |> tryGetPropertyValue "Inputs")
-            tryInclude "outputs" (ProcessOutput.encoder options) (oa |> tryGetPropertyValue "Outputs")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "executesProtocol" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
+            GEncode.tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterValues")
+            GEncode.tryInclude "performer" GEncode.string (oa |> GEncode.tryGetPropertyValue "Performer")
+            GEncode.tryInclude "date" GEncode.string (oa |> GEncode.tryGetPropertyValue "Date")
+            GEncode.tryInclude "previousProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "PreviousProcess")
+            GEncode.tryInclude "nextProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "NextProcess")
+            GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
+            GEncode.tryInclude "outputs" (ProcessOutput.encoder options) (oa |> GEncode.tryGetPropertyValue "Outputs")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

@@ -6,11 +6,10 @@ open Thoth.Json
 open Thoth.Json.Net
 #endif
 open ISA
-open System.IO
-open GEncode
+
 module ProtocolParameter =
     
-    let genID (pp:ProtocolParameter) = 
+    let genID (pp:ProtocolParameter) : string = 
         match pp.ID with
         | Some id -> URI.toString id
         | None -> match pp.ParameterName with
@@ -20,9 +19,9 @@ module ProtocolParameter =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> ProtocolParameter |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "ProtocolParameter"
-            tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "ParameterName")
+            GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterName")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -65,8 +64,8 @@ module Component =
         [
             if options.SetID then "@id", GEncode.string (oa :?> Component |> genID)
             if options.IncludeType then "@type", GEncode.string "Component"
-            tryInclude "componentName" GEncode.string (oa |> tryGetPropertyValue "ComponentName")
-            tryInclude "componentType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "ComponentType")
+            GEncode.tryInclude "componentName" GEncode.string (oa |> GEncode.tryGetPropertyValue "ComponentName")
+            GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ComponentType")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -111,11 +110,11 @@ module Component =
 
 module Protocol =   
     
-    let genID (p:Protocol) = 
+    let genID (p:Protocol) : string = 
         match p.ID with
-        | Some id -> URI.toString id
+        | Some id -> URI.toString id 
         | None -> match p.Uri with
-                  | Some u -> URI.toString u
+                  | Some u -> u
                   | None -> match p.Name with
                             | Some n -> "#Protocol_" + n.Replace(" ","_")
                             | None -> "#EmptyProtocol" 
@@ -123,16 +122,16 @@ module Protocol =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Protocol |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Protocol"
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "ProtocolType")
-            tryInclude "description" GEncode.string (oa |> tryGetPropertyValue "Description")
-            tryInclude "uri" GEncode.string (oa |> tryGetPropertyValue "Uri")
-            tryInclude "version" GEncode.string (oa |> tryGetPropertyValue "Version")
-            tryInclude "parameters" (ProtocolParameter.encoder options) (oa |> tryGetPropertyValue "Parameters")
-            tryInclude "components" (Component.encoder options) (oa |> tryGetPropertyValue "Components")
-            tryInclude "comments" (Comment.encoder options) (oa |> tryGetPropertyValue "Comments")
+            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ProtocolType")
+            GEncode.tryInclude "description" GEncode.string (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "uri" GEncode.string (oa |> GEncode.tryGetPropertyValue "Uri")
+            GEncode.tryInclude "version" GEncode.string (oa |> GEncode.tryGetPropertyValue "Version")
+            GEncode.tryInclude "parameters" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Parameters")
+            GEncode.tryInclude "components" (Component.encoder options) (oa |> GEncode.tryGetPropertyValue "Components")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object

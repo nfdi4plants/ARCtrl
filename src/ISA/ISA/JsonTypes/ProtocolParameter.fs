@@ -21,19 +21,13 @@ type ProtocolParameter =
         ProtocolParameter.create()
 
     /// Create a ISAJson Protocol Parameter from ISATab string entries
-    static member fromString (term:string) (source:string) (accession:string) =
-        let oa = OntologyAnnotation.fromString term source accession
+    static member fromString (term:string, source:string, accession:string, ?comments : Comment list) =
+        let oa = OntologyAnnotation.fromString (term, source, accession, ?comments = comments)
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
-
-    /// Create a ISAJson Protocol parameter from ISATab string entries
-    static member fromStringWithComments (term:string) (source:string) (accession:string) (comments : Comment list) =
-        let oa = OntologyAnnotation.fromStringWithComments term source accession comments
-        ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
-
 
     /// Get ISATab string entries from an ISAJson ProtocolParameter object (name,source,accession)
     static member toString (pp : ProtocolParameter) =
-        pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")        
+        pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}       
 
     /// Returns the name of the parameter as string
     member this.NameText =

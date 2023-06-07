@@ -142,7 +142,7 @@ module AnnotationColumn =
             Some h
         | _ -> None
 
-    /// Parses to ColumnHeader, if the given header describes a Characteristics Value
+    /// Parses to ColumnHeader, if the given header describes a Characteristic Value
     let tryParseProtocolREFHeader (header:string) =
         match ColumnHeader.fromStringHeader header with
         | h when h.Kind = "Protocol REF" ->

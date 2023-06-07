@@ -1,5 +1,6 @@
 ﻿namespace ISA
 
+[<RequireQualifiedAccess>]
 type DataFile =
 
     | RawDataFile // "Raw Data File"

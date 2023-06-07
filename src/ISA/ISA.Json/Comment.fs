@@ -8,24 +8,25 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
 
 module Comment = 
     
-    let genID (c:Comment) = 
+    let genID (c:Comment) : string = 
         match c.ID with
         | Some id -> URI.toString id
         | None -> match c.Name with
-                  | Some n -> "#Comment_" + n.Replace(" ","_") + if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
+                  | Some n -> 
+                    let v = if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
+                    "#Comment_" + n.Replace(" ","_") + v
                   | None -> "#EmptyComment"
 
     let encoder (options : ConverterOptions) (comment : obj) = 
         [
             if options.SetID then "@id", GEncode.string (comment :?> Comment |> genID)
-                else tryInclude "@id" GEncode.string (comment |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (comment |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Comment"
-            tryInclude "name" GEncode.string (comment |> tryGetPropertyValue "Name")
-            tryInclude "value" GEncode.string (comment |> tryGetPropertyValue "Value")
+            GEncode.tryInclude "name" GEncode.string (comment |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "value" GEncode.string (comment |> GEncode.tryGetPropertyValue "Value")
         ]
         |> GEncode.choose
         |> Encode.object

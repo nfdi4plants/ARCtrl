@@ -7,7 +7,7 @@ open Thoth.Json.Net
 #endif
 open ISA
 open System.IO
-open GEncode
+
 
 module MaterialType = 
 
@@ -30,7 +30,7 @@ module MaterialType =
 
 module MaterialAttribute =
     
-    let genID (m:MaterialAttribute) = 
+    let genID (m:MaterialAttribute) : string = 
         match m.ID with
             | Some id -> URI.toString id
             | None -> "#EmptyMaterialAttribute"
@@ -38,9 +38,9 @@ module MaterialAttribute =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> MaterialAttribute |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "MaterialAttribute"
-            tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "CharacteristicType")
+            GEncode.tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicType")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -74,7 +74,7 @@ module MaterialAttribute =
 
 module MaterialAttributeValue =
     
-    let genID (m:MaterialAttributeValue) = 
+    let genID (m:MaterialAttributeValue) : string = 
         match m.ID with
         | Some id -> URI.toString id
         | None -> "#EmptyMaterialAttributeValue"
@@ -82,11 +82,11 @@ module MaterialAttributeValue =
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> MaterialAttributeValue |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "MaterialAttributeValue"
-            tryInclude "category" (MaterialAttribute.encoder options) (oa |> tryGetPropertyValue "Category")
-            tryInclude "value" (Value.encoder options) (oa |> tryGetPropertyValue "Value")
-            tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> tryGetPropertyValue "Unit")
+            GEncode.tryInclude "category" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
+            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -123,9 +123,9 @@ module MaterialAttributeValue =
 
 module Material = 
     
-    let genID (m:Material) = 
+    let genID (m:Material) : string = 
         match m.ID with
-            | Some id -> URI.toString id
+            | Some id -> id
             | None -> match m.Name with
                         | Some n -> "#Material_" + n.Replace(" ","_")
                         | None -> "#EmptyMaterial"
@@ -133,12 +133,12 @@ module Material =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.string (oa :?> Material |> genID)
-                else tryInclude "@id" GEncode.string (oa |> tryGetPropertyValue "ID")
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Material"
-            tryInclude "name" GEncode.string (oa |> tryGetPropertyValue "Name")
-            tryInclude "type" (MaterialType.encoder options) (oa |> tryGetPropertyValue "MaterialType")
-            tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> tryGetPropertyValue "Characteristics")
-            tryInclude "derivesFrom" (encoder options) (oa |> tryGetPropertyValue "DerivesFrom")
+            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "type" (MaterialType.encoder options) (oa |> GEncode.tryGetPropertyValue "MaterialType")
+            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
+            GEncode.tryInclude "derivesFrom" (encoder options) (oa |> GEncode.tryGetPropertyValue "DerivesFrom")
         ]
         |> GEncode.choose
         |> Encode.object

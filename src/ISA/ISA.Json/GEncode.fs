@@ -9,9 +9,9 @@ open Thoth.Json.Net
 open Fable.Core
 open Fable.Core.JsInterop
 
+[<RequireQualifiedAccess>]
 module GEncode = 
 
-    
     [<Emit("$1[$0]")>]
     let getFieldFable (name : string) (object : 'T) = jsNative
 

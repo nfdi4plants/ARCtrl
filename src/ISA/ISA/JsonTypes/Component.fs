@@ -1,11 +1,14 @@
 ﻿namespace ISA
 
-
 type Component = 
     {
+        // TODO: Maybe remove as field and add as member?
         ComponentName : string option
+        /// This can be the main column value of the component column. (e.g. "SCIEX instrument model" as `OntologyAnnotation`; 14;..)
         ComponentValue : Value option
+        /// This can be the unit describing a non `OntologyAnnotation` value in `ComponentValue`. (e.g. "degree celcius")
         ComponentUnit : OntologyAnnotation option
+        /// This can be the component column header (e.g. "instrument model")
         ComponentType : OntologyAnnotation option
     }
 
@@ -23,16 +26,26 @@ type Component =
     static member empty =
         Component.create()
     
+    /// This function creates a string containing full isa term triplet information about the component
+    ///
+    /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
+    /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
+    /// Without this string composition we loose the ontology information for the header value.
     static member composeName (value : Value Option) (unit : OntologyAnnotation option) = 
         match value,unit with
         | Some (Value.Ontology oa), _ ->
-            $"{oa.NameText} ({oa.ShortAnnotationString})"
+            $"{oa.NameText} ({oa.TermAccessionShort})"
         | Some v, None ->
             $"{v.AsString}"
         | Some v, Some u ->
-            $"{v.AsString} {u.NameText} ({u.ShortAnnotationString})"
+            $"{v.AsString} {u.NameText} ({u.TermAccessionShort})"
         | None, _ -> ""
 
+    /// This function parses the given Component header string format into the ISA-JSON Component type
+    ///
+    /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
+    /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
+    /// Without this string composition we loose the ontology information for the header value.
     static member decomposeName (name : string) = 
         let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
         let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
@@ -41,39 +54,35 @@ type Component =
         let unitr = System.Text.RegularExpressions.Regex.Match(name,unitPattern)
 
         if unitr.Success then
-            let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
+            let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAccession 
             let v =  (unitr.Groups.Item "value").Value      |> Value.fromString
             let u =  (unitr.Groups.Item "unit").Value
             v, Some {oa with Name = (Some (AnnotationValue.Text u))}
         elif r.Success then
-            let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromAnnotationId 
+            let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAccession 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
             Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.AsString))}, None
         else 
             Value.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (name: string) (term:string) (source:string) (accession:string) = 
-        let cType = OntologyAnnotation.fromString term source accession |> Option.fromValueWithDefault OntologyAnnotation.empty
-        let v,u = Component.decomposeName name
-        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+    static member fromString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : Comment list) = 
+        let cType = OntologyAnnotation.fromString (?term = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
+        match name with
+        | Some n -> 
+            let v,u = Component.decomposeName n
+            Component.make (name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+        | None ->
+            Component.make None None None cType
         
-    /// Create a ISAJson Component from ISATab string entries
-    static member fromStringWithComments (name: string) (term:string) (source:string) (accession:string) (comments : Comment list)  = 
-        let cType = OntologyAnnotation.fromStringWithComments term source accession comments |> Option.fromValueWithDefault OntologyAnnotation.empty
-        let v,u = Component.decomposeName name
-        Component.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (Value.Name "") v) u cType
-        
-
     static member fromOptions (value: Value option) (unit: OntologyAnnotation Option) (header:OntologyAnnotation option) = 
         let name = Component.composeName value unit |> Option.fromValueWithDefault ""
         Component.make name value unit header
 
-
     /// Get ISATab string entries from an ISAJson Component object
     static member toString (c : Component) =
-        let (n,t,a) = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue ("","","")
-        c.ComponentName |> Option.defaultValue "",n,t,a
+        let oa = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
+        c.ComponentName |> Option.defaultValue "", oa
 
     member this.NameText =
         this.ComponentType
