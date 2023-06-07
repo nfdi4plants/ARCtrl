@@ -82,17 +82,178 @@ let tests_compositeHeader =
             )
         ]
         testList "OfHeaderString" [
-            testCase "Characteristics Value" (fun () ->
-                let headerString = "Characteristics Value [species]"
-                match headerString.Trim() with
-                // Is term column
-                | Regex.Aux.Regex Regex.Pattern.TermColumnPattern r ->
-                    Expect.isTrue false "This should happen"
-                | _ -> Expect.isTrue true ""
-                let actual = CompositeHeader.OfHeaderString headerString
-                let expected = Characteristics <| OntologyAnnotation.fromString("species")
-                Expect.equal actual expected ""
-            )
+            testList "TermColumns" [
+                testCase "Characteristic" (fun () ->
+                    let headerString = "Characteristic [species]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Characteristics <| OntologyAnnotation.fromString("species")
+                    Expect.equal actual expected ""
+                )
+                testCase "Characteristics" (fun () ->
+                    let headerString = "Characteristics [species]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Characteristics <| OntologyAnnotation.fromString("species")
+                    Expect.equal actual expected ""
+                )
+                testCase "Characteristics Value" (fun () ->
+                    let headerString = "Characteristics Value [species]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Characteristics <| OntologyAnnotation.fromString("species")
+                    Expect.equal actual expected ""
+                )
+                testCase "Parameter" (fun () ->
+                    let headerString = "Parameter [centrifugation time]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Parameter <| OntologyAnnotation.fromString("centrifugation time")
+                    Expect.equal actual expected ""
+                )
+                testCase "Parameter Value" (fun () ->
+                    let headerString = "Parameter Value [centrifugation time]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Parameter <| OntologyAnnotation.fromString("centrifugation time")
+                    Expect.equal actual expected ""
+                )
+                testCase "Factor" (fun () ->
+                    let headerString = "Factor [temperature]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Factor <| OntologyAnnotation.fromString("temperature")
+                    Expect.equal actual expected ""
+                )
+                testCase "Factor Value" (fun () ->
+                    let headerString = "Factor Value [temperature]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Factor <| OntologyAnnotation.fromString("temperature")
+                    Expect.equal actual expected ""
+                )
+                testCase "Component" (fun () ->
+                    let headerString = "Component [temperature]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Component <| OntologyAnnotation.fromString("temperature")
+                    Expect.equal actual expected ""
+                )
+            ]
+            testList "IoColumns" [
+                testCase "Input [Source]" (fun () ->
+                    let headerString = "Input [Source]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Input Source
+                    Expect.equal actual expected ""
+                )
+                testCase "Input [Source Name]" (fun () ->
+                    let headerString = "Input [Source Name]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Input Source
+                    Expect.equal actual expected ""
+                )
+                testCase "Output [Source Name]" (fun () ->
+                    let headerString = "Output [Source Name]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Output Source
+                    Expect.equal actual expected ""
+                )
+                testCase "Input loop" (fun () ->
+                    let testForLoop (io:IOType) =      
+                        let headerString = io.asInput
+                        let actual = CompositeHeader.OfHeaderString headerString
+                        let expected = Input io
+                        Expect.equal actual expected $"""Faulty "to string -> back to IOType" loop for '{io}'"""
+                    IOType.All
+                    |> Array.iter testForLoop
+                )
+                testCase "Output loop" (fun () ->
+                    let testForLoop (io:IOType) =      
+                        let headerString = io.asOutput
+                        let actual = CompositeHeader.OfHeaderString headerString
+                        let expected = Output io
+                        Expect.equal actual expected $"""Faulty "to string -> back to IOType" loop for '{io}'"""
+                    IOType.All
+                    |> Array.iter testForLoop
+                )
+                testCase "Input FreeText" (fun () ->
+                    let headerString = "Input [Anything]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Input (IOType.FreeText "Anything")
+                    Expect.equal actual expected ""
+                )
+                testCase "Input loop FreeText" (fun () ->
+                    let headerString = (IOType.FreeText "Anything").asInput
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Input (IOType.FreeText "Anything")
+                    Expect.equal actual expected ""
+                )
+                testCase "Output FreeText" (fun () ->
+                    let headerString = "Output [Anything]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Output (IOType.FreeText "Anything")
+                    Expect.equal actual expected ""
+                )
+                testCase "Output loop FreeText" (fun () ->
+                    let headerString = (IOType.FreeText "Anything").asOutput
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Output (IOType.FreeText "Anything")
+                    Expect.equal actual expected ""
+                )
+            ]
+            testList "FeaturedColumns" [
+                testCase "ProtocolType" (fun () ->
+                    let headerString = "Protocol Type"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = ProtocolType
+                    Expect.equal actual expected ""
+                )
+            ]
+            testList "SingleColumns" [
+                testCase "ProtocolREF" (fun () ->
+                    let headerString = "Protocol REF"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = ProtocolREF
+                    Expect.equal actual expected ""
+                )
+                testCase "ProtocolDescription" (fun () ->
+                    let headerString = "Protocol Description"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = ProtocolDescription
+                    Expect.equal actual expected ""
+                )
+                testCase "ProtocolUri" (fun () ->
+                    let headerString = "Protocol Uri"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = ProtocolUri
+                    Expect.equal actual expected ""
+                )
+                testCase "ProtocolVersion" (fun () ->
+                    let headerString = "Protocol Version"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = ProtocolVersion
+                    Expect.equal actual expected ""
+                )
+                testCase "Performer" (fun () ->
+                    let headerString = "Performer"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Performer
+                    Expect.equal actual expected ""
+                )
+                testCase "Date" (fun () ->
+                    let headerString = "Date"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = Date
+                    Expect.equal actual expected ""
+                )
+            ]
+            testList "FreeText" [
+                testCase "Anyone important header" (fun () ->
+                    let headerString = "Anyone important header"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = FreeText "Anyone important header"
+                    Expect.equal actual expected ""
+                )
+                testCase "Anyone important header-loop" (fun () ->
+                    let headerString = (FreeText "Anyone important header").ToString()
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = FreeText "Anyone important header"
+                    Expect.equal actual expected ""
+                )
+            ]
         ]
     ]
 
@@ -101,4 +262,3 @@ let main =
         tests_iotype
         tests_compositeHeader
     ]
-

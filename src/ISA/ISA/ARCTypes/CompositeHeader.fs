@@ -121,6 +121,14 @@ type CompositeHeader =
     /// </summary>
     static member OfHeaderString (str: string) =
         match str.Trim() with
+        // Input/Output have similiar naming as Term, but are more specific. 
+        // So they have to be called first.
+        | Regex.Aux.Regex Regex.Pattern.InputPattern r ->
+            let iotype = r.Groups.["iotype"].Value
+            Input <| IOType.ofString (iotype)
+        | Regex.Aux.Regex Regex.Pattern.OutputPattern r ->
+            let iotype = r.Groups.["iotype"].Value
+            Output <| IOType.ofString (iotype)
         // Is term column
         | Regex.Aux.Regex Regex.Pattern.TermColumnPattern r ->
             let columnType = r.Groups.["termcolumntype"].Value
@@ -136,20 +144,13 @@ type CompositeHeader =
             | "Component"                   -> Component (OntologyAnnotation.fromString termName)
             // TODO: Is this what we intend?
             | _                             -> FreeText str
-        | Regex.Aux.Regex Regex.Pattern.InputPattern r ->
-            let iotype = r.Groups.["iotype"].Value
-            Input <| IOType.ofString (iotype)
-        | Regex.Aux.Regex Regex.Pattern.OutputPattern r ->
-            let iotype = r.Groups.["iotype"].Value
-            Output <| IOType.ofString (iotype)
         | "Date"                    -> Date
+        | "Performer"               -> Performer
         | "Protocol Description"    -> ProtocolDescription
         | "Protocol Uri"            -> ProtocolUri
         | "Protocol Version"        -> ProtocolVersion
         | "Protocol Type"           -> ProtocolType
         | "Protocol REF"            -> ProtocolREF
-        | input when input.ToLower().StartsWith "input"     -> failwith "not implemented yet"
-        | output when output.ToLower().StartsWith "output"  -> failwith "not implemented yet"
         | anyelse                   -> FreeText anyelse
 
 
