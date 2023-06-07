@@ -1,5 +1,8 @@
 ﻿namespace ISA
 
+open Fable.Core
+
+[<AttachMembers>]
 type CompositeCell = 
     /// ISA-TAB term columns as ontology annotation.
     ///
@@ -51,6 +54,11 @@ type CompositeCell =
         match this with
         | FreeText c -> c
         | _ -> failwith "Not a Swate TermCell."
+    // TODO: i would really love to have an overload here accepting string input
     static member createTerm (oa:OntologyAnnotation) = Term oa
+    static member createTermFromString (?name: string, ?tsr: string, ?tan: string) =
+        Term <| OntologyAnnotation.fromString(?term = name, ?tsr = tsr, ?tan = tan)
     static member createUnitized (value: string, ?oa:OntologyAnnotation) = Unitized (value, Option.defaultValue (OntologyAnnotation.empty) oa)
+    static member createUnitizedFromString (value: string, ?name: string, ?tsr: string, ?tan: string) = 
+        Unitized <| (value, OntologyAnnotation.fromString(?term = name, ?tsr = tsr, ?tan = tan))
     static member createFreeText (value: string) = FreeText value

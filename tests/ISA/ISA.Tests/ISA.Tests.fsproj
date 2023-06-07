@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
     <Compile Include="Utils.fs" />
     <Compile Include="DataModel.Tests.fs" />

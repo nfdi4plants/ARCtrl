@@ -13,8 +13,8 @@ let all = testSequenced <| testList "All" [
     Update.Tests.main
     DataModel.Tests.main
     CompositeHeader.Tests.main
+    CompositeCell.Tests.main
 ]
-
 
 let [<EntryPoint>] main argv = 
     #if FABLE_COMPILER
