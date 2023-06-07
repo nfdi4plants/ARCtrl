@@ -1,4 +1,4 @@
-﻿namespace ISA
+﻿namespace ISA.Aux
 
 [<RequireQualifiedAccess>]
 module Option =

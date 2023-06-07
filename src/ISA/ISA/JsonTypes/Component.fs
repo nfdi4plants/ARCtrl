@@ -1,5 +1,7 @@
 ﻿namespace ISA
 
+open ISA.Aux
+
 type Component = 
     {
         // TODO: Maybe remove as field and add as member?

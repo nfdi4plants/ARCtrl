@@ -27,6 +27,11 @@ type ProcessParameterValue =
         |> Option.map (fun oa -> oa.NameText)
         |> Option.defaultValue ""
 
+    /// Returns the name of the category as string
+    member this.TryNameText =
+        this.Category
+        |> Option.bind (fun oa -> oa.TryNameText)
+
     member this.ValueText =
     
         this.Value
@@ -76,3 +81,31 @@ type ProcessParameterValue =
             | Some category, None -> category + ":" + "No Value"
             | None, Some value -> value
             | None, None -> ""
+
+    /// Returns the name of the paramater value as string if it exists
+    static member tryGetNameText (pv : ProcessParameterValue) =
+        pv.TryNameText
+
+    /// Returns the name of the paramater value as string
+    static member getNameText (pv : ProcessParameterValue) =
+        pv.NameText
+
+    /// Returns true if the given name matches the name of the parameter value
+    static member nameEqualsString (name : string) (pv : ProcessParameterValue) =
+        pv.NameText = name
+
+    ///// Returns the value of the parameter value as string if it exists (with unit)
+    //static member tryGetValueAsString (pv : ProcessParameterValue) =
+    //    static member unit = pv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)
+    //    pv.Value
+    //    |> Option.map (fun v ->
+    //        static member s = v |> Value.toString
+    //        match unit with
+    //        | Some u -> s + " " + u
+    //        | None -> s
+    //    )
+
+    ///// Returns the value of the parameter value as string (with unit)
+    //static member getValueAsString (pv : ProcessParameterValue) =
+    //    tryGetValueAsString pv
+    //    |> Option.defaultValue ""

@@ -17,3 +17,9 @@ type AssayMaterials =
 
     static member empty =
         AssayMaterials.create()
+
+    static member getMaterials (am : AssayMaterials) =
+        am.OtherMaterials |> Option.defaultValue []
+        
+    static member getSamples (am : AssayMaterials) =
+        am.Samples |> Option.defaultValue []

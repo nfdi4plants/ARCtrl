@@ -36,3 +36,16 @@ type Sample =
             let chars = this.Characteristics |> Option.defaultValue [] |> List.length
             let facts = this.FactorValues |> Option.defaultValue [] |> List.length
             sprintf "%s [%i characteristics; %i factors]" this.NameAsString chars facts
+
+    static member getCharacteristicUnits (s:Sample) =
+        s.Characteristics
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
+
+    static member getFactorUnits (s:Sample) =
+        s.FactorValues
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
+
+    static member getUnits (s:Sample) =
+        List.append (Sample.getCharacteristicUnits s) (Sample.getFactorUnits s)

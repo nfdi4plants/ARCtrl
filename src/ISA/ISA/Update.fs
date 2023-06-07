@@ -1,6 +1,4 @@
-﻿namespace ISA.API
-
-open ISA
+﻿namespace ISA.Aux
 
 module Dict = 
 

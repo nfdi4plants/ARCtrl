@@ -75,3 +75,27 @@ type FactorValue =
             | Some category, None -> category + ":" + "No Value"
             | None, Some value -> value
             | None, None -> ""
+
+    /// Returns the name of the factor value as string
+    static member getNameAsString (fv : FactorValue) =
+        fv.NameText
+
+    /// Returns true if the given name matches the name of the factor value
+    static member nameEqualsString (name : string) (fv : FactorValue) =
+        fv.NameText = name
+
+    ///// Returns the value of the factor value as string if it exists (with unit)
+    //static member tryGetValueAsString (fv : FactorValue) =
+    //    let unit = fv.Unit |> Option.map (OntologyAnnotation.getNameText)
+    //    fv.Value
+    //    |> Option.map (fun v ->
+    //        let s = v |> Value.toString
+    //        match unit with
+    //        | Some u -> s + " " + u
+    //        | None -> s
+    //    )
+
+    ///// Returns the value of the factor value as string (with unit)
+    //static member getValueAsString (fv : FactorValue) =
+    //    tryGetValueAsString fv
+    //    |> Option.defaultValue ""

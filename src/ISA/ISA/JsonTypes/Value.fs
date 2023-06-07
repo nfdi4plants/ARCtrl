@@ -100,3 +100,6 @@ type Value =
             | Int i         -> sprintf "%i" i
             | Float f       -> sprintf "%f" f        
             | Name n        -> n
+
+    static member getText (v: Value) =
+        v.AsName()

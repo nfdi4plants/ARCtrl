@@ -1,6 +1,6 @@
 ﻿namespace ISA
 
-open ISA.API
+open ISA
 
 module ValueIndex = 
 

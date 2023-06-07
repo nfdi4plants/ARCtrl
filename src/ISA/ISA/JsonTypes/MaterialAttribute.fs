@@ -1,5 +1,8 @@
 ﻿namespace ISA
 
+open ISA.Aux
+open Update
+
 type MaterialAttribute = 
     {
         ID : URI option
@@ -34,6 +37,11 @@ type MaterialAttribute =
         |> Option.map (fun oa -> oa.NameText)
         |> Option.defaultValue ""
 
+    /// Returns the name of the characteristic as string
+    member this.TryNameText =
+        this.CharacteristicType
+        |> Option.bind (fun oa -> oa.TryNameText)
+
     member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
         {this with CharacteristicType = Option.map f this.CharacteristicType}
 
@@ -45,3 +53,15 @@ type MaterialAttribute =
             this.ToString()
         member this.PrintCompact() =
             "OA " + this.NameText
+
+    /// Returns the name of the characteristic as string if it exists
+    static member tryGetNameText (ma : MaterialAttribute) =
+        ma.NameText
+
+    /// Returns the name of the characteristic as string
+    static member getNameText (ma : MaterialAttribute) =
+        ma.TryNameText
+
+    /// Returns true if the given name matches the name of the characteristic
+    static member nameEqualsString (name : string) (ma : MaterialAttribute) =
+        ma.NameText = name
