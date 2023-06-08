@@ -1,5 +1,7 @@
 ﻿namespace ISA
 
+open ISA.Aux
+open Update
 
 type ProtocolParameter = 
     {
@@ -35,6 +37,11 @@ type ProtocolParameter =
         |> Option.map (fun oa -> oa.NameText)
         |> Option.defaultValue ""
 
+    /// Returns the name of the parameter as string
+    member this.TryNameText =
+        this.ParameterName
+        |> Option.bind (fun oa -> oa.TryNameText)
+
     interface IISAPrintable with
         member this.Print() =
             this.ToString()
@@ -46,3 +53,16 @@ type ProtocolParameter =
 
     member this.SetCategory(c : OntologyAnnotation) =
         {this with ParameterName = Some c}
+
+     /// Returns the name of the paramater as string if it exists
+    static member tryGetNameText (pp : ProtocolParameter) =
+        pp.TryNameText
+
+    /// Returns the name of the paramater as string
+    static member getNameText (pp : ProtocolParameter) =
+        ProtocolParameter.tryGetNameText pp
+        |> Option.defaultValue ""
+
+    /// Returns true if the given name matches the name of the parameter
+    static member nameEqualsString (name : string) (pp : ProtocolParameter) =
+        pp.NameText = name

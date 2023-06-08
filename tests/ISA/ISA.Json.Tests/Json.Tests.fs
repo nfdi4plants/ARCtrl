@@ -222,9 +222,9 @@ let testProcessInput =
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
                 
-                Expect.isTrue (API.ProcessInput.isSource result) "Result is not a source"
+                Expect.isTrue (ProcessInput.isSource result) "Result is not a source"
 
-                Expect.equal (API.ProcessInput.trySource result).Value expected "Source did not match"
+                Expect.equal (ProcessInput.trySource result).Value expected "Source did not match"
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
@@ -250,9 +250,9 @@ let testProcessInput =
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
 
-                Expect.isTrue (API.ProcessInput.isMaterial result) "Result is not a material"
+                Expect.isTrue (ProcessInput.isMaterial result) "Result is not a material"
 
-                Expect.equal (API.ProcessInput.tryMaterial result).Value expected "Material did not match"
+                Expect.equal (ProcessInput.tryMaterial result).Value expected "Material did not match"
 
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
@@ -277,8 +277,8 @@ let testProcessInput =
                 let result = ProcessInput.fromString TestObjects.ProcessInput.data
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
-                Expect.isTrue (API.ProcessInput.isData result) "Result is not a data"
-                Expect.equal (API.ProcessInput.tryData result).Value expected "Data did not match"
+                Expect.isTrue (ProcessInput.isData result) "Result is not a data"
+                Expect.equal (ProcessInput.tryData result).Value expected "Data did not match"
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
@@ -306,9 +306,9 @@ let testProcessInput =
                 let expected = 
                     Sample.create("#sample/sample-P-0.1-aliquot7","sample-P-0.1-aliquot7", DerivesFrom = expectedDerivesFrom)
 
-                Expect.isTrue (API.ProcessInput.isSample result) "Result is not a sample"
+                Expect.isTrue (ProcessInput.isSample result) "Result is not a sample"
 
-                Expect.equal (API.ProcessInput.trySample result).Value expected "Sample did not match"
+                Expect.equal (ProcessInput.trySample result).Value expected "Sample did not match"
             )
             testCase "WriterOutputMatchesInputSimple" (fun () -> 
             
@@ -339,9 +339,9 @@ let testProcessInputLD =
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
                 
-                Expect.isTrue (API.ProcessInput.isSource result) "Result is not a source"
+                Expect.isTrue (ProcessInput.isSource result) "Result is not a source"
 
-                Expect.equal (API.ProcessInput.trySource result).Value expected "Source did not match"
+                Expect.equal (ProcessInput.trySource result).Value expected "Source did not match"
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
@@ -382,9 +382,9 @@ let testProcessInputLD =
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
 
-                Expect.isTrue (API.ProcessInput.isMaterial result) "Result is not a material"
+                Expect.isTrue (ProcessInput.isMaterial result) "Result is not a material"
 
-                Expect.equal (API.ProcessInput.tryMaterial result).Value expected "Material did not match"
+                Expect.equal (ProcessInput.tryMaterial result).Value expected "Material did not match"
 
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
@@ -424,8 +424,8 @@ let testProcessInputLD =
                 let result = ProcessInput.fromString TestObjects.ProcessInput.dataLD
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
-                Expect.isTrue (API.ProcessInput.isData result) "Result is not a data"
-                Expect.equal (API.ProcessInput.tryData result).Value expected "Data did not match"
+                Expect.isTrue (ProcessInput.isData result) "Result is not a data"
+                Expect.equal (ProcessInput.tryData result).Value expected "Data did not match"
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
@@ -468,9 +468,9 @@ let testProcessInputLD =
                 let expected = 
                     Sample.create("#sample/sample-P-0.1-aliquot7","sample-P-0.1-aliquot7", DerivesFrom = expectedDerivesFrom)
 
-                Expect.isTrue (API.ProcessInput.isSample result) "Result is not a sample"
+                Expect.isTrue (ProcessInput.isSample result) "Result is not a sample"
 
-                Expect.equal (API.ProcessInput.trySample result).Value expected "Sample did not match"
+                Expect.equal (ProcessInput.trySample result).Value expected "Sample did not match"
             )
             testCase "WriterOutputMatchesInputSimpleGivenID" (fun () -> 
             

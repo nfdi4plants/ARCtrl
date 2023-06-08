@@ -1,5 +1,8 @@
 namespace ISA
 
+open ISA.Aux
+open Update
+
 [<CustomEquality; NoComparison>]
 type OntologyAnnotation =
     {
@@ -163,3 +166,59 @@ type OntologyAnnotation =
                 true
             else 
                 false
+
+    /// Returns the name of the ontology as string if it has a name
+    static member tryGetNameText (oa : OntologyAnnotation) =
+        oa.TryNameText
+
+    /// Returns the name of the ontology as string if it has a name
+    static member getNameText (oa : OntologyAnnotation) =
+        oa.NameText
+
+    /// Returns true if the given name matches the name of the ontology annotation
+    static member nameEqualsString (name : string) (oa : OntologyAnnotation) =
+        oa.NameText = name
+
+    /// If an ontology annotation with the given annotation value exists in the list, returns it
+    static member tryGetByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
+        List.tryFind (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
+
+    /// If a ontology annotation with the given annotation value exists in the list, returns true
+    static member existsByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
+        List.exists (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
+
+    /// Adds the given ontology annotation to the Study.StudyDesignDescriptors
+    static member add (onotolgyAnnotations: OntologyAnnotation list) (onotolgyAnnotation : OntologyAnnotation) =
+        List.append onotolgyAnnotations [onotolgyAnnotation]
+
+    /// Updates all ontology annotations for which the predicate returns true with the given ontology annotations values
+    static member updateBy (predicate : OntologyAnnotation -> bool) (updateOption : UpdateOptions) (design : OntologyAnnotation) (annotations : OntologyAnnotation list) =
+        if List.exists predicate annotations then
+            annotations
+            |> List.map (fun d -> if predicate d then updateOption.updateRecordType d design else d)
+        else 
+            annotations
+
+    /// If an ontology annotation with the same annotation value as the given annotation value exists in the list, updates it with the given ontology annotation
+    static member updateByName (updateOption:UpdateOptions) (design : OntologyAnnotation) (annotations : OntologyAnnotation list) =
+        OntologyAnnotation.updateBy (fun f -> f.Name = design.Name) updateOption design annotations
+
+    /// If a ontology annotation with the annotation value exists in the list, removes it
+    static member removeByName (name : AnnotationValue) (annotations : OntologyAnnotation list) = 
+        List.filter (fun (d:OntologyAnnotation) -> d.Name = Some name |> not) annotations
+
+    // Comments
+    
+    /// Returns comments of a ontology annotation
+    static member getComments (annotation : OntologyAnnotation) =
+        annotation.Comments
+    
+    /// Applies function f on comments of a ontology annotation
+    static member mapComments (f : Comment list -> Comment list) (annotation : OntologyAnnotation) =
+        { annotation with 
+            Comments = Option.mapDefault [] f annotation.Comments}
+    
+    /// Replaces comments of a ontology annotation by given comment list
+    static member setComments (annotation : OntologyAnnotation) (comments : Comment list) =
+        { annotation with
+            Comments = Some comments }

@@ -19,3 +19,12 @@ type StudyMaterials =
 
     static member empty =
         StudyMaterials.create ()
+
+    static member getMaterials (am : StudyMaterials) =
+        am.OtherMaterials |> Option.defaultValue []
+        
+    static member getSamples (am : StudyMaterials) =
+        am.Samples |> Option.defaultValue []
+
+    static member getSources (am : StudyMaterials) =
+        am.Sources |> Option.defaultValue []

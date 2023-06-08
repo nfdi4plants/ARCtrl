@@ -26,7 +26,7 @@ module GEncode =
         property
         |> Option.bind (fun property -> 
             match FSharp.Reflection.FSharpValue.GetRecordField (object,property) with
-            | ISA.API.Update.SomeObj o -> 
+            | ISA.Aux.Update.SomeObj o -> 
                 Some o
             | o when isNull o -> 
                 None

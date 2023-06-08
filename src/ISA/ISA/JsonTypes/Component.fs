@@ -1,5 +1,7 @@
 ﻿namespace ISA
 
+open ISA.Aux
+
 type Component = 
     {
         // TODO: Maybe remove as field and add as member?
@@ -36,9 +38,9 @@ type Component =
         | Some (Value.Ontology oa), _ ->
             $"{oa.NameText} ({oa.TermAccessionShort})"
         | Some v, None ->
-            $"{v.AsString}"
+            $"{v.Text}"
         | Some v, Some u ->
-            $"{v.AsString} {u.NameText} ({u.TermAccessionShort})"
+            $"{v.Text} {u.NameText} ({u.TermAccessionShort})"
         | None, _ -> ""
 
     /// This function parses the given Component header string format into the ISA-JSON Component type
@@ -61,7 +63,7 @@ type Component =
         elif r.Success then
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAccession 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
-            Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.AsString))}, None
+            Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.Text))}, None
         else 
             Value.Name (name), None       
 
@@ -97,7 +99,7 @@ type Component =
 
     member this.ValueText = 
         this.ComponentValue
-        |> Option.map (fun c -> c.AsString)
+        |> Option.map (fun c -> c.Text)
         |> Option.defaultValue ""
 
     member this.ValueWithUnitText =

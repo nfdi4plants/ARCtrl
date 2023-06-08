@@ -1,4 +1,4 @@
-﻿namespace ISA.API
+﻿namespace ISA.Aux
 
 open ISA
 

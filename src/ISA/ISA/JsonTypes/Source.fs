@@ -32,3 +32,7 @@ type Source =
             let l = this.Characteristics |> Option.defaultValue [] |> List.length
             sprintf "%s [%i characteristics]" this.NameAsString l 
 
+    static member getUnits (m:Source) = 
+        m.Characteristics
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)

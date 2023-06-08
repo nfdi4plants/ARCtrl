@@ -37,3 +37,8 @@ type Material =
             | Some t ->
                 sprintf "%s [%s; %i characteristics]" this.NameText t.AsString chars
             | None -> sprintf "%s [%i characteristics]" this.NameText chars
+
+    static member getUnits (m:Material) = 
+        m.Characteristics
+        |> Option.defaultValue []
+        |> List.choose (fun c -> c.Unit)
