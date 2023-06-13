@@ -1,266 +1,71 @@
 ﻿namespace ISA.Spreadsheet.AssayFile
 
+open FsSpreadsheet
 open ISA.Spreadsheet
+open ISA.Spreadsheet.ActivePattern
 open ISA
+
+open System
 
 /// Functions for parsing an annotation table to the described processes
 module AnnotationTable = 
 
-    open ISA.QueryModel
+    let annotationTablePrefix = "annotationTable"
+    let groupColumnsByHeader (columns : seq<FsColumn>) = 
+        columns
+        |> Seq.groupWhen false (fun c ->         
+            ISA.Regex.tryParseTermAnnotation c.[0].Value 
+            |> Option.isSome
+            ||
+            c.[0].Value = "Unit"
+        )
+
+    let parseCompositeHeader (cells : list<FsCell>) : CompositeHeader =
+        match cells with
+        | Parameter p -> p
+        | Factor f -> f
+        | Characteristic c -> c
+        | Input i -> i
+        | Output o -> o
+        | FreeText ft -> ft
+        | _ -> raise (NotImplementedException("parseCompositeHeader"))
+
+    let parseCompositeCells (cells : list<FsCell>) : CompositeCell =
+        let cellValues = cells |> List.map (fun c -> c.Value)
+        match cellValues with
+        | [v] -> CompositeCell.createFreeText v
+        | [v1;v2;v3] -> CompositeCell.createTermFromString(v1,v2,v3)
+        | [v1;v2;v3;v4] -> CompositeCell.createUnitizedFromString(v1,v2,v3,v4)
+        | _ -> 
+            failwithf "Dafuq"
+
+    let parseCompositeColumn (column : list<FsColumn>) : =
+        raise (NotImplementedException("parseCompositeColumn"))
+
 
     /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
-    let getProcessGetter (processNameRoot : string) (nodes : seq<seq<string>>) =
-    
-        let valueNodes =
-            nodes
-            |> Seq.filter (AnnotationNode.isValueNode)
-            |> Seq.indexed
+    let tryParseTable (sheet : FsWorksheet) =
+        let annotationTable =
+            sheet.Tables
+            |> Seq.tryFind (fun t -> t.Name.StartsWith annotationTablePrefix)
+        match annotationTable with
+        | Some t -> 
+            let compositeColumns = 
+                t.Columns(sheet.CellCollection)
+                |> groupColumnsByHeader
+                |> Seq.map parseCompositeColumn
+            compositeColumns
+            |> Seq.fold (fun table c -> 
+                ArcTable.appendColumn c table
+            ) ArcTable.empty
+            |> Some
+        | None ->
+            None
 
-        let characteristics,characteristicValueGetters =
-            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetCharacteristicGetter i n)
-            |> Seq.fold (fun (cl,cvl) (c,cv) -> c.Value :: cl, cv :: cvl) ([],[])
-            |> fun (l1,l2) -> List.rev l1, List.rev l2
-        let factors,factorValueGetters =
-            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetFactorGetter i n)
-            |> Seq.fold (fun (fl,fvl) (f,fv) -> f.Value :: fl, fv :: fvl) ([],[])
-            |> fun (l1,l2) -> List.rev l1, List.rev l2
-        let parameters,parameterValueGetters =
-            valueNodes |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetParameterGetter i n)
-            |> Seq.fold (fun (pl,pvl) (p,pv) -> p.Value :: pl, pv :: pvl) ([],[])
-            |> fun (l1,l2) -> List.rev l1, List.rev l2
-    
-        let componentGetters =
-            valueNodes 
-            |> Seq.choose (fun (i,n) -> AnnotationNode.tryGetComponentGetter i n)
-            |> Seq.toList
 
-        let protocolTypeGetter = 
-            valueNodes 
-            |> Seq.tryPick (fun (i,n) -> AnnotationNode.tryGetProtocolTypeGetter i n)
 
-        let protocolREFGetter = 
-            valueNodes 
-            |> Seq.tryPick (fun (i,n) -> AnnotationNode.tryGetProtocolREFGetter i n)
 
-        let dataFileGetter = nodes |> Seq.tryPick AnnotationNode.tryGetDataFileGetter
 
-        let inputGetter,outputGetter =
-            match nodes |> Seq.tryPick AnnotationNode.tryGetSourceNameGetter with
-            | Some inputNameGetter ->
-                let outputNameGetter = nodes |> Seq.tryPick AnnotationNode.tryGetSampleNameGetter
-                let inputGetter = 
-                    fun matrix i -> 
-                        let source = 
-                            Source.make
-                                None
-                                (inputNameGetter matrix i)
-                                (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                        if dataFileGetter.IsSome then 
-                            [source;source]
-                        else 
-                            [source]
-                
-                let outputGetter =
-                    fun matrix i -> 
-                        let data = dataFileGetter |> Option.map (fun f -> f matrix i)
-                        let outputName = 
-                            match outputNameGetter |> Option.bind (fun o -> o matrix i) with
-                            | Some s -> Some s
-                            | None -> 
-                                match data with
-                                | Some data -> data.Name
-                                | None -> None
-                        let sample =
-                            Sample.make
-                                None
-                                outputName
-                                None
-                                (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                                (inputGetter matrix i |> List.distinct |> Some)
-                        if data.IsSome then 
-                            [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
-                        else 
-                            [ProcessOutput.Sample sample]                      
-                (fun matrix i -> inputGetter matrix i |> List.map ProcessInput.Source |> Some),outputGetter
-            | None ->
-                let inputNameGetter = nodes |> Seq.head |> AnnotationNode.tryGetSampleNameGetter
-                let outputNameGetter = nodes |> Seq.last |> AnnotationNode.tryGetSampleNameGetter
-                let inputGetter = 
-
-                    fun matrix i ->      
-                        let source = 
-                            inputNameGetter
-                            |> Option.map (fun ing ->
-                                Sample.make
-                                    None
-                                    (ing matrix i)
-                                    (characteristicValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                                    None
-                                    None
-                                |> ProcessInput.Sample
-                            )   
-                        match source with
-                        | Some source when dataFileGetter.IsSome -> Some [source;source]
-                        | Some source -> Some  [source]
-                        | None -> None
-                            
-
-                let outputGetter =
-                    fun matrix i -> 
-                        let data = dataFileGetter |> Option.map (fun f -> f matrix i)
-                        let outputName = 
-                            match outputNameGetter |> Option.bind (fun o -> o matrix i) with
-                            | Some s -> Some s
-                            | None -> 
-                                match data with
-                                | Some data -> data.Name
-                                | None -> None
-                        let sample =
-                            Sample.make
-                                None
-                                outputName
-                                None
-                                (factorValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                                None
-                        if data.IsSome then 
-                            [ProcessOutput.Sample sample; ProcessOutput.Data data.Value]
-                        else 
-                            [ProcessOutput.Sample sample]  
-                inputGetter,outputGetter
-    
-        
-        
-        fun (matrix : System.Collections.Generic.Dictionary<(int * string),string>) i ->
-
-            let pn = processNameRoot |> Option.fromValueWithDefault ""
-
-            let protocol : Protocol = 
-                Protocol.make 
-                    None
-                    (protocolREFGetter |> Option.mapOrDefault pn (fun f -> f matrix i))
-                    (protocolTypeGetter |> Option.map (fun f -> f matrix i))
-                    None
-                    None
-                    None
-                    (Option.fromValueWithDefault [] parameters)
-                    (componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                    None
-                |> fun p -> p.SetRowIndex i
-
-            Process.make 
-                None 
-                pn 
-                (Some protocol) 
-                (parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                None
-                None
-                None
-                None          
-                (inputGetter matrix i)
-                (outputGetter matrix i |> Some)
-                None
-
-    /// Merges processes with the same parameter values, grouping the input and output files
-    let mergeIdenticalProcesses processNameRoot (processes : seq<Process>) =
-        let protocols = 
-            processes 
-            |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.Name.Value)
-            |> Seq.map (fun (n,ps) -> 
-                let protocols = ps |> Seq.map (fun p -> p.ExecutesProtocol.Value)
-                protocols
-                |> Seq.map (fun p -> p.ProtocolType,p.Components)
-                |> Seq.reduce (fun (pt,c) (pt',c') -> 
-                    if pt <> pt' then failwithf "For the protocol with the name %s, two different protocol Types %O and %O were given, which is not allowed" n pt pt'
-                    if c <> c' then failwithf "For the protocol with the name %s, two different component lists %O and %O were given, which is not allowed" n c c'
-                    pt,c
-                ) |> ignore
-                n,protocols |> Seq.toList |> Protocol.mergeIndicesToRange
-            )
-            |> Map.ofSeq
-        processes
-        |> Seq.groupBy (fun p -> p.ExecutesProtocol.Value.Name.Value, p.ParameterValues)
-        |> Seq.mapi (fun i ((name,_),processGroup) ->
-            processGroup
-            |> Seq.reduce (fun p1 p2 ->
-                let mergedInputs = List.append (p1.Inputs |> Option.defaultValue []) (p2.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
-                let mergedOutputs = List.append (p1.Outputs |> Option.defaultValue []) (p2.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
-                {p1 with Inputs = mergedInputs; Outputs = mergedOutputs}
-            )
-            |> fun pr -> {pr with ExecutesProtocol = Some (protocols.[name]); Name = Some (Process.composeName processNameRoot i)}
-        )
-
-    /// Create a sample from a source
-    let sampleOfSource (s:Source) =
-        Sample.make s.ID s.Name s.Characteristics None None
-
-    /// Create a sample from a source
-    let sourceOfSample (s:Sample) =
-        Source.make s.ID s.Name s.Characteristics
-
-    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
-    ///
-    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
-    let private updateSamplesBy (referenceProcesses : Process seq) (processes : Process seq) = 
-        let samples = 
-            referenceProcesses
-            |> Seq.collect (fun p -> 
-                let inputs =
-                    p.Inputs 
-                    |> Option.defaultValue [] 
-                    |> Seq.choose (function | ProcessInput.Sample x -> Some(x.Name,true, x) | ProcessInput.Source x -> Some (x.Name,false,sampleOfSource x)| _ -> None)
-                let outputs =
-                    p.Outputs 
-                    |> Option.defaultValue [] 
-                    |> Seq.choose (function | ProcessOutput.Sample x -> Some(x.Name,true, x) | _ -> None)
-                Seq.append inputs outputs
-                |> Seq.distinct
-                )
-            |> Seq.filter (fun (name,_,samples) -> name <> None && name <> (Some ""))
-            |> Seq.groupBy (fun (name,_,samples) -> name)
-            |> Seq.map (fun (name,samples) -> 
-                let aggregatedSample = 
-                    samples 
-                    |> Seq.map (fun (name,_,s) -> s) 
-                    |> Seq.reduce (fun s1 s2 -> if s1 = s2 then s1 else API.Update.UpdateByExistingAppendLists.updateRecordType s1 s2)
-                if Seq.exists (fun (name,isSample,s) -> isSample) samples then
-                    name, ProcessInput.Sample aggregatedSample
-                else name, ProcessInput.Source (sourceOfSample aggregatedSample)          
-            )
-            |> Map.ofSeq
-    
-        let updateInput (i:ProcessInput) =
-            match i with 
-            | ProcessInput.Source x ->      match Map.tryFind x.Name samples with   | Some s -> s | None -> ProcessInput.Source x
-            | ProcessInput.Sample x ->      match Map.tryFind x.Name samples with   | Some s -> s | None -> ProcessInput.Sample x
-            | ProcessInput.Data x ->        ProcessInput.Data x
-            | ProcessInput.Material x ->    ProcessInput.Material x
-        let updateOutput (o:ProcessOutput) =                         
-            match o with                                             
-            | ProcessOutput.Sample x ->     match Map.tryFind x.Name samples with   | Some (ProcessInput.Sample x) -> ProcessOutput.Sample x | _ -> ProcessOutput.Sample x
-            | ProcessOutput.Data x ->       ProcessOutput.Data x
-            | ProcessOutput.Material x ->   ProcessOutput.Material x
-        processes
-        |> Seq.map (fun p -> 
-           {p with
-                Inputs = p.Inputs |> Option.map (List.map updateInput)
-                Outputs = p.Outputs |> Option.map (List.map updateOutput)
-           }
-        )
-
-    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
-    ///
-    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
-    let updateSamplesByReference (referenceProcesses : Process seq) (processes : Process seq) = 
-        referenceProcesses
-        |> Seq.append processes
-        |> fun ref -> updateSamplesBy ref processes
-
-    /// Updates the sample information in the given processes with the information of the samples in the given referenceProcesses.
-    ///
-    /// If the processes contain a source with the same name as a sample in the referenceProcesses. Additionally transforms it to a sample
-    let updateSamplesByThemselves (processes : Process seq) =
-        processes
-        |> updateSamplesBy processes
 
 
 module QRow =
