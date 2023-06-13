@@ -1,7 +1,6 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
 open System.Text.RegularExpressions
 
 module Comment = 

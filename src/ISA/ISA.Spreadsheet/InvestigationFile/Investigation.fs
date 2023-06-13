@@ -1,7 +1,6 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
 open Comment
 open Remark
 open System.Collections.Generic

@@ -2,7 +2,6 @@ namespace ISA.Spreadsheet
 
 open FsSpreadsheet
 open ISA
-open ISA.API
 
 open System.Collections.Generic
 
