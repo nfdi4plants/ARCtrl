@@ -79,7 +79,7 @@ type IOType =
 type CompositeHeader = 
     // term
     | Component         of OntologyAnnotation
-    | Characteristic   of OntologyAnnotation
+    | Characteristic    of OntologyAnnotation
     | Factor            of OntologyAnnotation
     | Parameter         of OntologyAnnotation
     // featured
@@ -123,25 +123,23 @@ type CompositeHeader =
         match str.Trim() with
         // Input/Output have similiar naming as Term, but are more specific. 
         // So they have to be called first.
-        | Regex.Aux.Regex Regex.Pattern.InputPattern r ->
+        | Regex.ActivePatterns.Regex Regex.Pattern.InputPattern r ->
             let iotype = r.Groups.["iotype"].Value
             Input <| IOType.ofString (iotype)
-        | Regex.Aux.Regex Regex.Pattern.OutputPattern r ->
+        | Regex.ActivePatterns.Regex Regex.Pattern.OutputPattern r ->
             let iotype = r.Groups.["iotype"].Value
             Output <| IOType.ofString (iotype)
         // Is term column
-        | Regex.Aux.Regex Regex.Pattern.TermColumnPattern r ->
-            let columnType = r.Groups.["termcolumntype"].Value
-            let termName = r.Groups.["termname"].Value
-            match columnType with
+        | Regex.ActivePatterns.TermColumn r ->
+            match r.TermColumnType with
             | "Parameter" 
-            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString termName)
+            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString r.TermName)
             | "Factor" 
-            | "Factor Value"                -> Factor (OntologyAnnotation.fromString termName)
+            | "Factor Value"                -> Factor (OntologyAnnotation.fromString r.TermName)
             | "Characteristic" 
             | "Characteristics"
-            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString termName)
-            | "Component"                   -> Component (OntologyAnnotation.fromString termName)
+            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString r.TermName)
+            | "Component"                   -> Component (OntologyAnnotation.fromString r.TermName)
             // TODO: Is this what we intend?
             | _                             -> FreeText str
         | "Date"                    -> Date

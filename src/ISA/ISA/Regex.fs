@@ -24,22 +24,49 @@ module Pattern =
     [<LiteralAttribute>]
     let ExcelNumberFormat = "\"(?<numberFormat>(.*?))\""
 
-    /// This pattern captures all input coming before an opening square bracket or normal bracket (with whitespace).
+    /// Hits Unit column header
     [<LiteralAttribute>]
-    let CoreNamePattern = "^[^[(]*"
+    let UnitPattern = @"Unit"
+
+    /// Hits Term Source REF and Term Accession Number column headers
+    ///
+    /// Example 1: "Term Source REF (MS:1003022)"
+    ///
+    /// Example 2: "Term Accession Number (MS:1003022)"
+    ///
+    /// the id part "MS:1003022" is captured as `id` group.
+    [<LiteralAttribute>]
+    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s\((?<id>.+)\)"   
+
+    /// Hits Term Accession Number column header
+    ///
+    /// Example 1: "Term Source REF (MS:1003022)"
+    ///
+    /// the id part "MS:1003022" is captured as `id` group.
+    [<LiteralAttribute>]
+    let TermSourceREFColumnPattern = @"Term Source REF\s\((?<id>.+)\)" 
+
+    /// Hits Term Source REF column header
+    ///
+    /// Example 1: "Term Accession Number (MS:1003022)"
+    ///
+    /// the id part "MS:1003022" is captured as `id` group.
+    [<LiteralAttribute>]
+    let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.+)\)" 
 
     /// Hits term accession, without id: ENVO:01001831
     [<LiteralAttribute>]
-    let TermAccessionPattern = @"(?<idspace>\w+?):(?<localid>\w+)" //prev: @"[\w]+?:[\d]+"
+    let TermAnnotationShortPattern = @"(?<idspace>\w+?):(?<localid>\w+)" //prev: @"[\w]+?:[\d]+"
+
 
     // https://obofoundry.org/id-policy.html#mapping-of-owl-ids-to-obo-format-ids
     /// <summary>Regex pattern is designed to hit only Foundry-compliant URIs.</summary>
     [<LiteralAttribute>]
-    let TermAccessionPatternURI = @"http://purl.obolibrary.org/obo/(?<idspace>\w+?)_(?<localid>\w+)"
+    let TermAnnotationURIPattern = @"http://purl.obolibrary.org/obo/(?<idspace>\w+?)_(?<localid>\w+)"
 
     /// Watch this closely, this could hit some edge cases we do not want to cover.
     [<LiteralAttribute>]
-    let TermAccessionPatternURI_lessRestrictive = @".*\/(?<idspace>\w+?)[:_](?<localid>\w+)"
+    let TermAnnotationURIPattern_lessRestrictive = @".*\/(?<idspace>\w+?)[:_](?<localid>\w+)"
 
     /// This pattern is used to match both Input and Output columns and capture the IOType as `iotype` group.
     [<LiteralAttribute>]
@@ -65,18 +92,99 @@ module Pattern =
     [<LiteralAttribute>]
     let TermColumnPattern = @"(?<termcolumntype>.+)\s\[(?<termname>.+)\]"
 
-module Aux =
+module ActivePatterns =
     
     open System.Text.RegularExpressions
     
-    /// (|Regex|_|) pattern input
-    let (|Regex|_|) pattern input =
-        let m = Regex.Match(input, pattern)
+    /// Matches, if the input string matches the given regex pattern.
+    let (|Regex|_|) pattern (input : string) =
+        let m = Regex.Match(input.Trim(), pattern)
         if m.Success then Some(m)
         else None
 
+    /// Matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
+    let (|TermColumn|_|) input = 
+        match input with
+        | Regex Pattern.TermColumnPattern r ->
+            {|TermColumnType = r.Groups.["termcolumntype"].Value; TermName = r.Groups.["termname"].Value|}
+            |> Some
+        | _ -> None
+
+    let (|Unit|_|) input = 
+        match input with
+        | Regex Pattern.UnitPattern _ -> Some()
+         | _ -> None
+
+    let (|Parameter|_|) input = 
+        match input with
+        | TermColumn r ->
+            match r.TermColumnType with
+            | "Parameter" 
+            | "Parameter Value"             -> Some r.TermName
+            | _ -> None
+        | _ -> None
+
+    let (|Factor|_|) input = 
+        match input with
+        | TermColumn r ->
+            match r.TermColumnType with
+            | "Factor" 
+            | "Factor Value"             -> Some r.TermName
+            | _ -> None
+        | _ -> None
+
+    let (|Characteristic|_|) input = 
+        match input with
+        | TermColumn r ->
+            match r.TermColumnType with
+            | "Characteristic" 
+            | "Characteristics"
+            | "Characteristics Value" -> Some r.TermName
+            | _ -> None
+        | _ -> None
+
+    let (|TermAnnotation|_|) input =
+        match input with
+        | Regex Pattern.TermAnnotationShortPattern value 
+        | Regex Pattern.TermAnnotationURIPattern value 
+        | Regex Pattern.TermAnnotationURIPattern_lessRestrictive value ->
+            let idspace = value.Groups.["idspace"].Value
+            let localid = value.Groups.["localid"].Value
+            {|IdSpace = idspace; LocalId = localid|}
+            |> Some
+        | _ ->
+            None
+
+    let (|TermSourceRef|_|) input = 
+        match input with
+        | Regex Pattern.TermSourceREFColumnPattern r ->
+            match r.Groups.["id"].Value with
+            | TermAnnotation r -> Some r 
+            | _ -> None
+         | _ -> None
+
+    let (|TermAccessionNumber|_|) input = 
+        match input with
+        | Regex Pattern.TermAccessionNumberColumnPattern r ->
+            match r.Groups.["id"].Value with
+            | TermAnnotation r -> Some r 
+            | _ -> None
+         | _ -> None
+
+    let (|Input|_|) input = 
+        match input with
+        | Regex Pattern.InputPattern r ->
+            Some r.Groups.["iotype"].Value          
+         | _ -> None
+
+    let (|Output|_|) input =
+        match input with
+        | Regex Pattern.OutputPattern r ->
+            Some r.Groups.["iotype"].Value
+         | _ -> None
+
 open Pattern
-open Aux
+open ActivePatterns
 open System
 open System.Text.RegularExpressions
     
@@ -88,11 +196,11 @@ open System.Text.RegularExpressions
 /// 
 /// **Example 2:** "Term Source REF (NFDI4PSO:0000064)" --> "NFDI4PSO:0000064"
 /// </summary>
-let tryParseTermAccession (str:string) =
+let tryParseTermAnnotation (str:string) =
     match str.Trim() with
-    | Regex TermAccessionPattern value 
-    | Regex TermAccessionPatternURI value 
-    | Regex TermAccessionPatternURI_lessRestrictive value ->
+    | Regex TermAnnotationShortPattern value 
+    | Regex TermAnnotationURIPattern value 
+    | Regex TermAnnotationURIPattern_lessRestrictive value ->
         let idspace = value.Groups.["idspace"].Value
         let localid = value.Groups.["localid"].Value
         {|IdSpace = idspace; LocalId = localid|}
@@ -101,13 +209,13 @@ let tryParseTermAccession (str:string) =
         None
 
 /// Tries to parse 'str' to term accession and returns it in the format `Some "idspace:localid"`. Exmp.: `Some "MS:000001"`
-let tryGetTermAccessionString (str:string) = 
-    tryParseTermAccession str
+let tryGetTermAnnotationShortString (str:string) = 
+    tryParseTermAnnotation str
     |> Option.map (fun r -> r.IdSpace + ":" + r.LocalId)
 
 /// Parses 'str' to term accession and returns it in the format "idspace:localid". Exmp.: "MS:000001"
-let getTermAccessionString (str:string) =
-    match tryGetTermAccessionString str with
+let getTermAnnotationShortString (str:string) =
+    match tryGetTermAnnotationShortString str with
     | Some s -> s
     | None -> failwith $"Unable to parse '{str}' to term accession."
 
