@@ -17,15 +17,19 @@ type ArcTable =
     }
 
     member this.ColumnCount = this.ValueHeaders.Length
-    member this.RowCount = this.Values.Keys |> Seq.maxBy snd |> snd
+    member this.RowCount = 
+        if this.Values.Count = 0 then 0 else
+            this.Values.Keys |> Seq.groupBy fst |> Seq.map (fun (c,r) -> Seq.length r) |> Seq.max
 
     member this.addColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int) = 
         let cells = Option.defaultValue [||] cells
         let column = Array.singleton <| CompositeColumn.create(header, cells)
         this.addColumns (column, ?index = index)
 
-    member this.addColumns ( columns: CompositeColumn [], ?index: int) = 
+    member this.addColumns (columns: CompositeColumn [], ?index: int) = 
         let index = Option.defaultValue this.ColumnCount index
+        if index < 0 then failwith "Cannot insert CompositeColumn at index < 0."
+        if index > this.ColumnCount then failwith $"Specified index is out of table range! Table contains only {this.ColumnCount} columns."
         columns |> Array.iter (fun x -> x.validate(true) |> ignore)
         let nNewColumn = columns.Length
         let columnHeaders, columnRows = columns |> Array.map (fun x -> x.Header, x.Cells) |> Array.unzip
@@ -55,7 +59,10 @@ type ArcTable =
                 let ra = ResizeArray(v)
                 let relatedHeader = nextHeaders.[columnKey]
                 let empty = if relatedHeader.IsTermColumn then CompositeCell.emptyTerm else CompositeCell.emptyFreeText
-                let fillerCells = Array.init diff (fun i -> (columnKey, i + 1 + nExistingRows), empty)
+                let fillerCells = Array.init diff (fun i -> 
+                    let nextRowIndex = i + nExistingRows // nExistingRows -> length(!) we keep length as we would need to add 1 anyways to work with the `i` zero based index;  i -> [0,diff];  
+                    (columnKey, nextRowIndex), empty
+                )
                 ra.AddRange(fillerCells)
                 ra.ToArray()
             )

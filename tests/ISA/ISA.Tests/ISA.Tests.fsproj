@@ -9,11 +9,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Utils.fs" />
     <Compile Include="CompositeColumn.Tests.fs" />
     <Compile Include="ArcTable.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
-    <Compile Include="Utils.fs" />
     <Compile Include="DataModel.Tests.fs" />
     <Compile Include="Update.Tests.fs" />
     <Compile Include="Main.fs" />
