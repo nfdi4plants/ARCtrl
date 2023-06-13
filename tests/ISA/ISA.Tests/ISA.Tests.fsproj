@@ -9,6 +9,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="CompositeColumn.Tests.fs" />
+    <Compile Include="ArcTable.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
     <Compile Include="Utils.fs" />

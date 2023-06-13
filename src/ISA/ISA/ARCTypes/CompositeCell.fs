@@ -63,3 +63,7 @@ type CompositeCell =
     static member createUnitizedFromString (value: string, ?name: string, ?tsr: string, ?tan: string) = 
         Unitized <| (value, OntologyAnnotation.fromString(?term = name, ?tsr = tsr, ?tan = tan))
     static member createFreeText (value: string) = FreeText value
+    
+    static member emptyTerm = Term OntologyAnnotation.empty
+    static member emptyFreeText = FreeText ""
+    static member emptyUnitized = Unitized ("", OntologyAnnotation.empty)
