@@ -52,7 +52,7 @@ type IOType =
     ///
     /// Exmp. 1: "Source" --> Source
     ///
-    /// Exmp. 2: "raw data file" -> RawDataFile
+    /// Exmp. 2: "Raw Data File" | "RawDataFile" -> RawDataFile
     static member ofString (str: string) =  
         match str with
         | "Source" | "Source Name"                  -> Source
@@ -209,4 +209,18 @@ type CompositeHeader =
     member this.IsIOType =
         match this with 
         | Input io | Output io -> true 
+        | anythingElse -> false
+
+
+    // lower case "i" because of clashing naming: 
+    // Issue: https://github.com/dotnet/fsharp/issues/10359
+    // Proposed design: https://github.com/fsharp/fslang-design/blob/main/RFCs/FS-1079-union-properties-visible.md
+    member this.isInput =
+        match this with 
+        | Input io -> true 
+        | anythingElse -> false
+
+    member this.isOutput =
+        match this with 
+        | Input io -> true 
         | anythingElse -> false

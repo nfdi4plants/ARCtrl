@@ -34,14 +34,14 @@ let private tests_addColumn =
             let table = ArcTable.init(TableName)
             testCase "IO column, no cells" (fun () ->
                 let header = header_io
-                let newTable = table.addColumn(header)
+                let newTable = table.AddColumn(header)
                 Expect.equal newTable.RowCount 0 "RowCount = 0"
                 Expect.equal newTable.ColumnCount 1 "ColumnCount = 1"
                 Expect.equal newTable.ValueHeaders.[0] header "header"
             )
             testCase "term column, no cells" (fun () ->
                 let header = header_chara
-                let newTable = table.addColumn(header)
+                let newTable = table.AddColumn(header)
                 Expect.equal newTable.RowCount 0 "RowCount = 0"
                 Expect.equal newTable.ColumnCount 1 "ColumnCount = 1"
                 Expect.equal newTable.ValueHeaders.[0] header "header"
@@ -49,7 +49,7 @@ let private tests_addColumn =
             testCase "IO column, with cells" (fun () ->
                 let header = header_io
                 let cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
-                let newTable = table.addColumn(header, cells)
+                let newTable = table.AddColumn(header, cells)
                 Expect.equal newTable.RowCount 5 "RowCount"
                 Expect.equal newTable.ColumnCount 1 "ColumnCount"
                 Expect.equal newTable.ValueHeaders.[0] header "header"
@@ -61,7 +61,7 @@ let private tests_addColumn =
             testCase "term column, with cells" (fun () ->
                 let header = header_chara
                 let cells = Array.init 5 (fun _ -> CompositeCell.createTerm oa_chlamy)
-                let newTable = table.addColumn(header, cells)
+                let newTable = table.AddColumn(header, cells)
                 Expect.equal newTable.RowCount 5 "RowCount"
                 Expect.equal newTable.ColumnCount 1 "ColumnCount"
                 Expect.equal newTable.ValueHeaders.[0] header "header"
@@ -73,39 +73,39 @@ let private tests_addColumn =
             testCase "IO column, with wrong cells" (fun () ->
                 let header = header_io
                 let cells = Array.init 5 (fun _ -> CompositeCell.createTerm oa_chlamy)
-                let newTable() = table.addColumn(header, cells) |> ignore
+                let newTable() = table.AddColumn(header, cells) |> ignore
                 Expect.throws newTable ""
             )
             testCase "term column, with wrong cells" (fun () ->
                 let header = header_chara
                 let cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
-                let newTable() = table.addColumn(header, cells) |> ignore
+                let newTable() = table.AddColumn(header, cells) |> ignore
                 Expect.throws newTable ""
             )
             testCase "IO column, with cells at index" (fun () ->
                 let header = header_io
                 let cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
-                let newTable = table.addColumn(header, cells, 0)
+                let newTable = table.AddColumn(header, cells, 0)
                 Expect.equal newTable.RowCount 5 "RowCount"
                 Expect.equal newTable.ColumnCount 1 "ColumnCount"
             )
             testCase "term column, with cells at index" (fun () ->
                 let header = header_chara
                 let cells = Array.init 5 (fun _ -> CompositeCell.createTerm oa_chlamy)
-                let newTable = table.addColumn(header, cells, 0)
+                let newTable = table.AddColumn(header, cells, 0)
                 Expect.equal newTable.RowCount 5 "RowCount"
                 Expect.equal newTable.ColumnCount 1 "ColumnCount"
             )
             testCase "IO column, with cells at outside index" (fun () ->
                 let header = header_io
                 let cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
-                let newTable() = table.addColumn(header, cells, 1) |> ignore
+                let newTable() = table.AddColumn(header, cells, 1) |> ignore
                 Expect.throws newTable ""
             )
             testCase "term column, with cells at outside index" (fun () ->
                 let header = header_chara
                 let cells = Array.init 5 (fun _ -> CompositeCell.createTerm oa_chlamy)
-                let newTable() = table.addColumn(header, cells, 1) |> ignore
+                let newTable() = table.AddColumn(header, cells, 1) |> ignore
                 Expect.throws newTable ""
             )
         ]
@@ -116,13 +116,13 @@ let private tests_addColumn =
                 let io_cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
                 ArcTable
                     .init(TableName)
-                    .addColumn(header_io, io_cells)
+                    .AddColumn(header_io, io_cells)
             testCase "Ensure base table" (fun () ->
                 Expect.equal table.ColumnCount 1 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
             )
             testCase "add equal rows" (fun () ->
-                let table = table.addColumn(header_chara, createCells_chara 5)
+                let table = table.AddColumn(header_chara, createCells_chara 5)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
                 Expect.equal table.ValueHeaders.[0] header_io "Header 0"
@@ -130,7 +130,7 @@ let private tests_addColumn =
             )
             testCase "add less rows" (fun () ->
                 let cells = createCells_chara 2
-                let table = table.addColumn(header_chara, cells)
+                let table = table.AddColumn(header_chara, cells)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
                 Expect.equal table.ValueHeaders.[0] header_io "Header 0"
@@ -145,7 +145,7 @@ let private tests_addColumn =
             )
             testCase "add more rows" (fun () ->
                 let cells = createCells_chara 8
-                let table = table.addColumn(header_chara, cells)
+                let table = table.AddColumn(header_chara, cells)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 8 "RowCount"
                 Expect.equal table.ValueHeaders.[0] header_io "Header 0"
@@ -162,7 +162,7 @@ let private tests_addColumn =
             )
             testCase "add equal rows, insert at" (fun () ->
                 let cells = createCells_chara 5
-                let table = table.addColumn(header_chara, cells, 0)
+                let table = table.AddColumn(header_chara, cells, 0)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
                 Expect.equal table.ValueHeaders.[0] header_chara "Header chara"
@@ -170,7 +170,7 @@ let private tests_addColumn =
             )
             testCase "add less rows, insert at" (fun () ->
                 let cells = createCells_chara 2
-                let table = table.addColumn(header_chara, cells, 0)
+                let table = table.AddColumn(header_chara, cells, 0)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
                 Expect.equal table.ValueHeaders.[0] header_chara "Header chara"
@@ -185,7 +185,7 @@ let private tests_addColumn =
             )
             testCase "add more rows, insert at" (fun () ->
                 let cells = createCells_chara 8
-                let table = table.addColumn(header_chara, cells, 0)
+                let table = table.AddColumn(header_chara, cells, 0)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 8 "RowCount"
                 Expect.equal table.ValueHeaders.[0] header_chara "Header chara"
