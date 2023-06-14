@@ -80,6 +80,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA", "ISA", "{C61B3F43-2255-4585-9110-F8AB74F02654}"
 	ProjectSection(SolutionItems) = preProject
 		src\ISA\package.json = src\ISA\package.json
+		src\ISA\README.md = src\ISA\README.md
 	EndProjectSection
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA", "src\ISA\ISA\ISA.fsproj", "{67CF6725-6AC0-47FB-A725-6DC2192713B5}"

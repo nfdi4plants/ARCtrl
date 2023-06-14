@@ -211,7 +211,6 @@ type CompositeHeader =
         | Input io | Output io -> true 
         | anythingElse -> false
 
-
     // lower case "i" because of clashing naming: 
     // Issue: https://github.com/dotnet/fsharp/issues/10359
     // Proposed design: https://github.com/fsharp/fslang-design/blob/main/RFCs/FS-1079-union-properties-visible.md
