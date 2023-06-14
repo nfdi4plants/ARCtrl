@@ -17,7 +17,7 @@ module internal Seq =
     ///
     /// For example: 
     ///    Seq.groupWhen isOdd [3;3;2;4;1;2] = seq [[3]; [3; 2; 4]; [1; 2]]
-    let groupWhen (withOverlap : bool) predicate (input:seq<'a>) =
+    let private groupWhen (withOverlap : bool) predicate (input:seq<'a>) =
         use en = input.GetEnumerator()
     
         let rec loop cont =

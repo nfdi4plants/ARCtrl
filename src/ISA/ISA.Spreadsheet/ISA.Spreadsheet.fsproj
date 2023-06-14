@@ -6,6 +6,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="CompositeHeader.fs" />
+    <Compile Include="CompositeCell.fs" />
+    <Compile Include="CompositeColumn.fs" />
+    <Compile Include="ArcTable.fs" />
+    <Compile Include="ArcAssay.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CollectionAux.fs" />
     <Compile Include="Conversions.fs" />
@@ -20,11 +25,7 @@
     <Compile Include="InvestigationFile\Study.fs" />
     <Compile Include="InvestigationFile\OntologySourceReference.fs" />
     <Compile Include="InvestigationFile\Investigation.fs" />
-    <Compile Include="AssayFile\AnnotationColumn.fs" />
-    <Compile Include="AssayFile\AnnotationNode.fs" />
-    <Compile Include="AssayFile\AnnotationTable.fs" />
     <Compile Include="AssayFile\MetaData.fs" />
-    <Compile Include="AssayFile\Assay.fs" />
     <Compile Include="StudyFile\MetaData.fs" />
     <Compile Include="StudyFile\Study.fs" />
   </ItemGroup>
