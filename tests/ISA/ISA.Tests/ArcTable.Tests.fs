@@ -155,6 +155,7 @@ let private oa_species = OntologyAnnotation.fromString("species", "GO", "GO:0123
 let private oa_chlamy = OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456")
 let private oa_instrumentModel = OntologyAnnotation.fromString("instrument model", "MS", "MS:0123456")
 let private oa_SCIEXInstrumentModel = OntologyAnnotation.fromString("SCIEX instrument model", "MS", "MS:654321")
+let private oa_temperature = OntologyAnnotation.fromString("temperature","NCIT","NCIT:0123210")
 
 let private tests_addColumn =
     let header_input = CompositeHeader.Input IOType.Source
@@ -943,10 +944,123 @@ let private test_addColumns =
         ]
     ]
 
+let private test_setHeader = 
+    testList "setHeader" [
+        let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+        let createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+        let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
+        let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
+        let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
+        let column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
+        let column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
+        /// Valid TestTable with 5 columns, no cells: 
+        ///
+        /// Input [Source] -> 5 cells: [Source_1; Source_2..]
+        ///
+        /// Output [Sample] -> 5 cells: [Sample_1; Sample_2..]
+        ///
+        /// Component [empty] -> 5 cells: [SCIEX instrument model; SCIEX instrument model; ..]
+        ///
+        /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]    
+        ///
+        /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]   
+        let testTable = 
+            let t = ArcTable.init(TableName)
+            let columns = [|
+                column_input
+                column_output
+                column_component
+                column_param
+                column_param
+            |]
+            t.AddColumns(columns)
+        testCase "ensure test table" (fun () ->
+            Expect.equal testTable.RowCount 5 "RowCount"
+            Expect.equal testTable.ColumnCount 5 "ColumnCount"
+            Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
+            Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
+            Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
+            Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
+            Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
+            Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+        )
+        testCase "ensure not mutable" (fun () ->
+            let newHeader = CompositeHeader.Factor oa_temperature
+            // This should change both header for column 0 and cells for column 0...
+            let table = testTable.SetHeader(0, newHeader, true)
+            Expect.equal table.ValueHeaders.[0] newHeader "header0 new"
+            Expect.equal table.Values.[0,0] (CompositeCell.createTermFromString "Source_0") "cell 0,0 new"
+            // While testTable stays the same
+            Expect.equal testTable.RowCount 5 "RowCount"
+            Expect.equal testTable.ColumnCount 5 "ColumnCount"
+            Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
+            Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
+            Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
+            Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
+            Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
+            Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+        )
+        testCase "set outside of range" (fun () ->
+            let table() = testTable.SetHeader(12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            Expect.throws (table >> ignore) ""
+        )
+        testCase "set outside of range negative" (fun () ->
+            let table() = testTable.SetHeader(-12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            Expect.throws (table >> ignore) ""
+        )
+        testCase "set unique at different index" (fun () ->
+            let table() = testTable.SetHeader(3, CompositeHeader.Input IOType.DerivedDataFile)
+            Expect.throws (table >> ignore) ""
+        )
+        testCase "set unique at same index" (fun () ->
+            let newHeader = CompositeHeader.Input IOType.DerivedDataFile
+            let table = testTable.SetHeader(0, newHeader)
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.ValueHeaders.[0] newHeader "header0"
+            Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
+            Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
+            Expect.equal table.ValueHeaders.[3] column_param.Header "header3"
+            Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+        )
+        testCase "set invalid, force convert" (fun () ->
+            let newHeader = CompositeHeader.Factor oa_temperature
+            let table = testTable.SetHeader(0, newHeader, true)
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.ValueHeaders.[0] newHeader "header0"
+            Expect.equal table.Values.[0,0] (CompositeCell.createTermFromString "Source_0") "cell 0,0"
+            Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
+            Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
+            Expect.equal table.ValueHeaders.[3] column_param.Header "header3"
+            Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+        )
+        testCase "set valid" (fun () ->
+            let newHeader = CompositeHeader.Factor oa_temperature
+            let table = testTable.SetHeader(3, newHeader)
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.ValueHeaders.[0] column_input.Header "header0"
+            Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
+            Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
+            Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
+            Expect.equal table.ValueHeaders.[3] newHeader "header3"
+            Expect.equal table.Values.[3,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 3,4"
+            Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+        )
+    ]
+
 let main = 
     testList "ArcTable" [
         tests_ArcTableAux
         tests_member
         tests_addColumn
         test_addColumns
+        test_setHeader
     ]

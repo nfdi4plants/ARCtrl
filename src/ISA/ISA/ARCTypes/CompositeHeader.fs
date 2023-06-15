@@ -201,6 +201,7 @@ type CompositeHeader =
     /// </summary>
     member this.IsSingleColumn =
         match this with 
+        | FreeText _
         | Input _ | Output _ 
         | ProtocolREF | ProtocolDescription | ProtocolUri | ProtocolVersion | Performer | Date -> true 
         | anythingElse -> false

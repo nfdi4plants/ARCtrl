@@ -9,6 +9,8 @@ module rec ArcTableAux =
             if index < 0 then failwith "Cannot insert CompositeColumn at index < 0."
             if index > columnCount then failwith $"Specified index is out of table range! Table contains only {columnCount} columns."
 
+        let validateColumn (column:CompositeColumn) = column.validate(true) |> ignore
+
         let inline validateNoDuplicateUniqueColumns (columns:seq<CompositeColumn>) =
             let duplicates = columns |> Seq.map (fun x -> x.Header) |> ArcTableAux.tryFindDuplicateUniqueInArray
             if not <| List.isEmpty duplicates then
@@ -21,6 +23,11 @@ module rec ArcTableAux =
                 )
                 let msg = sb.ToString()
                 failwith msg
+
+        let inline validateNoDuplicateUnique (header: CompositeHeader) (columns:seq<CompositeHeader>) =
+            match tryFindDuplicateUnique header columns with
+            | None -> ()
+            | Some i -> failwith $"Invalid input. Tried setting unique header `{header}`, but header of same type already exists at index {i}."
 
     /// This function is used to init the correct format from ArcTable.ValueHeaders for `insertColumn`.
     let flattenBodyCells (values: System.Collections.Generic.Dictionary<int*int,CompositeCell>) =
@@ -44,7 +51,7 @@ module rec ArcTableAux =
         
     // TODO: Move to CompositeHeader?
     /// Returns the column index of the duplicate unique column in `existingHeaders`.
-    let inline tryFindDuplicateUnique (newHeader: CompositeHeader) (existingHeaders: seq<CompositeHeader>) = 
+    let tryFindDuplicateUnique (newHeader: CompositeHeader) (existingHeaders: seq<CompositeHeader>) = 
         match newHeader with
         | IsUniqueExistingHeader existingHeaders index -> Some index
         | _ -> None
@@ -171,7 +178,7 @@ type ArcTable =
         let forceReplace = Option.defaultValue false forceReplace
         // sanity checks
         ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
-        CompositeColumn.create(header, cells).validate(true) |> ignore
+        ArcTableAux.SanityChecks.validateColumn(CompositeColumn.create(header, cells))
         // 
         let nextHeaders, nextBody =
             this.Values 
@@ -180,13 +187,16 @@ type ArcTable =
             ||> ArcTableAux.extendBodyCells
         { this with ValueHeaders = nextHeaders; Values = nextBody }
 
+    static member addColumn (header: CompositeHeader) (cells: CompositeCell []) (index: int option) (table:ArcTable) =
+        table.AddColumn(header, cells, ?index = index)
+
     member this.AddColumns (columns: CompositeColumn [], ?index: int, ?forceReplace: bool) = 
         let mutable index = Option.defaultValue this.ColumnCount index
         let forceReplace = Option.defaultValue false forceReplace
         // sanity checks
         ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
         ArcTableAux.SanityChecks.validateNoDuplicateUniqueColumns columns
-        columns |> Array.iter (fun x -> x.validate(true) |> ignore)
+        columns |> Array.iter (fun x -> ArcTableAux.SanityChecks.validateColumn x)
         //
         let rec recInsertColumn i headers body = 
             let c = columns.[i]
@@ -200,11 +210,76 @@ type ArcTable =
             ||> ArcTableAux.extendBodyCells
         { this with ValueHeaders = nextHeaders; Values = nextBody }
         
-    static member addColumn (header: CompositeHeader) (cells: CompositeCell []) (index: int option) (table:ArcTable) =
-        table.AddColumn(header, cells, ?index = index)
-
     static member addColumns (columns: CompositeColumn []) (index: int option) (table:ArcTable) =
         table.AddColumns(columns, ?index = index)
+
+    member this.GetColumn(index:int) =
+        ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
+        let h = this.ValueHeaders.[index]
+        let cells = 
+            this.Values |> Seq.choose (fun x -> 
+                match x.Key with
+                | col, i when col = index -> Some (i, x.Value)
+                | _ -> None
+            )
+            |> Seq.sortBy fst
+            |> Seq.map snd
+            |> Array.ofSeq
+        CompositeColumn.create(h, cells)
+
+    static member getColumn (index:int) (table:ArcTable) = table.GetColumn(index)
+
+    member this.SetColumn (index:int, column:CompositeColumn) =
+        ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
+        ArcTableAux.SanityChecks.validateColumn(column)
+        /// remove to be replaced header, this is only used to check if any OTHER header is of the same unique type as column.Header
+        let otherHeaders = this.ValueHeaders |> Array.removeAt index
+        ArcTableAux.SanityChecks.validateNoDuplicateUnique column.Header otherHeaders
+        let nextHeader = 
+            // create clone of array
+            let nc = this.ValueHeaders |> Array.copy
+            nc.[index] <- column.Header
+            nc
+        let nextBody =
+            // create clone of dictionary
+            let nb = System.Collections.Generic.Dictionary(this.Values)
+            column.Cells |> Array.iteri (fun i v -> nb.[(index,i)] <- v)
+            nb
+        {
+            this with
+                ValueHeaders = nextHeader
+                Values = nextBody
+        }
+
+    static member setColumn (index:int) (column:CompositeColumn) (table:ArcTable) = table.SetColumn(index, column)
+        
+    member this.SetHeader (index:int, newHeader: CompositeHeader, ?forceConvertCells: bool) =
+        let forceConvertCells = Option.defaultValue false forceConvertCells
+        ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
+        /// remove to be replaced header, this is only used to check if any OTHER header is of the same unique type as column.Header
+        let otherHeaders = this.ValueHeaders |> Array.removeAt index
+        ArcTableAux.SanityChecks.validateNoDuplicateUnique newHeader otherHeaders
+        // Test if column is still valid with new header
+        let c = { this.GetColumn(index) with Header = newHeader }
+        if c.validate() then
+            let nextHeaders = 
+                // create clone of array
+                let h = this.ValueHeaders |> Array.copy
+                h.[index] <- newHeader
+                h
+            { this with ValueHeaders = nextHeaders }
+        // if we force convert cells, we want to convert the existing cells to a valid cell type for the new header
+        elif forceConvertCells then
+            let convertedCells =
+                match newHeader with
+                | isTerm when newHeader.IsTermColumn -> c.Cells |> Array.map (fun c -> c.ToTermCell())
+                | _ -> c.Cells |> Array.map (fun c -> c.ToFreeTextCell())
+            let newColumn = CompositeColumn.create(newHeader,convertedCells)
+            this.SetColumn(index, newColumn)
+        else
+            failwith "Tried setting header for column with invalid type of cells. Set `forceConvertCells` flag to automatically convert cells into valid CompositeCell type."
+
+    static member setHeader (index:int) (header:CompositeHeader) (table:ArcTable) = table.SetHeader(index, header)
 
     static member insertParameterValue (t : ArcTable) (p : ProcessParameterValue) : ArcTable = 
         raise (System.NotImplementedException())

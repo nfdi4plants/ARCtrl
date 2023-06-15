@@ -12,60 +12,60 @@ let private tests_cellConverter =
     testList "CellConverter" [
         testCase "FreeText toFreeText" (fun () ->
             let currentCell : CompositeCell = CompositeCell.FreeText "path/to/input"
-            let asNewCell : CompositeCell = currentCell.toFreeTextCell()
+            let asNewCell : CompositeCell = currentCell.ToFreeTextCell()
             let expected = currentCell
             Expect.equal asNewCell expected ""
         )
         testCase "FreeText toTerm" (fun () ->
             let currentCell : CompositeCell = CompositeCell.FreeText "path/to/input"
-            let asNewCell : CompositeCell = currentCell.toTermCell()
+            let asNewCell : CompositeCell = currentCell.ToTermCell()
             let expected = CompositeCell.Term <| OntologyAnnotation.fromString "path/to/input"
             Expect.equal asNewCell expected ""
         )
         testCase "FreeText toUnitized" (fun () ->
             let currentCell : CompositeCell = CompositeCell.FreeText "path/to/input"
-            let asNewCell : CompositeCell = currentCell.toUnitizedCell()
+            let asNewCell : CompositeCell = currentCell.ToUnitizedCell()
             let expected = CompositeCell.Unitized <| ("", OntologyAnnotation.fromString "path/to/input")
             Expect.equal asNewCell expected ""
         )
         testCase "Term toFreeText" (fun () ->
             let oa = OntologyAnnotation.fromString("instrument model", "MS", "MS:000000042")
             let currentCell : CompositeCell = CompositeCell.Term oa
-            let asNewCell : CompositeCell = currentCell.toFreeTextCell()
+            let asNewCell : CompositeCell = currentCell.ToFreeTextCell()
             let expected = CompositeCell.FreeText oa.NameText
             Expect.equal asNewCell expected ""
         )
         testCase "Term toTerm" (fun () ->
             let currentCell : CompositeCell = CompositeCell.Term <| OntologyAnnotation.fromString("instrument model", "MS", "MS:000000042")
-            let asNewCell : CompositeCell = currentCell.toTermCell()
+            let asNewCell : CompositeCell = currentCell.ToTermCell()
             let expected = currentCell
             Expect.equal asNewCell expected ""
         )
         testCase "Term toUnitized" (fun () ->
             let oa = OntologyAnnotation.fromString("instrument model", "MS", "MS:000000042")
             let currentCell : CompositeCell = CompositeCell.Term oa
-            let asNewCell : CompositeCell = currentCell.toUnitizedCell()
+            let asNewCell : CompositeCell = currentCell.ToUnitizedCell()
             let expected = CompositeCell.Unitized <| ("", oa)
             Expect.equal asNewCell expected ""
         )
         testCase "Unitized toFreeText" (fun () ->
             let oa = OntologyAnnotation.fromString("degree celsius", "UO", "UO:000000042")
             let currentCell : CompositeCell = CompositeCell.Unitized <| ("42", oa)
-            let asNewCell : CompositeCell = currentCell.toFreeTextCell()
+            let asNewCell : CompositeCell = currentCell.ToFreeTextCell()
             let expected = CompositeCell.FreeText oa.NameText
             Expect.equal asNewCell expected ""
         )
         testCase "Unitized toTerm" (fun () ->
             let oa = OntologyAnnotation.fromString("degree celsius", "UO", "UO:000000042")
             let currentCell : CompositeCell = CompositeCell.Unitized <| ("42", oa)
-            let asNewCell : CompositeCell = currentCell.toTermCell()
+            let asNewCell : CompositeCell = currentCell.ToTermCell()
             let expected = CompositeCell.Term <| oa
             Expect.equal asNewCell expected ""
         )
         testCase "Unitized toUnitized" (fun () ->
             let oa = OntologyAnnotation.fromString("degree celsius", "UO", "UO:000000042")
             let currentCell : CompositeCell = CompositeCell.Unitized <| ("42", oa)
-            let asNewCell : CompositeCell = currentCell.toUnitizedCell()
+            let asNewCell : CompositeCell = currentCell.ToUnitizedCell()
             let expected = currentCell
             Expect.equal asNewCell expected ""
         )
