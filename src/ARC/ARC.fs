@@ -62,25 +62,31 @@ type ARC =
         raise (System.NotImplementedException())
 
 
-    ///// Add assay folder to the ARC.FileSystem and update the ARC.ISA with the new assay metadata
-    //static member addAssay (assay : ISA.Assay) (studyIdentifier : string) (arc : ARC) : ARC = 
+    /// Add assay folder to the ARC.FileSystem and update the ARC.ISA with the new assay metadata
+    static member addAssay (assay : ISA.Assay) (studyIdentifier : string) (arc : ARC) : ARC = 
   
-    //    //// Assay add
-    //    // create spreadsheet assays/AssayName/isa.assay.xlsx  
-    //    // create text assays/AssayName/dataset/.gitkeep 
-    //    // create text assays/AssayName/dataset/Readme.md
-    //    // create text assays/AssayName/protocols/.gitkeep 
-    //    // update spreadsheet isa.investigation.xlsx
+        // - Contracts - //
+        // create spreadsheet assays/AssayName/isa.assay.xlsx  
+        // create text assays/AssayName/dataset/.gitkeep 
+        // create text assays/AssayName/dataset/Readme.md
+        // create text assays/AssayName/protocols/.gitkeep 
+        // update spreadsheet isa.investigation.xlsx
 
-    //    let assayFolderPath = Path.combineAssayFolderPath assay
-    //    let assaySubFolderPaths = Path.combineAssaySubfolderPaths assay
-    //    let assayReadmeFilePath = Path.combine assayFolderPath Path.assayReadmeFileName
-    //    let updatedInvestigation = Investigation.addAssay assay studyIdentifier arc.ISA
+        // - ISA - //
+        let assayFolderPath = Path.combineAssayFolderPath assay
+        let assaySubFolderPaths = Path.combineAssaySubfolderPaths assay
+        let assayReadmeFilePath = Path.combine assayFolderPath Path.assayReadmeFileName
+        let updatedInvestigation = ArcInvestigation.addAssay assay studyIdentifier arc.ISA
 
-    //    ARC.addFolder assayFolderPath arc // Create assay root folder in ARC.FileSystem
-    //    |> ARC.addEmptyFolders assaySubFolderPaths // Create assay subfolders in ARC.FileSystem
-    //    |> ARC.addFile assayReadmeFilePath // Create assay readme file in ARC.FileSystem
-    //    |> ARC.updateISA updatedInvestigation // Update ARC.ISA with the updated investigation
+        // - FileSystem - //
+        // Create assay root folder in ARC.FileSystem
+        ARC.addFolder assayFolderPath arc 
+        // Create assay subfolders in ARC.FileSystem
+        |> ARC.addEmptyFolders assaySubFolderPaths 
+        // Create assay readme file in ARC.FileSystem
+        |> ARC.addFile assayReadmeFilePath 
+        // Update ARC.ISA with the updated investigation
+        |> ARC.updateISA updatedInvestigation 
 
     // to-do: we need a function that generates only create contracts from a ARC data model. 
     // reason: contracts are initially designed to sync disk with in-memory model while working on the arc.

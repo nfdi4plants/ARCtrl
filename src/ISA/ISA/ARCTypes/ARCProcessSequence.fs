@@ -1,3 +1,3 @@
 ﻿namespace ISA
 
-type ARCProcessSequence = ArcTable list
+type ArcProcessSequence = ArcTable list
