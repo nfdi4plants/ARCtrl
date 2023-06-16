@@ -110,11 +110,13 @@ module ActivePatterns =
             |> Some
         | _ -> None
 
+    /// Matches a "Unit" column header.
     let (|Unit|_|) input = 
         match input with
         | Regex Pattern.UnitPattern _ -> Some()
          | _ -> None
 
+    /// Matches a "Parameter [Term]" or "Parameter Value [Term]" column header and returns the Term string.
     let (|Parameter|_|) input = 
         match input with
         | TermColumn r ->
@@ -124,6 +126,7 @@ module ActivePatterns =
             | _ -> None
         | _ -> None
 
+    /// Matches a "Factor [Term]" or "Factor Value [Term]" column header and returns the Term string.
     let (|Factor|_|) input = 
         match input with
         | TermColumn r ->
@@ -133,6 +136,7 @@ module ActivePatterns =
             | _ -> None
         | _ -> None
 
+    /// Matches a "Characteristic [Term]" or "Characteristics [Term]" or "Characteristics Value [Term]" column header and returns the Term string.
     let (|Characteristic|_|) input = 
         match input with
         | TermColumn r ->
@@ -143,6 +147,11 @@ module ActivePatterns =
             | _ -> None
         | _ -> None
 
+    /// Matches a term string (either short or URI) and returns the term source ref and the annotation number strings.
+    /// 
+    /// Example 1: "MS:1003022" --> term source ref: "MS"; annotation number: "1003022"
+    ///
+    /// Example 2: "http://purl.obolibrary.org/obo/MS_1003022" --> term source ref: "MS"; annotation number: "1003022"
     let (|TermAnnotation|_|) input =
         match input with
         | Regex Pattern.TermAnnotationShortPattern value 
@@ -155,7 +164,10 @@ module ActivePatterns =
         | _ ->
             None
 
-    let (|TermSourceRef|_|) input = 
+    /// Matches a "Term Source REF (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
+    ///
+    /// Example: "Term Source REF (MS:1003022)" --> term source ref: "MS"; annotation number: "1003022"
+    let (|TermSourceREF|_|) input = 
         match input with
         | Regex Pattern.TermSourceREFColumnPattern r ->
             match r.Groups.["id"].Value with
@@ -163,6 +175,9 @@ module ActivePatterns =
             | _ -> None
          | _ -> None
 
+    /// Matches a "Term Accession Number (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
+    ///
+    /// Example: "Term Accession Number (MS:1003022)" --> term source ref: "MS"; annotation number: "1003022"
     let (|TermAccessionNumber|_|) input = 
         match input with
         | Regex Pattern.TermAccessionNumberColumnPattern r ->
@@ -171,12 +186,14 @@ module ActivePatterns =
             | _ -> None
          | _ -> None
 
+    /// Matches a "Input [InputType]" column header and returns the InputType as string.
     let (|Input|_|) input = 
         match input with
         | Regex Pattern.InputPattern r ->
             Some r.Groups.["iotype"].Value          
          | _ -> None
 
+    /// Matches a "Output [OutputType]" column header and returns the OutputType as string.
     let (|Output|_|) input =
         match input with
         | Regex Pattern.OutputPattern r ->
@@ -246,3 +263,76 @@ let tryParseIOTypeHeader (headerStr: string) =
         Some numberFormat
     | _ ->
         None
+        
+/// Matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
+let tryParseTermColumn input = 
+    match input with
+    | TermColumn r -> Some r
+    | _ -> None
+
+
+
+
+/// Matches a "Unit" column header.
+let tryParseUnit input = 
+    match input with
+    | Unit r -> Some r
+    | _ -> None
+
+/// Matches a "Parameter [Term]" or "Parameter Value [Term]" column header and returns the Term string.
+let tryParseParameter input = 
+    match input with
+    | Parameter r -> Some r
+    | _ -> None
+
+/// Matches a "Factor [Term]" or "Factor Value [Term]" column header and returns the Term string.
+let tryParseFactor input = 
+    match input with
+    | Factor r -> Some r
+    | _ -> None
+
+/// Matches a "Characteristic [Term]" or "Characteristics [Term]" or "Characteristics Value [Term]" column header and returns the Term string.
+let tryParseCharacteristic input = 
+    match input with
+    | Characteristic r -> Some r
+    | _ -> None
+
+/// Matches a term string (either short or URI) and returns the term source ref and the annotation number strings.
+/// 
+/// Example 1: "MS:1003022" --> term source ref: "MS"; annotation number: "1003022"
+///
+/// Example 2: "http://purl.obolibrary.org/obo/MS_1003022" --> term source ref: "MS"; annotation number: "1003022"
+//let tryParseTermAnnotation input = 
+//    match input with
+//    | TermAnnotation r -> Some r
+//    | _ -> None
+
+/// Matches a "Term Source REF (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
+///
+/// Example: "Term Source REF (MS:1003022)" --> term source ref: "MS"; annotation number: "1003022"
+let tryParseTermSourceREF input = 
+    match input with
+    | TermSourceREF r -> Some r
+    | _ -> None
+
+/// Matches a "Term Accession Number (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
+///
+/// Example: "Term Accession Number (MS:1003022)" --> term source ref: "MS"; annotation number: "1003022"
+let tryParseTermAccessionNumber input = 
+    match input with
+    | TermAccessionNumber r -> Some r
+    | _ -> None
+
+/// Matches a "Input [InputType]" column header and returns the InputType as string.
+let tryParseInput input =
+    match input with
+    | Input r -> Some r
+    | _ -> None
+
+
+/// Matches a "Output [OutputType]" column header and returns the OutputType as string.
+let tryParseOutput input =
+    match input with
+    | Output r -> Some r
+    | _ -> None
+

@@ -77,7 +77,7 @@ type OntologyAnnotation =
         let termAccession = 
             if tan.IsSome then
                 let termAccessionString = tan.Value
-                let regexResult = Regex.tryGetTermAccessionString termAccessionString
+                let regexResult = Regex.tryGetTermAnnotationShortString termAccessionString
                 regexResult 
                 |> Option.defaultValue termAccessionString
                 |> Some 
@@ -92,9 +92,9 @@ type OntologyAnnotation =
             (comments)
 
     /// Will always be created without `OntologyAnnotion.Name`
-    static member fromTermAccession (termAccession : string) =
-        termAccession
-        |> Regex.tryParseTermAccession
+    static member fromTermAnnotation (termAnnotation : string) =
+        termAnnotation
+        |> Regex.tryParseTermAnnotation
         |> Option.get 
         |> fun r ->
             let accession = r.IdSpace + ":" + r.LocalId
@@ -104,7 +104,7 @@ type OntologyAnnotation =
     ///
     /// If `TermAccessionString` cannot be parsed to this format, returns empty string!
     member this.TermAccessionShort = 
-        match Regex.tryGetTermAccessionString this.TermAccessionString with
+        match Regex.tryGetTermAnnotationShortString this.TermAccessionString with
         | Some s -> s
         | None -> ""
 
@@ -113,7 +113,7 @@ type OntologyAnnotation =
         | Some tsr, Some tan ->
             OntologyAnnotation.createUriAnnotation tsr tan
         | None, Some tan ->
-            match Regex.tryParseTermAccession tan with 
+            match Regex.tryParseTermAnnotation tan with 
             | Some termAccession -> OntologyAnnotation.createUriAnnotation termAccession.IdSpace termAccession.LocalId
             | None -> ""
         | _ -> ""

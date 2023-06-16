@@ -183,7 +183,7 @@ type CompositeHeader =
         match this with | ProtocolType -> true | anythingElse -> false
 
     /// <summary>
-    /// This function sets the associated term accession for featured columns. 
+    /// This function gets the associated term accession for featured columns. 
     /// 
     /// It contains the hardcoded term accessions.
     /// </summary>
@@ -191,6 +191,18 @@ type CompositeHeader =
         match this with
         | ProtocolType -> "DPBO:1000161"
         | anyelse -> failwith $"Tried matching {anyelse} in getFeaturedColumnAccession, but is not a featured column."
+
+    /// <summary>
+    /// This function gets the associated term accession for term columns. 
+    /// </summary>
+    member this.GetColumnAccessionShort =
+        match this with
+        | ProtocolType -> this.GetFeaturedColumnAccession
+        | Parameter oa -> oa.TermAccessionShort
+        | Factor oa -> oa.TermAccessionShort
+        | Characteristic oa -> oa.TermAccessionShort
+        | Component oa -> oa.TermAccessionShort
+        | anyelse -> failwith $"Tried matching {anyelse}, but is not a column with an accession."
 
     /// <summary>
     /// Is true if the Building Block type is parsed to a single column. 
