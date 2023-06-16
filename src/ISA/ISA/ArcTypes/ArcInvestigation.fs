@@ -5,11 +5,28 @@ open Fable.Core
 [<AttachMembers>]
 type ArcInvestigation = 
 
-    {Studies : Study array option}
+    {
+        ID : URI option
+        FileName : string option
+        Identifier : string option
+        Title : string option
+        Description : string option
+        SubmissionDate : string option
+        PublicReleaseDate : string option
+        OntologySourceReferences : OntologySourceReference list option
+        Publications : Publication list option
+        Contacts : Person list option
+        Studies : ARCStudy list option
+        Comments : Comment list option
+        Remarks     : Remark list
+    }
+
+    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list option) (publications : Publication list option) (contacts : Person list option) (studies : ARCStudy list option) (comments : Comment list option) (remarks : Remark list) : ARCInvestigation =
+        {ID = id; FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
     [<NamedParams>]
-    static member create (?Studies : Study []) = 
-        {Studies = Studies}
+    static member create (?Id : URI, ?FileName : string, ?Identifier : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ARCStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ARCInvestigation =
+        ARCInvestigation.make Id FileName Identifier Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
 
     static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
         raise (System.NotImplementedException())
