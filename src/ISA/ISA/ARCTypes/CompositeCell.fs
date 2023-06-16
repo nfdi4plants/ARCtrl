@@ -67,3 +67,9 @@ type CompositeCell =
     static member emptyTerm = Term OntologyAnnotation.empty
     static member emptyFreeText = FreeText ""
     static member emptyUnitized = Unitized ("", OntologyAnnotation.empty)
+
+    override this.ToString() = 
+        match this with
+        | Term oa -> $"Term{oa.NameText}"
+        | FreeText s -> s
+        | Unitized (v,oa) -> $"{v} {oa.NameText}"

@@ -204,7 +204,7 @@ let private tests_addColumn =
                 table.AddColumn(header)
                 Expect.equal table.RowCount 0 "RowCount = 0"
                 Expect.equal table.ColumnCount 1 "ColumnCount = 1"
-                Expect.equal table.ValueHeaders.[0] header "header"
+                Expect.equal table.Headers.[0] header "header"
             )
             testCase "term column, no cells" (fun () ->
                 let table = create_table()
@@ -212,7 +212,7 @@ let private tests_addColumn =
                 table.AddColumn(header)
                 Expect.equal table.RowCount 0 "RowCount = 0"
                 Expect.equal table.ColumnCount 1 "ColumnCount = 1"
-                Expect.equal table.ValueHeaders.[0] header "header"
+                Expect.equal table.Headers.[0] header "header"
             )
             testCase "IO column, with cells" (fun () ->
                 let table = create_table()
@@ -221,7 +221,7 @@ let private tests_addColumn =
                 table.AddColumn(header, cells)
                 Expect.equal table.RowCount 5 "RowCount"
                 Expect.equal table.ColumnCount 1 "ColumnCount"
-                Expect.equal table.ValueHeaders.[0] header "header"
+                Expect.equal table.Headers.[0] header "header"
                 let expected = 
                     let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
                     System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
@@ -234,7 +234,7 @@ let private tests_addColumn =
                 table.AddColumn(header, cells)
                 Expect.equal table.RowCount 5 "RowCount"
                 Expect.equal table.ColumnCount 1 "ColumnCount"
-                Expect.equal table.ValueHeaders.[0] header "header"
+                Expect.equal table.Headers.[0] header "header"
                 let expected = 
                     let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
                     System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
@@ -302,8 +302,8 @@ let private tests_addColumn =
                 table.AddColumn(header_chara, createCells_chara 5)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
-                Expect.equal table.ValueHeaders.[0] header_input "Header 0"
-                Expect.equal table.ValueHeaders.[1] header_chara "Header 1"
+                Expect.equal table.Headers.[0] header_input "Header 0"
+                Expect.equal table.Headers.[1] header_chara "Header 1"
             )
             testCase "add less rows" (fun () ->
                 let table = create_table()
@@ -311,8 +311,8 @@ let private tests_addColumn =
                 table.AddColumn(header_chara, cells)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
-                Expect.equal table.ValueHeaders.[0] header_input "Header 0"
-                Expect.equal table.ValueHeaders.[1] header_chara "Header 1"
+                Expect.equal table.Headers.[0] header_input "Header 0"
+                Expect.equal table.Headers.[1] header_chara "Header 1"
                 let expected = 
                     Array.init 5 (fun i -> 
                         let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
@@ -327,8 +327,8 @@ let private tests_addColumn =
                 table.AddColumn(header_chara, cells)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 8 "RowCount"
-                Expect.equal table.ValueHeaders.[0] header_input "Header 0"
-                Expect.equal table.ValueHeaders.[1] header_chara "Header 1"
+                Expect.equal table.Headers.[0] header_input "Header 0"
+                Expect.equal table.Headers.[1] header_chara "Header 1"
                 let expected_chara = Array.init 8 (fun i -> System.Collections.Generic.KeyValuePair((1,i), CompositeCell.createTerm oa_chlamy))
                 let expected_io = 
                     Array.init 8 (fun i -> 
@@ -345,8 +345,8 @@ let private tests_addColumn =
                 table.AddColumn(header_chara, cells, 0)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
-                Expect.equal table.ValueHeaders.[0] header_chara "Header chara"
-                Expect.equal table.ValueHeaders.[1] header_input "Header io"
+                Expect.equal table.Headers.[0] header_chara "Header chara"
+                Expect.equal table.Headers.[1] header_input "Header io"
             )
             testCase "add less rows, insert at" (fun () ->
                 let table = create_table()
@@ -356,8 +356,8 @@ let private tests_addColumn =
                 System.IO.File.WriteAllLines(@"C:\Users\Kevin\Desktop\test.txt", printable)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
-                Expect.equal table.ValueHeaders.[0] header_chara "Header chara"
-                Expect.equal table.ValueHeaders.[1] header_input "Header io"
+                Expect.equal table.Headers.[0] header_chara "Header chara"
+                Expect.equal table.Headers.[1] header_input "Header io"
                 let expected = 
                     Array.init 5 (fun i -> 
                         let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
@@ -372,8 +372,8 @@ let private tests_addColumn =
                 table.AddColumn(header_chara, cells, 0)
                 Expect.equal table.ColumnCount 2 "ColumnCount"
                 Expect.equal table.RowCount 8 "RowCount"
-                Expect.equal table.ValueHeaders.[0] header_chara "Header chara"
-                Expect.equal table.ValueHeaders.[1] header_input "Header io"
+                Expect.equal table.Headers.[0] header_chara "Header chara"
+                Expect.equal table.Headers.[1] header_input "Header io"
                 let expected_chara = Array.init 8 (fun i -> System.Collections.Generic.KeyValuePair((0,i), CompositeCell.createTerm oa_chlamy))
                 let expected_io = 
                     Array.init 8 (fun i -> 
@@ -396,7 +396,7 @@ let private tests_addColumn =
                 table.AddColumn(newHeader, createCells_freetext "NewInput" 5, forceReplace=true)
                 Expect.equal table.ColumnCount 1 "ColumnCount"
                 Expect.equal table.RowCount 5 "RowCount"
-                Expect.equal table.ValueHeaders.[0] newHeader "Header"
+                Expect.equal table.Headers.[0] newHeader "Header"
             )
             testCase "add more rows, replace input, replace" (fun () ->
                 let table = create_table()
@@ -404,7 +404,7 @@ let private tests_addColumn =
                 table.AddColumn(newHeader, createCells_freetext "NewInput" 8, forceReplace=true)
                 Expect.equal table.ColumnCount 1 "ColumnCount"
                 Expect.equal table.RowCount 8 "RowCount"
-                Expect.equal table.ValueHeaders.[0] newHeader "Header"
+                Expect.equal table.Headers.[0] newHeader "Header"
             )
             testCase "add less rows, replace input, replace" (fun () ->
                 let table = create_table()
@@ -412,7 +412,7 @@ let private tests_addColumn =
                 table.AddColumn(newHeader, createCells_freetext "NewInput" 2, forceReplace=true)
                 Expect.equal table.ColumnCount 1 "ColumnCount"
                 Expect.equal table.RowCount 2 "RowCount"
-                Expect.equal table.ValueHeaders.[0] newHeader "Header"
+                Expect.equal table.Headers.[0] newHeader "Header"
             )
         ]
     ]
@@ -432,8 +432,8 @@ let private test_addColumns =
                 table.AddColumns(columns)
                 Expect.equal table.RowCount 0 "RowCount"
                 Expect.equal table.ColumnCount 2 "ColumnCount"
-                Expect.equal table.ValueHeaders.[0] column_0.Header "header0"
-                Expect.equal table.ValueHeaders.[1] column_1.Header "header1"
+                Expect.equal table.Headers.[0] column_0.Header "header0"
+                Expect.equal table.Headers.[1] column_1.Header "header1"
             )
             testCase "multiple columns, no cells" (fun () ->
                 let table = create_table()
@@ -451,11 +451,11 @@ let private test_addColumns =
                 table.AddColumns(columns)
                 Expect.equal table.RowCount 0 "RowCount"
                 Expect.equal table.ColumnCount 5 "ColumnCount"
-                Expect.equal table.ValueHeaders.[0] column_0.Header "header0"
-                Expect.equal table.ValueHeaders.[1] column_1.Header "header1"
-                Expect.equal table.ValueHeaders.[2] column_2.Header "header2"
-                Expect.equal table.ValueHeaders.[3] column_3.Header "header3"
-                Expect.equal table.ValueHeaders.[4] column_3.Header "header4"
+                Expect.equal table.Headers.[0] column_0.Header "header0"
+                Expect.equal table.Headers.[1] column_1.Header "header1"
+                Expect.equal table.Headers.[2] column_2.Header "header2"
+                Expect.equal table.Headers.[3] column_3.Header "header3"
+                Expect.equal table.Headers.[4] column_3.Header "header4"
             )
             testCase "multiple input, no cells, should throw" (fun () ->
                 let table = create_table()
@@ -515,11 +515,11 @@ let private test_addColumns =
                 table.AddColumns(columns, 0)
                 Expect.equal table.RowCount 0 "RowCount"
                 Expect.equal table.ColumnCount 5 "ColumnCount"
-                Expect.equal table.ValueHeaders.[0] column_0.Header "header0"
-                Expect.equal table.ValueHeaders.[1] column_1.Header "header1"
-                Expect.equal table.ValueHeaders.[2] column_2.Header "header2"
-                Expect.equal table.ValueHeaders.[3] column_3.Header "header3"
-                Expect.equal table.ValueHeaders.[4] column_3.Header "header4"
+                Expect.equal table.Headers.[0] column_0.Header "header0"
+                Expect.equal table.Headers.[1] column_1.Header "header1"
+                Expect.equal table.Headers.[2] column_2.Header "header2"
+                Expect.equal table.Headers.[3] column_3.Header "header3"
+                Expect.equal table.Headers.[4] column_3.Header "header4"
             )
         ]
         testList "To Table, no cells" [
@@ -543,11 +543,11 @@ let private test_addColumns =
                 let testTable = create_testTable() 
                 Expect.equal testTable.RowCount 0 "RowCount"
                 Expect.equal testTable.ColumnCount 5 "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
             )
             testCase "multiple columns" (fun () ->
                 let table = create_testTable() 
@@ -562,15 +562,15 @@ let private test_addColumns =
                 let expected_ColumnCount = table.ColumnCount + 4
                 Expect.equal table.RowCount expected_RowCount "RowCount"
                 Expect.equal table.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal table.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal table.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
-                Expect.equal table.ValueHeaders.[5] column_param.Header "header4"
-                Expect.equal table.ValueHeaders.[6] column_param.Header "header4"
-                Expect.equal table.ValueHeaders.[7] column_param.Header "header4"
-                Expect.equal table.ValueHeaders.[8] column_param.Header "header4"
+                Expect.equal table.Headers.[0] column_input.Header "header0"
+                Expect.equal table.Headers.[1] column_output.Header "header1"
+                Expect.equal table.Headers.[2] column_component.Header "header2"
+                Expect.equal table.Headers.[3] column_param.Header "header3"
+                Expect.equal table.Headers.[4] column_param.Header "header4"
+                Expect.equal table.Headers.[5] column_param.Header "header4"
+                Expect.equal table.Headers.[6] column_param.Header "header4"
+                Expect.equal table.Headers.[7] column_param.Header "header4"
+                Expect.equal table.Headers.[8] column_param.Header "header4"
             )
             testCase "multiple columns, duplicate input, throws" (fun () ->
                 let testTable = create_testTable() 
@@ -607,14 +607,14 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + 3
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[5] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[5] column_param.Header "header4"
+                Expect.equal testTable.Headers.[6] column_param.Header "header4"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
             )
             testCase "multiple columns, duplicate output, force replace" (fun () ->
                 let testTable = create_testTable() 
@@ -629,14 +629,14 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + 3
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[5] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[5] column_param.Header "header4"
+                Expect.equal testTable.Headers.[6] column_param.Header "header4"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
             )
             testCase "multiple columns, insert at index" (fun () ->
                 let testTable = create_testTable() 
@@ -651,15 +651,15 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + 4
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[4] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[5] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[6] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[8] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[0] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[1] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header4"
+                Expect.equal testTable.Headers.[4] column_input.Header "header0"
+                Expect.equal testTable.Headers.[5] column_output.Header "header1"
+                Expect.equal testTable.Headers.[6] column_component.Header "header2"
+                Expect.equal testTable.Headers.[7] column_param.Header "header3"
+                Expect.equal testTable.Headers.[8] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] column_param.Header "header4"
             )
             testCase "multiple columns, insert at index2" (fun () ->
                 let testTable = create_testTable() 
@@ -674,15 +674,15 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + 4
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[6] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[8] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[5] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[6] column_component.Header "header2"
+                Expect.equal testTable.Headers.[7] column_param.Header "header3"
+                Expect.equal testTable.Headers.[8] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] column_param.Header "header4"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[5] column_param.Header "header4"
             )
             testCase "multiple columns, insert at index, duplicate output, force replace" (fun () ->
                 let testTable = create_testTable() 
@@ -697,14 +697,14 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + 3
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[3] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[4] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[5] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[0] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[1] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] column_input.Header "header0"
+                Expect.equal testTable.Headers.[4] column_output.Header "header1"
+                Expect.equal testTable.Headers.[5] column_component.Header "header2"
+                Expect.equal testTable.Headers.[6] column_param.Header "header3"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
             )
             testCase "multiple columns, insert at index2, duplicate output, force replace" (fun () ->
                 let testTable = create_testTable() 
@@ -719,14 +719,14 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + 3
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[5] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[5] column_component.Header "header2"
+                Expect.equal testTable.Headers.[6] column_param.Header "header3"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] column_param.Header "header4"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
             )
         ]
         testList "To Table with cells" [
@@ -763,11 +763,11 @@ let private test_addColumns =
                 let testTable = create_testTable() 
                 Expect.equal testTable.RowCount 5 "RowCount"
                 Expect.equal testTable.ColumnCount 5 "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
             )
@@ -784,17 +784,17 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
-                Expect.equal testTable.ValueHeaders.[5] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[8] column_param.Header "header4"
+                Expect.equal testTable.Headers.[5] column_param.Header "header4"
+                Expect.equal testTable.Headers.[6] column_param.Header "header4"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[8] column_param.Header "header4"
                 Expect.equal testTable.Values.[8,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 8,4"
             )
             testCase "multiple columns, same rowCount, insert at" (fun () ->
@@ -810,17 +810,17 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[4] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[5] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[6] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[8] column_param.Header "header4"
+                Expect.equal testTable.Headers.[4] column_input.Header "header0"
+                Expect.equal testTable.Headers.[5] column_output.Header "header1"
+                Expect.equal testTable.Headers.[6] column_component.Header "header2"
+                Expect.equal testTable.Headers.[7] column_param.Header "header3"
+                Expect.equal testTable.Headers.[8] column_param.Header "header4"
                 Expect.equal testTable.Values.[4,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
                 Expect.equal testTable.Values.[8,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
-                Expect.equal testTable.ValueHeaders.[0] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[1] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] column_param.Header "header4"
                 Expect.equal testTable.Values.[3,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 8,4"
             )
             testCase "multiple columns, same rowCount, duplicate throw" (fun () ->
@@ -848,16 +848,16 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length - 1
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] newInputCol.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] newInputCol.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "NEW_0") "cell 0,0"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
-                Expect.equal testTable.ValueHeaders.[5] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[5] column_param.Header "header4"
+                Expect.equal testTable.Headers.[6] column_param.Header "header4"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
                 Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 7,4"
             )
             testCase "multiple columns, same rowCount, duplicate replace, insert at" (fun () ->
@@ -874,16 +874,16 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length - 1
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[3] newInputCol.Header "header0"
-                Expect.equal testTable.ValueHeaders.[4] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[5] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] newInputCol.Header "header0"
+                Expect.equal testTable.Headers.[4] column_output.Header "header1"
+                Expect.equal testTable.Headers.[5] column_component.Header "header2"
+                Expect.equal testTable.Headers.[6] column_param.Header "header3"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
                 Expect.equal testTable.Values.[3,0] (CompositeCell.FreeText "NEW_0") "cell 0,0"
                 Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
-                Expect.equal testTable.ValueHeaders.[0] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[1] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
                 Expect.equal testTable.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 7,4"
             )
             testCase "multiple columns, same rowCount, duplicate replace, insert at2" (fun () ->
@@ -900,16 +900,16 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length - 1
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] newInputCol.Header "header0"
+                Expect.equal testTable.Headers.[0] newInputCol.Header "header0"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "NEW_0") "cell 0,0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[5] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[6] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[7] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[5] column_component.Header "header2"
+                Expect.equal testTable.Headers.[6] column_param.Header "header3"
+                Expect.equal testTable.Headers.[7] column_param.Header "header4"
                 Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 7,4"
-                Expect.equal testTable.ValueHeaders.[2] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header4"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[2] column_param.Header "header4"
+                Expect.equal testTable.Headers.[3] column_param.Header "header4"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
             )
             testCase "multiple columns, less rowCount" (fun () ->
@@ -926,17 +926,17 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
-                Expect.equal testTable.ValueHeaders.[5] newColumn.Header "header5"
-                Expect.equal testTable.ValueHeaders.[6] newColumn.Header "header6"
-                Expect.equal testTable.ValueHeaders.[7] newColumn.Header "header7"
-                Expect.equal testTable.ValueHeaders.[8] newColumn.Header "header8"
+                Expect.equal testTable.Headers.[5] newColumn.Header "header5"
+                Expect.equal testTable.Headers.[6] newColumn.Header "header6"
+                Expect.equal testTable.Headers.[7] newColumn.Header "header7"
+                Expect.equal testTable.Headers.[8] newColumn.Header "header8"
                 Expect.equal testTable.Values.[8,4] (CompositeCell.emptyTerm) "cell 8,4"
             )
             testCase "multiple columns, more rowCount" (fun () ->
@@ -953,19 +953,19 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
+                Expect.equal testTable.Headers.[0] column_input.Header "header0"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
                 Expect.equal testTable.Values.[0,7] (CompositeCell.emptyFreeText) "cell 0,7"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
                 Expect.equal testTable.Values.[4,7] (CompositeCell.emptyUnitized) "cell 4,7"
-                Expect.equal testTable.ValueHeaders.[5] newColumn.Header "header5"
-                Expect.equal testTable.ValueHeaders.[6] newColumn.Header "header6"
-                Expect.equal testTable.ValueHeaders.[7] newColumn.Header "header7"
-                Expect.equal testTable.ValueHeaders.[8] newColumn.Header "header8"
+                Expect.equal testTable.Headers.[5] newColumn.Header "header5"
+                Expect.equal testTable.Headers.[6] newColumn.Header "header6"
+                Expect.equal testTable.Headers.[7] newColumn.Header "header7"
+                Expect.equal testTable.Headers.[8] newColumn.Header "header8"
                 Expect.equal testTable.Values.[8,7] (newColumn.Cells.[0]) "cell 8,7"
             )
             testCase "multiple columns, more rowCount, duplicate replace" (fun () ->
@@ -983,18 +983,18 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length - 1
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] newInput.Header "header0"
+                Expect.equal testTable.Headers.[0] newInput.Header "header0"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "NEW_0") "cell 0,0"
                 Expect.equal testTable.Values.[0,7] (CompositeCell.FreeText "NEW_7") "cell 0,7"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
                 Expect.equal testTable.Values.[4,7] (CompositeCell.emptyUnitized) "cell 4,7"
-                Expect.equal testTable.ValueHeaders.[5] newColumn.Header "header5"
-                Expect.equal testTable.ValueHeaders.[6] newColumn.Header "header6"
-                Expect.equal testTable.ValueHeaders.[7] newColumn.Header "header7"
+                Expect.equal testTable.Headers.[5] newColumn.Header "header5"
+                Expect.equal testTable.Headers.[6] newColumn.Header "header6"
+                Expect.equal testTable.Headers.[7] newColumn.Header "header7"
                 Expect.equal testTable.Values.[7,7] (newColumn.Cells.[0]) "cell 7,7"
             )
             testCase "multiple columns, different rowCount, duplicate replace" (fun () ->
@@ -1012,18 +1012,18 @@ let private test_addColumns =
                 let expected_ColumnCount = testTable.ColumnCount + columns.Length - 1
                 Expect.equal testTable.RowCount expected_RowCount "RowCount"
                 Expect.equal testTable.ColumnCount expected_ColumnCount "ColumnCount"
-                Expect.equal testTable.ValueHeaders.[0] newInput.Header "header0"
+                Expect.equal testTable.Headers.[0] newInput.Header "header0"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "NEW_0") "cell 0,0"
                 Expect.equal testTable.Values.[0,7] (CompositeCell.emptyFreeText) "cell 0,7"
-                Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-                Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-                Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-                Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+                Expect.equal testTable.Headers.[1] column_output.Header "header1"
+                Expect.equal testTable.Headers.[2] column_component.Header "header2"
+                Expect.equal testTable.Headers.[3] column_param.Header "header3"
+                Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
                 Expect.equal testTable.Values.[4,7] (CompositeCell.emptyUnitized) "cell 4,7"
-                Expect.equal testTable.ValueHeaders.[5] newColumn.Header "header5"
-                Expect.equal testTable.ValueHeaders.[6] newColumn.Header "header6"
-                Expect.equal testTable.ValueHeaders.[7] newColumn.Header "header7"
+                Expect.equal testTable.Headers.[5] newColumn.Header "header5"
+                Expect.equal testTable.Headers.[6] newColumn.Header "header6"
+                Expect.equal testTable.Headers.[7] newColumn.Header "header7"
                 Expect.equal testTable.Values.[7,7] (newColumn.Cells.[0]) "cell 7,7"
             )
         ]
@@ -1064,12 +1064,12 @@ let private test_setHeader =
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
             Expect.equal testTable.ColumnCount 5 "ColumnCount"
-            Expect.equal testTable.ValueHeaders.[0] column_input.Header "header0"
+            Expect.equal testTable.Headers.[0] column_input.Header "header0"
             Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-            Expect.equal testTable.ValueHeaders.[1] column_output.Header "header1"
-            Expect.equal testTable.ValueHeaders.[2] column_component.Header "header2"
-            Expect.equal testTable.ValueHeaders.[3] column_param.Header "header3"
-            Expect.equal testTable.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal testTable.Headers.[1] column_output.Header "header1"
+            Expect.equal testTable.Headers.[2] column_component.Header "header2"
+            Expect.equal testTable.Headers.[3] column_param.Header "header3"
+            Expect.equal testTable.Headers.[4] column_param.Header "header4"
             Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
         )
         testCase "set outside of range" (fun () ->
@@ -1093,11 +1093,11 @@ let private test_setHeader =
             table.SetHeader(0, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
-            Expect.equal table.ValueHeaders.[0] newHeader "header0"
-            Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
-            Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
-            Expect.equal table.ValueHeaders.[3] column_param.Header "header3"
-            Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal table.Headers.[0] newHeader "header0"
+            Expect.equal table.Headers.[1] column_output.Header "header1"
+            Expect.equal table.Headers.[2] column_component.Header "header2"
+            Expect.equal table.Headers.[3] column_param.Header "header3"
+            Expect.equal table.Headers.[4] column_param.Header "header4"
             Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
             Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
         )
@@ -1107,12 +1107,12 @@ let private test_setHeader =
             table.SetHeader(0, newHeader, true)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
-            Expect.equal table.ValueHeaders.[0] newHeader "header0"
+            Expect.equal table.Headers.[0] newHeader "header0"
             Expect.equal table.Values.[0,0] (CompositeCell.createTermFromString "Source_0") "cell 0,0"
-            Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
-            Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
-            Expect.equal table.ValueHeaders.[3] column_param.Header "header3"
-            Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal table.Headers.[1] column_output.Header "header1"
+            Expect.equal table.Headers.[2] column_component.Header "header2"
+            Expect.equal table.Headers.[3] column_param.Header "header3"
+            Expect.equal table.Headers.[4] column_param.Header "header4"
             Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
         )
         testCase "set valid" (fun () ->
@@ -1121,13 +1121,13 @@ let private test_setHeader =
             table.SetHeader(3, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
-            Expect.equal table.ValueHeaders.[0] column_input.Header "header0"
+            Expect.equal table.Headers.[0] column_input.Header "header0"
             Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-            Expect.equal table.ValueHeaders.[1] column_output.Header "header1"
-            Expect.equal table.ValueHeaders.[2] column_component.Header "header2"
-            Expect.equal table.ValueHeaders.[3] newHeader "header3"
+            Expect.equal table.Headers.[1] column_output.Header "header1"
+            Expect.equal table.Headers.[2] column_component.Header "header2"
+            Expect.equal table.Headers.[3] newHeader "header3"
             Expect.equal table.Values.[3,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 3,4"
-            Expect.equal table.ValueHeaders.[4] column_param.Header "header4"
+            Expect.equal table.Headers.[4] column_param.Header "header4"
             Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
         )
     ]
