@@ -5,7 +5,7 @@ open Comment
 open Remark
 open System.Collections.Generic
 
-module Study = 
+module Studies = 
 
     let identifierLabel = "Study Identifier"
     let titleLabel = "Study Title"
@@ -71,7 +71,7 @@ module Study =
                 comments
 
 
-        static member ToSparseTable (study: Study) =
+        static member ToSparseTable (study: ARCStudy) =
             let i = 1
             let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
@@ -99,13 +99,13 @@ module Study =
             SparseTable.FromRows(rows,StudyInfo.Labels,lineNumber)
             |> fun (s,ln,rs,sm) -> (s,ln,rs, StudyInfo.FromSparseTable sm)
     
-        static member toRows (study : Study) =  
+        static member toRows (study : ARCStudy) =  
             study
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
     
-    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays protocols contacts =
-        Study.make 
+    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays (protocols : Protocol list) contacts =
+        ARCStudy.make 
             None 
             (Option.fromValueWithDefault "" studyInfo.FileName)
             (Option.fromValueWithDefault "" studyInfo.Identifier)
@@ -116,9 +116,8 @@ module Study =
             (Option.fromValueWithDefault [] publications)
             (Option.fromValueWithDefault [] contacts)
             (Option.fromValueWithDefault [] designDescriptors) 
-            (Option.fromValueWithDefault [] protocols)
-            None
             None 
+            (Option.fromValueWithDefault [] protocols |> Option.map (List.map ArcTable.fromProtocol))
             (Option.fromValueWithDefault [] assays)
             (Option.fromValueWithDefault [] factors) 
             None 
@@ -162,7 +161,8 @@ module Study =
         loop currentLine item [] [] [] [] [] [] remarks lineNumber
 
     
-    let toRows (study : Study) =
+    let toRows (study : ARCStudy) =
+        let protocols = study.Sheets |> Option.defaultValue [] |> List.collect (fun p -> p |> ArcTable.getProtocols)
         seq {          
             yield! StudyInfo.toRows study
 
@@ -179,7 +179,7 @@ module Study =
             yield! Assays.toRows (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
 
             yield  SparseRow.fromValues[protocolsLabel]
-            yield! Protocols.toRows (Some protocolsLabelPrefix) (Option.defaultValue [] study.Protocols)
+            yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
             yield  SparseRow.fromValues[contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)

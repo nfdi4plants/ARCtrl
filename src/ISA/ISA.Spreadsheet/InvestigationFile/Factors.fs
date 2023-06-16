@@ -15,7 +15,7 @@ module Factors =
     let labels = [nameLabel;factorTypeLabel;typeTermAccessionNumberLabel;typeTermSourceREFLabel]
     
     let fromString name designType typeTermSourceREF typeTermAccessionNumber comments =
-        let factorType = OntologyAnnotation.fromString designType typeTermSourceREF typeTermAccessionNumber
+        let factorType = OntologyAnnotation.fromString(designType,typeTermSourceREF,typeTermAccessionNumber)
         Factor.make 
             None 
             (Option.fromValueWithDefault "" name) 
@@ -45,11 +45,11 @@ module Factors =
         factors
         |> List.iteri (fun i f ->
             let i = i + 1
-            let factorType,source,accession = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let ft = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
-            do matrix.Matrix.Add ((factorTypeLabel,i),              factorType)
-            do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), accession)
-            do matrix.Matrix.Add ((typeTermSourceREFLabel,i),       source)
+            do matrix.Matrix.Add ((factorTypeLabel,i),              ft.TermName)
+            do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), ft.TermAccessionNumber)
+            do matrix.Matrix.Add ((typeTermSourceREFLabel,i),       ft.TermSourceREF)
 
             match f.Comments with 
             | None -> ()

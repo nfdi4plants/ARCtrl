@@ -30,7 +30,7 @@ module Protocols =
         ]
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
-        let protocolType = OntologyAnnotation.fromString protocolType typeTermSourceREF typeTermAccessionNumber
+        let protocolType = OntologyAnnotation.fromString(protocolType,typeTermSourceREF,typeTermAccessionNumber)
         let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
@@ -79,24 +79,24 @@ module Protocols =
         protocols
         |> List.iteri (fun i p ->
             let i = i + 1
-            let protocolType,protocolSource,protocolAccession = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
-            let parameterType,parameterSource,parameterAccession = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
-            let componentName,componentType,componentSource,componentAccession = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
+            let pt = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let pAgg = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
+            let cAgg = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 
             do matrix.Matrix.Add ((nameLabel,i),                                (Option.defaultValue "" p.Name))
-            do matrix.Matrix.Add ((protocolTypeLabel,i),                        protocolType)
-            do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i),             protocolAccession)
-            do matrix.Matrix.Add ((typeTermSourceREFLabel,i),                   protocolSource)
+            do matrix.Matrix.Add ((protocolTypeLabel,i),                        pt.TermName)
+            do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i),             pt.TermAccessionNumber)
+            do matrix.Matrix.Add ((typeTermSourceREFLabel,i),                   pt.TermSourceREF)
             do matrix.Matrix.Add ((descriptionLabel,i),                         (Option.defaultValue "" p.Description))
             do matrix.Matrix.Add ((uriLabel,i),                                 (Option.defaultValue "" p.Uri))
             do matrix.Matrix.Add ((versionLabel,i),                             (Option.defaultValue "" p.Version))
-            do matrix.Matrix.Add ((parametersNameLabel,i),                      parameterType)
-            do matrix.Matrix.Add ((parametersTermAccessionNumberLabel,i),       parameterAccession)
-            do matrix.Matrix.Add ((parametersTermSourceREFLabel,i),             parameterSource)
-            do matrix.Matrix.Add ((componentsNameLabel,i),                      componentName)
-            do matrix.Matrix.Add ((componentsTypeLabel,i),                      componentType)
-            do matrix.Matrix.Add ((componentsTypeTermAccessionNumberLabel,i),   componentAccession)
-            do matrix.Matrix.Add ((componentsTypeTermSourceREFLabel,i),         componentSource)
+            do matrix.Matrix.Add ((parametersNameLabel,i),                      pAgg.TermNameAgg)
+            do matrix.Matrix.Add ((parametersTermAccessionNumberLabel,i),       pAgg.TermAccessionNumberAgg)
+            do matrix.Matrix.Add ((parametersTermSourceREFLabel,i),             pAgg.TermSourceREFAgg)
+            do matrix.Matrix.Add ((componentsNameLabel,i),                      cAgg.NameAgg)
+            do matrix.Matrix.Add ((componentsTypeLabel,i),                      cAgg.TermNameAgg)
+            do matrix.Matrix.Add ((componentsTypeTermAccessionNumberLabel,i),   cAgg.TermAccessionNumberAgg)
+            do matrix.Matrix.Add ((componentsTypeTermSourceREFLabel,i),         cAgg.TermSourceREFAgg)
 
             match p.Comments with 
             | None -> ()

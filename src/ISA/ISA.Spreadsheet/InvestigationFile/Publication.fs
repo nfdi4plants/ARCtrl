@@ -18,7 +18,7 @@ module Publications =
     let labels = [pubMedIDLabel;doiLabel;authorListLabel;titleLabel;statusLabel;statusTermAccessionNumberLabel;statusTermSourceREFLabel]
 
     let fromString pubMedID doi author title status statusTermSourceREF statursTermAccessionNumber comments =
-        let status = OntologyAnnotation.fromString status statusTermSourceREF statursTermAccessionNumber
+        let status = OntologyAnnotation.fromString(status,statusTermSourceREF,statursTermAccessionNumber)
         Publication.make 
             (Option.fromValueWithDefault "" pubMedID |> Option.map URI.fromString)
             (Option.fromValueWithDefault "" doi)
@@ -53,14 +53,14 @@ module Publications =
         publications
         |> List.iteri (fun i p ->
             let i = i + 1
-            let status,source,accession = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
+            let s = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
             do matrix.Matrix.Add ((authorListLabel,i),                  (Option.defaultValue "" p.Authors))
             do matrix.Matrix.Add ((titleLabel,i),                       (Option.defaultValue "" p.Title))
-            do matrix.Matrix.Add ((statusLabel,i),                      status)
-            do matrix.Matrix.Add ((statusTermAccessionNumberLabel,i),   accession)
-            do matrix.Matrix.Add ((statusTermSourceREFLabel,i),         source)
+            do matrix.Matrix.Add ((statusLabel,i),                      s.TermName)
+            do matrix.Matrix.Add ((statusTermAccessionNumberLabel,i),   s.TermAccessionNumber)
+            do matrix.Matrix.Add ((statusTermSourceREFLabel,i),         s.TermSourceREF)
 
             match p.Comments with 
             | None -> ()

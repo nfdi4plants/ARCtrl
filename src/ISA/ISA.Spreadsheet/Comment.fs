@@ -20,7 +20,7 @@ module Comment =
         )
    
     let wrapCommentKey k = 
-        sprintf "Comment[<%s>]" k
+        sprintf "Comment[%s]" k
 
     let fromString k v =
         Comment.make 

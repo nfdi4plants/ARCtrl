@@ -1,7 +1,7 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
+
 
 module internal Option =
  
@@ -44,20 +44,22 @@ module OntologyAnnotation =
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
-            Array.map3 OntologyAnnotation.fromString terms sources accessions
+            Array.map3 (fun a b c -> OntologyAnnotation.fromString(a,b,c)) terms sources accessions
             |> Array.toList
 
     /// Returns the aggregated ISATab OntologyAnnotation Name, ontology source and Accession number from a list of ISAJson OntologyAnnotation objects
     let toAggregatedStrings (separator:char) (oas : OntologyAnnotation list) =
-        if oas = [] then "","",""
+        if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}
         else
             oas
             |> List.map OntologyAnnotation.toString
-            |> List.reduce (fun (terms, sources, accessions) (term, source, accession) -> 
-                sprintf "%s%c%s" terms      separator term,
-                sprintf "%s%c%s" sources    separator source,
-                sprintf "%s%c%s" accessions separator accession
-            ) 
+            |> List.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
+                
+                sprintf "%s%c%s" nameAgg    separator term.TermName,
+                sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
+                sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
+            ) ("","","")
+            |> fun (nameAgg,tsrAgg,tanAgg) -> {|TermNameAgg = nameAgg; TermAccessionNumberAgg = tanAgg; TermSourceREFAgg = tsrAgg|}
 
 module Component = 
         
@@ -70,21 +72,22 @@ module Component =
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
-            Array.map4 Component.fromString names terms sources accessions
+            Array.map4 (fun a b c d -> Component.fromString(a,b,c,d)) names terms sources accessions
             |> Array.toList
 
     /// Returns the aggregated ISATAb Component Name, Ontology Annotation value, Accession number and ontology source from a list of ISAJson Component objects
     let toAggregatedStrings (separator:char) (cs : Component list) =
-        if cs = [] then "","","",""
+        if cs = [] then {|NameAgg = ""; TermNameAgg = "";  TermAccessionNumberAgg = "";  TermSourceREFAgg = ""; |}
         else
             cs
             |> List.map Component.toString
-            |> List.reduce (fun (names,terms, sources, accessions) (name,term, source, accession) -> 
-                sprintf "%s%c%s" names      separator name,
-                sprintf "%s%c%s" terms      separator term,
-                sprintf "%s%c%s" sources    separator source,
-                sprintf "%s%c%s" accessions separator accession
-            ) 
+            |> List.fold (fun (nameAgg,termAgg,tsrAgg,tanAgg) (name,term) ->     
+                sprintf "%s%c%s" nameAgg    separator name,
+                sprintf "%s%c%s" termAgg    separator term.TermName,
+                sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
+                sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
+            ) ("","","","")
+            |> fun (nameAgg,termAgg,tsrAgg,tanAgg) -> {|NameAgg = nameAgg; TermNameAgg = termAgg; TermAccessionNumberAgg = tanAgg; TermSourceREFAgg = tsrAgg|}
 
 module ProtocolParameter =
 
@@ -95,14 +98,16 @@ module ProtocolParameter =
 
     /// Returns the aggregated ISATAb Ontology Annotation value, Accession number and ontology source from a list of ISAJson ProtocolParameter objects
     let toAggregatedStrings (separator:char) (oas : ProtocolParameter list) =
-        if oas = [] then "","",""
+        if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}
         else
             oas
             |> List.map ProtocolParameter.toString
-            |> List.reduce (fun (terms, sources, accessions) (term, source, accession) -> 
-                sprintf "%s%c%s" terms      separator term,
-                sprintf "%s%c%s" sources    separator source,
-                sprintf "%s%c%s" accessions separator accession
-            ) 
+            |> List.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
+                
+                sprintf "%s%c%s" nameAgg    separator term.TermName,
+                sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
+                sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
+            ) ("","","")
+            |> fun (nameAgg,tsrAgg,tanAgg) -> {|TermNameAgg = nameAgg; TermAccessionNumberAgg = tanAgg; TermSourceREFAgg = tsrAgg|}
 
     

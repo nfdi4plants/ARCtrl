@@ -1,6 +1,7 @@
 namespace ISA.Spreadsheet
 
 open ISA
+open FsSpreadsheet
 open Comment
 open Remark
 open System.Collections.Generic
@@ -63,7 +64,7 @@ module Investigation =
                 comments
 
 
-        static member ToSparseTable (investigation: Investigation) =
+        static member ToSparseTable (investigation: ARCInvestigation) =
             let i = 1
             let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=2)
             let mutable commentKeys = []
@@ -91,13 +92,13 @@ module Investigation =
             SparseTable.FromRows(rows,InvestigationInfo.Labels,lineNumber)
             |> fun (s,ln,rs,sm) -> (s,ln,rs, InvestigationInfo.FromSparseTable sm)    
     
-        static member toRows (investigation : Investigation) =  
+        static member toRows (investigation : ARCInvestigation) =  
             investigation
             |> InvestigationInfo.ToSparseTable
             |> SparseTable.ToRows
  
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
-        Investigation.make 
+        ARCInvestigation.make 
             None 
             None 
             (Option.fromValueWithDefault "" investigationInfo.Identifier)
@@ -138,8 +139,8 @@ module Investigation =
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = studyLabel -> 
-                let currentLine,lineNumber,newRemarks,study = Study.fromRows (lineNumber + 1) en  
-                if study = Study.empty then
+                let currentLine,lineNumber,newRemarks,study = Studies.fromRows (lineNumber + 1) en  
+                if study.isEmpty then
                     loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
                 else 
                     loop currentLine ontologySourceReferences investigationInfo publications contacts (study::studies) (List.append remarks newRemarks) lineNumber
@@ -155,7 +156,7 @@ module Investigation =
             failwith "emptyInvestigationFile"
  
    
-    let toRows (investigation:Investigation) : seq<SparseRow> =
+    let toRows (investigation:ARCInvestigation) : seq<SparseRow> =
         let insertRemarks (remarks:Remark list) (rows:seq<SparseRow>) = 
             try 
                 let rm = remarks |> List.map Remark.toTuple |> Map.ofList            
@@ -185,102 +186,30 @@ module Investigation =
             yield  SparseRow.fromValues[contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
-            for study in (Option.defaultValue [Study.empty] investigation.Studies) do
+            for study in (Option.defaultValue [ARCStudy.create()] investigation.Studies) do
                 yield  SparseRow.fromValues[studyLabel]
-                yield! Study.toRows study
+                yield! Studies.toRows study
         }
         |> insertRemarks investigation.Remarks        
         |> seq
 
-    // Diesen Block durch JS ersetzen ----> 
-
-    /// Creates a new row from the given values.
-    let ofSparseValues rowIndex (vals : 'T option seq) =
-        let spans = Row.Spans.fromBoundaries 1u (Seq.length vals |> uint)
-        vals
-        |> Seq.mapi (fun i value -> 
-            value
-            |> Option.map (Cell.fromValue None (i + 1 |> uint) rowIndex)
-        )
-        |> Seq.choose id
-        |> Row.create rowIndex spans 
-
-    let fromSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) =  
+    let fromFsWorkbook (doc:FsWorkbook) =  
         try
-            doc
-            |> Spreadsheet.getRowsBySheetIndex 0u
-            |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            doc.GetWorksheets()
+            |> List.head
+            |> FsWorksheet.getRows
+            |> Seq.map SparseRow.fromFsRow
             |> fromRows 
         with
         | err -> failwithf "Could not read investigation from spreadsheet: %s" err.Message
 
-    let fromFile (path : string) =
+    let toFsWorkbook (investigation:ARCInvestigation) : FsWorkbook =           
         try
-            let doc = Spreadsheet.fromFile path false
-            try
-                fromSpreadsheet doc
-            finally
-                doc.Close()
-        with
-        | err -> failwithf "Could not read investigation from file with path \"%s\": %s" path err.Message
-
-    let fromStream (stream : System.IO.Stream) =
-        try
-            let doc = Spreadsheet.fromStream stream false
-            try
-                fromSpreadsheet doc
-            finally
-                doc.Close()
-        with
-        | err -> failwithf "Could not read investion from stream: %s" err.Message
-
-    let fromBytes (bytes : byte []) =
-        use memoryStream = new System.IO.MemoryStream(bytes)
-        fromStream memoryStream
-
-    let toSpreadsheet (doc:DocumentFormat.OpenXml.Packaging.SpreadsheetDocument) (investigation:Investigation) =           
-        try
-            let sheet = Spreadsheet.tryGetSheetBySheetIndex 0u doc |> Option.get
-
+            let wb = new FsWorkbook()
+            let sheet = FsWorksheet("Investigation")
             investigation
             |> toRows
-            |> Seq.mapi (fun i row -> 
-                row
-                |> SparseRow.getAllValues
-                |> ofSparseValues (i+1 |> uint)
-                )
-            |> Seq.fold (fun s r -> 
-                SheetData.appendRow r s
-            ) sheet
-            |> ignore
+            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet rowI r sheet)                     
+            wb
         with
         | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message
-
-    let toFile (path : string) (investigation:Investigation) =
-        try
-            let doc = Spreadsheet.initWithSst "isa_investigation" path
-            try 
-                toSpreadsheet doc investigation
-            finally
-                doc.Close()
-        with
-        | err -> failwithf "Could not write investigation to file with path \"%s\": %s" path err.Message
-
-    let toStream (stream : System.IO.Stream) (investigation:Investigation) =
-        try
-            let doc = FsSpreadsheet.ExcelIO.Spreadsheet.initWithSstOnStream "isa_investigation" stream 
-            try
-                toSpreadsheet doc investigation
-
-                FsSpreadsheet.ExcelIO.Spreadsheet.saveChanges doc |> ignore
-            finally
-                doc.Close()
-        with
-        | err -> failwithf "Could not write investion to stream: %s" err.Message
-
-    let toBytes (investigation) =
-        use memoryStream = new System.IO.MemoryStream()
-        toStream memoryStream investigation
-        memoryStream.ToArray()
-
-    // ---->  Bis hier

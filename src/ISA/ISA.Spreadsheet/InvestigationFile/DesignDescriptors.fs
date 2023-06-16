@@ -22,11 +22,12 @@ module DesignDescriptors =
                 |> List.map (fun k -> 
                     Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            OntologyAnnotation.fromStringWithComments
-                (matrix.TryGetValueDefault("",(designTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i)))
+            OntologyAnnotation.fromString(
+                (matrix.TryGetValueDefault("",(designTypeLabel,i))),
+                (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i))),
+                (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i))),
                 comments
+            )
         )
 
     let toSparseTable (designs: OntologyAnnotation list) =
@@ -35,10 +36,10 @@ module DesignDescriptors =
         designs
         |> List.iteri (fun i d ->
             let i = i + 1
-            let name,source,accession = OntologyAnnotation.toString d
-            do matrix.Matrix.Add ((designTypeLabel,i),                      name)
-            do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   accession)
-            do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         source)
+            let oa = OntologyAnnotation.toString d
+            do matrix.Matrix.Add ((designTypeLabel,i),                      oa.TermName)
+            do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   oa.TermAccessionNumber)
+            do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         oa.TermSourceREF)
 
             match d.Comments with 
             | None -> ()

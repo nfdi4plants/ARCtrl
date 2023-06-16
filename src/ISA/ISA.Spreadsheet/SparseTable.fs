@@ -1,8 +1,11 @@
 namespace ISA.Spreadsheet
 
 open ISA
+open ISA.Aux
 open System.Collections.Generic
 open FsSpreadsheet.DSL
+open FsSpreadsheet
+
 
 type SparseRow = (int * string) seq
 
@@ -21,6 +24,10 @@ module SparseRow =
         let max = i |> Seq.maxBy fst |> fst
         Seq.init (max + 1) (fun i -> Map.tryFind i m)
 
+    let fromFsRow (r : FsRow) = 
+        r.Cells
+        |> Seq.map (fun c -> c.ColumnNumber, c.Value)
+
     let tryGetValueAt i (vs : SparseRow) =
         vs 
         |> Seq.tryPick (fun (index,v) -> if index = i then Option.Some v else None)
@@ -33,6 +40,15 @@ module SparseRow =
                 | Option.Some v -> cell {v}
                 | None -> cell {""}
         }
+        
+    let readFromSheet (sheet : FsWorksheet) =
+        let rows = sheet.Rows |> Seq.map fromFsRow
+        rows
+
+    let writeToSheet (rowI : int) (row : SparseRow) (sheet : FsWorksheet) =
+        let fsRow = sheet.Row(rowI)
+        row
+        |> Seq.iter (fun (colI,v) -> fsRow.[colI].SetValueAs v)
 
 type SparseTable = 
 

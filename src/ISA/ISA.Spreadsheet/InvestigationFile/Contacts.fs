@@ -64,7 +64,7 @@ module Contacts =
         persons
         |> List.iteri (fun i p ->
             let i = i + 1
-            let role,rolesTermSourceREF,rolesTermAccessionNumber = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
+            let rAgg = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
             do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
             do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))
             do matrix.Matrix.Add ((midInitialsLabel,i),                 (Option.defaultValue ""  p.MidInitials  ))
@@ -73,9 +73,9 @@ module Contacts =
             do matrix.Matrix.Add ((faxLabel,i),                         (Option.defaultValue ""  p.Fax          ))
             do matrix.Matrix.Add ((addressLabel,i),                     (Option.defaultValue ""  p.Address      ))
             do matrix.Matrix.Add ((affiliationLabel,i),                 (Option.defaultValue ""  p.Affiliation  ))
-            do matrix.Matrix.Add ((rolesLabel,i),                       role)  
-            do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rolesTermAccessionNumber)
-            do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rolesTermSourceREF)
+            do matrix.Matrix.Add ((rolesLabel,i),                       rAgg.TermNameAgg)  
+            do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rAgg.TermAccessionNumberAgg)
+            do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rAgg.TermSourceREFAgg)
 
             match p.Comments with 
             | None -> ()
