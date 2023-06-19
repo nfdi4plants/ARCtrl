@@ -105,6 +105,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA.Json.JsNativeTests", "I
 		tests\ISA\ISA.Json.JsNativeTests\Main.js = tests\ISA\ISA.Json.JsNativeTests\Main.js
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", "{0700099B-325C-4D5F-A143-F2A3D2671073}"
+	ProjectSection(SolutionItems) = preProject
+		playground\KevinF.fsx = playground\KevinF.fsx
+		playground\testScript.fsx = playground\testScript.fsx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
