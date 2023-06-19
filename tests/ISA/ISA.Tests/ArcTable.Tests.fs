@@ -1138,6 +1138,232 @@ let private tests_removeColumn =
         )
     ]
 
+
+let private tests_removeColumns = 
+    let TableName = "Test"
+    let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    let createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
+    let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
+    let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
+    let column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
+    let column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
+    /// Valid TestTable with 5 columns, 7 rows: 
+    ///
+    /// Input [Source] -> 5 cells: [Source_1; Source_2..]
+    ///
+    /// Output [Sample] -> 5 cells: [Sample_1; Sample_2..]
+    ///
+    /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]    
+    ///
+    /// Component [instrument model] -> 5 cells: [SCIEX instrument model; SCIEX instrument model; ..]
+    ///
+    /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]   
+    let create_testTable() = 
+        let t = ArcTable.init(TableName)
+        let columns = [|
+            column_input
+            column_output
+            column_param
+            column_component
+            column_param
+        |]
+        t.AddColumns(columns)
+        t
+    testList "removeColumns" [
+        testCase "ensure table" (fun () ->
+            let table = create_testTable()
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+        )
+        testCase "remove middle" (fun () ->
+            let table = create_testTable()
+            table.RemoveColumns([|1;2|])
+            Expect.equal table.ColumnCount 3 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString ("4")) "table.ColumnCount-1,table.RowCount-1"
+        )
+        testCase "remove first 2" (fun () ->
+            let table = create_testTable()
+            table.RemoveColumns([|0;1|])
+            Expect.equal table.ColumnCount 3 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitized ("4", OntologyAnnotation.empty)) "table.ColumnCount-1,table.RowCount-1"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString ("4")) "3,4"
+        )
+        testCase "remove last 2" (fun () ->
+            let table = create_testTable()
+            table.RemoveColumns([|3;4|])
+            Expect.equal table.ColumnCount 3 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitized ("4", OntologyAnnotation.empty)) "table.ColumnCount-1,table.RowCount-1"
+        )
+        // if indices are NOT managed correctly, the first one will be removed shifting column index -1. 
+        // This will result in an raised error trying to remove the last column, from an index which does not exist anymore
+        testCase "remove head first then last" (fun () ->
+            let table = create_testTable()
+            table.RemoveColumns([|0;table.ColumnCount-1|])
+            Expect.equal table.ColumnCount 3 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Sample_0") "0,0"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "table.ColumnCount-1,table.RowCount-1"
+        )
+    ]
+
+let private tests_removeRow = 
+    let TableName = "Test"
+    let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    let createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
+    let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
+    let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
+    let column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
+    let column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
+    /// Valid TestTable with 5 columns, 7 rows: 
+    ///
+    /// Input [Source] -> 5 cells: [Source_1; Source_2..]
+    ///
+    /// Output [Sample] -> 5 cells: [Sample_1; Sample_2..]
+    ///
+    /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]    
+    ///
+    /// Component [instrument model] -> 5 cells: [SCIEX instrument model; SCIEX instrument model; ..]
+    ///
+    /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]   
+    let create_testTable() = 
+        let t = ArcTable.init(TableName)
+        let columns = [|
+            column_input
+            column_output
+            column_param
+            column_component
+            column_param
+        |]
+        t.AddColumns(columns)
+        t
+    testList "removeRow" [
+        testCase "ensure table" (fun () ->
+            let table = create_testTable()
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+        )
+        testCase "remove middle" (fun () ->
+            let table = create_testTable()
+            table.RemoveRow(2)
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 4 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_1") "0,1"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_3") "0,2"
+            Expect.equal table.Values.[(0,3)] (CompositeCell.createFreeText "Source_4") "0,3"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString ("4")) "4,3"
+        )
+        testCase "remove first" (fun () ->
+            let table = create_testTable()
+            table.RemoveRow(0)
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 4 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_1") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_2") "0,1"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_3") "0,2"
+            Expect.equal table.Values.[(0,3)] (CompositeCell.createFreeText "Source_4") "0,3"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString "4") "4,3"
+        )
+        testCase "remove last" (fun () ->
+            let table = create_testTable()
+            table.RemoveRow(table.RowCount-1)
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 4 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_1") "0,1"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_2") "0,2"
+            Expect.equal table.Values.[(0,3)] (CompositeCell.createFreeText "Source_3") "0,3"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString "3") "4,3"
+        )
+    ]
+
+
+let private tests_removeRows = 
+    let TableName = "Test"
+    let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    let createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
+    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
+    let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
+    let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
+    let column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
+    let column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
+    /// Valid TestTable with 5 columns, 7 rows: 
+    ///
+    /// Input [Source] -> 5 cells: [Source_1; Source_2..]
+    ///
+    /// Output [Sample] -> 5 cells: [Sample_1; Sample_2..]
+    ///
+    /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]    
+    ///
+    /// Component [instrument model] -> 5 cells: [SCIEX instrument model; SCIEX instrument model; ..]
+    ///
+    /// Parameter [empty] -> 5 cells: [0, oa.empty; 1, oa.empty; 2, oa.empty ..]   
+    let create_testTable() = 
+        let t = ArcTable.init(TableName)
+        let columns = [|
+            column_input
+            column_output
+            column_param
+            column_component
+            column_param
+        |]
+        t.AddColumns(columns)
+        t
+    testList "removeRows" [
+        testCase "ensure table" (fun () ->
+            let table = create_testTable()
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+        )
+        testCase "remove middle" (fun () ->
+            let table = create_testTable()
+            table.RemoveRows([|1;2|])
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 3 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_3") "0,2"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_4") "0,3"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString ("4")) "4,2"
+        )
+        testCase "remove first 2" (fun () ->
+            let table = create_testTable()
+            table.RemoveRows([|0;1|])
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 3 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_2") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_3") "0,1"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_4") "0,2"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString "4") "4,2"
+        )
+        testCase "remove last 2" (fun () ->
+            let table = create_testTable()
+            table.RemoveRows([|3;4|])
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 3 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_1") "0,1"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_2") "0,2"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString "2") "4,2"
+        )
+        testCase "remove head first then last" (fun () ->
+            let table = create_testTable()
+            table.RemoveRows([|0;table.RowCount-1|])
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.RowCount 3 "RowCount"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_1") "0,0"
+            Expect.equal table.Values.[(0,1)] (CompositeCell.createFreeText "Source_2") "0,1"
+            Expect.equal table.Values.[(0,2)] (CompositeCell.createFreeText "Source_3") "0,2"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString "3") "4,2"
+        )
+    ]
+
 let private tests_setHeader = 
     testList "setHeader" [
         let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
@@ -1489,6 +1715,9 @@ let main =
         tests_addColumn
         tests_addColumns
         tests_removeColumn
+        tests_removeColumns
+        tests_removeRow
+        tests_removeRows
         tests_setHeader
         tests_setCell
         tests_setColumn
