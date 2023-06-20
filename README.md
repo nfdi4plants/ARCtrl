@@ -10,19 +10,22 @@ Top level ARC DataModel and API function descriptions.
   - [Design choices](#design-choices)
     - [Fable compatibility as top priority](#fable-compatibility-as-top-priority)
 
+## Sub-Libraries
 
-## Jargon/Nomenclature
+[ISA README.md](src/ISA/README.md) :books:
+
+# Jargon/Nomenclature
 
 In general, a distinction is made between `DataModel`s,  `API`s, and `Tools`:
 - `DataModel`s are the data structures which represent the ARC or it's respective parts in memory. They are serializable and can be used as data exchange format between tool implementations:
-  - `FileSystem.DataModel`: Represents the file system structure of an ARC. All files and their path relative to the arc root folder are contained here.
-  - `ISA.DataModel`: Represents the experimental metadata of the ARC that is stored in the ISA-XLSX format (investigation, studies and assays).
-  - `CWL.DataModel`: Represents the workflow definitions of the ARC in the CWL format.
+  - `FileSystem`: Represents the file system structure of an ARC. All files and their path relative to the arc root folder are contained here.
+  - `ISA`: Represents the experimental metadata of the ARC that is stored in the ISA-XLSX format (investigation, studies and assays).
+  - `CWL`: Represents the workflow definitions of the ARC in the CWL format.
 - `API`s are static methods on the `DataModel` types that perfrom operations on the `DataModel`s. Often, these are CRUD-like operations, and are aimed to be be composable. 
   
   **Example**: A `ARC.addAssay` function has to do several things:
-  - Add a new assay to the `ISA.DataModel`
-  - Add a new assay to the `FileSystem.DataModel`
+  - Add a new assay to the `ISA`
+  - Add a new assay to the `FileSystem`
   it should therefore combine the respective functions of `ISA API` and `FileSystem API` to achieve this.
 
 - `Tools` or `Clients` are user-facing software such as Swate, ARCitect, or the ARCCommander. They should ideally compose their functionality from the `API`s and work with an in-memory representation of the ARC via `DataModel`s. There are operations such as IO for reading/writing actual files to the file system, which are not part of the `API`s, but rather part of the `Tools`.
@@ -49,7 +52,7 @@ flowchart TD
 %% ----- Nodes ------
 
 
-subgraph ARC
+subgraph ARCtrl
     arc[ARC]
     
     subgraph ISA
@@ -104,7 +107,7 @@ end
 
 %% ----- Edges ------
 
-Tools --> ARC
+Tools --> ARCtrl
 
 arcdotnet --> fsspreadx
 arcdotnet --> systemio
@@ -135,7 +138,7 @@ style node fill:#C1AD09,stroke:#EFD81D,stroke-width:2px,color: black
 
 
 %% fable
-style ARC stroke:#007B00,stroke-width:2px
+style ARCtrl stroke:#007B00,stroke-width:2px
 style ISA stroke:#007B00,stroke-width:2px
 style FileSystem stroke:#007B00,stroke-width:2px
 style CWL stroke:#007B00,stroke-width:2px
@@ -156,15 +159,19 @@ style thoth fill:#39B539,stroke:#007B00,stroke-width:2px,color: black
 ```mermaid
 classDiagram 
 
-class arc["ARC"] {
+class arc["ARCtrl"] {
     ISA
     CWL
     FileSystem
 }
 class isa["ISA"] {
-    Investigation [Tab]
-    Studies [Tab]
-    Assays [Tab]
+    Investigation
+    Studies
+    Assays
+    ArcTable
+    CompositeColumn
+    CompositeHeader
+    CompositeCell
 }
 class file ["FileSystem"] {
     - FileSystemTree
@@ -174,13 +181,18 @@ class cwl["CWL"] {
     CommandlineTool?
     Workflows
 }
-
-arc <|-- isa
-arc <|-- cwl
-arc <|-- file
+class io["IO"] {
+    FsSpreadsheet.ExcelIO
+    System.IO
+    exceljs
+    node fs
+}
+io <|--|> arc : Contracts
+arc <|--|> isa
+arc <|--|> cwl
+arc <|--|> file
 
 ```
-
 
 # Libraries
 

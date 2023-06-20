@@ -19,21 +19,21 @@ let [<Literal>] assayReadmeFileName = "Readme.md"
 
 let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]
 
+let combineAssayFolderPath (assay : ISA.Assay) = 
+    //Assay.getIdentifier assay
+    //|> Path.combine assaysFolderName
+    raise (System.NotImplementedException())
 
-//let combineAssayFolderPath (assay : ISA.Assay) = 
-//    Assay.getIdentifier assay
-//    |> Path.combine assaysFolderName
+let combineAssayProtocolsFolderPath (assay : ISA.Assay) = 
+    let assayFolder = combineAssayFolderPath assay
+    Path.combine assayFolder assayProtocolsFolderName
 
-//let combineAssayProtocolsFolderPath (assay : ISA.Assay) = 
-//    let assayFolder = combineAssayFolderPath assay
-//    Path.combine assayFolder assayProtocolsFolderName
+let combineAssayDatasetFolderPath (assay : ISA.Assay) = 
+    let assayFolder = combineAssayFolderPath assay
+    Path.combine assayFolder assayDatasetFolderName
 
-//let combineAssayDatasetFolderPath (assay : ISA.Assay) = 
-//    let assayFolder = combineAssayFolderPath assay
-//    Path.combine assayFolder assayDatasetFolderName
-
-//let combineAssaySubfolderPaths (assay : ISA.Assay) = 
-//    let assayFolder = combineAssayFolderPath assay
-//    assaySubFolderNames
-//    |> Array.map (fun subfolderName -> Path.combine assayFolder subfolderName)
+let combineAssaySubfolderPaths (assay : ISA.Assay) = 
+    let assayFolder = combineAssayFolderPath assay
+    assaySubFolderNames
+    |> Array.map (fun subfolderName -> Path.combine assayFolder subfolderName)
 

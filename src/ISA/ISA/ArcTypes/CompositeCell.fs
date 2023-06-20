@@ -23,7 +23,7 @@ type CompositeCell =
     /// FreeText string will be converted to unit term name.
     ///
     /// Term will be converted to unit term.
-    member this.toUnitizedCell() =
+    member this.ToUnitizedCell() =
         match this with
         | Unitized _ -> this
         | FreeText text -> CompositeCell.Unitized ("", OntologyAnnotation.create(Name = AnnotationValue.Text text))
@@ -31,13 +31,13 @@ type CompositeCell =
     /// FreeText string will be converted to term name.
     ///
     /// Unit term will be converted to term and unit value is dropped.
-    member this.toTermCell() =
+    member this.ToTermCell() =
         match this with
         | Term _ -> this
         | Unitized (_,unit) -> CompositeCell.Term unit
         | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(Name = AnnotationValue.Text text))
     /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
-    member this.toFreeTextCell() =
+    member this.ToFreeTextCell() =
         match this with
         | FreeText _ -> this
         | Term term -> FreeText(term.NameText)
@@ -63,3 +63,13 @@ type CompositeCell =
     static member createUnitizedFromString (value: string, ?name: string, ?tsr: string, ?tan: string) = 
         Unitized <| (value, OntologyAnnotation.fromString(?term = name, ?tsr = tsr, ?tan = tan))
     static member createFreeText (value: string) = FreeText value
+    
+    static member emptyTerm = Term OntologyAnnotation.empty
+    static member emptyFreeText = FreeText ""
+    static member emptyUnitized = Unitized ("", OntologyAnnotation.empty)
+
+    override this.ToString() = 
+        match this with
+        | Term oa -> $"Term{oa.NameText}"
+        | FreeText s -> s
+        | Unitized (v,oa) -> $"{v} {oa.NameText}"

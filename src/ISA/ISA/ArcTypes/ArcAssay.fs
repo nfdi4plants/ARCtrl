@@ -5,7 +5,7 @@ open Fable.Core
 // "MyAssay"; "assays/MyAssay/isa.assay.xlsx"
 
 [<AttachMembers>]
-type ARCAssay = 
+type ArcAssay = 
 
     {(*Identifier: string; *)FileName : string option}
 

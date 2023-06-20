@@ -1,12 +1,9 @@
 ﻿namespace ISA.Aux
 
-open ISA
-
 module Dict = 
 
     open System.Collections.Generic
 
-    
     let ofSeq (s : seq<'Key*'T>) = 
         let dict = Dictionary()
         s
@@ -35,12 +32,10 @@ module Dict =
 open Fable.Core
 open Fable.Core.JsInterop
 
-
 module Update =
 
     open System
     open Microsoft.FSharp.Reflection
-
 
     module ValueOfGenericObj =
 
@@ -69,7 +64,7 @@ module Update =
     /// Get the type of the IEnumerable elements. E.g. for Array<'T> it would be 'T
     let isMapType (v:obj) =
         #if FABLE_COMPILER
-            Fable.isMap_generic v
+            ISA.Fable.isMap_generic v
         #else 
         let t = v.GetType()
         // Maps are IEnumerables but are not easily to append. TODO(?)
@@ -79,7 +74,7 @@ module Update =
 
     let isListType (v:obj) =
         #if FABLE_COMPILER
-            Fable.isList_generic v
+            ISA.Fable.isList_generic v
         #else 
         v.GetType().Name.StartsWith "FSharpList`1"
         #endif
@@ -110,7 +105,7 @@ module Update =
     /// This function accesses the append method of the list/array module and applies it accordingly to the element type.
     let inline appendGenericListsByType l1 l2 (t:Type) =
         #if FABLE_COMPILER
-            Fable.append_generic l1 l2
+            ISA.Fable.append_generic l1 l2
         #else
         let fieldT = l1.GetType()
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
@@ -125,7 +120,7 @@ module Update =
     /// This function accesses the distinct method of the list/array module and applies it accordingly to the element type.
     let inline distinctGenericList l1 (t:Type) =
         #if FABLE_COMPILER
-            Fable.distinct_generic l1
+            ISA.Fable.distinct_generic l1
         #else
         let fieldT = l1.GetType()
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
