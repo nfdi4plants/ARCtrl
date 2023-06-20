@@ -209,7 +209,8 @@ module ArcInvestigation =
             let sheet = FsWorksheet("Investigation")
             investigation
             |> toRows
-            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet rowI r sheet)                     
+            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
+            wb.AddWorksheet(sheet)
             wb
         with
         | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message

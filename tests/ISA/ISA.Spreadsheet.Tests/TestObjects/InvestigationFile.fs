@@ -6,8 +6,8 @@ open FsSpreadsheet
 let emptyInvestigation = 
     let wb = new FsWorkbook()
     let ws = 
-        wb.AddWorksheet("empty_isa.investigation - Copy")
-        wb.GetWorksheetByName("empty_isa.investigation - Copy")
+        wb.AddWorksheet("Investigation")
+        wb.GetWorksheetByName("Investigation")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ONTOLOGY SOURCE REFERENCE"
     let row2 = ws.Row(2)

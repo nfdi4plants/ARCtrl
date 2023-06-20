@@ -128,6 +128,9 @@ type ArcTable =
     member this.RowCount 
         with get() = ArcTableAux.getRowCount this.Values
 
+    member this.Columns 
+        with get() = [for i = 0 to this.ColumnCount do this.GetColumn(i)] 
+
     member this.Copy() : ArcTable = 
         ArcTable.create(
             this.Name,
@@ -377,13 +380,16 @@ type ArcTable =
     static member addProcess = 
         raise (System.NotImplementedException())
 
-    static member getProtocols (t : ArcTable) : Protocol [] = 
+    static member fromProtocol (p : Protocol) : ArcTable = 
         raise (System.NotImplementedException())
 
-    static member getProcesses (t : ArcTable) : Process [] = 
+    static member getProtocols (t : ArcTable) : Protocol list = 
         raise (System.NotImplementedException())
 
-    static member fromProcesses (ps : Process array) : ArcTable = 
+    static member getProcesses (t : ArcTable) : Process list = 
+        raise (System.NotImplementedException())
+
+    static member fromProcesses (ps : Process list) : ArcTable = 
         raise (System.NotImplementedException())
 
     override this.ToString() =
