@@ -111,8 +111,13 @@ module SanityChecks =
 
     let inline validateRowLength (newCells: seq<CompositeCell>) (columnCount: int) =
         let newCellsCount = newCells |> Seq.length
-        if newCellsCount <> columnCount then
+        match columnCount with
+        | 0 ->
+            failwith $"Table contains no columns! Cannot add row to empty table!"
+        | unequal when newCellsCount <> columnCount ->
             failwith $"Cannot add a new row with {newCellsCount} cells, as the table has {columnCount} columns."
+        | _ ->
+            ()
 
 module Unchecked =
         
