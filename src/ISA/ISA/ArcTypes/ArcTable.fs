@@ -125,7 +125,7 @@ module ArcTableAux =
 
     module Unchecked =
         
-        let tryGetCellAt (column: int,row: int) (cells:Dictionary<int*int,CompositeCell>) = Dictionary.tryFind (column, row) cells
+        let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = Dictionary.tryFind (column, row) cells
         let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = Dictionary.addOrUpdateInPlace (columnIndex,rowIndex) c cells |> ignore
         let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
             match Dictionary.tryFind (fromCol, fromRow) cells with
@@ -138,8 +138,7 @@ module ArcTableAux =
                 // Assume a table with 5 rows, insert column with 2 cells. All 5 rows at `index` position are shifted +1, but only row 0 and 1 are replaced with new values.
                 // Without explicit removing, row 2..4 would stay as is.
                 // EDIT: First remove then set cell to otherwise a `amount` = 0 would just remove the cell!
-                cells.Remove(fromCol,fromRow)
-                |> ignore
+                cells.Remove((fromCol,fromRow)) |> ignore
                 setCellAt(toCol,toRow,c) cells
                 |> ignore
             | None -> ()
@@ -149,7 +148,7 @@ module ArcTableAux =
             for KeyValue((c,r),_) in cells do
                 // Remove cells of column
                 if c = index then
-                    cells.Remove(c,r)
+                    cells.Remove((c,r))
                     |> ignore
                 else
                     ()
@@ -160,7 +159,7 @@ module ArcTableAux =
             for col = index to (columnCount-1) do
                 for row = 0 to (rowCount-1) do
                     if col = index then
-                        cells.Remove(col,row)
+                        cells.Remove((col,row))
                         |> ignore
                     // move to left if "column index > index"
                     elif col > index then
@@ -171,7 +170,7 @@ module ArcTableAux =
             for KeyValue((c,r),_) in cells do
                 // Remove cells of column
                 if r = rowIndex then
-                    cells.Remove(c,r)
+                    cells.Remove((c,r))
                     |> ignore
                 else
                     ()
@@ -182,7 +181,7 @@ module ArcTableAux =
             for row = rowIndex to (rowCount-1) do
                 for col = 0 to (columnCount-1) do
                     if row = rowIndex then
-                        cells.Remove(col,row)
+                        cells.Remove((col,row))
                         |> ignore
                     // move to top if "row index > index"
                     elif row > rowIndex then
@@ -202,6 +201,104 @@ module ArcTableAux =
                 | None                              -> CompositeCell.emptyTerm
                 | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
                 | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
+
+        let addColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+            let mutable numberOfNewColumns = 1
+            let mutable index = index
+            /// If this isSome and the function does not raise exception we are executing a forceReplace.
+            let hasDuplicateUnique = tryFindDuplicateUnique newHeader headers
+            // implement fail if unique column should be added but exists already
+            if not forceReplace && hasDuplicateUnique.IsSome then failwith $"Invalid new column `{newHeader}`. Table already contains header of the same type on index `{hasDuplicateUnique.Value}`"
+            // Example: existingCells contains `Output io` (With io being any IOType) and header is `Output RawDataFile`. This should replace the existing `Output io`.
+            // In this case the number of new columns drops to 0 and we insert the index of the existing `Output io` column.
+            if hasDuplicateUnique.IsSome then
+                numberOfNewColumns <- 0
+                index <- hasDuplicateUnique.Value
+            /// This ensures nothing gets messed up during mutable insert, for example inser header first and change ColumCount in the process
+            let startColCount, startRowCount = getColumnCount headers, getRowCount values
+            // headers are easily added. Just insert at position of index. This will insert without replace.
+            let setNewHeader = 
+                // if duplication found and we want to forceReplace we remove related header
+                if hasDuplicateUnique.IsSome then
+                    removeHeader(index) headers
+                headers.Insert(index, newHeader)
+            /// For all columns with index >= we need to increase column index by `numberOfNewColumns`.
+            /// We do this by moving all these columns one to the right with mutable dictionary set logic (cells.[key] <- newValue), 
+            /// Therefore we need to start with the last column to not overwrite any values we still need to shift
+            let increaseColumnIndices =
+                // Only do this if column is inserted and not appended AND we do not execute forceReplace!
+                if index < startColCount && hasDuplicateUnique.IsNone then
+                    /// Get last column index
+                    let lastColumnIndex = System.Math.Max(startColCount - 1, 0) // If there are no columns. We get negative last column index. In this case just return 0.
+                    // start with last column index and go down to `index`
+                    for columnIndex = lastColumnIndex downto index do
+                        for rowIndex in 0 .. startRowCount do
+                            moveCellTo(columnIndex,rowIndex,columnIndex+numberOfNewColumns,rowIndex) values
+            /// Then we can set the new column at `index`
+            let setNewCells =
+                // Not sure if this is intended? If we for example `forceReplace` a single column table with `Input`and 5 rows with a new column of `Input` ..
+                // ..and only 2 rows, then table RowCount will decrease from 5 to 2.
+                // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
+                if hasDuplicateUnique.IsSome then
+                    removeColumnCells(index) values
+                newCells |> Array.iteri (fun rowIndex cell ->
+                    let columnIndex = index
+                    setCellAt (columnIndex,rowIndex,cell) values
+                )
+            ()
+
+        // We need to calculate the max number of rows between the new columns and the existing columns in the table.
+        // `maxRows` will be the number of rows all columns must have after adding the new columns.
+        // This behaviour should be intuitive for the user, as Excel handles this case in the same way.
+        let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+            let rowCount = getRowCount values
+            let columnCount = getColumnCount headers
+            let maxRows = rowCount
+            let lastColumnIndex = columnCount - 1
+            /// Get all keys, to map over relevant rows afterwards
+            let keys = values.Keys
+            // iterate over columns
+            for columnIndex in 0 .. lastColumnIndex do
+                /// Only get keys for the relevant column
+                let colKeys = keys |> Seq.filter (fun (c,_) -> c = columnIndex) |> Set.ofSeq 
+                /// Create set of expected keys
+                let expectedKeys = Seq.init maxRows (fun i -> columnIndex,i) |> Set.ofSeq 
+                /// Get the missing keys
+                let missingKeys = Set.difference expectedKeys colKeys 
+                // if no missing keys, we are done and skip the rest, if not empty missing keys we ...
+                if missingKeys.IsEmpty |> not then
+                    /// .. first check which empty filler `CompositeCells` we need. 
+                    ///
+                    /// We use header to decide between CompositeCell.Term/CompositeCell.Unitized and CompositeCell.FreeText
+                    let relatedHeader = headers.[columnIndex]
+                    /// We use the first cell in the column to decide between CompositeCell.Term and CompositeCell.Unitized
+                    ///
+                    /// Not sure if we can add a better logic to infer if empty cells should be term or unitized ~Kevin F
+                    let tryExistingCell = if colKeys.IsEmpty then None else Some values.[colKeys.MinimumElement]
+                    let empty = getEmptyCellForHeader relatedHeader tryExistingCell
+                    for missingColumn,missingRow in missingKeys do
+                        setCellAt (missingColumn,missingRow,empty) values
+
+        let addRow (index:int) (newCells:CompositeCell []) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+            /// Store start rowCount here, so it does not get changed midway through
+            let rowCount = getRowCount values
+            let columnCount = getColumnCount headers
+            let increaseRowIndices =  
+                // Only do this if column is inserted and not appended!
+                if index < rowCount then
+                    /// Get last row index
+                    let lastRowIndex = System.Math.Max(rowCount - 1, 0) // If there are no rows. We get negative last column index. In this case just return 0.
+                    // start with last row index and go down to `index`
+                    for rowIndex = lastRowIndex downto index do
+                        for columnIndex in 0 .. (columnCount-1) do
+                            moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+1) values
+            /// Then we can set the new row at `index`
+            let setNewCells =
+                newCells |> Array.iteri (fun columnIndex cell ->
+                    let rowIndex = index
+                    setCellAt (columnIndex,rowIndex,cell) values
+                )
+            ()
 
 open ArcTableAux
 
@@ -232,13 +329,12 @@ type ArcTable =
     /// Returns a cell at given position if it exists, else returns None.
     member this.TryGetCellAt (column: int,row: int) = ArcTableAux.Unchecked.tryGetCellAt (column,row) this.Values
     
-    // TODO: Und dann direkt mal eine design frage. Ist eine column mit rows die sowohl CompositeCell.Term als auch CompositeCell.Unitized enthalten erlaubt?
+    // TODO: And then directly a design question. Is a column with rows containing both CompositeCell.Term and CompositeCell.Unitized allowed?
     member this.SetCellAt(columnIndex, rowIndex,c : CompositeCell) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         SanityChecks.validateRowIndex rowIndex this.RowCount false
         SanityChecks.validateColumn <| CompositeColumn.create(this.Headers.[columnIndex],[|c|])
         Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
-
     static member setCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
@@ -252,13 +348,14 @@ type ArcTable =
         /// MUST USE "Seq.removeAt" to not remove in mutable object!
         let otherHeaders = this.Headers |> Seq.removeAt columnIndex
         SanityChecks.validateNoDuplicateUnique column.Header otherHeaders
+        // Must remove first, so no leftover rows stay when setting less rows than before.
         Unchecked.removeHeader columnIndex this.Headers
         Unchecked.removeColumnCells columnIndex this.Values
         let nextHeader = 
             this.Headers.Insert(columnIndex,column.Header)
         let nextBody =
             column.Cells |> Array.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) this.Values)
-        ArcTable.extendBodyCells(this)
+        Unchecked.fillMissingCells this.Headers this.Values
         ()
 
     static member setColumn (columnIndex:int, column:CompositeColumn) = 
@@ -330,8 +427,8 @@ type ArcTable =
         SanityChecks.validateColumnIndex index this.ColumnCount true
         SanityChecks.validateColumn(CompositeColumn.create(header, cells))
         // 
-        ArcTable.insertRawColumn header cells index forceReplace this
-        ArcTable.extendBodyCells this
+        Unchecked.addColumn header cells index forceReplace this.Headers this.Values
+        Unchecked.fillMissingCells this.Headers this.Values
     //member this.AddColumn(header: CompositeHeader,?cells: CompositeCell [], ?index,?forceReplace: bool) =
     //    match cells,index with
     //    | Some c, Some i -> this.InsertColumn(header,c,i,?forceReplace = forceReplace)
@@ -396,7 +493,6 @@ type ArcTable =
             newTable.AppendColumn(header, ?cells = cells)
             newTable
 
-    
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
         let index = defaultArg index this.RowCount
         let cells = 
@@ -418,7 +514,7 @@ type ArcTable =
             let column = CompositeColumn.create(h,[|cells.[columnIndex]|])
             SanityChecks.validateColumn column
         // Sanity checks - end
-        ArcTable.addRawRow index cells this
+        Unchecked.addRow index cells this.Headers this.Values
 
     static member addRow (?cells: CompositeCell [], ?index: int) =
         fun (table:ArcTable) ->
@@ -453,11 +549,11 @@ type ArcTable =
         columns
         |> Array.iter (fun col -> 
             let prevHeadersCount = this.Headers.Count
-            ArcTable.insertRawColumn col.Header col.Cells index forceReplace this
+            Unchecked.addColumn col.Header col.Cells index forceReplace this.Headers this.Values
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
-        ArcTable.extendBodyCells this
+        Unchecked.fillMissingCells this.Headers this.Values
 
     static member addColumns (columns: CompositeColumn [],?index: int) =
         fun (table:ArcTable) ->
@@ -478,7 +574,7 @@ type ArcTable =
         // Sanity checks - end
         rows
         |> Array.iter (fun row ->
-            ArcTable.addRawRow index row this
+            Unchecked.addRow index row this.Headers this.Values
             index <- index + 1
         )
 
@@ -607,99 +703,3 @@ type ArcTable =
                 this.GetRow(rowI) |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
         ]
         |> String.concat "\n"
-
-    ///
-    static member private insertRawColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (table:ArcTable) =
-        let mutable numberOfNewColumns = 1
-        let mutable index = index
-        /// If this isSome and the function does not raise exception we are executing a forceReplace.
-        let hasDuplicateUnique = ArcTableAux.tryFindDuplicateUnique newHeader table.Headers
-        // implement fail if unique column should be added but exists already
-        if not forceReplace && hasDuplicateUnique.IsSome then failwith $"Invalid new column `{newHeader}`. Table already contains header of the same type on index `{hasDuplicateUnique.Value}`"
-        // Example: existingCells contains `Output io` (With io being any IOType) and header is `Output RawDataFile`. This should replace the existing `Output io`.
-        // In this case the number of new columns drops to 0 and we insert the index of the existing `Output io` column.
-        if hasDuplicateUnique.IsSome then
-            numberOfNewColumns <- 0
-            index <- hasDuplicateUnique.Value
-        /// This ensures nothing gets messed up during mutable insert, for example inser header first and change ColumCount in the process
-        let startColCount, startRowCount = table.ColumnCount, table.RowCount
-        // headers are easily added. Just insert at position of index. This will insert without replace.
-        let setNewHeader = 
-            // if duplication found and we want to forceReplace we remove related header
-            if hasDuplicateUnique.IsSome then
-                Unchecked.removeHeader(index) table.Headers
-            table.Headers.Insert(index, newHeader)
-        /// For all columns with index >= we need to increase column index by `numberOfNewColumns`.
-        /// We do this by moving all these columns one to the right with mutable dictionary set logic (cells.[key] <- newValue), 
-        /// Therefore we need to start with the last column to not overwrite any values we still need to shift
-        let increaseColumnIndices =
-            // Only do this if column is inserted and not appended AND we do not execute forceReplace!
-            if index < startColCount && hasDuplicateUnique.IsNone then
-                /// Get last column index
-                let lastColumnIndex = System.Math.Max(startColCount - 1, 0) // If there are no columns. We get negative last column index. In this case just return 0.
-                // start with last column index and go down to `index`
-                for columnIndex = lastColumnIndex downto index do
-                    for rowIndex in 0 .. startRowCount do
-                        Unchecked.moveCellTo(columnIndex,rowIndex,columnIndex+numberOfNewColumns,rowIndex) table.Values
-        /// Then we can set the new column at `index`
-        let setNewCells =
-            // Not sure if this is intended? If we for example `forceReplace` a single column table with `Input`and 5 rows with a new column of `Input` ..
-            // ..and only 2 rows, then table RowCount will decrease from 5 to 2.
-            // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
-            if hasDuplicateUnique.IsSome then
-                Unchecked.removeColumnCells(index) table.Values
-            newCells |> Array.iteri (fun rowIndex cell ->
-                let columnIndex = index
-                Unchecked.setCellAt (columnIndex,rowIndex,cell) table.Values
-            )
-        ()
-
-    // We need to calculate the max number of rows between the new columns and the existing columns in the table.
-    // `maxRows` will be the number of rows all columns must have after adding the new columns.
-    // This behaviour should be intuitive for the user, as Excel handles this case in the same way.
-    static member private extendBodyCells (table:ArcTable) =
-        let maxRows = table.RowCount
-        let lastColumnIndex = table.ColumnCount - 1
-        /// Get all keys, to map over relevant rows afterwards
-        let keys = table.Values.Keys
-        // iterate over columns
-        for columnIndex in 0 .. lastColumnIndex do
-            /// Only get keys for the relevant column
-            let colKeys = keys |> Seq.filter (fun (c,_) -> c = columnIndex) |> Set.ofSeq 
-            /// Create set of expected keys
-            let expectedKeys = Seq.init maxRows (fun i -> columnIndex,i) |> Set.ofSeq 
-            /// Get the missing keys
-            let missingKeys = Set.difference expectedKeys colKeys 
-            // if no missing keys, we are done and skip the rest, if not empty missing keys we ...
-            if missingKeys.IsEmpty |> not then
-                /// .. first check which empty filler `CompositeCells` we need. 
-                ///
-                /// We use header to decide between CompositeCell.Term/CompositeCell.Unitized and CompositeCell.FreeText
-                let relatedHeader = table.Headers.[columnIndex]
-                /// We use the first cell in the column to decide between CompositeCell.Term and CompositeCell.Unitized
-                ///
-                /// Not sure if we can add a better logic to infer if empty cells should be term or unitized ~Kevin F
-                let tryExistingCell = if colKeys.IsEmpty then None else Some table.Values.[colKeys.MinimumElement]
-                let empty = Unchecked.getEmptyCellForHeader relatedHeader tryExistingCell
-                for missingColumn,missingRow in missingKeys do
-                    Unchecked.setCellAt (missingColumn,missingRow,empty) table.Values
-                    
-    static member private addRawRow (index:int) (newCells:CompositeCell []) (table: ArcTable) =
-        /// Store start rowCount here, so it does not get changed midway through
-        let rowCount = table.RowCount
-        let increaseRowIndices =  
-            // Only do this if column is inserted and not appended!
-            if index < rowCount then
-                /// Get last row index
-                let lastRowIndex = System.Math.Max(rowCount - 1, 0) // If there are no rows. We get negative last column index. In this case just return 0.
-                // start with last row index and go down to `index`
-                for rowIndex = lastRowIndex downto index do
-                    for columnIndex in 0 .. (rowCount-1) do
-                        Unchecked.moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+1) table.Values
-        /// Then we can set the new row at `index`
-        let setNewCells =
-            newCells |> Array.iteri (fun columnIndex cell ->
-                let rowIndex = index
-                Unchecked.setCellAt (columnIndex,rowIndex,cell) table.Values
-            )
-        ()
