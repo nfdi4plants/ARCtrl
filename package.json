@@ -15,7 +15,8 @@
     "test": "mocha tests/ISA/ISA.JsNativeTests/fable",
     "posttest": "mocha tests/ISA/ISA.JsNativeTests",
     "test:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests/fable",
-    "testnative:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests"
+    "testnative:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests",
+    "postinstall": "cd src/ISA & npm install"
   },
   "repository": {
     "type": "git",

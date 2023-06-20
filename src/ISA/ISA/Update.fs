@@ -4,7 +4,6 @@ module Dict =
 
     open System.Collections.Generic
 
-    
     let ofSeq (s : seq<'Key*'T>) = 
         let dict = Dictionary()
         s
@@ -33,12 +32,10 @@ module Dict =
 open Fable.Core
 open Fable.Core.JsInterop
 
-
 module Update =
 
     open System
     open Microsoft.FSharp.Reflection
-
 
     module ValueOfGenericObj =
 
