@@ -17,6 +17,7 @@ type CompositeColumn = {
     /// Returns true if header and cells are a valid combination. E.g. Term header with term or unitized cells. IO header with freetext cells.
     ///
     /// ?raiseExeption: Default false. Set true if this function should raise an exception instead of return false.
+    // TODO! Do not only check cells.Head
     member this.validate(?raiseExeption: bool) =
         let raiseExeption = Option.defaultValue false raiseExeption
         let header = this.Header

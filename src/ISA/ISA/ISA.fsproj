@@ -47,6 +47,7 @@
     <Compile Include="ArcTypes\CompositeHeader.fs" />
     <Compile Include="ArcTypes\CompositeCell.fs" />
     <Compile Include="ArcTypes\CompositeColumn.fs" />
+    <Compile Include="ArcTypes\ArcTableAux.fs" />
     <Compile Include="ArcTypes\ArcTable.fs" />
     <Compile Include="ArcTypes\ArcProcessSequence.fs" />
     <Compile Include="ArcTypes\ArcAssay.fs" />
