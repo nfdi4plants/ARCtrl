@@ -1,5 +1,12 @@
 ﻿module TestingUtils
 
+module Result =
+
+    let getMessage (r : Result<'T,string>) =
+        match r with
+        | Ok _ -> ""
+        | Error msg -> msg
+
 let private firstDiff s1 s2 =
   let s1 = Seq.append (Seq.map Some s1) (Seq.initInfinite (fun _ -> None))
   let s2 = Seq.append (Seq.map Some s2) (Seq.initInfinite (fun _ -> None))
