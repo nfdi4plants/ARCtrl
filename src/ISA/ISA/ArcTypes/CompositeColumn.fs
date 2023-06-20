@@ -18,8 +18,8 @@ type CompositeColumn = {
     ///
     /// ?raiseExeption: Default false. Set true if this function should raise an exception instead of return false.
     // TODO! Do not only check cells.Head
-    member this.validate(?raiseExeption: bool) =
-        let raiseExeption = Option.defaultValue false raiseExeption
+    member this.validate(?raiseException: bool) =
+        let raiseExeption = Option.defaultValue false raiseException
         let header = this.Header
         let cells = this.Cells
         match header, cells with

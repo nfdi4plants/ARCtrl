@@ -28,20 +28,45 @@ type ArcTable =
         Values = System.Collections.Generic.Dictionary<int*int,CompositeCell>()
     }
 
+    /// Will return true or false if table is valid. 
+    ///
+    /// Set `raiseException` = `true` to raise exception.
+    member this.Validate(?raiseException: bool) = 
+        let mutable isValid: bool = true
+        for columnIndex in 0 .. (this.ColumnCount - 1) do
+            let column : CompositeColumn = this.GetColumn(columnIndex)
+            isValid <- column.validate(?raiseException=raiseException)
+        isValid
+
+    /// Will return true or false if table is valid. 
+    ///
+    /// Set `raiseException` = `true` to raise exception.
+    static member validate(?raiseException: bool) =
+        fun (table:ArcTable) ->
+            table.Validate(?raiseException=raiseException)
+
+
     /// Returns a cell at given position if it exists, else returns None.
     member this.TryGetCellAt (column: int,row: int) = ArcTableAux.Unchecked.tryGetCellAt (column,row) this.Values
     
+    static member tryGetCellAt  (column: int,row: int) =
+        fun (table:ArcTable) ->
+            table.TryGetCellAt(column, row)
+
+
     // TODO: And then directly a design question. Is a column with rows containing both CompositeCell.Term and CompositeCell.Unitized allowed?
     member this.SetCellAt(columnIndex, rowIndex,c : CompositeCell) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         SanityChecks.validateRowIndex rowIndex this.RowCount false
         SanityChecks.validateColumn <| CompositeColumn.create(this.Headers.[columnIndex],[|c|])
         Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
+
     static member setCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.SetCellAt(columnIndex,rowIndex,cell)
             newTable
+
 
     member this.SetColumn (columnIndex:int, column:CompositeColumn) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
@@ -65,7 +90,8 @@ type ArcTable =
             let newTable = table.Copy()
             newTable.SetColumn(columnIndex, column)
             newTable
-        
+    
+
     member this.SetHeader (index:int, newHeader: CompositeHeader, ?forceConvertCells: bool) =
         let forceConvertCells = Option.defaultValue false forceConvertCells
         ArcTableAux.SanityChecks.validateColumnIndex index this.ColumnCount false
@@ -94,20 +120,7 @@ type ArcTable =
             let newTable = table.Copy()
             newTable.SetHeader(index, header)
             newTable
-     
-    // TODO: No error checking if new position is valid for body cells. If we want to give a streamlined API this subfunction should be placed in ArcTableAux and not as member without sanity checks. 
-    // TODO: This is just SetHeader?
-    //member this.OverwriteHeader(header: CompositeHeader, index : int) =
-    //    ArcTableAux.SanityChecks.validateColumnIndex index this.ColumnCount false
-    //    this.Headers.[index] <- header
 
-    // TODO: This is just SetColumn?
-    //member this.OverwriteColumn(header: CompositeHeader, cells : CompositeCell [], index : int) =
-    //    ArcTableAux.SanityChecks.validateColumnIndex index this.ColumnCount false
-    //    ArcTableAux.SanityChecks.validateColumn <| CompositeColumn.create(header, cells)
-    //    this.Headers.[index] <- header
-    //    cells
-    //    |> Array.iteri (fun i c ->  Unchecked.setCellAt (index,i,c) this.Values)
 
     member this.ColumnCount 
         with get() = ArcTableAux.getColumnCount this.Headers
@@ -122,6 +135,7 @@ type ArcTable =
             Dictionary(this.Values)
         )
 
+
     member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int, ?forceReplace: bool) : unit = 
         let index = defaultArg index this.ColumnCount
         let cells = defaultArg cells [||]
@@ -131,13 +145,6 @@ type ArcTable =
         // 
         Unchecked.addColumn header cells index forceReplace this.Headers this.Values
         Unchecked.fillMissingCells this.Headers this.Values
-    //member this.AddColumn(header: CompositeHeader,?cells: CompositeCell [], ?index,?forceReplace: bool) =
-    //    match cells,index with
-    //    | Some c, Some i -> this.InsertColumn(header,c,i,?forceReplace = forceReplace)
-    //    | Some c, None -> this.AppendColumn(header,c,?forceReplace = forceReplace)
-    //    | None, Some i -> this.InsertEmptyColumn(header,i,?forceReplace = forceReplace)
-    //    | None,None -> this.AppendEmptyColumn(header,?forceReplace = forceReplace)
-    //    ArcTable.extendBodyCells this
 
     static member addColumn (header: CompositeHeader,cells: CompositeCell [],?Index: int ,?ForceReplace : bool) : (ArcTable -> ArcTable) =
         fun (table: ArcTable) ->
@@ -145,28 +152,9 @@ type ArcTable =
             newTable.AddColumn(header, cells, ?index = Index)
             newTable
 
+
     member this.InsertColumn (header:CompositeHeader, index: int, ?cells: CompositeCell []) =
         this.AddColumn(header, index = index,?cells = cells, forceReplace = false)
-    //// TODO: I think this function should not have a forceReplace option. With a specific usecase of a given `index` it seems unintuitive to allow forceReplace an another index.
-    //member this.InsertColumn(header: CompositeHeader,cells: CompositeCell [],index: int,?forceReplace: bool) =
-    //    let forceReplace = defaultArg forceReplace false
-    //    ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
-    //    match ArcTableAux.tryFindDuplicateUnique header this.Headers with
-    //    | Some i when forceReplace -> this.OverwriteColumn(header,cells,i)
-    //    | Some _ -> ArcTableAux.failWithDuplicateUnique()
-    //    | None -> 
-    //        for rowI = 0 to this.RowCount - 1 do
-                  // THIS DOES NOT WORK!? I thought so too, but after tests failed i checked and for-loops down must use `downto` or `(this.ColumnCount - 1) .. -1 .. index`
-    //            for colI = this.ColumnCount - 1 to index do
-    //                this.MoveCellAtHorizontally(colI,rowI,1)
-    //        cells
-    //        |> Array.iteri (fun rowI c ->               
-    //            this.SetCellAt(index,rowI,c)           
-    //        )
-    //        this.Headers.Insert(index,header)
-           
-    //member this.InsertEmptyColumn(header: CompositeHeader,index: int,?forceReplace: bool) =
-    //    this.InsertColumn(header, [||],index ,?forceReplace = forceReplace)
 
     static member insertColumn (header:CompositeHeader, index: int, ?cells: CompositeCell []) =
         fun (table: ArcTable) ->
@@ -174,26 +162,16 @@ type ArcTable =
             newTable.InsertColumn(header, index, ?cells = cells)
             newTable
 
+
     member this.AppendColumn (header:CompositeHeader, ?cells: CompositeCell []) =
         this.AddColumn(header, ?cells = cells, index = this.ColumnCount, forceReplace = false)
-    //member this.AppendColumn(header: CompositeHeader,cells: CompositeCell [],?forceReplace: bool) =
-    //    let forceReplace = defaultArg forceReplace false
-    //    match ArcTableAux.tryFindDuplicateUnique header this.Headers with
-    //    | Some i when forceReplace -> this.OverwriteColumn(header,cells,i)
-    //    | Some _ -> ArcTableAux.failWithDuplicateUnique()
-    //    | None -> 
-    //        cells
-    //        |> Array.iteri (fun i c -> this.SetCellAt(this.ColumnCount,i,c))
-    //        this.Headers.Add(header)
-
-    //member this.AppendEmptyColumn(header: CompositeHeader,?forceReplace: bool) =
-    //    this.AppendColumn(header, [||], ?forceReplace = forceReplace)
 
     static member appendColumn (header:CompositeHeader, ?cells: CompositeCell []) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
             newTable.AppendColumn(header, ?cells = cells)
             newTable
+
 
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
         let index = defaultArg index this.RowCount
@@ -224,6 +202,7 @@ type ArcTable =
             newTable.AddRow(?cells=cells,?index=index)
             newTable
 
+
     member this.AppendRow (?cells: CompositeCell []) =
         this.AddRow(?cells=cells,index = this.RowCount)
 
@@ -233,6 +212,7 @@ type ArcTable =
             newTable.AppendRow(?cells=cells)
             newTable
 
+
     member this.InsertRow (index: int, ?cells: CompositeCell []) =
         this.AddRow(index=index, ?cells=cells)
 
@@ -241,6 +221,7 @@ type ArcTable =
             let newTable = table.Copy()
             newTable.AddRow(index=index, ?cells=cells)
             newTable
+
 
     member this.AddColumns (columns: CompositeColumn [], ?index: int, ?forceReplace: bool) : unit = 
         let mutable index = defaultArg index this.ColumnCount
@@ -262,6 +243,7 @@ type ArcTable =
             let newTable = table.Copy()
             newTable.AddColumns(columns, ?index = index)
             newTable
+
 
     member this.AddRows (rows: CompositeCell [] [], ?index: int) =
         let mutable index = defaultArg index this.RowCount
@@ -286,6 +268,7 @@ type ArcTable =
             newTable.AddRows(rows,?index=index)
             newTable
 
+
     member this.AddRowsEmpty (rowCount: int, ?index: int) =
         let row = [|
             for columnIndex in 0 .. this.ColumnCount-1 do
@@ -302,6 +285,7 @@ type ArcTable =
             newTable.AddRowsEmpty(rowCount, ?index=index)
             newTable
 
+
     member this.RemoveColumn (index:int) =
         ArcTableAux.SanityChecks.validateColumnIndex index this.ColumnCount false
         /// Set ColumnCount here to avoid changing columnCount by changing header count
@@ -316,6 +300,7 @@ type ArcTable =
             newTable.RemoveColumn(index)
             newTable
 
+
     member this.RemoveColumns(indexArr:int []) =
         // Sanity check here too, to avoid removing things from mutable to fail in the middle
         Array.iter (fun index -> SanityChecks.validateColumnIndex index this.ColumnCount false) indexArr
@@ -329,6 +314,7 @@ type ArcTable =
             newTable.RemoveColumns(indexArr)
             newTable
 
+
     member this.RemoveRow (index:int) =
         ArcTableAux.SanityChecks.validateRowIndex index this.RowCount false
         let removeCells = Unchecked.removeRowCells_withIndexChange index this.ColumnCount this.RowCount this.Values
@@ -339,6 +325,7 @@ type ArcTable =
             let newTable = table.Copy()
             newTable.RemoveRow (index)
             newTable
+
 
     member this.RemoveRows (indexArr:int []) =
         // Sanity check here too, to avoid removing things from mutable to fail in the middle
@@ -353,6 +340,7 @@ type ArcTable =
             newTable.RemoveColumns indexArr
             newTable
 
+
     member this.GetRow(rowIndex : int) =
         SanityChecks.validateRowIndex rowIndex this.RowCount false
         [|
@@ -364,6 +352,7 @@ type ArcTable =
         fun (table:ArcTable) ->
             table.GetRow(index)
         
+
     member this.GetColumn(columnIndex:int) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
@@ -376,6 +365,7 @@ type ArcTable =
     static member getColumn (index:int) = 
         fun (table:ArcTable) ->
             table.GetColumn(index)
+
 
     static member insertParameterValue (t : ArcTable) (p : ProcessParameterValue) : ArcTable = 
         raise (System.NotImplementedException())

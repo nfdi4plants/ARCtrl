@@ -65,6 +65,34 @@ let private tests_member =
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 ""
         )
+        testCase "RowCount" (fun () ->
+            let table = create_testTable()
+            Expect.equal table.RowCount 5 ""
+        )
+    ]
+
+let private tests_validate = 
+    testList "Validate" [
+        testCase "empty table" (fun () ->
+            let table = ArcTable.init(testName)
+            let isValid = table.Validate()
+            Expect.isTrue isValid ""
+        )
+        testCase "table" (fun () ->
+            let table = create_testTable()
+            let isValid = table.Validate()
+            Expect.isTrue isValid ""
+        )
+        testCase "empty table, raise not" (fun () ->
+            let table = ArcTable.init(testName)
+            let isValid = table.Validate(true)
+            Expect.isTrue isValid ""
+        )
+        testCase "table, raise not" (fun () ->
+            let table = create_testTable()
+            let isValid = table.Validate(true)
+            Expect.isTrue isValid ""
+        )
     ]
 
 let private tests_SanityChecks = testList "SanityChecks" [
@@ -1688,4 +1716,5 @@ let main =
         tests_removeRows
         tests_addRow
         tests_addRows
+        tests_validate
     ]
