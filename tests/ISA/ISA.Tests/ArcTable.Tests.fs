@@ -74,7 +74,7 @@ let private tests_member =
 let private tests_validate = 
     testList "Validate" [
         testCase "empty table" (fun () ->
-            let table = ArcTable.init(testName)
+            let table = ArcTable.init(TableName)
             let isValid = table.Validate()
             Expect.isTrue isValid ""
         )
@@ -84,7 +84,7 @@ let private tests_validate =
             Expect.isTrue isValid ""
         )
         testCase "empty table, raise not" (fun () ->
-            let table = ArcTable.init(testName)
+            let table = ArcTable.init(TableName)
             let isValid = table.Validate(true)
             Expect.isTrue isValid ""
         )
@@ -1530,14 +1530,14 @@ let private tests_addRow =
             let table = create_testTable()
             let row = row_default.[0..3]
             let eval() = table.AddRow(row)
-            Expect.isLessThan row.Length table.RowCount "This MUST be correct"
+            Expect.isTrue (row.Length < table.RowCount) "must be less than"
             Expect.throws eval ""
         )
         testCase "append row, more cols, throw" (fun () ->
             let table = create_testTable()
             let row = Array.append row_default row_default
             let eval() = table.AddRow(row)
-            Expect.isGreaterThan row.Length table.RowCount "This MUST be correct"
+            Expect.isTrue (row.Length > table.RowCount) "must be more than"
             Expect.throws eval ""
         )
         testCase "append row, wrong cells for column, throw" (fun () ->
@@ -1645,14 +1645,14 @@ let private tests_addRows =
             let table = create_testTable()
             let rows = rows_default |> Array.mapi (fun i arr -> if i = 0 then Array.take 3 arr else arr)
             let eval() = table.AddRows(rows)
-            Expect.isLessThan rows.[0].Length table.RowCount "This MUST be correct"
+            Expect.isTrue (rows.[0].Length < table.RowCount) "must be less than"
             Expect.throws eval ""
         )
         testCase "append row, more cols, throw" (fun () ->
             let table = create_testTable()
             let rows = rows_default |> Array.mapi (fun i arr -> if i = 0 then Array.append arr arr else arr)
             let eval() = table.AddRows(rows)
-            Expect.isGreaterThan rows.[0].Length table.RowCount "This MUST be correct"
+            Expect.isTrue (rows.[0].Length > table.RowCount) "must be more than"
             Expect.throws eval ""
         )
         testCase "append row, wrong cells for column, throw" (fun () ->
