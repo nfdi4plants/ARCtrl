@@ -9,8 +9,8 @@ let contactsLabel = "ASSAY PERFORMERS"
 
 let metaDataSheetName = "Assay"
 
-let toMetadataSheet (assay : ARCAssay) : FsWorksheet =
-    let toRows (assay:ARCAssay) =
+let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
+    let toRows (assay:ArcAssay) =
         seq {          
 
             yield  SparseRow.fromValues [assaysLabel]
@@ -25,7 +25,7 @@ let toMetadataSheet (assay : ARCAssay) : FsWorksheet =
     |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet rowI r sheet)    
     sheet
 
-let fromMetadataSheet (sheet : FsWorksheet) : ARCAssay =
+let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         let rec loop lastLine assays contacts lineNumber =
@@ -42,8 +42,8 @@ let fromMetadataSheet (sheet : FsWorksheet) : ARCAssay =
 
             | k -> 
                 assays |> Seq.tryHead 
-                |> Option.defaultValue (ARCAssay.create()) 
-                |> ARCAssay.setPerformers (Option.fromValueWithDefault [] contacts)
+                |> Option.defaultValue (ArcAssay.create()) 
+                |> ArcAssay.setPerformers (Option.fromValueWithDefault [] contacts)
         
         if en.MoveNext () then
             let currentLine = en.Current |> SparseRow.tryGetValueAt 0
@@ -66,7 +66,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
             fromMetadataSheet sheet
         | None -> 
             printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" sheet." metaDataSheetName
-            ARCAssay.create()     
+            ArcAssay.create()     
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
@@ -76,7 +76,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
         assayMetaData with Sheets = Some sheets   
     }
 
-let toFsWorkbook (assay : ARCAssay) =
+let toFsWorkbook (assay : ArcAssay) =
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet assay
     doc.AddWorksheet metaDataSheet

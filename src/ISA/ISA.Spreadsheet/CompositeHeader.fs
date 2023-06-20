@@ -22,7 +22,9 @@ module ActivePattern =
             f ont
             |> Some
         | [AC name; TermSourceREF term1; TermAccessionNumber term2] 
-        | [AC name; Unit; TermSourceREF term1; TermAccessionNumber term2] -> 
+        //| [AC name; TermAccessionNumber term1; TermSourceREF term2] 
+        //| [AC name; Unit; TermAccessionNumber term1; TermSourceREF term2] 
+        | [AC name; Unit; TermSourceREF term1; TermAccessionNumber term2] ->
             let term = mergeTerms term1.IdSpace term1.IdSpace term2.LocalId term2.LocalId
             let ont = OntologyAnnotation.fromString(name, term.TermSourceRef, term.TermAccessionNumber)
             f ont

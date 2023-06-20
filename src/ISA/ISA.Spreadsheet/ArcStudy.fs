@@ -9,8 +9,8 @@ let studiesLabel = "STUDY"
 let metaDataSheetName = "Study"
 
 
-let toMetadataSheet (study : ARCStudy) : FsWorksheet =
-    let toRows (study:ARCStudy) =
+let toMetadataSheet (study : ArcStudy) : FsWorksheet =
+    let toRows (study:ArcStudy) =
         seq {          
             yield  SparseRow.fromValues [studiesLabel]
             yield! Studies.StudyInfo.toRows study
@@ -21,7 +21,7 @@ let toMetadataSheet (study : ARCStudy) : FsWorksheet =
     |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet rowI r sheet)    
     sheet
 
-let fromMetadataSheet (sheet : FsWorksheet) : ARCStudy =
+let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy =
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         en.MoveNext() |> ignore  
@@ -41,7 +41,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
             fromMetadataSheet sheet
         | None -> 
             printfn "Cannot retrieve metadata: Study file does not contain \"%s\" sheet." metaDataSheetName
-            ARCStudy.create()     
+            ArcStudy.create()     
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
@@ -51,7 +51,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
         studyMetadata with Sheets = Some sheets   
     }
 
-let toFsWorkbook (study : ARCStudy) =
+let toFsWorkbook (study : ArcStudy) =
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet study
     doc.AddWorksheet metaDataSheet

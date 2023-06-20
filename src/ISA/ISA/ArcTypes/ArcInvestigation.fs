@@ -16,17 +16,17 @@ type ArcInvestigation =
         OntologySourceReferences : OntologySourceReference list option
         Publications : Publication list option
         Contacts : Person list option
-        Studies : ARCStudy list option
+        Studies : ArcStudy list option
         Comments : Comment list option
         Remarks     : Remark list
     }
 
-    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list option) (publications : Publication list option) (contacts : Person list option) (studies : ARCStudy list option) (comments : Comment list option) (remarks : Remark list) : ARCInvestigation =
+    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list option) (publications : Publication list option) (contacts : Person list option) (studies : ArcStudy list option) (comments : Comment list option) (remarks : Remark list) : ArcInvestigation =
         {ID = id; FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
     [<NamedParams>]
-    static member create (?Id : URI, ?FileName : string, ?Identifier : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ARCStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ARCInvestigation =
-        ARCInvestigation.make Id FileName Identifier Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
+    static member create (?Id : URI, ?FileName : string, ?Identifier : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ArcStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ArcInvestigation =
+        ArcInvestigation.make Id FileName Identifier Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
 
     static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
         raise (System.NotImplementedException())

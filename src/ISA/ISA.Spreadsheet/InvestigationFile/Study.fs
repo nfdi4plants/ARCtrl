@@ -71,7 +71,7 @@ module Studies =
                 comments
 
 
-        static member ToSparseTable (study: ARCStudy) =
+        static member ToSparseTable (study: ArcStudy) =
             let i = 1
             let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
@@ -99,13 +99,13 @@ module Studies =
             SparseTable.FromRows(rows,StudyInfo.Labels,lineNumber)
             |> fun (s,ln,rs,sm) -> (s,ln,rs, StudyInfo.FromSparseTable sm)
     
-        static member toRows (study : ARCStudy) =  
+        static member toRows (study : ArcStudy) =  
             study
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays (protocols : Protocol list) contacts =
-        ARCStudy.make 
+        ArcStudy.make 
             None 
             (Option.fromValueWithDefault "" studyInfo.FileName)
             (Option.fromValueWithDefault "" studyInfo.Identifier)
@@ -161,7 +161,7 @@ module Studies =
         loop currentLine item [] [] [] [] [] [] remarks lineNumber
 
     
-    let toRows (study : ARCStudy) =
+    let toRows (study : ArcStudy) =
         let protocols = study.Sheets |> Option.defaultValue [] |> List.collect (fun p -> p |> ArcTable.getProtocols)
         seq {          
             yield! StudyInfo.toRows study

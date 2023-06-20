@@ -6,7 +6,7 @@ open Comment
 open Remark
 open System.Collections.Generic
 
-module Investigation = 
+module ArcInvestigation = 
 
     let identifierLabel = "Investigation Identifier"
     let titleLabel = "Investigation Title"
@@ -64,7 +64,7 @@ module Investigation =
                 comments
 
 
-        static member ToSparseTable (investigation: ARCInvestigation) =
+        static member ToSparseTable (investigation: ArcInvestigation) =
             let i = 1
             let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=2)
             let mutable commentKeys = []
@@ -92,13 +92,13 @@ module Investigation =
             SparseTable.FromRows(rows,InvestigationInfo.Labels,lineNumber)
             |> fun (s,ln,rs,sm) -> (s,ln,rs, InvestigationInfo.FromSparseTable sm)    
     
-        static member toRows (investigation : ARCInvestigation) =  
+        static member toRows (investigation : ArcInvestigation) =  
             investigation
             |> InvestigationInfo.ToSparseTable
             |> SparseTable.ToRows
  
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
-        ARCInvestigation.make 
+        ArcInvestigation.make 
             None 
             None 
             (Option.fromValueWithDefault "" investigationInfo.Identifier)
@@ -156,7 +156,7 @@ module Investigation =
             failwith "emptyInvestigationFile"
  
    
-    let toRows (investigation:ARCInvestigation) : seq<SparseRow> =
+    let toRows (investigation:ArcInvestigation) : seq<SparseRow> =
         let insertRemarks (remarks:Remark list) (rows:seq<SparseRow>) = 
             try 
                 let rm = remarks |> List.map Remark.toTuple |> Map.ofList            
@@ -186,7 +186,7 @@ module Investigation =
             yield  SparseRow.fromValues[contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
-            for study in (Option.defaultValue [ARCStudy.create()] investigation.Studies) do
+            for study in (Option.defaultValue [ArcStudy.create()] investigation.Studies) do
                 yield  SparseRow.fromValues[studyLabel]
                 yield! Studies.toRows study
         }
@@ -203,7 +203,7 @@ module Investigation =
         with
         | err -> failwithf "Could not read investigation from spreadsheet: %s" err.Message
 
-    let toFsWorkbook (investigation:ARCInvestigation) : FsWorkbook =           
+    let toFsWorkbook (investigation:ArcInvestigation) : FsWorkbook =           
         try
             let wb = new FsWorkbook()
             let sheet = FsWorksheet("Investigation")

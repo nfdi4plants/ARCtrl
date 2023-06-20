@@ -102,7 +102,6 @@ type ArcTable =
     }
 
 
-
     /// Returns a cell at given position if it exists, else returns None.
     member this.TryGetCellAt (column: int,row: int) =
         Dictionary.tryFind (column, row) this.Values
@@ -167,6 +166,7 @@ type ArcTable =
         | None, Some i -> this.InsertEmptyColumn(header,i,?forceReplace = forceReplace)
         | None,None -> this.AppendEmptyColumn(header,?forceReplace = forceReplace)
         ArcTable.extendBodyCells this
+
     /////
     //static member private insertRawColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (table:ArcTable) =
     //    let mutable numberOfNewColumns = 1
@@ -258,35 +258,33 @@ type ArcTable =
 
     member this.ColumnCount 
         with get() = ArcTableAux.getColumnCount (this.Headers)
-
-        with get() = this.ValueHeaders.Length
-
     member this.RowCount 
         with get() = ArcTableAux.getRowCount (this.Values)
 
     member this.Columns with get() : CompositeColumn list = 
-        this.ValueHeaders
-        |> Array.mapi (fun colI h ->
+        this.Headers
+        |> Seq.mapi (fun colI h ->
             let values = Array.init this.RowCount (fun rowI -> this.Values.[colI,rowI])
             CompositeColumn.create(h,values)
         )
-        |> Array.toList
+        |> Seq.toList
 
 
-    member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int) = 
-        let index = Option.defaultValue this.ColumnCount index
-        let cells = Option.defaultValue [||] cells
-        let forceReplace = Option.defaultValue false forceReplace
-        // sanity checks
-        ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
-        ArcTableAux.SanityChecks.validateColumn(CompositeColumn.create(header, cells))
-        // 
-        let nextHeaders, nextBody =
-            this.Values 
-            |> ArcTableAux.flattenBodyCells
-            |> ArcTableAux.insertColumn header cells index forceReplace this.ValueHeaders
-            ||> ArcTableAux.extendBodyCells
-        { this with ValueHeaders = nextHeaders; Values = nextBody }
+    //member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int) = 
+    //    let index = Option.defaultValue this.ColumnCount index
+    //    let cells = Option.defaultValue [||] cells
+    //    let forceReplace = Option.defaultValue false forceReplace
+    //    // sanity checks
+    //    ArcTableAux.SanityChecks.validateIndex index this.ColumnCount
+    //    ArcTableAux.SanityChecks.validateColumn(CompositeColumn.create(header, cells))
+    //    // 
+    //    let nextHeaders, nextBody =
+    //        this.Values 
+    //        |> ArcTableAux.flattenBodyCells
+    //        |> ArcTableAux.insertColumn header cells index forceReplace this.ValueHeaders
+    //        ||> ArcTableAux.extendBodyCells
+    //    { this with ValueHeaders = nextHeaders; Values = nextBody }
+
     member this.Copy() : ArcTable = 
         ArcTable.create(
             this.Name,

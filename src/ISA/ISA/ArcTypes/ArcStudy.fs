@@ -17,7 +17,7 @@ type ArcStudy =
         StudyDesignDescriptors : OntologyAnnotation list option
         Materials : StudyMaterials option
         Sheets : ArcTable list option
-        Assays : ARCAssay list option
+        Assays : ArcAssay list option
         Factors : Factor list option
         /// List of all the characteristics categories (or material attributes) defined in the study, used to avoid duplication of their declaration when each material_attribute_value is created. 
         CharacteristicCategories : MaterialAttribute list option
@@ -70,7 +70,7 @@ type ArcStudy =
 
     [<NamedParams>]
     static member create (?ID, ?FileName, ?Identifier, ?Title, ?Description, ?SubmissionDate, ?PublicReleaseDate, ?Publications, ?Contacts, ?StudyDesignDescriptors, ?Materials, ?Sheets, ?Assays, ?Factors, ?CharacteristicCategories, ?UnitCategories, ?Comments) = 
-        ARCStudy.make ID FileName Identifier Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Materials Sheets Assays Factors CharacteristicCategories UnitCategories Comments
+        ArcStudy.make ID FileName Identifier Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Materials Sheets Assays Factors CharacteristicCategories UnitCategories Comments
 
     static member tryGetAssayByID (assayIdentifier : string) (study : Study) : Assay option = 
         raise (System.NotImplementedException())
@@ -82,8 +82,8 @@ type ArcStudy =
     static member addAssay (assay : Assay) (study : Study) : Study = 
         raise (System.NotImplementedException())
 
-    static member fromStudy (study : Study) : ARCStudy = 
+    static member fromStudy (study : Study) : ArcStudy = 
         raise (System.NotImplementedException())
 
-    static member toStudy (arcStudy : ARCStudy) : Study =
+    static member toStudy (ArcStudy : ArcStudy) : Study =
         raise (System.NotImplementedException())

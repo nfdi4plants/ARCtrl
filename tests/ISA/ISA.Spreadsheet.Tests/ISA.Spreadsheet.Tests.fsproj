@@ -7,10 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TestObjects\InvestigationFile.fs" />
+    <Compile Include="StringConversionTests.fs" />
+    <Compile Include="SparseTableTests.fs" />
+    <Compile Include="CompositeHeaderTests.fs" />
+    <Compile Include="CompositeCellTests.fs" />
+    <Compile Include="CompositeColumnTests.fs" />
+    <Compile Include="ArcTableTests.fs" />
     <Compile Include="AssayFileTests.fs" />
     <Compile Include="InvestigationFileTests.fs" />
-    <Compile Include="RegexPattern.fs" />
-    <Compile Include="Sample.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
@@ -18,6 +23,7 @@
     <PackageReference Include="Expecto" Version="9.*" />
     <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <ProjectReference Include="..\..\..\src\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj" />
     <PackageReference Update="FSharp.Core" Version="6.*" />
   </ItemGroup>
 </Project>

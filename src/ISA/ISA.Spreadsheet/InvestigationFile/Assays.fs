@@ -23,10 +23,10 @@ module Assays =
         ]
 
     
-    let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ARCAssay = 
+    let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
         let measurementType = OntologyAnnotation.fromString(measurementType,measurementTypeTermSourceREF,measurementTypeTermAccessionNumber)
         let technologyType = OntologyAnnotation.fromString(technologyType,technologyTypeTermSourceREF,technologyTypeTermAccessionNumber)
-        ARCAssay.make 
+        ArcAssay.make 
             None 
             (Option.fromValueWithDefault "" fileName)
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
@@ -36,7 +36,7 @@ module Assays =
             None 
             (Option.fromValueWithDefault [] comments)
         
-    let fromSparseTable (matrix : SparseTable) : ARCAssay list=
+    let fromSparseTable (matrix : SparseTable) : ArcAssay list=
         
         List.init matrix.Length (fun i -> 
 
@@ -57,7 +57,7 @@ module Assays =
                 comments
         )
 
-    let toSparseTable (assays: ARCAssay list) =
+    let toSparseTable (assays: ArcAssay list) =
         let matrix = SparseTable.Create (keys = labels,length=assays.Length + 1)
         let mutable commentKeys = []
         assays
@@ -92,7 +92,7 @@ module Assays =
         | None -> SparseTable.FromRows(rows,labels,lineNumber)
         |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
  
-    let toRows prefix (assays : ARCAssay list) =
+    let toRows prefix (assays : ArcAssay list) =
         assays
         |> toSparseTable
         |> fun m -> 

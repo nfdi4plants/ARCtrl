@@ -29,7 +29,7 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
             |> List.map CompositeColumn.fromFsColumns
             |> List.toArray
         ArcTable.init sheet.Name
-        |> ArcTable.addColumns compositeColumns None 
+        |> ArcTable.addColumns compositeColumns 
         |> Some
     | None ->
         None
