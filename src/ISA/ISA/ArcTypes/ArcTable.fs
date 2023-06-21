@@ -4,6 +4,7 @@ open Fable.Core
 open System.Collections.Generic
 open ArcTableAux
 
+[<CustomEquality; NoComparison>]
 [<AttachMembers>]
 type ArcTable = 
     {
@@ -149,10 +150,10 @@ type ArcTable =
         Unchecked.addColumn header cells index forceReplace this.Headers this.Values
         Unchecked.fillMissingCells this.Headers this.Values
 
-    static member addColumn (header: CompositeHeader,cells: CompositeCell [],?Index: int ,?ForceReplace : bool) : (ArcTable -> ArcTable) =
+    static member addColumn (header: CompositeHeader, ?cells: CompositeCell [],?index: int ,?forceReplace : bool) : (ArcTable -> ArcTable) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
-            newTable.AddColumn(header, cells, ?index = Index)
+            newTable.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
             newTable
 
 
@@ -401,3 +402,16 @@ type ArcTable =
                 this.GetRow(rowI) |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
         ]
         |> String.concat "\n"
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? ArcTable as table -> 
+            let sameName = this.Name = table.Name
+            let sameHeaders = Seq.forall2 (fun x y -> x = y) this.Headers table.Headers
+            let sameBodyCells = Seq.forall2 (fun x y -> x = y) this.Headers table.Headers
+            sameName && sameHeaders && sameBodyCells
+        | _ -> false
+
+    // it's good practice to ensure that this behaves using the same fields as Equals does:
+    override this.GetHashCode () = this.GetHashCode()
