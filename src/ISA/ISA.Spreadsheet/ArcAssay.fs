@@ -50,7 +50,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
             loop currentLine [] [] 1
             
         else
-            failwith "emptyInvestigationFile"
+            failwith "empty assay metadata sheet"
     sheet.Rows 
     |> Seq.map SparseRow.fromFsRow
     |> fromRows

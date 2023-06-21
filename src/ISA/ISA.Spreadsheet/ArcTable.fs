@@ -4,6 +4,7 @@ open ISA
 open FSharpAux
 open FsSpreadsheet
 
+[<Literal>]
 let annotationTablePrefix = "annotationTable"
 
 let groupColumnsByHeader (columns : list<FsColumn>) = 
@@ -14,13 +15,15 @@ let groupColumnsByHeader (columns : list<FsColumn>) =
         ||
         c.[0].Value = "Unit"
     )
+c
+/// Returns the annotation table of the worksheet if it exists, else returns None
+let tryAnnotationTable (sheet : FsWorksheet) =
+    sheet.Tables
+    |> Seq.tryFind (fun t -> t.Name.StartsWith annotationTablePrefix)
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
-    let annotationTable =
-        sheet.Tables
-        |> Seq.tryFind (fun t -> t.Name.StartsWith annotationTablePrefix)
-    match annotationTable with
+    match tryAnnotationTable sheet with
     | Some t -> 
         let compositeColumns = 
             t.Columns(sheet.CellCollection)

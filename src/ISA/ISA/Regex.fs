@@ -56,17 +56,17 @@ module Pattern =
 
     /// Hits term accession, without id: ENVO:01001831
     [<LiteralAttribute>]
-    let TermAnnotationShortPattern = @"(?<idspace>\w+?):(?<localid>\w+)" //prev: @"[\w]+?:[\d]+"
+    let TermAnnotationShortPattern = @"(?<termsourceref>\w+?):(?<localtan>\w+)" //prev: @"[\w]+?:[\d]+"
 
 
     // https://obofoundry.org/id-policy.html#mapping-of-owl-ids-to-obo-format-ids
     /// <summary>Regex pattern is designed to hit only Foundry-compliant URIs.</summary>
     [<LiteralAttribute>]
-    let TermAnnotationURIPattern = @"http://purl.obolibrary.org/obo/(?<idspace>\w+?)_(?<localid>\w+)"
+    let TermAnnotationURIPattern = @"http://purl.obolibrary.org/obo/(?<termsourceref>\w+?)_(?<localtan>\w+)"
 
     /// Watch this closely, this could hit some edge cases we do not want to cover.
     [<LiteralAttribute>]
-    let TermAnnotationURIPattern_lessRestrictive = @".*\/(?<idspace>\w+?)[:_](?<localid>\w+)"
+    let TermAnnotationURIPattern_lessRestrictive = @".*\/(?<termsourceref>\w+?)[:_](?<localtan>\w+)"
 
     /// This pattern is used to match both Input and Output columns and capture the IOType as `iotype` group.
     [<LiteralAttribute>]
@@ -149,17 +149,17 @@ module ActivePatterns =
 
     /// Matches a term string (either short or URI) and returns the term source ref and the annotation number strings.
     /// 
-    /// Example 1: "MS:1003022" --> term source ref: "MS"; annotation number: "1003022"
+    /// Example 1: "MS:1003022" --> TermSourceRef = "MS"; LocalTAN = "1003022"
     ///
-    /// Example 2: "http://purl.obolibrary.org/obo/MS_1003022" --> term source ref: "MS"; annotation number: "1003022"
+    /// Example 2: "http://purl.obolibrary.org/obo/MS_1003022" --> TermSourceRef = "MS"; LocalTAN = "1003022"
     let (|TermAnnotation|_|) input =
         match input with
         | Regex Pattern.TermAnnotationShortPattern value 
         | Regex Pattern.TermAnnotationURIPattern value 
         | Regex Pattern.TermAnnotationURIPattern_lessRestrictive value ->
-            let idspace = value.Groups.["idspace"].Value
-            let localid = value.Groups.["localid"].Value
-            {|IdSpace = idspace; LocalId = localid|}
+            let termsourceref = value.Groups.["termsourceref"].Value
+            let localtan = value.Groups.["localtan"].Value
+            {|TermSourceRef = termsourceref; LocalTAN = localtan|}
             |> Some
         | _ ->
             None
@@ -218,19 +218,19 @@ let tryParseTermAnnotation (str:string) =
     | Regex TermAnnotationShortPattern value 
     | Regex TermAnnotationURIPattern value 
     | Regex TermAnnotationURIPattern_lessRestrictive value ->
-        let idspace = value.Groups.["idspace"].Value
-        let localid = value.Groups.["localid"].Value
-        {|IdSpace = idspace; LocalId = localid|}
+        let termsourceref = value.Groups.["termsourceref"].Value
+        let localtan = value.Groups.["localtan"].Value
+        {|TermSourceRef = termsourceref; LocalTAN = localtan|}
         |> Some
     | _ ->
         None
 
-/// Tries to parse 'str' to term accession and returns it in the format `Some "idspace:localid"`. Exmp.: `Some "MS:000001"`
+/// Tries to parse 'str' to term accession and returns it in the format `Some "termsourceref:localtan"`. Exmp.: `Some "MS:000001"`
 let tryGetTermAnnotationShortString (str:string) = 
     tryParseTermAnnotation str
-    |> Option.map (fun r -> r.IdSpace + ":" + r.LocalId)
+    |> Option.map (fun r -> r.TermSourceRef + ":" + r.LocalTAN)
 
-/// Parses 'str' to term accession and returns it in the format "idspace:localid". Exmp.: "MS:000001"
+/// Parses 'str' to term accession and returns it in the format "termsourceref:localtan". Exmp.: "MS:000001"
 let getTermAnnotationShortString (str:string) =
     match tryGetTermAnnotationShortString str with
     | Some s -> s
