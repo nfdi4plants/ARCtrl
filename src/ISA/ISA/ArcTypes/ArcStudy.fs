@@ -85,5 +85,5 @@ type ArcStudy =
     static member fromStudy (study : Study) : ArcStudy = 
         raise (System.NotImplementedException())
 
-    static member toStudy (ArcStudy : ArcStudy) : Study =
+    static member toStudy (arcStudy : ArcStudy) : Study =
         raise (System.NotImplementedException())

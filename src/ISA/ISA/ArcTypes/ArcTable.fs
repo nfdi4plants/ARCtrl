@@ -139,7 +139,6 @@ type ArcTable =
             Dictionary(this.Values)
         )
 
-
     member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int, ?forceReplace: bool) : unit = 
         let index = defaultArg index this.ColumnCount
         let cells = defaultArg cells [||]
