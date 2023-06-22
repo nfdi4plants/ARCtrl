@@ -16,6 +16,7 @@ let all = testSequenced <| testList "All" [
     CompositeCell.Tests.main
     CompositeColumn.Tests.main
     ArcTable.Tests.main
+    ArcAssay.Tests.main
 ]
 
 let [<EntryPoint>] main argv = 
