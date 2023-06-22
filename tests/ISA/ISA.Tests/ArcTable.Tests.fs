@@ -1700,6 +1700,24 @@ let private tests_addRows =
         )
     ]
 
+let private tests_processTransformation = 
+    testList "Process Transformation" [
+        testCase "ToProcesses" (fun () ->
+            Expect.isFalse true "Not implemented"
+        )
+    ]
+
+let private tests_protocolTransformation = 
+    testList "Protocol Transformation" [
+        testCase "FromProtocol SingleParameter" (fun () ->
+            //let p = Protocol()
+            Expect.isFalse true "Not implemented"
+        )
+        testCase "GetProtocols" (fun () ->
+            Expect.isFalse true "Not implemented"
+        )
+    ]
+
 let main = 
     testList "ArcTable" [
         tests_SanityChecks

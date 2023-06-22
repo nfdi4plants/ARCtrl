@@ -15,11 +15,19 @@ let groupColumnsByHeader (columns : list<FsColumn>) =
         ||
         c.[0].Value = "Unit"
     )
-c
+
 /// Returns the annotation table of the worksheet if it exists, else returns None
 let tryAnnotationTable (sheet : FsWorksheet) =
     sheet.Tables
     |> Seq.tryFind (fun t -> t.Name.StartsWith annotationTablePrefix)
+
+/// Groups and parses a collection of single columns into the according ISA composite columns
+let composeColumns (columns : seq<FsColumn>) : CompositeColumn [] =
+    columns
+    |> Seq.toList
+    |> groupColumnsByHeader
+    |> List.map CompositeColumn.fromFsColumns
+    |> List.toArray
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
@@ -27,10 +35,7 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
     | Some t -> 
         let compositeColumns = 
             t.Columns(sheet.CellCollection)
-            |> Seq.toList
-            |> groupColumnsByHeader
-            |> List.map CompositeColumn.fromFsColumns
-            |> List.toArray
+            |> composeColumns
         ArcTable.init sheet.Name
         |> ArcTable.addColumns compositeColumns 
         |> Some
