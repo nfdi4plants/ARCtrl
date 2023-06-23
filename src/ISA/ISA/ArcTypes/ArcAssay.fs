@@ -25,8 +25,14 @@ module ArcAssayAux =
                 |> findNextNumber
         ArcTable.init($"New Table {nextNumber}")
 
+    let tryByTableName (name: string) (tables: ResizeArray<ArcTable>) =
+        match Seq.tryFindIndex (fun t -> t.Name = name) tables with
+        | Some index -> index
+        | None -> failwith $"Unable to find table with name '{name}'!"
+
     module SanityChecks =
         
+
         let validateSheetIndex (index: int) (allowAppend: bool) (sheets: ResizeArray<ArcTable>) =
             let eval x y = if allowAppend then x > y else x >= y
             if index < 0 then failwith "Cannot insert ArcTable at index < 0."
@@ -128,16 +134,38 @@ type ArcAssay =
             newAssay.GetTableAt(index)
 
 
+    member this.GetTable(name: string) : ArcTable =
+        tryByTableName name this.Tables
+        |> this.GetTableAt
+
+    static member getTable(name: string) : ArcAssay -> ArcTable =
+        fun (assay:ArcAssay) ->
+            // copy is done in subfunction
+            tryByTableName name assay.Tables
+            |> ArcAssay.getTableAt <| assay
+
+
     member this.SetTableAt(index:int, table:ArcTable) =
         SanityChecks.validateSheetIndex index false this.Tables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
         this.Tables.[index] <- table
 
-    static member setTableAt(index:int, table:ArcTable) =
+    static member setTableAt(index:int, table:ArcTable) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.SetTableAt(index, table)
             newAssay
+
+
+    member this.SetTable(name: string, table:ArcTable) : unit =
+        (tryByTableName name this.Tables, table)
+        |> this.SetTableAt
+
+    static member setTable(name: string, table:ArcTable) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            // copy is done in subfunction
+            (tryByTableName name assay.Tables, table)
+            |> ArcAssay.setTableAt <| assay
 
 
     member this.RemoveTableAt(index:int) : unit =
@@ -150,6 +178,18 @@ type ArcAssay =
             newAssay.RemoveTableAt(index)
             newAssay
 
+
+    member this.RemoveTable(name: string) : unit =
+        tryByTableName name this.Tables
+        |> this.RemoveTableAt
+
+    static member removeTable(name: string) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            // copy is done in subfunction
+            tryByTableName name assay.Tables
+            |> ArcAssay.removeTableAt <| assay
+
+
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
     member this.UpdateTableAt(index: int, updateFun: ArcTable -> unit) =
         SanityChecks.validateSheetIndex index false this.Tables
@@ -161,6 +201,42 @@ type ArcAssay =
             let newAssay = assay.Copy()    
             newAssay.UpdateTableAt(index, updateFun)
             newAssay
+
+
+    member this.UpdateTable(name: string, updateFun: ArcTable -> unit) : unit =
+        (tryByTableName name this.Tables, updateFun)
+        |> this.UpdateTableAt
+
+    static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            // copy is done in subfunction
+            (tryByTableName name assay.Tables, updateFun)
+            |> ArcAssay.updateTableAt <| assay
+
+
+    member this.RenameTableAt(index: int, newName: string) : unit =
+        SanityChecks.validateSheetIndex index false this.Tables
+        SanityChecks.validateNewNameUnique newName this.TableNames
+        let table = this.GetTableAt index
+        let renamed = {table with Name = newName} 
+        this.SetTableAt(index, renamed)
+
+    static member renameTableAt(index: int, newName: string) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()    
+            newAssay.RenameTableAt(index, newName)
+            newAssay
+
+
+    member this.RenameTable(name: string, newName: string) : unit =
+        (tryByTableName name this.Tables, newName)
+        |> this.RenameTableAt
+
+    static member renameTableAt(name: string, newName: string) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            // copy is done in subfunction
+            (tryByTableName name assay.Tables, newName)
+            |> ArcAssay.renameTableAt <| assay
 
 
     member this.Copy() : ArcAssay =
