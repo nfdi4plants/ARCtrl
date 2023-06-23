@@ -108,6 +108,9 @@ type ArcAssay =
         let Sheets = ResizeArray()
         ArcAssay.make ID FileName MeasurementType TechnologyType TechnologyPlatform Sheets Performers Comments
 
+
+    // - Table API - //
+    // remark should this return ArcTable?
     member this.AddTable(?table:ArcTable, ?index: int) = 
         let index = defaultArg index this.TableCount
         let table =
@@ -124,6 +127,7 @@ type ArcAssay =
         this.Tables.InsertRange(index, tables)
 
 
+    // - Table API - //
     member this.GetTableAt(index:int) : ArcTable =
         SanityChecks.validateSheetIndex index false this.Tables
         this.Tables.[index]
@@ -133,7 +137,7 @@ type ArcAssay =
             let newAssay = assay.Copy()
             newAssay.GetTableAt(index)
 
-
+    // - Table API - //
     member this.GetTable(name: string) : ArcTable =
         tryByTableName name this.Tables
         |> this.GetTableAt
@@ -144,7 +148,7 @@ type ArcAssay =
             tryByTableName name assay.Tables
             |> ArcAssay.getTableAt <| assay
 
-
+    // - Table API - //
     member this.SetTableAt(index:int, table:ArcTable) =
         SanityChecks.validateSheetIndex index false this.Tables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
@@ -156,7 +160,7 @@ type ArcAssay =
             newAssay.SetTableAt(index, table)
             newAssay
 
-
+    // - Table API - //
     member this.SetTable(name: string, table:ArcTable) : unit =
         (tryByTableName name this.Tables, table)
         |> this.SetTableAt
@@ -167,7 +171,7 @@ type ArcAssay =
             (tryByTableName name assay.Tables, table)
             |> ArcAssay.setTableAt <| assay
 
-
+    // - Table API - //
     member this.RemoveTableAt(index:int) : unit =
         SanityChecks.validateSheetIndex index false this.Tables
         this.Tables.RemoveAt(index)
@@ -178,7 +182,7 @@ type ArcAssay =
             newAssay.RemoveTableAt(index)
             newAssay
 
-
+    // - Table API - //
     member this.RemoveTable(name: string) : unit =
         tryByTableName name this.Tables
         |> this.RemoveTableAt
@@ -189,7 +193,7 @@ type ArcAssay =
             tryByTableName name assay.Tables
             |> ArcAssay.removeTableAt <| assay
 
-
+    // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
     member this.UpdateTableAt(index: int, updateFun: ArcTable -> unit) =
         SanityChecks.validateSheetIndex index false this.Tables
@@ -202,7 +206,7 @@ type ArcAssay =
             newAssay.UpdateTableAt(index, updateFun)
             newAssay
 
-
+    // - Table API - //
     member this.UpdateTable(name: string, updateFun: ArcTable -> unit) : unit =
         (tryByTableName name this.Tables, updateFun)
         |> this.UpdateTableAt
@@ -213,7 +217,7 @@ type ArcAssay =
             (tryByTableName name assay.Tables, updateFun)
             |> ArcAssay.updateTableAt <| assay
 
-
+    // - Table API - //
     member this.RenameTableAt(index: int, newName: string) : unit =
         SanityChecks.validateSheetIndex index false this.Tables
         SanityChecks.validateNewNameUnique newName this.TableNames
@@ -227,7 +231,7 @@ type ArcAssay =
             newAssay.RenameTableAt(index, newName)
             newAssay
 
-
+    // - Table API - //
     member this.RenameTable(name: string, newName: string) : unit =
         (tryByTableName name this.Tables, newName)
         |> this.RenameTableAt
@@ -238,6 +242,11 @@ type ArcAssay =
             (tryByTableName name assay.Tables, newName)
             |> ArcAssay.renameTableAt <| assay
 
+    // - Column CRUD API - //
+    member this.AddColumn(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
+        this.UpdateTableAt(tableIndex, fun table ->
+            table.AddColumn(header, ?cells=cells, ?index=columnIndex, ?forceReplace=forceReplace)
+        )
 
     member this.Copy() : ArcAssay =
         let newSheets = ResizeArray()
