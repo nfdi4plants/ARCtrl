@@ -12,6 +12,7 @@ open Expecto
 let all = testSequenced <| testList "All" [
     Update.Tests.main
     DataModel.Tests.main
+    Regex.Tests.main
     CompositeHeader.Tests.main
     CompositeCell.Tests.main
     CompositeColumn.Tests.main
