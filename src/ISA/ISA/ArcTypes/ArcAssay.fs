@@ -126,7 +126,6 @@ type ArcAssay =
         SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
         this.Tables.InsertRange(index, tables)
 
-
     // - Table API - //
     member this.GetTableAt(index:int) : ArcTable =
         SanityChecks.validateSheetIndex index false this.Tables
@@ -144,9 +143,8 @@ type ArcAssay =
 
     static member getTable(name: string) : ArcAssay -> ArcTable =
         fun (assay:ArcAssay) ->
-            // copy is done in subfunction
-            tryByTableName name assay.Tables
-            |> ArcAssay.getTableAt <| assay
+            let newAssay = assay.Copy()
+            newAssay.GetTable(name)
 
     // - Table API - //
     member this.SetTableAt(index:int, table:ArcTable) =
@@ -167,9 +165,9 @@ type ArcAssay =
 
     static member setTable(name: string, table:ArcTable) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
-            // copy is done in subfunction
-            (tryByTableName name assay.Tables, table)
-            |> ArcAssay.setTableAt <| assay
+            let newAssay = assay.Copy()
+            newAssay.SetTable(name, table)
+            newAssay
 
     // - Table API - //
     member this.RemoveTableAt(index:int) : unit =
@@ -189,9 +187,9 @@ type ArcAssay =
 
     static member removeTable(name: string) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
-            // copy is done in subfunction
-            tryByTableName name assay.Tables
-            |> ArcAssay.removeTableAt <| assay
+            let newAssay = assay.Copy()
+            newAssay.RemoveTable(name)
+            newAssay
 
     // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
@@ -213,9 +211,9 @@ type ArcAssay =
 
     static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
-            // copy is done in subfunction
-            (tryByTableName name assay.Tables, updateFun)
-            |> ArcAssay.updateTableAt <| assay
+            let newAssay = assay.Copy()
+            newAssay.UpdateTable(name, updateFun)
+            newAssay
 
     // - Table API - //
     member this.RenameTableAt(index: int, newName: string) : unit =
@@ -236,17 +234,189 @@ type ArcAssay =
         (tryByTableName name this.Tables, newName)
         |> this.RenameTableAt
 
-    static member renameTableAt(name: string, newName: string) : ArcAssay -> ArcAssay =
+    static member renameTable(name: string, newName: string) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
-            // copy is done in subfunction
-            (tryByTableName name assay.Tables, newName)
-            |> ArcAssay.renameTableAt <| assay
+            let newAssay = assay.Copy()
+            newAssay.RenameTable(name, newName)
+            newAssay
 
     // - Column CRUD API - //
-    member this.AddColumn(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
+    member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
         this.UpdateTableAt(tableIndex, fun table ->
             table.AddColumn(header, ?cells=cells, ?index=columnIndex, ?forceReplace=forceReplace)
         )
+
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay = 
+        fun (assay: ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
+            newAssay
+
+    // - Column CRUD API - //
+    member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
+        tryByTableName tableName this.Tables
+        |> fun i -> this.AddColumnAt(i, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
+
+    static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.AddColumn(tableName, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
+            newAssay
+
+    // - Column CRUD API - //
+    member this.RemoveColumnAt(tableIndex: int, columnIndex: int) =
+        this.UpdateTableAt(tableIndex, fun table ->
+            table.RemoveColumn(columnIndex)
+        )
+
+    static member removeColumnAt(tableIndex: int, columnIndex: int) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.RemoveColumnAt(tableIndex, columnIndex)
+            newAssay
+
+    // - Column CRUD API - //
+    member this.RemoveColumn(tableName: string, columnIndex: int) : unit =
+        (tryByTableName tableName this.Tables, columnIndex)
+        |> this.RemoveColumnAt
+
+    static member removeColumn(tableName: string, columnIndex: int) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.RemoveColumn(tableName, columnIndex)
+            newAssay
+
+    // - Column CRUD API - //
+    member this.SetColumnAt(tableIndex: int, columnIndex: int, column: CompositeColumn) =
+        this.UpdateTableAt(tableIndex, fun table ->
+            table.SetColumn(columnIndex, column)
+        )
+
+    static member setColumnAt(tableIndex: int, columnIndex: int, column: CompositeColumn) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetColumnAt(tableIndex, columnIndex, column)
+            newAssay
+
+    // - Column CRUD API - //
+    member this.SetColumn(tableName: string, columnIndex: int, column: CompositeColumn) =
+        (tryByTableName tableName this.Tables, columnIndex, column)
+        |> this.SetColumnAt
+
+    static member setColumn(tableName: string, columnIndex: int, column: CompositeColumn) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetColumn(tableName, columnIndex, column)
+            newAssay
+
+    // - Column CRUD API - //
+    member this.GetColumnAt(tableIndex: int, columnIndex: int) =
+        let table = this.GetTableAt(tableIndex)
+        table.GetColumn(columnIndex)
+
+    static member getColumnAt(tableIndex: int, columnIndex: int) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.GetColumnAt(tableIndex, columnIndex)
+
+    // - Column CRUD API - //
+    member this.GetColumn(tableName: string, columnIndex: int) =
+        (tryByTableName tableName this.Tables, columnIndex)
+        |> this.GetColumnAt
+
+    static member getColumn(tableName: string, columnIndex: int) =
+        fun (assay: ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.GetColumn(tableName, columnIndex)
+
+    // - Row CRUD API - //
+    member this.AddRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) = 
+        this.UpdateTableAt(tableIndex, fun table ->
+            table.AddRow(?cells=cells, ?index=rowIndex)
+        )
+
+    static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcAssay -> ArcAssay = 
+        fun (assay: ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
+            newAssay
+
+    // - Row CRUD API - //
+    member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
+        tryByTableName tableName this.Tables
+        |> fun i -> this.AddRowAt(i, ?cells=cells, ?rowIndex=rowIndex)
+
+    static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.AddRow(tableName, ?cells=cells, ?rowIndex=rowIndex)
+            newAssay
+
+    // - Row CRUD API - //
+    member this.RemoveRowAt(tableIndex: int, rowIndex: int) =
+        this.UpdateTableAt(tableIndex, fun table ->
+            table.RemoveRow(rowIndex)
+        )
+
+    static member removeRowAt(tableIndex: int, rowIndex: int) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.RemoveColumnAt(tableIndex, rowIndex)
+            newAssay
+
+    // - Row CRUD API - //
+    member this.RemoveRow(tableName: string, rowIndex: int) : unit =
+        (tryByTableName tableName this.Tables, rowIndex)
+        |> this.RemoveRowAt
+
+    static member removeRow(tableName: string, rowIndex: int) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.RemoveRow(tableName, rowIndex)
+            newAssay
+
+    // - Row CRUD API - //
+    member this.SetRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+        this.UpdateTableAt(tableIndex, fun table ->
+            table.SetRow(rowIndex, cells)
+        )
+
+    static member setRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetRowAt(tableIndex, rowIndex, cells)
+            newAssay
+
+    // - Row CRUD API - //
+    member this.SetRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+        (tryByTableName tableName this.Tables, rowIndex, cells)
+        |> this.SetRowAt
+
+    static member setRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetRow(tableName, rowIndex, cells)
+            newAssay
+
+    // - Row CRUD API - //
+    member this.GetRowAt(tableIndex: int, rowIndex: int) =
+        let table = this.GetTableAt(tableIndex)
+        table.GetRow(rowIndex)
+
+    static member getRowAt(tableIndex: int, rowIndex: int) =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.GetRowAt(tableIndex, rowIndex)
+
+    // - Row CRUD API - //
+    member this.GetRow(tableName: string, rowIndex: int) =
+        (tryByTableName tableName this.Tables, rowIndex)
+        |> this.GetRowAt
+
+    static member getRow(tableName: string, rowIndex: int) =
+        fun (assay: ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.GetRow(tableName, rowIndex)
 
     member this.Copy() : ArcAssay =
         let newSheets = ResizeArray()
