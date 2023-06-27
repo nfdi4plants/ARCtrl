@@ -66,7 +66,9 @@ open ArcAssayAux
 type ArcAssay = 
 
     {
+        /// JSON-LD identifier. Only relevant for json io.
         ID : URI option
+        /// Must be unique in one study
         FileName : string option
         MeasurementType : OntologyAnnotation option
         TechnologyType : OntologyAnnotation option
