@@ -97,8 +97,8 @@ type OntologyAnnotation =
         |> Regex.tryParseTermAnnotation
         |> Option.get 
         |> fun r ->
-            let accession = r.TermSourceRef + ":" + r.LocalTAN
-            OntologyAnnotation.fromString ("", r.TermSourceRef, accession)
+            let accession = r.TermSourceREF + ":" + r.LocalTAN
+            OntologyAnnotation.fromString ("", r.TermSourceREF, accession)
 
     /// Parses any value in `TermAccessionString` to term accession format "termsourceref:localtan". Exmp.: "MS:000001".
     ///
@@ -114,7 +114,7 @@ type OntologyAnnotation =
             OntologyAnnotation.createUriAnnotation tsr tan
         | None, Some tan ->
             match Regex.tryParseTermAnnotation tan with 
-            | Some termAccession -> OntologyAnnotation.createUriAnnotation termAccession.TermSourceRef termAccession.LocalTAN
+            | Some termAccession -> OntologyAnnotation.createUriAnnotation termAccession.TermSourceREF termAccession.LocalTAN
             | None -> ""
         | _ -> ""
 

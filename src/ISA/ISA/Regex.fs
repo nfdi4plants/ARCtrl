@@ -154,9 +154,9 @@ module ActivePatterns =
 
     /// Matches a term string (either short or URI) and returns the term source ref and the annotation number strings.
     /// 
-    /// Example 1: "MS:1003022" --> TermSourceRef = "MS"; LocalTAN = "1003022"
+    /// Example 1: "MS:1003022" --> term source ref: "MS"; annotation number: "1003022"
     ///
-    /// Example 2: "http://purl.obolibrary.org/obo/MS_1003022" --> TermSourceRef = "MS"; LocalTAN = "1003022"
+    /// Example 2: "http://purl.obolibrary.org/obo/MS_1003022" --> term source ref: "MS"; annotation number: "1003022"
     let (|TermAnnotation|_|) input =
         match input with
         | Regex Pattern.TermAnnotationShortPattern value 
@@ -164,7 +164,7 @@ module ActivePatterns =
         | Regex Pattern.TermAnnotationURIPattern_lessRestrictive value ->
             let termsourceref = value.Groups.["termsourceref"].Value
             let localtan = value.Groups.["localtan"].Value
-            {|TermSourceRef = termsourceref; LocalTAN = localtan|}
+            {|TermSourceREF = termsourceref; LocalTAN = localtan|}
             |> Some
         | _ ->
             None
@@ -235,7 +235,7 @@ let tryParseTermAnnotation (str:string) =
     | Regex TermAnnotationURIPattern_lessRestrictive value ->
         let termsourceref = value.Groups.["termsourceref"].Value
         let localtan = value.Groups.["localtan"].Value
-        {|TermSourceRef = termsourceref; LocalTAN = localtan|}
+        {|TermSourceREF = termsourceref; LocalTAN = localtan|}
         |> Some
     | _ ->
         None
@@ -243,7 +243,7 @@ let tryParseTermAnnotation (str:string) =
 /// Tries to parse 'str' to term accession and returns it in the format `Some "termsourceref:localtan"`. Exmp.: `Some "MS:000001"`
 let tryGetTermAnnotationShortString (str:string) = 
     tryParseTermAnnotation str
-    |> Option.map (fun r -> r.TermSourceRef + ":" + r.LocalTAN)
+    |> Option.map (fun r -> r.TermSourceREF + ":" + r.LocalTAN)
 
 /// Parses 'str' to term accession and returns it in the format "termsourceref:localtan". Exmp.: "MS:000001"
 let getTermAnnotationShortString (str:string) =
