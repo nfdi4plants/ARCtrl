@@ -171,6 +171,7 @@ type ArcAssay =
         SanityChecks.validateSheetIndex index false this.Tables
         this.Tables.[index]
 
+    /// Receive **copy** of table at `index`
     static member getTableAt(index:int) : ArcAssay -> ArcTable =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -181,6 +182,7 @@ type ArcAssay =
         indexByTableName name this.Tables
         |> this.GetTableAt
 
+    /// Receive **copy** of table with `name` = `ArcTable.Name`
     static member getTable(name: string) : ArcAssay -> ArcTable =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
