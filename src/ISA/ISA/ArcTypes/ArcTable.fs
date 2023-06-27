@@ -435,4 +435,8 @@ type ArcTable =
         | _ -> false
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:
-    override this.GetHashCode () = this.GetHashCode()
+    override this.GetHashCode () = 
+        let name = this.Name.GetHashCode()
+        let headers = this.Headers |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
+        let bodyCells = this.Values |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
+        name + headers + bodyCells

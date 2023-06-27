@@ -69,6 +69,12 @@ let private tests_member =
             let table = create_testTable()
             Expect.equal table.RowCount 5 ""
         )
+        testCase "GetHashCode && Custom equality" (fun () ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            Expect.equal table1 table2 "equal"
+            Expect.equal (table1.GetHashCode()) (table2.GetHashCode()) "HashCode"
+        )
     ]
 
 let private tests_validate = 

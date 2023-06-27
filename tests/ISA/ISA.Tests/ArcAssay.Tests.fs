@@ -74,13 +74,15 @@ let private tests_AddTable =
     testList "AddTable" [
         testCase "append, default table" (fun () ->
             let assay = ArcAssay.create()
-            assay.AddTable()
+            let table = ArcTable.init("New Table 1")
+            assay.AddTable(table)
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name"
         )
         testCase "append, default table, iter 5x" (fun () ->
             let assay = ArcAssay.create()
-            for i in 1 .. 5 do assay.AddTable()
+            for i in 1 .. 5 do 
+                assay.AddTable(ArcTable.init($"New Table {i}"))
             Expect.equal assay.TableCount 5 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name 0"
             Expect.equal assay.TableNames.[4] "New Table 5" "Sheet Name 4"
@@ -102,7 +104,7 @@ let private tests_AddTable =
         )
         testCase "insert, default table" (fun () ->
             let assay = create_exampleAssay()
-            assay.AddTable(index=0)
+            assay.AddTable(ArcTable.init("New Table 1"), index=0)
             Expect.equal assay.TableCount 6 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name 0"
             Expect.equal assay.TableNames.[1] "My Table 0" "Sheet Name 1"
@@ -110,7 +112,7 @@ let private tests_AddTable =
         )
         testCase "add, duplicate name, throws" (fun () ->
             let assay = ArcAssay.create()
-            assay.AddTable()
+            assay.AddTable(ArcTable.init("New Table 1"))
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name"
             let eval() = assay.AddTable(ArcTable.init "New Table 1")

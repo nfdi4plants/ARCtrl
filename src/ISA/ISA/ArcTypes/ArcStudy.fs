@@ -149,11 +149,52 @@ type ArcStudy =
         SanityChecks.validateNewNameUnique table.Name this.TableNames
         this.Tables.Insert(index, table)
 
+    static member addTable(table:ArcTable, ?index: int) =
+        fun (study:ArcStudy) ->
+            let c = study.Copy()
+            c.AddTable(table, ?index = index)
+            c
+
+    // - Table API - //
     member this.AddTables(tables:seq<ArcTable>, ?index: int) = 
         let index = defaultArg index this.TableCount
         SanityChecks.validateSheetIndex index true this.Tables
         SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
         this.Tables.InsertRange(index, tables)
+
+    static member addTables(tables:seq<ArcTable>, ?index: int) =
+        fun (study:ArcStudy) ->
+            let c = study.Copy()
+            c.AddTables(tables, ?index = index)
+            c
+
+    // - Table API - //
+    member this.InitTable(tableName:string, ?index: int) = 
+        let index = defaultArg index this.TableCount
+        let table = ArcTable.init(tableName)
+        SanityChecks.validateSheetIndex index true this.Tables
+        SanityChecks.validateNewNameUnique table.Name this.TableNames
+        this.Tables.Insert(index, table)
+
+    static member initTable(tableName: string, ?index: int) =
+        fun (study:ArcStudy) ->
+            let c = study.Copy()
+            c.InitTable(tableName, ?index=index)
+            c
+
+    // - Table API - //
+    member this.InitTables(tableNames:seq<string>, ?index: int) = 
+        let index = defaultArg index this.TableCount
+        let tables = tableNames |> Seq.map (fun x -> ArcTable.init(x))
+        SanityChecks.validateSheetIndex index true this.Tables
+        SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
+        this.Tables.InsertRange(index, tables)
+
+    static member initTables(tableNames:seq<string>, ?index: int) =
+        fun (study:ArcStudy) ->
+            let c = study.Copy()
+            c.InitTables(tableNames, ?index=index)
+            c
 
     // - Table API - //
     member this.GetTableAt(index:int) : ArcTable =
