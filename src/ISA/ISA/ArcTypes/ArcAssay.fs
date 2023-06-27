@@ -327,26 +327,26 @@ type ArcAssay =
             newAssay
 
     // - Column CRUD API - //
-    member this.SetColumnAt(tableIndex: int, columnIndex: int, column: CompositeColumn) =
+    member this.SetColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         this.UpdateTableAt(tableIndex, fun table ->
-            table.SetColumn(columnIndex, column)
+            table.SetColumn(columnIndex, header, ?cells=cells)
         )
 
-    static member setColumnAt(tableIndex: int, columnIndex: int, column: CompositeColumn) =
+    static member setColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
-            newAssay.SetColumnAt(tableIndex, columnIndex, column)
+            newAssay.SetColumnAt(tableIndex, columnIndex, header, ?cells=cells)
             newAssay
 
     // - Column CRUD API - //
-    member this.SetColumn(tableName: string, columnIndex: int, column: CompositeColumn) =
-        (tryByTableName tableName this.Tables, columnIndex, column)
-        |> this.SetColumnAt
+    member this.SetColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+        tryByTableName tableName this.Tables
+        |> fun tableIndex -> this.SetColumnAt(tableIndex, columnIndex, header, ?cells=cells)
 
-    static member setColumn(tableName: string, columnIndex: int, column: CompositeColumn) =
+    static member setColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
-            newAssay.SetColumn(tableName, columnIndex, column)
+            newAssay.SetColumn(tableName, columnIndex, header, ?cells=cells)
             newAssay
 
     // - Column CRUD API - //

@@ -439,24 +439,21 @@ let private tests_SetColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(table.ColumnCount, column)
+            let eval() = table.SetColumn(table.ColumnCount, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid, at invalid negative index" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(-1, column)
+            let eval() = table.SetColumn(-1, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.SetColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -472,15 +469,14 @@ let private tests_SetColumn =
             let h = CompositeHeader.Input IOType.RawDataFile
             let cells = createCells_FreeText "NEWSOURCE" 5
             let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(1, column)
+            let eval() = table.SetColumn(1, h, cells)
             Expect.throws eval ""
         )
         testCase "set unique duplicate, same index" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Input IOType.RawDataFile
             let cells = createCells_FreeText "NEWSOURCE" 5
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.SetColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -495,8 +491,7 @@ let private tests_SetColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 2
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.SetColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -512,8 +507,7 @@ let private tests_SetColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 7
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.SetColumn(0, h, cells)
             Expect.equal table.RowCount 7 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"

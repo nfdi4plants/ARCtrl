@@ -104,8 +104,7 @@ type ArcTable =
                 match newHeader with
                 | isTerm when newHeader.IsTermColumn -> c.Cells |> Array.map (fun c -> c.ToTermCell())
                 | _ -> c.Cells |> Array.map (fun c -> c.ToFreeTextCell())
-            let newColumn = CompositeColumn.create(newHeader,convertedCells)
-            this.SetColumn(index, newColumn)
+            this.SetColumn(index, newHeader, convertedCells)
         else
             failwith "Tried setting header for column with invalid type of cells. Set `forceConvertCells` flag to automatically convert cells into valid CompositeCell type."
 
@@ -116,8 +115,9 @@ type ArcTable =
             newTable
 
 
-    member this.SetColumn (columnIndex:int, column:CompositeColumn) =
+    member this.SetColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
+        let column = CompositeColumn.create(header, ?cells=cells)
         SanityChecks.validateColumn(column)
         /// remove to be replaced header, this is only used to check if any OTHER header is of the same unique type as column.Header
         /// MUST USE "Seq.removeAt" to not remove in mutable object!
@@ -133,10 +133,10 @@ type ArcTable =
         Unchecked.fillMissingCells this.Headers this.Values
         ()
 
-    static member setColumn (columnIndex:int, column:CompositeColumn) = 
+    static member setColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.SetColumn(columnIndex, column)
+            newTable.SetColumn(columnIndex, header, ?cells=cells)
             newTable
 
     ///
