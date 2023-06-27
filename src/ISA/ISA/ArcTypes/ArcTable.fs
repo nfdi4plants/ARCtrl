@@ -4,6 +4,8 @@ open Fable.Core
 open System.Collections.Generic
 open ArcTableAux
 
+open Fable.Core.JsInterop
+
 [<CustomEquality; NoComparison>]
 [<AttachMembers>]
 type ArcTable = 
@@ -161,9 +163,12 @@ type ArcTable =
             newTable
 
     ///
+    //[<NamedParams(fromIndex=1)>]
     member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int, ?forceReplace: bool) : unit = 
-        let index = defaultArg index this.ColumnCount
-        let cells = defaultArg cells [||]
+        let index = 
+            defaultArg index this.ColumnCount
+        let cells = 
+            defaultArg cells [||]
         let forceReplace = defaultArg forceReplace false 
         SanityChecks.validateColumnIndex index this.ColumnCount true
         SanityChecks.validateColumn(CompositeColumn.create(header, cells))

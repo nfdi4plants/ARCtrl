@@ -105,14 +105,14 @@ type ArcAssay =
         with get() = 
             [for s in this.Tables do yield s.Name]
 
-    [<NamedParams>]
-    static member create (?ID : URI, ?FileName : string, ?MeasurementType : OntologyAnnotation, ?TechnologyType : OntologyAnnotation, ?TechnologyPlatform : string, ?Sheets : ResizeArray<ArcTable>, ?Performers : Person list, ?Comments : Comment list) = 
-        let Sheets = ResizeArray()
-        ArcAssay.make ID FileName MeasurementType TechnologyType TechnologyPlatform Sheets Performers Comments
-
+    //[<NamedParams>]
+    static member create (?id : string, ?fileName : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
+        let tables = defaultArg tables <| ResizeArray()
+        ArcAssay.make id fileName measurementType technologyType technologyPlatform tables performers comments
 
     // - Table API - //
     // remark should this return ArcTable?
+    //[<NamedParams(fromIndex=1)>]
     member this.AddTable(table:ArcTable, ?index: int) = 
         let index = defaultArg index this.TableCount
         SanityChecks.validateSheetIndex index true this.Tables
