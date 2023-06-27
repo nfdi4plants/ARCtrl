@@ -48,7 +48,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
     if sheets.IsEmpty then
         studyMetadata
     else {
-        studyMetadata with Sheets = Some sheets   
+        studyMetadata with Tables = ResizeArray(sheets)
     }
 
 let toFsWorkbook (study : ArcStudy) =
@@ -56,8 +56,7 @@ let toFsWorkbook (study : ArcStudy) =
     let metaDataSheet = toMetadataSheet study
     doc.AddWorksheet metaDataSheet
 
-    study.Sheets
-    |> Option.defaultValue []
-    |> List.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+    study.Tables
+    |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
 
     doc

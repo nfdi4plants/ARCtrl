@@ -32,7 +32,7 @@ module Assays =
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
             (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
             (Option.fromValueWithDefault "" technologyPlatform)
-            None             
+            (ResizeArray())             
             None 
             (Option.fromValueWithDefault [] comments)
         

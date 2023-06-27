@@ -73,7 +73,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
     if sheets.IsEmpty then
         assayMetaData
     else {
-        assayMetaData with Sheets = Some sheets   
+        assayMetaData with Tables = ResizeArray(sheets)
     }
 
 let toFsWorkbook (assay : ArcAssay) =
@@ -81,8 +81,7 @@ let toFsWorkbook (assay : ArcAssay) =
     let metaDataSheet = toMetadataSheet assay
     doc.AddWorksheet metaDataSheet
 
-    assay.Sheets
-    |> Option.defaultValue []
-    |> List.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+    assay.Tables
+    |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
 
     doc
