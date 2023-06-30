@@ -134,15 +134,15 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
-    member this.UpdateTableAt(index: int, updateFun: ArcTable -> unit) =
+    member this.MapTableAt(index: int, updateFun: ArcTable -> unit) =
         SanityChecks.validateSheetIndex index false thisTables
         let table = thisTables.[index]
         updateFun table
 
     // - Table API - //
-    member this.UpdateTable(name: string, updateFun: ArcTable -> unit) : unit =
+    member this.MapTable(name: string, updateFun: ArcTable -> unit) : unit =
         (indexByTableName name thisTables, updateFun)
-        |> this.UpdateTableAt
+        |> this.MapTableAt
 
     // - Table API - //
     member this.RenameTableAt(index: int, newName: string) : unit =
@@ -159,7 +159,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
-        this.UpdateTableAt(tableIndex, fun table ->
+        this.MapTableAt(tableIndex, fun table ->
             table.AddColumn(header, ?cells=cells, ?index=columnIndex, ?forceReplace=forceReplace)
         )
 
@@ -170,7 +170,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.RemoveColumnAt(tableIndex: int, columnIndex: int) =
-        this.UpdateTableAt(tableIndex, fun table ->
+        this.MapTableAt(tableIndex, fun table ->
             table.RemoveColumn(columnIndex)
         )
 
@@ -181,7 +181,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.UpdateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        this.UpdateTableAt(tableIndex, fun table ->
+        this.MapTableAt(tableIndex, fun table ->
             table.UpdateColumn(columnIndex, header, ?cells=cells)
         )
 
@@ -202,7 +202,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.AddRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) = 
-        this.UpdateTableAt(tableIndex, fun table ->
+        this.MapTableAt(tableIndex, fun table ->
             table.AddRow(?cells=cells, ?index=rowIndex)
         )
 
@@ -213,7 +213,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.RemoveRowAt(tableIndex: int, rowIndex: int) =
-        this.UpdateTableAt(tableIndex, fun table ->
+        this.MapTableAt(tableIndex, fun table ->
             table.RemoveRow(rowIndex)
         )
 
@@ -224,7 +224,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.UpdateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
-        this.UpdateTableAt(tableIndex, fun table ->
+        this.MapTableAt(tableIndex, fun table ->
             table.UpdateRow(rowIndex, cells)
         )
 

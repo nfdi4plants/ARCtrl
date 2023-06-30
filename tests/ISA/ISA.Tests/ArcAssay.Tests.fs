@@ -330,13 +330,13 @@ let private tests_UpdateTable =
         )
         testCase "set on append index, throws" (fun () ->
             let assay = create_exampleAssay()
-            let eval() = assay.UpdateTableAt(assay.TableCount, fun table -> ())
+            let eval() = assay.MapTableAt(assay.TableCount, fun table -> ())
             Expect.throws eval ""
         )
         testCase "update, AddColumn" (fun () ->
             let index = 1
             let assay = create_exampleAssay()
-            assay.UpdateTableAt(index, fun table ->
+            assay.MapTableAt(index, fun table ->
                 table.AddColumn(column_input.Header, column_input.Cells)
             )
             Expect.equal assay.TableCount 5 "TableCount"
@@ -360,7 +360,7 @@ let private tests_updateTable =
         )
         testCase "set on append index, throws" (fun () ->
             let assay = create_exampleAssay()
-            let eval() = assay.UpdateTableAt(assay.TableCount, fun table -> ())
+            let eval() = assay.MapTableAt(assay.TableCount, fun table -> ())
             Expect.throws eval ""
         )
         testCase "update, AddColumn" (fun () ->
@@ -368,7 +368,7 @@ let private tests_updateTable =
             let assay = create_exampleAssay()
             let assay_expected = create_exampleAssay()
             let newAssay = 
-                assay |> ArcAssay.updateTableAt(index, fun table ->
+                assay |> ArcAssay.mapTableAt(index, fun table ->
                     table.AddColumn(column_input.Header, column_input.Cells)
                 )
             Expect.equal newAssay.TableCount 5 "TableCount"

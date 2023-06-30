@@ -144,21 +144,21 @@ type ArcAssay =
 
     // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
-    member this.UpdateTableAt(index: int, updateFun: ArcTable -> unit) = ArcTables(this.Tables).UpdateTableAt(index, updateFun)
+    member this.MapTableAt(index: int, updateFun: ArcTable -> unit) = ArcTables(this.Tables).MapTableAt(index, updateFun)
 
-    static member updateTableAt(index:int, updateFun: ArcTable -> unit) =
+    static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()    
-            newAssay.UpdateTableAt(index, updateFun)
+            newAssay.MapTableAt(index, updateFun)
             newAssay
 
     // - Table API - //
-    member this.UpdateTable(name: string, updateFun: ArcTable -> unit) : unit = ArcTables(this.Tables).UpdateTable(name, updateFun)
+    member this.MapTable(name: string, updateFun: ArcTable -> unit) : unit = ArcTables(this.Tables).MapTable(name, updateFun)
 
     static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
-            newAssay.UpdateTable(name, updateFun)
+            newAssay.MapTable(name, updateFun)
             newAssay
 
     // - Table API - //
@@ -345,7 +345,7 @@ type ArcAssay =
     static member getIdentifier (assay : Assay) = 
         raise (System.NotImplementedException())
 
-    static member updatePerformers performers assay =
+    static member setPerformers performers assay =
         {assay with Performers = performers}
 
     static member fromAssay (assay : Assay) : ArcAssay =
