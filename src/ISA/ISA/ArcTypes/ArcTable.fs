@@ -75,20 +75,20 @@ type ArcTable =
 
 
     // TODO: And then directly a design question. Is a column with rows containing both CompositeCell.Term and CompositeCell.Unitized allowed?
-    member this.SetCellAt(columnIndex, rowIndex,c : CompositeCell) =
+    member this.UpdateCellAt(columnIndex, rowIndex,c : CompositeCell) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         SanityChecks.validateRowIndex rowIndex this.RowCount false
         SanityChecks.validateColumn <| CompositeColumn.create(this.Headers.[columnIndex],[|c|])
         Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
 
-    static member setCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell) =
+    static member updateCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.SetCellAt(columnIndex,rowIndex,cell)
+            newTable.UpdateCellAt(columnIndex,rowIndex,cell)
             newTable
 
 
-    member this.SetHeader (index:int, newHeader: CompositeHeader, ?forceConvertCells: bool) =
+    member this.UpdateHeader (index:int, newHeader: CompositeHeader, ?forceConvertCells: bool) =
         let forceConvertCells = Option.defaultValue false forceConvertCells
         ArcTableAux.SanityChecks.validateColumnIndex index this.ColumnCount false
         /// remove to be replaced header, this is only used to check if any OTHER header is of the same unique type as column.Header
@@ -106,18 +106,18 @@ type ArcTable =
                 match newHeader with
                 | isTerm when newHeader.IsTermColumn -> c.Cells |> Array.map (fun c -> c.ToTermCell())
                 | _ -> c.Cells |> Array.map (fun c -> c.ToFreeTextCell())
-            this.SetColumn(index, newHeader, convertedCells)
+            this.UpdateColumn(index, newHeader, convertedCells)
         else
             failwith "Tried setting header for column with invalid type of cells. Set `forceConvertCells` flag to automatically convert cells into valid CompositeCell type."
 
-    static member setHeader (index:int, header:CompositeHeader) = 
+    static member updateHeader (index:int, header:CompositeHeader) = 
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.SetHeader(index, header)
+            newTable.UpdateHeader(index, header)
             newTable
 
 
-    member this.SetColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) =
+    member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let column = CompositeColumn.create(header, ?cells=cells)
         SanityChecks.validateColumn(column)
@@ -128,21 +128,20 @@ type ArcTable =
         // Must remove first, so no leftover rows stay when setting less rows than before.
         Unchecked.removeHeader columnIndex this.Headers
         Unchecked.removeColumnCells columnIndex this.Values
-        let nextHeader = 
-            this.Headers.Insert(columnIndex,column.Header)
-        let nextBody =
-            column.Cells |> Array.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) this.Values)
+        // nextHeader 
+        this.Headers.Insert(columnIndex,column.Header)
+        // nextBody
+        column.Cells |> Array.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) this.Values)
         Unchecked.fillMissingCells this.Headers this.Values
-        ()
 
-    static member setColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
+    static member updatetColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.SetColumn(columnIndex, header, ?cells=cells)
+            newTable.UpdateColumn(columnIndex, header, ?cells=cells)
             newTable
 
     ///
-    member this.SetRow(rowIndex: int, cells: CompositeCell []) =
+    member this.UpdateRow(rowIndex: int, cells: CompositeCell []) =
         SanityChecks.validateRowIndex rowIndex this.RowCount false
         SanityChecks.validateRowLength cells this.RowCount
         cells
@@ -156,14 +155,14 @@ type ArcTable =
             Unchecked.setCellAt(columnIndex, rowIndex, cell) this.Values
         )
 
-    static member setRow(rowIndex: int, cells: CompositeCell []) =
+    static member updateRow(rowIndex: int, cells: CompositeCell []) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
-            newTable.SetRow(rowIndex, cells)
+            newTable.UpdateRow(rowIndex, cells)
             newTable
 
     ///
-    //[<NamedParams(fromIndex=1)>]
+    //[<NamedParams>]
     member this.AddColumn (header:CompositeHeader, ?cells: CompositeCell [], ?index: int, ?forceReplace: bool) : unit = 
         let index = 
             defaultArg index this.ColumnCount
@@ -435,12 +434,12 @@ type ArcTable =
         | :? ArcTable as table -> 
             let sameName = this.Name = table.Name
             let sameHeaders = Seq.forall2 (fun x y -> x = y) this.Headers table.Headers
-            let sameBodyCells = Seq.forall2 (fun x y -> x = y) this.Headers table.Headers
+            let sameBodyCells = Seq.forall2 (fun x y -> x = y) this.Values table.Values
             sameName && sameHeaders && sameBodyCells
         | _ -> false
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:
-    override this.GetHashCode () = 
+    override this.GetHashCode() = 
         let name = this.Name.GetHashCode()
         let headers = this.Headers |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
         let bodyCells = this.Values |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0

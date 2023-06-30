@@ -1,7 +1,6 @@
 ﻿namespace ISA
 
 open Fable.Core
-open ArcAssayAux
 
 [<AttachMembers>]
 type ArcStudy = 
@@ -89,16 +88,26 @@ type ArcStudy =
     static member toStudy (arcStudy : ArcStudy) : Study =
         raise (System.NotImplementedException())
 
-
     // - Assay API - CRUD //
-    member this.AddAssay(?assay: ArcAssay) =
-        let assay = defaultArg assay <| ArcAssay.create()
+    member this.AddAssay(assay: ArcAssay) =
         this.Assays.Add(assay)
 
-    static member addAssay(?assay: ArcAssay) =
+    static member addAssay(assay: ArcAssay) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
-            newStudy.AddAssay(?assay=assay)
+            newStudy.AddAssay(assay)
+            newStudy
+
+    // - Assay API - CRUD //
+    member this.AddAssayEmpty(assayName: string) =
+        let assay = ArcAssay.create(assayName)
+        this.Assays.Add(assay)
+
+    static member addAssay(assayName: string) =
+        fun (study:ArcStudy) ->
+            let newStudy = study.Copy()
+            let assay = ArcAssay.create(assayName)
+            newStudy.AddAssay(assay)
             newStudy
 
     // - Assay API - CRUD //
@@ -135,19 +144,14 @@ type ArcStudy =
     ////////////////////////////////////
     
     member this.TableCount 
-        with get() = this.Tables.Count
+        with get() = ArcTables(this.Tables).TableCount
 
     member this.TableNames 
-        with get() = 
-            [for s in this.Tables do yield s.Name]
+        with get() = ArcTables(this.Tables).TableNames
 
-    // - Table API - //
+        // - Table API - //
     // remark should this return ArcTable?
-    member this.AddTable(table:ArcTable, ?index: int) = 
-        let index = defaultArg index this.TableCount
-        SanityChecks.validateSheetIndex index true this.Tables
-        SanityChecks.validateNewNameUnique table.Name this.TableNames
-        this.Tables.Insert(index, table)
+    member this.AddTable(table:ArcTable, ?index: int) = ArcTables(this.Tables).AddTable(table, ?index = index)
 
     static member addTable(table:ArcTable, ?index: int) =
         fun (study:ArcStudy) ->
@@ -156,11 +160,7 @@ type ArcStudy =
             c
 
     // - Table API - //
-    member this.AddTables(tables:seq<ArcTable>, ?index: int) = 
-        let index = defaultArg index this.TableCount
-        SanityChecks.validateSheetIndex index true this.Tables
-        SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
-        this.Tables.InsertRange(index, tables)
+    member this.AddTables(tables:seq<ArcTable>, ?index: int) = ArcTables(this.Tables).AddTables(tables, ?index = index)
 
     static member addTables(tables:seq<ArcTable>, ?index: int) =
         fun (study:ArcStudy) ->
@@ -169,12 +169,7 @@ type ArcStudy =
             c
 
     // - Table API - //
-    member this.InitTable(tableName:string, ?index: int) = 
-        let index = defaultArg index this.TableCount
-        let table = ArcTable.init(tableName)
-        SanityChecks.validateSheetIndex index true this.Tables
-        SanityChecks.validateNewNameUnique table.Name this.TableNames
-        this.Tables.Insert(index, table)
+    member this.InitTable(tableName:string, ?index: int) = ArcTables(this.Tables).InitTable(tableName, ?index = index)
 
     static member initTable(tableName: string, ?index: int) =
         fun (study:ArcStudy) ->
@@ -183,12 +178,7 @@ type ArcStudy =
             c
 
     // - Table API - //
-    member this.InitTables(tableNames:seq<string>, ?index: int) = 
-        let index = defaultArg index this.TableCount
-        let tables = tableNames |> Seq.map (fun x -> ArcTable.init(x))
-        SanityChecks.validateSheetIndex index true this.Tables
-        SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
-        this.Tables.InsertRange(index, tables)
+    member this.InitTables(tableNames:seq<string>, ?index: int) =  ArcTables(this.Tables).InitTables(tableNames, ?index = index)
 
     static member initTables(tableNames:seq<string>, ?index: int) =
         fun (study:ArcStudy) ->
@@ -197,9 +187,7 @@ type ArcStudy =
             c
 
     // - Table API - //
-    member this.GetTableAt(index:int) : ArcTable =
-        SanityChecks.validateSheetIndex index false this.Tables
-        this.Tables.[index]
+    member this.GetTableAt(index:int) : ArcTable = ArcTables(this.Tables).GetTableAt(index)
 
     /// Receive **copy** of table at `index`
     static member getTableAt(index:int) : ArcStudy -> ArcTable =
@@ -208,9 +196,7 @@ type ArcStudy =
             newAssay.GetTableAt(index)
 
     // - Table API - //
-    member this.GetTable(name: string) : ArcTable =
-        indexByTableName name this.Tables
-        |> this.GetTableAt
+    member this.GetTable(name: string) : ArcTable = ArcTables(this.Tables).GetTable(name)
 
     /// Receive **copy** of table with `name` = `ArcTable.Name`
     static member getTable(name: string) : ArcStudy -> ArcTable =
@@ -219,32 +205,25 @@ type ArcStudy =
             newAssay.GetTable(name)
 
     // - Table API - //
-    member this.SetTableAt(index:int, table:ArcTable) =
-        SanityChecks.validateSheetIndex index false this.Tables
-        SanityChecks.validateNewNameUnique table.Name this.TableNames
-        this.Tables.[index] <- table
+    member this.UpdateTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).UpdateTableAt(index, table)
 
-    static member setTableAt(index:int, table:ArcTable) : ArcStudy -> ArcStudy =
+    static member updateTableAt(index:int, table:ArcTable) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
-            newAssay.SetTableAt(index, table)
+            newAssay.UpdateTableAt(index, table)
             newAssay
 
     // - Table API - //
-    member this.SetTable(name: string, table:ArcTable) : unit =
-        (indexByTableName name this.Tables, table)
-        |> this.SetTableAt
+    member this.UpdateTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).UpdateTable(name, table)
 
-    static member setTable(name: string, table:ArcTable) : ArcStudy -> ArcStudy =
+    static member updateTable(name: string, table:ArcTable) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
-            newAssay.SetTable(name, table)
+            newAssay.UpdateTable(name, table)
             newAssay
 
     // - Table API - //
-    member this.RemoveTableAt(index:int) : unit =
-        SanityChecks.validateSheetIndex index false this.Tables
-        this.Tables.RemoveAt(index)
+    member this.RemoveTableAt(index:int) : unit = ArcTables(this.Tables).RemoveTableAt(index)
 
     static member removeTableAt(index:int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -253,9 +232,7 @@ type ArcStudy =
             newAssay
 
     // - Table API - //
-    member this.RemoveTable(name: string) : unit =
-        indexByTableName name this.Tables
-        |> this.RemoveTableAt
+    member this.RemoveTable(name: string) : unit = ArcTables(this.Tables).RemoveTable(name)
 
     static member removeTable(name: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -265,10 +242,7 @@ type ArcStudy =
 
     // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
-    member this.UpdateTableAt(index: int, updateFun: ArcTable -> unit) =
-        SanityChecks.validateSheetIndex index false this.Tables
-        let table = this.Tables.[index]
-        updateFun table
+    member this.UpdateTableAt(index: int, updateFun: ArcTable -> unit) = ArcTables(this.Tables).UpdateTableAt(index, updateFun)
 
     static member updateTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (study:ArcStudy) ->
@@ -277,9 +251,7 @@ type ArcStudy =
             newAssay
 
     // - Table API - //
-    member this.UpdateTable(name: string, updateFun: ArcTable -> unit) : unit =
-        (indexByTableName name this.Tables, updateFun)
-        |> this.UpdateTableAt
+    member this.UpdateTable(name: string, updateFun: ArcTable -> unit) : unit = ArcTables(this.Tables).UpdateTable(name, updateFun)
 
     static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -288,12 +260,7 @@ type ArcStudy =
             newAssay
 
     // - Table API - //
-    member this.RenameTableAt(index: int, newName: string) : unit =
-        SanityChecks.validateSheetIndex index false this.Tables
-        SanityChecks.validateNewNameUnique newName this.TableNames
-        let table = this.GetTableAt index
-        let renamed = {table with Name = newName} 
-        this.SetTableAt(index, renamed)
+    member this.RenameTableAt(index: int, newName: string) : unit = ArcTables(this.Tables).RenameTableAt(index, newName)
 
     static member renameTableAt(index: int, newName: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -302,9 +269,7 @@ type ArcStudy =
             newAssay
 
     // - Table API - //
-    member this.RenameTable(name: string, newName: string) : unit =
-        (indexByTableName name this.Tables, newName)
-        |> this.RenameTableAt
+    member this.RenameTable(name: string, newName: string) : unit = ArcTables(this.Tables).RenameTable(name, newName)
 
     static member renameTable(name: string, newName: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -314,9 +279,7 @@ type ArcStudy =
 
     // - Column CRUD API - //
     member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
-        this.UpdateTableAt(tableIndex, fun table ->
-            table.AddColumn(header, ?cells=cells, ?index=columnIndex, ?forceReplace=forceReplace)
-        )
+        ArcTables(this.Tables).AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex = columnIndex, ?forceReplace = forceReplace)
 
     static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy = 
         fun (study: ArcStudy) ->
@@ -326,8 +289,7 @@ type ArcStudy =
 
     // - Column CRUD API - //
     member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
-        indexByTableName tableName this.Tables
-        |> fun i -> this.AddColumnAt(i, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
+            ArcTables(this.Tables).AddColumn(tableName, header, ?cells=cells, ?columnIndex = columnIndex, ?forceReplace = forceReplace)
 
     static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -337,9 +299,7 @@ type ArcStudy =
 
     // - Column CRUD API - //
     member this.RemoveColumnAt(tableIndex: int, columnIndex: int) =
-        this.UpdateTableAt(tableIndex, fun table ->
-            table.RemoveColumn(columnIndex)
-        )
+        ArcTables(this.Tables).RemoveColumnAt(tableIndex, columnIndex)
 
     static member removeColumnAt(tableIndex: int, columnIndex: int) =
         fun (study:ArcStudy) ->
@@ -349,8 +309,7 @@ type ArcStudy =
 
     // - Column CRUD API - //
     member this.RemoveColumn(tableName: string, columnIndex: int) : unit =
-        (indexByTableName tableName this.Tables, columnIndex)
-        |> this.RemoveColumnAt
+        ArcTables(this.Tables).RemoveColumn(tableName, columnIndex)
 
     static member removeColumn(tableName: string, columnIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -359,32 +318,28 @@ type ArcStudy =
             newAssay
 
     // - Column CRUD API - //
-    member this.SetColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        this.UpdateTableAt(tableIndex, fun table ->
-            table.SetColumn(columnIndex, header, ?cells=cells)
-        )
+    member this.UpdateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+        ArcTables(this.Tables).UpdateColumnAt(tableIndex, columnIndex, header, ?cells = cells)
 
-    static member setColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
-            newAssay.SetColumnAt(tableIndex, columnIndex, header, ?cells=cells)
+            newAssay.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
             newAssay
 
     // - Column CRUD API - //
-    member this.SetColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        indexByTableName tableName this.Tables
-        |> fun tableIndex -> this.SetColumnAt(tableIndex, columnIndex, header, ?cells=cells)
+    member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+        ArcTables(this.Tables).UpdateColumn(tableName, columnIndex, header, ?cells=cells)
 
-    static member setColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
-            newAssay.SetColumn(tableName, columnIndex, header, ?cells=cells)
+            newAssay.UpdateColumn(tableName, columnIndex, header, ?cells=cells)
             newAssay
 
     // - Column CRUD API - //
     member this.GetColumnAt(tableIndex: int, columnIndex: int) =
-        let table = this.GetTableAt(tableIndex)
-        table.GetColumn(columnIndex)
+        ArcTables(this.Tables).GetColumnAt(tableIndex, columnIndex)
 
     static member getColumnAt(tableIndex: int, columnIndex: int) =
         fun (study:ArcStudy) ->
@@ -393,8 +348,7 @@ type ArcStudy =
 
     // - Column CRUD API - //
     member this.GetColumn(tableName: string, columnIndex: int) =
-        (indexByTableName tableName this.Tables, columnIndex)
-        |> this.GetColumnAt
+        ArcTables(this.Tables).GetColumn(tableName, columnIndex)
 
     static member getColumn(tableName: string, columnIndex: int) =
         fun (study: ArcStudy) ->
@@ -403,9 +357,7 @@ type ArcStudy =
 
     // - Row CRUD API - //
     member this.AddRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) = 
-        this.UpdateTableAt(tableIndex, fun table ->
-            table.AddRow(?cells=cells, ?index=rowIndex)
-        )
+        ArcTables(this.Tables).AddRowAt(tableIndex, ?cells=cells, ?rowIndex = rowIndex)
 
     static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcStudy -> ArcStudy = 
         fun (study: ArcStudy) ->
@@ -415,8 +367,7 @@ type ArcStudy =
 
     // - Row CRUD API - //
     member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
-        indexByTableName tableName this.Tables
-        |> fun i -> this.AddRowAt(i, ?cells=cells, ?rowIndex=rowIndex)
+        ArcTables(this.Tables).AddRow(tableName, ?cells=cells, ?rowIndex = rowIndex)
 
     static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -426,9 +377,7 @@ type ArcStudy =
 
     // - Row CRUD API - //
     member this.RemoveRowAt(tableIndex: int, rowIndex: int) =
-        this.UpdateTableAt(tableIndex, fun table ->
-            table.RemoveRow(rowIndex)
-        )
+        ArcTables(this.Tables).RemoveRowAt(tableIndex, rowIndex)
 
     static member removeRowAt(tableIndex: int, rowIndex: int) =
         fun (study:ArcStudy) ->
@@ -438,8 +387,7 @@ type ArcStudy =
 
     // - Row CRUD API - //
     member this.RemoveRow(tableName: string, rowIndex: int) : unit =
-        (indexByTableName tableName this.Tables, rowIndex)
-        |> this.RemoveRowAt
+        ArcTables(this.Tables).RemoveRow(tableName, rowIndex)
 
     static member removeRow(tableName: string, rowIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
@@ -448,32 +396,28 @@ type ArcStudy =
             newAssay
 
     // - Row CRUD API - //
-    member this.SetRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
-        this.UpdateTableAt(tableIndex, fun table ->
-            table.SetRow(rowIndex, cells)
-        )
+    member this.UpdateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+        ArcTables(this.Tables).UpdateRowAt(tableIndex, rowIndex, cells)
 
-    static member setRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+    static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
-            newAssay.SetRowAt(tableIndex, rowIndex, cells)
+            newAssay.UpdateRowAt(tableIndex, rowIndex, cells)
             newAssay
 
     // - Row CRUD API - //
-    member this.SetRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
-        (indexByTableName tableName this.Tables, rowIndex, cells)
-        |> this.SetRowAt
+    member this.UpdateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+        ArcTables(this.Tables).UpdateRow(tableName, rowIndex, cells)
 
-    static member setRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+    static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
-            newAssay.SetRow(tableName, rowIndex, cells)
+            newAssay.UpdateRow(tableName, rowIndex, cells)
             newAssay
 
     // - Row CRUD API - //
     member this.GetRowAt(tableIndex: int, rowIndex: int) =
-        let table = this.GetTableAt(tableIndex)
-        table.GetRow(rowIndex)
+        ArcTables(this.Tables).GetRowAt(tableIndex, rowIndex)
 
     static member getRowAt(tableIndex: int, rowIndex: int) =
         fun (study:ArcStudy) ->
@@ -482,8 +426,7 @@ type ArcStudy =
 
     // - Row CRUD API - //
     member this.GetRow(tableName: string, rowIndex: int) =
-        (indexByTableName tableName this.Tables, rowIndex)
-        |> this.GetRowAt
+        ArcTables(this.Tables).GetRow(tableName, rowIndex)
 
     static member getRow(tableName: string, rowIndex: int) =
         fun (study: ArcStudy) ->

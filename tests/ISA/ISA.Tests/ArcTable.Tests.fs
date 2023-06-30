@@ -52,6 +52,9 @@ let create_testTable() =
     t.AddColumns(columns)
     t
 
+type MyUnion =
+| ISBOOL of string
+
 let private tests_member = 
     testList "Member" [
         let table = ArcTable.init(TableName)
@@ -72,7 +75,10 @@ let private tests_member =
         testCase "GetHashCode && Custom equality" (fun () ->
             let table1 = create_testTable()
             let table2 = create_testTable()
+            let myString = MyUnion.ISBOOL "Hello"
+            let myString2 = MyUnion.ISBOOL "Hello"
             Expect.equal table1 table2 "equal"
+            Expect.equal (myString.GetHashCode()) (myString2.GetHashCode()) "HashCode"
             Expect.equal (table1.GetHashCode()) (table2.GetHashCode()) "HashCode"
         )
     ]
@@ -270,8 +276,8 @@ let private tests_ArcTableAux =
         ]
     ]
 
-let private tests_SetHeader = 
-    testList "SetHeader" [
+let private tests_UpdateHeader = 
+    testList "UpdateHeader" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -286,23 +292,23 @@ let private tests_SetHeader =
         )
         testCase "set outside of range" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.SetHeader(12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            let table() = testTable.UpdateHeader(12, CompositeHeader.Characteristic OntologyAnnotation.empty)
             Expect.throws table ""
         )
         testCase "set outside of range negative" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.SetHeader(-12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            let table() = testTable.UpdateHeader(-12, CompositeHeader.Characteristic OntologyAnnotation.empty)
             Expect.throws table ""
         )
         testCase "set unique at different index" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.SetHeader(2, CompositeHeader.Input IOType.DerivedDataFile)
+            let table() = testTable.UpdateHeader(2, CompositeHeader.Input IOType.DerivedDataFile)
             Expect.throws (table >> ignore) ""
         )
         testCase "set unique at same index" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Input IOType.DerivedDataFile
-            table.SetHeader(0, newHeader)
+            table.UpdateHeader(0, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] newHeader "header0"
@@ -316,13 +322,13 @@ let private tests_SetHeader =
         testCase "set invalid" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Factor oa_temperature
-            let eval() = table.SetHeader(0, newHeader)
+            let eval() = table.UpdateHeader(0, newHeader)
             Expect.throws eval ""
         )
         testCase "set invalid, force convert" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Factor oa_temperature
-            table.SetHeader(0, newHeader, true)
+            table.UpdateHeader(0, newHeader, true)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] newHeader "header0"
@@ -336,7 +342,7 @@ let private tests_SetHeader =
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Factor oa_temperature
-            table.SetHeader(3, newHeader)
+            table.UpdateHeader(3, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] column_input.Header "header0"
@@ -354,8 +360,8 @@ let private tests_SetHeader =
             let table = create_testTable()
             let table2 = table.Copy()
             let newHeader = CompositeHeader.Factor oa_temperature
-            table.SetHeader(3, newHeader)
-            table2.SetHeader(3, newHeader, true)
+            table.UpdateHeader(3, newHeader)
+            table2.UpdateHeader(3, newHeader, true)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] column_input.Header "header0"
@@ -372,8 +378,8 @@ let private tests_SetHeader =
         )
     ]
 
-let private tests_SetCell =
-    testList "SetCell" [
+let private tests_UpdateCell =
+    testList "UpdateCell" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -389,7 +395,7 @@ let private tests_SetCell =
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let cell = CompositeCell.createFreeText "MYNEWCELL42"
-            table.SetCellAt(0,0,cell)
+            table.UpdateCellAt(0,0,cell)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] column_input.Header "header0"
@@ -404,10 +410,10 @@ let private tests_SetCell =
         testCase "set valid, at invalid indices" (fun () ->
             let table = create_testTable()
             let cell = CompositeCell.createFreeText "MYNEWCELL42"
-            let eval_colCount() = table.SetCellAt(table.ColumnCount,0,cell)
-            let eval_rowCount() = table.SetCellAt(0,table.RowCount,cell)
-            let eval_negRow() = table.SetCellAt(0,-2,cell)
-            let eval_negCol() = table.SetCellAt(-2,0,cell)
+            let eval_colCount() = table.UpdateCellAt(table.ColumnCount,0,cell)
+            let eval_rowCount() = table.UpdateCellAt(0,table.RowCount,cell)
+            let eval_negRow() = table.UpdateCellAt(0,-2,cell)
+            let eval_negCol() = table.UpdateCellAt(-2,0,cell)
             Expect.throws eval_colCount "ColumnCount"
             Expect.throws eval_rowCount "RowCount"
             Expect.throws eval_negRow "negative row"
@@ -416,13 +422,13 @@ let private tests_SetCell =
         testCase "set invalid" (fun () ->
             let table = create_testTable()
             let cell = CompositeCell.createTerm OntologyAnnotation.empty
-            let eval() = table.SetCellAt(0,0,cell)
+            let eval() = table.UpdateCellAt(0,0,cell)
             Expect.throws eval ""
         )
     ]
 
-let private tests_SetColumn = 
-    testList "SetColumn" [
+let private tests_UpdateColumn = 
+    testList "UpdateColumn" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -439,21 +445,21 @@ let private tests_SetColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let eval() = table.SetColumn(table.ColumnCount, h, cells)
+            let eval() = table.UpdateColumn(table.ColumnCount, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid, at invalid negative index" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let eval() = table.SetColumn(-1, h, cells)
+            let eval() = table.UpdateColumn(-1, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            table.SetColumn(0, h, cells)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -469,14 +475,14 @@ let private tests_SetColumn =
             let h = CompositeHeader.Input IOType.RawDataFile
             let cells = createCells_FreeText "NEWSOURCE" 5
             let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(1, h, cells)
+            let eval() = table.UpdateColumn(1, h, cells)
             Expect.throws eval ""
         )
         testCase "set unique duplicate, same index" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Input IOType.RawDataFile
             let cells = createCells_FreeText "NEWSOURCE" 5
-            table.SetColumn(0, h, cells)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -491,7 +497,7 @@ let private tests_SetColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 2
-            table.SetColumn(0, h, cells)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -507,7 +513,7 @@ let private tests_SetColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 7
-            table.SetColumn(0, h, cells)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 7 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -1961,9 +1967,9 @@ let main =
         tests_SanityChecks
         tests_ArcTableAux
         tests_member
-        tests_SetHeader
-        tests_SetCell
-        tests_SetColumn
+        tests_UpdateHeader
+        tests_UpdateCell
+        tests_UpdateColumn
         tests_AddColumn
         tests_addColumn
         tests_AddColumns

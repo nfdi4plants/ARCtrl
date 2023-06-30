@@ -63,7 +63,7 @@ module Helper =
     ///
     /// Table Names: ["New Table 0"; "New Table 1" .. "New Table 4"]
     let create_exampleAssay() =
-        let assay = ArcAssay.create()
+        let assay = ArcAssay.create("MyAssay")
         let sheets = create_exampleTables("My")
         sheets |> Array.iter (fun table -> assay.AddTable(table))
         assay
@@ -73,14 +73,14 @@ open Helper
 let private tests_AddTable = 
     testList "AddTable" [
         testCase "append, default table" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let table = ArcTable.init("New Table 1")
             assay.AddTable(table)
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name"
         )
         testCase "append, default table, iter 5x" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             for i in 1 .. 5 do 
                 assay.AddTable(ArcTable.init($"New Table {i}"))
             Expect.equal assay.TableCount 5 "TableCount"
@@ -88,14 +88,14 @@ let private tests_AddTable =
             Expect.equal assay.TableNames.[4] "New Table 5" "Sheet Name 4"
         )
         testCase "append, table" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let sheet = ArcTable.init($"MY NICE TABLE")
             assay.AddTable(sheet)
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "MY NICE TABLE" "Sheet Name 0"
         )
         testCase "append, tables, iter 5x" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let sheets = Array.init 5 (fun i -> ArcTable.init($"New Table {i}"))
             sheets |> Array.iter (fun table -> assay.AddTable(table))
             Expect.equal assay.TableCount 5 "TableCount"
@@ -111,7 +111,7 @@ let private tests_AddTable =
             Expect.equal assay.TableNames.[5] "My Table 4" "Sheet Name 4"
         )
         testCase "add, duplicate name, throws" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             assay.AddTable(ArcTable.init("New Table 1"))
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name"
@@ -123,7 +123,7 @@ let private tests_AddTable =
 let private tests_AddTables = 
     testList "AddTables" [
         testCase "append" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let tables = create_exampleTables("My")
             assay.AddTables(tables)
             Expect.equal assay.TableCount 5 "TableCount"
@@ -142,7 +142,7 @@ let private tests_AddTables =
             Expect.equal assay.TableNames.[assay.TableCount-1] "My Table 4" "Sheet Name 9"
         )
         testCase "add, duplicate name, throws" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let tables = create_exampleTables("My")
             assay.AddTables(tables)
             Expect.equal assay.TableCount 5 "TableCount"
@@ -152,7 +152,7 @@ let private tests_AddTables =
             Expect.throws eval "throws, duplicate table names"
         )
         testCase "add, duplicate new names, throws" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let tables = create_exampleTables("My") |> Array.map (fun x -> { x with Name = "Duplicate Name"})
             let eval() = assay.AddTables(tables)
             Expect.throws eval "throws, duplicate table names"
@@ -230,7 +230,7 @@ let private tests_Copy =
 let private tests_RemoveTable = 
     testList "RemoveTableAt" [
         testCase "empty table, throw" (fun () ->
-            let assay = ArcAssay.create()
+            let assay = ArcAssay.create("MyAssay")
             let eval() = assay.RemoveTableAt(0)
             Expect.throws eval ""
         )
@@ -263,8 +263,8 @@ let private tests_RemoveTable =
         )
     ]
 
-let private tests_SetTable = 
-    testList "SetTableAt" [
+let private tests_UpdateTableAt = 
+    testList "UpdateTableAt" [
         testCase "ensure table" (fun () ->
             let assay = create_exampleAssay()
             Expect.equal assay.TableCount 5 "TableCount"
@@ -274,14 +274,14 @@ let private tests_SetTable =
         testCase "set on append index, throws" (fun () ->
             let assay = create_exampleAssay()
             let table = create_testTable()
-            let eval() = assay.SetTableAt(assay.TableCount, table)
+            let eval() = assay.UpdateTableAt(assay.TableCount, table)
             Expect.throws eval ""
         )
         testCase "set on first" (fun () ->
             let index = 0
             let assay = create_exampleAssay()
             let table = create_testTable()
-            assay.SetTableAt(index, table)
+            assay.UpdateTableAt(index, table)
             Expect.equal assay.TableCount 5 "TableCount"
             Expect.equal assay.TableNames.[index] "Test" "Sheet Name changed"
             Expect.equal (assay.GetTableAt(index).ColumnCount) 5 "ColumnCount"
@@ -292,7 +292,7 @@ let private tests_SetTable =
             let assay = create_exampleAssay()
             let index = assay.TableCount-1
             let table = create_testTable()
-            assay.SetTableAt(index, table)
+            assay.UpdateTableAt(index, table)
             Expect.equal assay.TableCount 5 "TableCount"
             Expect.equal assay.TableNames.[0] "My Table 0" "Sheet Name"
             Expect.equal assay.TableNames.[index] "Test" "Sheet Name changed"
@@ -303,7 +303,7 @@ let private tests_SetTable =
             let assay = create_exampleAssay()
             let index = 2
             let table = create_testTable()
-            assay.SetTableAt(index, table)
+            assay.UpdateTableAt(index, table)
             Expect.equal assay.TableCount 5 "TableCount"
             Expect.equal assay.TableNames.[0] "My Table 0" "Sheet Name"
             Expect.equal assay.TableNames.[index] "Test" "Sheet Name changed"
@@ -315,13 +315,13 @@ let private tests_SetTable =
             let assay = create_exampleAssay()
             let index = 2
             let table = { create_testTable() with Name = "My Table 0" }
-            let eval() = assay.SetTableAt(index, table)
+            let eval() = assay.UpdateTableAt(index, table)
             Expect.throws eval "throws, duplicate name"
         )
     ]
 
 let private tests_UpdateTable = 
-    testList "UpdateTableAt" [
+    testList "UpdateTable" [
         testCase "ensure table" (fun () ->
             let assay = create_exampleAssay()
             Expect.equal assay.TableCount 5 "TableCount"
@@ -391,7 +391,7 @@ let main =
         tests_AddTables
         tests_Copy
         tests_RemoveTable
-        tests_SetTable
+        tests_UpdateTableAt
         tests_UpdateTable
         tests_updateTable
     ]
