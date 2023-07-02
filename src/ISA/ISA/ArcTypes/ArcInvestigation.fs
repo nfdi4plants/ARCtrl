@@ -38,10 +38,10 @@ type ArcInvestigation =
     static member addStudy (study : Study) (investigation : Investigation) : Investigation = 
         raise (System.NotImplementedException())
 
-    static member addAssay (assay : Assay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
+    static member addAssay (assay : ArcAssay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
         match ArcInvestigation.tryGetStudyByID studyIdentifier investigation with
         | Some s ->
-             ArcStudy.addAssay |> ignore
+             ArcStudy.addAssay (assay) |> ignore
              ArcInvestigation.updateStudyByID |> ignore
 
         | None ->

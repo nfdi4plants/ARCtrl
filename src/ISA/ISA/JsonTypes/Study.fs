@@ -106,9 +106,6 @@ type Study =
         { study with
             Factors = Some factors }
 
-
-
-
     /// Applies function f to the protocols of a study
     static member mapProtocols (f : Protocol list -> Protocol list) (study : Study) =
         { study with 

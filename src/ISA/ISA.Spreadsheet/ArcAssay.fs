@@ -42,7 +42,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
 
             | k -> 
                 assays |> Seq.tryHead 
-                |> Option.defaultValue (ArcAssay.create()) 
+                |> Option.defaultValue (ArcAssay.create(sheet.Name)) 
                 |> ArcAssay.setPerformers (Option.fromValueWithDefault [] contacts)
         
         if en.MoveNext () then
@@ -66,14 +66,14 @@ let fromFsWorkbook (doc:FsWorkbook) =
             fromMetadataSheet sheet
         | None -> 
             printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" sheet." metaDataSheetName
-            ArcAssay.create()     
+            ArcAssay.create("New Assay")
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
     if sheets.IsEmpty then
         assayMetaData
     else {
-        assayMetaData with Sheets = Some sheets   
+        assayMetaData with Tables = ResizeArray(sheets)
     }
 
 let toFsWorkbook (assay : ArcAssay) =
@@ -81,8 +81,7 @@ let toFsWorkbook (assay : ArcAssay) =
     let metaDataSheet = toMetadataSheet assay
     doc.AddWorksheet metaDataSheet
 
-    assay.Sheets
-    |> Option.defaultValue []
-    |> List.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+    assay.Tables
+    |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
 
     doc

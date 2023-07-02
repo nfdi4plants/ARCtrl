@@ -50,7 +50,7 @@
     <Compile Include="ArcTypes\CompositeColumn.fs" />
     <Compile Include="ArcTypes\ArcTableAux.fs" />
     <Compile Include="ArcTypes\ArcTable.fs" />
-    <Compile Include="ArcTypes\ArcProcessSequence.fs" />
+    <Compile Include="ArcTypes\ArcTables.fs" />
     <Compile Include="ArcTypes\ArcAssay.fs" />
     <Compile Include="ArcTypes\ArcStudy.fs" />
     <Compile Include="ArcTypes\ArcInvestigation.fs" />

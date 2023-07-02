@@ -104,7 +104,7 @@ module Studies =
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
     
-    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays (protocols : Protocol list) contacts =
+    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
         ArcStudy.make 
             None 
             (Option.fromValueWithDefault "" studyInfo.FileName)
@@ -117,8 +117,8 @@ module Studies =
             (Option.fromValueWithDefault [] contacts)
             (Option.fromValueWithDefault [] designDescriptors) 
             None 
-            (Option.fromValueWithDefault [] protocols |> Option.map (List.map ArcTable.fromProtocol))
-            (Option.fromValueWithDefault [] assays)
+            (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
+            (ResizeArray(assays))
             (Option.fromValueWithDefault [] factors) 
             None 
             None
@@ -162,25 +162,25 @@ module Studies =
 
     
     let toRows (study : ArcStudy) =
-        let protocols = study.Sheets |> Option.defaultValue [] |> List.collect (fun p -> p |> ArcTable.getProtocols)
+        let protocols = study.Tables |> Seq.collect (fun p -> p |> ArcTable.getProtocols) |> List.ofSeq
         seq {          
             yield! StudyInfo.toRows study
 
             yield  SparseRow.fromValues [designDescriptorsLabel]
             yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
 
-            yield  SparseRow.fromValues[publicationsLabel]
+            yield  SparseRow.fromValues [publicationsLabel]
             yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
 
-            yield  SparseRow.fromValues[factorsLabel]
+            yield  SparseRow.fromValues [factorsLabel]
             yield! Factors.toRows (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
 
-            yield  SparseRow.fromValues[assaysLabel]
-            yield! Assays.toRows (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
+            yield  SparseRow.fromValues [assaysLabel]
+            yield! Assays.toRows (Some assaysLabelPrefix) (List.ofSeq study.Assays)
 
-            yield  SparseRow.fromValues[protocolsLabel]
+            yield  SparseRow.fromValues [protocolsLabel]
             yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
-            yield  SparseRow.fromValues[contactsLabel]
+            yield  SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
         }
