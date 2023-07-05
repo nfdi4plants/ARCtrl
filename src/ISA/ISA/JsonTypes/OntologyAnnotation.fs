@@ -61,9 +61,9 @@ type OntologyAnnotation =
         this.TermAccessionNumber
         |> Option.defaultValue ""
 
-    /// Create a path in form of `http://purl.obolibrary.org/obo/MS_1000121` from it's Term Accession Source `MS` and Term Accession Number `1000121`. 
-    static member createUriAnnotation (termSourceRef : string) (termAccessionNumber : string) =
-        $"{Url.OntobeeOboPurl}{termSourceRef}_{termAccessionNumber}"
+    /// Create a path in form of `http://purl.obolibrary.org/obo/MS_1000121` from it's Term Accession Source `MS` and Local Term Accession Number `1000121`. 
+    static member createUriAnnotation (termSourceRef : string) (localTAN : string) =
+        $"{Url.OntobeeOboPurl}{termSourceRef}_{localTAN}"
 
     ///<summary>
     /// Create a ISAJson Ontology Annotation value from ISATab string entries, will try to reduce `termAccessionNumber` with regex matching.
@@ -109,13 +109,12 @@ type OntologyAnnotation =
         | None -> ""
 
     member this.TermAccessionOntobeeUrl = 
-        match this.TermSourceREF, this.TermAccessionNumber with
-        | Some tsr, Some tan ->
-            OntologyAnnotation.createUriAnnotation tsr tan
-        | None, Some tan ->
-            match Regex.tryParseTermAnnotation tan with 
-            | Some termAccession -> OntologyAnnotation.createUriAnnotation termAccession.TermSourceREF termAccession.LocalTAN
-            | None -> ""
+        let annotation = this.TermAccessionNumber |> Option.bind (Regex.tryParseTermAnnotation)
+        match this.TermSourceREF, annotation with
+        | Some tsr, Some annotation ->
+            OntologyAnnotation.createUriAnnotation tsr annotation.LocalTAN
+        | None, Some annotation ->
+            OntologyAnnotation.createUriAnnotation annotation.TermSourceREF annotation.LocalTAN
         | _ -> ""
 
     /// <summary>
@@ -130,7 +129,11 @@ type OntologyAnnotation =
             TermSourceREF = oa.TermSourceREF |> Option.defaultValue ""
             TermAccessionNumber = 
                 if asOntobeePurlUrl then
-                    oa.TermAccessionOntobeeUrl
+                    let url = oa.TermAccessionOntobeeUrl
+                    if url = "" then 
+                        oa.TermAccessionNumber |> Option.defaultValue ""
+                    else
+                        url
                 else
                     oa.TermAccessionNumber |> Option.defaultValue ""
         |}
