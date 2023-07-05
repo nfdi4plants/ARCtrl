@@ -39,20 +39,17 @@ let private testInvestigationFile =
         )
 
         testCase "OutputMatchesInput" (fun () ->
-
+           
             let i = 
                 TestObjects.Investigation.fullInvestigation.GetWorksheetByName "Investigation"
-                |> fun ws -> ws.Rows
-                |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
+                
             let o = 
                 TestObjects.Investigation.fullInvestigation
                 |> ArcInvestigation.fromFsWorkbook
                 |> ArcInvestigation.toFsWorkbook
                 |> fun wb -> wb.GetWorksheetByName "Investigation"               
-                |> fun ws -> ws.Rows
-                |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
-
-            Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
+                
+            Expect.workSheetEqual o i "Written investigation file does not match read investigation file"
         )
 
         testCase "ReaderIgnoresEmptyStudy" (fun () -> 

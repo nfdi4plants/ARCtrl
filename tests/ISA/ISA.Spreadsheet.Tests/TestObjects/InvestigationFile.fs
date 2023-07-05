@@ -250,9 +250,9 @@ let fullInvestigation =
     row12.[1].Value <- "Investigation Public Release Date"
     row12.[2].Value <- "2009-03-10"
     let row13 = ws.Row(13)
-    row13.[1].Value <- "Comment[<Created With Configuration>]"
+    row13.[1].Value <- "Comment[Created With Configuration]"
     let row14 = ws.Row(14)
-    row14.[1].Value <- "Comment[<Last Opened With Configuration>]"
+    row14.[1].Value <- "Comment[Last Opened With Configuration]"
     row14.[2].Value <- "isaconfig-default_v2013-02-13"
     let row15 = ws.Row(15)
     row15.[1].Value <- "INVESTIGATION PUBLICATIONS"
@@ -318,7 +318,7 @@ let fullInvestigation =
     let row34 = ws.Row(34)
     row34.[1].Value <- "Investigation Person Roles Term Source REF"
     let row35 = ws.Row(35)
-    row35.[1].Value <- "Comment[<Investigation Person REF>]"
+    row35.[1].Value <- "Comment[Investigation Person REF]"
     let row36 = ws.Row(36)
     row36.[1].Value <- "STUDY"
     let row37 = ws.Row(37)
@@ -340,9 +340,9 @@ let fullInvestigation =
     row42.[1].Value <- "Study File Name"
     row42.[2].Value <- "s_BII-S-1.txt"
     let row43 = ws.Row(43)
-    row43.[1].Value <- "Comment[<Study Grant Number>]"
+    row43.[1].Value <- "Comment[Study Grant Number]"
     let row44 = ws.Row(44)
-    row44.[1].Value <- "Comment[<Study Funding Agency>]"
+    row44.[1].Value <- "Comment[Study Funding Agency]"
     let row45 = ws.Row(45)
     row45.[1].Value <- "STUDY DESIGN DESCRIPTORS"
     let row46 = ws.Row(46)
@@ -529,7 +529,7 @@ let fullInvestigation =
     let row98 = ws.Row(98)
     row98.[1].Value <- "Study Person Roles Term Source REF"
     let row99 = ws.Row(99)
-    row99.[1].Value <- "Comment[<Study Person REF>]"
+    row99.[1].Value <- "Comment[Study Person REF]"
     let row100 = ws.Row(100)
     row100.[1].Value <- "STUDY"
     let row101 = ws.Row(101)
@@ -553,9 +553,9 @@ let fullInvestigation =
     row107.[1].Value <- "Study File Name"
     row107.[2].Value <- "s_BII-S-2.txt"
     let row108 = ws.Row(108)
-    row108.[1].Value <- "Comment[<Study Grant Number>]"
+    row108.[1].Value <- "Comment[Study Grant Number]"
     let row109 = ws.Row(109)
-    row109.[1].Value <- "Comment[<Study Funding Agency>]"
+    row109.[1].Value <- "Comment[Study Funding Agency]"
     let row110 = ws.Row(110)
     row110.[1].Value <- "STUDY DESIGN DESCRIPTORS"
     let row111 = ws.Row(111)
@@ -717,7 +717,7 @@ let fullInvestigation =
     let row162 = ws.Row(162)
     row162.[1].Value <- "Study Person Roles Term Source REF"
     let row163 = ws.Row(163)
-    row163.[1].Value <- "Comment[<Study Person REF>]"
+    row163.[1].Value <- "Comment[Study Person REF]"
     let row164 = ws.Row(164)
     row164.[1].Value <- "#TestRemark4"
     let row165 = ws.Row(165)

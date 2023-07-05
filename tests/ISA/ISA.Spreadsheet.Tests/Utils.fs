@@ -1,5 +1,7 @@
 ﻿module TestingUtils
 
+open FsSpreadsheet
+
 module Result =
 
     let getMessage (r : Result<'T,string>) =
@@ -26,3 +28,11 @@ let mySequenceEqual actual expected message =
   | i,Some a,None ->
     failwithf "%s. Sequence actual longer than expected, at pos %i found item %A."
       message i a
+
+module Expect = 
+    let workSheetEqual (actual : FsWorksheet) expected message =
+        let f (ws : FsWorksheet) = 
+            ws.Rows
+            |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
+
+        mySequenceEqual (f actual) (f expected) $"{message}. Worksheet does not match"
