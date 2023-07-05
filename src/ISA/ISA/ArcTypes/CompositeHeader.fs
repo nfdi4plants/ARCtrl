@@ -234,3 +234,84 @@ type CompositeHeader =
         match this with 
         | Input io -> true 
         | anythingElse -> false
+
+    member this.isParameter =
+        match this with 
+        | Parameter _ -> true 
+        | anythingElse -> false
+
+    member this.isFactor =
+        match this with 
+        | Factor _ -> true 
+        | anythingElse -> false
+
+    member this.isCharacteristic =
+        match this with 
+        | Characteristic _ -> true 
+        | anythingElse -> false
+
+    member this.isComponent =
+        match this with
+        | Component _ -> true
+        | anythingElse -> false
+
+    member this.isProtocolType =
+        match this with
+        | ProtocolType -> true
+        | anythingElse -> false
+
+    member this.isProtocolREF =
+        match this with
+        | ProtocolREF -> true
+        | anythingElse -> false
+
+    member this.isProtocolDescription =
+        match this with
+        | ProtocolDescription -> true
+        | anythingElse -> false
+
+    member this.isProtocolUri =
+        match this with
+        | ProtocolUri -> true
+        | anythingElse -> false
+
+    member this.isProtocolVersion =
+        match this with
+        | ProtocolVersion -> true
+        | anythingElse -> false
+
+    member this.isPerformer =
+        match this with
+        | Performer -> true
+        | anythingElse -> false
+
+    member this.isDate =
+        match this with
+        | Date -> true
+        | anythingElse -> false
+
+    member this.isFreeText =
+        match this with
+        | FreeText _ -> true
+        | anythingElse -> false
+
+    member this.TryParameter() = 
+        match this with 
+        | Parameter oa -> Some (ProtocolParameter.create(ParameterName = oa))
+        | _ -> None
+
+    member this.TryFactor() =
+        match this with
+        | Factor oa -> Some (Factor.create(FactorType = oa))
+        | _ -> None
+
+    member this.TryCharacteristic() =
+        match this with
+        | Characteristic oa -> Some (MaterialAttribute.create(CharacteristicType = oa))
+        | _ -> None
+
+    member this.TryComponent() =
+        match this with
+        | Component oa -> Some (Component.create(ComponentType = oa))
+        | _ -> None
+
