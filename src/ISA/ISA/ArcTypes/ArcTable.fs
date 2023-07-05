@@ -3,6 +3,7 @@
 open Fable.Core
 open System.Collections.Generic
 open ArcTableAux
+open ColumnIndex
 
 open Fable.Core.JsInterop
 
@@ -234,6 +235,7 @@ type ArcTable =
             newTable
 
     // - Column API - //
+    // GetColumnAt?
     member this.GetColumn(columnIndex:int) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
@@ -246,6 +248,10 @@ type ArcTable =
     static member getColumn (index:int) = 
         fun (table:ArcTable) ->
             table.GetColumn(index)
+
+    member this.GetColumnByHeader (header:CompositeHeader) =
+        let index = this.Headers |> Seq.findIndex (fun x -> x = header)
+        this.GetColumn(index)
 
     // - Row API - //
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
@@ -397,6 +403,9 @@ type ArcTable =
         fun (table:ArcTable) ->
             table.GetRow(index)
 
+    //member this.InsertParameterValue () =
+    //    this.in
+
     static member insertParameterValue (t : ArcTable) (p : ProcessParameterValue) : ArcTable = 
         raise (System.NotImplementedException())
 
@@ -407,11 +416,128 @@ type ArcTable =
     static member addProcess = 
         raise (System.NotImplementedException())
 
-    static member fromProtocol (p : Protocol) : ArcTable = 
-        raise (System.NotImplementedException())
+    ///
+    member this.AddProtocolTypeColumn(?types : OntologyAnnotation [], ?index : int) =
+        let header = CompositeHeader.ProtocolType
+        let cells = types |> Option.map (Array.map CompositeCell.Term)
+        this.AddColumn(header, ?cells = cells, ?index = index)
 
-    static member getProtocols (t : ArcTable) : Protocol list = 
-        raise (System.NotImplementedException())
+    member this.AddProtocolVersionColumn(?versions : string [], ?index : int) =
+        let header = CompositeHeader.ProtocolVersion
+        let cells = versions |> Option.map (Array.map CompositeCell.FreeText)
+        this.AddColumn(header, ?cells = cells, ?index = index)
+
+    member this.AddProtocolUriColumn(?uris : string [], ?index : int) =
+        let header = CompositeHeader.ProtocolUri
+        let cells = uris |> Option.map (Array.map CompositeCell.FreeText)
+        this.AddColumn(header, ?cells = cells, ?index = index)
+
+    member this.AddProtocolDescriptionColumn(?descriptions : string [], ?index : int) =
+        let header = CompositeHeader.ProtocolDescription
+        let cells = descriptions |> Option.map (Array.map CompositeCell.FreeText)
+        this.AddColumn(header, ?cells = cells, ?index = index)
+
+    member this.AddProtocolNameColumn(?names : string [], ?index : int) =
+        let header = CompositeHeader.ProtocolREF
+        let cells = names |> Option.map (Array.map CompositeCell.FreeText)
+        this.AddColumn(header, ?cells = cells, ?index = index)
+
+    /// Get functions for the protocol columns
+    member this.GetProtocolTypeColumn() =
+        this.GetColumnByHeader(CompositeHeader.ProtocolType)
+
+    member this.GetProtocolVersionColumn() =
+        this.GetColumnByHeader(CompositeHeader.ProtocolVersion)
+
+    member this.GetProtocolUriColumn() =
+        this.GetColumnByHeader(CompositeHeader.ProtocolUri)
+
+    member this.GetProtocolDescriptionColumn() =
+        this.GetColumnByHeader(CompositeHeader.ProtocolDescription)
+
+    member this.GetProtocolNameColumn() =
+        this.GetColumnByHeader(CompositeHeader.ProtocolREF)
+
+    member this.GetComponentColumns() =
+        this.Headers
+        |> Seq.filter (fun h -> h.isComponent)
+        |> Seq.toArray
+        |> Array.map (fun h -> this.GetColumnByHeader(h))
+
+    static member fromProtocol (p : Protocol) : ArcTable = 
+        
+        let t = ArcTable.init (p.Name |> Option.defaultValue "")
+
+
+        for pp in p.Parameters |> Option.defaultValue [] do
+
+            //t.AddParameterColumn(pp, ?index = pp.TryGetColumnIndex())
+
+            t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
+
+
+        for c in p.Components |> Option.defaultValue [] do
+            let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> Array.singleton)
+            t.AddColumn(
+                CompositeHeader.Parameter c.ComponentType.Value, 
+                ?cells = v,
+                ?index = c.TryGetColumnIndex())
+        p.Description 
+            |> Option.map (fun d -> 
+                t.AddProtocolDescriptionColumn([|d|])) 
+            |> ignore
+        p.Version |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|])) |> ignore
+        p.ProtocolType |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|])) |> ignore
+        p.Uri |> Option.map (fun d -> t.AddProtocolUriColumn([|d|])) |> ignore
+        p.Name |> Option.map (fun d -> t.AddProtocolNameColumn([|d|])) |> ignore
+        t
+
+    member this.GetProtocols() : Protocol list = 
+
+        if this.RowCount = 0 then
+            this.Headers
+            |> Seq.fold (fun (p : Protocol) h -> 
+                match h with
+                | CompositeHeader.ProtocolType -> 
+                    Protocol.setProtocolType p OntologyAnnotation.empty
+                | CompositeHeader.ProtocolVersion -> Protocol.setVersion p ""
+                | CompositeHeader.ProtocolUri -> Protocol.setUri p ""
+                | CompositeHeader.ProtocolDescription -> Protocol.setDescription p ""
+                | CompositeHeader.ProtocolREF -> Protocol.setName p ""
+                | CompositeHeader.Parameter oa -> 
+                    let pp = ProtocolParameter.create(ParameterName = oa)
+                    Protocol.addParameter (pp) p
+                | CompositeHeader.Component oa -> 
+                    let c = Component.create(ComponentType = oa)
+                    Protocol.addComponent c p
+                | _ -> p
+            ) Protocol.empty
+            |> List.singleton
+        else
+            List.init this.RowCount (fun i ->
+                this.GetRow(i) 
+                |> Seq.zip this.Headers
+                |> Seq.fold (fun p hc ->
+                    match hc with
+                    | CompositeHeader.ProtocolType, CompositeCell.Term oa -> 
+                        Protocol.setProtocolType p oa
+                    | CompositeHeader.ProtocolVersion, CompositeCell.FreeText v -> Protocol.setVersion p v
+                    | CompositeHeader.ProtocolUri, CompositeCell.FreeText v -> Protocol.setUri p v
+                    | CompositeHeader.ProtocolDescription, CompositeCell.FreeText v -> Protocol.setDescription p v
+                    | CompositeHeader.ProtocolREF, CompositeCell.FreeText v -> Protocol.setName p v
+                    | CompositeHeader.Parameter oa, _ -> 
+                        let pp = ProtocolParameter.create(ParameterName = oa)
+                        Protocol.addParameter (pp) p
+                    | CompositeHeader.Component oa, CompositeCell.Unitized(v,unit) -> 
+                        let c = Component.create(ComponentType = oa, Value = Value.fromString v, Unit = unit)
+                        Protocol.addComponent c p        
+                    | CompositeHeader.Component oa, CompositeCell.Term t -> 
+                        let c = Component.create(ComponentType = oa, Value = Value.Ontology t)
+                        Protocol.addComponent c p     
+                    | _ -> p
+                ) Protocol.empty                    
+            )
+            |> List.distinct
 
     static member getProcesses (t : ArcTable) : Process list = 
         raise (System.NotImplementedException())
