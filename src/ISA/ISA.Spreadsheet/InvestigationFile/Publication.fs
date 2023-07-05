@@ -17,8 +17,8 @@ module Publications =
 
     let labels = [pubMedIDLabel;doiLabel;authorListLabel;titleLabel;statusLabel;statusTermAccessionNumberLabel;statusTermSourceREFLabel]
 
-    let fromString pubMedID doi author title status statusTermSourceREF statursTermAccessionNumber comments =
-        let status = OntologyAnnotation.fromString(status,statusTermSourceREF,statursTermAccessionNumber)
+    let fromString pubMedID doi author title status statusTermSourceREF statusTermAccessionNumber comments =
+        let status = OntologyAnnotation.fromString(status,?tan = statusTermAccessionNumber,?tsr = statusTermSourceREF)
         Publication.make 
             (Option.fromValueWithDefault "" pubMedID |> Option.map URI.fromString)
             (Option.fromValueWithDefault "" doi)
@@ -42,8 +42,8 @@ module Publications =
                 (matrix.TryGetValueDefault("",(authorListLabel,i)))         
                 (matrix.TryGetValueDefault("",(titleLabel,i)))                 
                 (matrix.TryGetValueDefault("",(statusLabel,i)))                
-                (matrix.TryGetValueDefault("",(statusTermSourceREFLabel,i)))    
-                (matrix.TryGetValueDefault("",(statusTermAccessionNumberLabel,i)))
+                (matrix.TryGetValue((statusTermSourceREFLabel,i)))    
+                (matrix.TryGetValue((statusTermAccessionNumberLabel,i)))
                 comments
         )
 
@@ -53,7 +53,7 @@ module Publications =
         publications
         |> List.iteri (fun i p ->
             let i = i + 1
-            let s = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
+            let s = Option.defaultValue OntologyAnnotation.empty p.Status |> fun s -> OntologyAnnotation.toString (s,true)
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
             do matrix.Matrix.Add ((authorListLabel,i),                  (Option.defaultValue "" p.Authors))

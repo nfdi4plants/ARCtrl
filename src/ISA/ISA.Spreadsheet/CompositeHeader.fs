@@ -21,10 +21,10 @@ module ActivePattern =
             let ont = OntologyAnnotation.fromString(name)
             f ont
             |> Some
-        | [AC name; TermSourceREF term1; TermAccessionNumber term2] 
+        | [AC name; TSRColumnHeader term1; TANColumnHeader term2] 
         //| [AC name; TermAccessionNumber term1; TermSourceREF term2] 
         //| [AC name; Unit; TermAccessionNumber term1; TermSourceREF term2] 
-        | [AC name; Unit; TermSourceREF term1; TermAccessionNumber term2] ->
+        | [AC name; UnitColumnHeader; TSRColumnHeader term1; TANColumnHeader term2] ->
             let term = mergeTerms term1.TermSourceREF term1.TermSourceREF term2.LocalTAN term2.LocalTAN
             let ont = OntologyAnnotation.fromString(name, term.TermSourceRef, term.TermAccessionNumber)
             f ont
@@ -33,26 +33,26 @@ module ActivePattern =
 
     let (|Parameter|_|) (cells : FsCell list) =
         match cells with
-        | Term Regex.tryParseParameter CompositeHeader.Parameter r ->
+        | Term Regex.tryParseParameterColumnHeader CompositeHeader.Parameter r ->
             Some r
         | _ -> None
 
     let (|Factor|_|) (cells : FsCell list) =
         match cells with
-        | Term Regex.tryParseFactor CompositeHeader.Factor r ->
+        | Term Regex.tryParseFactorColumnHeader CompositeHeader.Factor r ->
             Some r
         | _ -> None
 
     let (|Characteristic|_|) (cells : FsCell list) =
         match cells with
-        | Term Regex.tryParseCharacteristic CompositeHeader.Characteristic r ->
+        | Term Regex.tryParseCharacteristicColumnHeader CompositeHeader.Characteristic r ->
             Some r
         | _ -> None
     
     let (|Input|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.Value)
         match cellValues with
-        | [Input ioType] -> 
+        | [InputColumnHeader ioType] -> 
             IOType.ofString ioType
             |> CompositeHeader.Input
             |> Some
@@ -61,7 +61,7 @@ module ActivePattern =
     let (|Output|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.Value)
         match cellValues with
-        | [Output ioType] -> 
+        | [OutputColumnHeader ioType] -> 
             IOType.ofString ioType
             |> CompositeHeader.Output
             |> Some

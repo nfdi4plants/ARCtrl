@@ -26,7 +26,7 @@ module SparseRow =
 
     let fromFsRow (r : FsRow) = 
         r.Cells
-        |> Seq.map (fun c -> c.ColumnNumber, c.Value)
+        |> Seq.map (fun c -> c.ColumnNumber - 1, c.Value)
 
     let tryGetValueAt i (vs : SparseRow) =
         vs 
@@ -59,6 +59,9 @@ type SparseTable =
         ///Column Count
         Length : int
     }
+
+    member this.TryGetValue(key) =
+        Dictionary.tryGetValue key this.Matrix
 
     member this.TryGetValueDefault(defaultValue,key) =
         if this.Matrix.ContainsKey(key) then

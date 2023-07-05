@@ -15,7 +15,7 @@ module Factors =
     let labels = [nameLabel;factorTypeLabel;typeTermAccessionNumberLabel;typeTermSourceREFLabel]
     
     let fromString name designType typeTermSourceREF typeTermAccessionNumber comments =
-        let factorType = OntologyAnnotation.fromString(designType,typeTermSourceREF,typeTermAccessionNumber)
+        let factorType = OntologyAnnotation.fromString(designType,?tan = typeTermAccessionNumber, ?tsr = typeTermSourceREF)
         Factor.make 
             None 
             (Option.fromValueWithDefault "" name) 
@@ -34,8 +34,8 @@ module Factors =
             fromString
                 (matrix.TryGetValueDefault("",(nameLabel,i)))
                 (matrix.TryGetValueDefault("",(factorTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermAccessionNumberLabel,i)))
+                (matrix.TryGetValue((typeTermSourceREFLabel,i)))
+                (matrix.TryGetValue((typeTermAccessionNumberLabel,i)))
                 comments
         )
 
@@ -45,7 +45,7 @@ module Factors =
         factors
         |> List.iteri (fun i f ->
             let i = i + 1
-            let ft = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let ft = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> fun f -> OntologyAnnotation.toString(f,true)
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              ft.TermName)
             do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), ft.TermAccessionNumber)

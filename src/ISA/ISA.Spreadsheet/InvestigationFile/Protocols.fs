@@ -30,7 +30,7 @@ module Protocols =
         ]
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
-        let protocolType = OntologyAnnotation.fromString(protocolType,typeTermSourceREF,typeTermAccessionNumber)
+        let protocolType = OntologyAnnotation.fromString(protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
         let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
@@ -58,8 +58,8 @@ module Protocols =
             fromString
                 (matrix.TryGetValueDefault("",(nameLabel,i)))
                 (matrix.TryGetValueDefault("",(protocolTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermSourceREFLabel,i)))
+                (matrix.TryGetValue(typeTermAccessionNumberLabel,i))
+                (matrix.TryGetValue(typeTermSourceREFLabel,i))
                 (matrix.TryGetValueDefault("",(descriptionLabel,i)))
                 (matrix.TryGetValueDefault("",(uriLabel,i)))
                 (matrix.TryGetValueDefault("",(versionLabel,i)))
@@ -79,7 +79,7 @@ module Protocols =
         protocols
         |> List.iteri (fun i p ->
             let i = i + 1
-            let pt = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let pt = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> fun pt -> OntologyAnnotation.toString(pt,true)
             let pAgg = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
             let cAgg = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 

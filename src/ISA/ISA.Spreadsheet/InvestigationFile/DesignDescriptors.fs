@@ -36,7 +36,7 @@ module DesignDescriptors =
         designs
         |> List.iteri (fun i d ->
             let i = i + 1
-            let oa = OntologyAnnotation.toString d
+            let oa = OntologyAnnotation.toString(d,true)
             do matrix.Matrix.Add ((designTypeLabel,i),                      oa.TermName)
             do matrix.Matrix.Add ((designTypeTermAccessionNumberLabel,i),   oa.TermAccessionNumber)
             do matrix.Matrix.Add ((designTypeTermSourceREFLabel,i),         oa.TermSourceREF)

@@ -49,15 +49,19 @@ module OntologyAnnotation =
 
     /// Returns the aggregated ISATab OntologyAnnotation Name, ontology source and Accession number from a list of ISAJson OntologyAnnotation objects
     let toAggregatedStrings (separator:char) (oas : OntologyAnnotation list) =
-        if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}
+        let mutable first = true
+        if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}       
         else
             oas
             |> List.map OntologyAnnotation.toString
             |> List.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
-                
-                sprintf "%s%c%s" nameAgg    separator term.TermName,
-                sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
-                sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
+                if first then 
+                    first <- false
+                    term.TermName,term.TermSourceREF,term.TermAccessionNumber
+                else 
+                    sprintf "%s%c%s" nameAgg    separator term.TermName,
+                    sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
+                    sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
             ) ("","","")
             |> fun (nameAgg,tsrAgg,tanAgg) -> {|TermNameAgg = nameAgg; TermAccessionNumberAgg = tanAgg; TermSourceREFAgg = tsrAgg|}
 
@@ -77,11 +81,16 @@ module Component =
 
     /// Returns the aggregated ISATAb Component Name, Ontology Annotation value, Accession number and ontology source from a list of ISAJson Component objects
     let toAggregatedStrings (separator:char) (cs : Component list) =
+        let mutable first = true
         if cs = [] then {|NameAgg = ""; TermNameAgg = "";  TermAccessionNumberAgg = "";  TermSourceREFAgg = ""; |}
         else
             cs
             |> List.map Component.toString
             |> List.fold (fun (nameAgg,termAgg,tsrAgg,tanAgg) (name,term) ->     
+                if first then 
+                    first <- false
+                    name,term.TermName,term.TermSourceREF,term.TermAccessionNumber
+                else 
                 sprintf "%s%c%s" nameAgg    separator name,
                 sprintf "%s%c%s" termAgg    separator term.TermName,
                 sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
@@ -98,15 +107,19 @@ module ProtocolParameter =
 
     /// Returns the aggregated ISATAb Ontology Annotation value, Accession number and ontology source from a list of ISAJson ProtocolParameter objects
     let toAggregatedStrings (separator:char) (oas : ProtocolParameter list) =
+        let mutable first = true
         if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}
         else
             oas
             |> List.map ProtocolParameter.toString
             |> List.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
-                
-                sprintf "%s%c%s" nameAgg    separator term.TermName,
-                sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
-                sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
+                if first then 
+                    first <- false
+                    term.TermName,term.TermSourceREF,term.TermAccessionNumber
+                else 
+                    sprintf "%s%c%s" nameAgg    separator term.TermName,
+                    sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
+                    sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
             ) ("","","")
             |> fun (nameAgg,tsrAgg,tanAgg) -> {|TermNameAgg = nameAgg; TermAccessionNumberAgg = tanAgg; TermSourceREFAgg = tsrAgg|}
 

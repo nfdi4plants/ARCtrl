@@ -24,8 +24,8 @@ module Assays =
 
     
     let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
-        let measurementType = OntologyAnnotation.fromString(measurementType,measurementTypeTermSourceREF,measurementTypeTermAccessionNumber)
-        let technologyType = OntologyAnnotation.fromString(technologyType,technologyTypeTermSourceREF,technologyTypeTermAccessionNumber)
+        let measurementType = OntologyAnnotation.fromString(measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
+        let technologyType = OntologyAnnotation.fromString(technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
         ArcAssay.make 
             None 
             (Option.fromValueWithDefault "" fileName)
@@ -47,11 +47,11 @@ module Assays =
 
             fromString
                 (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
-                (matrix.TryGetValueDefault("",(measurementTypeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(measurementTypeTermAccessionNumberLabel,i)))
+                (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
+                (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
                 (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
-                (matrix.TryGetValueDefault("",(technologyTypeTermSourceREFLabel,i)))   
-                (matrix.TryGetValueDefault("",(technologyTypeTermAccessionNumberLabel,i))) 
+                (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
+                (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
                 (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
                 (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
                 comments
@@ -63,8 +63,8 @@ module Assays =
         assays
         |> List.iteri (fun i a ->
             let i = i + 1
-            let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
-            let tt = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
+            let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
+            let tt = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       mt.TermName)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    mt.TermAccessionNumber)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          mt.TermSourceREF)
