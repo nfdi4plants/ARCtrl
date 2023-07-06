@@ -152,6 +152,20 @@ module ActivePatterns =
             | _ -> None
         | _ -> None
 
+
+    /// Matches a short term string and returns the term source ref and the annotation number strings.
+    /// 
+    /// Example: "MS:1003022" --> term source ref: "MS"; annotation number: "1003022"
+    let (|TermAnnotationShort|_|) input =
+        match input with
+        | Regex Pattern.TermAnnotationShortPattern value ->
+            let termsourceref = value.Groups.["termsourceref"].Value
+            let localtan = value.Groups.["localtan"].Value
+            {|TermSourceREF = termsourceref; LocalTAN = localtan|}
+            |> Some
+        | _ ->
+            None
+
     /// Matches a term string (either short or URI) and returns the term source ref and the annotation number strings.
     /// 
     /// Example 1: "MS:1003022" --> term source ref: "MS"; annotation number: "1003022"
@@ -220,6 +234,16 @@ open ActivePatterns
 open System
 open System.Text.RegularExpressions
     
+
+
+let tryParseTermAnnotationShort (str:string) =
+    match str.Trim() with
+    | Regex TermAnnotationShortPattern value ->
+        let termsourceref = value.Groups.["termsourceref"].Value
+        let localtan = value.Groups.["localtan"].Value
+        {|TermSourceREF = termsourceref; LocalTAN = localtan|} 
+        |> Some
+    | _ -> None
 
 /// <summary>
 /// This function can be used to extract `IDSPACE:LOCALID` (or: `Term Accession`) from Swate header strings or obofoundry conform URI strings.

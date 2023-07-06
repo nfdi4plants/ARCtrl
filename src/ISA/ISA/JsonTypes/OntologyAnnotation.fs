@@ -9,22 +9,24 @@ type OntologyAnnotation =
         ID : URI option
         Name : AnnotationValue option
         TermSourceREF : string option
+        LocalID : string option
         TermAccessionNumber : URI option
         Comments : Comment list option
     }
 
-    static member make id name termSourceREF termAccessionNumber comments= 
+    static member make id name termSourceREF localID termAccessionNumber comments= 
         {
             ID = id
             Name = name 
             TermSourceREF = termSourceREF
+            LocalID = localID
             TermAccessionNumber = termAccessionNumber  
             Comments = comments
         }
 
     /// This function creates the type exactly as given. If you want a more streamlined approach use `OntologyAnnotation.fromString`.
-    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
-        OntologyAnnotation.make Id Name TermSourceREF TermAccessionNumber Comments
+    static member create(?Id,?Name,?TermSourceREF,?LocalID,?TermAccessionNumber,?Comments) : OntologyAnnotation =
+        OntologyAnnotation.make Id Name TermSourceREF LocalID TermAccessionNumber Comments
 
     static member empty =
         OntologyAnnotation.create()
@@ -74,22 +76,20 @@ type OntologyAnnotation =
     ///<param name="tan">Term accession number</param>
     static member fromString (?term:string, ?tsr:string, ?tan:string, ?comments : Comment list) =
 
-        let termAccession = 
-            if tan.IsSome then
-                let termAccessionString = tan.Value
-                let regexResult = Regex.tryGetTermAnnotationShortString termAccessionString
-                regexResult 
-                |> Option.defaultValue termAccessionString
-                |> Some 
-            else
-                None
+        let tsr,localID = 
+            match tan with
+            | Some (Regex.ActivePatterns.TermAnnotation tan) -> 
+                (if tsr.IsSome then tsr else Some tan.TermSourceREF),
+                Some tan.LocalTAN
+            | _ -> tsr,None
 
         OntologyAnnotation.make 
             None 
             (term |> Option.map AnnotationValue.fromString)
-            (tsr)
-            (termAccession)
-            (comments)
+            tsr
+            localID
+            tan
+            comments
 
     /// Will always be created without `OntologyAnnotion.Name`
     static member fromTermAnnotation (termAnnotation : string) =
@@ -104,17 +104,21 @@ type OntologyAnnotation =
     ///
     /// If `TermAccessionString` cannot be parsed to this format, returns empty string!
     member this.TermAccessionShort = 
-        match Regex.tryGetTermAnnotationShortString this.TermAccessionString with
-        | Some s -> s
-        | None -> ""
+        match this.TermSourceREF, this.LocalID with
+        | Some tsr, Some id -> $"{tsr}:{id}"
+        | _ -> ""
 
     member this.TermAccessionOntobeeUrl = 
-        let annotation = this.TermAccessionNumber |> Option.bind (Regex.tryParseTermAnnotation)
-        match this.TermSourceREF, annotation with
-        | Some tsr, Some annotation ->
-            OntologyAnnotation.createUriAnnotation tsr annotation.LocalTAN
-        | None, Some annotation ->
-            OntologyAnnotation.createUriAnnotation annotation.TermSourceREF annotation.LocalTAN
+        match this.TermSourceREF, this.LocalID with
+        | Some tsr, Some id -> OntologyAnnotation.createUriAnnotation tsr id
+        | _ -> ""
+
+    member this.TermAccessionAndOntobeeUrlIfShort = 
+        match this.TermAccessionNumber with
+        | Some tan -> 
+            match tan with 
+            | Regex.ActivePatterns.Regex Regex.Pattern.TermAnnotationShortPattern _ -> this.TermAccessionOntobeeUrl
+            | _ -> tan
         | _ -> ""
 
     /// <summary>
@@ -122,14 +126,14 @@ type OntologyAnnotation =
     ///
     /// `asOntobeePurlUrl`: option to return term accession in Ontobee purl-url format (`http://purl.obolibrary.org/obo/MS_1000121`)
     /// </summary>
-    static member toString (oa : OntologyAnnotation, ?asOntobeePurlUrl: bool) =
-        let asOntobeePurlUrl = Option.defaultValue false asOntobeePurlUrl
+    static member toString (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
+        let asOntobeePurlUrlIfShort = Option.defaultValue false asOntobeePurlUrlIfShort
         {|
             TermName = oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue ""
             TermSourceREF = oa.TermSourceREF |> Option.defaultValue ""
             TermAccessionNumber = 
-                if asOntobeePurlUrl then
-                    let url = oa.TermAccessionOntobeeUrl
+                if asOntobeePurlUrlIfShort then
+                    let url = oa.TermAccessionAndOntobeeUrlIfShort
                     if url = "" then 
                         oa.TermAccessionNumber |> Option.defaultValue ""
                     else
