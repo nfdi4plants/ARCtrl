@@ -14,21 +14,25 @@ module DesignDescriptors =
     let labels = [designTypeLabel;designTypeTermAccessionNumberLabel;designTypeTermSourceREFLabel]
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            OntologyAnnotation.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            OntologyAnnotation.fromString(
-                (matrix.TryGetValueDefault("",(designTypeLabel,i))),
-                (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i))),
-                (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i))),
-                comments
+                OntologyAnnotation.fromString(
+                    (matrix.TryGetValueDefault("",(designTypeLabel,i))),
+                    (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i))),
+                    (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i))),
+                    comments
+                )
             )
-        )
 
     let toSparseTable (designs: OntologyAnnotation list) =
         let matrix = SparseTable.Create (keys = labels,length=designs.Length + 1)

@@ -1,10 +1,10 @@
-﻿module AssayFileTests
+﻿module ArcAssayTests
 
 
 open ISA
 
 open Expecto
-//open TestingUtils
+open TestingUtils
 
 open ISA
 open ISA.Spreadsheet
@@ -661,66 +661,81 @@ let testProcessComparisonFunctions =
         //)
     ]
 
-
-[<Tests>]
 let testMetaDataFunctions = 
 
-    //let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
-    //let referenceAssayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayMetadataTestFile.xlsx")
+    testList "AssayMetadataTests" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
-    testList "MetaDataTests" [
-        //testCase "CanReadMetaData" (fun () ->
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
 
-        //    let doc = Spreadsheet.fromFile referenceAssayFilePath false
+        )
 
-        //    let sst = Spreadsheet.getSharedStringTable doc
+        testCase "WriterSuccess" (fun () ->
 
-        //    let rows = 
-        //        Spreadsheet.tryGetSheetBySheetName "Investigation" doc
-        //        |> Option.get
-        //        |> SheetData.getRows
-        //        |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst))
-        //        |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata
 
-        //    let readingSuccess = 
-        //        try 
-        //            AssayFile.MetaData.fromRows rows |> ignore
-        //            Result.Ok "DidRun"
-        //        with
-        //        | err -> Result.Ok(sprintf "Reading the test metadata failed: %s" err.Message)
+            let writingSuccess = 
+                try 
+                    ArcAssay.toMetadataSheet a |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
 
-        //    Expect.isOk readingSuccess (Result.getMessage readingSuccess)
-        //)
-        //testCase "ReadsMetaDataCorrectly" (fun () ->
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
 
-        //    let doc = Spreadsheet.fromFile referenceAssayFilePath false
-
-        //    let sst = Spreadsheet.getSharedStringTable doc
-
-        //    let rows = 
-        //        Spreadsheet.tryGetSheetBySheetName "Investigation" doc
-        //        |> Option.get
-        //        |> SheetData.getRows
-        //        |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst))
-        //        |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
-
-        //    let assay,contacts = AssayFile.MetaData.fromRows rows 
-
-        //    let testAssay = Assays.fromString "protein expression profiling" "OBI" "http://purl.obolibrary.org/obo/OBI_0000615" "mass spectrometry" "OBI" "" "iTRAQ" "" []
-
-        //    let testContact = Contacts.fromString "Leo" "Zeef" "A" "" "" "" "Oxford Road, Manchester M13 9PT, UK" "Faculty of Life Sciences, Michael Smith Building, University of Manchester" "author" "" "" [Comment.fromString "Worksheet" "Sheet3"]
+        testCase "OutputMatchesInput" (fun () ->
+           
+            let o = 
+                TestObjects.Assay.assayMetadata
+                |> ArcAssay.fromMetadataSheet
+                |> ArcAssay.toMetadataSheet
                 
-        //    Expect.isSome assay "Assay metadata information could not be read from metadata sheet"
+            Expect.workSheetEqual o TestObjects.Assay.assayMetadata "Written assay metadata does not match read assay metadata"
+        )
 
-        //    Expect.equal assay.Value testAssay "Assay metadata information could not be correctly read from metadata sheet"
+        testCase "ReaderSuccessEmpty" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        )
 
-        //    Expect.hasLength contacts 3 "Wrong count of parsed contacts"
+        testCase "WriterSuccessEmpty" (fun () ->
 
-        //    Expect.equal contacts.[2] testContact "Test Person could not be correctly read from metadata sheet"
-        //)
+            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty
 
-    ]
-    |> testSequenced
+            let writingSuccess = 
+                try 
+                    ArcAssay.toMetadataSheet a |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the Empty test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        testCase "OutputMatchesInputEmpty" (fun () ->
+           
+            let o = 
+                TestObjects.Assay.assayMetadataEmpty
+                |> ArcAssay.fromMetadataSheet
+                |> ArcAssay.toMetadataSheet
+                
+            Expect.workSheetEqual o TestObjects.Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
+        )
+        ]
 
 [<Tests>]
 let testAssayFileReader = 
@@ -867,4 +882,10 @@ let testAssayFileReader =
         //    Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
+    ]
+
+
+let main = 
+    testList "AssayFile" [
+        testMetaDataFunctions
     ]

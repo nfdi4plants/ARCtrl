@@ -482,14 +482,11 @@ type ArcTable =
                 CompositeHeader.Parameter c.ComponentType.Value, 
                 ?cells = v,
                 ?index = c.TryGetColumnIndex())
-        p.Description 
-            |> Option.map (fun d -> 
-                t.AddProtocolDescriptionColumn([|d|])) 
-            |> ignore
-        p.Version |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|])) |> ignore
-        p.ProtocolType |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|])) |> ignore
-        p.Uri |> Option.map (fun d -> t.AddProtocolUriColumn([|d|])) |> ignore
-        p.Name |> Option.map (fun d -> t.AddProtocolNameColumn([|d|])) |> ignore
+        p.Description   |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
+        p.Version       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
+        p.ProtocolType  |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
+        p.Uri           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
+        p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn([|d|]))         |> ignore
         t
 
     member this.GetProtocols() : Protocol list = 

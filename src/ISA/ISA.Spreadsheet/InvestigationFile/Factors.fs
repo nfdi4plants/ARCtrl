@@ -23,21 +23,25 @@ module Factors =
             (Option.fromValueWithDefault [] comments)
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Factor.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(nameLabel,i)))
-                (matrix.TryGetValueDefault("",(factorTypeLabel,i)))
-                (matrix.TryGetValue((typeTermSourceREFLabel,i)))
-                (matrix.TryGetValue((typeTermAccessionNumberLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(nameLabel,i)))
+                    (matrix.TryGetValueDefault("",(factorTypeLabel,i)))
+                    (matrix.TryGetValue((typeTermSourceREFLabel,i)))
+                    (matrix.TryGetValue((typeTermAccessionNumberLabel,i)))
+                    comments
+            )
 
     let toSparseTable (factors: Factor list) =
         let matrix = SparseTable.Create (keys = labels,length=factors.Length + 1)

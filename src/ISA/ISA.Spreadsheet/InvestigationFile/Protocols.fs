@@ -47,31 +47,35 @@ module Protocols =
 
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Protocol.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(nameLabel,i)))
-                (matrix.TryGetValueDefault("",(protocolTypeLabel,i)))
-                (matrix.TryGetValue(typeTermAccessionNumberLabel,i))
-                (matrix.TryGetValue(typeTermSourceREFLabel,i))
-                (matrix.TryGetValueDefault("",(descriptionLabel,i)))
-                (matrix.TryGetValueDefault("",(uriLabel,i)))
-                (matrix.TryGetValueDefault("",(versionLabel,i)))
-                (matrix.TryGetValueDefault("",(parametersNameLabel,i)))
-                (matrix.TryGetValueDefault("",(parametersTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(parametersTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsNameLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsTypeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsTypeTermSourceREFLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(nameLabel,i)))
+                    (matrix.TryGetValueDefault("",(protocolTypeLabel,i)))
+                    (matrix.TryGetValue(typeTermAccessionNumberLabel,i))
+                    (matrix.TryGetValue(typeTermSourceREFLabel,i))
+                    (matrix.TryGetValueDefault("",(descriptionLabel,i)))
+                    (matrix.TryGetValueDefault("",(uriLabel,i)))
+                    (matrix.TryGetValueDefault("",(versionLabel,i)))
+                    (matrix.TryGetValueDefault("",(parametersNameLabel,i)))
+                    (matrix.TryGetValueDefault("",(parametersTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(parametersTermSourceREFLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsNameLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsTypeLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsTypeTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsTypeTermSourceREFLabel,i)))
+                    comments
+            )
     
     let toSparseTable (protocols: Protocol list) =
         let matrix = SparseTable.Create (keys = labels,length=protocols.Length + 1)

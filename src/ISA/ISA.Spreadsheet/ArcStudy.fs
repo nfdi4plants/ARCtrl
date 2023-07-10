@@ -18,7 +18,7 @@ let toMetadataSheet (study : ArcStudy) : FsWorksheet =
     let sheet = FsWorksheet(metaDataSheetName)
     study
     |> toRows
-    |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet rowI r sheet)    
+    |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
     sheet
 
 let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy =

@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
+    <Compile Include="TestObjects\Assay.fs" />
     <Compile Include="TestObjects\InvestigationFile.fs" />
     <Compile Include="StringConversionTests.fs" />
     <Compile Include="SparseTableTests.fs" />

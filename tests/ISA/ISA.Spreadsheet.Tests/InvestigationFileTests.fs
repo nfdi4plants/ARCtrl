@@ -478,6 +478,6 @@ let private testInvestigationFile =
 //    |> testSequenced
 
 let main = 
-    testList "CompositeColumn" [
+    testList "InvestigationFile" [
         testInvestigationFile
     ]

@@ -24,21 +24,25 @@ module OntologySourceReference =
             (Option.fromValueWithDefault [] comments)
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            OntologySourceReference.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(descriptionLabel,i)))
-                (matrix.TryGetValueDefault("",(fileLabel,i)))
-                (matrix.TryGetValueDefault("",(nameLabel,i)))
-                (matrix.TryGetValueDefault("",(versionLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(descriptionLabel,i)))
+                    (matrix.TryGetValueDefault("",(fileLabel,i)))
+                    (matrix.TryGetValueDefault("",(nameLabel,i)))
+                    (matrix.TryGetValueDefault("",(versionLabel,i)))
+                    comments
+            )
 
     let toSparseTable (ontologySources: OntologySourceReference list) =
         let matrix = SparseTable.Create (keys = labels,length=ontologySources.Length + 1)

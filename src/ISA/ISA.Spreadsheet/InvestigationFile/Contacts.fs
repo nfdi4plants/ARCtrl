@@ -37,26 +37,30 @@ module Contacts =
             (Option.fromValueWithDefault [] comments   )
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-            fromString
-                (matrix.TryGetValueDefault("",(lastNameLabel,i)))
-                (matrix.TryGetValueDefault("",(firstNameLabel,i)))
-                (matrix.TryGetValueDefault("",(midInitialsLabel,i)))
-                (matrix.TryGetValueDefault("",(emailLabel,i)))
-                (matrix.TryGetValueDefault("",(phoneLabel,i)))
-                (matrix.TryGetValueDefault("",(faxLabel,i)))
-                (matrix.TryGetValueDefault("",(addressLabel,i)))
-                (matrix.TryGetValueDefault("",(affiliationLabel,i)))
-                (matrix.TryGetValueDefault("",(rolesLabel,i)))
-                (matrix.TryGetValueDefault("",(rolesTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(rolesTermSourceREFLabel,i)))
-                comments
-        )
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Person.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                fromString
+                    (matrix.TryGetValueDefault("",(lastNameLabel,i)))
+                    (matrix.TryGetValueDefault("",(firstNameLabel,i)))
+                    (matrix.TryGetValueDefault("",(midInitialsLabel,i)))
+                    (matrix.TryGetValueDefault("",(emailLabel,i)))
+                    (matrix.TryGetValueDefault("",(phoneLabel,i)))
+                    (matrix.TryGetValueDefault("",(faxLabel,i)))
+                    (matrix.TryGetValueDefault("",(addressLabel,i)))
+                    (matrix.TryGetValueDefault("",(affiliationLabel,i)))
+                    (matrix.TryGetValueDefault("",(rolesLabel,i)))
+                    (matrix.TryGetValueDefault("",(rolesTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(rolesTermSourceREFLabel,i)))
+                    comments
+            )
 
     let toSparseTable (persons:Person list) =
         let matrix = SparseTable.Create (keys = labels,length=persons.Length + 1)
@@ -91,9 +95,7 @@ module Contacts =
 
 
     let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
-        match prefix with
-        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
-        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        SparseTable.FromRows(rows,labels,lineNumber,?prefix = prefix)
         |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
 
     let toRows (prefix : string option) (persons : Person list) =

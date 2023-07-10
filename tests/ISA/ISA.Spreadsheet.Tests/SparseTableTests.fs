@@ -22,7 +22,7 @@ let main =
             Expect.equal sparseTable.Matrix.Count 0 "Dictionary was not empty"
             Expect.equal sparseTable.Keys keys "Keys were not taken properly"
             Expect.equal sparseTable.CommentKeys [] "Comment keys should be empty"
-            Expect.equal sparseTable.Length length "Length did not match"
+            Expect.equal sparseTable.ColumnCount length "Length did not match"
 
         )
 
@@ -38,7 +38,7 @@ let main =
             Expect.equal sparseTableFirstRow.Matrix.Count  2           "FirstRowAdded: Dictionary was not empty"
             Expect.equal sparseTableFirstRow.Keys          [firstKey]  "FirstRowAdded: Keys were not updated properly"
             Expect.equal sparseTableFirstRow.CommentKeys   []          "FirstRowAdded: Comment keys should be empty"
-            Expect.equal sparseTableFirstRow.Length        3           "FirstRowAdded: Length did not update according to item count"
+            Expect.equal sparseTableFirstRow.ColumnCount        3           "FirstRowAdded: Length did not update according to item count"
             
             let sparseTableSecondRow = 
                 sparseTableFirstRow
@@ -47,7 +47,7 @@ let main =
             Expect.equal sparseTableSecondRow.Matrix.Count  3                       "SecondRowAdded: Dictionary was not empty"
             Expect.equal sparseTableSecondRow.Keys          [firstKey;secondKey]    "SecondRowAdded: Keys were not updated properly"
             Expect.equal sparseTableSecondRow.CommentKeys   []                      "SecondRowAdded: Comment keys should be empty"
-            Expect.equal sparseTableSecondRow.Length        5                       "SecondRowAdded: Length did not update according to item count"            
+            Expect.equal sparseTableSecondRow.ColumnCount        5                       "SecondRowAdded: Length did not update according to item count"            
 
         )
 
@@ -67,7 +67,7 @@ let main =
             Expect.equal sparseTableFirstComment.Matrix.Count  6                       "FirstCommentAdded: Dictionary was not empty"
             Expect.equal sparseTableFirstComment.Keys          [firstKey;secondKey]    "FirstCommentAdded: Keys were not updated properly"
             Expect.equal sparseTableFirstComment.CommentKeys   [firstComment]          "FirstCommentAdded: Comment keys should be empty"
-            Expect.equal sparseTableFirstComment.Length        5                       "FirstCommentAdded: Length did not update according to item count"
+            Expect.equal sparseTableFirstComment.ColumnCount        5                       "FirstCommentAdded: Length did not update according to item count"
 
             let sparseTableSecondComment = 
                 sparseTableFirstComment
@@ -76,9 +76,30 @@ let main =
             Expect.equal sparseTableSecondComment.Matrix.Count  8                              "SecondCommentAdded: Dictionary was not empty"
             Expect.equal sparseTableSecondComment.Keys          [firstKey;secondKey]           "SecondCommentAdded: Keys were not update properly"
             Expect.equal sparseTableSecondComment.CommentKeys   [firstComment;secondComment]   "SecondCommentAdded: Comment keys should be empty"
-            Expect.equal sparseTableSecondComment.Length        6                              "SecondCommentAdded: Length did not update according to item count"                    
+            Expect.equal sparseTableSecondComment.ColumnCount        6                              "SecondCommentAdded: Length did not update according to item count"                    
         )
-        |> testSequenced
+        testCase "AddEmptyComment" (fun () ->
+
+            let firstKey,firstRow = "Greetings",[1,"Hello";2,"Bye"]
+            let secondKey,secondRow = "AndAgain",[4,"Hello Again"]
+            let firstComment,firstCommentRow = "CommentSameLength",[1,"Lel";2,"Lal";3,"Lul"]
+            let emptyComment = "CommentLonger"
+
+            let sparseTableFirstComment = 
+                SparseTable.Create()
+                |> SparseTable.AddRow firstKey firstRow
+                |> SparseTable.AddRow secondKey secondRow
+                |> SparseTable.AddComment firstComment firstCommentRow
+
+            let sparseTableEmptyComment = 
+                sparseTableFirstComment
+                |> SparseTable.AddEmptyComment emptyComment
+
+            Expect.equal sparseTableEmptyComment.Matrix.Count  6                              "SecondCommentAdded: Dictionary was not empty"
+            Expect.equal sparseTableEmptyComment.Keys          [firstKey;secondKey]           "SecondCommentAdded: Keys were not update properly"
+            Expect.equal sparseTableEmptyComment.CommentKeys   [firstComment;emptyComment]   "SecondCommentAdded: Comment keys should be empty"
+            Expect.equal sparseTableEmptyComment.ColumnCount        5                              "SecondCommentAdded: Length did not update according to item count"                    
+        )
 
         testCase "ToRow" (fun () ->
 
@@ -112,7 +133,6 @@ let main =
             )
 
         )
-        |> testSequenced
     ]
 
 //let main = 

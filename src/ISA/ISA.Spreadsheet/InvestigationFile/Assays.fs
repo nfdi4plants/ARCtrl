@@ -37,25 +37,29 @@ module Assays =
             (Option.fromValueWithDefault [] comments)
         
     let fromSparseTable (matrix : SparseTable) : ArcAssay list=
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            {ArcAssay.create(fileName ="",comments = comments) with FileName = None}
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
-                (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
-                (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
-                (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
-                (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
-                (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
-                (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
+                    (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
+                    (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
+                    (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
+                    (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
+                    (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
+                    (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
+                    comments
+            )
 
     let toSparseTable (assays: ArcAssay list) =
         let matrix = SparseTable.Create (keys = labels,length=assays.Length + 1)

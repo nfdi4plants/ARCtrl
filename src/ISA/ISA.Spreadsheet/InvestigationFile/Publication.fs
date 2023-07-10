@@ -28,24 +28,28 @@ module Publications =
             (Option.fromValueWithDefault [] comments)
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Publication.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(pubMedIDLabel,i)))            
-                (matrix.TryGetValueDefault("",(doiLabel,i)))             
-                (matrix.TryGetValueDefault("",(authorListLabel,i)))         
-                (matrix.TryGetValueDefault("",(titleLabel,i)))                 
-                (matrix.TryGetValueDefault("",(statusLabel,i)))                
-                (matrix.TryGetValue((statusTermSourceREFLabel,i)))    
-                (matrix.TryGetValue((statusTermAccessionNumberLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(pubMedIDLabel,i)))            
+                    (matrix.TryGetValueDefault("",(doiLabel,i)))             
+                    (matrix.TryGetValueDefault("",(authorListLabel,i)))         
+                    (matrix.TryGetValueDefault("",(titleLabel,i)))                 
+                    (matrix.TryGetValueDefault("",(statusLabel,i)))                
+                    (matrix.TryGetValue((statusTermSourceREFLabel,i)))    
+                    (matrix.TryGetValue((statusTermAccessionNumberLabel,i)))
+                    comments
+            )
 
     let toSparseTable (publications: Publication list) =
         let matrix = SparseTable.Create (keys = labels,length=publications.Length + 1)
