@@ -178,7 +178,7 @@ module ActivePatterns =
         | Regex Pattern.TermAnnotationURIPattern_lessRestrictive value ->
             let termsourceref = value.Groups.["termsourceref"].Value
             let localtan = value.Groups.["localtan"].Value
-            {|TermSourceREF = termsourceref; LocalTAN = localtan|}
+            {|TermSourceREF = termsourceref; LocalTAN = localtan; TermAccessionNumber = input|}
             |> Some
         | _ ->
             None

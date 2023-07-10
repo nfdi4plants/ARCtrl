@@ -7,7 +7,6 @@ open TestingUtils
 
 open ISA.Spreadsheet
 
-[<Tests>]
 let private testInvestigationFile = 
 
     testList "InvestigationXLSXTests" [

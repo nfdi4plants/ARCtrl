@@ -7,12 +7,12 @@ open FsSpreadsheet
 let fromFsColumns (columns : list<FsColumn>) : CompositeColumn =
     let header = 
         columns
-        |> List.map (fun c -> c.[0])
+        |> List.map (fun c -> c.[1])
         |> CompositeHeader.fromFsCells
     let l = columns.[0].RangeAddress.LastAddress.RowNumber
     let cells = 
         [|
-        for i = 1 to l do
+        for i = 2 to l do
             columns
             |> List.map (fun c -> c.[i])
             |> CompositeCell.fromFsCells

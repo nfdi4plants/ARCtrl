@@ -2054,7 +2054,7 @@ let private tests_protocolTransformation =
         //    let name1 = "Name"
         //    let name2 = "Name2"
         //    t.AddProtocolNameColumn([|name1;name2|])
-        //    t.AddProtocolParameterColumn([|pParam1;pParam1|])
+        //    t.addpara([|pParam1;pParam1|])
         //    let expected = [Protocol.create(Name = name1;Parameters = [pParam1]);Protocol.create(Name = name2;Parameters = [pParam1])]
         //    TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
         
