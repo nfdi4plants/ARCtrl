@@ -17,7 +17,7 @@ let private parameterTests =
         testCase "SingleWithUnit" (fun () ->
             let cols = 
                 initTableCols
-                    [Parameter.appendTemperatureColumn]
+                    [Parameter.appendTemperatureColumn 1]
             let col = CompositeColumn.fromFsColumns cols
                 
             Expect.equal col.Header Parameter.temperatureHeader "Header did not match"
@@ -27,7 +27,7 @@ let private parameterTests =
         testCase "SingleWithUnitWrite" (fun () ->
             let cols = 
                 initTableCols
-                    [Parameter.appendTemperatureColumn]
+                    [Parameter.appendTemperatureColumn 1]
             let out = 
                 CompositeColumn.fromFsColumns cols
                 |> CompositeColumn.toFsColumns
@@ -37,7 +37,7 @@ let private parameterTests =
         testCase "SingleWithTerm" (fun () ->
             let cols = 
                 initTableCols
-                    [Parameter.appendInstrumentColumn]
+                    [Parameter.appendInstrumentColumn 1]
             let col = CompositeColumn.fromFsColumns cols
                 
             Expect.equal col.Header Parameter.instrumentHeader "Header did not match"
@@ -47,10 +47,31 @@ let private parameterTests =
         testCase "SingleWithTermWrite" (fun () ->
             let cols = 
                 initTableCols
-                    [Parameter.appendInstrumentColumn]
+                    [Parameter.appendInstrumentColumn 1]
             let out = 
                 CompositeColumn.fromFsColumns cols
                 |> CompositeColumn.toFsColumns
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Parameter output columns did not match"
+        )
+        testCase "MixedWithUnit" (fun () ->
+            let cols = 
+                initTableCols
+                    [Parameter.appendMixedTemperatureColumn 1 1]
+            let col = CompositeColumn.fromFsColumns cols
+                
+            Expect.equal col.Header Parameter.temperatureHeader "Header did not match"
+            Expect.equal col.Cells.Length 2 "Wrong number of cells"
+            Expect.equal col.Cells.[0] Parameter.temperatureValue "First Value did not match"
+            Expect.equal col.Cells.[1] Parameter.temperatureValue2 "Second Value did not match"
+        )
+        testCase "MixedWithUnitWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Parameter.appendMixedTemperatureColumn 1 1]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+
             Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Parameter output columns did not match"
         )
     ]
@@ -61,7 +82,7 @@ let characteristicTests =
             ///Same test as above, but with characteristic and organism header and value
             let cols = 
                 initTableCols
-                    [Characteristic.appendOrganismColumn]
+                    [Characteristic.appendOrganismColumn 1]
             let col = CompositeColumn.fromFsColumns cols
 
             Expect.equal col.Header Characteristic.organismHeader "Header did not match"
@@ -71,7 +92,7 @@ let characteristicTests =
         testCase "SingleWithTermWrite" (fun () ->
             let cols = 
                 initTableCols
-                    [Characteristic.appendOrganismColumn]
+                    [Characteristic.appendOrganismColumn 1]
             let out = 
                 CompositeColumn.fromFsColumns cols
                 |> CompositeColumn.toFsColumns
@@ -85,7 +106,7 @@ let factorTests =
         testCase "SingleWithUnit" (fun () ->
             let cols = 
                 initTableCols
-                    [Factor.appendTimeColumn]
+                    [Factor.appendTimeColumn 1]
             let col = CompositeColumn.fromFsColumns cols
             Expect.equal col.Header Factor.timeHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
@@ -94,7 +115,7 @@ let factorTests =
         testCase "SingleWithUnitWrite" (fun () ->
             let cols = 
                 initTableCols
-                    [Factor.appendTimeColumn]
+                    [Factor.appendTimeColumn 1]
             let out = 
                 CompositeColumn.fromFsColumns cols
                 |> CompositeColumn.toFsColumns
@@ -107,7 +128,7 @@ let protocolTests =
         testCase "REFSingle" (fun () ->
             let cols = 
                 initTableCols
-                    [Protocol.REF.appendLolColumn]
+                    [Protocol.REF.appendLolColumn 1]
             let col = CompositeColumn.fromFsColumns cols
             Expect.equal col.Header Protocol.REF.lolHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
@@ -116,7 +137,7 @@ let protocolTests =
         testCase "REFSingleWrite" (fun () ->
             let cols = 
                 initTableCols
-                    [Protocol.REF.appendLolColumn]
+                    [Protocol.REF.appendLolColumn 1]
             let out = 
                 CompositeColumn.fromFsColumns cols
                 |> CompositeColumn.toFsColumns
@@ -125,7 +146,7 @@ let protocolTests =
         testCase "TypeSingle" (fun () ->
             let cols =
                 initTableCols
-                    [Protocol.Type.appendCollectionColumn]
+                    [Protocol.Type.appendCollectionColumn 1]
             let col = CompositeColumn.fromFsColumns cols
             Expect.equal col.Header Protocol.Type.collectionHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
@@ -134,7 +155,7 @@ let protocolTests =
         testCase "TypeSingleWrite" (fun () ->
             let cols = 
                 initTableCols
-                    [Protocol.Type.appendCollectionColumn]
+                    [Protocol.Type.appendCollectionColumn 1]
             let out = 
                 CompositeColumn.fromFsColumns cols
                 |> CompositeColumn.toFsColumns

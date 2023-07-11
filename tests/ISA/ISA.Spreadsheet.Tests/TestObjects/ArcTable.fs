@@ -4,6 +4,14 @@ open FsSpreadsheet
 open ISA
 open ISA.Spreadsheet
 
+type FsTable with
+    member this.IsEmpty(c : FsCellsCollection) =
+        this.RangeAddress.Range = "A1:A1"
+        && 
+            (this.Cell(FsAddress("A1"),c).Value = null)
+            ||
+            (this.Cell(FsAddress("A1"),c).Value = "")
+
 module Parameter = 
 
     let temperatureHeader = 
@@ -12,6 +20,11 @@ module Parameter =
     let temperatureValue = 
         CompositeCell.createUnitized
             ("5",
+            OntologyAnnotation.fromString("degree celsius","UO","UO:0000027"))
+
+    let temperatureValue2 = 
+        CompositeCell.createUnitized
+            ("10",
             OntologyAnnotation.fromString("degree celsius","UO","UO:0000027"))
 
     let temperatureHeaderV1 = "Parameter [temperature]"
@@ -24,16 +37,39 @@ module Parameter =
     let temperatureValueV3 = "UO"
     let temperatureValueV4 = "http://purl.obolibrary.org/obo/UO_0000027"
 
-    let appendTemperatureColumn (c : FsCellsCollection) (t : FsTable) = 
-        let colCount = if t.RangeAddress.Range = "A1:A1" then 0 else t.ColumnCount()
+    let temperatureValue2V1 = "10"
+    let temperatureValue2V2 = "degree celsius"
+    let temperatureValue2V3 = "UO"
+    let temperatureValue2V4 = "http://purl.obolibrary.org/obo/UO_0000027"
+
+    let appendTemperatureColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs temperatureHeaderV1
         t.Cell(FsAddress(1, colCount + 2),c).SetValueAs temperatureHeaderV2
         t.Cell(FsAddress(1, colCount + 3),c).SetValueAs temperatureHeaderV3
         t.Cell(FsAddress(1, colCount + 4),c).SetValueAs temperatureHeaderV4
-        t.Cell(FsAddress(2, colCount + 1),c).SetValueAs temperatureValueV1
-        t.Cell(FsAddress(2, colCount + 2),c).SetValueAs temperatureValueV2 
-        t.Cell(FsAddress(2, colCount + 3),c).SetValueAs temperatureValueV3
-        t.Cell(FsAddress(2, colCount + 4),c).SetValueAs temperatureValueV4
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs temperatureValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs temperatureValueV2 
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs temperatureValueV3
+            t.Cell(FsAddress(i, colCount + 4),c).SetValueAs temperatureValueV4
+
+    let appendMixedTemperatureColumn l1 l2 (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs temperatureHeaderV1
+        t.Cell(FsAddress(1, colCount + 2),c).SetValueAs temperatureHeaderV2
+        t.Cell(FsAddress(1, colCount + 3),c).SetValueAs temperatureHeaderV3
+        t.Cell(FsAddress(1, colCount + 4),c).SetValueAs temperatureHeaderV4
+        for i = 2 to l1 + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs temperatureValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs temperatureValueV2 
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs temperatureValueV3
+            t.Cell(FsAddress(i, colCount + 4),c).SetValueAs temperatureValueV4
+        for j = 2 + l1 to l1 + l2 + 1 do
+            t.Cell(FsAddress(j, colCount + 1),c).SetValueAs temperatureValue2V1
+            t.Cell(FsAddress(j, colCount + 2),c).SetValueAs temperatureValue2V2 
+            t.Cell(FsAddress(j, colCount + 3),c).SetValueAs temperatureValue2V3
+            t.Cell(FsAddress(j, colCount + 4),c).SetValueAs temperatureValue2V4
 
     let instrumentHeader = 
         CompositeHeader.Parameter 
@@ -51,14 +87,15 @@ module Parameter =
     let instrumentValueV2 = "MS"
     let instrumentValueV3 = "http://purl.obolibrary.org/obo/MS_1000483"
 
-    let appendInstrumentColumn (c : FsCellsCollection) (t : FsTable) = 
-        let colCount = if t.RangeAddress.Range = "A1:A1" then 0 else t.ColumnCount()
+    let appendInstrumentColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs instrumentHeaderV1
         t.Cell(FsAddress(1, colCount + 2),c).SetValueAs instrumentHeaderV2
         t.Cell(FsAddress(1, colCount + 3),c).SetValueAs instrumentHeaderV3
-        t.Cell(FsAddress(2, colCount + 1),c).SetValueAs instrumentValueV1
-        t.Cell(FsAddress(2, colCount + 2),c).SetValueAs instrumentValueV2
-        t.Cell(FsAddress(2, colCount + 3),c).SetValueAs instrumentValueV3
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs instrumentValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs instrumentValueV2
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs instrumentValueV3
 
 
 module Characteristic = 
@@ -78,14 +115,15 @@ module Characteristic =
     let organismValueV2 = "NCBITaxon"
     let organismValueV3 = "http://purl.obolibrary.org/obo/NCBITaxon_3702"
 
-    let appendOrganismColumn (c : FsCellsCollection) (t : FsTable) = 
-        let colCount = if t.RangeAddress.Range = "A1:A1" then 0 else t.ColumnCount()
+    let appendOrganismColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs organismHeaderV1
         t.Cell(FsAddress(1, colCount + 2),c).SetValueAs organismHeaderV2
         t.Cell(FsAddress(1, colCount + 3),c).SetValueAs organismHeaderV3
-        t.Cell(FsAddress(2, colCount + 1),c).SetValueAs organismValueV1
-        t.Cell(FsAddress(2, colCount + 2),c).SetValueAs organismValueV2
-        t.Cell(FsAddress(2, colCount + 3),c).SetValueAs organismValueV3
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs organismValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs organismValueV2
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs organismValueV3
 
 module Factor = 
 
@@ -107,16 +145,51 @@ module Factor =
     let timeValueV3 = "UO"
     let timeValueV4 = "http://purl.obolibrary.org/obo/UO_0000032"
 
-    let appendTimeColumn (c : FsCellsCollection) (t : FsTable) = 
-        let colCount = if t.RangeAddress.Range = "A1:A1" then 0 else t.ColumnCount()
+    let appendTimeColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs timeHeaderV1
         t.Cell(FsAddress(1, colCount + 2),c).SetValueAs timeHeaderV2
         t.Cell(FsAddress(1, colCount + 3),c).SetValueAs timeHeaderV3
         t.Cell(FsAddress(1, colCount + 4),c).SetValueAs timeHeaderV4
-        t.Cell(FsAddress(2, colCount + 1),c).SetValueAs timeValueV1
-        t.Cell(FsAddress(2, colCount + 2),c).SetValueAs timeValueV2 
-        t.Cell(FsAddress(2, colCount + 3),c).SetValueAs timeValueV3
-        t.Cell(FsAddress(2, colCount + 4),c).SetValueAs timeValueV4
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs timeValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs timeValueV2 
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs timeValueV3
+            t.Cell(FsAddress(i, colCount + 4),c).SetValueAs timeValueV4
+
+module Input = 
+    let sampleHeader = 
+        CompositeHeader.Input IOType.Sample
+
+    let sampleValue = 
+        CompositeCell.FreeText "MySample"
+
+    let sampleHeaderV1 = "Input [Sample Name]"
+    
+    let sampleValueV1 = "MySample"  
+
+    let appendSampleColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs sampleHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
+
+module Output = 
+    let rawDataHeader = 
+        CompositeHeader.Output IOType.RawDataFile
+
+    let rawDataValue = 
+        CompositeCell.FreeText "MyRawData"
+
+    let rawDataHeaderV1 = "Output [Raw Data File]"
+    
+    let rawDataValueV1 = "MyRawData"  
+
+    let appendRawDataColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs rawDataHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs rawDataValueV1
 
 module Protocol =
     module REF = 
@@ -129,10 +202,11 @@ module Protocol =
         let lolHeaderV1 = "Protocol REF"
         let lolValueV1 = "LOL"
 
-        let appendLolColumn (c : FsCellsCollection) (t : FsTable) = 
-            let colCount = if t.RangeAddress.Range = "A1:A1" then 0 else t.ColumnCount()
+        let appendLolColumn l (c : FsCellsCollection) (t : FsTable) = 
+            let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
             t.Cell(FsAddress(1, colCount + 1),c).SetValueAs lolHeaderV1
-            t.Cell(FsAddress(2, colCount + 1),c).SetValueAs lolValueV1
+            for i = 2 to l + 1 do                   
+                t.Cell(FsAddress(i, colCount + 1),c).SetValueAs lolValueV1
 
     module Type = 
         
@@ -151,14 +225,15 @@ module Protocol =
         let collectionValueV2 = "DPBO"
         let collectionValueV3 = "http://purl.obolibrary.org/obo/DPBO_1000169"
 
-        let appendCollectionColumn (c : FsCellsCollection) (t : FsTable) = 
-            let colCount = if t.RangeAddress.Range = "A1:A1" then 0 else t.ColumnCount()
+        let appendCollectionColumn l (c : FsCellsCollection) (t : FsTable) = 
+            let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
             t.Cell(FsAddress(1, colCount + 1),c).SetValueAs collectionHeaderV1
             t.Cell(FsAddress(1, colCount + 2),c).SetValueAs collectionHeaderV2
             t.Cell(FsAddress(1, colCount + 3),c).SetValueAs collectionHeaderV3
-            t.Cell(FsAddress(2, colCount + 1),c).SetValueAs collectionValueV1
-            t.Cell(FsAddress(2, colCount + 2),c).SetValueAs collectionValueV2
-            t.Cell(FsAddress(2, colCount + 3),c).SetValueAs collectionValueV3
+            for i = 2 to l + 1 do               
+                t.Cell(FsAddress(i, colCount + 1),c).SetValueAs collectionValueV1
+                t.Cell(FsAddress(i, colCount + 2),c).SetValueAs collectionValueV2
+                t.Cell(FsAddress(i, colCount + 3),c).SetValueAs collectionValueV3
 
 let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c = FsCellsCollection()

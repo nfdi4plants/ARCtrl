@@ -1,10 +1,13 @@
 ﻿module ArcInvestigationTests
 
-open ISA
-
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
-open TestingUtils
+#endif
 
+open ISA
+open TestingUtils
 open ISA.Spreadsheet
 
 let private testInvestigationFile = 

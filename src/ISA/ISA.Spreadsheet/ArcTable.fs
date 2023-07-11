@@ -4,6 +4,36 @@ open ISA
 open FSharpAux
 open FsSpreadsheet
 
+type ColumnOrder =
+    | InputClass = 1
+    | ProtocolClass = 2
+    | ParamsClass = 3
+    | OutputClass = 4
+
+let classifyHeaderOrder (header : CompositeHeader) =     
+    match header with
+    | CompositeHeader.Input             _ -> ColumnOrder.InputClass
+
+    | CompositeHeader.ProtocolType          
+    | CompositeHeader.ProtocolDescription
+    | CompositeHeader.ProtocolUri
+    | CompositeHeader.ProtocolVersion
+    | CompositeHeader.ProtocolREF       
+    | CompositeHeader.Performer
+    | CompositeHeader.Date                -> ColumnOrder.ProtocolClass
+
+    | CompositeHeader.Component         _
+    | CompositeHeader.Characteristic    _
+    | CompositeHeader.Factor            _
+    | CompositeHeader.Parameter         _ 
+    | CompositeHeader.FreeText          _ -> ColumnOrder.ParamsClass
+
+    | CompositeHeader.Output            _ -> ColumnOrder.OutputClass
+
+let classifyColumnOrder (column : CompositeColumn) =
+    column.Header
+    |> classifyHeaderOrder
+
 [<Literal>]
 let annotationTablePrefix = "annotationTable"
 
@@ -47,6 +77,7 @@ let toFsWorksheet (table : ArcTable) =
     let ws = FsWorksheet(table.Name)
     let columns = 
         table.Columns
+        |> List.sortBy classifyColumnOrder
         |> List.collect CompositeColumn.toFsColumns
     let maxRow = columns.Head.Length
     let maxCol = columns.Length
