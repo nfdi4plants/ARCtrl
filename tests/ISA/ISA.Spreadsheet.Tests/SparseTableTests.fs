@@ -8,6 +8,8 @@ open Fable.Mocha
 open Expecto
 #endif
 
+open TestingUtils
+
 let main =
 
     testList "SparseTableTests" [
@@ -128,7 +130,7 @@ let main =
             |> SparseTable.ToRows
             |> Seq.iteri (fun i r ->               
                 let testSeq = Seq.item i testRows
-                Expect.sequenceEqual (SparseRow.getValues r) testSeq ""
+                mySequenceEqual (SparseRow.getValues r) testSeq ""
             
             )
 

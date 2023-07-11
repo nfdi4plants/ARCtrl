@@ -40,7 +40,7 @@ let private groupCols =
             let actualHeaderGroups =
                 grouped
                 |> List.map (fun cols -> cols |> List.map (fun c -> c.[1].Value) |> List.reduce (fun a b -> a + ";" + b))
-            Expect.sequenceEqual actualHeaderGroups expectedHeaderGroups "Header groups did not match"
+            mySequenceEqual actualHeaderGroups expectedHeaderGroups "Header groups did not match"
         )
     ]
 

@@ -109,6 +109,11 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet", "src\ISA\
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet.Tests", "tests\ISA\ISA.Spreadsheet.Tests\ISA.Spreadsheet.Tests.fsproj", "{656E8DAF-EFCF-472E-91D0-987D09B74523}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA.Spreadsheet.JsNativeTests", "ISA.Spreadsheet.JsNativeTests", "{A30B3744-BCE2-4551-81A5-5E20BBAA47B3}"
+	ProjectSection(SolutionItems) = preProject
+		tests\ISA\ISA.Spreadsheet.JsNativeTests\Main.js = tests\ISA\ISA.Spreadsheet.JsNativeTests\Main.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -184,6 +189,7 @@ Global
 		{BC8F5361-E1D8-4DCA-B6DD-CD866404AB96} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{07C7942E-FC34-4C27-82C1-6B2972654BA7} = {C61B3F43-2255-4585-9110-F8AB74F02654}
 		{656E8DAF-EFCF-472E-91D0-987D09B74523} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
+		{A30B3744-BCE2-4551-81A5-5E20BBAA47B3} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}
