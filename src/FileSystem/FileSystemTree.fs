@@ -49,3 +49,40 @@ type FileSystemTree =
             | Folder (name, _) -> FileSystemTree.createFolder(name, [|yield! files; yield! folders|])
             | x -> x
         loop splitPaths root 
+
+    /// <summary>
+    /// Reverts FileSystemTree back to an array of filepaths relative to ARC root.
+    /// </summary>
+    /// <param name="removeRoot">Will remove root `Folder` if set true. *Default*: `true`.</param>
+    member this.toFilePaths (?removeRoot: bool) =
+        let removeRoot = defaultArg removeRoot true
+        let res = ResizeArray<string>()
+        let rec loop (output: string list) (parent: FileSystemTree)  =
+            match parent with
+            | File n -> 
+                (n::output)
+                |> List.rev 
+                |> Array.ofList 
+                |> Path.combineMany 
+                |> res.Add //output full path
+            | Folder (n, children) ->
+                let nextOutput = n::output
+                children
+                |> Array.iter (fun filest -> 
+                    loop nextOutput filest 
+                )
+        // When creating FileSystemTree with `fromFilePaths` we create an `root` `Folder`. 
+        // This root folder serves as relative parent for all filepaths given.
+        // The removeRoot flag will remove this extra folder.
+        if removeRoot then
+            match this with
+            | Folder (_, children) -> 
+                children |> Array.iter (loop [])
+            | File n -> res.Add(n)
+        else
+            loop [] this
+        res
+        |> Array.ofSeq
+
+    static member toFilePaths (?removeRoot: bool) =
+        fun (root: FileSystemTree) -> root.toFilePaths(?removeRoot=removeRoot)

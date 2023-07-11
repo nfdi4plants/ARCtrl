@@ -99,6 +99,21 @@ let private tests_fromFilePaths =
             Expect.equal filest expected "isEqual"
     ]
 
+let private tests_toFilePaths =
+    testList "toFilePaths" [
+        testCase "new arc (2023-07-11)" <| fun _ ->
+            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            let actual = filest |> FileSystemTree.toFilePaths()
+            // Actual will be created with generic seperator `/` instead of windows `\\`
+            let actual_sep = actual |> Array.map (fun p -> p.Replace('/', '\\'))
+            let actualDifference = Array.except newArcRelativePaths actual_sep
+            Expect.equal actualDifference Array.empty "should be empty"
+            let actual_sorted = actual_sep |> Array.sort
+            let expected_sorted = newArcRelativePaths |> Array.sort
+            Expect.equal actual_sorted expected_sorted "equal"
+    ]
+
 let main = testList "FileSystemTree" [
     tests_fromFilePaths
+    tests_toFilePaths
 ]
