@@ -109,6 +109,16 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet", "src\ISA\
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet.Tests", "tests\ISA\ISA.Spreadsheet.Tests\ISA.Spreadsheet.Tests.fsproj", "{656E8DAF-EFCF-472E-91D0-987D09B74523}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", "{6B19399C-6BFD-4BE5-8D33-ACA316EBDFA9}"
+	ProjectSection(SolutionItems) = preProject
+		playground\KevinF.fsx = playground\KevinF.fsx
+		playground\testScript.fsx = playground\testScript.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{AA40C511-E208-44D3-A97C-B7AA99353F8D}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FileSystem.Tests", "tests\FileSystem\FileSystem.Tests\FileSystem.Tests.fsproj", "{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +169,10 @@ Global
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Release|Any CPU.Build.0 = Release|Any CPU
+		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -184,6 +198,8 @@ Global
 		{BC8F5361-E1D8-4DCA-B6DD-CD866404AB96} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{07C7942E-FC34-4C27-82C1-6B2972654BA7} = {C61B3F43-2255-4585-9110-F8AB74F02654}
 		{656E8DAF-EFCF-472E-91D0-987D09B74523} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
+		{AA40C511-E208-44D3-A97C-B7AA99353F8D} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C} = {AA40C511-E208-44D3-A97C-B7AA99353F8D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}
