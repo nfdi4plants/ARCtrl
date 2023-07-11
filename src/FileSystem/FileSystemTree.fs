@@ -7,22 +7,30 @@ type FileSystemTree =
     | File of name:string
     | Folder of name:string * children:FileSystemTree array
 
-    static member createFile name = File name
-
-    static member createFolder(name:string, children:FileSystemTree array) = Folder(name,children)
-
-    static member addFolder (path : string) (fileSystem : FileSystemTree) : FileSystemTree =
-        let x = Path.split path // todo: make OS agnostic!
-        raise (System.NotImplementedException())
-
-    static member addFile (path : string) (fileSystem : FileSystemTree) : FileSystemTree =
-        let x = Path.split path // todo: make OS agnostic!
-        raise (System.NotImplementedException())
-
+    member this.Name = match this with | File n | Folder (n,_) -> n
+    member this.isFolder = match this with | Folder _ -> true | _ -> false
+    member this.isFile = match this with | File _ -> true | _ -> false
     /// <summary>
     /// Defines the name of the root folder of the FileSystemTree when created by `fromFilePaths`.
     /// </summary>
     static member ROOT_NAME = "root"
+
+    static member createFile name = File name
+
+    static member createFolder(name:string, ?children:FileSystemTree array) = 
+        let children = defaultArg children [||]
+        Folder(name,children)
+
+    member this.AddFile (path: string) : FileSystemTree =
+        let existingPaths = this.ToFilePaths()
+        let filePaths = [|
+            path
+            yield! existingPaths
+        |]
+        FileSystemTree.fromFilePaths (filePaths)
+
+    static member addFile (path: string) =
+        fun (tree: FileSystemTree) -> tree.AddFile(path)
 
     /// <summary>
     /// Split `paths` by `\\` or `/` and sort them into FileSystemTree. All given paths must be relative to ARC root and are sorted into a folder called `root`.
@@ -30,7 +38,7 @@ type FileSystemTree =
     /// <param name="paths">A array of file paths relative to ARC root.</param>
     static member fromFilePaths (paths: string array) : FileSystemTree =
         // Split path by seperators into path sequence.
-        let splitPaths = paths |> Array.map Path.split
+        let splitPaths = paths |> Array.map Path.split |> Array.distinct
         let root = FileSystemTree.createFolder(FileSystemTree.ROOT_NAME,[||])
         let rec loop (paths:string [] []) (parent: FileSystemTree) =
             // Files are always the last and only in path sequence.
@@ -54,7 +62,7 @@ type FileSystemTree =
     /// Reverts FileSystemTree back to an array of filepaths relative to ARC root.
     /// </summary>
     /// <param name="removeRoot">Will remove root `Folder` if set true. *Default*: `true`.</param>
-    member this.toFilePaths (?removeRoot: bool) =
+    member this.ToFilePaths (?removeRoot: bool) =
         let removeRoot = defaultArg removeRoot true
         let res = ResizeArray<string>()
         let rec loop (output: string list) (parent: FileSystemTree)  =
@@ -85,4 +93,21 @@ type FileSystemTree =
         |> Array.ofSeq
 
     static member toFilePaths (?removeRoot: bool) =
-        fun (root: FileSystemTree) -> root.toFilePaths(?removeRoot=removeRoot)
+        fun (root: FileSystemTree) -> root.ToFilePaths(?removeRoot=removeRoot)
+
+    member this.Filter (predicate: string -> bool) =
+        let rec loop (parent: FileSystemTree) =
+            match parent with
+            | File n -> 
+                if predicate n then Some (File n) else None
+            | Folder (n, children) ->
+                let filteredChildren = children |> Array.choose loop
+                if Array.isEmpty filteredChildren then 
+                    None 
+                else 
+                    Folder (n, filteredChildren)
+                    |> Some 
+        loop this
+
+    static member filter (predicate: string -> bool) =
+        fun (tree: FileSystemTree) -> tree.Filter predicate

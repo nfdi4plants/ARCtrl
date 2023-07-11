@@ -12,9 +12,9 @@ module Path =
         path.Split(seperators, enum<StringSplitOptions>(3))
 
     let combine (path1 : string) (path2 : string) : string = 
-        let path1 = path1.TrimEnd(seperators)
-        let path2 = path1.TrimStart(seperators)
-        let combined = path1 + string PathSeperator + path2
+        let path1_trimmed = path1.TrimEnd(seperators)
+        let path2_trimmed = path2.TrimStart(seperators)
+        let combined = path1_trimmed + string PathSeperator + path2_trimmed
         combined // should we trim any excessive path seperators?
 
     let combineMany (paths : string []) : string = 

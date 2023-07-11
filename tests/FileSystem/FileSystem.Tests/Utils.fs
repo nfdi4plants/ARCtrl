@@ -37,7 +37,8 @@ let rec testFileSystemTree (actual:FileSystemTree) (expected:FileSystemTree) =
     | File n1, File n2 -> Expect.equal n1 n2 $"Expects file names to be equal: {n1} = {n2}"
     | Folder (n1, children1), Folder (n2, children2) -> 
         Expect.equal n1 n2 $"Expects folder names to be equal: {n1} = {n2}"
-        Array.iter2 testFileSystemTree children1 children2
+        let sortByName (children: FileSystemTree []) = children |> Array.sortBy (fun c -> c.Name)
+        Array.iter2 testFileSystemTree (sortByName children1) (sortByName children2)
     | anyActual, anyExpected ->
         failwith $"Testing FileSystemTree found an issue with unequal states: 
 Actual:        

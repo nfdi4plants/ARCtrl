@@ -33,6 +33,58 @@ let private newArcRelativePaths = [|
     @"studies\TestAssay1\resources\.gitkeep"|]
 
 
+let newArcFST = Folder("root",[|
+    File "isa.investigation.xlsx"; 
+    Folder(".arc", [|File ".gitkeep"|]);
+    Folder(".git",[|
+        File "config"; File "description"; File "HEAD";
+        Folder("hooks",[|
+            File "applypatch-msg.sample"; File "commit-msg.sample";
+            File "fsmonitor-watchman.sample"; File "post-update.sample";
+            File "pre-applypatch.sample"; File "pre-commit.sample";
+            File "pre-merge-commit.sample"; File "pre-push.sample";
+            File "pre-rebase.sample"; File "pre-receive.sample";
+            File "prepare-commit-msg.sample";
+            File "push-to-checkout.sample"; File "update.sample"
+        |]);
+        Folder ("info", [|File "exclude"|])
+    |]);
+    Folder("assays",[|
+        File ".gitkeep";
+        Folder("est",[|
+            File "isa.assay.xlsx"; File "README.md";
+            Folder ("dataset", [|File ".gitkeep"|]);
+            Folder ("protocols", [|File ".gitkeep"|])
+        |]);
+        Folder
+            ("TestAssay1",[|
+            File "isa.assay.xlsx"; File "README.md";
+            Folder ("dataset", [|File ".gitkeep"|]);
+            Folder ("protocols", [|File ".gitkeep"|])
+        |])
+    |]);
+    Folder("runs", [|File ".gitkeep"|]);
+    Folder("studies",[|
+        File ".gitkeep";
+        Folder("est",[|
+            File "isa.study.xlsx"; File "README.md";
+            Folder ("protocols", [|File ".gitkeep"|]);
+            Folder ("resources", [|File ".gitkeep"|])
+        |]);
+        Folder("MyStudy",[|
+            File "isa.study.xlsx"; File "README.md";
+            Folder ("protocols", [|File ".gitkeep"|]);
+            Folder ("resources", [|File ".gitkeep"|])
+        |]);
+        Folder("TestAssay1",[|
+            File "isa.study.xlsx"; File "README.md";
+            Folder ("protocols", [|File ".gitkeep"|]);
+            Folder ("resources", [|File ".gitkeep"|])
+        |])
+    |]);
+    Folder ("workflows", [|File ".gitkeep"|])
+|])
+
 let private tests_fromFilePaths =
     testList "fromFilePaths" [
         testCase "new arc (2023-07-11)" <| fun _ ->
@@ -42,6 +94,51 @@ let private tests_fromFilePaths =
             //    |> Array.ofSeq 
             //    |> Array.map (fun p -> Path.GetRelativePath(rootPath, p))
             let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            // damn... i made this, because i thought equal would somehow not work. But i missed adding "@" in front of paths.
+            // i'll leave it for improved error message.
+            TestingUtils.testFileSystemTree filest newArcFST 
+            Expect.equal filest newArcFST "isEqual"
+    ]
+
+let private tests_ToFilePaths =
+    testList "ToFilePaths" [
+        testCase "new arc (2023-07-11)" <| fun _ ->
+            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            let actual = filest.ToFilePaths()
+            // Actual will be created with generic seperator `/` instead of windows `\\`
+            let actual_sep = actual |> Array.map (fun p -> p.Replace('/', '\\'))
+            let actualDifference = Array.except newArcRelativePaths actual_sep
+            Expect.equal actualDifference Array.empty "should be empty"
+            let actual_sorted = actual_sep |> Array.sort
+            let expected_sorted = newArcRelativePaths |> Array.sort
+            Expect.equal actual_sorted expected_sorted "equal"
+    ]
+
+let private tests_Filter = 
+    testList "Filter" [
+        testCase "new arc (2023-07-11)" <| fun _ ->
+            let expected = Some(
+                Folder("root",[|
+                    File "isa.investigation.xlsx";
+                    Folder("assays",[|
+                        Folder ("est", [|File "isa.assay.xlsx"|]);
+                        Folder ("TestAssay1", [|File "isa.assay.xlsx"|])
+                    |]);
+                    Folder("studies",[|
+                        Folder ("est", [|File "isa.study.xlsx"|]);
+                        Folder ("MyStudy", [|File "isa.study.xlsx"|]);
+                        Folder ("TestAssay1", [|File "isa.study.xlsx"|])
+                    |])
+                |])
+            )
+            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            let actual = filest.Filter (fun n -> n.EndsWith ".xlsx")
+            Expect.equal actual expected ""
+    ]
+
+let private tests_AddFile = 
+    testList "AddFile" [
+        testCase "new arc, add nested file" <| fun _ ->
             let expected = Folder("root",[|
                 File "isa.investigation.xlsx"; 
                 Folder(".arc", [|File ".gitkeep"|]);
@@ -66,7 +163,62 @@ let private tests_fromFilePaths =
                         Folder ("protocols", [|File ".gitkeep"|])
                     |]);
                     Folder
-                      ("TestAssay1",[|
+                        ("TestAssay1",[|
+                        File "isa.assay.xlsx"; File "README.md";
+                        Folder ("dataset", [|File ".gitkeep"|]);
+                        Folder ("protocols", [|File ".gitkeep"|])
+                    |])
+                |]);
+                Folder("runs", [|File ".gitkeep"|]);
+                Folder("studies",[|
+                    File ".gitkeep";
+                    Folder("est",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File ".gitkeep"|])
+                    |]);
+                    Folder("MyStudy",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File ".gitkeep"|])
+                    |]);
+                    Folder("TestAssay1",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File "MyAwesomeRessource.pdf"; File ".gitkeep"|])
+                    |])
+                |]);
+                Folder ("workflows", [|File ".gitkeep"|])
+            |])
+            let newPath = @"studies\TestAssay1\resources\MyAwesomeRessource.pdf"
+            let actual = newArcFST.AddFile newPath
+            TestingUtils.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
+        testCase "new arc, add root file" <| fun _ ->
+            let expected = Folder("root",[|
+                File "isa.investigation.xlsx"; File "Test.md";
+                Folder(".arc", [|File ".gitkeep"|]);
+                Folder(".git",[|
+                    File "config"; File "description"; File "HEAD";
+                    Folder("hooks",[|
+                        File "applypatch-msg.sample"; File "commit-msg.sample";
+                        File "fsmonitor-watchman.sample"; File "post-update.sample";
+                        File "pre-applypatch.sample"; File "pre-commit.sample";
+                        File "pre-merge-commit.sample"; File "pre-push.sample";
+                        File "pre-rebase.sample"; File "pre-receive.sample";
+                        File "prepare-commit-msg.sample";
+                        File "push-to-checkout.sample"; File "update.sample"
+                    |]);
+                    Folder ("info", [|File "exclude"|])
+                |]);
+                Folder("assays",[|
+                    File ".gitkeep";
+                    Folder("est",[|
+                        File "isa.assay.xlsx"; File "README.md";
+                        Folder ("dataset", [|File ".gitkeep"|]);
+                        Folder ("protocols", [|File ".gitkeep"|])
+                    |]);
+                    Folder
+                        ("TestAssay1",[|
                         File "isa.assay.xlsx"; File "README.md";
                         Folder ("dataset", [|File ".gitkeep"|]);
                         Folder ("protocols", [|File ".gitkeep"|])
@@ -93,27 +245,70 @@ let private tests_fromFilePaths =
                 |]);
                 Folder ("workflows", [|File ".gitkeep"|])
             |])
-            // damn... i made this, because i thought equal would somehow not work. But i missed adding "@" in front of paths.
-            // i'll leave it for improved error message.
-            TestingUtils.testFileSystemTree filest expected 
-            Expect.equal filest expected "isEqual"
-    ]
-
-let private tests_toFilePaths =
-    testList "toFilePaths" [
-        testCase "new arc (2023-07-11)" <| fun _ ->
-            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
-            let actual = filest |> FileSystemTree.toFilePaths()
-            // Actual will be created with generic seperator `/` instead of windows `\\`
-            let actual_sep = actual |> Array.map (fun p -> p.Replace('/', '\\'))
-            let actualDifference = Array.except newArcRelativePaths actual_sep
-            Expect.equal actualDifference Array.empty "should be empty"
-            let actual_sorted = actual_sep |> Array.sort
-            let expected_sorted = newArcRelativePaths |> Array.sort
-            Expect.equal actual_sorted expected_sorted "equal"
+            let newPath = @"Test.md"
+            let actual = newArcFST.AddFile newPath
+            TestingUtils.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
+        testCase "new arc, add new folder" <| fun _ ->
+            let expected = Folder("root",[|
+                File "isa.investigation.xlsx"; 
+                Folder ("MyNewFolder", [|File "README.md"|]);
+                Folder(".arc", [|File ".gitkeep"|]);
+                Folder(".git",[|
+                    File "config"; File "description"; File "HEAD";
+                    Folder("hooks",[|
+                        File "applypatch-msg.sample"; File "commit-msg.sample";
+                        File "fsmonitor-watchman.sample"; File "post-update.sample";
+                        File "pre-applypatch.sample"; File "pre-commit.sample";
+                        File "pre-merge-commit.sample"; File "pre-push.sample";
+                        File "pre-rebase.sample"; File "pre-receive.sample";
+                        File "prepare-commit-msg.sample";
+                        File "push-to-checkout.sample"; File "update.sample"
+                    |]);
+                    Folder ("info", [|File "exclude"|])
+                |]);
+                Folder("assays",[|
+                    File ".gitkeep";
+                    Folder("est",[|
+                        File "isa.assay.xlsx"; File "README.md";
+                        Folder ("dataset", [|File ".gitkeep"|]);
+                        Folder ("protocols", [|File ".gitkeep"|])
+                    |]);
+                    Folder
+                        ("TestAssay1",[|
+                        File "isa.assay.xlsx"; File "README.md";
+                        Folder ("dataset", [|File ".gitkeep"|]);
+                        Folder ("protocols", [|File ".gitkeep"|])
+                    |])
+                |]);
+                Folder("runs", [|File ".gitkeep"|]);
+                Folder("studies",[|
+                    File ".gitkeep";
+                    Folder("est",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File ".gitkeep"|])
+                    |]);
+                    Folder("MyStudy",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File ".gitkeep"|])
+                    |]);
+                    Folder("TestAssay1",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File ".gitkeep"|])
+                    |])
+                |]);
+                Folder ("workflows", [|File ".gitkeep"|])
+            |])
+            let newPath = @"MyNewFolder/README.md"
+            let actual = newArcFST.AddFile newPath
+            TestingUtils.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
     ]
 
 let main = testList "FileSystemTree" [
     tests_fromFilePaths
-    tests_toFilePaths
+    tests_ToFilePaths
+    tests_Filter
+    tests_AddFile
 ]

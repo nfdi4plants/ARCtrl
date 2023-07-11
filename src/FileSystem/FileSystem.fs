@@ -10,17 +10,19 @@ type FileSystem =
     }
     
     [<NamedParams>]
-    static member create(tree : FileSystemTree, history : Commit array) = 
+    static member create(tree : FileSystemTree, ?history : Commit array) = 
+        let history = defaultArg history [||]
         {
             Tree = tree
             History = history
         }
 
+    member this.AddFile (path : string) : FileSystem =
+        {
+            this with
+                Tree = this.Tree.AddFile(path)
+        }
 
-    static member addFolder (path : string) (fileSystem : FileSystem) : FileSystem =
-        FileSystemTree.addFolder |> ignore
-        raise (System.NotImplementedException())
-
-    static member addFile (path : string) (fileSystem : FileSystem) : FileSystem =
-        FileSystemTree.addFile |> ignore
-        raise (System.NotImplementedException())
+    static member fromFilePaths (paths : string []) : FileSystem =
+        let tree = FileSystemTree.fromFilePaths paths
+        FileSystem.create(tree)
