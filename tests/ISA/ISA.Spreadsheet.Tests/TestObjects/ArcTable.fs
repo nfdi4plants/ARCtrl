@@ -2,6 +2,7 @@
 
 open FsSpreadsheet
 open ISA
+open ISA.Spreadsheet
 
 module Parameter = 
 
@@ -143,8 +144,8 @@ module Protocol =
                 ("sample collection protocol","DPBO","http://purl.obolibrary.org/obo/DPBO_1000169")
 
         let collectionHeaderV1 = "Protocol Type"
-        let collectionHeaderV2 = "Term Source REF (PATO:0000165)"
-        let collectionHeaderV3 = "Term Accession Number (PATO:0000165)"
+        let collectionHeaderV2 = "Term Source REF (DPBO:1000161)"
+        let collectionHeaderV3 = "Term Accession Number (DPBO:1000161)"
 
         let collectionValueV1 = "sample collection protocol"
         let collectionValueV2 = "DPBO"
@@ -161,7 +162,7 @@ module Protocol =
 
 let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c = FsCellsCollection()
-    let t = FsTable("AnnotationTable", FsRangeAddress("A1:A1"))
+    let t = FsTable(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o c t)
     c,t
@@ -170,3 +171,10 @@ let initTableCols (appendOperations : (FsCellsCollection -> FsTable -> unit) lis
     let c,t = initTable appendOperations
     t.Columns(c)
     |> Seq.toList
+
+let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
+    let w = FsWorksheet(name)
+    let t  = w.Table(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))
+    appendOperations 
+    |> List.iter (fun o -> o w.CellCollection t)
+    w

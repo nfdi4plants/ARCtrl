@@ -67,6 +67,19 @@ module ActivePattern =
             |> Some
         | _ -> None
 
+    let (|ProtocolHeader|_|) (cells : FsCell list) =
+        let cellValues = cells |> List.map (fun c -> c.Value)
+        match cellValues with
+        | "Protocol Type" :: _  -> 
+            Some CompositeHeader.ProtocolType
+        | ["Protocol REF"] -> Some CompositeHeader.ProtocolREF
+        | ["Protocol Description"] -> Some CompositeHeader.ProtocolDescription
+        | ["Protocol Uri"] -> Some CompositeHeader.ProtocolUri
+        | ["Protocol Version"] -> Some CompositeHeader.ProtocolVersion
+        | ["Performer"] -> Some CompositeHeader.Performer
+        | ["Date"] -> Some CompositeHeader.Date
+        | _ -> None
+
     let (|FreeText|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.Value)
         match cellValues with
@@ -84,6 +97,7 @@ let fromFsCells (cells : list<FsCell>) : CompositeHeader =
     | Characteristic c -> c
     | Input i -> i
     | Output o -> o
+    | ProtocolHeader ph -> ph 
     | FreeText ft -> ft
     | _ -> raise (System.NotImplementedException("parseCompositeHeader"))
 

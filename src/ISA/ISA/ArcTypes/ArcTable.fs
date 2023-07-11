@@ -57,7 +57,7 @@ type ArcTable =
         with get() = ArcTableAux.getRowCount this.Values
 
     member this.Columns 
-        with get() = [for i = 0 to this.ColumnCount do this.GetColumn(i)] 
+        with get() = [for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)] 
 
     member this.Copy() : ArcTable = 
         ArcTable.create(

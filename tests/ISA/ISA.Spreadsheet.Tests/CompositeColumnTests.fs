@@ -7,6 +7,7 @@ open Expecto
 #endif
 
 open ISA
+open TestingUtils
 open ISA.Spreadsheet
 
 open TestObjects.ArcTable
@@ -23,6 +24,16 @@ let private parameterTests =
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Parameter.temperatureValue "Value did not match"
         )
+        testCase "SingleWithUnitWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Parameter.appendTemperatureColumn]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Parameter output columns did not match"
+        )
         testCase "SingleWithTerm" (fun () ->
             let cols = 
                 initTableCols
@@ -32,6 +43,15 @@ let private parameterTests =
             Expect.equal col.Header Parameter.instrumentHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Parameter.instrumentValue "Value did not match"
+        )
+        testCase "SingleWithTermWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Parameter.appendInstrumentColumn]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Parameter output columns did not match"
         )
     ]
     
@@ -47,7 +67,16 @@ let characteristicTests =
             Expect.equal col.Header Characteristic.organismHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Characteristic.organismValue "Value did not match"
-        )      
+        )
+        testCase "SingleWithTermWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Characteristic.appendOrganismColumn]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Characteristic output columns did not match"
+        )
     ]
 
 /// Factor tests, one test (unitized) with time header and value
@@ -61,6 +90,15 @@ let factorTests =
             Expect.equal col.Header Factor.timeHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Factor.timeValue "Value did not match"
+        ) 
+        testCase "SingleWithUnitWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Factor.appendTimeColumn]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Factor output columns did not match"
         )
     ]
 
@@ -75,6 +113,15 @@ let protocolTests =
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Protocol.REF.lolValue "Value did not match"
         )
+        testCase "REFSingleWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Protocol.REF.appendLolColumn]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Protocol REF output columns did not match"
+        )
         testCase "TypeSingle" (fun () ->
             let cols =
                 initTableCols
@@ -83,6 +130,15 @@ let protocolTests =
             Expect.equal col.Header Protocol.Type.collectionHeader "Header did not match"
             Expect.equal col.Cells.Length 1 "Wrong number of cells"
             Expect.equal col.Cells.[0] Protocol.Type.collectionValue "Value did not match"
+        )
+        testCase "TypeSingleWrite" (fun () ->
+            let cols = 
+                initTableCols
+                    [Protocol.Type.appendCollectionColumn]
+            let out = 
+                CompositeColumn.fromFsColumns cols
+                |> CompositeColumn.toFsColumns
+            Expect.columnsEqual (out |> Seq.map seq) (cols |> Seq.map seq) "Protocol type Output columns did not match"
         )
     ]
 

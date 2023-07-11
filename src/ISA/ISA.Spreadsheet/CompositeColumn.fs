@@ -27,18 +27,18 @@ let toFsColumns (column : CompositeColumn) : FsCell list list =
     let cells = column.Cells |> Array.map (CompositeCell.toFsCells isTerm hasUnit)
     if hasUnit then
         [
-            [header.[0]] @ cells.[0]
-            [header.[1]] @ cells.[1]
-            [header.[2]] @ cells.[2]
-            [header.[3]] @ cells.[3]
+            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
+            [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
+            [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
+            [header.[3]; for i = 0 to column.Cells.Length - 1 do cells.[i].[3]]
         ]
     elif isTerm then
         [
-            [header.[0]] @ cells.[0]
-            [header.[1]] @ cells.[1]
-            [header.[2]] @ cells.[2]
+            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
+            [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
+            [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
         ]
     else
         [
-            [header.[0]] @ cells.[0]
+            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
         ]

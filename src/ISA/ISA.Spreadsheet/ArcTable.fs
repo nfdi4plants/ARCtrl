@@ -10,10 +10,11 @@ let annotationTablePrefix = "annotationTable"
 let groupColumnsByHeader (columns : list<FsColumn>) = 
     columns
     |> List.groupWhen (fun c ->         
-        ISA.Regex.tryParseTermAnnotation c.[0].Value 
-        |> Option.isSome
-        ||
-        c.[0].Value = "Unit"
+        ISA.Regex.tryParseTermAnnotation c.[1].Value 
+        |> Option.isNone
+        &&
+        c.[1].Value <> "Unit"
+
     )
 
 /// Returns the annotation table of the worksheet if it exists, else returns None

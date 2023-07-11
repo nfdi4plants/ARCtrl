@@ -10,6 +10,7 @@ open Expecto
 let all = testSequenced <| testList "All" [
     ArcInvestigationTests.main
     CompositeColumnTests.main
+    ArcTableTests.main
     ArcAssayTests.main
     SparseTableTests.main
 ]
