@@ -186,7 +186,7 @@ module ArcInvestigation =
             yield  SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
-            for study in (Option.defaultValue [ArcStudy.create()] investigation.Studies) do
+            for study in (Option.defaultValue [ArcStudy.createEmpty()] investigation.Studies) do
                 yield  SparseRow.fromValues [studyLabel]
                 yield! Studies.toRows study
         }

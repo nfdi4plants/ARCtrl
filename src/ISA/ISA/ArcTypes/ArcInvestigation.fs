@@ -1,6 +1,7 @@
 ﻿namespace ISA
 
 open Fable.Core
+open ISA.Aux
 
 [<AttachMembers>]
 type ArcInvestigation = 
@@ -25,8 +26,11 @@ type ArcInvestigation =
         {ID = id; FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
     [<NamedParams>]
-    static member create (?Id : URI, ?FileName : string, ?Identifier : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ArcStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ArcInvestigation =
-        ArcInvestigation.make Id FileName Identifier Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
+    static member create (identifier : string, ?Id : URI, ?FileName : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ArcStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ArcInvestigation =
+        ArcInvestigation.make Id FileName (Option.fromValueWithDefault "" identifier) Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
+
+    static member createEmpty() =
+        ArcInvestigation.make None None None None None None None None None None None None []
 
     static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
         raise (System.NotImplementedException())

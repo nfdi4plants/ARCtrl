@@ -1,6 +1,7 @@
 ﻿namespace ISA
 
 open Fable.Core
+open ISA.Aux
 
 // "MyAssay"; "assays/MyAssay/isa.assay.xlsx"
 
@@ -49,7 +50,10 @@ type ArcAssay =
     [<NamedParams>]
     static member create (fileName : string, ?id : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
         let tables = defaultArg tables <| ResizeArray()
-        ArcAssay.make id (Some fileName) measurementType technologyType technologyPlatform tables performers comments
+        ArcAssay.make id (Option.fromValueWithDefault "" fileName) measurementType technologyType technologyPlatform tables performers comments
+
+    static member createEmpty () = 
+        ArcAssay.make None None None None None (ResizeArray()) None None
 
     // - Table API - //
     // remark should this return ArcTable?

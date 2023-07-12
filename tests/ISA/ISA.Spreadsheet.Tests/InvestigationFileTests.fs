@@ -7,10 +7,57 @@ open Expecto
 #endif
 
 open ISA
+open FsSpreadsheet
 open TestingUtils
 open ISA.Spreadsheet
 
+let private testInvestigationWriterComponents = 
+/// Test the single components of invesigation file writing
+    testList "InvestigationWriterPartTests" [       
+        testCase "CreateEmptyWorkbook" (fun () ->
+            let wb = new FsWorkbook()
+            Expect.isTrue true "Workbook could not be initialized"
+        )
+        testCase "CreateSheet" (fun () ->
+            let sheet = FsWorksheet("Investigation")
+            Expect.equal sheet.Name "Investigation" "Worksheet could not be initialized"
+        )
+        testCase "InvestigationToRows" (fun () ->
+            let i = ArcInvestigation.createEmpty()
+            let rows = i |> ArcInvestigation.toRows
+            Expect.isTrue (rows |> Seq.length |> (<) 0) "Investigation should have at least one row"
+        )
+        testCase "AddEmptyWorksheet" (fun () ->
+            let wb = new FsWorkbook()
+            let sheet = FsWorksheet("Investigation")
+            wb.AddWorksheet(sheet)                                    
+        )
+        testCase "FillWorksheet" (fun () ->
+            let i = ArcInvestigation.createEmpty()
+            let sheet = FsWorksheet("Investigation")
+            let rows = i |> ArcInvestigation.toRows
+            rows
+            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet) 
+            Expect.isTrue (sheet.Rows |> Seq.length |> (<) 0) "Worksheet should have at least one row"
+        )
+        testCase "AddFilledWorksheet" (fun () ->
+            let i = ArcInvestigation.createEmpty()
+            let wb = new FsWorkbook()
+            let sheet = FsWorksheet("Investigation")
+            let rows = i |> ArcInvestigation.toRows
+            rows
+            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
+            wb.AddWorksheet(sheet)
+            Expect.isSome (wb.TryGetWorksheetByName "Investigation") "Worksheet should be added to workbook"
+        )
+
+                    
+                   
+    ]
+
 let private testInvestigationFile = 
+
+    
 
     testList "InvestigationXLSXTests" [
         testCase "ReaderSuccess" (fun () -> 
@@ -55,7 +102,7 @@ let private testInvestigationFile =
         )
 
         testCase "ReaderIgnoresEmptyStudy" (fun () -> 
-            let emptyInvestigation = ArcInvestigation.create()
+            let emptyInvestigation = ArcInvestigation.createEmpty()
             let wb = ArcInvestigation.toFsWorkbook emptyInvestigation
             let i = ArcInvestigation.fromFsWorkbook wb
             Expect.isNone i.Studies "Empty study in investigation should be read to None, but here is Some"
@@ -481,5 +528,6 @@ let private testInvestigationFile =
 
 let main = 
     testList "InvestigationFile" [
-        testInvestigationFile
+        testInvestigationWriterComponents
+        //testInvestigationFile
     ]

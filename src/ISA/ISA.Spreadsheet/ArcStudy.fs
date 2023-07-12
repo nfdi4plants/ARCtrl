@@ -41,7 +41,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
             fromMetadataSheet sheet
         | None -> 
             printfn "Cannot retrieve metadata: Study file does not contain \"%s\" sheet." metaDataSheetName
-            ArcStudy.create()     
+            ArcStudy.createEmpty()     
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
