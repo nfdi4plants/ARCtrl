@@ -8,6 +8,7 @@ let testProjects =
     [
         "tests/ISA/ISA.Tests"
         "tests/ISA/ISA.Json.Tests"
+        "tests/ISA/ISA.Spreadsheet.Tests"
     ]
 
 let solutionFile  = $"{project}.sln"

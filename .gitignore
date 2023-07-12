@@ -355,3 +355,5 @@ pkg/
 tmp/
 /tests/ISA/ISA.JsNativeTests/fable/**/*.js
 /tests/ISA/ISA.Json.JsNativeTests/fable/**/*.js
+/testjs
+/tests/ISA/ISA.Spreadsheet.JsNativeTests/fable

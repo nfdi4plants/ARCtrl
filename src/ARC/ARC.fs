@@ -63,7 +63,7 @@ type ARC =
 
 
     /// Add assay folder to the ARC.FileSystem and update the ARC.ISA with the new assay metadata
-    static member addAssay (assay : ISA.Assay) (studyIdentifier : string) (arc : ARC) : ARC = 
+    static member addAssay (assay : ISA.ArcAssay) (studyIdentifier : string) (arc : ARC) : ARC = 
   
         // - Contracts - //
         // create spreadsheet assays/AssayName/isa.assay.xlsx  

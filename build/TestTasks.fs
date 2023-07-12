@@ -16,6 +16,11 @@ let JsonFableTestPath_input = "tests/ISA/ISA.Json.Tests"
 [<Literal>]
 let JsonFableTestPath_output = "tests/ISA/ISA.Json.JsNativeTests/fable"
 
+[<Literal>]
+let SpreadsheetFableTestPath_input = "tests/ISA/ISA.Spreadsheet.Tests"
+[<Literal>]
+let SpreadsheetFableTestPath_output = "tests/ISA/ISA.Spreadsheet.JsNativeTests/fable"
+
 [<AutoOpen>]
 module private Helper =
 
@@ -129,6 +134,7 @@ module RunTests =
         //run npm "test --prefix ./src/ISA" ""
         run npm "test" ""
         run npm "run testJson" ""
+        run npm "run testSpreadsheet" ""
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {

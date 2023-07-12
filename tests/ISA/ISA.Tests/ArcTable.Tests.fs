@@ -69,6 +69,21 @@ let private tests_member =
             let table = create_testTable()
             Expect.equal table.RowCount 5 ""
         )
+        testCase "Custom equality" (fun () ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            Expect.equal table1 table2 "equal"
+        )
+        #if !FABLE_COMPILER
+        // i have no idea why this does not work
+        testCase "GetHashCode" (fun () ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            let hash1 = table1.GetHashCode()
+            let hash2 = table2.GetHashCode()
+            Expect.equal hash1 hash2 "HashCode"
+        )
+        #endif
     ]
 
 let private tests_validate = 
@@ -264,8 +279,8 @@ let private tests_ArcTableAux =
         ]
     ]
 
-let private tests_setHeader = 
-    testList "setHeader" [
+let private tests_UpdateHeader = 
+    testList "UpdateHeader" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -280,23 +295,23 @@ let private tests_setHeader =
         )
         testCase "set outside of range" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.SetHeader(12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            let table() = testTable.UpdateHeader(12, CompositeHeader.Characteristic OntologyAnnotation.empty)
             Expect.throws table ""
         )
         testCase "set outside of range negative" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.SetHeader(-12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            let table() = testTable.UpdateHeader(-12, CompositeHeader.Characteristic OntologyAnnotation.empty)
             Expect.throws table ""
         )
         testCase "set unique at different index" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.SetHeader(2, CompositeHeader.Input IOType.DerivedDataFile)
+            let table() = testTable.UpdateHeader(2, CompositeHeader.Input IOType.DerivedDataFile)
             Expect.throws (table >> ignore) ""
         )
         testCase "set unique at same index" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Input IOType.DerivedDataFile
-            table.SetHeader(0, newHeader)
+            table.UpdateHeader(0, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] newHeader "header0"
@@ -310,13 +325,13 @@ let private tests_setHeader =
         testCase "set invalid" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Factor oa_temperature
-            let eval() = table.SetHeader(0, newHeader)
+            let eval() = table.UpdateHeader(0, newHeader)
             Expect.throws eval ""
         )
         testCase "set invalid, force convert" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Factor oa_temperature
-            table.SetHeader(0, newHeader, true)
+            table.UpdateHeader(0, newHeader, true)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] newHeader "header0"
@@ -330,7 +345,7 @@ let private tests_setHeader =
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let newHeader = CompositeHeader.Factor oa_temperature
-            table.SetHeader(3, newHeader)
+            table.UpdateHeader(3, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] column_input.Header "header0"
@@ -348,8 +363,8 @@ let private tests_setHeader =
             let table = create_testTable()
             let table2 = table.Copy()
             let newHeader = CompositeHeader.Factor oa_temperature
-            table.SetHeader(3, newHeader)
-            table2.SetHeader(3, newHeader, true)
+            table.UpdateHeader(3, newHeader)
+            table2.UpdateHeader(3, newHeader, true)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] column_input.Header "header0"
@@ -366,8 +381,8 @@ let private tests_setHeader =
         )
     ]
 
-let private tests_setCell =
-    testList "setCell" [
+let private tests_UpdateCell =
+    testList "UpdateCell" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -383,7 +398,7 @@ let private tests_setCell =
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let cell = CompositeCell.createFreeText "MYNEWCELL42"
-            table.SetCellAt(0,0,cell)
+            table.UpdateCellAt(0,0,cell)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] column_input.Header "header0"
@@ -398,10 +413,10 @@ let private tests_setCell =
         testCase "set valid, at invalid indices" (fun () ->
             let table = create_testTable()
             let cell = CompositeCell.createFreeText "MYNEWCELL42"
-            let eval_colCount() = table.SetCellAt(table.ColumnCount,0,cell)
-            let eval_rowCount() = table.SetCellAt(0,table.RowCount,cell)
-            let eval_negRow() = table.SetCellAt(0,-2,cell)
-            let eval_negCol() = table.SetCellAt(-2,0,cell)
+            let eval_colCount() = table.UpdateCellAt(table.ColumnCount,0,cell)
+            let eval_rowCount() = table.UpdateCellAt(0,table.RowCount,cell)
+            let eval_negRow() = table.UpdateCellAt(0,-2,cell)
+            let eval_negCol() = table.UpdateCellAt(-2,0,cell)
             Expect.throws eval_colCount "ColumnCount"
             Expect.throws eval_rowCount "RowCount"
             Expect.throws eval_negRow "negative row"
@@ -410,13 +425,13 @@ let private tests_setCell =
         testCase "set invalid" (fun () ->
             let table = create_testTable()
             let cell = CompositeCell.createTerm OntologyAnnotation.empty
-            let eval() = table.SetCellAt(0,0,cell)
+            let eval() = table.UpdateCellAt(0,0,cell)
             Expect.throws eval ""
         )
     ]
 
-let private tests_setColumn = 
-    testList "setColumn" [
+let private tests_UpdateColumn = 
+    testList "UpdateColumn" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -433,24 +448,21 @@ let private tests_setColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(table.ColumnCount, column)
+            let eval() = table.UpdateColumn(table.ColumnCount, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid, at invalid negative index" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(-1, column)
+            let eval() = table.UpdateColumn(-1, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 5
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -466,15 +478,14 @@ let private tests_setColumn =
             let h = CompositeHeader.Input IOType.RawDataFile
             let cells = createCells_FreeText "NEWSOURCE" 5
             let column = CompositeColumn.create(h, cells)
-            let eval() = table.SetColumn(1, column)
+            let eval() = table.UpdateColumn(1, h, cells)
             Expect.throws eval ""
         )
         testCase "set unique duplicate, same index" (fun () ->
             let table = create_testTable()
             let h = CompositeHeader.Input IOType.RawDataFile
             let cells = createCells_FreeText "NEWSOURCE" 5
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -489,8 +500,7 @@ let private tests_setColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 2
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -506,8 +516,7 @@ let private tests_setColumn =
             let table = create_testTable()
             let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
             let cells = createCells_Term 7
-            let column = CompositeColumn.create(h, cells)
-            table.SetColumn(0, column)
+            table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 7 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
             Expect.equal table.Headers.[0] h "header0"
@@ -522,12 +531,12 @@ let private tests_setColumn =
         )
     ]
 
-let private tests_addColumn =
+let private tests_AddColumn =
     let header_input = CompositeHeader.Input IOType.Source
     let header_chara = CompositeHeader.Characteristic oa_species
     let createCells_chara (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
     let createCells_freetext pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
-    testList "addColumn" [
+    testList "AddColumn" [
         testList "New Table" [
             let create_table() = ArcTable.init(TableName)
             testCase "IO column, no cells" (fun () ->
@@ -748,8 +757,247 @@ let private tests_addColumn =
         ]
     ]
 
-let private tests_addColumns =
-    testList "addColumns" [
+/// Exemplary tests to check non mutable implementation of mutability bases member function.
+let private tests_addColumn =
+    let header_input = CompositeHeader.Input IOType.Source
+    let header_chara = CompositeHeader.Characteristic oa_species
+    let createCells_chara (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
+    let createCells_freetext pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
+    testList "addColumn" [
+        testList "New Table" [
+            let create_table() = ArcTable.init(TableName)
+            testCase "IO column, no cells" (fun () ->
+                let table = create_table()
+                let header = header_input
+                let table_rep = create_table()
+                let updatedTable =
+                    table 
+                    |> ArcTable.addColumn(header)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.RowCount 0 "RowCount = 0"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount = 1"
+                Expect.equal updatedTable.Headers.[0] header "header"
+            )
+            testCase "term column, no cells" (fun () ->
+                let table = create_table()
+                let header = header_chara
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.RowCount 0 "RowCount = 0"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount = 1"
+                Expect.equal updatedTable.Headers.[0] header "header"
+            )
+            testCase "IO column, with cells" (fun () ->
+                let table = create_table()
+                let header = header_input
+                let cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header, cells)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+                Expect.equal updatedTable.Headers.[0] header "header"
+                let expected = 
+                    let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
+                    System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
+                TestingUtils.mySequenceEqual updatedTable.Values expected "values"
+            )
+            testCase "term column, with cells" (fun () ->
+                let table = create_table()
+                let header = header_chara
+                let cells = Array.init 5 (fun _ -> CompositeCell.createTerm oa_chlamy)
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header, cells)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+                Expect.equal updatedTable.Headers.[0] header "header"
+                let expected = 
+                    let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
+                    System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
+                TestingUtils.mySequenceEqual updatedTable.Values expected "values"
+            )
+            testCase "IO column, with cells at index" (fun () ->
+                let table = create_table()
+                let header = header_input
+                let cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header, cells, 0)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+            )
+            testCase "term column, with cells at index" (fun () ->
+                let table = create_table()
+                let header = header_chara
+                let cells = Array.init 5 (fun _ -> CompositeCell.createTerm oa_chlamy)
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header, cells, 0)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+            )
+        ]
+        testList "Existing Table" [
+            /// Table contains 5 rows and 1 column Input [Source] with cells "Source_id"
+            let create_table() = 
+                let io_cells = Array.init 5 (fun i -> CompositeCell.createFreeText  $"Source_{i}")
+                let table = ArcTable.init(TableName)
+                table.AddColumn(header_input, io_cells)
+                table
+            testCase "Ensure base table" (fun () ->
+                let table = create_table()
+                Expect.equal table.ColumnCount 1 "ColumnCount"
+                Expect.equal table.RowCount 5 "RowCount"
+            )
+            testCase "add equal rows" (fun () ->
+                let table = create_table()
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header_chara, createCells_chara 5)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 2 "ColumnCount"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.Headers.[0] header_input "Header 0"
+                Expect.equal updatedTable.Headers.[1] header_chara "Header 1"
+            )
+            testCase "add less rows" (fun () ->
+                let table = create_table()
+                let cells = createCells_chara 2
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header_chara, cells)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 2 "ColumnCount"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.Headers.[0] header_input "Header 0"
+                Expect.equal updatedTable.Headers.[1] header_chara "Header 1"
+                let expected = 
+                    Array.init 5 (fun i -> 
+                        let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
+                        System.Collections.Generic.KeyValuePair((1,i), c) 
+                    )
+                let actual = Array.ofSeq updatedTable.Values
+                Expect.containsAll actual expected "extendedValues"
+            )
+            testCase "add more rows" (fun () ->
+                let table = create_table()
+                let cells = createCells_chara 8
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header_chara, cells)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 2 "ColumnCount"
+                Expect.equal updatedTable.RowCount 8 "RowCount"
+                Expect.equal updatedTable.Headers.[0] header_input "Header 0"
+                Expect.equal updatedTable.Headers.[1] header_chara "Header 1"
+                let expected_chara = Array.init 8 (fun i -> System.Collections.Generic.KeyValuePair((1,i), CompositeCell.createTerm oa_chlamy))
+                let expected_io = 
+                    Array.init 8 (fun i -> 
+                        let c = if i <= 4 then CompositeCell.createFreeText $"Source_{i}" else CompositeCell.emptyFreeText
+                        System.Collections.Generic.KeyValuePair((0,i), c) 
+                    )
+                let actual = Array.ofSeq updatedTable.Values
+                Expect.containsAll actual expected_chara "extendedValues chara"
+                Expect.containsAll actual expected_io "extendedValues io"
+            )
+            testCase "add equal rows, insert at" (fun () ->
+                let table = create_table()
+                let cells = createCells_chara 5
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header_chara, cells, 0)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 2 "ColumnCount"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.Headers.[0] header_chara "Header chara"
+                Expect.equal updatedTable.Headers.[1] header_input "Header io"
+            )
+            testCase "add less rows, insert at" (fun () ->
+                let table = create_table()
+                let cells = createCells_chara 2
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header_chara, cells, 0)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 2 "ColumnCount"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.Headers.[0] header_chara "Header chara"
+                Expect.equal updatedTable.Headers.[1] header_input "Header io"
+                let expected = 
+                    Array.init 5 (fun i -> 
+                        let c = if i <= 1 then CompositeCell.createTerm oa_chlamy else CompositeCell.emptyTerm
+                        System.Collections.Generic.KeyValuePair((0,i), c) 
+                    )
+                let actual = Array.ofSeq updatedTable.Values
+                Expect.containsAll actual expected "extendedValues"
+            )
+            testCase "add more rows, insert at" (fun () ->
+                let table = create_table()
+                let cells = createCells_chara 8
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(header_chara, cells, 0)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 2 "ColumnCount"
+                Expect.equal updatedTable.RowCount 8 "RowCount"
+                Expect.equal updatedTable.Headers.[0] header_chara "Header chara"
+                Expect.equal updatedTable.Headers.[1] header_input "Header io"
+                let expected_chara = Array.init 8 (fun i -> System.Collections.Generic.KeyValuePair((0,i), CompositeCell.createTerm oa_chlamy))
+                let expected_io = 
+                    Array.init 8 (fun i -> 
+                        let c = if i <= 4 then CompositeCell.createFreeText $"Source_{i}" else CompositeCell.emptyFreeText
+                        System.Collections.Generic.KeyValuePair((1,i), c) 
+                    )
+                let actual = Array.ofSeq updatedTable.Values
+                Expect.containsAll actual expected_chara "extendedValues chara"
+                Expect.containsAll actual expected_io "extendedValues io"
+            )
+            testCase "add equal rows, replace input, replace" (fun () ->
+                let table = create_table()
+                let newHeader = CompositeHeader.Input IOType.Sample
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(newHeader, createCells_freetext "NewInput" 5, forceReplace=true)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+                Expect.equal updatedTable.RowCount 5 "RowCount"
+                Expect.equal updatedTable.Headers.[0] newHeader "Header"
+            )
+            testCase "add more rows, replace input, force replace" (fun () ->
+                let table = create_table()
+                let newHeader = CompositeHeader.Input IOType.Sample
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(newHeader, createCells_freetext "NewInput" 8, forceReplace=true)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+                Expect.equal updatedTable.RowCount 8 "RowCount"
+                Expect.equal updatedTable.Headers.[0] newHeader "Header"
+            )
+            testCase "add less rows, replace input, force replace" (fun () ->
+                let table = create_table()
+                let newHeader = CompositeHeader.Input IOType.Sample
+                let table_rep = create_table()
+                let updatedTable =
+                    table |> ArcTable.addColumn(newHeader, createCells_freetext "NewInput" 2, forceReplace=true)
+                Expect.equal table table_rep "origin table must be unchanged!"
+                Expect.equal updatedTable.ColumnCount 1 "ColumnCount"
+                Expect.equal updatedTable.RowCount 2 "RowCount, if this rowCount is higher, previous cells might not get deleted"
+                Expect.equal updatedTable.Headers.[0] newHeader "Header"
+                Expect.equal updatedTable.Values.[0,0] (CompositeCell.createFreeText "NewInput_0") "0,0"
+            )
+        ]
+    ]
+
+let private tests_AddColumns =
+    testList "AddColumns" [
         testList "New Table" [
             let create_table() = ArcTable.init(TableName)
             testCase "IO columns, no cells" (fun () ->
@@ -1332,8 +1580,8 @@ let private tests_addColumns =
         ]
     ]
 
-let private tests_removeColumn = 
-    testList "removeColumn" [
+let private tests_RemoveColumn = 
+    testList "RemoveColumn" [
         testCase "ensure table" (fun () ->
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -1365,8 +1613,8 @@ let private tests_removeColumn =
         )
     ]
 
-let private tests_removeColumns = 
-    testList "removeColumns" [
+let private tests_RemoveColumns = 
+    testList "RemoveColumns" [
         testCase "ensure table" (fun () ->
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -1408,8 +1656,8 @@ let private tests_removeColumns =
         )
     ]
 
-let private tests_removeRow = 
-    testList "removeRow" [
+let private tests_RemoveRow = 
+    testList "RemoveRow" [
         testCase "ensure table" (fun () ->
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -1450,8 +1698,8 @@ let private tests_removeRow =
         )
     ]
 
-let private tests_removeRows = 
-    testList "removeRows" [
+let private tests_RemoveRows = 
+    testList "RemoveRows" [
         testCase "ensure table" (fun () ->
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -1499,8 +1747,8 @@ let private tests_removeRows =
         )
     ]
 
-let private tests_addRow = 
-    testList "addRow" [
+let private tests_AddRow = 
+    testList "AddRow" [
         testCase "ensure table" (fun () ->
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -1616,9 +1864,8 @@ let private tests_addRow =
         )
     ]
 
-
-let private tests_addRows = 
-    testList "addRows" [
+let private tests_AddRows = 
+    testList "AddRows" [
         testCase "ensure table" (fun () ->
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -1700,21 +1947,139 @@ let private tests_addRows =
         )
     ]
 
+let private tests_processTransformation = 
+    testList "Process Transformation" [
+        testCase "ToProcesses" (fun () ->
+            Expect.isFalse true "Not implemented"
+        )
+    ]
+
+let private tests_protocolTransformation =
+    
+    let pName = "ProtocolName"
+    let pType = OntologyAnnotation.fromString("Growth","ABC","ABC:123")
+    let pVersion = "1.0"
+    let pDescription = "Great Protocol"
+
+    let pParam1OA = OntologyAnnotation.fromString("Temperature","NCIT","NCIT:123")
+    let pParam1 = ProtocolParameter.create(ParameterName = pParam1OA)
+
+    testList "Protocol Transformation" [
+        testCase "FromProtocol Empty" (fun () ->
+            let p = Protocol.create()
+            let t = p |> ArcTable.fromProtocol
+
+            Expect.equal t.ColumnCount 0 "ColumnCount should be 0"
+        )
+        testCase "FromProtocol SingleParameter" (fun () ->
+            let p = Protocol.create(Parameters = [pParam1])
+            let t = p |> ArcTable.fromProtocol
+
+            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
+            let c = t.TryGetCellAt(0,0)
+            Expect.isNone c "Cell should not exist"
+        )
+        testCase "FromProtocol SingleProtocolType" (fun () ->
+            let p = Protocol.create(ProtocolType = pType)
+            let t = p |> ArcTable.fromProtocol
+            let expected = CompositeCell.Term pType
+
+            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
+            let c = t.TryGetCellAt(0,0)
+            Expect.isSome c "Cell should exist"
+            let c = c.Value
+            Expect.equal c expected "Cell value does not match"
+        )
+        testCase "FromProtocol SingleName" (fun () ->
+            let p = Protocol.create(Name = pName)
+            let t = p |> ArcTable.fromProtocol
+            let expected = CompositeCell.FreeText pName
+
+            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
+            let c = t.TryGetCellAt(0,0) 
+            Expect.isSome c "Cell should exist"
+            let c = c.Value
+            Expect.equal c expected "Cell value does not match"
+            )
+        testCase "FromProtocol SingleVersion" (fun () ->
+            let p = Protocol.create(Version = pVersion)
+            let t = p |> ArcTable.fromProtocol
+            let expected = CompositeCell.FreeText pVersion
+
+            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
+            let c = t.TryGetCellAt(0,0)
+            Expect.isSome c "Cell should exist"
+            let c = c.Value
+            Expect.equal c expected "Cell value does not match"
+        )
+        testCase "FromProtocol SingleDescription" (fun () ->
+            let p = Protocol.create(Description = pDescription)
+            let t = p |> ArcTable.fromProtocol
+            let expected = CompositeCell.FreeText pDescription
+
+            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
+            let c = t.TryGetCellAt(0,0)
+            Expect.isSome c "Cell should exist"
+            let c = c.Value
+            Expect.equal c expected "Cell value does not match"
+        )
+
+        testCase "GetProtocols SingleName" (fun () ->           
+            let t = ArcTable.init "TestTable"
+            let name = "Name"
+            t.AddProtocolNameColumn([|name|])
+            let expected = [Protocol.create(Name = name)]
+
+            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+        )
+        testCase "GetProtocols SameNames" (fun () ->           
+            let t = ArcTable.init "TestTable"
+            let name = "Name"
+            t.AddProtocolNameColumn([|name;name|])
+            let expected = [Protocol.create(Name = name)]
+
+            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+        )
+        testCase "GetProtocols DifferentNames" (fun () ->           
+            let t = ArcTable.init "TestTable"
+            let name1 = "Name"
+            let name2 = "Name2"
+            t.AddProtocolNameColumn([|name1;name2|])
+            let expected = [Protocol.create(Name = name1);Protocol.create(Name = name2)]
+
+            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+        )
+        //testCase "GetProtocols Parameters" (fun () ->
+        //    let t = ArcTable.init "TestTable"
+        //    let name1 = "Name"
+        //    let name2 = "Name2"
+        //    t.AddProtocolNameColumn([|name1;name2|])
+        //    t.addpara([|pParam1;pParam1|])
+        //    let expected = [Protocol.create(Name = name1;Parameters = [pParam1]);Protocol.create(Name = name2;Parameters = [pParam1])]
+        //    TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+        
+        //)
+
+
+    ]
+
 let main = 
     testList "ArcTable" [
         tests_SanityChecks
         tests_ArcTableAux
         tests_member
-        tests_setHeader
-        tests_setCell
-        tests_setColumn
+        tests_UpdateHeader
+        tests_UpdateCell
+        tests_UpdateColumn
+        tests_AddColumn
         tests_addColumn
-        tests_addColumns
-        tests_removeColumn
-        tests_removeColumns
-        tests_removeRow
-        tests_removeRows
-        tests_addRow
-        tests_addRows
+        tests_AddColumns
+        tests_RemoveColumn
+        tests_RemoveColumns
+        tests_RemoveRow
+        tests_RemoveRows
+        tests_AddRow
+        tests_AddRows
         tests_validate
+        tests_protocolTransformation
     ]

@@ -16,6 +16,17 @@ type CompositeCell =
     /// https://isa-specs.readthedocs.io/en/latest/isatab.html#unit
     | Unitized of string*OntologyAnnotation
 
+
+    static member fromValue(value : Value, ?unit : OntologyAnnotation) =
+        match value,unit with
+        | Value.Ontology t, None -> CompositeCell.Term t
+        | Value.Int i, None -> CompositeCell.FreeText (string i)
+        | Value.Int i, Some u -> CompositeCell.Unitized(string i, u)
+        | Value.Float f, None -> CompositeCell.FreeText (string f)
+        | Value.Float f, Some u -> CompositeCell.Unitized(string f, u)
+        | Value.Name s, None -> CompositeCell.FreeText s
+        | _ -> failwith "could not convert value to cell, invalid combination of value and unit"
+
     member this.isUnitized = match this with | Unitized _ -> true | _ -> false
     member this.isTerm = match this with | Term _ -> true | _ -> false
     member this.isFreeText = match this with | FreeText _ -> true | _ -> false

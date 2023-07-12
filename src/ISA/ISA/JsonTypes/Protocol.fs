@@ -95,6 +95,72 @@ type Protocol =
         { protocol with
             ProtocolType = Some protocolType }
 
+    // Protocol Version
+
+    /// Returns protocol version of a protocol
+    static member getVersion (protocol : Protocol) =
+        protocol.Version
+
+    /// Applies function f on protocol version of a protocol
+    static member mapVersion (f : string -> string) (protocol : Protocol) =
+        {protocol with 
+            Version = Option.map f protocol.Version}
+
+    /// Replaces protocol version of a protocol by given protocol version
+    static member setVersion (protocol : Protocol) (version : string) =
+        { protocol with
+            Version = Some version }
+
+    /// Protocol Name
+
+    /// Returns protocol name of a protocol
+    static member getName (protocol : Protocol) =
+        protocol.Name
+
+    /// Applies function f on protocol name of a protocol
+    static member mapName (f : string -> string) (protocol : Protocol) =
+        {protocol with 
+            Name = Option.map f protocol.Name}
+
+    /// Replaces protocol name of a protocol by given protocol name
+    static member setName (protocol : Protocol) (name : string) =
+        { protocol with
+            Name = Some name }
+    
+    // Protocol Description
+
+    /// Returns protocol description of a protocol
+    static member getDescription (protocol : Protocol) =
+        protocol.Description
+
+    /// Applies function f on protocol description of a protocol
+    static member mapDescription (f : string -> string) (protocol : Protocol) =
+        {protocol with 
+            Description = Option.map f protocol.Description}
+
+    /// Replaces protocol description of a protocol by given protocol description
+    static member setDescription (protocol : Protocol) (description : string) =
+        { protocol with
+            Description = Some description }
+    
+    // Protocol URI
+    
+    /// Returns protocol URI of a protocol
+    static member getUri (protocol : Protocol) =
+        protocol.Uri
+
+    /// Applies function f on protocol URI of a protocol
+    static member mapUri (f : URI -> URI) (protocol : Protocol) =
+        {protocol with 
+            Uri = Option.map f protocol.Uri}
+
+    /// Replaces protocol URI of a protocol by given protocol URI
+    static member setUri (protocol : Protocol) (uri : URI) =
+        { protocol with
+            Uri = Some uri }
+
+
+
     // Components
 
     /// Returns components of a protocol
@@ -111,12 +177,20 @@ type Protocol =
         { protocol with
             Components = Some components }
 
+    static member addComponent (comp : Component) (protocol : Protocol) =
+        protocol.Components 
+        |> Option.defaultValue []
+        |> fun cs -> List.append cs [comp]
+        |> Protocol.setComponents protocol
+    
+
     // Protocol Parameters
     
     /// Returns protocol parameters of a protocol
     static member getParameters (protocol : Protocol) =
         protocol.Parameters
-    
+   
+
     /// Applies function f on protocol parameters of a protocol
     static member mapParameters (f : ProtocolParameter list -> ProtocolParameter list) (protocol : Protocol) =
         { protocol with 
@@ -126,3 +200,9 @@ type Protocol =
     static member setParameters (protocol : Protocol) (parameters : ProtocolParameter list) =
         { protocol with
             Parameters = Some parameters }
+
+    static member addParameter (parameter : ProtocolParameter) (protocol : Protocol) =
+        protocol.Parameters 
+        |> Option.defaultValue []
+        |> fun ps -> List.append ps [parameter]
+        |> Protocol.setParameters protocol

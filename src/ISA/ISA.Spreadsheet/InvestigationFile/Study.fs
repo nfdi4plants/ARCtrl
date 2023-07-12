@@ -1,12 +1,11 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
 open Comment
 open Remark
 open System.Collections.Generic
 
-module Study = 
+module Studies = 
 
     let identifierLabel = "Study Identifier"
     let titleLabel = "Study Title"
@@ -72,7 +71,7 @@ module Study =
                 comments
 
 
-        static member ToSparseTable (study: Study) =
+        static member ToSparseTable (study: ArcStudy) =
             let i = 1
             let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
@@ -100,13 +99,13 @@ module Study =
             SparseTable.FromRows(rows,StudyInfo.Labels,lineNumber)
             |> fun (s,ln,rs,sm) -> (s,ln,rs, StudyInfo.FromSparseTable sm)
     
-        static member toRows (study : Study) =  
+        static member toRows (study : ArcStudy) =  
             study
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
     
-    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors assays protocols contacts =
-        Study.make 
+    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
+        ArcStudy.make 
             None 
             (Option.fromValueWithDefault "" studyInfo.FileName)
             (Option.fromValueWithDefault "" studyInfo.Identifier)
@@ -117,10 +116,9 @@ module Study =
             (Option.fromValueWithDefault [] publications)
             (Option.fromValueWithDefault [] contacts)
             (Option.fromValueWithDefault [] designDescriptors) 
-            (Option.fromValueWithDefault [] protocols)
-            None
             None 
-            (Option.fromValueWithDefault [] assays)
+            (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
+            (ResizeArray(assays))
             (Option.fromValueWithDefault [] factors) 
             None 
             None
@@ -163,25 +161,26 @@ module Study =
         loop currentLine item [] [] [] [] [] [] remarks lineNumber
 
     
-    let toRows (study : Study) =
+    let toRows (study : ArcStudy) =
+        let protocols = study.Tables |> Seq.collect (fun p -> p.GetProtocols()) |> List.ofSeq
         seq {          
             yield! StudyInfo.toRows study
 
             yield  SparseRow.fromValues [designDescriptorsLabel]
             yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
 
-            yield  SparseRow.fromValues[publicationsLabel]
+            yield  SparseRow.fromValues [publicationsLabel]
             yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
 
-            yield  SparseRow.fromValues[factorsLabel]
+            yield  SparseRow.fromValues [factorsLabel]
             yield! Factors.toRows (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
 
-            yield  SparseRow.fromValues[assaysLabel]
-            yield! Assays.toRows (Some assaysLabelPrefix) (Option.defaultValue [] study.Assays)
+            yield  SparseRow.fromValues [assaysLabel]
+            yield! Assays.toRows (Some assaysLabelPrefix) (List.ofSeq study.Assays)
 
-            yield  SparseRow.fromValues[protocolsLabel]
-            yield! Protocols.toRows (Some protocolsLabelPrefix) (Option.defaultValue [] study.Protocols)
+            yield  SparseRow.fromValues [protocolsLabel]
+            yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
-            yield  SparseRow.fromValues[contactsLabel]
+            yield  SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
         }

@@ -44,12 +44,13 @@
     <Compile Include="JsonTypes\StudyMaterials.fs" />
     <Compile Include="JsonTypes\Study.fs" />
     <Compile Include="JsonTypes\Investigation.fs" />
+    <Compile Include="JsonTypes\ColumnIndex.fs" />
     <Compile Include="ArcTypes\CompositeHeader.fs" />
     <Compile Include="ArcTypes\CompositeCell.fs" />
     <Compile Include="ArcTypes\CompositeColumn.fs" />
     <Compile Include="ArcTypes\ArcTableAux.fs" />
     <Compile Include="ArcTypes\ArcTable.fs" />
-    <Compile Include="ArcTypes\ArcProcessSequence.fs" />
+    <Compile Include="ArcTypes\ArcTables.fs" />
     <Compile Include="ArcTypes\ArcAssay.fs" />
     <Compile Include="ArcTypes\ArcStudy.fs" />
     <Compile Include="ArcTypes\ArcInvestigation.fs" />

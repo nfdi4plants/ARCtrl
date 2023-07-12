@@ -1,15 +1,36 @@
 ﻿namespace ISA
 
 open Fable.Core
+open ISA.Aux
 
 [<AttachMembers>]
 type ArcInvestigation = 
 
-    {Studies : Study array option}
+    {
+        ID : URI option
+        FileName : string option
+        Identifier : string option
+        Title : string option
+        Description : string option
+        SubmissionDate : string option
+        PublicReleaseDate : string option
+        OntologySourceReferences : OntologySourceReference list option
+        Publications : Publication list option
+        Contacts : Person list option
+        Studies : ArcStudy list option
+        Comments : Comment list option
+        Remarks     : Remark list
+    }
+
+    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list option) (publications : Publication list option) (contacts : Person list option) (studies : ArcStudy list option) (comments : Comment list option) (remarks : Remark list) : ArcInvestigation =
+        {ID = id; FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
     [<NamedParams>]
-    static member create (?Studies : Study []) = 
-        {Studies = Studies}
+    static member create (identifier : string, ?Id : URI, ?FileName : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ArcStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ArcInvestigation =
+        ArcInvestigation.make Id FileName (Option.fromValueWithDefault "" identifier) Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
+
+    static member createEmpty() =
+        ArcInvestigation.make None None None None None None None None None None None None []
 
     static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
         raise (System.NotImplementedException())
@@ -21,10 +42,10 @@ type ArcInvestigation =
     static member addStudy (study : Study) (investigation : Investigation) : Investigation = 
         raise (System.NotImplementedException())
 
-    static member addAssay (assay : Assay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
+    static member addAssay (assay : ArcAssay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
         match ArcInvestigation.tryGetStudyByID studyIdentifier investigation with
         | Some s ->
-             ArcStudy.addAssay |> ignore
+             ArcStudy.addAssay (assay) |> ignore
              ArcInvestigation.updateStudyByID |> ignore
 
         | None ->

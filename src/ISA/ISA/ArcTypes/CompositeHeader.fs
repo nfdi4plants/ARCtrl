@@ -79,7 +79,7 @@ type IOType =
 type CompositeHeader = 
     // term
     | Component         of OntologyAnnotation
-    | Characteristic   of OntologyAnnotation
+    | Characteristic    of OntologyAnnotation
     | Factor            of OntologyAnnotation
     | Parameter         of OntologyAnnotation
     // featured
@@ -123,25 +123,23 @@ type CompositeHeader =
         match str.Trim() with
         // Input/Output have similiar naming as Term, but are more specific. 
         // So they have to be called first.
-        | Regex.Aux.Regex Regex.Pattern.InputPattern r ->
+        | Regex.ActivePatterns.Regex Regex.Pattern.InputPattern r ->
             let iotype = r.Groups.["iotype"].Value
             Input <| IOType.ofString (iotype)
-        | Regex.Aux.Regex Regex.Pattern.OutputPattern r ->
+        | Regex.ActivePatterns.Regex Regex.Pattern.OutputPattern r ->
             let iotype = r.Groups.["iotype"].Value
             Output <| IOType.ofString (iotype)
         // Is term column
-        | Regex.Aux.Regex Regex.Pattern.TermColumnPattern r ->
-            let columnType = r.Groups.["termcolumntype"].Value
-            let termName = r.Groups.["termname"].Value
-            match columnType with
+        | Regex.ActivePatterns.TermColumn r ->
+            match r.TermColumnType with
             | "Parameter" 
-            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString termName)
+            | "Parameter Value"             -> Parameter (OntologyAnnotation.fromString r.TermName)
             | "Factor" 
-            | "Factor Value"                -> Factor (OntologyAnnotation.fromString termName)
+            | "Factor Value"                -> Factor (OntologyAnnotation.fromString r.TermName)
             | "Characteristic" 
             | "Characteristics"
-            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString termName)
-            | "Component"                   -> Component (OntologyAnnotation.fromString termName)
+            | "Characteristics Value"       -> Characteristic (OntologyAnnotation.fromString r.TermName)
+            | "Component"                   -> Component (OntologyAnnotation.fromString r.TermName)
             // TODO: Is this what we intend?
             | _                             -> FreeText str
         | "Date"                    -> Date
@@ -185,7 +183,7 @@ type CompositeHeader =
         match this with | ProtocolType -> true | anythingElse -> false
 
     /// <summary>
-    /// This function sets the associated term accession for featured columns. 
+    /// This function gets the associated term accession for featured columns. 
     /// 
     /// It contains the hardcoded term accessions.
     /// </summary>
@@ -193,6 +191,18 @@ type CompositeHeader =
         match this with
         | ProtocolType -> "DPBO:1000161"
         | anyelse -> failwith $"Tried matching {anyelse} in getFeaturedColumnAccession, but is not a featured column."
+
+    /// <summary>
+    /// This function gets the associated term accession for term columns. 
+    /// </summary>
+    member this.GetColumnAccessionShort =
+        match this with
+        | ProtocolType -> this.GetFeaturedColumnAccession
+        | Parameter oa -> oa.TermAccessionShort
+        | Factor oa -> oa.TermAccessionShort
+        | Characteristic oa -> oa.TermAccessionShort
+        | Component oa -> oa.TermAccessionShort
+        | anyelse -> failwith $"Tried matching {anyelse}, but is not a column with an accession."
 
     /// <summary>
     /// Is true if the Building Block type is parsed to a single column. 
@@ -224,3 +234,84 @@ type CompositeHeader =
         match this with 
         | Input io -> true 
         | anythingElse -> false
+
+    member this.isParameter =
+        match this with 
+        | Parameter _ -> true 
+        | anythingElse -> false
+
+    member this.isFactor =
+        match this with 
+        | Factor _ -> true 
+        | anythingElse -> false
+
+    member this.isCharacteristic =
+        match this with 
+        | Characteristic _ -> true 
+        | anythingElse -> false
+
+    member this.isComponent =
+        match this with
+        | Component _ -> true
+        | anythingElse -> false
+
+    member this.isProtocolType =
+        match this with
+        | ProtocolType -> true
+        | anythingElse -> false
+
+    member this.isProtocolREF =
+        match this with
+        | ProtocolREF -> true
+        | anythingElse -> false
+
+    member this.isProtocolDescription =
+        match this with
+        | ProtocolDescription -> true
+        | anythingElse -> false
+
+    member this.isProtocolUri =
+        match this with
+        | ProtocolUri -> true
+        | anythingElse -> false
+
+    member this.isProtocolVersion =
+        match this with
+        | ProtocolVersion -> true
+        | anythingElse -> false
+
+    member this.isPerformer =
+        match this with
+        | Performer -> true
+        | anythingElse -> false
+
+    member this.isDate =
+        match this with
+        | Date -> true
+        | anythingElse -> false
+
+    member this.isFreeText =
+        match this with
+        | FreeText _ -> true
+        | anythingElse -> false
+
+    member this.TryParameter() = 
+        match this with 
+        | Parameter oa -> Some (ProtocolParameter.create(ParameterName = oa))
+        | _ -> None
+
+    member this.TryFactor() =
+        match this with
+        | Factor oa -> Some (Factor.create(FactorType = oa))
+        | _ -> None
+
+    member this.TryCharacteristic() =
+        match this with
+        | Characteristic oa -> Some (MaterialAttribute.create(CharacteristicType = oa))
+        | _ -> None
+
+    member this.TryComponent() =
+        match this with
+        | Component oa -> Some (Component.create(ComponentType = oa))
+        | _ -> None
+

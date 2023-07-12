@@ -1242,6 +1242,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/Published")
                     (Some (AnnotationValue.Text "published"))
                     (Some "pso")
+                    (Some "published")
                     (Some "http://purl.org/spar/pso/published")
                     (Some [comment])
 
@@ -1259,6 +1260,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/SoftwareDeveloperRole")
                     (Some (AnnotationValue.Text "software developer role"))
                     (Some "swo")
+                    (Some "0000392")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
                     (Some [comment])
 
@@ -1284,6 +1286,7 @@ let testInvestigationFile =
                             (Some "OntologyTerm/Organism")
                             (Some (AnnotationValue.Text "organism"))
                             (Some "obi")
+                            (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [comment])
                     ))
@@ -1297,6 +1300,7 @@ let testInvestigationFile =
                             (Some "OntologyTerm/Organism")
                             (Some (AnnotationValue.Text "Arabidopsis thaliana"))
                             (Some "obi")
+                            (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [comment])
                         |> Value.Ontology
@@ -1308,6 +1312,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/TimeSeries")
                     (Some (AnnotationValue.Text "Time Series Analysis"))
                     (Some "ncit")
+                    (Some "C18235")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
                     (Some [comment])
 
@@ -1316,6 +1321,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/GrowthProtocol")
                     (Some (AnnotationValue.Text "growth protocol"))
                     (Some "dfbo")
+                    (Some "DFBA_0000001")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
                     (Some [comment])
 
@@ -1327,6 +1333,7 @@ let testInvestigationFile =
                             (Some "OntologyTerm/Temperature")
                             (Some (AnnotationValue.Text "temperature unit"))
                             (Some "uo")
+                            (Some "UO_0000005")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
                             (Some [comment])
                     ))
@@ -1336,6 +1343,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/DegreeCelsius")
                     (Some (AnnotationValue.Text "degree celsius"))
                     (Some "uo")
+                    (Some "UO_0000027")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
                     (Some [comment])
 
@@ -1353,6 +1361,7 @@ let testInvestigationFile =
                             (Some "OntologyTerm/RTPCR")
                             (Some (AnnotationValue.Text "real-time PCR machine"))
                             (Some "obi")
+                            (Some "0001110")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
                             (Some [comment])
                         |> Value.Ontology
@@ -1363,6 +1372,7 @@ let testInvestigationFile =
                             (Some "OntologyTerm/PCR")
                             (Some (AnnotationValue.Text "PCR instrument"))
                             (Some "obi")
+                            (Some "0000989")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
                             (Some [comment])
                     ))
@@ -1388,6 +1398,7 @@ let testInvestigationFile =
                                 (Some "OntologyTerm/Time")
                                 (Some (AnnotationValue.Text "time"))
                                 (Some "pato")
+                                (Some "0000165")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
                                 (Some [comment])
                         ))
@@ -1398,6 +1409,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/Hour")
                     (Some (AnnotationValue.Text "hour"))
                     (Some "uo")
+                    (Some "0000032")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
                     (Some [comment])
                     
@@ -1486,6 +1498,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/LFQuantification")
                     (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
                     (Some "ncit")
+                    (Some "C161813")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
                     (Some [comment])
 
@@ -1494,6 +1507,7 @@ let testInvestigationFile =
                     (Some "OntologyTerm/TOF")
                     (Some (AnnotationValue.Text "Time-of-Flight"))
                     (Some "ncit")
+                    (Some "C70698")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
                     (Some [comment])
 
@@ -1664,6 +1678,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/Published")
                     (Some (AnnotationValue.Text "published"))
                     (Some "pso")
+                    (Some "published")
                     (Some "http://purl.org/spar/pso/published")
                     (Some [comment])
 
@@ -1681,6 +1696,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/SoftwareDeveloperRole")
                     (Some (AnnotationValue.Text "software developer role"))
                     (Some "swo")
+                    (Some "0000392")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
                     (Some [comment])
 
@@ -1706,6 +1722,7 @@ let testInvestigationFileLD =
                             (Some "OntologyTerm/Organism")
                             (Some (AnnotationValue.Text "organism"))
                             (Some "obi")
+                            (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [comment])
                     ))
@@ -1719,6 +1736,7 @@ let testInvestigationFileLD =
                             (Some "OntologyTerm/Organism")
                             (Some (AnnotationValue.Text "Arabidopsis thaliana"))
                             (Some "obi")
+                            (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [comment])
                         |> Value.Ontology
@@ -1730,6 +1748,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/TimeSeries")
                     (Some (AnnotationValue.Text "Time Series Analysis"))
                     (Some "ncit")
+                    (Some "C18235")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
                     (Some [comment])
 
@@ -1738,6 +1757,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/GrowthProtocol")
                     (Some (AnnotationValue.Text "growth protocol"))
                     (Some "dfbo")
+                    (Some "0000001")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
                     (Some [comment])
 
@@ -1749,6 +1769,7 @@ let testInvestigationFileLD =
                             (Some "OntologyTerm/Temperature")
                             (Some (AnnotationValue.Text "temperature unit"))
                             (Some "uo")
+                            (Some "UO_0000005")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
                             (Some [comment])
                     ))
@@ -1758,6 +1779,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/DegreeCelsius")
                     (Some (AnnotationValue.Text "degree celsius"))
                     (Some "uo")
+                    (Some "0000027")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
                     (Some [comment])
 
@@ -1775,6 +1797,7 @@ let testInvestigationFileLD =
                             (Some "OntologyTerm/RTPCR")
                             (Some (AnnotationValue.Text "real-time PCR machine"))
                             (Some "obi")
+                            (Some "0001110")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
                             (Some [comment])
                         |> Value.Ontology
@@ -1785,6 +1808,7 @@ let testInvestigationFileLD =
                             (Some "OntologyTerm/PCR")
                             (Some (AnnotationValue.Text "PCR instrument"))
                             (Some "obi")
+                            (Some "0000989")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
                             (Some [comment])
                     ))
@@ -1810,6 +1834,7 @@ let testInvestigationFileLD =
                                 (Some "OntologyTerm/Time")
                                 (Some (AnnotationValue.Text "time"))
                                 (Some "pato")
+                                (Some "0000165")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
                                 (Some [comment])
                         ))
@@ -1820,6 +1845,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/Hour")
                     (Some (AnnotationValue.Text "hour"))
                     (Some "uo")
+                    (Some "0000032")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
                     (Some [comment])
                     
@@ -1908,6 +1934,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/LFQuantification")
                     (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
                     (Some "ncit")
+                    (Some "C161813")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
                     (Some [comment])
 
@@ -1916,6 +1943,7 @@ let testInvestigationFileLD =
                     (Some "OntologyTerm/TOF")
                     (Some (AnnotationValue.Text "Time-of-Flight"))
                     (Some "ncit")
+                    (Some "C70698")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
                     (Some [comment])
 

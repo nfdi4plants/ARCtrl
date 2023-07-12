@@ -7,17 +7,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="TestObjects\Assay.fs" />
+    <Compile Include="TestObjects\ArcTable.fs" />
+    <Compile Include="TestObjects\InvestigationFile.fs" />
+    <Compile Include="StringConversionTests.fs" />
+    <Compile Include="SparseTableTests.fs" />
+    <Compile Include="CompositeHeaderTests.fs" />
+    <Compile Include="CompositeCellTests.fs" />
+    <Compile Include="CompositeColumnTests.fs" />
+    <Compile Include="ArcTableTests.fs" />
     <Compile Include="AssayFileTests.fs" />
     <Compile Include="InvestigationFileTests.fs" />
-    <Compile Include="RegexPattern.fs" />
-    <Compile Include="Sample.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Expecto" Version="9.*" />
-    <PackageReference Include="YoloDev.Expecto.TestSdk" Version="0.*" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
+    <PackageReference Include="Expecto" Version="[9.0.4]" />
+    <PackageReference Include="Fable.Mocha" Version="[2.16.0]" />
+    <PackageReference Include="YoloDev.Expecto.TestSdk" Version="[0.13.2]" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="[17.4.0]" />
+    <PackageReference Update="FSharp.Core" Version="7.0.0" />
     <PackageReference Update="FSharp.Core" Version="6.*" />
+    <ProjectReference Include="..\..\..\src\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj" />
   </ItemGroup>
 </Project>

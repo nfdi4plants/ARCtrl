@@ -6,11 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <EmbeddedResource Remove="StudyFile\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CollectionAux.fs" />
     <Compile Include="Conversions.fs" />
-    <Compile Include="InvestigationFile\Comment.fs" />
-    <Compile Include="InvestigationFile\SparseTable.fs" />
+    <Compile Include="Comment.fs" />
+    <Compile Include="SparseTable.fs" />
     <Compile Include="InvestigationFile\Contacts.fs" />
     <Compile Include="InvestigationFile\DesignDescriptors.fs" />
     <Compile Include="InvestigationFile\Factors.fs" />
@@ -20,21 +24,21 @@
     <Compile Include="InvestigationFile\Study.fs" />
     <Compile Include="InvestigationFile\OntologySourceReference.fs" />
     <Compile Include="InvestigationFile\Investigation.fs" />
-    <Compile Include="AssayFile\AnnotationColumn.fs" />
-    <Compile Include="AssayFile\AnnotationNode.fs" />
-    <Compile Include="AssayFile\AnnotationTable.fs" />
-    <Compile Include="AssayFile\MetaData.fs" />
-    <Compile Include="AssayFile\Assay.fs" />
-    <Compile Include="StudyFile\MetaData.fs" />
-    <Compile Include="StudyFile\Study.fs" />
+    <Compile Include="CompositeHeader.fs" />
+    <Compile Include="CompositeCell.fs" />
+    <Compile Include="CompositeColumn.fs" />
+    <Compile Include="ArcTable.fs" />
+    <Compile Include="ArcAssay.fs" />
+    <Compile Include="ArcStudy.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="0.3.0" />
+    <PackageReference Include="FsSpreadsheet" Version="2.0.1" />
+    <PackageReference Include="FSharpAux.Core" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.0" />
+    <PackageReference Update="FSharp.Core" Version="6.0.7" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,7 +1,6 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -31,7 +30,7 @@ module Protocols =
         ]
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
-        let protocolType = OntologyAnnotation.fromString protocolType typeTermSourceREF typeTermAccessionNumber
+        let protocolType = OntologyAnnotation.fromString(protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
         let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
@@ -48,31 +47,35 @@ module Protocols =
 
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Protocol.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(nameLabel,i)))
-                (matrix.TryGetValueDefault("",(protocolTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(descriptionLabel,i)))
-                (matrix.TryGetValueDefault("",(uriLabel,i)))
-                (matrix.TryGetValueDefault("",(versionLabel,i)))
-                (matrix.TryGetValueDefault("",(parametersNameLabel,i)))
-                (matrix.TryGetValueDefault("",(parametersTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(parametersTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsNameLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsTypeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(componentsTypeTermSourceREFLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(nameLabel,i)))
+                    (matrix.TryGetValueDefault("",(protocolTypeLabel,i)))
+                    (matrix.TryGetValue(typeTermAccessionNumberLabel,i))
+                    (matrix.TryGetValue(typeTermSourceREFLabel,i))
+                    (matrix.TryGetValueDefault("",(descriptionLabel,i)))
+                    (matrix.TryGetValueDefault("",(uriLabel,i)))
+                    (matrix.TryGetValueDefault("",(versionLabel,i)))
+                    (matrix.TryGetValueDefault("",(parametersNameLabel,i)))
+                    (matrix.TryGetValueDefault("",(parametersTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(parametersTermSourceREFLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsNameLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsTypeLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsTypeTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(componentsTypeTermSourceREFLabel,i)))
+                    comments
+            )
     
     let toSparseTable (protocols: Protocol list) =
         let matrix = SparseTable.Create (keys = labels,length=protocols.Length + 1)
@@ -80,24 +83,24 @@ module Protocols =
         protocols
         |> List.iteri (fun i p ->
             let i = i + 1
-            let protocolType,protocolSource,protocolAccession = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
-            let parameterType,parameterSource,parameterAccession = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
-            let componentName,componentType,componentSource,componentAccession = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
+            let pt = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> fun pt -> OntologyAnnotation.toString(pt,true)
+            let pAgg = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
+            let cAgg = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 
             do matrix.Matrix.Add ((nameLabel,i),                                (Option.defaultValue "" p.Name))
-            do matrix.Matrix.Add ((protocolTypeLabel,i),                        protocolType)
-            do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i),             protocolAccession)
-            do matrix.Matrix.Add ((typeTermSourceREFLabel,i),                   protocolSource)
+            do matrix.Matrix.Add ((protocolTypeLabel,i),                        pt.TermName)
+            do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i),             pt.TermAccessionNumber)
+            do matrix.Matrix.Add ((typeTermSourceREFLabel,i),                   pt.TermSourceREF)
             do matrix.Matrix.Add ((descriptionLabel,i),                         (Option.defaultValue "" p.Description))
             do matrix.Matrix.Add ((uriLabel,i),                                 (Option.defaultValue "" p.Uri))
             do matrix.Matrix.Add ((versionLabel,i),                             (Option.defaultValue "" p.Version))
-            do matrix.Matrix.Add ((parametersNameLabel,i),                      parameterType)
-            do matrix.Matrix.Add ((parametersTermAccessionNumberLabel,i),       parameterAccession)
-            do matrix.Matrix.Add ((parametersTermSourceREFLabel,i),             parameterSource)
-            do matrix.Matrix.Add ((componentsNameLabel,i),                      componentName)
-            do matrix.Matrix.Add ((componentsTypeLabel,i),                      componentType)
-            do matrix.Matrix.Add ((componentsTypeTermAccessionNumberLabel,i),   componentAccession)
-            do matrix.Matrix.Add ((componentsTypeTermSourceREFLabel,i),         componentSource)
+            do matrix.Matrix.Add ((parametersNameLabel,i),                      pAgg.TermNameAgg)
+            do matrix.Matrix.Add ((parametersTermAccessionNumberLabel,i),       pAgg.TermAccessionNumberAgg)
+            do matrix.Matrix.Add ((parametersTermSourceREFLabel,i),             pAgg.TermSourceREFAgg)
+            do matrix.Matrix.Add ((componentsNameLabel,i),                      cAgg.NameAgg)
+            do matrix.Matrix.Add ((componentsTypeLabel,i),                      cAgg.TermNameAgg)
+            do matrix.Matrix.Add ((componentsTypeTermAccessionNumberLabel,i),   cAgg.TermAccessionNumberAgg)
+            do matrix.Matrix.Add ((componentsTypeTermSourceREFLabel,i),         cAgg.TermSourceREFAgg)
 
             match p.Comments with 
             | None -> ()

@@ -1,7 +1,6 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -24,57 +23,58 @@ module Assays =
         ]
 
     
-    let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments =
-        let measurementType = OntologyAnnotation.fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber
-        let technologyType = OntologyAnnotation.fromString technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber
-        Assay.make 
+    let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
+        let measurementType = OntologyAnnotation.fromString(measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
+        let technologyType = OntologyAnnotation.fromString(technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
+        ArcAssay.make 
             None 
             (Option.fromValueWithDefault "" fileName)
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
             (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
             (Option.fromValueWithDefault "" technologyPlatform)
-            None
-            None
-            None 
-            None 
+            (ResizeArray())             
             None 
             (Option.fromValueWithDefault [] comments)
         
-    let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+    let fromSparseTable (matrix : SparseTable) : ArcAssay list=
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            {ArcAssay.create(fileName ="",comments = comments) with FileName = None}
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
-                (matrix.TryGetValueDefault("",(measurementTypeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(measurementTypeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
-                (matrix.TryGetValueDefault("",(technologyTypeTermSourceREFLabel,i)))   
-                (matrix.TryGetValueDefault("",(technologyTypeTermAccessionNumberLabel,i))) 
-                (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
-                (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
+                    (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
+                    (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
+                    (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
+                    (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
+                    (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
+                    (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
+                    comments
+            )
 
-    let toSparseTable (assays: Assay list) =
+    let toSparseTable (assays: ArcAssay list) =
         let matrix = SparseTable.Create (keys = labels,length=assays.Length + 1)
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
             let i = i + 1
-            let measurementType,measurementSource,measurementAccession = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
-            let technologyType,technologySource,technologyAccession = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
-            do matrix.Matrix.Add ((measurementTypeLabel,i),                       measurementType)
-            do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    measurementAccession)
-            do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          measurementSource)
-            do matrix.Matrix.Add ((technologyTypeLabel,i),                        technologyType)
-            do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     technologyAccession)
-            do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           technologySource)
+            let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
+            let tt = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
+            do matrix.Matrix.Add ((measurementTypeLabel,i),                       mt.TermName)
+            do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    mt.TermAccessionNumber)
+            do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          mt.TermSourceREF)
+            do matrix.Matrix.Add ((technologyTypeLabel,i),                        tt.TermName)
+            do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     tt.TermAccessionNumber)
+            do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           tt.TermSourceREF)
             do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
             do matrix.Matrix.Add ((fileNameLabel,i),                              (Option.defaultValue "" a.FileName))
 
@@ -96,7 +96,7 @@ module Assays =
         | None -> SparseTable.FromRows(rows,labels,lineNumber)
         |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
  
-    let toRows prefix (assays : Assay list) =
+    let toRows prefix (assays : ArcAssay list) =
         assays
         |> toSparseTable
         |> fun m -> 

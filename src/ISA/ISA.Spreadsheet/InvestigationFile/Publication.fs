@@ -1,7 +1,6 @@
 namespace ISA.Spreadsheet
 
 open ISA
-open ISA.API
 open Comment
 open Remark
 open System.Collections.Generic
@@ -18,8 +17,8 @@ module Publications =
 
     let labels = [pubMedIDLabel;doiLabel;authorListLabel;titleLabel;statusLabel;statusTermAccessionNumberLabel;statusTermSourceREFLabel]
 
-    let fromString pubMedID doi author title status statusTermSourceREF statursTermAccessionNumber comments =
-        let status = OntologyAnnotation.fromString status statusTermSourceREF statursTermAccessionNumber
+    let fromString pubMedID doi author title status statusTermSourceREF statusTermAccessionNumber comments =
+        let status = OntologyAnnotation.fromString(status,?tan = statusTermAccessionNumber,?tsr = statusTermSourceREF)
         Publication.make 
             (Option.fromValueWithDefault "" pubMedID |> Option.map URI.fromString)
             (Option.fromValueWithDefault "" doi)
@@ -29,24 +28,28 @@ module Publications =
             (Option.fromValueWithDefault [] comments)
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Publication.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(pubMedIDLabel,i)))            
-                (matrix.TryGetValueDefault("",(doiLabel,i)))             
-                (matrix.TryGetValueDefault("",(authorListLabel,i)))         
-                (matrix.TryGetValueDefault("",(titleLabel,i)))                 
-                (matrix.TryGetValueDefault("",(statusLabel,i)))                
-                (matrix.TryGetValueDefault("",(statusTermSourceREFLabel,i)))    
-                (matrix.TryGetValueDefault("",(statusTermAccessionNumberLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(pubMedIDLabel,i)))            
+                    (matrix.TryGetValueDefault("",(doiLabel,i)))             
+                    (matrix.TryGetValueDefault("",(authorListLabel,i)))         
+                    (matrix.TryGetValueDefault("",(titleLabel,i)))                 
+                    (matrix.TryGetValueDefault("",(statusLabel,i)))                
+                    (matrix.TryGetValue((statusTermSourceREFLabel,i)))    
+                    (matrix.TryGetValue((statusTermAccessionNumberLabel,i)))
+                    comments
+            )
 
     let toSparseTable (publications: Publication list) =
         let matrix = SparseTable.Create (keys = labels,length=publications.Length + 1)
@@ -54,14 +57,14 @@ module Publications =
         publications
         |> List.iteri (fun i p ->
             let i = i + 1
-            let status,source,accession = Option.defaultValue OntologyAnnotation.empty p.Status |> OntologyAnnotation.toString 
+            let s = Option.defaultValue OntologyAnnotation.empty p.Status |> fun s -> OntologyAnnotation.toString (s,true)
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
             do matrix.Matrix.Add ((authorListLabel,i),                  (Option.defaultValue "" p.Authors))
             do matrix.Matrix.Add ((titleLabel,i),                       (Option.defaultValue "" p.Title))
-            do matrix.Matrix.Add ((statusLabel,i),                      status)
-            do matrix.Matrix.Add ((statusTermAccessionNumberLabel,i),   accession)
-            do matrix.Matrix.Add ((statusTermSourceREFLabel,i),         source)
+            do matrix.Matrix.Add ((statusLabel,i),                      s.TermName)
+            do matrix.Matrix.Add ((statusTermAccessionNumberLabel,i),   s.TermAccessionNumber)
+            do matrix.Matrix.Add ((statusTermSourceREFLabel,i),         s.TermSourceREF)
 
             match p.Comments with 
             | None -> ()
