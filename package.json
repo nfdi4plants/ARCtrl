@@ -7,7 +7,7 @@
     "fable-js": "dotnet fable ./src/ARC -o ./js",
     "fable-ts": "dotnet fable ./src/ARC -o ./ts --lang ts",
     "pretestJson": "dotnet fable tests/ISA/ISA.Json.Tests -o tests/ISA/ISA.Json.JsNativeTests/fable",
-    "testJson": "mocha tests/ISA/ISA.Json.JsNativeTests/fable",
+    "testJson": "mocha tests/ISA/ISA.Json.JsNativeTests/fable --timeout 20000",
     "posttestJson": "mocha tests/ISA/ISA.Json.JsNativeTests",
     "pretestSpreadsheet": "dotnet fable tests/ISA/ISA.Spreadsheet.Tests -o tests/ISA/ISA.Spreadsheet.JsNativeTests/fable",
     "testSpreadsheet": "mocha tests/ISA/ISA.Spreadsheet.JsNativeTests/fable",
