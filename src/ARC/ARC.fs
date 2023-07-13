@@ -39,27 +39,27 @@ type ARC =
         ARC.updateFileSystem |> ignore
         raise (System.NotImplementedException())
 
-    static member addFolder (path : string) (arc : ARC) : ARC =
-        FileSystem.addFolder |> ignore
-        ARC.updateFileSystem |> ignore
-        raise (System.NotImplementedException())
+    //static member addFolder (path : string) (arc : ARC) : ARC =
+    //    FileSystem.addFolder |> ignore
+    //    ARC.updateFileSystem |> ignore
+    //    raise (System.NotImplementedException())
 
-    static member addFolders (paths : string array) (arc : ARC) : ARC =
-        paths
-        |> Array.fold (fun arc path -> ARC.addFolder path arc) arc |> ignore
-        raise (System.NotImplementedException())
+    //static member addFolders (paths : string array) (arc : ARC) : ARC =
+    //    paths
+    //    |> Array.fold (fun arc path -> ARC.addFolder path arc) arc |> ignore
+    //    raise (System.NotImplementedException())
 
-    /// Add folder to ARC.FileSystem and add .gitkeep file to the folder
-    static member addEmptyFolder (path : string) (arc : ARC) : ARC =
-        FileSystem.addFolder  |> ignore   
-        FileSystem.addFile (Path.combine path Path.gitKeepFileName) |> ignore
-        ARC.updateFileSystem |> ignore
-        raise (System.NotImplementedException())
+    ///// Add folder to ARC.FileSystem and add .gitkeep file to the folder
+    //static member addEmptyFolder (path : string) (arc : ARC) : ARC =
+    //    FileSystem.addFolder  |> ignore   
+    //    FileSystem.addFile (Path.combine path Path.gitKeepFileName) |> ignore
+    //    ARC.updateFileSystem |> ignore
+    //    raise (System.NotImplementedException())
 
-    static member addEmptyFolders (paths : string array) (arc : ARC) : ARC =
-        paths
-        |> Array.fold (fun arc path -> ARC.addEmptyFolder path arc) arc |> ignore
-        raise (System.NotImplementedException())
+    //static member addEmptyFolders (paths : string array) (arc : ARC) : ARC =
+    //    paths
+    //    |> Array.fold (fun arc path -> ARC.addEmptyFolder path arc) arc |> ignore
+    //    raise (System.NotImplementedException())
 
 
     /// Add assay folder to the ARC.FileSystem and update the ARC.ISA with the new assay metadata
@@ -77,16 +77,16 @@ type ARC =
         let assaySubFolderPaths = Path.combineAssaySubfolderPaths assay
         let assayReadmeFilePath = Path.combine assayFolderPath Path.assayReadmeFileName
         let updatedInvestigation = ArcInvestigation.addAssay assay studyIdentifier arc.ISA
-
+        arc
         // - FileSystem - //
-        // Create assay root folder in ARC.FileSystem
-        ARC.addFolder assayFolderPath arc 
-        // Create assay subfolders in ARC.FileSystem
-        |> ARC.addEmptyFolders assaySubFolderPaths 
+        //// Create assay root folder in ARC.FileSystem
+        //ARC.addFolder assayFolderPath arc 
+        //// Create assay subfolders in ARC.FileSystem
+        //|> ARC.addEmptyFolders assaySubFolderPaths 
         // Create assay readme file in ARC.FileSystem
-        |> ARC.addFile assayReadmeFilePath 
-        // Update ARC.ISA with the updated investigation
-        |> ARC.updateISA updatedInvestigation 
+        //ARC.addFile assayReadmeFilePath 
+        //// Update ARC.ISA with the updated investigation
+        //|> ARC.updateISA updatedInvestigation 
 
     // to-do: we need a function that generates only create contracts from a ARC data model. 
     // reason: contracts are initially designed to sync disk with in-memory model while working on the arc.

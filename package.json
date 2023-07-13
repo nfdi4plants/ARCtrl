@@ -17,6 +17,9 @@
     "pretest": "dotnet fable tests/ISA/ISA.Tests -o tests/ISA/ISA.JsNativeTests/fable",
     "test": "mocha tests/ISA/ISA.JsNativeTests/fable",
     "posttest": "mocha tests/ISA/ISA.JsNativeTests",
+    "pretestFS": "dotnet fable tests/FileSystem/FileSystem.Tests -o tests/FileSystem/FileSystem.JsNativeTests/fable",
+    "testFS": "mocha tests/FileSystem/FileSystem.JsNativeTests/fable",
+    "posttestFS": "mocha tests/FileSystem/FileSystem.JsNativeTests",
     "test:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests/fable",
     "testnative:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests",
     "postinstall": "cd src/ISA & npm install"

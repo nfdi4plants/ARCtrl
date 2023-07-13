@@ -357,3 +357,4 @@ tmp/
 /tests/ISA/ISA.Json.JsNativeTests/fable/**/*.js
 /testjs
 /tests/ISA/ISA.Spreadsheet.JsNativeTests/fable
+/tests/FileSystem/FileSystem.JsNativeTests/fable
