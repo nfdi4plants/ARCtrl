@@ -68,7 +68,7 @@ type ArcInvestigation =
     // - Study API - CRUD //
     member this.AddStudyEmpty(studyName: string) =
         let study = ArcStudy.create(studyName)
-        this.Studies.Add(study)
+        this.AddStudy(study)
 
     static member addStudyEmpty(studyName: string) =
         fun (inv: ArcInvestigation) ->
@@ -106,6 +106,71 @@ type ArcInvestigation =
         fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
             newInv.GetStudyAt(index)
+
+    // - Study API - CRUD //
+    member this.GetStudy(studyIdentifier: string) : ArcStudy =
+        this.Studies.Find (fun s -> s.Identifier = Some studyIdentifier)
+
+    static member getStudy(studyIdentifier: string) : ArcInvestigation -> ArcStudy =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.GetStudy(studyIdentifier)
+
+    // - Study API - CRUD //
+    member this.AddAssay(studyIdentifier: string, assay: ArcAssay) =
+        let study = this.GetStudy(studyIdentifier)
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay study.Assays
+        study.AddAssay(assay)
+
+    static member addAssay(studyIdentifier: string, assay: ArcAssay) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.AddAssay(studyIdentifier, assay)
+            copy
+
+    // - Study API - CRUD //
+    member this.AddAssayEmpty(studyIdentifier: string, assayName: string) =
+        let assay = ArcAssay.create(assayName)
+        this.AddAssay(studyIdentifier, assay)
+
+    static member addAssayEmpty(studyIdentifier: string, assayName: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.AddAssayEmpty(studyIdentifier, assayName)
+            copy
+
+    // - Study API - CRUD //
+    member this.RemoveAssayAt(studyIdentifier: string, index: int) =
+        let study = this.GetStudy(studyIdentifier)
+        study.Assays.RemoveAt(index)
+
+    static member removeAssayAt(studyIdentifier: string, index: int) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RemoveAssayAt(studyIdentifier, index)
+            newInv
+
+    // - Study API - CRUD //
+    member this.SetAssayAt(studyIdentifier: string, index: int, assay: ArcAssay) =
+        let study = this.GetStudy(studyIdentifier)
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay (study.Assays |> Seq.removeAt index)
+        this.Studies.[index] <- study
+
+    static member setAssayAt(studyIdentifier: string, index: int, assay: ArcAssay) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.SetAssayAt(studyIdentifier, index, assay)
+            newInv
+
+    // - Study API - CRUD //
+    member this.GetAssayAt(studyIdentifier: string, index: int) : ArcAssay =
+        let study = this.GetStudy(studyIdentifier)
+        study.GetAssayAt index
+
+    static member getAssayAt(studyIdentifier: string, index: int) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.GetAssayAt(studyIdentifier, index)
 
     member this.Copy() : ArcInvestigation =
         let newStudies = ResizeArray()

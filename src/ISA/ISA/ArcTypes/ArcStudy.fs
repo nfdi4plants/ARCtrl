@@ -5,7 +5,7 @@ open ISA.Aux
 
 module ArcStudyAux =
     module SanityChecks = 
-        let inline validateUniqueStudyIdentifier (assay: ArcAssay) (existingAssays: seq<ArcAssay>) =
+        let inline validateUniqueAssayIdentifier (assay: ArcAssay) (existingAssays: seq<ArcAssay>) =
             match Seq.tryFindIndex (fun x -> x.FileName = assay.FileName) existingAssays with
             | Some i ->
                 failwith $"Cannot create assay with name {assay.FileName}, as assay names must be unique and assay at index {i} has the same name."
@@ -101,7 +101,7 @@ type ArcStudy =
 
     // - Assay API - CRUD //
     member this.AddAssay(assay: ArcAssay) =
-        ArcStudyAux.SanityChecks.validateUniqueStudyIdentifier assay this.Assays
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay this.Assays
         this.Assays.Add(assay)
 
     static member addAssay(assay: ArcAssay) =
@@ -113,13 +113,12 @@ type ArcStudy =
     // - Assay API - CRUD //
     member this.AddAssayEmpty(assayName: string) =
         let assay = ArcAssay.create(assayName)
-        this.Assays.Add(assay)
+        this.AddAssay(assay)
 
     static member addAssayEmpty(assayName: string) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
-            let assay = ArcAssay.create(assayName)
-            newStudy.AddAssay(assay)
+            newStudy.AddAssayEmpty(assayName)
             newStudy
 
     // - Assay API - CRUD //
