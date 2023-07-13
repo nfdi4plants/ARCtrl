@@ -24,8 +24,8 @@ module Assays =
 
     
     let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
-        let measurementType = OntologyAnnotation.fromString(measurementType,measurementTypeTermSourceREF,measurementTypeTermAccessionNumber)
-        let technologyType = OntologyAnnotation.fromString(technologyType,technologyTypeTermSourceREF,technologyTypeTermAccessionNumber)
+        let measurementType = OntologyAnnotation.fromString(measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
+        let technologyType = OntologyAnnotation.fromString(technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
         ArcAssay.make 
             None 
             (Option.fromValueWithDefault "" fileName)
@@ -37,25 +37,29 @@ module Assays =
             (Option.fromValueWithDefault [] comments)
         
     let fromSparseTable (matrix : SparseTable) : ArcAssay list=
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            {ArcAssay.create(fileName ="",comments = comments) with FileName = None}
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
-                (matrix.TryGetValueDefault("",(measurementTypeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(measurementTypeTermAccessionNumberLabel,i)))
-                (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
-                (matrix.TryGetValueDefault("",(technologyTypeTermSourceREFLabel,i)))   
-                (matrix.TryGetValueDefault("",(technologyTypeTermAccessionNumberLabel,i))) 
-                (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
-                (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
+                    (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
+                    (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
+                    (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
+                    (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
+                    (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
+                    (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
+                    (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
+                    comments
+            )
 
     let toSparseTable (assays: ArcAssay list) =
         let matrix = SparseTable.Create (keys = labels,length=assays.Length + 1)
@@ -63,8 +67,8 @@ module Assays =
         assays
         |> List.iteri (fun i a ->
             let i = i + 1
-            let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> OntologyAnnotation.toString 
-            let tt = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> OntologyAnnotation.toString
+            let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
+            let tt = Option.defaultValue OntologyAnnotation.empty  a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       mt.TermName)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    mt.TermAccessionNumber)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          mt.TermSourceREF)

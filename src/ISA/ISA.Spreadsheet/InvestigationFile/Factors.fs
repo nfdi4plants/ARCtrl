@@ -15,7 +15,7 @@ module Factors =
     let labels = [nameLabel;factorTypeLabel;typeTermAccessionNumberLabel;typeTermSourceREFLabel]
     
     let fromString name designType typeTermSourceREF typeTermAccessionNumber comments =
-        let factorType = OntologyAnnotation.fromString(designType,typeTermSourceREF,typeTermAccessionNumber)
+        let factorType = OntologyAnnotation.fromString(designType,?tan = typeTermAccessionNumber, ?tsr = typeTermSourceREF)
         Factor.make 
             None 
             (Option.fromValueWithDefault "" name) 
@@ -23,21 +23,25 @@ module Factors =
             (Option.fromValueWithDefault [] comments)
 
     let fromSparseTable (matrix : SparseTable) =
-        
-        List.init matrix.Length (fun i -> 
+        if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
+            let comments = SparseTable.GetEmptyComments matrix
+            Factor.create(Comments = comments)
+            |> List.singleton
+        else
+            List.init matrix.ColumnCount (fun i -> 
 
-            let comments = 
-                matrix.CommentKeys 
-                |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                let comments = 
+                    matrix.CommentKeys 
+                    |> List.map (fun k -> 
+                        Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-            fromString
-                (matrix.TryGetValueDefault("",(nameLabel,i)))
-                (matrix.TryGetValueDefault("",(factorTypeLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermSourceREFLabel,i)))
-                (matrix.TryGetValueDefault("",(typeTermAccessionNumberLabel,i)))
-                comments
-        )
+                fromString
+                    (matrix.TryGetValueDefault("",(nameLabel,i)))
+                    (matrix.TryGetValueDefault("",(factorTypeLabel,i)))
+                    (matrix.TryGetValue((typeTermSourceREFLabel,i)))
+                    (matrix.TryGetValue((typeTermAccessionNumberLabel,i)))
+                    comments
+            )
 
     let toSparseTable (factors: Factor list) =
         let matrix = SparseTable.Create (keys = labels,length=factors.Length + 1)
@@ -45,7 +49,7 @@ module Factors =
         factors
         |> List.iteri (fun i f ->
             let i = i + 1
-            let ft = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> OntologyAnnotation.toString 
+            let ft = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> fun f -> OntologyAnnotation.toString(f,true)
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              ft.TermName)
             do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), ft.TermAccessionNumber)

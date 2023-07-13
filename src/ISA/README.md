@@ -31,9 +31,9 @@ subgraph ISAModel
     person[Person]
     publication[Publication]
 
-    ppv[Parameter Value]
-    cv[Characteristic Value]
-    fv[Factor Value]
+    ch[CompositeHeader]
+    cc[CompositeCells]
+    oa[OntologyAnnotation]
 
     table[ArcTable<br><i>= Process + Protocol</i>]
 
@@ -43,9 +43,10 @@ subgraph ISAModel
 
 end 
 
-table --> ppv
-table --> cv
-table --> fv
+table --> ch
+table --> cc
+ch --> oa
+cc --> oa
 
 assay --> table
 study --> table
@@ -69,9 +70,9 @@ end
 style json fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
 style tab fill:#F04D63,stroke:#BA0C24,stroke-width:2px,color: black
 
-style ppv fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
-style fv fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
-style cv fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
+style ch fill:#F04D63,stroke:#BA0C24,stroke-width:2px,color: black
+style cc fill:#F04D63,stroke:#BA0C24,stroke-width:2px,color: black
+style oa fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
 style person fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
 style publication fill:#5AA8B7,stroke:#0A6778,stroke-width:2px,color: black
 
@@ -80,5 +81,42 @@ style assay stroke:#BA0C24,stroke-width:2px
 style study stroke:#BA0C24,stroke-width:2px
 style investigation stroke:#BA0C24,stroke-width:2px
 
+```
 
+### Annotation Term Handling
+
+When creating an `Ontology Annotation` object, we should save the input string of the `Term Accession Number`. Like this, we can still get Short Accession and PURL when possible, but keep the possibility of returning the original input.
+
+```mermaid
+flowchart LR
+obo[http://obo.obo/obo/EFO_0000721]
+short[EFO:0000721]
+other[http://www.ebi.ac.uk/efo/EFO_0000721]
+
+subgraph OntologyAnnotation
+    oboO[http://obo.obo/obo/EFO_0000721]
+    shortO[EFO:0000721]
+    otherO[http://www.ebi.ac.uk/efo/EFO_0000721]       
+end
+
+shortOut[EFO:0000721]
+oboOut[http://obo.obo/obo/EFO_0000721]
+
+otherAny[http://www.ebi.ac.uk/efo/EFO_0000721]
+
+obo --> oboO
+short --> shortO
+other --> otherO
+
+oboO --GetShort--> shortOut
+oboO --GetPURL--> oboOut
+oboO --GetOriginal--> oboOut
+
+otherO --GetShort--> shortOut
+otherO --GetPURL--> oboOut
+otherO --GetOriginal--> otherAny
+
+shortO --GetShort--> shortOut
+shortO --GetPURL--> oboOut
+shortO --GetOriginal--> shortOut
 ```

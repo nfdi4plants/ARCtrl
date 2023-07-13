@@ -192,6 +192,46 @@ let componentCastingTests =
         )
     ]
 
+let ontologyAnnotationTests = 
+    testList "ontologyAnnotationTests" [
+        let short = "EFO:0000721"
+        let uri = "http://purl.obolibrary.org/obo/EFO_0000721" 
+        let otherParseable = "http://www.ebi.ac.uk/efo/EFO_0000721"
+        let other = "Unparseable"
+        testList "fromString" [
+            
+
+            testCase "FromShort" (fun () ->             
+                let oa = OntologyAnnotation.fromString(tan = short)
+
+                Expect.equal oa.TermAccessionString short "TAN incorrect"
+                Expect.equal oa.TermAccessionShort short "short TAN incorrect"
+                Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
+            )
+            testCase "FromUri" (fun () ->          
+                let oa = OntologyAnnotation.fromString(tan = uri)
+                Expect.equal oa.TermAccessionString uri "TAN incorrect"
+                Expect.equal oa.TermAccessionShort short "short TAN incorrect"
+                Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
+            )
+            testCase "FromOtherParseable" (fun () ->          
+                let oa = OntologyAnnotation.fromString(tan = otherParseable)
+                Expect.equal oa.TermAccessionString otherParseable "TAN incorrect"
+                Expect.equal oa.TermAccessionShort short "short TAN incorrect"
+                Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
+            )
+            testCase "FromOther" (fun () ->          
+                let oa = OntologyAnnotation.fromString(tan = other)
+                Expect.equal oa.TermAccessionString other "TAN incorrect"
+            )
+            testCase "FromOtherWithTSR" (fun () ->          
+                let tsr = "ABC"
+                let oa = OntologyAnnotation.fromString(tsr = tsr,tan = other)
+                Expect.equal oa.TermAccessionString other "TAN incorrect"
+                Expect.equal oa.TermSourceREFString tsr "TSR incorrect"
+            )
+        ]
+    ]
 
 let valueTests = 
 
@@ -242,6 +282,7 @@ let valueTests =
 
 let main =
     testList "DataModelTests" [
+        ontologyAnnotationTests
         componentCastingTests
         valueTests
     ]

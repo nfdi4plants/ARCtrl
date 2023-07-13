@@ -174,20 +174,20 @@ module ArcInvestigation =
                 |> List.rev
             with | _ -> rows |> Seq.toList
         seq {
-            yield  SparseRow.fromValues[ontologySourceReferenceLabel]
+            yield  SparseRow.fromValues [ontologySourceReferenceLabel]
             yield! OntologySourceReference.toRows (Option.defaultValue [] investigation.OntologySourceReferences)
 
-            yield  SparseRow.fromValues[investigationLabel]
+            yield  SparseRow.fromValues [investigationLabel]
             yield! InvestigationInfo.toRows investigation
 
-            yield  SparseRow.fromValues[publicationsLabel]
+            yield  SparseRow.fromValues [publicationsLabel]
             yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] investigation.Publications)
 
-            yield  SparseRow.fromValues[contactsLabel]
+            yield  SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
 
-            for study in (Option.defaultValue [ArcStudy.create()] investigation.Studies) do
-                yield  SparseRow.fromValues[studyLabel]
+            for study in (Option.defaultValue [ArcStudy.createEmpty()] investigation.Studies) do
+                yield  SparseRow.fromValues [studyLabel]
                 yield! Studies.toRows study
         }
         |> insertRemarks investigation.Remarks        

@@ -22,7 +22,7 @@ let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
     let sheet = FsWorksheet(metaDataSheetName)
     assay
     |> toRows
-    |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet rowI r sheet)    
+    |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
     sheet
 
 let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
@@ -42,7 +42,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
 
             | k -> 
                 assays |> Seq.tryHead 
-                |> Option.defaultValue (ArcAssay.create(sheet.Name)) 
+                |> Option.defaultValue ({ArcAssay.create(sheet.Name) with FileName = None}) 
                 |> ArcAssay.setPerformers (Option.fromValueWithDefault [] contacts)
         
         if en.MoveNext () then

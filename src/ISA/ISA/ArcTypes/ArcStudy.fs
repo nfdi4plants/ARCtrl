@@ -1,6 +1,7 @@
 ﻿namespace ISA
 
 open Fable.Core
+open ISA.Aux
 
 [<AttachMembers>]
 type ArcStudy = 
@@ -69,10 +70,12 @@ type ArcStudy =
             (this.Comments = None)
 
     [<NamedParams>]
-    static member create (?ID, ?FileName, ?Identifier, ?Title, ?Description, ?SubmissionDate, ?PublicReleaseDate, ?Publications, ?Contacts, ?StudyDesignDescriptors, ?Materials, ?Tables, ?Assays, ?Factors, ?CharacteristicCategories, ?UnitCategories, ?Comments) = 
+    static member create (identifier : string, ?ID, ?FileName, ?Title, ?Description, ?SubmissionDate, ?PublicReleaseDate, ?Publications, ?Contacts, ?StudyDesignDescriptors, ?Materials, ?Tables, ?Assays, ?Factors, ?CharacteristicCategories, ?UnitCategories, ?Comments) = 
         let tables = defaultArg Tables <| ResizeArray()
         let assays = defaultArg Assays <| ResizeArray()
-        ArcStudy.make ID FileName Identifier Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Materials tables assays Factors CharacteristicCategories UnitCategories Comments
+        ArcStudy.make ID FileName (Option.fromValueWithDefault "" identifier) Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Materials tables assays Factors CharacteristicCategories UnitCategories Comments
+
+    static member createEmpty() = ArcStudy.make None None None None None None None None None None None (ResizeArray()) (ResizeArray()) None None None None
 
     static member tryGetAssayByID (assayIdentifier : string) (study : Study) : Assay option = 
         raise (System.NotImplementedException())

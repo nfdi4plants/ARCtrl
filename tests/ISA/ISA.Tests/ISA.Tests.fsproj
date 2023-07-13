@@ -18,6 +18,7 @@
     <Compile Include="ArcAssay.Tests.fs" />
     <Compile Include="DataModel.Tests.fs" />
     <Compile Include="Update.Tests.fs" />
+    <Compile Include="Fable.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

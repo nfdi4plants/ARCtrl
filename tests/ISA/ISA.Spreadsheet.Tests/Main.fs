@@ -9,6 +9,10 @@ open Expecto
 #endif
 let all = testSequenced <| testList "All" [
     ArcInvestigationTests.main
+    CompositeColumnTests.main
+    ArcTableTests.main
+    ArcAssayTests.main
+    SparseTableTests.main
 ]
 
 let [<EntryPoint>] main argv = 

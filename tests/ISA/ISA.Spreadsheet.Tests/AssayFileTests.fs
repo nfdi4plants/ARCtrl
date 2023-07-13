@@ -1,15 +1,16 @@
-﻿module AssayFileTests
+﻿module ArcAssayTests
 
 
-open ISA
-
+#if FABLE_COMPILER
+open Fable.Mocha
+#else
 open Expecto
-//open TestingUtils
+#endif
 
 open ISA
+open TestingUtils
 open ISA.Spreadsheet
 
-[<Tests>]
 let testColumnHeaderFunctions = 
 
     testList "ColumnHeaderFunctionTests" [
@@ -90,7 +91,6 @@ let testColumnHeaderFunctions =
         //)
     ]
 
-[<Tests>]
 let testNodeGetterFunctions =
 
     //let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
@@ -383,7 +383,6 @@ let testNodeGetterFunctions =
         //)
     ]
 
-[<Tests>]
 let testProcessGetter =
 
     //let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
@@ -442,8 +441,8 @@ let testProcessGetter =
         //    let factors =           API.Process.getFactors processV
         //    let protocol =         processV.ExecutesProtocol.Value
 
-        //    Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
-        //    Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
+        //    mySequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
+        //    mySequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
         //    Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
 
         //)
@@ -471,8 +470,8 @@ let testProcessGetter =
         //    let factors =           API.Process.getFactors processV
         //    let protocol =         processV.ExecutesProtocol.Value
 
-        //    Expect.sequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
-        //    Expect.sequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
+        //    mySequenceEqual characteristics [expectedCharacteristic] "Characteristics were parsed incorrectly"
+        //    mySequenceEqual factors [expectedFactor] "Factors were parsed incorrectly"
         //    Expect.equal protocol expectedProtocol "Protocol was parsed incorrectly"
 
         //    Expect.equal processV expectedProcess "Process was retrieved incorrectly"
@@ -480,7 +479,6 @@ let testProcessGetter =
         //)
     ]
 
-[<Tests>]
 let testProcessComparisonFunctions = 
 
     //let parameters = 
@@ -538,8 +536,8 @@ let testProcessComparisonFunctions =
         //    Expect.isSome mergedProcess.Inputs "Inputs were dropped"
         //    Expect.isSome mergedProcess.Outputs "Outputs were dropped"
 
-        //    Expect.sequenceEqual mergedProcess.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source2;ProcessInput.Source source3;ProcessInput.Source source4] "Inputs were not merged correctly"
-        //    Expect.sequenceEqual mergedProcess.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample2;ProcessOutput.Sample sample3;ProcessOutput.Sample sample4] "Inputs were not merged correctly"
+        //    mySequenceEqual mergedProcess.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source2;ProcessInput.Source source3;ProcessInput.Source source4] "Inputs were not merged correctly"
+        //    mySequenceEqual mergedProcess.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample2;ProcessOutput.Sample sample3;ProcessOutput.Sample sample4] "Inputs were not merged correctly"
         //)        
         //testCase "MergeProcessesDifferentParams" (fun () ->
 
@@ -558,14 +556,14 @@ let testProcessComparisonFunctions =
         //    Expect.isSome mergedProcess1.Inputs "Inputs were dropped for mergedProcess1"
         //    Expect.isSome mergedProcess1.Outputs "Outputs were dropped for mergedProcess1"
 
-        //    Expect.sequenceEqual mergedProcess1.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source2] "Inputs were not merged correctly for mergedProcess1"
-        //    Expect.sequenceEqual mergedProcess1.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample2] "Inputs were not merged correctly for mergedProcess1"
+        //    mySequenceEqual mergedProcess1.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source2] "Inputs were not merged correctly for mergedProcess1"
+        //    mySequenceEqual mergedProcess1.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample2] "Inputs were not merged correctly for mergedProcess1"
         
         //    Expect.isSome mergedProcess2.Inputs "Inputs were dropped for mergedProcess2"
         //    Expect.isSome mergedProcess2.Outputs "Outputs were dropped for mergedProcess2"
 
-        //    Expect.sequenceEqual mergedProcess2.Inputs.Value [ProcessInput.Source source3;ProcessInput.Source source4] "Inputs were not merged correctly for mergedProcess2"
-        //    Expect.sequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample3;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
+        //    mySequenceEqual mergedProcess2.Inputs.Value [ProcessInput.Source source3;ProcessInput.Source source4] "Inputs were not merged correctly for mergedProcess2"
+        //    mySequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample3;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
         
         //)
         //testCase "MergeProcessesDifferentProtocols" (fun () ->
@@ -585,14 +583,14 @@ let testProcessComparisonFunctions =
         //    Expect.isSome mergedProcess1.Inputs "Inputs were dropped for mergedProcess1"
         //    Expect.isSome mergedProcess1.Outputs "Outputs were dropped for mergedProcess1"
 
-        //    Expect.sequenceEqual mergedProcess1.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source3] "Inputs were not merged correctly for mergedProcess1"
-        //    Expect.sequenceEqual mergedProcess1.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample3] "Inputs were not merged correctly for mergedProcess1"
+        //    mySequenceEqual mergedProcess1.Inputs.Value [ProcessInput.Source source1;ProcessInput.Source source3] "Inputs were not merged correctly for mergedProcess1"
+        //    mySequenceEqual mergedProcess1.Outputs.Value [ProcessOutput.Sample sample1;ProcessOutput.Sample sample3] "Inputs were not merged correctly for mergedProcess1"
         
         //    Expect.isSome mergedProcess2.Inputs "Inputs were dropped for mergedProcess2"
         //    Expect.isSome mergedProcess2.Outputs "Outputs were dropped for mergedProcess2"
 
-        //    Expect.sequenceEqual mergedProcess2.Inputs.Value [ProcessInput.Source source2;ProcessInput.Source source4] "Inputs were not merged correctly for mergedProcess2"
-        //    Expect.sequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample2;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
+        //    mySequenceEqual mergedProcess2.Inputs.Value [ProcessInput.Source source2;ProcessInput.Source source4] "Inputs were not merged correctly for mergedProcess2"
+        //    mySequenceEqual mergedProcess2.Outputs.Value [ProcessOutput.Sample sample2;ProcessOutput.Sample sample4] "Inputs were not merged correctly for mergedProcess2"
         
         //)
         //testCase "IndexIdenticalProcessesByProtocolName" (fun () ->
@@ -608,7 +606,7 @@ let testProcessComparisonFunctions =
 
         //    let expectedNames = ["Process_0";"Process_1";"Process_2";"Process_3"]
 
-        //    Expect.sequenceEqual names expectedNames "Processes were not indexed correctly"
+        //    mySequenceEqual names expectedNames "Processes were not indexed correctly"
         //)
         //testCase "MergeSampleInfoTransformToSource" (fun () ->
             
@@ -626,7 +624,7 @@ let testProcessComparisonFunctions =
                 
         //        ]
 
-        //    Expect.sequenceEqual updatedProcesses expectedProcessSequence "Source with same name as sample should have been converted to sample"        
+        //    mySequenceEqual updatedProcesses expectedProcessSequence "Source with same name as sample should have been converted to sample"        
         //)
         //testCase "MergeSampleInfo" (fun () ->
             
@@ -661,68 +659,82 @@ let testProcessComparisonFunctions =
         //)
     ]
 
-
-[<Tests>]
 let testMetaDataFunctions = 
 
-    //let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
-    //let referenceAssayFilePath = System.IO.Path.Combine(sourceDirectory,"AssayMetadataTestFile.xlsx")
+    testList "AssayMetadataTests" [
+        testCase "ReaderSuccess" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
-    testList "MetaDataTests" [
-        //testCase "CanReadMetaData" (fun () ->
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
 
-        //    let doc = Spreadsheet.fromFile referenceAssayFilePath false
+        )
 
-        //    let sst = Spreadsheet.getSharedStringTable doc
+        testCase "WriterSuccess" (fun () ->
 
-        //    let rows = 
-        //        Spreadsheet.tryGetSheetBySheetName "Investigation" doc
-        //        |> Option.get
-        //        |> SheetData.getRows
-        //        |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst))
-        //        |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
+            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata
 
-        //    let readingSuccess = 
-        //        try 
-        //            AssayFile.MetaData.fromRows rows |> ignore
-        //            Result.Ok "DidRun"
-        //        with
-        //        | err -> Result.Ok(sprintf "Reading the test metadata failed: %s" err.Message)
+            let writingSuccess = 
+                try 
+                    ArcAssay.toMetadataSheet a |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
 
-        //    Expect.isOk readingSuccess (Result.getMessage readingSuccess)
-        //)
-        //testCase "ReadsMetaDataCorrectly" (fun () ->
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
 
-        //    let doc = Spreadsheet.fromFile referenceAssayFilePath false
-
-        //    let sst = Spreadsheet.getSharedStringTable doc
-
-        //    let rows = 
-        //        Spreadsheet.tryGetSheetBySheetName "Investigation" doc
-        //        |> Option.get
-        //        |> SheetData.getRows
-        //        |> Seq.map (Row.mapCells (Cell.includeSharedStringValue sst))
-        //        |> Seq.map (Row.getIndexedValues None >> Seq.map (fun (i,v) -> (int i) - 1, v))
-
-        //    let assay,contacts = AssayFile.MetaData.fromRows rows 
-
-        //    let testAssay = Assays.fromString "protein expression profiling" "OBI" "http://purl.obolibrary.org/obo/OBI_0000615" "mass spectrometry" "OBI" "" "iTRAQ" "" []
-
-        //    let testContact = Contacts.fromString "Leo" "Zeef" "A" "" "" "" "Oxford Road, Manchester M13 9PT, UK" "Faculty of Life Sciences, Michael Smith Building, University of Manchester" "author" "" "" [Comment.fromString "Worksheet" "Sheet3"]
+        testCase "OutputMatchesInput" (fun () ->
+           
+            let o = 
+                TestObjects.Assay.assayMetadata
+                |> ArcAssay.fromMetadataSheet
+                |> ArcAssay.toMetadataSheet
                 
-        //    Expect.isSome assay "Assay metadata information could not be read from metadata sheet"
+            Expect.workSheetEqual o TestObjects.Assay.assayMetadata "Written assay metadata does not match read assay metadata"
+        )
 
-        //    Expect.equal assay.Value testAssay "Assay metadata information could not be correctly read from metadata sheet"
+        testCase "ReaderSuccessEmpty" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+        )
 
-        //    Expect.hasLength contacts 3 "Wrong count of parsed contacts"
+        testCase "WriterSuccessEmpty" (fun () ->
 
-        //    Expect.equal contacts.[2] testContact "Test Person could not be correctly read from metadata sheet"
-        //)
+            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty
 
-    ]
-    |> testSequenced
+            let writingSuccess = 
+                try 
+                    ArcAssay.toMetadataSheet a |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the Empty test file failed: %s" err.Message)
 
-[<Tests>]
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        testCase "OutputMatchesInputEmpty" (fun () ->
+           
+            let o = 
+                TestObjects.Assay.assayMetadataEmpty
+                |> ArcAssay.fromMetadataSheet
+                |> ArcAssay.toMetadataSheet
+                
+            Expect.workSheetEqual o TestObjects.Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
+        )
+        ]
+
 let testAssayFileReader = 
 
     //let sourceDirectory = __SOURCE_DIRECTORY__ + @"/TestFiles/"
@@ -783,9 +795,9 @@ let testAssayFileReader =
         //    let factors = API.Assay.getFactors assay
         //    let protocols = API.Assay.getProtocols assay
 
-        //    Expect.sequenceEqual factors expectedFactors        "Factors were read incorrectly"
-        //    Expect.sequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
-        //    Expect.sequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
+        //    mySequenceEqual factors expectedFactors        "Factors were read incorrectly"
+        //    mySequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
+        //    mySequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
 
         //    Expect.isSome assay.FileName "FileName was not read"
         //    Expect.equal assay.FileName.Value fileName "FileName was not read correctly"
@@ -799,7 +811,7 @@ let testAssayFileReader =
         //    Expect.isSome assay.ProcessSequence "Processes were not read"
         //    assay.ProcessSequence.Value
         //    |> Seq.map (fun p -> Option.defaultValue "" p.Name)
-        //    |> fun names -> Expect.sequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
+        //    |> fun names -> mySequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
 
         //)
         //testCase "AroundTheWorldComponents" (fun () ->        
@@ -831,7 +843,7 @@ let testAssayFileReader =
         //        Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
         //        Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
         //    ) 
-        //    Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+        //    mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
         //testCase "AroundTheWorldProtocolType" (fun () ->        
@@ -864,7 +876,13 @@ let testAssayFileReader =
         //        Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
         //        Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
         //    ) 
-        //    Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+        //    mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
+    ]
+
+
+let main = 
+    testList "AssayFile" [
+        testMetaDataFunctions
     ]

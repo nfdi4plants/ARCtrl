@@ -14,6 +14,8 @@ Top level ARC DataModel and API function descriptions.
 
 [ISA README.md](src/ISA/README.md) :books:
 
+[Contracts README.md](src/ArcContract/README.md) :books:
+
 # Jargon/Nomenclature
 
 In general, a distinction is made between `DataModel`s,  `API`s, and `Tools`:

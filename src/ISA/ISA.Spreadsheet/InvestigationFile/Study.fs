@@ -162,7 +162,7 @@ module Studies =
 
     
     let toRows (study : ArcStudy) =
-        let protocols = study.Tables |> Seq.collect (fun p -> p |> ArcTable.getProtocols) |> List.ofSeq
+        let protocols = study.Tables |> Seq.collect (fun p -> p.GetProtocols()) |> List.ofSeq
         seq {          
             yield! StudyInfo.toRows study
 

@@ -1,7 +1,7 @@
 ﻿namespace ISA.Spreadsheet
 
         
-module internal Seq = 
+module Seq = 
     
     /// If at least i values exist in seq a, builds a new array that contains the elements of the given seq, exluding the first i elements
     let trySkip i s =
