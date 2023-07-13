@@ -20,6 +20,8 @@
     <ProjectReference Include="..\CWL\CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\FileSystem.fsproj" />
     <ProjectReference Include="..\ISA\ISA\ISA.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Json\ISA.Json.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -75,10 +75,8 @@ module ArcInvestigation =
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" investigation.SubmissionDate))
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" investigation.PublicReleaseDate))
 
-            match investigation.Comments with 
-            | None -> ()
-            | Some c ->
-                c
+            if investigation.Comments.IsEmpty |> not then
+                investigation.Comments
                 |> List.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
@@ -97,7 +95,7 @@ module ArcInvestigation =
             |> InvestigationInfo.ToSparseTable
             |> SparseTable.ToRows
  
-    let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts studies remarks =
+    let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts (studies: ArcStudy list) remarks =
         ArcInvestigation.make 
             None 
             None 
@@ -106,11 +104,11 @@ module ArcInvestigation =
             (Option.fromValueWithDefault "" investigationInfo.Description) 
             (Option.fromValueWithDefault "" investigationInfo.SubmissionDate) 
             (Option.fromValueWithDefault "" investigationInfo.PublicReleaseDate)
-            (Option.fromValueWithDefault [] ontologySourceReference) 
-            (Option.fromValueWithDefault [] publications)  
-            (Option.fromValueWithDefault [] contacts)  
-            (Option.fromValueWithDefault [] studies)  
-            (Option.fromValueWithDefault [] investigationInfo.Comments)  
+            (ontologySourceReference) 
+            (publications)  
+            (contacts)  
+            (ResizeArray(studies))  
+            (investigationInfo.Comments)  
             remarks
 
 
@@ -175,18 +173,18 @@ module ArcInvestigation =
             with | _ -> rows |> Seq.toList
         seq {
             yield  SparseRow.fromValues [ontologySourceReferenceLabel]
-            yield! OntologySourceReference.toRows (Option.defaultValue [] investigation.OntologySourceReferences)
+            yield! OntologySourceReference.toRows (investigation.OntologySourceReferences)
 
             yield  SparseRow.fromValues [investigationLabel]
             yield! InvestigationInfo.toRows investigation
 
             yield  SparseRow.fromValues [publicationsLabel]
-            yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] investigation.Publications)
+            yield! Publications.toRows (Some publicationsLabelPrefix) (investigation.Publications)
 
             yield  SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] investigation.Contacts)
+            yield! Contacts.toRows (Some contactsLabelPrefix) (investigation.Contacts)
 
-            for study in (Option.defaultValue [ArcStudy.createEmpty()] investigation.Studies) do
+            for study in (List.ofSeq investigation.Studies) do
                 yield  SparseRow.fromValues [studyLabel]
                 yield! Studies.toRows study
         }

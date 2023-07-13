@@ -23,7 +23,7 @@ let private tests_EmptyObjectCreation =
             Expect.isNone s.ID "Should be None"                 
         )
         testCase "MakeEmptyInvestigation" (fun () ->
-            let i = ArcInvestigation.make None None None None None None None None None None None None []
+            let i = ArcInvestigation.make None None None None None None None [] [] [] (ResizeArray()) [] []
             Expect.isNone i.ID "Should be None"
         )
         testCase "InitEmptyInvestigation" (fun () ->

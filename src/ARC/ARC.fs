@@ -76,7 +76,7 @@ type ARC =
         let assayFolderPath = Path.combineAssayFolderPath assay
         let assaySubFolderPaths = Path.combineAssaySubfolderPaths assay
         let assayReadmeFilePath = Path.combine assayFolderPath Path.assayReadmeFileName
-        let updatedInvestigation = ArcInvestigation.addAssay assay studyIdentifier arc.ISA
+        //let updatedInvestigation = ArcInvestigation.addAssay assay studyIdentifier arc.ISA
         arc
         // - FileSystem - //
         //// Create assay root folder in ARC.FileSystem

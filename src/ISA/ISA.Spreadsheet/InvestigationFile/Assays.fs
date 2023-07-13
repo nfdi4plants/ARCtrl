@@ -33,8 +33,8 @@ module Assays =
             (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
             (Option.fromValueWithDefault "" technologyPlatform)
             (ResizeArray())             
-            None 
-            (Option.fromValueWithDefault [] comments)
+            [] 
+            (comments)
         
     let fromSparseTable (matrix : SparseTable) : ArcAssay list=
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -78,10 +78,8 @@ module Assays =
             do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
             do matrix.Matrix.Add ((fileNameLabel,i),                              (Option.defaultValue "" a.FileName))
 
-            match a.Comments with 
-            | None -> ()
-            | Some c ->
-                c
+            if a.Comments.IsEmpty |> not then
+                a.Comments
                 |> List.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys

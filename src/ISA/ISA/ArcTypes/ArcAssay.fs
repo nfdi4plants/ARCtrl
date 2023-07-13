@@ -13,12 +13,12 @@ type ArcAssay =
         ID : URI option
         /// Must be unique in one study
         FileName : string option
-        MeasurementType : OntologyAnnotation option
-        TechnologyType : OntologyAnnotation option
-        TechnologyPlatform : string option
+        mutable MeasurementType : OntologyAnnotation option
+        mutable TechnologyType : OntologyAnnotation option
+        mutable TechnologyPlatform : string option
         Tables : ResizeArray<ArcTable>
-        Performers : Person list option
-        Comments : Comment list option
+        mutable Performers : Person list
+        mutable Comments : Comment list
     }
    
     static member make 
@@ -28,8 +28,8 @@ type ArcAssay =
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : string option)
         (tables : ResizeArray<ArcTable>)
-        (performers : Person list option)
-        (comments : Comment list option) = 
+        (performers : Person list)
+        (comments : Comment list) = 
         {
             ID = id
             FileName = fileName
@@ -50,10 +50,12 @@ type ArcAssay =
     [<NamedParams>]
     static member create (fileName : string, ?id : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
         let tables = defaultArg tables <| ResizeArray()
+        let performers = defaultArg performers []
+        let comments = defaultArg comments []
         ArcAssay.make id (Option.fromValueWithDefault "" fileName) measurementType technologyType technologyPlatform tables performers comments
 
     static member createEmpty () = 
-        ArcAssay.make None None None None None (ResizeArray()) None None
+        ArcAssay.make None None None None None (ResizeArray()) [] []
 
     // - Table API - //
     // remark should this return ArcTable?

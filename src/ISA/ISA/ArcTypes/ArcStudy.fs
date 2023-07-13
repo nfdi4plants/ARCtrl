@@ -3,29 +3,38 @@
 open Fable.Core
 open ISA.Aux
 
+module ArcStudyAux =
+    module SanityChecks = 
+        let inline validateUniqueStudyIdentifier (assay: ArcAssay) (existingAssays: seq<ArcAssay>) =
+            match Seq.tryFindIndex (fun x -> x.FileName = assay.FileName) existingAssays with
+            | Some i ->
+                failwith $"Cannot create assay with name {assay.FileName}, as assay names must be unique and assay at index {i} has the same name."
+            | None ->
+                ()
+
 [<AttachMembers>]
 type ArcStudy = 
     {
         ID : URI option
-        FileName : string option
+        mutable FileName : string option
         Identifier : string option
-        Title : string option
-        Description : string option
-        SubmissionDate : string option
-        PublicReleaseDate : string option
-        Publications : Publication list option
-        Contacts : Person list option
-        StudyDesignDescriptors : OntologyAnnotation list option
-        Materials : StudyMaterials option
+        mutable Title : string option
+        mutable Description : string option
+        mutable SubmissionDate : string option
+        mutable PublicReleaseDate : string option
+        mutable Publications : Publication list
+        mutable Contacts : Person list
+        mutable StudyDesignDescriptors : OntologyAnnotation list
+        mutable Materials : StudyMaterials option
         Tables : ResizeArray<ArcTable>
         // Make this mutable?
         Assays : ResizeArray<ArcAssay>
-        Factors : Factor list option
+        mutable Factors : Factor list
         /// List of all the characteristics categories (or material attributes) defined in the study, used to avoid duplication of their declaration when each material_attribute_value is created. 
-        CharacteristicCategories : MaterialAttribute list option
+        mutable CharacteristicCategories : MaterialAttribute list
         /// List of all the unitsdefined in the study, used to avoid duplication of their declaration when each value is created.
-        UnitCategories : OntologyAnnotation list option
-        Comments : Comment list option
+        mutable UnitCategories : OntologyAnnotation list
+        mutable Comments : Comment list
     }
 
     static member make id fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors materials tables assays factors characteristicCategories unitCategories comments = 
@@ -58,41 +67,41 @@ type ArcStudy =
             (this.Description = None) &&
             (this.SubmissionDate = None) &&
             (this.PublicReleaseDate = None) &&
-            (this.Publications = None) &&
-            (this.Contacts = None) &&
-            (this.StudyDesignDescriptors = None) &&
+            (this.Publications = []) &&
+            (this.Contacts = []) &&
+            (this.StudyDesignDescriptors = []) &&
             (this.Materials = None) &&
             (this.Tables.Count = 0) &&
             (this.Assays.Count = 0) &&
-            (this.Factors = None) &&
-            (this.CharacteristicCategories = None) &&
-            (this.UnitCategories = None) &&
-            (this.Comments = None)
+            (this.Factors = []) &&
+            (this.CharacteristicCategories = []) &&
+            (this.UnitCategories = []) &&
+            (this.Comments = [])
 
     [<NamedParams>]
-    static member create (identifier : string, ?ID, ?FileName, ?Title, ?Description, ?SubmissionDate, ?PublicReleaseDate, ?Publications, ?Contacts, ?StudyDesignDescriptors, ?Materials, ?Tables, ?Assays, ?Factors, ?CharacteristicCategories, ?UnitCategories, ?Comments) = 
-        let tables = defaultArg Tables <| ResizeArray()
-        let assays = defaultArg Assays <| ResizeArray()
-        ArcStudy.make ID FileName (Option.fromValueWithDefault "" identifier) Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Materials tables assays Factors CharacteristicCategories UnitCategories Comments
+    static member create (identifier : string, ?id, ?fileName, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?materials, ?tables, ?assays, ?factors, ?characteristicCategories, ?unitCategories, ?comments) = 
+        let tables = defaultArg tables <| ResizeArray()
+        let assays = defaultArg assays <| ResizeArray()
+        let publications = defaultArg publications []
+        let contacts = defaultArg contacts []
+        let studyDesignDescriptors = defaultArg studyDesignDescriptors []
+        let factors = defaultArg factors []
+        let characteristicCategories = defaultArg characteristicCategories []
+        let unitCategories = defaultArg unitCategories []
+        let comments = defaultArg comments []
+        ArcStudy.make id fileName (Option.fromValueWithDefault "" identifier) title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors materials tables assays factors characteristicCategories unitCategories comments
 
-    static member createEmpty() = ArcStudy.make None None None None None None None None None None None (ResizeArray()) (ResizeArray()) None None None None
+    static member createEmpty() = ArcStudy.make None None None None None None None [] [] [] None (ResizeArray()) (ResizeArray()) [] [] [] []
 
-    static member tryGetAssayByID (assayIdentifier : string) (study : Study) : Assay option = 
-        raise (System.NotImplementedException())
+    //static member fromStudy (study : Study) : ArcStudy = 
+    //    raise (System.NotImplementedException())
 
-    static member updateAssayByID (assay : Assay) (assayIdentifier : string) (study : Study) : Study = 
-        ArcStudy.tryGetAssayByID assayIdentifier study |> ignore
-        raise (System.NotImplementedException())
-
-
-    static member fromStudy (study : Study) : ArcStudy = 
-        raise (System.NotImplementedException())
-
-    static member toStudy (arcStudy : ArcStudy) : Study =
-        raise (System.NotImplementedException())
+    //static member toStudy (arcStudy : ArcStudy) : Study =
+    //    raise (System.NotImplementedException())
 
     // - Assay API - CRUD //
     member this.AddAssay(assay: ArcAssay) =
+        ArcStudyAux.SanityChecks.validateUniqueStudyIdentifier assay this.Assays
         this.Assays.Add(assay)
 
     static member addAssay(assay: ArcAssay) =
@@ -106,7 +115,7 @@ type ArcStudy =
         let assay = ArcAssay.create(assayName)
         this.Assays.Add(assay)
 
-    static member addAssay(assayName: string) =
+    static member addAssayEmpty(assayName: string) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
             let assay = ArcAssay.create(assayName)

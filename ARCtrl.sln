@@ -124,6 +124,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", 
 		playground\testScript.fsx = playground\testScript.fsx
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem.JsNativeTests", "FileSystem.JsNativeTests", "{000B0238-BF76-416C-B4FB-5C2C76F6289D}"
+	ProjectSection(SolutionItems) = preProject
+		tests\FileSystem\FileSystem.JsNativeTests\Main.js = tests\FileSystem\FileSystem.JsNativeTests\Main.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -206,6 +211,7 @@ Global
 		{A30B3744-BCE2-4551-81A5-5E20BBAA47B3} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{E36B41EF-DD2A-45EB-912C-E637BBDBFDDE} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{D7397A55-93AE-4165-9E2D-D83A52C22D41} = {E36B41EF-DD2A-45EB-912C-E637BBDBFDDE}
+		{000B0238-BF76-416C-B4FB-5C2C76F6289D} = {E36B41EF-DD2A-45EB-912C-E637BBDBFDDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}

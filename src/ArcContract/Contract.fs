@@ -1,9 +1,8 @@
 ﻿namespace Contract
 
 open Fable.Core
+open FsSpreadsheet
 open Fable.Core.JsInterop
-
-type FsSpreadsheet = unit
 
 [<StringEnum>]
 [<RequireQualifiedAccess>]
@@ -28,7 +27,7 @@ type CLITool =
 [<Erase>]
 [<RequireQualifiedAccess>]
 type DTO =
-    | Spreadsheet of FsSpreadsheet
+    | Spreadsheet of FsWorkbook
     | Text of string
     | CLITool of CLITool
 
@@ -112,14 +111,14 @@ module Samples =
             op = UPDATE,
             path = "path/to/investigation.xlsx",          
             dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*investigation spreadsheet data here*))
+            dto = DTO.Spreadsheet (new FsWorkbook())
             
         ) 
         Contract.create(
             op = UPDATE,
             path = "path/to/study.xlsx",
             dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*study spreadsheet data here*))           
+            dto = DTO.Spreadsheet (new FsWorkbook())         
         ) 
     ]
 
@@ -135,7 +134,7 @@ module Samples =
             path = "path/to/investigation.xlsx",
             
             dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*study spreadsheet data here*))
+            dto = DTO.Spreadsheet (new FsWorkbook())
             
         )
     ]
@@ -147,7 +146,7 @@ module Samples =
             op = CREATE,
             path = "path/to/isa.assay.xlsx",
             dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*assay spreadsheet data here*))
+            dto = DTO.Spreadsheet (new FsWorkbook())
         ) 
         // create empty file assays/AssayName/dataset/.gitkeep 
         Contract.create(
@@ -172,7 +171,7 @@ module Samples =
             op = CREATE,
             path = "path/to/study.xlsx",
             dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*study spreadsheet data here*))
+            dto = DTO.Spreadsheet (new FsWorkbook())
         )
         // create empty file studies/StudyName/resources/.gitkeep 
         Contract.create(
@@ -196,6 +195,6 @@ module Samples =
             op = UPDATE,
             path = "path/to/investigation.xlsx",
             dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*investigation spreadsheet data here*))
+            dto = DTO.Spreadsheet (new FsWorkbook())
             ) 
     ]

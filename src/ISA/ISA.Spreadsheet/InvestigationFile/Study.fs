@@ -83,10 +83,8 @@ module Studies =
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
             do matrix.Matrix.Add ((fileNameLabel,i),            (Option.defaultValue "" study.FileName))
 
-            match study.Comments with 
-            | None -> ()
-            | Some c ->
-                c
+            if study.Comments.IsEmpty |> not then
+                study.Comments
                 |> List.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
@@ -113,16 +111,16 @@ module Studies =
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
             (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
-            (Option.fromValueWithDefault [] publications)
-            (Option.fromValueWithDefault [] contacts)
-            (Option.fromValueWithDefault [] designDescriptors) 
+            (publications)
+            (contacts)
+            (designDescriptors) 
             None 
             (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
             (ResizeArray(assays))
-            (Option.fromValueWithDefault [] factors) 
-            None 
-            None
-            (Option.fromValueWithDefault [] studyInfo.Comments)
+            (factors) 
+            []
+            []
+            (studyInfo.Comments)
 
     let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
 
@@ -167,13 +165,13 @@ module Studies =
             yield! StudyInfo.toRows study
 
             yield  SparseRow.fromValues [designDescriptorsLabel]
-            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
+            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (study.StudyDesignDescriptors)
 
             yield  SparseRow.fromValues [publicationsLabel]
-            yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
+            yield! Publications.toRows (Some publicationsLabelPrefix) (study.Publications)
 
             yield  SparseRow.fromValues [factorsLabel]
-            yield! Factors.toRows (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
+            yield! Factors.toRows (Some factorsLabelPrefix) (study.Factors)
 
             yield  SparseRow.fromValues [assaysLabel]
             yield! Assays.toRows (Some assaysLabelPrefix) (List.ofSeq study.Assays)
@@ -182,5 +180,5 @@ module Studies =
             yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
             yield  SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
+            yield! Contacts.toRows (Some contactsLabelPrefix) (study.Contacts)
         }

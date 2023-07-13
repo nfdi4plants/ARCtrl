@@ -3,55 +3,128 @@
 open Fable.Core
 open ISA.Aux
 
+module ArcInvestigationAux =
+    module SanityChecks = 
+        let inline validateUniqueStudyIdentifier (study: ArcStudy) (existingStudies: seq<ArcStudy>) =
+            match Seq.tryFindIndex (fun x -> x.Identifier = study.Identifier) existingStudies with
+            | Some i ->
+                failwith $"Cannot create study with name {study.Identifier}, as study names must be unique and study at index {i} has the same name."
+            | None ->
+                ()
+
 [<AttachMembers>]
 type ArcInvestigation = 
 
     {
         ID : URI option
-        FileName : string option
+        mutable FileName : string option
         Identifier : string option
-        Title : string option
-        Description : string option
-        SubmissionDate : string option
-        PublicReleaseDate : string option
-        OntologySourceReferences : OntologySourceReference list option
-        Publications : Publication list option
-        Contacts : Person list option
-        Studies : ArcStudy list option
-        Comments : Comment list option
-        Remarks     : Remark list
+        mutable Title : string option
+        mutable Description : string option
+        mutable SubmissionDate : string option
+        mutable PublicReleaseDate : string option
+        mutable OntologySourceReferences : OntologySourceReference list
+        mutable Publications : Publication list
+        mutable Contacts : Person list
+        Studies : ResizeArray<ArcStudy>
+        mutable Comments : Comment list
+        mutable Remarks : Remark list
     }
 
-    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list option) (publications : Publication list option) (contacts : Person list option) (studies : ArcStudy list option) (comments : Comment list option) (remarks : Remark list) : ArcInvestigation =
+    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
         {ID = id; FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
     [<NamedParams>]
-    static member create (identifier : string, ?Id : URI, ?FileName : string, ?Title : string, ?Description : string, ?SubmissionDate : string, ?PublicReleaseDate : string, ?OntologySourceReferences : OntologySourceReference list, ?Publications : Publication list, ?Contacts : Person list, ?Studies : ArcStudy list, ?Comments : Comment list, ?Remarks : Remark list) : ArcInvestigation =
-        ArcInvestigation.make Id FileName (Option.fromValueWithDefault "" identifier) Title Description SubmissionDate PublicReleaseDate OntologySourceReferences Publications Contacts Studies Comments (Remarks |> Option.defaultValue [])
+    static member create (identifier : string, ?id : URI, ?fileName : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) : ArcInvestigation =
+        let ontologySourceReferences = defaultArg ontologySourceReferences []
+        let publications = defaultArg publications []
+        let contacts = defaultArg contacts []
+        let studies = defaultArg studies (ResizeArray())
+        let comments = defaultArg comments []
+        let remarks = defaultArg remarks []
+        ArcInvestigation.make id fileName (Option.fromValueWithDefault "" identifier) title description submissionDate publicReleaseDate ontologySourceReferences publications contacts studies comments remarks
 
     static member createEmpty() =
-        ArcInvestigation.make None None None None None None None None None None None None []
+        ArcInvestigation.make None None None None None None None [] [] [] (ResizeArray()) [] []
 
-    static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
-        raise (System.NotImplementedException())
+    //static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
+    //    raise (System.NotImplementedException())
 
-    static member updateStudyByID (study : Study) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
-        ArcInvestigation.tryGetStudyByID studyIdentifier investigation |> ignore
-        raise (System.NotImplementedException())
+    //static member updateStudyByID (study : Study) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
+    //    ArcInvestigation.tryGetStudyByID studyIdentifier investigation |> ignore
+    //    raise (System.NotImplementedException())
 
-    static member addStudy (study : Study) (investigation : Investigation) : Investigation = 
-        raise (System.NotImplementedException())
+    // - Study API - CRUD //
+    member this.AddStudy(study: ArcStudy) =
+        ArcInvestigationAux.SanityChecks.validateUniqueStudyIdentifier study this.Studies
+        this.Studies.Add(study)
 
-    static member addAssay (assay : ArcAssay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
-        match ArcInvestigation.tryGetStudyByID studyIdentifier investigation with
-        | Some s ->
-             ArcStudy.addAssay (assay) |> ignore
-             ArcInvestigation.updateStudyByID |> ignore
+    static member addStudy(study: ArcStudy) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.AddStudy(study)
+            copy
 
-        | None ->
-             Study.create |> ignore
-             ArcInvestigation.addStudy |> ignore
-        raise (System.NotImplementedException())
+    // - Study API - CRUD //
+    member this.AddStudyEmpty(studyName: string) =
+        let study = ArcStudy.create(studyName)
+        this.Studies.Add(study)
+
+    static member addStudyEmpty(studyName: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            let study = ArcStudy.create(studyName)
+            copy.AddStudy(study)
+            copy
+
+    // - Study API - CRUD //
+    member this.RemoveStudyAt(index: int) =
+        this.Studies.RemoveAt(index)
+
+    static member removeStudyAt(index: int) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RemoveStudyAt(index)
+            newInv
+
+    // - Study API - CRUD //
+    member this.SetStudyAt(index: int, study: ArcStudy) =
+        ArcInvestigationAux.SanityChecks.validateUniqueStudyIdentifier study (this.Studies |> Seq.removeAt index)
+        this.Studies.[index] <- study
+
+    static member setStudyAt(index: int, study: ArcStudy) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.SetStudyAt(index, study)
+            newInv
+
+    // - Study API - CRUD //
+    member this.GetStudyAt(index: int) : ArcStudy =
+        this.Studies.[index]
+
+    static member getStudyAt(index: int) : ArcInvestigation -> ArcStudy =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.GetStudyAt(index)
+
+    member this.Copy() : ArcInvestigation =
+        let newStudies = ResizeArray()
+        for study in this.Studies do
+            let copy = study.Copy()
+            newStudies.Add(copy)
+        { this with 
+            Studies = newStudies
+        }
+    //static member addAssay (assay : ArcAssay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
+    //    match ArcInvestigation.tryGetStudyByID studyIdentifier investigation with
+    //    | Some s ->
+    //         ArcStudy.addAssay (assay) |> ignore
+    //         ArcInvestigation.updateStudyByID |> ignore
+
+    //    | None ->
+    //         Study.create |> ignore
+    //         ArcInvestigation.addStudy |> ignore
+    //    raise (System.NotImplementedException())
 
 
     

@@ -14,7 +14,9 @@ let [<Literal>] gitKeepFileName = ".gitkeep"
 let [<Literal>] assaysFolderName = "assays"
 let [<Literal>] assayProtocolsFolderName = "protocols"
 let [<Literal>] assayDatasetFolderName = "dataset"
-let [<Literal>] assayFileName = "isa.assay.xlsx"
+let [<Literal>] AssayFileName = "isa.assay.xlsx"
+let [<Literal>] StudyFileName = "isa.study.xlsx"
+let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
 let [<Literal>] assayReadmeFileName = "Readme.md"
 
 let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]

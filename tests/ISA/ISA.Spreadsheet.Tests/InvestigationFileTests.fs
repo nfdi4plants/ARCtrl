@@ -105,7 +105,7 @@ let private testInvestigationFile =
             let emptyInvestigation = ArcInvestigation.createEmpty()
             let wb = ArcInvestigation.toFsWorkbook emptyInvestigation
             let i = ArcInvestigation.fromFsWorkbook wb
-            Expect.isNone i.Studies "Empty study in investigation should be read to None, but here is Some"
+            Expect.isEmpty i.Studies "Empty study in investigation should be read to empty ResizeArray"
         )
 
         testCase "ReaderSuccessEmpty" (fun () -> 
