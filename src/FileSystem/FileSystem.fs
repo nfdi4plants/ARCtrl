@@ -17,12 +17,17 @@ type FileSystem =
             History = history
         }
 
-    member this.AddFile (path : string) : FileSystem =
+    member this.AddFile (path: string) : FileSystem =
         {
             this with
                 Tree = this.Tree.AddFile(path)
         }
 
+    static member addFile (path: string) =
+        fun (fs: FileSystem) -> fs.AddFile(path)
+
     static member fromFilePaths (paths : string []) : FileSystem =
         let tree = FileSystemTree.fromFilePaths paths
         FileSystem.create(tree)
+
+    

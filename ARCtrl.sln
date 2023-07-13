@@ -114,6 +114,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA.Spreadsheet.JsNativeTes
 		tests\ISA\ISA.Spreadsheet.JsNativeTests\Main.js = tests\ISA\ISA.Spreadsheet.JsNativeTests\Main.js
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{E36B41EF-DD2A-45EB-912C-E637BBDBFDDE}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FileSystem.Tests", "tests\FileSystem\FileSystem.Tests\FileSystem.Tests.fsproj", "{D7397A55-93AE-4165-9E2D-D83A52C22D41}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", "{45E972BE-0BFA-4DE3-B84A-D9F13C4E9D08}"
+	ProjectSection(SolutionItems) = preProject
+		playground\KevinF.fsx = playground\KevinF.fsx
+		playground\testScript.fsx = playground\testScript.fsx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -164,10 +174,10 @@ Global
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Release|Any CPU.Build.0 = Release|Any CPU
-		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{394EC95C-4B5E-4EBC-8022-DACC8B737A3C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -194,6 +204,8 @@ Global
 		{07C7942E-FC34-4C27-82C1-6B2972654BA7} = {C61B3F43-2255-4585-9110-F8AB74F02654}
 		{656E8DAF-EFCF-472E-91D0-987D09B74523} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{A30B3744-BCE2-4551-81A5-5E20BBAA47B3} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
+		{E36B41EF-DD2A-45EB-912C-E637BBDBFDDE} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{D7397A55-93AE-4165-9E2D-D83A52C22D41} = {E36B41EF-DD2A-45EB-912C-E637BBDBFDDE}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}
