@@ -17,6 +17,8 @@
     "test:live": "mocha --watch --parallel tests/ISA/ISA.JsNativeTests/fable",
     "pretestJavaScript": "dotnet fable src/ARC -o tests/JavaScript/ARC",
     "testJavaScript": "mocha tests/JavaScript",
+    "pretestPython": "dotnet fable src/ARC -o tests/Python/ARC --lang py ",
+    "testPython": "",
     "postinstall": "cd src/ISA & npm install"
   },
   "repository": {
