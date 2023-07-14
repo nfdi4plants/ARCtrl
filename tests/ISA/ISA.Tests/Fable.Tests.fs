@@ -27,7 +27,7 @@ let private tests_EmptyObjectCreation =
             Expect.isNone i.ID "Should be None"
         )
         testCase "InitEmptyInvestigation" (fun () ->
-            let i = 
+            let i : ArcInvestigation = 
                 {
                     ID = None 
                     FileName = None
@@ -36,11 +36,11 @@ let private tests_EmptyObjectCreation =
                     Description = None
                     SubmissionDate = None
                     PublicReleaseDate = None
-                    OntologySourceReferences = None
-                    Publications = None
-                    Contacts = None
-                    Studies = None
-                    Comments = None
+                    OntologySourceReferences = []
+                    Publications = []
+                    Contacts = []
+                    Studies = ResizeArray()
+                    Comments = []
                     Remarks = []                           
                 }
             Expect.isNone i.ID "Should be None"
