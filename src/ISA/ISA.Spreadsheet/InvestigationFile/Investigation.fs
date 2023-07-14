@@ -8,20 +8,20 @@ open System.Collections.Generic
 
 module ArcInvestigation = 
 
-    let identifierLabel = "Investigation Identifier"
-    let titleLabel = "Investigation Title"
-    let descriptionLabel = "Investigation Description"
-    let submissionDateLabel = "Investigation Submission Date"
-    let publicReleaseDateLabel = "Investigation Public Release Date"
+    let [<Literal>] identifierLabel = "Investigation Identifier"
+    let [<Literal>] titleLabel = "Investigation Title"
+    let [<Literal>] descriptionLabel = "Investigation Description"
+    let [<Literal>] submissionDateLabel = "Investigation Submission Date"
+    let [<Literal>] publicReleaseDateLabel = "Investigation Public Release Date"
 
-    let investigationLabel = "INVESTIGATION"
-    let ontologySourceReferenceLabel = "ONTOLOGY SOURCE REFERENCE"
-    let publicationsLabel = "INVESTIGATION PUBLICATIONS"
-    let contactsLabel = "INVESTIGATION CONTACTS"
-    let studyLabel = "STUDY"
+    let [<Literal>] investigationLabel = "INVESTIGATION"
+    let [<Literal>] ontologySourceReferenceLabel = "ONTOLOGY SOURCE REFERENCE"
+    let [<Literal>] publicationsLabel = "INVESTIGATION PUBLICATIONS"
+    let [<Literal>] contactsLabel = "INVESTIGATION CONTACTS"
+    let [<Literal>] studyLabel = "STUDY"
 
-    let publicationsLabelPrefix = "Investigation Publication"
-    let contactsLabelPrefix = "Investigation Person"
+    let [<Literal>] publicationsLabelPrefix = "Investigation Publication"
+    let [<Literal>] contactsLabelPrefix = "Investigation Person"
 
     
     type InvestigationInfo =
@@ -69,7 +69,7 @@ module ArcInvestigation =
             let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=2)
             let mutable commentKeys = []
 
-            do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" investigation.Identifier))
+            do matrix.Matrix.Add ((identifierLabel,i),          (investigation.Identifier))
             do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" investigation.Title))
             do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" investigation.Description))
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" investigation.SubmissionDate))
@@ -98,8 +98,7 @@ module ArcInvestigation =
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts (studies: ArcStudy list) remarks =
         ArcInvestigation.make 
             None 
-            None 
-            (Option.fromValueWithDefault "" investigationInfo.Identifier)
+            (investigationInfo.Identifier)
             (Option.fromValueWithDefault "" investigationInfo.Title)
             (Option.fromValueWithDefault "" investigationInfo.Description) 
             (Option.fromValueWithDefault "" investigationInfo.SubmissionDate) 
@@ -121,7 +120,7 @@ module ArcInvestigation =
             match lastLine with
 
             | Some k when k = ontologySourceReferenceLabel -> 
-                let currentLine,lineNumber,newRemarks,ontologySourceReferences = OntologySourceReference.fromRows (lineNumber + 1) en         
+                let currentLine,lineNumber,newRemarks,ontologySourceReferences = OntologySourceReference.fromRows (lineNumber + 1) en
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = investigationLabel -> 
@@ -138,10 +137,10 @@ module ArcInvestigation =
 
             | Some k when k = studyLabel -> 
                 let currentLine,lineNumber,newRemarks,study = Studies.fromRows (lineNumber + 1) en  
-                if study.isEmpty then
-                    loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
+                if study.IsSome then
+                    loop currentLine ontologySourceReferences investigationInfo publications contacts (study.Value::studies) (List.append remarks newRemarks) lineNumber
                 else 
-                    loop currentLine ontologySourceReferences investigationInfo publications contacts (study::studies) (List.append remarks newRemarks) lineNumber
+                    loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | k -> 
                 fromParts investigationInfo ontologySourceReferences publications contacts (List.rev studies) remarks

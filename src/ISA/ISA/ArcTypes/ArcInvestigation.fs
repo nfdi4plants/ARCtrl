@@ -16,9 +16,8 @@ module ArcInvestigationAux =
 type ArcInvestigation = 
 
     {
-        ID : URI option
         mutable FileName : string option
-        Identifier : string option
+        Identifier : string
         mutable Title : string option
         mutable Description : string option
         mutable SubmissionDate : string option
@@ -31,8 +30,8 @@ type ArcInvestigation =
         mutable Remarks : Remark list
     }
 
-    static member make (id : URI option) (filename : string option) (identifier : string option) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
-        {ID = id; FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
+    static member make (filename : string option) (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
+        {FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
     [<NamedParams>]
     static member create (identifier : string, ?id : URI, ?fileName : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) : ArcInvestigation =
@@ -42,10 +41,10 @@ type ArcInvestigation =
         let studies = defaultArg studies (ResizeArray())
         let comments = defaultArg comments []
         let remarks = defaultArg remarks []
-        ArcInvestigation.make id fileName (Option.fromValueWithDefault "" identifier) title description submissionDate publicReleaseDate ontologySourceReferences publications contacts studies comments remarks
+        ArcInvestigation.make fileName identifier title description submissionDate publicReleaseDate ontologySourceReferences publications contacts studies comments remarks
 
-    static member createEmpty() =
-        ArcInvestigation.make None None None None None None None [] [] [] (ResizeArray()) [] []
+    static member createEmpty(identifier: string) =
+        ArcInvestigation.make None identifier None None None None [] [] [] (ResizeArray()) [] []
 
     //static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
     //    raise (System.NotImplementedException())
@@ -109,7 +108,7 @@ type ArcInvestigation =
 
     // - Study API - CRUD //
     member this.GetStudy(studyIdentifier: string) : ArcStudy =
-        this.Studies.Find (fun s -> s.Identifier = Some studyIdentifier)
+        this.Studies.Find (fun s -> s.Identifier = studyIdentifier)
 
     static member getStudy(studyIdentifier: string) : ArcInvestigation -> ArcStudy =
         fun (inv: ArcInvestigation) ->

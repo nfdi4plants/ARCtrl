@@ -23,7 +23,7 @@ let private testInvestigationWriterComponents =
             Expect.equal sheet.Name "Investigation" "Worksheet could not be initialized"
         )
         testCase "InvestigationToRows" (fun () ->
-            let i = ArcInvestigation.createEmpty()
+            let i = ArcInvestigation.createEmpty("My Investigation")
             let rows = i |> ArcInvestigation.toRows
             Expect.isTrue (rows |> Seq.length |> (<) 0) "Investigation should have at least one row"
         )
@@ -33,7 +33,7 @@ let private testInvestigationWriterComponents =
             wb.AddWorksheet(sheet)                                    
         )
         testCase "FillWorksheet" (fun () ->
-            let i = ArcInvestigation.createEmpty()
+            let i = ArcInvestigation.createEmpty("My Identifier")
             let sheet = FsWorksheet("Investigation")
             let rows = i |> ArcInvestigation.toRows
             rows
@@ -41,7 +41,7 @@ let private testInvestigationWriterComponents =
             Expect.isTrue (sheet.Rows |> Seq.length |> (<) 0) "Worksheet should have at least one row"
         )
         testCase "AddFilledWorksheet" (fun () ->
-            let i = ArcInvestigation.createEmpty()
+            let i = ArcInvestigation.createEmpty("My Identifier")
             let wb = new FsWorkbook()
             let sheet = FsWorksheet("Investigation")
             let rows = i |> ArcInvestigation.toRows
@@ -102,7 +102,7 @@ let private testInvestigationFile =
         )
 
         testCase "ReaderIgnoresEmptyStudy" (fun () -> 
-            let emptyInvestigation = ArcInvestigation.createEmpty()
+            let emptyInvestigation = ArcInvestigation.createEmpty("My Identifier")
             let wb = ArcInvestigation.toFsWorkbook emptyInvestigation
             let i = ArcInvestigation.fromFsWorkbook wb
             Expect.isEmpty i.Studies "Empty study in investigation should be read to empty ResizeArray"

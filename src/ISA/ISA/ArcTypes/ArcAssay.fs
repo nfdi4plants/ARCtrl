@@ -9,10 +9,8 @@ open ISA.Aux
 type ArcAssay = 
 
     {
-        /// JSON-LD identifier. Only relevant for json io.
-        ID : URI option
         /// Must be unique in one study
-        FileName : string option
+        FileName : string
         mutable MeasurementType : OntologyAnnotation option
         mutable TechnologyType : OntologyAnnotation option
         mutable TechnologyPlatform : string option
@@ -22,8 +20,7 @@ type ArcAssay =
     }
    
     static member make 
-        (id : URI option)
-        (fileName : string option)
+        (fileName : string)
         (measurementType : OntologyAnnotation option)
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : string option)
@@ -31,7 +28,6 @@ type ArcAssay =
         (performers : Person list)
         (comments : Comment list) = 
         {
-            ID = id
             FileName = fileName
             MeasurementType = measurementType
             TechnologyType = technologyType
@@ -48,14 +44,14 @@ type ArcAssay =
         with get() = ArcTables(this.Tables).TableNames
 
     [<NamedParams>]
-    static member create (fileName : string, ?id : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
+    static member create (fileName : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
         let tables = defaultArg tables <| ResizeArray()
         let performers = defaultArg performers []
         let comments = defaultArg comments []
-        ArcAssay.make id (Option.fromValueWithDefault "" fileName) measurementType technologyType technologyPlatform tables performers comments
+        ArcAssay.make fileName measurementType technologyType technologyPlatform tables performers comments
 
-    static member createEmpty () = 
-        ArcAssay.make None None None None None (ResizeArray()) [] []
+    static member createEmpty (fileName : string) = 
+        ArcAssay.make fileName None None None (ResizeArray()) [] []
 
     // - Table API - //
     // remark should this return ArcTable?

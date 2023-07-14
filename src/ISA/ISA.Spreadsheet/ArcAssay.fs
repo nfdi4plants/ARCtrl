@@ -3,20 +3,19 @@
 open ISA
 open FsSpreadsheet
 
-let obsoloteAssaysLabel = "ASSAY METADATA"
-let assaysLabel = "ASSAY"
-let contactsLabel = "ASSAY PERFORMERS"
+let [<Literal>] obsoloteAssaysLabel = "ASSAY METADATA"
+let [<Literal>] assaysLabel = "ASSAY"
+let [<Literal>] contactsLabel = "ASSAY PERFORMERS"
 
-let metaDataSheetName = "Assay"
+let [<Literal>] metaDataSheetName = "Assay"
 
 let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
     let toRows (assay:ArcAssay) =
         seq {          
-
             yield  SparseRow.fromValues [assaysLabel]
             yield! Assays.toRows (None) [assay]
 
-            yield  SparseRow.fromValues [contactsLabel]
+            yield SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (None) (assay.Performers)
         }
     let sheet = FsWorksheet(metaDataSheetName)
@@ -41,9 +40,13 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
                 loop currentLine assays contacts lineNumber
 
             | k -> 
-                assays |> Seq.tryHead 
-                |> Option.defaultValue ({ArcAssay.create(sheet.Name) with FileName = None}) 
-                |> ArcAssay.setPerformers (contacts)
+                match assays, contacts with
+                | [], [] -> ArcAssay.create(Identifier.createMissingIdentifier())
+                | assays, contacts ->
+                    assays
+                    |> Seq.tryHead 
+                    |> Option.defaultValue (ArcAssay.create(Identifier.createMissingIdentifier()))
+                    |> ArcAssay.setPerformers contacts
         
         if en.MoveNext () then
             let currentLine = en.Current |> SparseRow.tryGetValueAt 0
@@ -66,7 +69,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
             fromMetadataSheet sheet
         | None -> 
             printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" sheet." metaDataSheetName
-            ArcAssay.create("New Assay")
+            ArcAssay.create(Identifier.createMissingIdentifier())
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
@@ -77,8 +80,9 @@ let fromFsWorkbook (doc:FsWorkbook) =
     }
 
 let toFsWorkbook (assay : ArcAssay) =
+    let assay = {assay with FileName = Identifier.removeMissingIdentifier(assay.FileName)}
     let doc = new FsWorkbook()
-    let metaDataSheet = toMetadataSheet assay
+    let metaDataSheet = toMetadataSheet (assay)
     doc.AddWorksheet metaDataSheet
 
     assay.Tables

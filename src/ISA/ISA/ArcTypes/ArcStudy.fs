@@ -15,9 +15,8 @@ module ArcStudyAux =
 [<AttachMembers>]
 type ArcStudy = 
     {
-        ID : URI option
         mutable FileName : string option
-        Identifier : string option
+        Identifier : string
         mutable Title : string option
         mutable Description : string option
         mutable SubmissionDate : string option
@@ -25,21 +24,15 @@ type ArcStudy =
         mutable Publications : Publication list
         mutable Contacts : Person list
         mutable StudyDesignDescriptors : OntologyAnnotation list
-        mutable Materials : StudyMaterials option
         Tables : ResizeArray<ArcTable>
         // Make this mutable?
         Assays : ResizeArray<ArcAssay>
         mutable Factors : Factor list
-        /// List of all the characteristics categories (or material attributes) defined in the study, used to avoid duplication of their declaration when each material_attribute_value is created. 
-        mutable CharacteristicCategories : MaterialAttribute list
-        /// List of all the unitsdefined in the study, used to avoid duplication of their declaration when each value is created.
-        mutable UnitCategories : OntologyAnnotation list
         mutable Comments : Comment list
     }
 
-    static member make id fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors materials tables assays factors characteristicCategories unitCategories comments = 
+    static member make fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments = 
         {
-            ID = id
             FileName = fileName
             Identifier = identifier
             Title = title
@@ -49,20 +42,18 @@ type ArcStudy =
             Publications = publications
             Contacts = contacts
             StudyDesignDescriptors = studyDesignDescriptors
-            Materials = materials
             Tables = tables
             Assays = assays
             Factors = factors
-            CharacteristicCategories = characteristicCategories
-            UnitCategories = unitCategories
             Comments = comments
         }
 
+    /// <summary>
+    /// Returns true if all fields are None/ empty sequences **except** Identifier.
+    /// </summary>
     member this.isEmpty 
         with get() =
-            (this.ID = None) &&
             (this.FileName = None) &&
-            (this.Identifier = None) &&
             (this.Title = None) &&
             (this.Description = None) &&
             (this.SubmissionDate = None) &&
@@ -70,28 +61,23 @@ type ArcStudy =
             (this.Publications = []) &&
             (this.Contacts = []) &&
             (this.StudyDesignDescriptors = []) &&
-            (this.Materials = None) &&
             (this.Tables.Count = 0) &&
             (this.Assays.Count = 0) &&
             (this.Factors = []) &&
-            (this.CharacteristicCategories = []) &&
-            (this.UnitCategories = []) &&
             (this.Comments = [])
 
     [<NamedParams>]
-    static member create (identifier : string, ?id, ?fileName, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?materials, ?tables, ?assays, ?factors, ?characteristicCategories, ?unitCategories, ?comments) = 
+    static member create (identifier : string, ?fileName, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
         let tables = defaultArg tables <| ResizeArray()
         let assays = defaultArg assays <| ResizeArray()
         let publications = defaultArg publications []
         let contacts = defaultArg contacts []
         let studyDesignDescriptors = defaultArg studyDesignDescriptors []
         let factors = defaultArg factors []
-        let characteristicCategories = defaultArg characteristicCategories []
-        let unitCategories = defaultArg unitCategories []
         let comments = defaultArg comments []
-        ArcStudy.make id fileName (Option.fromValueWithDefault "" identifier) title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors materials tables assays factors characteristicCategories unitCategories comments
+        ArcStudy.make fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments
 
-    static member createEmpty() = ArcStudy.make None None None None None None None [] [] [] None (ResizeArray()) (ResizeArray()) [] [] [] []
+    static member createEmpty(identifier : string) = ArcStudy.make None identifier None None None None [] [] [] (ResizeArray()) (ResizeArray()) [] []
 
     //static member fromStudy (study : Study) : ArcStudy = 
     //    raise (System.NotImplementedException())

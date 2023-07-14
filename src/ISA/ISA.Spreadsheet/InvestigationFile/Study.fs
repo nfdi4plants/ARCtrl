@@ -7,26 +7,26 @@ open System.Collections.Generic
 
 module Studies = 
 
-    let identifierLabel = "Study Identifier"
-    let titleLabel = "Study Title"
-    let descriptionLabel = "Study Description"
-    let submissionDateLabel = "Study Submission Date"
-    let publicReleaseDateLabel = "Study Public Release Date"
-    let fileNameLabel = "Study File Name"
+    let [<Literal>] identifierLabel = "Study Identifier"
+    let [<Literal>] titleLabel = "Study Title"
+    let [<Literal>] descriptionLabel = "Study Description"
+    let [<Literal>] submissionDateLabel = "Study Submission Date"
+    let [<Literal>] publicReleaseDateLabel = "Study Public Release Date"
+    let [<Literal>] fileNameLabel = "Study File Name"
 
-    let designDescriptorsLabelPrefix = "Study Design"
-    let publicationsLabelPrefix = "Study Publication"
-    let factorsLabelPrefix = "Study Factor"
-    let assaysLabelPrefix = "Study Assay"
-    let protocolsLabelPrefix = "Study Protocol"
-    let contactsLabelPrefix = "Study Person"
+    let [<Literal>] designDescriptorsLabelPrefix = "Study Design"
+    let [<Literal>] publicationsLabelPrefix = "Study Publication"
+    let [<Literal>] factorsLabelPrefix = "Study Factor"
+    let [<Literal>] assaysLabelPrefix = "Study Assay"
+    let [<Literal>] protocolsLabelPrefix = "Study Protocol"
+    let [<Literal>] contactsLabelPrefix = "Study Person"
 
-    let designDescriptorsLabel = "STUDY DESIGN DESCRIPTORS"
-    let publicationsLabel = "STUDY PUBLICATIONS"
-    let factorsLabel = "STUDY FACTORS"
-    let assaysLabel = "STUDY ASSAYS"
-    let protocolsLabel = "STUDY PROTOCOLS"
-    let contactsLabel = "STUDY CONTACTS"
+    let [<Literal>] designDescriptorsLabel = "STUDY DESIGN DESCRIPTORS"
+    let [<Literal>] publicationsLabel = "STUDY PUBLICATIONS"
+    let [<Literal>] factorsLabel = "STUDY FACTORS"
+    let [<Literal>] assaysLabel = "STUDY ASSAYS"
+    let [<Literal>] protocolsLabel = "STUDY PROTOCOLS"
+    let [<Literal>] contactsLabel = "STUDY CONTACTS"
 
     type StudyInfo =
         {
@@ -76,7 +76,7 @@ module Studies =
             let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
 
-            do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" study.Identifier))
+            do matrix.Matrix.Add ((identifierLabel,i),          study.Identifier)
             do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" study.Title))
             do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" study.Description))
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" study.SubmissionDate))
@@ -104,23 +104,20 @@ module Studies =
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
         ArcStudy.make 
-            None 
             (Option.fromValueWithDefault "" studyInfo.FileName)
-            (Option.fromValueWithDefault "" studyInfo.Identifier)
+            (studyInfo.Identifier)
             (Option.fromValueWithDefault "" studyInfo.Title)
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
             (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
             (publications)
             (contacts)
-            (designDescriptors) 
-            None 
+            (designDescriptors)  
             (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
             (ResizeArray(assays))
             (factors) 
-            []
-            []
             (studyInfo.Comments)
+        |> fun arcstudy -> if arcstudy.isEmpty && arcstudy.Identifier = "" then None else Some arcstudy
 
     let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
 

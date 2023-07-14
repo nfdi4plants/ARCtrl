@@ -3,10 +3,10 @@
 open ISA
 open FsSpreadsheet
 
-let obsoloteStudiesLabel = "STUDY METADATA"
-let studiesLabel = "STUDY"
+let [<Literal>] obsoloteStudiesLabel = "STUDY METADATA"
+let [<Literal>] studiesLabel = "STUDY"
 
-let metaDataSheetName = "Study"
+let [<Literal>] metaDataSheetName = "Study"
 
 
 let toMetadataSheet (study : ArcStudy) : FsWorksheet =
@@ -21,7 +21,7 @@ let toMetadataSheet (study : ArcStudy) : FsWorksheet =
     |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
     sheet
 
-let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy =
+let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy option =
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         en.MoveNext() |> ignore  
@@ -41,17 +41,20 @@ let fromFsWorkbook (doc:FsWorkbook) =
             fromMetadataSheet sheet
         | None -> 
             printfn "Cannot retrieve metadata: Study file does not contain \"%s\" sheet." metaDataSheetName
-            ArcStudy.createEmpty()     
+            None   
+        |> Option.defaultValue (ArcStudy.createEmpty(Identifier.createMissingIdentifier()))
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
     if sheets.IsEmpty then
         studyMetadata
-    else {
-        studyMetadata with Tables = ResizeArray(sheets)
-    }
+    else
+        {
+            studyMetadata with Tables = ResizeArray(sheets)
+        }
 
 let toFsWorkbook (study : ArcStudy) =
+    let study = {study with Identifier = Identifier.removeMissingIdentifier(study.Identifier)}
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet study
     doc.AddWorksheet metaDataSheet

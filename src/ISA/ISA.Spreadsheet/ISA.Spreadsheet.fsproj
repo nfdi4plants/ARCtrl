@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Identifier.fs" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CollectionAux.fs" />
     <Compile Include="Conversions.fs" />
