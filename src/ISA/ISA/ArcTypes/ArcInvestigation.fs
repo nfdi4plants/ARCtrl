@@ -33,6 +33,12 @@ type ArcInvestigation =
     static member make (filename : string option) (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
         {FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
 
+    member this.StudyCount 
+        with get() = this.Studies.Count
+
+    member this.StudyIdentifiers
+        with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier)
+
     [<NamedParams>]
     static member create (identifier : string, ?id : URI, ?fileName : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) : ArcInvestigation =
         let ontologySourceReferences = defaultArg ontologySourceReferences []
@@ -87,6 +93,18 @@ type ArcInvestigation =
             newInv
 
     // - Study API - CRUD //
+    member this.RemoveStudy(studyIdentifier: string) =
+        this.GetStudy(studyIdentifier)
+        |> this.Studies.Remove
+        |> ignore
+
+    static member removeStudy(studyIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.RemoveStudy(studyIdentifier)
+            copy
+
+    // - Study API - CRUD //
     member this.SetStudyAt(index: int, study: ArcStudy) =
         ArcInvestigationAux.SanityChecks.validateUniqueStudyIdentifier study (this.Studies |> Seq.removeAt index)
         this.Studies.[index] <- study
@@ -96,6 +114,26 @@ type ArcInvestigation =
             let newInv = inv.Copy()
             newInv.SetStudyAt(index, study)
             newInv
+
+    // - Study API - CRUD //
+    member this.SetStudy(studyIdentifier: string, study: ArcStudy) =
+        let index = this.GetStudyIndex studyIdentifier
+        ArcInvestigationAux.SanityChecks.validateUniqueStudyIdentifier study (this.Studies |> Seq.removeAt index)
+        this.Studies.[index] <- study
+
+    static member setStudy(studyIdentifier: string, study: ArcStudy) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.SetStudy(studyIdentifier, study)
+            newInv
+
+    // - Study API - CRUD //
+    member this.GetStudyIndex(studyIdentifier: string) : int =
+        this.Studies.FindIndex (fun s -> s.Identifier = studyIdentifier)
+
+    // - Study API - CRUD //
+    static member getStudyIndex(studyIdentifier: string) : ArcInvestigation -> int =
+        fun (inv: ArcInvestigation) -> inv.GetStudyIndex (studyIdentifier)
 
     // - Study API - CRUD //
     member this.GetStudyAt(index: int) : ArcStudy =
@@ -125,6 +163,18 @@ type ArcInvestigation =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
             copy.AddAssay(studyIdentifier, assay)
+            copy
+
+        // - Study API - CRUD //
+    member this.AddAssayAt(studyIndex: int, assay: ArcAssay) =
+        let study = this.GetStudyAt(studyIndex)
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay study.Assays
+        study.AddAssay(assay)
+
+    static member addAssayAt(studyIndex: int, assay: ArcAssay) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.AddAssayAt(studyIndex, assay)
             copy
 
     // - Study API - CRUD //
@@ -170,6 +220,17 @@ type ArcInvestigation =
         fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
             newInv.GetAssayAt(studyIdentifier, index)
+
+    // - Study API - CRUD //
+    member this.GetAssay(studyIdentifier: string, assayIdentifier: string) : ArcAssay =
+        let study = this.GetStudy(studyIdentifier)
+        let index = study.GetAssayIndex assayIdentifier
+        study.GetAssayAt index
+
+    static member getAssay(studyIdentifier: string, assayIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.GetAssay(studyIdentifier, assayIdentifier)
 
     member this.Copy() : ArcInvestigation =
         let newStudies = ResizeArray()

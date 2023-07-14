@@ -66,6 +66,12 @@ type ArcStudy =
             (this.Factors = []) &&
             (this.Comments = [])
 
+    member this.AssayCount 
+        with get() = this.Assays.Count
+
+    member this.AssayIdentifiers 
+        with get() = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.FileName)
+
     [<NamedParams>]
     static member create (identifier : string, ?fileName, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
         let tables = defaultArg tables <| ResizeArray()
@@ -128,6 +134,13 @@ type ArcStudy =
             newStudy
 
     // - Assay API - CRUD //
+    member this.GetAssayIndex(assayIdentifier: string) =
+        this.Assays.FindIndex (fun a -> a.FileName = assayIdentifier)
+
+    static member GetAssayIndex(assayIdentifier: string) : ArcStudy -> int =
+        fun (study: ArcStudy) -> study.GetAssayIndex(assayIdentifier)
+
+    // - Assay API - CRUD //
     member this.GetAssayAt(index: int) : ArcAssay =
         this.Assays.[index]
 
@@ -135,6 +148,16 @@ type ArcStudy =
         fun (study: ArcStudy) ->
             let newStudy = study.Copy()
             newStudy.GetAssayAt(index)
+
+    // - Assay API - CRUD //
+    member this.GetAssay(assayIdentifier: string) : ArcAssay =
+        let index = this.GetAssayIndex(assayIdentifier)
+        this.GetAssayAt index
+
+    static member getAssay(assayIdentifier: string) : ArcStudy -> ArcAssay =
+        fun (study: ArcStudy) ->
+            let newStudy = study.Copy()
+            newStudy.GetAssay(assayIdentifier)
 
     ////////////////////////////////////
     // - Copy & Paste from ArcAssay - //
