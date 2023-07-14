@@ -26,3 +26,6 @@ module Path =
                 p.Trim(seperators)
         )
         |> String.concat(string PathSeperator)
+
+    let getFileName (path: string) : string =
+        split path |> Array.last

@@ -46,25 +46,39 @@ let getReadContracts (filePaths) =
     let xlsxReadContractFromPath (path: string) = Contract.createRead(path, DTOType.Spreadsheet)
     let fs = FileSystem.fromFilePaths filePaths
     let xlsxFileNames = [|AssayFileName; StudyFileName; InvestigationFileName|]
-    let xlsxFiles = fs.Tree.Filter(fun p ->xlsxFileNames |> Array.contains p)
+    let xlsxFiles = fs.Tree.Filter(fun p -> xlsxFileNames |> Array.contains p)
     match xlsxFiles with
     | Some xlsxPaths -> xlsxPaths.ToFilePaths() |> Array.map xlsxReadContractFromPath
     | None -> [||]
 
-// let initARCFromContracts (cArr: Contract []) =
-//     let mutable state = ArcInvestigation.createEmpty()
-//     cArr
-//     |> Array.iter (fun frc ->
-//         match frc with
-//         | {Operation = READ; DTOType = Some DTOType.Spreadsheet; DTO = Some fsworkbook; Path = p} ->
-//             match p with
-//             | AssayFileName -> 
-//                 ISA.Spreadsheet.ArcAssay.fromFsWorkbook fsworkbook
-//                 |> state.
-//         | {Operation = READ; DTOType = Some DTOType.Spreadsheet; DTO = None} ->
-//             printfn "Contract not fullfilled will be skipped?"
-//         | _ -> failwithf "The given contract does not contain the expected information: %A" frc
-//     )
+let initARCFromContracts (cArr: Contract []) =
+    let isFile (fileName: string) (path: string) = (FileSystem.Path.getFileName path) = fileName
+    let filteredContracts = cArr |> Array.choose (fun c ->
+        match c with
+        | {Operation = READ; DTOType = Some DTOType.Spreadsheet; DTO = Some (DTO.Spreadsheet fsworkbook); Path = p} ->
+            Some (p, fsworkbook)
+        | _ -> None
+    )
+    let investigation = 
+        filteredContracts 
+        |> Array.find (fun c -> fst c |> isFile InvestigationFileName)
+        |> snd 
+        |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
+    let studies =
+        filteredContracts 
+        |> Array.filter (fun c -> fst c |> isFile StudyFileName)
+        |> Array.map (fun c ->
+            snd c
+            |> ISA.Spreadsheet.ArcStudy.fromFsWorkbook
+        )
+    let assays =
+        filteredContracts 
+        |> Array.filter (fun c -> fst c |> isFile AssayFileName)
+        |> Array.map (fun c ->
+            snd c
+            |> ISA.Spreadsheet.ArcAssay.fromFsWorkbook
+        )
+    investigation, studies.Length, assays.Length
 
 getReadContracts filePaths
 |> ARC_IO.fullfillREADContracts rootPath
