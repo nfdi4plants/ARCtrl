@@ -29,3 +29,10 @@ module Path =
 
     let getFileName (path: string) : string =
         split path |> Array.last
+
+    /// <summary>
+    /// Checks if `path` points to a file with the name `fileName`
+    /// </summary>
+    /// <param name="fileName">The name of the file the path should point to.</param>
+    /// <param name="path">The path to a file.</param>
+    let isFile (fileName: string) (path: string) = (getFileName path) = fileName

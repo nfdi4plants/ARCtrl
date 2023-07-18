@@ -25,19 +25,19 @@ type ARC =
            FileSystem = fs
         }  
 
-    static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
-        raise (System.NotImplementedException())
+    //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
+    //    raise (System.NotImplementedException())
 
-    static member updateCWL (cwl : CWL.CWL) (arc : ARC) : ARC =
-        raise (System.NotImplementedException())
+    //static member updateCWL (cwl : CWL.CWL) (arc : ARC) : ARC =
+    //    raise (System.NotImplementedException())
 
-    static member updateFileSystem (fileSystem : FileSystem.FileSystem) (arc : ARC) : ARC =
-        raise (System.NotImplementedException())
+    //static member updateFileSystem (fileSystem : FileSystem.FileSystem) (arc : ARC) : ARC =
+    //    raise (System.NotImplementedException())
 
-    static member addFile (path : string) (arc : ARC) : ARC =
-        FileSystem.addFile |> ignore
-        ARC.updateFileSystem |> ignore
-        raise (System.NotImplementedException())
+    //static member addFile (path : string) (arc : ARC) : ARC =
+    //    FileSystem.addFile |> ignore
+    //    ARC.updateFileSystem |> ignore
+    //    raise (System.NotImplementedException())
 
     //static member addFolder (path : string) (arc : ARC) : ARC =
     //    FileSystem.addFolder |> ignore
@@ -63,7 +63,7 @@ type ARC =
 
 
     /// Add assay folder to the ARC.FileSystem and update the ARC.ISA with the new assay metadata
-    static member addAssay (assay : ISA.ArcAssay) (studyIdentifier : string) (arc : ARC) : ARC = 
+    //static member addAssay (assay : ISA.ArcAssay) (studyIdentifier : string) (arc : ARC) : ARC = 
   
         // - Contracts - //
         // create spreadsheet assays/AssayName/isa.assay.xlsx  
@@ -73,11 +73,11 @@ type ARC =
         // update spreadsheet isa.investigation.xlsx
 
         // - ISA - //
-        let assayFolderPath = Path.combineAssayFolderPath assay
-        let assaySubFolderPaths = Path.combineAssaySubfolderPaths assay
-        let assayReadmeFilePath = Path.combine assayFolderPath Path.assayReadmeFileName
+        //let assayFolderPath = Path.combineAssayFolderPath assay
+        //let assaySubFolderPaths = Path.combineAssaySubfolderPaths assay
+        //let assayReadmeFilePath = Path.combine assayFolderPath Path.assayReadmeFileName
         //let updatedInvestigation = ArcInvestigation.addAssay assay studyIdentifier arc.ISA
-        arc
+        //arc
         // - FileSystem - //
         //// Create assay root folder in ARC.FileSystem
         //ARC.addFolder assayFolderPath arc 
@@ -94,6 +94,64 @@ type ARC =
 
     // to-do: function that returns read contracts based on a list of paths.
     // the list of paths is used to create a filesystem tree
-    static member createReadContracts (paths : string array) : Contract array =
-        let fileTree = FileSystemTree.fromFilePaths paths
-        raise (System.NotImplementedException())
+    static member createReadContracts (filePaths : string array) : Contract array =
+        let xlsxReadContractFromPath (path: string) = Contract.createRead(path, DTOType.Spreadsheet)
+        let fs = FileSystem.fromFilePaths filePaths
+        let xlsxFileNames = [|Path.AssayFileName; Path.StudyFileName; Path.InvestigationFileName|]
+        let xlsxFiles = fs.Tree.Filter(fun p -> xlsxFileNames |> Array.contains p)
+        match xlsxFiles with
+        | Some xlsxPaths -> xlsxPaths.ToFilePaths() |> Array.map xlsxReadContractFromPath
+        | None -> [||]
+
+    [<NamedParams(fromIndex=1)>]
+    static member createFromReadContracts (cArr: Contract [], ?enableLogging: bool) =
+        let enableLogging = defaultArg enableLogging false
+        /// filter to only keep *fullfilled* READ contracts of type spreadsheet.
+        let filteredContracts = cArr |> Array.choose (fun c ->
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.Spreadsheet; DTO = Some (DTO.Spreadsheet fsworkbook); Path = p} ->
+                Some (p, fsworkbook)
+            | _ -> None
+        )
+        /// get investigation from xlsx
+        let investigation = 
+            filteredContracts 
+            |> Array.find (fun c -> fst c |> FileSystem.Path.isFile Path.InvestigationFileName)
+            |> snd 
+            |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
+        /// get studies from xlsx
+        let studies =
+            filteredContracts 
+            |> Array.filter (fun c -> fst c |> FileSystem.Path.isFile Path.StudyFileName)
+            |> Array.map (snd >> ISA.Spreadsheet.ArcStudy.fromFsWorkbook)
+        /// get assays from xlsx
+        let assays =
+            filteredContracts 
+            |> Array.filter (fun c -> fst c |> FileSystem.Path.isFile Path.AssayFileName)
+            |> Array.map (snd >> ISA.Spreadsheet.ArcAssay.fromFsWorkbook)
+        /// Create a investigation copy to check for registered studies/assays
+        let copy = investigation.Copy()
+        /// Get all registered studies
+        let registeredStudies = copy.StudyIdentifiers
+        registeredStudies |> Seq.iter (fun studyRegisteredIdent ->
+            /// Try find registered study in parsed READ contracts
+            let studyOpt = studies |> Array.tryFind (fun s -> s.Identifier = studyRegisteredIdent)
+            match studyOpt with
+            | Some study -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
+                if enableLogging then printfn "Found study: %s" studyRegisteredIdent
+                let registeredAssays = copy.GetStudy(studyRegisteredIdent).AssayIdentifiers
+                registeredAssays |> Seq.iter (fun assayRegisteredIdent ->
+                    /// Try find registered assay in parsed READ contracts
+                    let assayOpt = assays |> Array.tryFind (fun a -> a.Identifier = assayRegisteredIdent)
+                    match assayOpt with
+                    | Some assay -> 
+                        if enableLogging then printfn "Found assay: %s - %s" studyRegisteredIdent assayRegisteredIdent 
+                        study.AddAssay(assay)
+                    | None -> 
+                        if enableLogging then printfn "Unable to find registered assay '%s' in fullfilled READ contracts!" assayRegisteredIdent
+                )
+                investigation.SetStudy(studyRegisteredIdent, study)
+            | None -> 
+                if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
+        )
+        investigation

@@ -8,7 +8,6 @@
   <ItemGroup>
     <Compile Include="ARCPath.fs" />
     <Compile Include="ARC.fs" />
-    <Compile Include="ARCStrich.fs" />
   </ItemGroup>
 
   <ItemGroup>

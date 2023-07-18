@@ -104,8 +104,8 @@ module Studies =
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
         ArcStudy.make 
-            (Option.fromValueWithDefault "" studyInfo.FileName)
             (studyInfo.Identifier)
+            (Option.fromValueWithDefault "" studyInfo.FileName)
             (Option.fromValueWithDefault "" studyInfo.Title)
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)

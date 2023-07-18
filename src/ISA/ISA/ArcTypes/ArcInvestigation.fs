@@ -129,7 +129,9 @@ type ArcInvestigation =
 
     // - Study API - CRUD //
     member this.GetStudyIndex(studyIdentifier: string) : int =
-        this.Studies.FindIndex (fun s -> s.Identifier = studyIdentifier)
+        let index = this.Studies.FindIndex (fun s -> s.Identifier = studyIdentifier)
+        if index = -1 then failwith $"Unable to find study with specified identifier '{studyIdentifier}'!"
+        index
 
     // - Study API - CRUD //
     static member getStudyIndex(studyIdentifier: string) : ArcInvestigation -> int =
@@ -232,6 +234,12 @@ type ArcInvestigation =
             let newInv = inv.Copy()
             newInv.GetAssay(studyIdentifier, assayIdentifier)
 
+    //member this.TryFindStudyForAssay(assayIdentifier: string) =
+    //    let idents = this.Studies |> Seq.map (fun s -> s.Identifier, s.AssayIdentifiers)
+    //    idents |> Seq.tryFind (fun (s, aArr) ->
+    //        aArr |> Seq.contains assayIdentifier
+    //    )
+
     member this.Copy() : ArcInvestigation =
         let newStudies = ResizeArray()
         for study in this.Studies do
@@ -240,16 +248,6 @@ type ArcInvestigation =
         { this with 
             Studies = newStudies
         }
-    //static member addAssay (assay : ArcAssay) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
-    //    match ArcInvestigation.tryGetStudyByID studyIdentifier investigation with
-    //    | Some s ->
-    //         ArcStudy.addAssay (assay) |> ignore
-    //         ArcInvestigation.updateStudyByID |> ignore
-
-    //    | None ->
-    //         Study.create |> ignore
-    //         ArcInvestigation.addStudy |> ignore
-    //    raise (System.NotImplementedException())
 
 
     

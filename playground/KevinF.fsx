@@ -1,5 +1,6 @@
 #r "nuget: Fable.Core, 4.0.0"
-#r "nuget: FsSpreadsheet.ExcelIO"
+#r "nuget: FsSpreadsheet, 2.0.2"
+#r "nuget: FsSpreadsheet.ExcelIO, 2.0.2"
 
 //#I @"../src\ISA\ISA/bin\Debug\netstandard2.0"
 #I @"../src\ARC/bin\Debug\netstandard2.0"
@@ -14,6 +15,9 @@ open ARC
 open ARC.Path
 open FileSystem
 open Contract
+
+open FsSpreadsheet
+open FsSpreadsheet.ExcelIO
 
 let [<Literal>] rootPath = @"C:\Users\Kevin\Desktop\TestARC"
 
@@ -78,8 +82,28 @@ let initARCFromContracts (cArr: Contract []) =
             snd c
             |> ISA.Spreadsheet.ArcAssay.fromFsWorkbook
         )
-    investigation, studies.Length, assays.Length
+    let copy = investigation.Copy()
+    let registeredStudies = copy.StudyIdentifiers
+    registeredStudies |> Seq.iter (fun studyRegisteredIdent ->
+        let studyOpt = studies |> Array.tryFind (fun s -> s.Identifier = studyRegisteredIdent)
+        match studyOpt with
+        | Some study -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
+            printfn "Found study: %s" studyRegisteredIdent
+            let registeredAssays = copy.GetStudy(studyRegisteredIdent).AssayIdentifiers
+            registeredAssays |> Seq.iter (fun assayRegisteredIdent ->
+                let assayOpt = assays |> Array.tryFind (fun a -> a.Identifier = assayRegisteredIdent)
+                match assayOpt with
+                | Some assay -> 
+                    printfn "Found assay: %s - %s" studyRegisteredIdent assayRegisteredIdent 
+                    study.AddAssay(assay)
+                | None -> printfn "Unable to find registered assay '%s' in fullfilled READ contracts!" assayRegisteredIdent
+            )
+            investigation.SetStudy(studyRegisteredIdent, study)
+        | None -> printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
+    )
+    investigation
 
-getReadContracts filePaths
-|> ARC_IO.fullfillREADContracts rootPath
-|> initARCFromContracts
+let i = 
+    getReadContracts filePaths
+    |> ARC_IO.fullfillREADContracts rootPath
+    |> initARCFromContracts

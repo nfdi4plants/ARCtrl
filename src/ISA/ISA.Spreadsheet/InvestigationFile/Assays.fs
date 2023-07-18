@@ -28,6 +28,7 @@ module Assays =
         let technologyType = OntologyAnnotation.fromString(technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
         ArcAssay.make 
             (fileName)
+            (Option.fromValueWithDefault "" fileName)
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
             (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
             (Option.fromValueWithDefault "" technologyPlatform)
@@ -38,7 +39,7 @@ module Assays =
     let fromSparseTable (matrix : SparseTable) : ArcAssay list=
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
             let comments = SparseTable.GetEmptyComments matrix
-            ArcAssay.create(fileName = System.Guid.NewGuid().ToString(),comments = comments)
+            ArcAssay.create(Identifier.createMissingIdentifier(),comments = comments)
             |> List.singleton
         else
             List.init matrix.ColumnCount (fun i -> 
@@ -75,7 +76,7 @@ module Assays =
             do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     tt.TermAccessionNumber)
             do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           tt.TermSourceREF)
             do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
-            do matrix.Matrix.Add ((fileNameLabel,i),                              Identifier.removeMissingIdentifier(a.FileName))
+            do matrix.Matrix.Add ((fileNameLabel,i),                              Identifier.removeMissingIdentifier(a.Identifier))
 
             if a.Comments.IsEmpty |> not then
                 a.Comments

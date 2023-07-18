@@ -80,7 +80,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
     }
 
 let toFsWorkbook (assay : ArcAssay) =
-    let assay = {assay with FileName = Identifier.removeMissingIdentifier(assay.FileName)}
+    let assay = {assay with Identifier = Identifier.removeMissingIdentifier(assay.Identifier)}
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet (assay)
     doc.AddWorksheet metaDataSheet

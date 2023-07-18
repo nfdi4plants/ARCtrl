@@ -6,17 +6,17 @@ open ISA.Aux
 module ArcStudyAux =
     module SanityChecks = 
         let inline validateUniqueAssayIdentifier (assay: ArcAssay) (existingAssays: seq<ArcAssay>) =
-            match Seq.tryFindIndex (fun x -> x.FileName = assay.FileName) existingAssays with
+            match Seq.tryFindIndex (fun x -> x.Identifier = assay.Identifier) existingAssays with
             | Some i ->
-                failwith $"Cannot create assay with name {assay.FileName}, as assay names must be unique and assay at index {i} has the same name."
+                failwith $"Cannot create assay with name {assay.Identifier}, as assay names must be unique and assay at index {i} has the same name."
             | None ->
                 ()
 
 [<AttachMembers>]
 type ArcStudy = 
     {
-        mutable FileName : string option
         Identifier : string
+        mutable FileName : string option
         mutable Title : string option
         mutable Description : string option
         mutable SubmissionDate : string option
@@ -31,10 +31,10 @@ type ArcStudy =
         mutable Comments : Comment list
     }
 
-    static member make fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments = 
+    static member make identifier fileName title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments = 
         {
-            FileName = fileName
             Identifier = identifier
+            FileName = fileName
             Title = title
             Description = description
             SubmissionDate = submissionDate
@@ -70,7 +70,7 @@ type ArcStudy =
         with get() = this.Assays.Count
 
     member this.AssayIdentifiers 
-        with get() = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.FileName)
+        with get() = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.Identifier)
 
     [<NamedParams>]
     static member create (identifier : string, ?fileName, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
@@ -81,9 +81,9 @@ type ArcStudy =
         let studyDesignDescriptors = defaultArg studyDesignDescriptors []
         let factors = defaultArg factors []
         let comments = defaultArg comments []
-        ArcStudy.make fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments
+        ArcStudy.make identifier fileName title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments
 
-    static member createEmpty(identifier : string) = ArcStudy.make None identifier None None None None [] [] [] (ResizeArray()) (ResizeArray()) [] []
+    static member createEmpty(identifier : string) = ArcStudy.make identifier None None None None None [] [] [] (ResizeArray()) (ResizeArray()) [] []
 
     //static member fromStudy (study : Study) : ArcStudy = 
     //    raise (System.NotImplementedException())
@@ -133,9 +133,22 @@ type ArcStudy =
             newStudy.SetAssayAt(index, assay)
             newStudy
 
+        // - Assay API - CRUD //
+    member this.SetAssay(assayIdentifier: string, assay: ArcAssay) =
+        let index = this.GetAssayIndex(assayIdentifier)
+        this.Assays.[index] <- assay
+
+    static member setAssay(assayIdentifier: string, assay: ArcAssay) =
+        fun (study:ArcStudy) ->
+            let newStudy = study.Copy()
+            newStudy.SetAssay(assayIdentifier, assay)
+            newStudy
+
     // - Assay API - CRUD //
     member this.GetAssayIndex(assayIdentifier: string) =
-        this.Assays.FindIndex (fun a -> a.FileName = assayIdentifier)
+        let index = this.Assays.FindIndex (fun a -> a.Identifier = assayIdentifier)
+        if index = -1 then failwith $"Unable to find assay with specified identifier '{assayIdentifier}'!"
+        index
 
     static member GetAssayIndex(assayIdentifier: string) : ArcStudy -> int =
         fun (study: ArcStudy) -> study.GetAssayIndex(assayIdentifier)

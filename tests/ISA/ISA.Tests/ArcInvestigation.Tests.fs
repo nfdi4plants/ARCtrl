@@ -170,16 +170,16 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let a = i.GetAssayAt("Study 1", 0)
-            Expect.equal a.FileName "Assay 1" "FileName"
+            Expect.equal a.Identifier "Assay 1" "FileName"
         testCase "by ident" <| fun _ ->
             let i = createExampleInvestigation()
             let a = i.GetAssay("Study 1", "Assay 2")
-            Expect.equal a.FileName "Assay 2" "FileName"
+            Expect.equal a.Identifier "Assay 2" "FileName"
         testCase "mutable propagation" <| fun _ ->
             let i = createExampleInvestigation()
             let tech = Some "New Tech Stuff"
             let a = i.GetAssayAt("Study 1", 0)
-            Expect.equal a.FileName "Assay 1" "FileName"
+            Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
             a.TechnologyPlatform <- tech
             Expect.equal a.TechnologyPlatform tech "TechnologyPlatform, a"
@@ -189,7 +189,7 @@ let tests_Assay = testList "CRUD Assay" [
             let copy = createExampleInvestigation()
             let tech = Some "New Tech Stuff"
             let a = i.GetAssayAt("Study 1", 0)
-            Expect.equal a.FileName "Assay 1" "FileName"
+            Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
             a.TechnologyPlatform <- tech
             Expect.equal a.TechnologyPlatform tech "TechnologyPlatform, a"

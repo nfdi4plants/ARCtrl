@@ -1,8 +1,30 @@
 ﻿module ISA.Spreadsheet.ArcTable
 
 open ISA
-open FSharpAux
 open FsSpreadsheet
+
+// I think we really should not add FSharpAux for exactly one function.
+module Aux =
+
+    module List =
+
+        /// Iterates over elements of the input list and groups adjacent elements.
+        /// A new group is started when the specified predicate holds about the element
+        /// of the list (and at the beginning of the iteration).
+        ///
+        /// For example: 
+        ///    List.groupWhen isOdd [3;3;2;4;1;2] = [[3]; [3; 2; 4]; [1; 2]]
+        let groupWhen f list =
+            list
+            |> List.fold (
+                fun acc e ->
+                    match f e, acc with
+                    | true  , _         -> [e] :: acc       // true case
+                    | false , h :: t    -> (e :: h) :: t    // false case, non-empty acc list
+                    | false , _         -> [[e]]            // false case, empty acc list
+            ) []
+            |> List.map List.rev
+            |> List.rev
 
 type ColumnOrder =
     | InputClass = 1
@@ -39,12 +61,11 @@ let annotationTablePrefix = "annotationTable"
 
 let groupColumnsByHeader (columns : list<FsColumn>) = 
     columns
-    |> List.groupWhen (fun c ->         
+    |> Aux.List.groupWhen (fun c ->         
         ISA.Regex.tryParseTermAnnotation c.[1].Value 
         |> Option.isNone
         &&
         c.[1].Value <> "Unit"
-
     )
 
 /// Returns the annotation table of the worksheet if it exists, else returns None
@@ -63,7 +84,7 @@ let composeColumns (columns : seq<FsColumn>) : CompositeColumn [] =
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
     match tryAnnotationTable sheet with
-    | Some t -> 
+    | Some (t: FsTable) -> 
         let compositeColumns = 
             t.Columns(sheet.CellCollection)
             |> composeColumns
