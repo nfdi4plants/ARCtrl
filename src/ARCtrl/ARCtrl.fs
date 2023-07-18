@@ -6,16 +6,48 @@ open ISA
 
 open Fable.Core
 
+module ARCAux =
+
+    // No idea where to move this
+    let getArcAssaysFromContracts (contracts: Contract []) = 
+        contracts |> Array.choose (fun c ->
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.ISA_Assay; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
+                Some fsworkbook
+            | _ -> None
+        )
+        |> Array.map ISA.Spreadsheet.ArcAssay.fromFsWorkbook
+
+    // No idea where to move this
+    let getArcStudiesFromContracts (contracts: Contract []) =
+        contracts |> Array.choose (fun c ->
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.ISA_Study; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
+                Some fsworkbook
+            | _ -> None
+        )
+        |> Array.map ISA.Spreadsheet.ArcStudy.fromFsWorkbook
+
+    let getArcInvestigationFromContracts (contracts: Contract []) =
+        contracts |> Array.choose (fun c ->
+            match c with
+            | {Operation = READ; DTOType = Some DTOType.ISA_Investigation; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
+                Some fsworkbook
+            | _ -> None
+        )
+        |> Array.exactlyOne 
+        |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
+
 [<AttachMembers>]
 type ARC =
     {
-       ISA : ISA.Investigation
+       ISA : ISA.ArcInvestigation
        CWL : CWL.CWL
        FileSystem : FileSystem.FileSystem 
     }    
 
     static member create(
-        isa: ISA.Investigation,
+        isa: ISA.ArcInvestigation,
         cwl: CWL.CWL,
         fs: FileSystem.FileSystem 
     ) =
@@ -92,48 +124,32 @@ type ARC =
     // reason: contracts are initially designed to sync disk with in-memory model while working on the arc.
     // but we need a way to create an arc programmatically and then write it to disk.
 
+    static member FSFromFilePaths (filePaths : string array) : FileSystem = FileSystem.fromFilePaths filePaths
+
     // to-do: function that returns read contracts based on a list of paths.
     // the list of paths is used to create a filesystem tree
-    static member createReadContracts (filePaths : string array) : Contract array =
-        let xlsxReadContractFromPath (path: string) = Contract.createRead(path, DTOType.Spreadsheet)
-        let fs = FileSystem.fromFilePaths filePaths
-        let xlsxFileNames = [|Path.AssayFileName; Path.StudyFileName; Path.InvestigationFileName|]
-        let xlsxFiles = fs.Tree.Filter(fun p -> xlsxFileNames |> Array.contains p)
-        match xlsxFiles with
-        | Some xlsxPaths -> xlsxPaths.ToFilePaths() |> Array.map xlsxReadContractFromPath
-        | None -> [||]
+    static member getReadContracts (filePaths : string array) =
+        // TODO: What to do with FS? Cannot create FS from fullfilled contracts but should i return fs here?
+        let fs: FileSystem = FileSystem.fromFilePaths filePaths
+        filePaths
+        |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath
 
-    [<NamedParams(fromIndex=1)>]
-    static member createFromReadContracts (cArr: Contract [], ?enableLogging: bool) =
+    /// <summary>
+    /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
+    /// </summary>
+    /// <param name="cArr">The fullfilled READ contracts.</param>
+    /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
+    static member ISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
         let enableLogging = defaultArg enableLogging false
-        /// filter to only keep *fullfilled* READ contracts of type spreadsheet.
-        let filteredContracts = cArr |> Array.choose (fun c ->
-            match c with
-            | {Operation = READ; DTOType = Some DTOType.Spreadsheet; DTO = Some (DTO.Spreadsheet fsworkbook); Path = p} ->
-                Some (p, fsworkbook)
-            | _ -> None
-        )
         /// get investigation from xlsx
-        let investigation = 
-            filteredContracts 
-            |> Array.find (fun c -> fst c |> FileSystem.Path.isFile Path.InvestigationFileName)
-            |> snd 
-            |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
+        let investigation = ARCAux.getArcInvestigationFromContracts contracts
         /// get studies from xlsx
-        let studies =
-            filteredContracts 
-            |> Array.filter (fun c -> fst c |> FileSystem.Path.isFile Path.StudyFileName)
-            |> Array.map (snd >> ISA.Spreadsheet.ArcStudy.fromFsWorkbook)
+        let studies = ARCAux.getArcStudiesFromContracts contracts
         /// get assays from xlsx
-        let assays =
-            filteredContracts 
-            |> Array.filter (fun c -> fst c |> FileSystem.Path.isFile Path.AssayFileName)
-            |> Array.map (snd >> ISA.Spreadsheet.ArcAssay.fromFsWorkbook)
-        /// Create a investigation copy to check for registered studies/assays
+        let assays = ARCAux.getArcAssaysFromContracts contracts
+        /// Necessary, else: System.InvalidOperationException: Collection was modified; enumeration operation may not execute.
         let copy = investigation.Copy()
-        /// Get all registered studies
-        let registeredStudies = copy.StudyIdentifiers
-        registeredStudies |> Seq.iter (fun studyRegisteredIdent ->
+        copy.StudyIdentifiers |> Seq.iter (fun studyRegisteredIdent ->
             /// Try find registered study in parsed READ contracts
             let studyOpt = studies |> Array.tryFind (fun s -> s.Identifier = studyRegisteredIdent)
             match studyOpt with

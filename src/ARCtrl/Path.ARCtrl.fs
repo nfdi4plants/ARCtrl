@@ -1,16 +1,20 @@
-﻿module ARCtrl.Path 
+﻿module Path.ARCtrl
 
 open ISA
 open FileSystem
 
-let [<Literal>] gitKeepFileName = ".gitkeep" 
-let [<Literal>] assaysFolderName = "assays"
-let [<Literal>] assayProtocolsFolderName = "protocols"
-let [<Literal>] assayDatasetFolderName = "dataset"
+// Files
 let [<Literal>] AssayFileName = "isa.assay.xlsx"
 let [<Literal>] StudyFileName = "isa.study.xlsx"
 let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
-let [<Literal>] assayReadmeFileName = "Readme.md"
+let [<Literal>] GitKeepFileName = ".gitkeep" 
+let [<Literal>] READMEFileName = "README.md"
+
+// Folder
+let [<Literal>] AssaysFolderName = "assays"
+let [<Literal>] StudiesFolderName = "studies"
+let [<Literal>] AssayProtocolsFolderName = "protocols"
+let [<Literal>] AssayDatasetFolderName = "dataset"
 
 //let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]
 

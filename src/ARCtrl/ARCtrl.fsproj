@@ -7,11 +7,10 @@
 
   <ItemGroup>
     <None Include="README.md" />
-    <Compile Include="ARCtrl.Path.fs" />
+    <Compile Include="Path.ARCtrl.fs" />
+    <Compile Include="Contracts.ARCtrl.fs" />
     <Compile Include="ARCtrl.fs" />
   </ItemGroup>
-
-  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Fable.Core" Version="[4.0.0]" />

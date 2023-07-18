@@ -7,7 +7,9 @@ open Fable.Core.JsInterop
 [<StringEnum>]
 [<RequireQualifiedAccess>]
 type DTOType = 
-    | [<CompiledName("Spreadsheet")>] Spreadsheet // isa.assay.xlsx
+    | [<CompiledName("ISA_Assay")>] ISA_Assay // isa.assay.xlsx
+    | [<CompiledName("ISA_Study")>] ISA_Study
+    | [<CompiledName("ISA_Investigation")>] ISA_Investigation 
     | [<CompiledName("JSON")>] JSON // arc.json
     | [<CompiledName("Markdown")>] Markdown // README.md
     | [<CompiledName("CWL")>] CWL // workflow.cwl, might be a new DTO once we 
