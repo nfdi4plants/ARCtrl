@@ -42,7 +42,7 @@ let fromFsWorkbook (doc:FsWorkbook) =
         | None -> 
             printfn "Cannot retrieve metadata: Study file does not contain \"%s\" sheet." metaDataSheetName
             None   
-        |> Option.defaultValue (ArcStudy.createEmpty(Identifier.createMissingIdentifier()))
+        |> Option.defaultValue (ArcStudy.init(Identifier.createMissingIdentifier()))
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
