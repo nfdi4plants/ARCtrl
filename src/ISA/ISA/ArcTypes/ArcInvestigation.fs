@@ -40,7 +40,7 @@ type ArcInvestigation =
         with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier)
 
     [<NamedParams>]
-    static member create (identifier : string, ?id : URI, ?fileName : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) : ArcInvestigation =
+    static member create (identifier : string, ?fileName : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) : ArcInvestigation =
         let ontologySourceReferences = defaultArg ontologySourceReferences []
         let publications = defaultArg publications []
         let contacts = defaultArg contacts []
@@ -49,15 +49,7 @@ type ArcInvestigation =
         let remarks = defaultArg remarks []
         ArcInvestigation.make fileName identifier title description submissionDate publicReleaseDate ontologySourceReferences publications contacts studies comments remarks
 
-    static member createEmpty(identifier: string) =
-        ArcInvestigation.make None identifier None None None None [] [] [] (ResizeArray()) [] []
-
-    //static member tryGetStudyByID (studyIdentifier : string) (investigation : Investigation) : Study option = 
-    //    raise (System.NotImplementedException())
-
-    //static member updateStudyByID (study : Study) (studyIdentifier : string) (investigation : Investigation) : Investigation = 
-    //    ArcInvestigation.tryGetStudyByID studyIdentifier investigation |> ignore
-    //    raise (System.NotImplementedException())
+    static member init(identifier: string) = ArcInvestigation.create identifier
 
     // - Study API - CRUD //
     member this.AddStudy(study: ArcStudy) =
@@ -71,15 +63,14 @@ type ArcInvestigation =
             copy
 
     // - Study API - CRUD //
-    member this.AddStudyEmpty(studyName: string) =
-        let study = ArcStudy.create(studyName)
+    member this.InitStudy (studyName: string) =
+        let study = ArcStudy.init(studyName)
         this.AddStudy(study)
 
-    static member addStudyEmpty(studyName: string) =
+    static member initStudy(studyName: string) =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
-            let study = ArcStudy.create(studyName)
-            copy.AddStudy(study)
+            copy.InitStudy(studyName)
             copy
 
     // - Study API - CRUD //
@@ -180,14 +171,14 @@ type ArcInvestigation =
             copy
 
     // - Study API - CRUD //
-    member this.AddAssayEmpty(studyIdentifier: string, assayName: string) =
-        let assay = ArcAssay.create(assayName)
+    member this.InitAssay(studyIdentifier: string, assayName: string) =
+        let assay = ArcAssay.init(assayName)
         this.AddAssay(studyIdentifier, assay)
 
-    static member addAssayEmpty(studyIdentifier: string, assayName: string) =
+    static member initAssay(studyIdentifier: string, assayName: string) =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
-            copy.AddAssayEmpty(studyIdentifier, assayName)
+            copy.InitAssay(studyIdentifier, assayName)
             copy
 
     // - Study API - CRUD //

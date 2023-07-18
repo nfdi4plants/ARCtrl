@@ -53,8 +53,7 @@ type ArcAssay =
         let comments = defaultArg comments []
         ArcAssay.make identifier fileName measurementType technologyType technologyPlatform tables performers comments
 
-    static member createEmpty (identifier : string) = 
-        ArcAssay.make identifier None None None None (ResizeArray()) [] []
+    static member init (identifier : string) = ArcAssay.create(identifier)
 
     // - Table API - //
     // remark should this return ArcTable?

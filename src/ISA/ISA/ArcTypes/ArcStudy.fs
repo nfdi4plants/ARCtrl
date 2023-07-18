@@ -83,7 +83,7 @@ type ArcStudy =
         let comments = defaultArg comments []
         ArcStudy.make identifier fileName title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments
 
-    static member createEmpty(identifier : string) = ArcStudy.make identifier None None None None None [] [] [] (ResizeArray()) (ResizeArray()) [] []
+    static member init(identifier : string) = ArcStudy.create identifier
 
     //static member fromStudy (study : Study) : ArcStudy = 
     //    raise (System.NotImplementedException())
@@ -103,14 +103,14 @@ type ArcStudy =
             newStudy
 
     // - Assay API - CRUD //
-    member this.AddAssayEmpty(assayName: string) =
+    member this.InitAssay(assayName: string) =
         let assay = ArcAssay.create(assayName)
         this.AddAssay(assay)
 
-    static member addAssayEmpty(assayName: string) =
+    static member initAssay(assayName: string) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
-            newStudy.AddAssayEmpty(assayName)
+            newStudy.InitAssay(assayName)
             newStudy
 
     // - Assay API - CRUD //
