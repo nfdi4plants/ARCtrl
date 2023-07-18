@@ -107,3 +107,132 @@ For example: styling, plots, etc. in spreadsheet files that are not modelled in 
     
 - **DELETE** does exactly what you think it does.
 - **EXECUTE**: represents instructions for running a cli-tool with a given name and arguments. As the ARC API does not have information about absolute paths, the tool name should be executable as is. E.g. in Windows by adding it to the PATH.
+
+
+## Examples
+
+
+### Git-pull
+
+```fsharp
+let gitPull = 
+    Contract.create(
+        op = EXECUTE,
+        path = "", //relative to arc root
+        dto = DTO.CLITool (
+            CLITool.create(
+                name = "git",
+                arguments = [|"pull"|]
+            )
+        )
+    )
+```
+
+
+### Update study person name
+
+```fsharp
+// update a study person name
+let updateStudyContracts = [
+    // UPDATE INVESTIGATION METADATA
+    Contract.create(
+        op = UPDATE,
+        path = "path/to/investigation.xlsx",          
+        dtoType = DTOType.Spreadsheet,
+        dto = DTO.Spreadsheet (new FsWorkbook())
+            
+    ) 
+    Contract.create(
+        op = UPDATE,
+        path = "path/to/study.xlsx",
+        dtoType = DTOType.Spreadsheet,
+        dto = DTO.Spreadsheet (new FsWorkbook())         
+    ) 
+]
+```
+
+
+### Delete a study
+
+```fsharp
+// delete a study
+let deleteStudyContracts = [
+    // UPDATE INVESTIGATION METADATA
+    Contract.create(
+        op = DELETE,
+        path = "path/to/studyFOLDER(!)"
+    ) 
+    Contract.create(
+        op = UPDATE,
+        path = "path/to/investigation.xlsx",
+            
+        dtoType = DTOType.Spreadsheet,
+        dto = DTO.Spreadsheet (new FsWorkbook())
+            
+    )
+]
+```
+
+### Add assay when no study exists
+
+```fsharp
+// Assay add, when no study exists
+let addAssayContracts = [
+    // create spreadsheet assays/AssayName/isa.assay.xlsx  
+    Contract.create(
+        op = CREATE,
+        path = "path/to/isa.assay.xlsx",
+        dtoType = DTOType.Spreadsheet,
+        dto = DTO.Spreadsheet (new FsWorkbook())
+    ) 
+    // create empty file assays/AssayName/dataset/.gitkeep 
+    Contract.create(
+        op = CREATE,
+        path = "path/to/dataset/.gitkeep"
+    )        
+    // create text assays/AssayName/README.md
+    Contract.create(
+        op = CREATE,
+        path = "path/to/README.md",
+        dtoType = DTOType.Markdown,
+        dto = DTO.Text "# Markdown"
+            
+    )
+    // create empty file assays/AssayName/protocols/.gitkeep
+    Contract.create(
+        op = CREATE,
+        path = "path/to/protocols/.gitkeep"
+    )
+    // create spreadsheet studies/StudyName/isa.study.xlsx  
+    Contract.create(
+        op = CREATE,
+        path = "path/to/study.xlsx",
+        dtoType = DTOType.Spreadsheet,
+        dto = DTO.Spreadsheet (new FsWorkbook())
+    )
+    // create empty file studies/StudyName/resources/.gitkeep 
+    Contract.create(
+        op = CREATE,
+        path = "path/to/resources/.gitkeep"
+    )        
+    // create text studies/StudyName/README.md
+    Contract.create(
+        op = CREATE,
+        path = "path/to/README.md",
+        dtoType = DTOType.Markdown,
+        dto = DTO.Text "# Markdown"
+    )
+    // create empty file studies/StudyName/protocols/.gitkeep
+    Contract.create(
+        op = CREATE,
+        path = "path/to/protocols/.gitkeep"
+    )
+    // update spreadsheet isa.investigation.xlsx
+    Contract.create(
+        op = UPDATE,
+        path = "path/to/investigation.xlsx",
+        dtoType = DTOType.Spreadsheet,
+        dto = DTO.Spreadsheet (new FsWorkbook())
+        ) 
+]
+```

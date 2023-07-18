@@ -11,7 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="README.md" />
     <Compile Include="Contract.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
 </Project>
