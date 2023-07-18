@@ -125,6 +125,7 @@ type ArcStudy =
 
     // - Assay API - CRUD //
     member this.SetAssayAt(index: int, assay: ArcAssay) =
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay (this.Assays |> Seq.removeAt index)
         this.Assays.[index] <- assay
 
     static member setAssayAt(index: int, assay: ArcAssay) =

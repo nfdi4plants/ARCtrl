@@ -195,7 +195,7 @@ type ArcInvestigation =
     // - Study API - CRUD //
     member this.SetAssayAt(studyIdentifier: string, index: int, assay: ArcAssay) =
         let study = this.GetStudy(studyIdentifier)
-        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay (study.Assays |> Seq.removeAt index)
+        study.SetAssayAt(index, assay)
         this.Studies.[index] <- study
 
     static member setAssayAt(studyIdentifier: string, index: int, assay: ArcAssay) =
