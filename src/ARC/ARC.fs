@@ -1,9 +1,9 @@
 ﻿namespace ARC
 
 open FileSystem
+open Contract
 open ISA
 
-open Contract
 open Fable.Core
 
 [<AttachMembers>]

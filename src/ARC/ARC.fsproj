@@ -6,9 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="README.md" />
     <Compile Include="ARCPath.fs" />
     <Compile Include="ARC.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Fable.Core" Version="[4.0.0]" />
