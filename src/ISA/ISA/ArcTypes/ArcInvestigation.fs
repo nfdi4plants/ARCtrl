@@ -205,6 +205,17 @@ type ArcInvestigation =
             newInv
 
     // - Study API - CRUD //
+    member this.SetAssay(studyIdentifier: string, assayIdentifier: string, assay: ArcAssay) =
+        let study = this.GetStudy(studyIdentifier)
+        let index = study.GetAssayIndex assayIdentifier
+        study.SetAssayAt (index, assay)
+
+    static member setAssay(studyIdentifier: string, assayIdentifier: string, assay: ArcAssay) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.SetAssay(studyIdentifier, assayIdentifier, assay)
+
+    // - Study API - CRUD //
     member this.GetAssayAt(studyIdentifier: string, index: int) : ArcAssay =
         let study = this.GetStudy(studyIdentifier)
         study.GetAssayAt index

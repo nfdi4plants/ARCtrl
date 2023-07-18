@@ -10,10 +10,10 @@ open Expecto
 
 let tests_MutableFields = testList "MutableFields" [
     testCase "ensure investigation" <| fun _ ->
-        let i = ArcInvestigation.createEmpty("MyInvestigation")
+        let i = ArcInvestigation.init("MyInvestigation")
         Expect.equal i.FileName None ""
     testCase "test mutable fields" <| fun _ ->
-        let i = ArcInvestigation.createEmpty("MyInvestigation")
+        let i = ArcInvestigation.init("MyInvestigation")
         let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
         i.FileName <- Some "MyName"
         i.Contacts <- persons
@@ -25,7 +25,7 @@ let tests_MutableFields = testList "MutableFields" [
 
 let tests_Copy = testList "Copy" [
     testCase "test mutable fields" <| fun _ ->
-        let i = ArcInvestigation.createEmpty("MyInvestigation")
+        let i = ArcInvestigation.init("MyInvestigation")
         let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
         i.FileName <- Some "MyName"
         i.Contacts <- persons
@@ -49,8 +49,8 @@ let tests_Copy = testList "Copy" [
 
 let tests_Study = testList "CRUD Study" [
     let createExampleInvestigation() =
-        let i = ArcInvestigation.createEmpty("MyInvestigation")
-        let s = ArcStudy.createEmpty("Study 1")
+        let i = ArcInvestigation.init("MyInvestigation")
+        let s = ArcStudy.init("Study 1")
         let s2 = ArcStudy.create("Study 2",title="Study 2 Title")
         i.AddStudy s
         i.AddStudy s2
@@ -123,10 +123,10 @@ let tests_Study = testList "CRUD Study" [
 
 let tests_Assay = testList "CRUD Assay" [
     let createExampleInvestigation() =
-        let i = ArcInvestigation.createEmpty("MyInvestigation")
-        let s = ArcStudy.createEmpty("Study 1")
-        let a = ArcAssay.createEmpty("Assay 1")
-        let a2 = ArcAssay.createEmpty("Assay 2")
+        let i = ArcInvestigation.init("MyInvestigation")
+        let s = ArcStudy.init("Study 1")
+        let a = ArcAssay.init("Assay 1")
+        let a2 = ArcAssay.init("Assay 2")
         s.AddAssay(a)
         s.AddAssay(a2)
         let s2 = ArcStudy.create("Study 2",title="Study 2 Title")
@@ -164,6 +164,30 @@ let tests_Assay = testList "CRUD Assay" [
             let s = i.Studies.Item 0 
             Expect.equal s.AssayCount 3 "AssayCount"
             let actual = s.GetAssayAt 2
+            Expect.equal actual expected "equal"
+    ]
+    testList "SetAssay" [ 
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let assay_ident = "New Assay"
+            let assay_techPlatform = "Assay Tech"
+            let expected = ArcAssay.create(assay_ident, technologyPlatform = assay_techPlatform)
+            i.SetAssayAt("Study 1", 0, expected)
+            Expect.equal i.StudyCount 2 "StudyCount"
+            let s = i.Studies.Item 0 
+            Expect.equal s.AssayCount 2 "AssayCount"
+            let actual = s.GetAssayAt 0
+            Expect.equal actual expected "equal"
+        testCase "by identifier" <| fun _ ->
+            let i = createExampleInvestigation()
+            let assay_ident = "New Assay"
+            let assay_techPlatform = "Assay Tech"
+            let expected = ArcAssay.create(assay_ident, technologyPlatform = assay_techPlatform)
+            i.SetAssay("Study 1", "Assay 2", expected)
+            Expect.equal i.StudyCount 2 "StudyCount"
+            let s = i.Studies.Item 0 
+            Expect.equal s.AssayCount 2 "AssayCount"
+            let actual = s.GetAssayAt 1
             Expect.equal actual expected "equal"
     ]
     testList "GetAssay" [ 
