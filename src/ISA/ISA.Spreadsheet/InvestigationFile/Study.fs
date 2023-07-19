@@ -81,7 +81,7 @@ module Studies =
             do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" study.Description))
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" study.SubmissionDate))
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
-            do matrix.Matrix.Add ((fileNameLabel,i),            (Option.defaultValue "" study.FileName))
+            do matrix.Matrix.Add ((fileNameLabel,i),            ArcStudy.FileName)
 
             if study.Comments.IsEmpty |> not then
                 study.Comments
@@ -105,7 +105,6 @@ module Studies =
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
         ArcStudy.make 
             (studyInfo.Identifier)
-            (Option.fromValueWithDefault "" studyInfo.FileName)
             (Option.fromValueWithDefault "" studyInfo.Title)
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)

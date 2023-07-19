@@ -6,50 +6,54 @@ open ISA.Aux
 module ArcInvestigationAux =
     module SanityChecks = 
         let inline validateUniqueStudyIdentifier (study: ArcStudy) (existingStudies: seq<ArcStudy>) =
-            match Seq.tryFindIndex (fun x -> x.Identifier = study.Identifier) existingStudies with
+            match existingStudies |> Seq.tryFindIndex (fun x -> x.Identifier = study.Identifier) with
             | Some i ->
                 failwith $"Cannot create study with name {study.Identifier}, as study names must be unique and study at index {i} has the same name."
             | None ->
                 ()
 
 [<AttachMembers>]
-type ArcInvestigation = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) = 
 
-    {
-        mutable FileName : string option
-        Identifier : string
-        mutable Title : string option
-        mutable Description : string option
-        mutable SubmissionDate : string option
-        mutable PublicReleaseDate : string option
-        mutable OntologySourceReferences : OntologySourceReference list
-        mutable Publications : Publication list
-        mutable Contacts : Person list
-        Studies : ResizeArray<ArcStudy>
-        mutable Comments : Comment list
-        mutable Remarks : Remark list
-    }
+    let ontologySourceReferences = defaultArg ontologySourceReferences []
+    let publications = defaultArg publications []
+    let contacts = defaultArg contacts []
+    let studies = defaultArg studies (ResizeArray())
+    let comments = defaultArg comments []
+    let remarks = defaultArg remarks []
 
-    static member make (filename : string option) (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReference : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
-        {FileName = filename; Identifier = identifier; Title = title; Description = description; SubmissionDate = submissionDate; PublicReleaseDate = publicReleaseDate; OntologySourceReferences = ontologySourceReference; Publications = publications; Contacts = contacts; Studies = studies; Comments = comments; Remarks = remarks}
+    let mutable identifier = identifier
+    /// Must be unique in one investigation
+    member this.Identifier 
+        with get() = identifier
+        and internal set(i) = identifier <- i
+
+    member val Title : string option = title with get, set
+    member val Description : string option = description with get, set
+    member val SubmissionDate : string option = submissionDate with get, set
+    member val PublicReleaseDate : string option = publicReleaseDate with get, set
+    member val OntologySourceReferences : OntologySourceReference list = ontologySourceReferences with get, set
+    member val Publications : Publication list = publications with get, set
+    member val Contacts : Person list = contacts with get, set
+    member val Studies : ResizeArray<ArcStudy> = studies with get, set
+    member val Comments : Comment list = comments with get, set
+    member val Remarks : Remark list = remarks with get, set
+
+    static member FileName = Path.ISA.InvestigationFileName
+
+    static member init(identifier: string) = ArcInvestigation identifier
+    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) = 
+        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?studies = studies, ?comments = comments, ?remarks = remarks)
+
+    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
+        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, studies = studies, comments = comments, remarks = remarks)
+
 
     member this.StudyCount 
         with get() = this.Studies.Count
 
     member this.StudyIdentifiers
         with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier)
-
-    [<NamedParams>]
-    static member create (identifier : string, ?fileName : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) : ArcInvestigation =
-        let ontologySourceReferences = defaultArg ontologySourceReferences []
-        let publications = defaultArg publications []
-        let contacts = defaultArg contacts []
-        let studies = defaultArg studies (ResizeArray())
-        let comments = defaultArg comments []
-        let remarks = defaultArg remarks []
-        ArcInvestigation.make fileName identifier title description submissionDate publicReleaseDate ontologySourceReferences publications contacts studies comments remarks
-
-    static member init(identifier: string) = ArcInvestigation.create identifier
 
     // - Study API - CRUD //
     member this.AddStudy(study: ArcStudy) =
@@ -247,9 +251,19 @@ type ArcInvestigation =
         for study in this.Studies do
             let copy = study.Copy()
             newStudies.Add(copy)
-        { this with 
-            Studies = newStudies
-        }
+        ArcInvestigation(
+            this.Identifier,
+            ?title = this.Title,
+            ?description = this.Description,
+            ?submissionDate = this.SubmissionDate,
+            ?publicReleaseDate = this.PublicReleaseDate,
+            ontologySourceReferences = this.OntologySourceReferences,
+            publications = this.Publications,
+            contacts = this.Contacts,
+            studies = newStudies, // correct mutable behaviour is tested on this field
+            comments = this.Comments,
+            remarks = this.Remarks
+        )
 
 
     

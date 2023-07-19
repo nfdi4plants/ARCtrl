@@ -4,15 +4,10 @@ open ISA
 open FileSystem
 
 // Files
-let [<Literal>] AssayFileName = "isa.assay.xlsx"
-let [<Literal>] StudyFileName = "isa.study.xlsx"
-let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
 let [<Literal>] GitKeepFileName = ".gitkeep" 
 let [<Literal>] READMEFileName = "README.md"
 
 // Folder
-let [<Literal>] AssaysFolderName = "assays"
-let [<Literal>] StudiesFolderName = "studies"
 let [<Literal>] AssayProtocolsFolderName = "protocols"
 let [<Literal>] AssayDatasetFolderName = "dataset"
 

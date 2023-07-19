@@ -49,12 +49,13 @@ let fromFsWorkbook (doc:FsWorkbook) =
     if sheets.IsEmpty then
         studyMetadata
     else
-        {
-            studyMetadata with Tables = ResizeArray(sheets)
-        }
+        studyMetadata.Tables <- ResizeArray(sheets)
+        studyMetadata
 
 let toFsWorkbook (study : ArcStudy) =
-    let study = {study with Identifier = Identifier.removeMissingIdentifier(study.Identifier)}
+    let study = 
+        let nextIdent = Identifier.removeMissingIdentifier(study.Identifier)
+        ISA.IdentifierHandler.setStudyIdentifier nextIdent study
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet study
     doc.AddWorksheet metaDataSheet

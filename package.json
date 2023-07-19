@@ -14,9 +14,9 @@
     "test": "mocha tests/ISA/ISA.Tests/js",
     "pretestFS": "dotnet fable tests/FileSystem/FileSystem.Tests -o tests/FileSystem/FileSystem.Tests/js",
     "testFS": "mocha tests/FileSystem/FileSystem.Tests/js",
-    "pretestJavaScript": "dotnet fable src/ARC -o tests/JavaScript/ARC",
+    "pretestJavaScript": "dotnet fable src/ARCtrl -o tests/JavaScript/ARCtrl",
     "testJavaScript": "mocha tests/JavaScript",
-    "pretestPython": "dotnet fable src/ARC -o tests/Python/ARC --lang py ",
+    "pretestPython": "dotnet fable src/ARCtrl -o tests/Python/ARCtrl --lang py ",
     "testPython": "",
     "postinstall": "cd src/ISA & npm install"
   },

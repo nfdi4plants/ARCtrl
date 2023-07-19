@@ -1,6 +1,6 @@
 ﻿module Contracts.ARCtrl 
 
-open Path.ARCtrl
+open Path.ISA
 open Contract
 
 // Assumptions: 

@@ -46,9 +46,9 @@ module ARC_IO =
     /// Create and fullfill READ contracts for ARCtrl in .NET, then init ARC from existing ARC on disc.
     let readARC (arcRootPath: string) =
         readFilePaths arcRootPath               // Get all file paths relative to ARC root
-        |> ARC.createReadContracts              // Get READ contracts from ARCtrl
+        |> ARC.getReadContracts                 // Get READ contracts from ARCtrl
         |> fullfillREADContracts arcRootPath    // Fullfill READ contracts in .NET
-        |> ARC.createFromReadContracts          // Create ARC model from fullfilled READ contracts
+        |> ARC.ISAFromContracts                 // Create ARC model from fullfilled READ contracts
 
 // ArcInvestigation with all studies and assays
 ARC_IO.readARC(rootPath)

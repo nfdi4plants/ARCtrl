@@ -75,12 +75,14 @@ let fromFsWorkbook (doc:FsWorkbook) =
         |> List.choose ArcTable.tryFromFsWorksheet
     if sheets.IsEmpty then
         assayMetaData
-    else {
-        assayMetaData with Tables = ResizeArray(sheets)
-    }
+    else 
+        assayMetaData.Tables <- ResizeArray(sheets)
+        assayMetaData
 
 let toFsWorkbook (assay : ArcAssay) =
-    let assay = {assay with Identifier = Identifier.removeMissingIdentifier(assay.Identifier)}
+    let assay = 
+        let nextIdent = Identifier.removeMissingIdentifier(assay.Identifier)
+        ISA.IdentifierHandler.setAssayIdentifier nextIdent assay
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet (assay)
     doc.AddWorksheet metaDataSheet

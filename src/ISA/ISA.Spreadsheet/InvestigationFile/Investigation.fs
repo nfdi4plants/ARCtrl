@@ -97,7 +97,6 @@ module ArcInvestigation =
  
     let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) publications contacts (studies: ArcStudy list) remarks =
         ArcInvestigation.make 
-            None 
             (investigationInfo.Identifier)
             (Option.fromValueWithDefault "" investigationInfo.Title)
             (Option.fromValueWithDefault "" investigationInfo.Description) 

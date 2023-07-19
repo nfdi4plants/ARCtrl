@@ -8,17 +8,155 @@ open Fable.Mocha
 open Expecto
 #endif
 
+let private test_create =
+    testList "create" [
+        testCase "constructor" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let title = "Investigation Title"
+            let description = "Investigation Description"
+            let submissionDate = "2023-07-19"
+            let publicReleaseDate = "2023-12-31"
+            let ontologySourceReferences = [OntologySourceReference.create("Reference 1")]
+            let publications = [Publication.create("Publication 1")]
+            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
+            let studies = ResizeArray([ArcStudy.init("Study 1")])
+            let comments = [Comment.create("Comment 1")]
+            let remarks = [Remark.create(1, "Remark 1")]
+
+            let actual =
+                ArcInvestigation(
+                    identifier = identifier,
+                    title = title,
+                    description = description,
+                    submissionDate = submissionDate,
+                    publicReleaseDate = publicReleaseDate,
+                    ontologySourceReferences = ontologySourceReferences,
+                    publications = publications,
+                    contacts = contacts,
+                    studies = studies,
+                    comments = comments,
+                    remarks = remarks
+                )
+
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.Title (Some title) "Title"
+            Expect.equal actual.Description (Some description) "Description"
+            Expect.equal actual.SubmissionDate (Some submissionDate) "SubmissionDate"
+            Expect.equal actual.PublicReleaseDate (Some publicReleaseDate) "PublicReleaseDate"
+            Expect.equal actual.OntologySourceReferences ontologySourceReferences "OntologySourceReferences"
+            Expect.equal actual.Publications publications "Publications"
+            Expect.equal actual.Contacts contacts "Contacts"
+            Expect.equal actual.Studies studies "Studies"
+            Expect.equal actual.Comments comments "Comments"
+            Expect.equal actual.Remarks remarks "Remarks"
+
+        testCase "create" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let title = "Investigation Title"
+            let description = "Investigation Description"
+            let submissionDate = "2023-07-19"
+            let publicReleaseDate = "2023-12-31"
+            let ontologySourceReferences = [OntologySourceReference.create("Reference 1")]
+            let publications = [Publication.create("Publication 1")]
+            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
+            let studies = ResizeArray([ArcStudy.init("Study 1")])
+            let comments = [Comment.create("Comment 1")]
+            let remarks = [Remark.create(1, "Remark 1")]
+
+            let actual = ArcInvestigation.create(
+                identifier = identifier,
+                title = title,
+                description = description,
+                submissionDate = submissionDate,
+                publicReleaseDate = publicReleaseDate,
+                ontologySourceReferences = ontologySourceReferences,
+                publications = publications,
+                contacts = contacts,
+                studies = studies,
+                comments = comments,
+                remarks = remarks
+            )
+
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.Title (Some title) "Title"
+            Expect.equal actual.Description (Some description) "Description"
+            Expect.equal actual.SubmissionDate (Some submissionDate) "SubmissionDate"
+            Expect.equal actual.PublicReleaseDate (Some publicReleaseDate) "PublicReleaseDate"
+            Expect.equal actual.OntologySourceReferences ontologySourceReferences "OntologySourceReferences"
+            Expect.equal actual.Publications publications "Publications"
+            Expect.equal actual.Contacts contacts "Contacts"
+            Expect.equal actual.Studies studies "Studies"
+            Expect.equal actual.Comments comments "Comments"
+            Expect.equal actual.Remarks remarks "Remarks"
+
+        testCase "init" <| fun _ ->
+            let identifier = "MyIdentifier"
+
+            let actual = ArcInvestigation.init(identifier)
+
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.Title None "Title"
+            Expect.equal actual.Description None "Description"
+            Expect.equal actual.SubmissionDate None "SubmissionDate"
+            Expect.equal actual.PublicReleaseDate None "PublicReleaseDate"
+            Expect.isEmpty actual.OntologySourceReferences "OntologySourceReferences"
+            Expect.isEmpty actual.Publications "Publications"
+            Expect.isEmpty actual.Contacts "Contacts"
+            Expect.isEmpty actual.Studies "Studies"
+            Expect.isEmpty actual.Comments "Comments"
+            Expect.isEmpty actual.Remarks "Remarks"
+
+        testCase "make" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let title = Some "Investigation Title"
+            let description = Some "Investigation Description"
+            let submissionDate = Some "2023-07-19"
+            let publicReleaseDate = Some "2023-12-31"
+            let ontologySourceReferences = [OntologySourceReference.create("Reference 1")]
+            let publications = [Publication.create("Publication 1")]
+            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
+            let studies = ResizeArray([ArcStudy.init("Study 1")])
+            let comments = [Comment.create("Comment 1")]
+            let remarks = [Remark.create(1, "Remark 1")]
+
+            let actual = 
+                ArcInvestigation.make
+                    identifier
+                    title
+                    description
+                    submissionDate
+                    publicReleaseDate
+                    ontologySourceReferences
+                    publications
+                    contacts
+                    studies
+                    comments
+                    remarks
+
+            Expect.equal actual.Identifier identifier "Identifier"
+            Expect.equal actual.Title title "Title"
+            Expect.equal actual.Description description "Description"
+            Expect.equal actual.SubmissionDate submissionDate "SubmissionDate"
+            Expect.equal actual.PublicReleaseDate publicReleaseDate "PublicReleaseDate"
+            Expect.equal actual.OntologySourceReferences ontologySourceReferences "OntologySourceReferences"
+            Expect.equal actual.Publications publications "Publications"
+            Expect.equal actual.Contacts contacts "Contacts"
+            Expect.equal actual.Studies studies "Studies"
+            Expect.equal actual.Comments comments "Comments"
+            Expect.equal actual.Remarks remarks "Remarks"
+    ]
+
 let tests_MutableFields = testList "MutableFields" [
     testCase "ensure investigation" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        Expect.equal i.FileName None ""
+        Expect.equal i.Description None ""
     testCase "test mutable fields" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
-        i.FileName <- Some "MyName"
+        i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
-        Expect.equal i.FileName (Some "MyName") "FileName"
+        Expect.equal i.Description (Some "MyName") "FileName"
         Expect.equal i.Contacts persons "Contacts"
         Expect.equal i.Title (Some "Awesome Title") "Title"
 ]
@@ -27,31 +165,65 @@ let tests_Copy = testList "Copy" [
     testCase "test mutable fields" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
-        i.FileName <- Some "MyName"
+        i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
-        Expect.equal i.FileName (Some "MyName") "FileName"
+        Expect.equal i.Description (Some "MyName") "FileName"
         Expect.equal i.Contacts persons "Contacts"
         Expect.equal i.Title (Some "Awesome Title") "Title"
         let copy = i.Copy()
         let nextPersons = [Person.create(FirstName="Pascal", LastName="Gevangen")]
-        copy.FileName <- Some "Next FileName"
+        copy.Description <- Some "Next FileName"
         copy.Contacts <- nextPersons
         copy.Title <- Some "Next Title"
-        Expect.equal i.FileName (Some "MyName") "FileName, after copy"
+        Expect.equal i.Description (Some "MyName") "FileName, after copy"
         Expect.equal i.Contacts persons "Contacts, after copy"
         Expect.equal i.Title (Some "Awesome Title") "Title, after copy"
-        Expect.equal copy.FileName (Some "Next FileName") "copy FileName"
+        Expect.equal copy.Description (Some "Next FileName") "copy FileName"
         Expect.equal copy.Contacts nextPersons "copy Contacts"
         Expect.equal copy.Title (Some "Next Title") "copy Title"
-        
+    testCase "test mutable fields on study" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
+        i.Description <- Some "MyName"
+        i.Contacts <- persons
+        i.Title <- Some "Awesome Title"
+        i.AddStudy(ArcStudy.init("Study 1"))
+        let s = i.GetStudyAt(0)
+        s.Description <- Some "My Test Desciption"
+        Expect.equal i.Description (Some "MyName") "FileName"
+        Expect.equal i.Contacts persons "Contacts"
+        Expect.equal i.Title (Some "Awesome Title") "Title"
+        Expect.equal i.StudyCount 1 "StudyCount"
+        let sNext = i.GetStudyAt(0)
+        Expect.equal sNext.Description (Some "My Test Desciption") "study description"
+        // Create `copy` and change params. Then `i` should still be the same while `copy` must be changed
+        let copy = i.Copy()
+        let nextPersons = [Person.create(FirstName="Pascal", LastName="Gevangen")]
+        copy.Description <- Some "Next FileName"
+        copy.Contacts <- nextPersons
+        copy.Title <- Some "Next Title"
+        let copyStudy = copy.GetStudyAt(0)
+        copyStudy.Description <- Some "My New Desciption"
+        Expect.equal i.Description (Some "MyName") "FileName, after copy"
+        Expect.equal i.Contacts persons "Contacts, after copy"
+        Expect.equal i.Title (Some "Awesome Title") "Title, after copy"
+        Expect.equal i.StudyCount 1 "StudyCount, after copy"
+        let s_postCopy = i.GetStudyAt(0)
+        Expect.equal s_postCopy.Description (Some "My Test Desciption") "study description, after copy"
+        Expect.equal copy.Description (Some "Next FileName") "copy FileName"
+        Expect.equal copy.Contacts nextPersons "copy Contacts"
+        Expect.equal copy.Title (Some "Next Title") "copy Title"
+        Expect.equal copy.StudyCount 1 "copy StudyCount"
+        let nextcopyStudy = copy.GetStudyAt(0)
+        Expect.equal nextcopyStudy.Description (Some "My New Desciption") "copy study desciption"
 ]
 
 let tests_Study = testList "CRUD Study" [
     let createExampleInvestigation() =
         let i = ArcInvestigation.init("MyInvestigation")
         let s = ArcStudy.init("Study 1")
-        let s2 = ArcStudy.create("Study 2",title="Study 2 Title")
+        let s2 = ArcStudy("Study 2",title="Study 2 Title")
         i.AddStudy s
         i.AddStudy s2
         i
@@ -147,7 +319,7 @@ let tests_Assay = testList "CRUD Assay" [
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = "Assay Tech"
-            let expected = ArcAssay.create(assay_ident, technologyPlatform = assay_techPlatform)
+            let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.AddAssayAt(0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
             let s = i.Studies.Item 0 
@@ -158,7 +330,7 @@ let tests_Assay = testList "CRUD Assay" [
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = "Assay Tech"
-            let expected = ArcAssay.create(assay_ident, technologyPlatform = assay_techPlatform)
+            let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.AddAssay("Study 1", expected)
             Expect.equal i.StudyCount 2 "StudyCount"
             let s = i.Studies.Item 0 
@@ -171,7 +343,7 @@ let tests_Assay = testList "CRUD Assay" [
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = "Assay Tech"
-            let expected = ArcAssay.create(assay_ident, technologyPlatform = assay_techPlatform)
+            let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssayAt("Study 1", 0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
             let s = i.Studies.Item 0 
@@ -182,7 +354,7 @@ let tests_Assay = testList "CRUD Assay" [
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = "Assay Tech"
-            let expected = ArcAssay.create(assay_ident, technologyPlatform = assay_techPlatform)
+            let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssay("Study 1", "Assay 2", expected)
             Expect.equal i.StudyCount 2 "StudyCount"
             let s = i.Studies.Item 0 
@@ -225,6 +397,7 @@ let tests_Assay = testList "CRUD Assay" [
 
 let main = 
     testList "ArcInvestigation" [
+        test_create
         tests_MutableFields
         tests_Copy
         tests_Study

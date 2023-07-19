@@ -357,5 +357,5 @@ tmp/
 /tests/ISA/ISA.Json.Tests/js
 /tests/ISA/ISA.Spreadsheet.Tests/js
 /tests/ISA/ISA.Tests/js
-/tests/JavaScript/ARC
-/tests/Python/ARC
+/tests/JavaScript/ARCtrl
+/tests/Python/ARCtrl
