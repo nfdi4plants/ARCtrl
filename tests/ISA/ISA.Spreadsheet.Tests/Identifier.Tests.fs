@@ -15,6 +15,10 @@ let private testIdentifierFromFileName () =
         "MyAssay/isa.assay.xlsx", "MyAssay"
         "assays/My_Assay/isa.assay.xlsx", "My_Assay"
         "assays/Awesome Assay/isa.assay.xlsx", "Awesome Assay"
+        "TestAssay1\isa.assay.xlsx", "TestAssay1" // Windows path separator
+        "assays\TestAssay1\isa.assay.xlsx", "TestAssay1" // Windows path separator
+        "assays\TestAssay1/isa.assay.xlsx", "TestAssay1" // Mixed path separator
+        "assays\my-awesome-assay/isa.assay.xlsx", "my-awesome-assay" // new allowed "-" character
     ]
     let invalidTestFileName = [
         "isa.assay.xlsx"
@@ -48,6 +52,7 @@ let private testFileNameFromIdentifier () =
     let invalidTestIdentifier = [
         ""
         "Invalid/path"
+        "notassays/identifier/isa.assay.xlsx"
     ]
 
     let validTestCases = 
@@ -66,7 +71,14 @@ let private testFileNameFromIdentifier () =
         )
     validTestCases@invalidTestCases
 
-let test_identifierFromFileName = testList "identifierFromFileName" (testIdentifierFromFileName ())
+let test_identifierFromFileName = testList "identifierFromFileName" [
+    yield! testIdentifierFromFileName ()
+    testCase "createMissingIdentifier" <| fun _ ->
+        let pseudoFileName = createMissingIdentifier()
+        let identifierFromFileName = Assay.identifierFromFileName pseudoFileName
+        Expect.equal identifierFromFileName pseudoFileName ""
+
+]
 let test_fileNameFromIdentifier = testList "fileNameFromIdentifier" (testFileNameFromIdentifier ())
 
 let tests_Assay = testList "Assay" [

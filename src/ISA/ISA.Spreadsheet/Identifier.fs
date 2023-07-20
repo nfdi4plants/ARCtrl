@@ -34,9 +34,5 @@ module Assay =
     /// </summary>
     /// <param name="identifier">Any correct assay identifier</param>
     let fileNameFromIdentifier (identifier: string) : string =
-        let regex = Regex(ISA.IdentifierHandler.ValidIdentifierPattern)
-        let m = regex.Match(identifier)
-        match m.Success with
-        | false -> failwith $"Invalid identifier: `{identifier}`! Unable to create FileName."
-        | true ->
-            FileSystem.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]
+        ISA.IdentifierHandler.checkValidCharacters (identifier)
+        FileSystem.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]

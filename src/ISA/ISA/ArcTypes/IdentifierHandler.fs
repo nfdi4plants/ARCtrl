@@ -4,7 +4,7 @@ module ISA.IdentifierHandler
 open System.Text.RegularExpressions
 
 /// This pattern should never be used as standalone pattern!
-let [<Literal>] internal InnerValidCharactersPattern = @"[a-zA-Z0-9_ ]+"
+let [<Literal>] internal InnerValidCharactersPattern = @"[a-zA-Z0-9_\- ]+"
 
 // Define a regular expression pattern for valid characters
 let [<Literal>] ValidIdentifierPattern = @"^" + InnerValidCharactersPattern + @"$"
@@ -16,7 +16,7 @@ let [<Literal>] ValidFileNamePattern = @"^(assays(\/|\\))?(?<identifier>" + Inne
 let checkValidCharacters (identifier: string) =
     let regex = new Regex(ValidIdentifierPattern)
     let isValid = regex.IsMatch(identifier)
-    if not isValid then failwith "New identifier contains forbidden characters! Allowe characters are: letters, digits, underscore (_) and whitespace ( )."
+    if not isValid then failwith "New identifier contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
 
 let setAssayIdentifier (newIdentifier: string) (assay: ArcAssay) =
     checkValidCharacters newIdentifier
