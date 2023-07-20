@@ -1,4 +1,4 @@
-﻿module Path.ISA
+﻿module ARCtrl.Path
 
 // Files
 let [<Literal>] AssayFileName = "isa.assay.xlsx"

@@ -1,4 +1,4 @@
-﻿module Path.ARCtrl
+﻿module ARCtrl.Path
 
 open ISA
 open FileSystem

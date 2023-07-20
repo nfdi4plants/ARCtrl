@@ -53,9 +53,6 @@ let fromFsWorkbook (doc:FsWorkbook) =
         studyMetadata
 
 let toFsWorkbook (study : ArcStudy) =
-    let study = 
-        let nextIdent = Identifier.removeMissingIdentifier(study.Identifier)
-        ISA.IdentifierHandler.setStudyIdentifier nextIdent study
     let doc = new FsWorkbook()
     let metaDataSheet = toMetadataSheet study
     doc.AddWorksheet metaDataSheet

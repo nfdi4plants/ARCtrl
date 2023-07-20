@@ -41,21 +41,17 @@ module ARCAux =
 [<AttachMembers>]
 type ARC =
     {
-       ISA : ISA.ArcInvestigation
-       CWL : CWL.CWL
-       FileSystem : FileSystem.FileSystem 
-    }    
+       ISA : ISA.ArcInvestigation option
+       CWL : CWL.CWL option
+       FileSystem : FileSystem.FileSystem option
+    }
 
-    static member create(
-        isa: ISA.ArcInvestigation,
-        cwl: CWL.CWL,
-        fs: FileSystem.FileSystem 
-    ) =
+    static member create(?isa: ISA.ArcInvestigation,?cwl: CWL.CWL, ?fs: FileSystem.FileSystem) =
         {
            ISA = isa
            CWL = cwl
            FileSystem = fs
-        }  
+        }
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -124,22 +120,29 @@ type ARC =
     // reason: contracts are initially designed to sync disk with in-memory model while working on the arc.
     // but we need a way to create an arc programmatically and then write it to disk.
 
-    static member FSFromFilePaths (filePaths : string array) : FileSystem = FileSystem.fromFilePaths filePaths
+    static member fromFilePaths (filePaths : string array) : ARC = 
+        let fs : FileSystem = FileSystem.fromFilePaths filePaths
+        ARC.create(fs=fs)
+
+    // Maybe add forceReplace flag?
+    member this.addFSFromFilePaths (filePaths : string array) : ARC = 
+        let fs : FileSystem = FileSystem.fromFilePaths filePaths
+        { this with FileSystem = Some fs }
 
     // to-do: function that returns read contracts based on a list of paths.
-    // the list of paths is used to create a filesystem tree
-    static member getReadContracts (filePaths : string array) =
-        // TODO: What to do with FS? Cannot create FS from fullfilled contracts but should i return fs here?
-        let fs: FileSystem = FileSystem.fromFilePaths filePaths
-        filePaths
-        |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath
+    member this.getReadContracts () =
+        match this.FileSystem with
+        | Some fs -> fs.Tree.ToFilePaths() |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath
+        | None -> failwith "Cannot create READ contracts from ARC without FileSystem.
+
+You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFromFilePaths` to avoid this issue."
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
     /// </summary>
     /// <param name="cArr">The fullfilled READ contracts.</param>
     /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
-    static member ISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
+    member this.addISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
         let enableLogging = defaultArg enableLogging false
         /// get investigation from xlsx
         let investigation = ARCAux.getArcInvestigationFromContracts contracts
@@ -170,4 +173,16 @@ type ARC =
             | None -> 
                 if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
         )
-        investigation
+        {this with ISA = Some investigation}
+
+//-Pseudo code-//
+//// Option 1
+//let fs, readcontracts = ARC.FSFromFilePaths filepaths
+//let isa = ARC.ISAFromContracts fullfilled_readcontracts
+//let cwl = ARC.CWLFromXXX XXX
+//ARC.create(fs, isa, cwl)
+
+//// Option 2
+//let arc = ARC.fromFilePaths // returned ARC
+//let contracts = arc.getREADContracts // retunred READ
+//arc.updateFromContracts fullfilled_contracts //returned ARC

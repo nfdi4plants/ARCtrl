@@ -40,18 +40,35 @@ module ARC_IO =
         readFilePaths arcRootPath
         |> ARC.getReadContracts
         |> fullfillREADContracts arcRootPath
-        //|> ARC.createFromReadContracts
+        |> ARC.ISAFromContracts
 
-let expectedStudyPathFromStudyIdentifier (studyIdentifier) =
-    FileSystem.Path.combineMany[|Path.ARCtrl.StudiesFolderName; studyIdentifier; Path.ARCtrl.StudyFileName|]
+let myarc = 
+    ARC_IO.initExistingARC(rootPath)
 
-let tryFindStudy (contracts: Contract []) (studyRegisteredIdent: string) =
-    contracts |> Array.tryPick (fun c ->
-        let expectedPath = expectedStudyPathFromStudyIdentifier studyRegisteredIdent
-        match c with
-        | {Operation = READ; DTOType = Some DTOType.ISA_Study; DTO = Some (DTO.Spreadsheet fsworkbook); Path = p} when p = expectedPath ->
-            Some (p, fsworkbook)
-        | _ -> None
-    )
+let newArcPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "TestArc") 
 
-ARC_IO.initExistingARC(rootPath)
+open ISA
+open FsSpreadsheet
+open FsSpreadsheet.ExcelIO
+open ISA.Spreadsheet
+
+module WriteContracts =
+    let investigationFromISA (investigation: ArcInvestigation) =
+        let investigationFile = ArcInvestigation.toFsWorkbook (investigation)
+        let investigationFilePath = Path.combineMany [|rootPath; Path.ISA.InvestigationFileName|]
+        let investigationContract = Contract.createCreate(investigationFilePath,DTOType.ISA_Investigation, DTO.Spreadsheet investigationFile)
+        investigationContract
+
+    let study (study: ArcStudy) =
+        let studyFile = ArcStudy.toFsWorkbook study
+        let studyFilePath = Path.combineMany [|rootPath; Path.ISA.StudiesFolderName; Path.ISA.StudyFileName|]
+
+let writeNewContracts (arc: ArcInvestigation) =
+    let contracts = ResizeArray()
+    // root items
+    let investigationContract = WriteContracts.investigationFromISA arc
+    contracts.Add(investigationContract)
+    contracts
+
+
+writeNewContracts arc

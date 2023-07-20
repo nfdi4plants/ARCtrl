@@ -39,7 +39,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member val Comments : Comment list = comments with get, set
     member val Remarks : Remark list = remarks with get, set
 
-    static member FileName = Path.ISA.InvestigationFileName
+    static member FileName = ARCtrl.Path.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
     static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) = 

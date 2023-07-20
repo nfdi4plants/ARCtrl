@@ -17,6 +17,7 @@
     <Compile Include="CompositeCellTests.fs" />
     <Compile Include="CompositeColumnTests.fs" />
     <Compile Include="ArcTableTests.fs" />
+    <Compile Include="Identifier.Tests.fs" />
     <Compile Include="AssayFileTests.fs" />
     <Compile Include="InvestigationFileTests.fs" />
     <Compile Include="Main.fs" />

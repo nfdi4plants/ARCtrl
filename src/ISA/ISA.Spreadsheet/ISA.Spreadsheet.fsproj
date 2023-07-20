@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ISA\ISA.fsproj" />
+    <ProjectReference Include="..\..\FileSystem\FileSystem.fsproj" />
   </ItemGroup>
   
   <PropertyGroup>

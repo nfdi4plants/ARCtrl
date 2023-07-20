@@ -66,7 +66,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             (this.Comments = [])
 
     // Not sure how to handle this best case.
-    static member FileName = Path.ISA.StudyFileName
+    static member FileName = ARCtrl.Path.StudyFileName
     //member this.FileName = ArcStudy.FileName
 
     member this.AssayCount 

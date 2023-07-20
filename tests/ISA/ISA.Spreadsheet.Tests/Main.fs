@@ -13,6 +13,7 @@ let all = testSequenced <| testList "All" [
     ArcTableTests.main
     ArcAssayTests.main
     SparseTableTests.main
+    IdentifierTests.main
 ]
 
 let [<EntryPoint>] main argv = 

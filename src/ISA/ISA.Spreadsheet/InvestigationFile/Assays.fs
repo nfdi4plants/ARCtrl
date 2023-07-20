@@ -56,7 +56,7 @@ module Assays =
                     (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
                     (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
                     (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
-                    (matrix.TryGetValueDefault(Identifier.createMissingIdentifier(),(fileNameLabel,i)))                    
+                    (matrix.TryGetValueDefault(Identifier.createMissingIdentifier(),(fileNameLabel,i)) |> Identifier.Assay.identifierFromFileName)                    
                     comments
             )
 
@@ -65,6 +65,8 @@ module Assays =
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
+            let processedIdentifier =
+                if a.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then Identifier.removeMissingIdentifier(a.Identifier) else Identifier.Assay.fileNameFromIdentifier(a.Identifier)
             let i = i + 1
             let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
             let tt = Option.defaultValue OntologyAnnotation.empty a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
@@ -75,7 +77,7 @@ module Assays =
             do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     tt.TermAccessionNumber)
             do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           tt.TermSourceREF)
             do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
-            do matrix.Matrix.Add ((fileNameLabel,i),                              Identifier.removeMissingIdentifier(a.Identifier))
+            do matrix.Matrix.Add ((fileNameLabel,i),                              (processedIdentifier))
 
             if a.Comments.IsEmpty |> not then
                 a.Comments

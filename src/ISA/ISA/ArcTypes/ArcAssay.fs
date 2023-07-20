@@ -17,7 +17,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         with get() = identifier
         and internal set(i) = identifier <- i
 
-    static member FileName = Path.ISA.AssayFileName
+    static member FileName = ARCtrl.Path.AssayFileName
 
     member val MeasurementType : OntologyAnnotation option = measurementType with get, set
     member val TechnologyType : OntologyAnnotation option = technologyType with get, set

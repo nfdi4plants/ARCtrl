@@ -1,7 +1,5 @@
 ﻿module ISADotnet.Tests
 
-open ISA
-
 #if FABLE_COMPILER
 open Fable.Mocha
 #else
@@ -20,6 +18,7 @@ let all = testSequenced <| testList "All" [
     ArcAssay.Tests.main
     ArcStudy.Tests.main
     ArcInvestigation.Tests.main
+    IdentifierHandler.Tests.main
     Fable.Tests.main
 ]
 
