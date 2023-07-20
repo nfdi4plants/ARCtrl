@@ -10,7 +10,7 @@ let [<Literal>] internal InnerValidCharactersPattern = @"[a-zA-Z0-9_ ]+"
 let [<Literal>] ValidIdentifierPattern = @"^" + InnerValidCharactersPattern + @"$"
 
 // Define a regular expression pattern for valid characters
-let [<Literal>] ValidFileNamePattern = @"^(assays\/)?(?<identifier>" + InnerValidCharactersPattern + @")(\/isa.assay.xlsx)?$"
+let [<Literal>] ValidFileNamePattern = @"^(assays(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.assay.xlsx)?$"
 
 // Function to check if a string contains only valid characters
 let checkValidCharacters (identifier: string) =
