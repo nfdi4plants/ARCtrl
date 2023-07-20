@@ -94,6 +94,13 @@ type ProcessInput =
         | ProcessInput.Material m -> Some m
         | _ -> None
 
+    static member setCharacteristicValues (characteristics : MaterialAttributeValue list) (pi : ProcessInput) =
+        match pi with
+        | ProcessInput.Sample s     -> ProcessInput.Sample (Sample.setCharacteristicValues characteristics s)
+        | ProcessInput.Source s     -> ProcessInput.Source (Source.setCharacteristicValues characteristics s)
+        | ProcessInput.Material m   -> ProcessInput.Material (Material.setCharacteristicValues characteristics m)
+        | ProcessInput.Data _       -> pi
+
     /// If given process input contains characteristics, returns them
     static member tryGetCharacteristicValues (pi : ProcessInput) =
         match pi with

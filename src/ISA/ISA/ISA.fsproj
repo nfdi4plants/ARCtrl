@@ -48,6 +48,7 @@
     <Compile Include="ArcTypes\Path.fs" />
     <Compile Include="ArcTypes\CompositeHeader.fs" />
     <Compile Include="ArcTypes\CompositeCell.fs" />
+    <Compile Include="ArcTypes\CompositeRow.fs" />
     <Compile Include="ArcTypes\CompositeColumn.fs" />
     <Compile Include="ArcTypes\ArcTableAux.fs" />
     <Compile Include="ArcTypes\ArcTable.fs" />
@@ -60,7 +61,6 @@
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />
     <Compile Include="Builder\Transform.fs" />
-    <Compile Include="ValueIndex.fs" />
   </ItemGroup>
 
   <ItemGroup>

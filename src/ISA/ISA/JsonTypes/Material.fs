@@ -42,3 +42,6 @@ type Material =
         m.Characteristics
         |> Option.defaultValue []
         |> List.choose (fun c -> c.Unit)
+
+    static member setCharacteristicValues (values:MaterialAttributeValue list) (m:Material) =
+        { m with Characteristics = Some values }

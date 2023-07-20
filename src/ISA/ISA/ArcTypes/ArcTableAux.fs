@@ -295,3 +295,283 @@ module Unchecked =
                 setCellAt (columnIndex,rowIndex,cell) values
             )
         ()
+
+module JsonTypes = 
+
+    let valueOfCell (value : CompositeCell) =
+        match value with
+        | CompositeCell.FreeText (text) -> Value.fromString text, None
+        | CompositeCell.Term (term) -> Value.Ontology term, None
+        | CompositeCell.Unitized (text,unit) -> Value.fromString text, Some unit
+
+    let composeComponent (header : CompositeHeader) (value : CompositeCell) : Component =
+        let v,u = valueOfCell value
+        Component.fromOptions (Some v) u (header.ToTerm() |> Some)
+
+    let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : ProcessParameterValue =
+        let v,u = valueOfCell value
+        let p = ProtocolParameter.create(ParameterName = header.ToTerm())
+        ProcessParameterValue.create(p,v,?Unit = u)
+
+    let composeFactorValue (header : CompositeHeader) (value : CompositeCell) : FactorValue =
+        let v,u = valueOfCell value
+        let f = Factor.create(Name = header.ToString(),FactorType = header.ToTerm())
+        FactorValue.create(Category = f,Value = v,?Unit = u)
+
+    let composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : MaterialAttributeValue =
+        let v,u = valueOfCell value
+        let c = MaterialAttribute.create(CharacteristicType = header.ToTerm())
+        MaterialAttributeValue.create(Category = c,Value = v,?Unit = u)
+
+    let composeProcessInput (header : CompositeHeader) (value : CompositeCell) : ProcessInput =
+        match header with
+        | CompositeHeader.Input IOType.Source -> 
+            Source.create(Name = value.ToString())
+            |> ProcessInput.Source
+        | CompositeHeader.Input IOType.Sample ->
+            Sample.create(Name = value.ToString())
+            |> ProcessInput.Sample
+        | CompositeHeader.Input IOType.Material ->
+            Material.create(Name = value.ToString())
+            |> ProcessInput.Material
+        | CompositeHeader.Input IOType.ImageFile -> 
+            Data.create(Name = value.ToString(),DataType = DataFile.ImageFile)
+            |> ProcessInput.Data
+
+        | CompositeHeader.Input IOType.RawDataFile -> 
+            Data.create(Name = value.ToString(),DataType = DataFile.RawDataFile)
+            |> ProcessInput.Data
+        | CompositeHeader.Input IOType.DerivedDataFile ->
+            Data.create(Name = value.ToString(),DataType = DataFile.DerivedDataFile)
+            |> ProcessInput.Data
+        | _ ->
+            failwithf "Could not parse input header %O" header
+
+    let composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : ProcessOutput =
+        match header with
+        | CompositeHeader.Output IOType.Sample ->
+            Sample.create(Name = value.ToString())
+            |> ProcessOutput.Sample
+        | CompositeHeader.Output IOType.Material ->
+            Material.create(Name = value.ToString())
+            |> ProcessOutput.Material
+        | CompositeHeader.Output IOType.ImageFile ->
+            Data.create(Name = value.ToString(),DataType = DataFile.ImageFile)
+            |> ProcessOutput.Data
+        | CompositeHeader.Output IOType.RawDataFile ->
+            Data.create(Name = value.ToString(),DataType = DataFile.RawDataFile)
+            |> ProcessOutput.Data
+        | CompositeHeader.Output IOType.DerivedDataFile ->
+            Data.create(Name = value.ToString(),DataType = DataFile.DerivedDataFile)
+            |> ProcessOutput.Data
+        | _ ->
+            failwithf "Could not parse output header %O" header
+
+module ProcessParsing = 
+
+    open ISA.ColumnIndex
+
+    /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
+    let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Component oa ->
+            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeComponent cat matrix.[generalI,i]
+            |> Some
+        | _ -> None    
+            
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Component oa ->
+            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeParameterValue cat matrix.[generalI,i]
+            |> Some
+        | _ -> None 
+
+    let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Component oa ->
+            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeFactorValue cat matrix.[generalI,i]
+            |> Some
+        | _ -> None 
+
+    let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Component oa ->
+            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeCharacteristicValue cat matrix.[generalI,i]
+            |> Some
+        | _ -> None 
+
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolType ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsTerm
+            |> Some
+        | _ -> None 
+
+
+    let tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolREF ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolDescription ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolUri ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolVersion ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetInputGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Input io ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeProcessInput header matrix.[generalI,i]
+            |> Some
+        | _ -> None
+
+    let tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Output io ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeProcessOutput header matrix.[generalI,i]
+            |> Some
+        | _ -> None
+
+    /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
+    let getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
+    
+        let headers = 
+            headers
+            |> Seq.indexed
+
+        let valueHeaders =
+            headers
+            |> Seq.filter (snd >> fun h -> h.IsCvParamColumn)
+            |> Seq.indexed
+            |> Seq.toList
+
+        let charGetters =
+            valueHeaders 
+            |> List.choose (fun (valueI,(generalI,header)) -> tryCharacteristicGetter generalI valueI header)
+
+        let factorValueGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> tryFactorGetter generalI valueI header)
+
+        let parameterValueGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> tryParameterGetter generalI valueI header)
+
+        let componentGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> tryComponentGetter generalI valueI header)
+
+        let protocolTypeGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolTypeGetter generalI header)
+
+        let protocolREFGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolREFGetter generalI header)
+
+        let protocolDescriptionGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolDescriptionGetter generalI header)
+
+        let protocolURIGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolURIGetter generalI header)
+
+        let protocolVersionGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolVersionGetter generalI header)
+
+        let inputGetter =
+            match headers |> Seq.tryPick (fun (generalI,header) -> tryGetInputGetter generalI header) with
+            | Some inputGetter ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    inputGetter matrix i
+                    |> ProcessInput.setCharacteristicValues chars
+                    |> List.singleton
+            | None ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    ProcessInput.Source (Source.create(Name = $"{processNameRoot}_Input_{i}", Characteristics = chars))
+                    |> List.singleton
+            
+        let outputGetter =
+            match headers |> Seq.tryPick (fun (generalI,header) -> tryGetOutputGetter generalI header) with
+            | Some outputGetter ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    outputGetter matrix i
+                    |> ProcessOutput.setFactorValues factors
+                    |> List.singleton
+            | None ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    ProcessOutput.Sample (Sample.create(Name = $"{processNameRoot}_Output_{i}", FactorValues = factors))
+                    |> List.singleton
+
+        fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+
+            let pn = processNameRoot |> Aux.Option.fromValueWithDefault ""
+
+            let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [] 
+            let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
+
+            let protocol : Protocol = 
+                Protocol.make 
+                    None
+                    (protocolREFGetter |> Aux.Option.mapOrDefault pn (fun f -> f matrix i))
+                    (protocolTypeGetter |> Option.map (fun f -> f matrix i))
+                    (protocolDescriptionGetter |> Option.map (fun f -> f matrix i))
+                    (protocolURIGetter |> Option.map (fun f -> f matrix i))
+                    (protocolVersionGetter |> Option.map (fun f -> f matrix i))
+                    (parameters)
+                    (componentGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [])
+                    None
+
+            Process.make 
+                None 
+                pn 
+                (Some protocol) 
+                (paramvalues)
+                None
+                None
+                None
+                None          
+                (inputGetter matrix i |> Some)
+                (outputGetter matrix i |> Some)
+                None

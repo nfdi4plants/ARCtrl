@@ -99,9 +99,16 @@ type ProcessOutput =
         | ProcessOutput.Material _   -> None
         | ProcessOutput.Data _       -> None
 
+    static member setFactorValues (values:FactorValue list) (po:ProcessOutput) =
+        match po with
+        | ProcessOutput.Sample s     -> Sample.setFactorValues values s |> Sample
+        | ProcessOutput.Material _   -> po
+        | ProcessOutput.Data _       -> po
+
     /// If given process output contains units, returns them
     static member getUnits (po : ProcessOutput) =
         match po with
         | ProcessOutput.Sample s     -> Sample.getUnits s
         | ProcessOutput.Material m   -> Material.getUnits m
         | ProcessOutput.Data _       -> []
+

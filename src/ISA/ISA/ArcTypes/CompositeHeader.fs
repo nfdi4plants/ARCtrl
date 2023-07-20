@@ -114,6 +114,23 @@ type CompositeHeader =
         | Output io             -> io.asOutput
         | FreeText str          -> str
 
+    member this.ToTerm() =
+        match this with
+        | Parameter oa          -> oa
+        | Factor oa             -> oa
+        | Characteristic oa     -> oa
+        | Component oa          -> oa
+        | ProtocolType          -> OntologyAnnotation.fromString "Protocol Type" 
+        | ProtocolREF           -> OntologyAnnotation.fromString "Protocol REF"
+        | ProtocolDescription   -> OntologyAnnotation.fromString "Protocol Description"
+        | ProtocolUri           -> OntologyAnnotation.fromString "Protocol Uri"
+        | ProtocolVersion       -> OntologyAnnotation.fromString "Protocol Version"
+        | Performer             -> OntologyAnnotation.fromString "Performer"
+        | Date                  -> OntologyAnnotation.fromString "Date"
+        | Input io              -> OntologyAnnotation.fromString io.asInput
+        | Output io             -> OntologyAnnotation.fromString io.asOutput
+        | FreeText str          -> OntologyAnnotation.fromString str
+
     /// <summary>
     /// Tries to create a `CompositeHeader` from a given string.
     /// </summary>
@@ -158,6 +175,16 @@ type CompositeHeader =
         | FreeText s when s.ToLower() = "data file name" -> true
         | FreeText s when s.ToLower() = "derived data file" -> true
         | _ -> false   
+
+    /// <summary>
+    /// Is true if this Building Block type is a CvParamColumn.
+    ///
+    /// The name "CvParamColumn" refers to all columns with the syntax "Parameter/Factor/etc [TERM-NAME]".
+    /// </summary>
+    member this.IsCvParamColumn =
+        match this with 
+        | Parameter _ | Factor _| Characteristic _| Component _ -> true
+        | anythingElse -> false
 
     /// <summary>
     /// Is true if this Building Block type is a TermColumn.
