@@ -367,6 +367,57 @@ module JsonTypes =
         | _ ->
             failwithf "Could not parse output header %O" header
 
+    let cellOfValue (value : Value option) (unit : OntologyAnnotation option) =
+        let value = value |> Option.defaultValue (Value.Name "")
+        match value,unit with
+        | Value.Ontology oa, None -> CompositeCell.Term oa
+        | Value.Name text, None -> CompositeCell.FreeText text
+        | Value.Name "", Some u -> CompositeCell.Unitized ("",u)
+        | Value.Float f, Some u -> CompositeCell.Unitized (f.ToString(),u)
+        | Value.Float f, None -> CompositeCell.FreeText (f.ToString())
+        | Value.Int i, Some u -> CompositeCell.Unitized (i.ToString(),u)
+        | Value.Int i, None -> CompositeCell.FreeText (i.ToString())
+        | _ -> failwithf "Could not parse value %O with unit %O" value unit
+
+    let decomposeComponent (c : Component) : CompositeHeader*CompositeCell =
+        CompositeHeader.Component (c.ComponentType.Value),
+        cellOfValue c.ComponentValue c.ComponentUnit 
+
+    let decomposeParameterValue (ppv : ProcessParameterValue) : CompositeHeader*CompositeCell =
+        CompositeHeader.Parameter (ppv.Category.Value.ParameterName.Value),
+        cellOfValue ppv.Value ppv.Unit
+
+    let decomposeFactorValue (fv : FactorValue) : CompositeHeader*CompositeCell =
+        CompositeHeader.Parameter (fv.Category.Value.FactorType.Value),
+        cellOfValue fv.Value fv.Unit
+
+    let decomposeCharacteristicValue (cv : MaterialAttributeValue) : CompositeHeader*CompositeCell =
+        CompositeHeader.Parameter (cv.Category.Value.CharacteristicType.Value),
+        cellOfValue cv.Value cv.Unit
+
+    let decomposeProcessInput (pi : ProcessInput) : CompositeHeader*CompositeCell =
+        match pi with
+        | ProcessInput.Source s -> CompositeHeader.Input IOType.Source, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
+        | ProcessInput.Sample s -> CompositeHeader.Input IOType.Sample, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
+        | ProcessInput.Material m -> CompositeHeader.Input IOType.Material, CompositeCell.FreeText (m.Name |> Option.defaultValue "")
+        | ProcessInput.Data d -> 
+            let dataType = d.DataType.Value
+            match dataType with
+            | DataFile.ImageFile -> CompositeHeader.Input IOType.ImageFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.RawDataFile -> CompositeHeader.Input IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.DerivedDataFile -> CompositeHeader.Input IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+
+    let decomposeProcessOutput (po : ProcessOutput) : CompositeHeader*CompositeCell =
+        match po with
+        | ProcessOutput.Sample s -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
+        | ProcessOutput.Material m -> CompositeHeader.Output IOType.Material, CompositeCell.FreeText (m.Name |> Option.defaultValue "")
+        | ProcessOutput.Data d -> 
+            let dataType = d.DataType.Value
+            match dataType with
+            | DataFile.ImageFile -> CompositeHeader.Output IOType.ImageFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.RawDataFile -> CompositeHeader.Output IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.DerivedDataFile -> CompositeHeader.Output IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+
 module ProcessParsing = 
 
     open ISA.ColumnIndex
@@ -575,3 +626,58 @@ module ProcessParsing =
                 (inputGetter matrix i |> Some)
                 (outputGetter matrix i |> Some)
                 None
+
+    let groupProcesses (ps : Process list) = 
+        ps
+        |> List.groupBy (fun x -> 
+            if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
+                (x.Name.Value |> Process.decomposeName |> fst)
+            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                x.ExecutesProtocol.Value.Name.Value 
+            elif x.Name.Value.Contains "_" then
+                let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
+                x.Name.Value.Remove lastUnderScoreIndex
+            else
+                x.Name.Value           
+        )
+
+    let processToRows (p : Process) =
+        let pvs = p.ParameterValues |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeParameterValue ppv, ColumnIndex.tryGetParameterColumnIndex ppv)
+        let components = 
+            match p.ExecutesProtocol with
+            | Some prot ->
+                prot.Components |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeComponent ppv, ColumnIndex.tryGetComponentIndex ppv)
+            | None -> []
+        let protVals = 
+            match p.ExecutesProtocol with
+            | Some prot ->
+                [
+                    if prot.Name.IsSome then CompositeHeader.ProtocolREF, CompositeCell.FreeText prot.Name.Value
+                    if prot.ProtocolType.IsSome then CompositeHeader.ProtocolType, CompositeCell.Term prot.ProtocolType.Value
+                    if prot.Description.IsSome then CompositeHeader.ProtocolDescription, CompositeCell.FreeText prot.Description.Value
+                    if prot.Uri.IsSome then CompositeHeader.ProtocolUri, CompositeCell.FreeText prot.Uri.Value
+                    if prot.Version.IsSome then CompositeHeader.ProtocolVersion, CompositeCell.FreeText prot.Version.Value
+                ]
+            | None -> []
+        p.Outputs.Value
+        |> List.zip p.Inputs.Value
+        |> List.map (fun (i,o) ->
+            let chars = i |> ProcessInput.getCharacteristicValues |> List.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetCharacteristicColumnIndex cv)
+            let factors = o |> ProcessOutput.getFactorValues |> List.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetFactorColumnIndex fv)
+            let vals = 
+                (chars @ components @ pvs @ factors)
+                |> List.sortBy (snd >> Option.defaultValue 10000)
+                |> List.map fst
+            [
+                yield JsonTypes.decomposeProcessInput i
+                yield! protVals
+                yield! vals
+                yield JsonTypes.decomposeProcessOutput o
+            ]
+        )
+        
+
+    //let headersFromProcesses (ps : Process list) = 
+    //    ps
+    //    |> List.map 
+        

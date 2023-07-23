@@ -526,8 +526,18 @@ type ArcTable =
         ]
 
 
-    static member fromProcesses (ps : Process list) : ArcTable = 
-        raise (System.NotImplementedException())
+    static member fromProcesses name (ps : Process list) : ArcTable = 
+        let t = ArcTable.init name
+        ps 
+        |> List.iter (fun p ->
+            p 
+            |> ArcTableAux.ProcessParsing.processToRows
+            |> List.iter (fun row ->
+                ArcTableAux.Unchecked.addRow
+            
+            )
+        )
+        t
 
     override this.ToString() =
         [

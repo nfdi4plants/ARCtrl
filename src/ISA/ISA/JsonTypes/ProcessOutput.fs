@@ -105,6 +105,9 @@ type ProcessOutput =
         | ProcessOutput.Material _   -> po
         | ProcessOutput.Data _       -> po
 
+    static member getFactorValues (po : ProcessOutput) =
+        po |> ProcessOutput.tryGetFactorValues |> Option.defaultValue []
+
     /// If given process output contains units, returns them
     static member getUnits (po : ProcessOutput) =
         match po with

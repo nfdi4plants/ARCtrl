@@ -114,6 +114,9 @@ type ProcessInput =
         ProcessInput.tryGetCharacteristicValues pi
         |> Option.map (List.choose (fun c -> c.Category))
 
+    static member getCharacteristicValues (pi : ProcessInput) = 
+        pi |> ProcessInput.tryGetCharacteristicValues |> Option.defaultValue []
+
     /// If given process output contains units, returns them
     static member getUnits (pi : ProcessInput) =
         match pi with
