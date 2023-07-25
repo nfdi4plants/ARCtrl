@@ -1,4 +1,4 @@
-﻿module IdentifierHandler.Tests
+﻿module Identifier.Tests
 
 open ISA
 
@@ -8,7 +8,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA.IdentifierHandler
+open ISA.Identifier
 
 let private tests_checkValidCharacters = testList "checkValidCharacters" [
     // Function to test the checkValidCharacters function with a given identifier

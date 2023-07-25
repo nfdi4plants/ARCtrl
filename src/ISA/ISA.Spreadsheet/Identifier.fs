@@ -21,7 +21,7 @@ module Assay =
     /// </summary>
     /// <param name="fileName">FileName as written in isa.assay.xlsx metadata sheet</param>
     let identifierFromFileName (fileName: string) : string =
-        let regex = Regex(ISA.IdentifierHandler.ValidFileNamePattern)
+        let regex = Regex(ISA.Identifier.ValidFileNamePattern)
         let m = regex.Match(fileName)
         match m.Success with
         | false -> failwith $"Cannot parse identifier from FileName `{fileName}`"
@@ -34,5 +34,5 @@ module Assay =
     /// </summary>
     /// <param name="identifier">Any correct assay identifier</param>
     let fileNameFromIdentifier (identifier: string) : string =
-        ISA.IdentifierHandler.checkValidCharacters (identifier)
+        ISA.Identifier.checkValidCharacters (identifier)
         FileSystem.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]

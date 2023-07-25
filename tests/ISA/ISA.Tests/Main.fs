@@ -18,7 +18,7 @@ let all = testSequenced <| testList "All" [
     ArcAssay.Tests.main
     ArcStudy.Tests.main
     ArcInvestigation.Tests.main
-    IdentifierHandler.Tests.main
+    Identifier.Tests.main
     Fable.Tests.main
 ]
 
