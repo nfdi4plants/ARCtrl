@@ -11,8 +11,6 @@ type IOType =
     | DerivedDataFile
     | ImageFile
     | Material
-    // Do we need FreeText of string on this one too? Do we want to allow other IOTypes?
-    // For now: yes
     | FreeText of string
 
     // This is used for example in Swate to programmatically create Options for adding building blocks.

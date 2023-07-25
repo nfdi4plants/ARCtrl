@@ -10,31 +10,19 @@ module ARCAux =
 
     // No idea where to move this
     let getArcAssaysFromContracts (contracts: Contract []) = 
-        contracts |> Array.choose (fun c ->
-            match c with
-            | {Operation = READ; DTOType = Some DTOType.ISA_Assay; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                Some fsworkbook
-            | _ -> None
-        )
+        contracts 
+        |> Array.choose Contracts.ArcAssay.tryFromContract
         |> Array.map ISA.Spreadsheet.ArcAssay.fromFsWorkbook
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
-        contracts |> Array.choose (fun c ->
-            match c with
-            | {Operation = READ; DTOType = Some DTOType.ISA_Study; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                Some fsworkbook
-            | _ -> None
-        )
+        contracts 
+        |> Array.choose Contracts.ArcStudy.tryFromContract
         |> Array.map ISA.Spreadsheet.ArcStudy.fromFsWorkbook
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
-        contracts |> Array.choose (fun c ->
-            match c with
-            | {Operation = READ; DTOType = Some DTOType.ISA_Investigation; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                Some fsworkbook
-            | _ -> None
-        )
+        contracts 
+        |> Array.choose Contracts.ArcInvestigation.tryFromContract
         |> Array.exactlyOne 
         |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 

@@ -359,3 +359,5 @@ tmp/
 /tests/ISA/ISA.Tests/js
 /tests/JavaScript/ARCtrl
 /tests/Python/ARCtrl
+/tests/ARCtrl/js
+/tests/FileSystem/js

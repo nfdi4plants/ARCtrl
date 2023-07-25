@@ -11,6 +11,7 @@
     <Compile Include="TestObjects\Assay.fs" />
     <Compile Include="TestObjects\ArcTable.fs" />
     <Compile Include="TestObjects\InvestigationFile.fs" />
+    <Compile Include="FableTests.fs" />
     <Compile Include="StringConversionTests.fs" />
     <Compile Include="SparseTableTests.fs" />
     <Compile Include="CompositeHeaderTests.fs" />

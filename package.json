@@ -14,6 +14,8 @@
     "test": "mocha tests/ISA/ISA.Tests/js",
     "pretestFS": "dotnet fable tests/FileSystem/FileSystem.Tests -o tests/FileSystem/FileSystem.Tests/js",
     "testFS": "mocha tests/FileSystem/FileSystem.Tests/js",
+    "pretestARC": "dotnet fable tests/ARCtrl -o tests/ARCtrl/js",
+    "testARC": "mocha tests/ARCtrl/js",
     "pretestJavaScript": "dotnet fable src/ARCtrl -o tests/JavaScript/ARCtrl",
     "testJavaScript": "mocha tests/JavaScript",
     "pretestPython": "dotnet fable src/ARCtrl -o tests/Python/ARCtrl --lang py ",

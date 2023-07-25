@@ -6,9 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="README.md" />
     <Compile Include="Path.ARCtrl.fs" />
-    <Compile Include="Contracts.ARCtrl.fs" />
+    <Compile Include="Contracts\Contracts.ArcAssay.fs" />
+    <Compile Include="Contracts\Contracts.ArcStudy.fs" />
+    <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
+    <Compile Include="Contracts\Contracts.ARCtrl.fs" />
+    <None Include="README.md" />
     <Compile Include="ARCtrl.fs" />
   </ItemGroup>
 
