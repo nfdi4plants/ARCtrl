@@ -11,14 +11,14 @@ open ISA.Spreadsheet.Identifier
 // Function to test identifierFromFileName
 let private testIdentifierFromFileName () =
     let validTestFileNames = [
-        "assays/MyAssay/isa.assay.xlsx", "MyAssay"
-        "MyAssay/isa.assay.xlsx", "MyAssay"
-        "assays/My_Assay/isa.assay.xlsx", "My_Assay"
-        "assays/Awesome Assay/isa.assay.xlsx", "Awesome Assay"
-        "TestAssay1\isa.assay.xlsx", "TestAssay1" // Windows path separator
-        "assays\TestAssay1\isa.assay.xlsx", "TestAssay1" // Windows path separator
-        "assays\TestAssay1/isa.assay.xlsx", "TestAssay1" // Mixed path separator
-        "assays\my-awesome-assay/isa.assay.xlsx", "my-awesome-assay" // new allowed "-" character
+        @"assays/MyAssay/isa.assay.xlsx", "MyAssay"
+        @"MyAssay/isa.assay.xlsx", "MyAssay"
+        @"assays/My_Assay/isa.assay.xlsx", "My_Assay"
+        @"assays/Awesome Assay/isa.assay.xlsx", "Awesome Assay"
+        @"TestAssay1\isa.assay.xlsx", "TestAssay1" // Windows path separator
+        @"assays\TestAssay1\isa.assay.xlsx", "TestAssay1" // Windows path separator
+        @"assays\TestAssay1/isa.assay.xlsx", "TestAssay1" // Mixed path separator
+        @"assays\my-awesome-assay/isa.assay.xlsx", "my-awesome-assay" // new allowed "-" character
     ]
     let invalidTestFileName = [
         "isa.assay.xlsx"
