@@ -3,6 +3,10 @@
 open ARCtrl.Path
 open Contract
 
+open Contracts.ArcInvestigation
+open Contracts.ArcAssay
+open Contracts.ArcStudy
+
 // Assumptions: 
 // 1. All ISA .xlsx files MUST have the same names, either "isa.investigation.xlsx", "isa.assay.xlsx" or "isa.study.xlsx"
 // 2. All ISA .xlsx files MUST be placed at the correct place. 
@@ -14,12 +18,12 @@ open Contract
 let tryISAReadContractFromPath (path: string) = 
     let split = FileSystem.Path.split path
     match split with
-    | [|InvestigationFileName|] -> 
-        Some <| Contract.createRead(path, DTOType.ISA_Investigation) 
-    | [|AssaysFolderName; anyAssayName; AssayFileName|] ->
-        Some <| Contract.createRead(path, DTOType.ISA_Assay) 
-    | [|StudiesFolderName; anyStudyName; StudyFileName|] ->
-        Some <| Contract.createRead(path, DTOType.ISA_Study) 
+    | InvestigationPath p -> 
+        Some <| Contract.createRead(p, DTOType.ISA_Investigation) 
+    | AssayPath p ->
+        Some <| Contract.createRead(p, DTOType.ISA_Assay) 
+    | StudyPath p ->
+        Some <| Contract.createRead(p, DTOType.ISA_Study) 
     | anyElse -> 
         None
 

@@ -8,3 +8,12 @@ let tryFromContract (c:Contract) =
         Some fsworkbook
     | _ -> None
 
+
+open ARCtrl.Path
+
+let (|InvestigationPath|_|) (input) =
+    match input with
+    | [|InvestigationFileName|] -> 
+        let path = FileSystem.Path.combineMany input
+        Some path
+    | _ -> None

@@ -1,4 +1,4 @@
-﻿module Contracts.ArcAssay
+﻿module Contracts.ArcStudy
 
 open Contract
 
@@ -8,3 +8,11 @@ let tryFromContract (c:Contract) =
         Some fsworkbook
     | _ -> None
 
+open ARCtrl.Path
+
+let (|StudyPath|_|) (input) =
+    match input with
+    | [|StudiesFolderName; anyStudyName; StudyFileName|] -> 
+        let path = FileSystem.Path.combineMany input
+        Some path
+    | _ -> None
