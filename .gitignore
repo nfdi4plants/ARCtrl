@@ -353,8 +353,11 @@ MigrationBackup/
 # Custom ignored files
 pkg/
 tmp/
-/tests/ISA/ISA.JsNativeTests/fable/**/*.js
-/tests/ISA/ISA.Json.JsNativeTests/fable/**/*.js
-/testjs
-/tests/ISA/ISA.Spreadsheet.JsNativeTests/fable
-/tests/FileSystem/FileSystem.JsNativeTests/fable
+/tests/FileSystem/FileSystem.Tests/js
+/tests/ISA/ISA.Json.Tests/js
+/tests/ISA/ISA.Spreadsheet.Tests/js
+/tests/ISA/ISA.Tests/js
+/tests/JavaScript/ARCtrl
+/tests/Python/ARCtrl
+/tests/ARCtrl/js
+/tests/FileSystem/js

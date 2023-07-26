@@ -6,21 +6,6 @@ open Fake.DotNet
 open ProjectInfo
 open BasicTasks
 
-[<Literal>]
-let FableTestPath_input = "tests/ISA/ISA.Tests"
-[<Literal>]
-let FableTestPath_output = "tests/ISA/ISA.JsNativeTests/fable"
-
-[<Literal>]
-let JsonFableTestPath_input = "tests/ISA/ISA.Json.Tests"
-[<Literal>]
-let JsonFableTestPath_output = "tests/ISA/ISA.Json.JsNativeTests/fable"
-
-[<Literal>]
-let SpreadsheetFableTestPath_input = "tests/ISA/ISA.Spreadsheet.Tests"
-[<Literal>]
-let SpreadsheetFableTestPath_output = "tests/ISA/ISA.Spreadsheet.JsNativeTests/fable"
-
 [<AutoOpen>]
 module private Helper =
 
@@ -117,25 +102,19 @@ module private Helper =
         processes
         |> Proc.Parallel.run
         |> ignore
-    
-    let cleanFable = BuildTask.create "cleanFable" [clean; build] {
-        System.IO.Directory.CreateDirectory FableTestPath_output |> ignore
-        run dotnet "fable clean --yes" FableTestPath_output
-        System.IO.Directory.CreateDirectory JsonFableTestPath_output |> ignore
-        run dotnet "fable clean --yes" JsonFableTestPath_output
-    }
-
+   
 module RunTests = 
 
     /// runs `npm test` in root. 
     /// npm test consists of `test` and `pretest`
     /// check package.json in root for behavior
-    let runTestsJs = BuildTask.create "runTestsJS" [clean; cleanFable; build] {
+    let runTestsJs = BuildTask.create "runTestsJS" [clean; build] {
         //run npm "test --prefix ./src/ISA" ""
         run npm "test" ""
         run npm "run testJson" ""
         run npm "run testSpreadsheet" ""
         run npm "run testFS" ""
+        run npm "run testJavaScript" ""
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {
@@ -156,65 +135,80 @@ let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; R
     ()
 }
 
-module WatchTests =
+// // ! Decided to remove watch test logic for now, as formatting is really bad anyways and we support test explorer ! //
+//module WatchTests =
 
-    let private watchProjTests (projPath:string) =
-        let pName = 
-            let n = System.IO.Path.GetFileNameWithoutExtension(projPath)
-            $"[{n}]"
-        pName, dotnet "watch run" projPath
+    //let [<Literal>] JS_FolderName = "js" 
 
-    let private dotnetTestsProcesses =
-        [
-            for testProj in testProjects do
-                yield watchProjTests testProj
-        ]
+    //[<Literal>]
+    //let FableTestPath_input = "tests/ISA/ISA.Tests"
+    //let FableTestPath_output = System.IO.Path.Combine(FableTestPath_input, JS_FolderName)
 
-    let private fableTestsProcesses =
-        [
-            "[ISADotNet Fable]", dotnet $"fable watch {FableTestPath_input} -o {FableTestPath_output} --run npm run test:live" "."
-            "[ISADotNet Mocha]", npm $"run testnative:live" "."
-            "[ISADotNet.Json Fable]", dotnet $"fable watch {JsonFableTestPath_input} -o {JsonFableTestPath_output} --run npm run testJson:live" "."
-            "[ISADotNet.Json Mocha]", npm $"run testJsonnative:live" "."
-        ]
+    //[<Literal>]
+    //let JsonFableTestPath_input = "tests/ISA/ISA.Json.Tests"
+    //let JsonFableTestPath_output = System.IO.Path.Combine(JsonFableTestPath_input, JS_FolderName)
 
-    let allTest = dotnetTestsProcesses@fableTestsProcesses
+    //[<Literal>]
+    //let SpreadsheetFableTestPath_input = "tests/ISA/ISA.Spreadsheet.Tests"
+    //let SpreadsheetFableTestPath_output = System.IO.Path.Combine(SpreadsheetFableTestPath_input, JS_FolderName)
 
-    let watchTestsDotnet = BuildTask.create "watchTestsDotnet" [clean; build] {
-        dotnetTestsProcesses
-        |> runParallel
-    }
+//    let private watchProjTests (projPath:string) =
+//        let pName = 
+//            let n = System.IO.Path.GetFileNameWithoutExtension(projPath)
+//            $"[{n}]"
+//        pName, dotnet "watch run" projPath
 
-    let watchJS = BuildTask.create "watchTestsJS" [clean; build] {
-        fableTestsProcesses
-        |> runParallel
-    }
+//    let private dotnetTestsProcesses =
+//        [
+//            for testProj in testProjects do
+//                yield watchProjTests testProj
+//        ]
 
-let watchTests = BuildTask.create "watchTests" [clean; build] {
-    WatchTests.allTest
-    |> runParallel
-}
+//    let private fableTestsProcesses =
+//        [
+//            "[ISADotNet Fable]", dotnet $"fable watch {FableTestPath_input} -o {FableTestPath_output} --run npm run test:live" "."
+//            "[ISADotNet Mocha]", npm $"run testnative:live" "."
+//            "[ISADotNet.Json Fable]", dotnet $"fable watch {JsonFableTestPath_input} -o {JsonFableTestPath_output} --run npm run testJson:live" "."
+//            "[ISADotNet.Json Mocha]", npm $"run testJsonnative:live" "."
+//        ]
 
-// to do: use this once we have actual tests ~ Kevin Schneider
-// Not sure how this interacts with the changes for fable compatibility, i will..
-// ..leave it in for now ~ Kevin Frey
-let runTestsWithCodeCov = BuildTask.create "RunTestsWithCodeCov" [clean; build] {
-    let standardParams = Fake.DotNet.MSBuild.CliArguments.Create ()
-    testProjects
-    |> Seq.iter(fun testProject -> 
-        Fake.DotNet.DotNet.test(fun testParams ->
-            {
-                testParams with
-                    MSBuildParams = {
-                        standardParams with
-                            Properties = [
-                                "AltCover","true"
-                                "AltCoverCobertura","../../codeCov.xml"
-                                "AltCoverForce","true"
-                            ]
-                    };
-                    Logger = Some "console;verbosity=detailed"
-            }
-        ) testProject
-    )
-}
+//    let allTest = dotnetTestsProcesses@fableTestsProcesses
+
+//    let watchTestsDotnet = BuildTask.create "watchTestsDotnet" [clean; build] {
+//        dotnetTestsProcesses
+//        |> runParallel
+//    }
+
+//    let watchJS = BuildTask.create "watchTestsJS" [clean; build] {
+//        fableTestsProcesses
+//        |> runParallel
+//    }
+
+//let watchTests = BuildTask.create "watchTests" [clean; build] {
+//    WatchTests.allTest
+//    |> runParallel
+//}
+
+//// to do: use this once we have actual tests ~ Kevin Schneider
+//// Not sure how this interacts with the changes for fable compatibility, i will..
+//// ..leave it in for now ~ Kevin Frey
+//let runTestsWithCodeCov = BuildTask.create "RunTestsWithCodeCov" [clean; build] {
+//    let standardParams = Fake.DotNet.MSBuild.CliArguments.Create ()
+//    testProjects
+//    |> Seq.iter(fun testProject -> 
+//        Fake.DotNet.DotNet.test(fun testParams ->
+//            {
+//                testParams with
+//                    MSBuildParams = {
+//                        standardParams with
+//                            Properties = [
+//                                "AltCover","true"
+//                                "AltCoverCobertura","../../codeCov.xml"
+//                                "AltCoverForce","true"
+//                            ]
+//                    };
+//                    Logger = Some "console;verbosity=detailed"
+//            }
+//        ) testProject
+//    )
+//}

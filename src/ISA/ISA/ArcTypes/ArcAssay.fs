@@ -6,40 +6,39 @@ open ISA.Aux
 // "MyAssay"; "assays/MyAssay/isa.assay.xlsx"
 
 [<AttachMembers>]
-type ArcAssay = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
+    let tables = defaultArg tables <| ResizeArray()
+    let performers = defaultArg performers []
+    let comments = defaultArg comments []
+    let mutable identifier : string = identifier
 
-    {
-        /// JSON-LD identifier. Only relevant for json io.
-        ID : URI option
-        /// Must be unique in one study
-        FileName : string option
-        MeasurementType : OntologyAnnotation option
-        TechnologyType : OntologyAnnotation option
-        TechnologyPlatform : string option
-        Tables : ResizeArray<ArcTable>
-        Performers : Person list option
-        Comments : Comment list option
-    }
-   
+    /// Must be unique in one study
+    member this.Identifier 
+        with get() = identifier
+        and internal set(i) = identifier <- i
+
+    static member FileName = ARCtrl.Path.AssayFileName
+
+    member val MeasurementType : OntologyAnnotation option = measurementType with get, set
+    member val TechnologyType : OntologyAnnotation option = technologyType with get, set
+    member val TechnologyPlatform : string option = technologyPlatform with get, set
+    member val Tables : ResizeArray<ArcTable> = tables with get, set
+    member val Performers : Person list = performers with get, set
+    member val Comments : Comment list = comments with get, set
+
+    static member init (identifier : string) = ArcAssay(identifier)
+    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
+        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?performers = performers, ?comments = comments)
+
     static member make 
-        (id : URI option)
-        (fileName : string option)
+        (identifier : string)
         (measurementType : OntologyAnnotation option)
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : string option)
         (tables : ResizeArray<ArcTable>)
-        (performers : Person list option)
-        (comments : Comment list option) = 
-        {
-            ID = id
-            FileName = fileName
-            MeasurementType = measurementType
-            TechnologyType = technologyType
-            TechnologyPlatform = technologyPlatform
-            Tables = tables
-            Performers = performers
-            Comments = comments
-        }
+        (performers : Person list)
+        (comments : Comment list) = 
+        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
 
     member this.TableCount 
         with get() = ArcTables(this.Tables).TableCount
@@ -47,17 +46,9 @@ type ArcAssay =
     member this.TableNames 
         with get() = ArcTables(this.Tables).TableNames
 
-    [<NamedParams>]
-    static member create (fileName : string, ?id : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
-        let tables = defaultArg tables <| ResizeArray()
-        ArcAssay.make id (Option.fromValueWithDefault "" fileName) measurementType technologyType technologyPlatform tables performers comments
-
-    static member createEmpty () = 
-        ArcAssay.make None None None None None (ResizeArray()) None None
-
     // - Table API - //
     // remark should this return ArcTable?
-    member this.AddTable(table:ArcTable, ?index: int) = ArcTables(this.Tables).AddTable(table, ?index = index)
+    member this.AddTable(table:ArcTable, ?index: int) : unit = ArcTables(this.Tables).AddTable(table, ?index = index)
 
     static member addTable(table:ArcTable, ?index: int) =
         fun (assay:ArcAssay) ->
@@ -339,21 +330,22 @@ type ArcAssay =
             let newAssay = assay.Copy()
             newAssay.GetRow(tableName, rowIndex)
 
+    // - Mutable properties API - //
+    static member setPerformers performers (assay: ArcAssay) =
+        assay.Performers <- performers
+        assay
+
     member this.Copy() : ArcAssay =
-        let newSheets = ResizeArray()
+        let newTables = ResizeArray()
         for table in this.Tables do
             let copy = table.Copy()
-            newSheets.Add(copy)
-        { this with Tables = newSheets }
-        
-    static member getIdentifier (assay : Assay) = 
-        raise (System.NotImplementedException())
-
-    static member setPerformers performers assay =
-        {assay with Performers = performers}
-
-    static member fromAssay (assay : Assay) : ArcAssay =
-        raise (System.NotImplementedException())
-
-    static member toAssay (assay : ArcAssay) : Assay =
-        raise (System.NotImplementedException())
+            newTables.Add(copy)
+        ArcAssay(
+            this.Identifier,
+            ?measurementType = this.MeasurementType,
+            ?technologyType = this.TechnologyType, 
+            ?technologyPlatform = this.TechnologyPlatform, 
+            tables=newTables, 
+            performers=this.Performers, 
+            comments=this.Comments
+        )

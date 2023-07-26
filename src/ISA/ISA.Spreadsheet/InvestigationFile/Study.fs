@@ -7,26 +7,26 @@ open System.Collections.Generic
 
 module Studies = 
 
-    let identifierLabel = "Study Identifier"
-    let titleLabel = "Study Title"
-    let descriptionLabel = "Study Description"
-    let submissionDateLabel = "Study Submission Date"
-    let publicReleaseDateLabel = "Study Public Release Date"
-    let fileNameLabel = "Study File Name"
+    let [<Literal>] identifierLabel = "Study Identifier"
+    let [<Literal>] titleLabel = "Study Title"
+    let [<Literal>] descriptionLabel = "Study Description"
+    let [<Literal>] submissionDateLabel = "Study Submission Date"
+    let [<Literal>] publicReleaseDateLabel = "Study Public Release Date"
+    let [<Literal>] fileNameLabel = "Study File Name"
 
-    let designDescriptorsLabelPrefix = "Study Design"
-    let publicationsLabelPrefix = "Study Publication"
-    let factorsLabelPrefix = "Study Factor"
-    let assaysLabelPrefix = "Study Assay"
-    let protocolsLabelPrefix = "Study Protocol"
-    let contactsLabelPrefix = "Study Person"
+    let [<Literal>] designDescriptorsLabelPrefix = "Study Design"
+    let [<Literal>] publicationsLabelPrefix = "Study Publication"
+    let [<Literal>] factorsLabelPrefix = "Study Factor"
+    let [<Literal>] assaysLabelPrefix = "Study Assay"
+    let [<Literal>] protocolsLabelPrefix = "Study Protocol"
+    let [<Literal>] contactsLabelPrefix = "Study Person"
 
-    let designDescriptorsLabel = "STUDY DESIGN DESCRIPTORS"
-    let publicationsLabel = "STUDY PUBLICATIONS"
-    let factorsLabel = "STUDY FACTORS"
-    let assaysLabel = "STUDY ASSAYS"
-    let protocolsLabel = "STUDY PROTOCOLS"
-    let contactsLabel = "STUDY CONTACTS"
+    let [<Literal>] designDescriptorsLabel = "STUDY DESIGN DESCRIPTORS"
+    let [<Literal>] publicationsLabel = "STUDY PUBLICATIONS"
+    let [<Literal>] factorsLabel = "STUDY FACTORS"
+    let [<Literal>] assaysLabel = "STUDY ASSAYS"
+    let [<Literal>] protocolsLabel = "STUDY PROTOCOLS"
+    let [<Literal>] contactsLabel = "STUDY CONTACTS"
 
     type StudyInfo =
         {
@@ -76,17 +76,15 @@ module Studies =
             let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
 
-            do matrix.Matrix.Add ((identifierLabel,i),          (Option.defaultValue "" study.Identifier))
+            do matrix.Matrix.Add ((identifierLabel,i),          study.Identifier)
             do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" study.Title))
             do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" study.Description))
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" study.SubmissionDate))
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
-            do matrix.Matrix.Add ((fileNameLabel,i),            (Option.defaultValue "" study.FileName))
+            do matrix.Matrix.Add ((fileNameLabel,i),            ArcStudy.FileName)
 
-            match study.Comments with 
-            | None -> ()
-            | Some c ->
-                c
+            if study.Comments.IsEmpty |> not then
+                study.Comments
                 |> List.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
@@ -106,23 +104,19 @@ module Studies =
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
         ArcStudy.make 
-            None 
-            (Option.fromValueWithDefault "" studyInfo.FileName)
-            (Option.fromValueWithDefault "" studyInfo.Identifier)
+            (studyInfo.Identifier)
             (Option.fromValueWithDefault "" studyInfo.Title)
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
             (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
-            (Option.fromValueWithDefault [] publications)
-            (Option.fromValueWithDefault [] contacts)
-            (Option.fromValueWithDefault [] designDescriptors) 
-            None 
+            (publications)
+            (contacts)
+            (designDescriptors)  
             (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
             (ResizeArray(assays))
-            (Option.fromValueWithDefault [] factors) 
-            None 
-            None
-            (Option.fromValueWithDefault [] studyInfo.Comments)
+            (factors) 
+            (studyInfo.Comments)
+        |> fun arcstudy -> if arcstudy.isEmpty && arcstudy.Identifier = "" then None else Some arcstudy
 
     let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
 
@@ -167,13 +161,13 @@ module Studies =
             yield! StudyInfo.toRows study
 
             yield  SparseRow.fromValues [designDescriptorsLabel]
-            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (Option.defaultValue [] study.StudyDesignDescriptors)
+            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (study.StudyDesignDescriptors)
 
             yield  SparseRow.fromValues [publicationsLabel]
-            yield! Publications.toRows (Some publicationsLabelPrefix) (Option.defaultValue [] study.Publications)
+            yield! Publications.toRows (Some publicationsLabelPrefix) (study.Publications)
 
             yield  SparseRow.fromValues [factorsLabel]
-            yield! Factors.toRows (Some factorsLabelPrefix) (Option.defaultValue [] study.Factors)
+            yield! Factors.toRows (Some factorsLabelPrefix) (study.Factors)
 
             yield  SparseRow.fromValues [assaysLabel]
             yield! Assays.toRows (Some assaysLabelPrefix) (List.ofSeq study.Assays)
@@ -182,5 +176,5 @@ module Studies =
             yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
             yield  SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsLabelPrefix) (Option.defaultValue [] study.Contacts)
+            yield! Contacts.toRows (Some contactsLabelPrefix) (study.Contacts)
         }

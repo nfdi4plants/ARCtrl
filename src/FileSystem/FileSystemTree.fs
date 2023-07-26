@@ -2,6 +2,8 @@
 
 open Fable.Core
 
+open ARCtrl
+
 [<AttachMembers>]
 type FileSystemTree =
     | File of name:string

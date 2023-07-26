@@ -1,4 +1,4 @@
-﻿module ISA.XLSX.Tests
+﻿module Main.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -8,13 +8,7 @@ open Expecto
 [<Tests>]
 #endif
 let all = testSequenced <| testList "All" [
-    FableTests.main
-    ArcInvestigationTests.main
-    CompositeColumnTests.main
-    ArcTableTests.main
-    ArcAssayTests.main
-    SparseTableTests.main
-    IdentifierTests.main
+    ARCtrl.Tests.main
 ]
 
 let [<EntryPoint>] main argv = 

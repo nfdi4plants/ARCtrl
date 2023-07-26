@@ -1,47 +1,72 @@
 #r "nuget: Fable.Core, 4.0.0"
-
-//#I @"../src\ISA\ISA/bin\Debug\netstandard2.0"
-#I @"../src\ARC/bin\Debug\netstandard2.0"
+#r "nuget: FsSpreadsheet, 2.0.2"
+#r "nuget: FsSpreadsheet.ExcelIO, 2.0.2"
+#I @"../src\ARCtrl/bin\Debug\netstandard2.0"
 #r "ISA.dll"
-#r "ARC.dll"
+#r "Contract.dll"
 #r "FileSystem.dll"
+#r "ISA.Spreadsheet.dll"
+#r "CWL.dll"
+#r "ARCtrl.dll"
 
-open ISA
-open ARC
-open FileSystem
+//#i @"nuget: C:/Users/Kevin/source/repos/ISADotNet/pkg/"
+//#r "nuget: ARC"
 
 let [<Literal>] rootPath = @"C:\Users\Kevin\Desktop\TestARC"
+open Contract
+open ARCtrl
+open FileSystem
 
-open System
+module ARC_IO =
+    open FsSpreadsheet
+    open FsSpreadsheet.ExcelIO
+    let readFilePaths (arcPath: string) = 
+        System.IO.Directory.EnumerateFiles(arcPath,"*",System.IO.SearchOption.AllDirectories)
+        |> Array.ofSeq 
+        |> Array.map (fun p -> System.IO.Path.GetRelativePath(rootPath, p))
 
-// https://github.com/nfdi4plants/arcIO.NET/blob/main/src/arcIO.NET/Assay.fs
-let readFilePaths (arcPath: string) = 
-    System.IO.Directory.EnumerateFiles(arcPath,"*",System.IO.SearchOption.AllDirectories)
-    |> Array.ofSeq 
-    |> Array.map (fun p -> System.IO.Path.GetRelativePath(rootPath, p))
+    let fullfillREADContract (arcRoot: string) (c: Contract) =
+        let p = System.IO.Path.Combine [|arcRoot; c.Path|]
+        match c with
+        | {Operation = READ} ->
+            let dto = DTO.Spreadsheet <| FsWorkbook.fromXlsxFile(p)
+            {c with DTO = Some dto}
+        | _ -> failwith "Tried reading from non-READ contract."
 
-let filePaths = readFilePaths (rootPath) 
+    let fullfillREADContracts (arcRoot: string) (cArr: Contract []) =
+        cArr |> Array.map (fullfillREADContract arcRoot)
 
-let tree = FileSystemTree.fromFilePaths(filePaths)
+    let initExistingARC (arcRootPath: string) =
+        let arc = readFilePaths arcRootPath |> ARC.fromFilePaths
+        let contracts = arc.getReadContracts() |> fullfillREADContracts arcRootPath
+        arc.addISAFromContracts(contracts)
 
-let newPath = @"studies\TestAssay1\resources\MyAwesomeRessource.pdf"
+let myarc = ARC_IO.initExistingARC(rootPath)
 
-let newPath_newFolder = @"MyNewFolder/README.md"
+let newArcPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "TestArc") 
 
-let newPath_minimal = @"Test.md"
+open ISA
+open FsSpreadsheet
+open FsSpreadsheet.ExcelIO
+open ISA.Spreadsheet
 
-let rec createFSTFromSplitPath (splitPath: string []) =
-    let head, tail = Array.head splitPath, Array.tail splitPath
-    match head, tail with
-    | any, [||] -> File any
-    | any, anyChildren -> Folder (any, [|createFSTFromSplitPath anyChildren|])
+module WriteContracts =
 
-let addFile (filePath: string) (tree: FileSystemTree) = 
-    let existingPaths = tree.toFilePaths()
-    let filePaths = [|
-        filePath
-        yield! existingPaths
-    |]
-    FileSystemTree.fromFilePaths (filePaths)
+    let getInvestigationPath() = Path.combineMany [|ARCtrl.Path.InvestigationFileName|]
 
-addFile newPath_newFolder tree
+    let createInvestigation (investigation: ArcInvestigation) =
+        let investigationFile = ArcInvestigation.toFsWorkbook (investigation)
+        let investigationFilePath = getInvestigationPath ()
+        let investigationContract = Contract.createCreate(investigationFilePath,DTOType.ISA_Investigation, DTO.Spreadsheet investigationFile)
+        investigationContract
+
+
+let writeNewContracts (investigation: ArcInvestigation) =
+    let contracts = ResizeArray()
+    // root items
+    let investigationContract = WriteContracts.createInvestigation investigation
+    contracts.Add(investigationContract)
+    contracts
+
+
+writeNewContracts arc

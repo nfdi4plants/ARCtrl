@@ -730,7 +730,7 @@ let testMetaDataFunctions =
                 TestObjects.Assay.assayMetadataEmpty
                 |> ArcAssay.fromMetadataSheet
                 |> ArcAssay.toMetadataSheet
-                
+
             Expect.workSheetEqual o TestObjects.Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
         )
         ]

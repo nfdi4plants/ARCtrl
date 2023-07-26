@@ -63,24 +63,96 @@ module Helper =
     ///
     /// Table Names: ["New Table 0"; "New Table 1" .. "New Table 4"]
     let create_exampleAssay() =
-        let assay = ArcAssay.create("MyAssay")
+        let assay = ArcAssay("MyAssay")
         let sheets = create_exampleTables("My")
         sheets |> Array.iter (fun table -> assay.AddTable(table))
         assay
 
 open Helper
 
+let private test_create =
+    testList "create" [
+        testCase "constructor" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let oa_mt = OntologyAnnotation.fromString("measurement type")
+            let oa_tt = OntologyAnnotation.fromString("technology type")
+            let technologyPlatform = "tp"
+            let tables = ResizeArray([ArcTable.init("MyTable1")])
+            let performers = [Person.create(FirstName = "Kevin", LastName = "Frey")]
+            let comments = [Comment.create("Comment Name")]
+            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
+            Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
+            Expect.equal actual.TechnologyPlatform (Some technologyPlatform) "technologyPlatform"
+            Expect.equal actual.Tables tables "tables"
+            Expect.equal actual.Performers performers "performers"
+            Expect.equal actual.Comments comments "Comments"
+        testCase "create" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let oa_mt = OntologyAnnotation.fromString("measurement type")
+            let oa_tt = OntologyAnnotation.fromString("technology type")
+            let technologyPlatform = "tp"
+            let tables = ResizeArray([ArcTable.init("MyTable1")])
+            let performers = [Person.create(FirstName = "Kevin", LastName = "Frey")]
+            let comments = [Comment.create("Comment Name")]
+            let actual = ArcAssay.create(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
+            Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
+            Expect.equal actual.TechnologyPlatform (Some technologyPlatform) "technologyPlatform"
+            Expect.equal actual.Tables tables "tables"
+            Expect.equal actual.Performers performers "performers"
+            Expect.equal actual.Comments comments "Comments"
+        testCase "init" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let actual = ArcAssay.init identifier
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.MeasurementType None "MeasurementType"
+            Expect.equal actual.TechnologyType None "TechnologyType"
+            Expect.equal actual.TechnologyPlatform None "technologyPlatform"
+            Expect.equal actual.Tables.Count 0 "tables"
+            Expect.equal actual.Performers.Length 0 "performers"
+            Expect.equal actual.Comments.Length 0 "Comments"
+        testCase "make" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let measurementType = Some (OntologyAnnotation.fromString("Measurement Type"))
+            let technologyType = Some (OntologyAnnotation.fromString("Technology Type"))
+            let technologyPlatform = Some "Technology Platform"
+            let tables = ResizeArray([ArcTable.init("Table 1")])
+            let performers = [Person.create(FirstName = "John", LastName = "Doe")]
+            let comments = [Comment.create("Comment 1")]
+
+            let actual = 
+                ArcAssay.make
+                    identifier
+                    measurementType
+                    technologyType
+                    technologyPlatform
+                    tables
+                    performers
+                    comments
+
+            Expect.equal actual.Identifier identifier "Identifier"
+            Expect.equal actual.MeasurementType measurementType "MeasurementType"
+            Expect.equal actual.TechnologyType technologyType "TechnologyType"
+            Expect.equal actual.TechnologyPlatform technologyPlatform "TechnologyPlatform"
+            Expect.equal actual.Tables tables "Tables"
+            Expect.equal actual.Performers performers "Performers"
+            Expect.equal actual.Comments comments "Comments"
+    ]
+
 let private tests_AddTable = 
     testList "AddTable" [
         testCase "append, default table" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let table = ArcTable.init("New Table 1")
             assay.AddTable(table)
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name"
         )
         testCase "append, default table, iter 5x" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             for i in 1 .. 5 do 
                 assay.AddTable(ArcTable.init($"New Table {i}"))
             Expect.equal assay.TableCount 5 "TableCount"
@@ -88,14 +160,14 @@ let private tests_AddTable =
             Expect.equal assay.TableNames.[4] "New Table 5" "Sheet Name 4"
         )
         testCase "append, table" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let sheet = ArcTable.init($"MY NICE TABLE")
             assay.AddTable(sheet)
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "MY NICE TABLE" "Sheet Name 0"
         )
         testCase "append, tables, iter 5x" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let sheets = Array.init 5 (fun i -> ArcTable.init($"New Table {i}"))
             sheets |> Array.iter (fun table -> assay.AddTable(table))
             Expect.equal assay.TableCount 5 "TableCount"
@@ -111,7 +183,7 @@ let private tests_AddTable =
             Expect.equal assay.TableNames.[5] "My Table 4" "Sheet Name 4"
         )
         testCase "add, duplicate name, throws" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             assay.AddTable(ArcTable.init("New Table 1"))
             Expect.equal assay.TableCount 1 "TableCount"
             Expect.equal assay.TableNames.[0] "New Table 1" "Sheet Name"
@@ -123,7 +195,7 @@ let private tests_AddTable =
 let private tests_AddTables = 
     testList "AddTables" [
         testCase "append" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let tables = create_exampleTables("My")
             assay.AddTables(tables)
             Expect.equal assay.TableCount 5 "TableCount"
@@ -142,7 +214,7 @@ let private tests_AddTables =
             Expect.equal assay.TableNames.[assay.TableCount-1] "My Table 4" "Sheet Name 9"
         )
         testCase "add, duplicate name, throws" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let tables = create_exampleTables("My")
             assay.AddTables(tables)
             Expect.equal assay.TableCount 5 "TableCount"
@@ -152,7 +224,7 @@ let private tests_AddTables =
             Expect.throws eval "throws, duplicate table names"
         )
         testCase "add, duplicate new names, throws" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let tables = create_exampleTables("My") |> Array.map (fun x -> { x with Name = "Duplicate Name"})
             let eval() = assay.AddTables(tables)
             Expect.throws eval "throws, duplicate table names"
@@ -230,7 +302,7 @@ let private tests_Copy =
 let private tests_RemoveTable = 
     testList "RemoveTableAt" [
         testCase "empty table, throw" (fun () ->
-            let assay = ArcAssay.create("MyAssay")
+            let assay = ArcAssay("MyAssay")
             let eval() = assay.RemoveTableAt(0)
             Expect.throws eval ""
         )
@@ -387,6 +459,7 @@ let private tests_updateTable =
 
 let main = 
     testList "ArcAssay" [
+        test_create
         tests_AddTable
         tests_AddTables
         tests_Copy

@@ -6,9 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ARCPath.fs" />
-    <Compile Include="ARC.fs" />
-    <Compile Include="ARCStrich.fs" />
+    <Compile Include="Path.fs" />
+    <Compile Include="Contracts\Contracts.ArcAssay.fs" />
+    <Compile Include="Contracts\Contracts.ArcStudy.fs" />
+    <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
+    <Compile Include="Contracts\Contracts.ARCtrl.fs" />
+    <None Include="README.md" />
+    <Compile Include="ARCtrl.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -20,6 +24,8 @@
     <ProjectReference Include="..\CWL\CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\FileSystem.fsproj" />
     <ProjectReference Include="..\ISA\ISA\ISA.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Json\ISA.Json.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj" />
   </ItemGroup>
 
 </Project>

@@ -35,8 +35,7 @@ In general, a distinction is made between `DataModel`s,  `API`s, and `Tools`:
 ## Local Setup
 
 1. `dotnet tool restore`
-2. `npm install` in *root*.
-3. `npm install` in *src/ISA*
+2. `npm install` in *root* (this will also run `npm install` in `src/ISA`).
 
 ## API Design
 

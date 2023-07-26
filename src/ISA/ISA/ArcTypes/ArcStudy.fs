@@ -3,96 +3,81 @@
 open Fable.Core
 open ISA.Aux
 
+module ArcStudyAux =
+    module SanityChecks = 
+        let inline validateUniqueAssayIdentifier (assay: ArcAssay) (existingAssays: seq<ArcAssay>) =
+            match existingAssays |> Seq.tryFindIndex (fun x -> x.Identifier = assay.Identifier)  with
+            | Some i ->
+                failwith $"Cannot create assay with name {assay.Identifier}, as assay names must be unique and assay at index {i} has the same name."
+            | None ->
+                ()
+
 [<AttachMembers>]
-type ArcStudy = 
-    {
-        ID : URI option
-        FileName : string option
-        Identifier : string option
-        Title : string option
-        Description : string option
-        SubmissionDate : string option
-        PublicReleaseDate : string option
-        Publications : Publication list option
-        Contacts : Person list option
-        StudyDesignDescriptors : OntologyAnnotation list option
-        Materials : StudyMaterials option
-        Tables : ResizeArray<ArcTable>
-        // Make this mutable?
-        Assays : ResizeArray<ArcAssay>
-        Factors : Factor list option
-        /// List of all the characteristics categories (or material attributes) defined in the study, used to avoid duplication of their declaration when each material_attribute_value is created. 
-        CharacteristicCategories : MaterialAttribute list option
-        /// List of all the unitsdefined in the study, used to avoid duplication of their declaration when each value is created.
-        UnitCategories : OntologyAnnotation list option
-        Comments : Comment list option
-    }
+type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
+    let publications = defaultArg publications []
+    let contacts = defaultArg contacts []
+    let studyDesignDescriptors = defaultArg studyDesignDescriptors []
+    let tables = defaultArg tables <| ResizeArray()
+    let assays = defaultArg assays <| ResizeArray()
+    let factors = defaultArg factors []
+    let comments = defaultArg comments []
 
-    static member make id fileName identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors materials tables assays factors characteristicCategories unitCategories comments = 
-        {
-            ID = id
-            FileName = fileName
-            Identifier = identifier
-            Title = title
-            Description = description
-            SubmissionDate = submissionDate
-            PublicReleaseDate = publicReleaseDate
-            Publications = publications
-            Contacts = contacts
-            StudyDesignDescriptors = studyDesignDescriptors
-            Materials = materials
-            Tables = tables
-            Assays = assays
-            Factors = factors
-            CharacteristicCategories = characteristicCategories
-            UnitCategories = unitCategories
-            Comments = comments
-        }
+    let mutable identifier = identifier
+    /// Must be unique in one investigation
+    member this.Identifier 
+        with get() = identifier
+        and internal set(i) = identifier <- i
 
+    member val Title : string option = title with get, set
+    member val Description : string option = description with get, set
+    member val SubmissionDate : string option = submissionDate with get, set
+    member val PublicReleaseDate : string option = publicReleaseDate with get, set
+    member val Publications : Publication list = publications with get, set
+    member val Contacts : Person list = contacts with get, set
+    member val StudyDesignDescriptors : OntologyAnnotation list = studyDesignDescriptors with get, set
+    member val Tables : ResizeArray<ArcTable> = tables with get, set
+    member val Assays : ResizeArray<ArcAssay> = assays with get, set
+    member val Factors : Factor list = factors with get, set
+    member val Comments : Comment list= comments with get, set
+
+    static member init(identifier : string) = ArcStudy identifier
+
+    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
+        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, ?publications = publications, ?contacts = contacts, ?studyDesignDescriptors = studyDesignDescriptors, ?tables = tables, ?assays = assays, ?factors = factors, ?comments = comments)
+
+    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments = 
+        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, publications = publications, contacts = contacts, studyDesignDescriptors = studyDesignDescriptors, tables = tables, assays = assays, factors = factors, comments = comments)
+
+    /// <summary>
+    /// Returns true if all fields are None/ empty sequences **except** Identifier.
+    /// </summary>
     member this.isEmpty 
         with get() =
-            (this.ID = None) &&
-            (this.FileName = None) &&
-            (this.Identifier = None) &&
             (this.Title = None) &&
             (this.Description = None) &&
             (this.SubmissionDate = None) &&
             (this.PublicReleaseDate = None) &&
-            (this.Publications = None) &&
-            (this.Contacts = None) &&
-            (this.StudyDesignDescriptors = None) &&
-            (this.Materials = None) &&
+            (this.Publications = []) &&
+            (this.Contacts = []) &&
+            (this.StudyDesignDescriptors = []) &&
             (this.Tables.Count = 0) &&
             (this.Assays.Count = 0) &&
-            (this.Factors = None) &&
-            (this.CharacteristicCategories = None) &&
-            (this.UnitCategories = None) &&
-            (this.Comments = None)
+            (this.Factors = []) &&
+            (this.Comments = [])
 
-    [<NamedParams>]
-    static member create (identifier : string, ?ID, ?FileName, ?Title, ?Description, ?SubmissionDate, ?PublicReleaseDate, ?Publications, ?Contacts, ?StudyDesignDescriptors, ?Materials, ?Tables, ?Assays, ?Factors, ?CharacteristicCategories, ?UnitCategories, ?Comments) = 
-        let tables = defaultArg Tables <| ResizeArray()
-        let assays = defaultArg Assays <| ResizeArray()
-        ArcStudy.make ID FileName (Option.fromValueWithDefault "" identifier) Title Description SubmissionDate PublicReleaseDate Publications Contacts StudyDesignDescriptors Materials tables assays Factors CharacteristicCategories UnitCategories Comments
+    // Not sure how to handle this best case.
+    static member FileName = ARCtrl.Path.StudyFileName
+    //member this.FileName = ArcStudy.FileName
 
-    static member createEmpty() = ArcStudy.make None None None None None None None None None None None (ResizeArray()) (ResizeArray()) None None None None
+    member this.AssayCount 
+        with get() = this.Assays.Count
 
-    static member tryGetAssayByID (assayIdentifier : string) (study : Study) : Assay option = 
-        raise (System.NotImplementedException())
-
-    static member updateAssayByID (assay : Assay) (assayIdentifier : string) (study : Study) : Study = 
-        ArcStudy.tryGetAssayByID assayIdentifier study |> ignore
-        raise (System.NotImplementedException())
-
-
-    static member fromStudy (study : Study) : ArcStudy = 
-        raise (System.NotImplementedException())
-
-    static member toStudy (arcStudy : ArcStudy) : Study =
-        raise (System.NotImplementedException())
+    member this.AssayIdentifiers 
+        with get() = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.Identifier)
 
     // - Assay API - CRUD //
     member this.AddAssay(assay: ArcAssay) =
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay this.Assays
         this.Assays.Add(assay)
 
     static member addAssay(assay: ArcAssay) =
@@ -102,15 +87,14 @@ type ArcStudy =
             newStudy
 
     // - Assay API - CRUD //
-    member this.AddAssayEmpty(assayName: string) =
-        let assay = ArcAssay.create(assayName)
-        this.Assays.Add(assay)
+    member this.InitAssay(assayName: string) =
+        let assay = ArcAssay(assayName)
+        this.AddAssay(assay)
 
-    static member addAssay(assayName: string) =
+    static member initAssay(assayName: string) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
-            let assay = ArcAssay.create(assayName)
-            newStudy.AddAssay(assay)
+            newStudy.InitAssay(assayName)
             newStudy
 
     // - Assay API - CRUD //
@@ -125,6 +109,7 @@ type ArcStudy =
 
     // - Assay API - CRUD //
     member this.SetAssayAt(index: int, assay: ArcAssay) =
+        ArcStudyAux.SanityChecks.validateUniqueAssayIdentifier assay (this.Assays |> Seq.removeAt index)
         this.Assays.[index] <- assay
 
     static member setAssayAt(index: int, assay: ArcAssay) =
@@ -132,6 +117,26 @@ type ArcStudy =
             let newStudy = study.Copy()
             newStudy.SetAssayAt(index, assay)
             newStudy
+
+        // - Assay API - CRUD //
+    member this.SetAssay(assayIdentifier: string, assay: ArcAssay) =
+        let index = this.GetAssayIndex(assayIdentifier)
+        this.Assays.[index] <- assay
+
+    static member setAssay(assayIdentifier: string, assay: ArcAssay) =
+        fun (study:ArcStudy) ->
+            let newStudy = study.Copy()
+            newStudy.SetAssay(assayIdentifier, assay)
+            newStudy
+
+    // - Assay API - CRUD //
+    member this.GetAssayIndex(assayIdentifier: string) =
+        let index = this.Assays.FindIndex (fun a -> a.Identifier = assayIdentifier)
+        if index = -1 then failwith $"Unable to find assay with specified identifier '{assayIdentifier}'!"
+        index
+
+    static member GetAssayIndex(assayIdentifier: string) : ArcStudy -> int =
+        fun (study: ArcStudy) -> study.GetAssayIndex(assayIdentifier)
 
     // - Assay API - CRUD //
     member this.GetAssayAt(index: int) : ArcAssay =
@@ -141,6 +146,16 @@ type ArcStudy =
         fun (study: ArcStudy) ->
             let newStudy = study.Copy()
             newStudy.GetAssayAt(index)
+
+    // - Assay API - CRUD //
+    member this.GetAssay(assayIdentifier: string) : ArcAssay =
+        let index = this.GetAssayIndex(assayIdentifier)
+        this.GetAssayAt index
+
+    static member getAssay(assayIdentifier: string) : ArcStudy -> ArcAssay =
+        fun (study: ArcStudy) ->
+            let newStudy = study.Copy()
+            newStudy.GetAssay(assayIdentifier)
 
     ////////////////////////////////////
     // - Copy & Paste from ArcAssay - //
@@ -445,8 +460,18 @@ type ArcStudy =
         for study in this.Assays do
             let copy = study.Copy()
             newAssays.Add(copy)
-        { this with 
-            Tables = newTables
-            Assays = newAssays
-        }
+        ArcStudy(
+            this.Identifier, 
+            ?title = this.Title, 
+            ?description = this.Description, 
+            ?submissionDate = submissionDate, 
+            ?publicReleaseDate = this.PublicReleaseDate, 
+            publications = this.Publications, 
+            contacts = this.Contacts,
+            studyDesignDescriptors = this.StudyDesignDescriptors,
+            tables = newTables,
+            assays = newAssays,
+            factors = this.Factors,
+            comments = this.Comments
+        )
 

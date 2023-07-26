@@ -1,14 +1,15 @@
 ﻿namespace Contract
 
 open Fable.Core
+open FsSpreadsheet
 open Fable.Core.JsInterop
-
-type FsSpreadsheet = unit
 
 [<StringEnum>]
 [<RequireQualifiedAccess>]
 type DTOType = 
-    | [<CompiledName("Spreadsheet")>] Spreadsheet // isa.assay.xlsx
+    | [<CompiledName("ISA_Assay")>] ISA_Assay // isa.assay.xlsx
+    | [<CompiledName("ISA_Study")>] ISA_Study
+    | [<CompiledName("ISA_Investigation")>] ISA_Investigation 
     | [<CompiledName("JSON")>] JSON // arc.json
     | [<CompiledName("Markdown")>] Markdown // README.md
     | [<CompiledName("CWL")>] CWL // workflow.cwl, might be a new DTO once we 
@@ -28,7 +29,7 @@ type CLITool =
 [<Erase>]
 [<RequireQualifiedAccess>]
 type DTO =
-    | Spreadsheet of FsSpreadsheet
+    | Spreadsheet of FsWorkbook
     | Text of string
     | CLITool of CLITool
 
@@ -89,113 +90,3 @@ type Contract =
     static member createExecute(dto: CLITool, ?path: string) = 
         let path = Option.defaultValue "" path
         {Operation= Operation.EXECUTE; Path = path; DTOType = Some DTOType.CLI; DTO = Some <| DTO.CLITool dto}
-
-module Samples = 
-
-    let gitPull = 
-
-        Contract.create(
-            op = EXECUTE,
-            path = "", //relative to arc root
-            dto = DTO.CLITool (
-                CLITool.create(
-                    name = "git",
-                    arguments = [|"pull"|]
-                )
-            )
-        )
-
-    // update a study person name
-    let updateStudyContracts = [
-        // UPDATE INVESTIGATION METADATA
-        Contract.create(
-            op = UPDATE,
-            path = "path/to/investigation.xlsx",          
-            dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*investigation spreadsheet data here*))
-            
-        ) 
-        Contract.create(
-            op = UPDATE,
-            path = "path/to/study.xlsx",
-            dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*study spreadsheet data here*))           
-        ) 
-    ]
-
-    // delete a study
-    let deleteStudyContracts = [
-        // UPDATE INVESTIGATION METADATA
-        Contract.create(
-            op = DELETE,
-            path = "path/to/studyFOLDER(!)"
-        ) 
-        Contract.create(
-            op = UPDATE,
-            path = "path/to/investigation.xlsx",
-            
-            dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*study spreadsheet data here*))
-            
-        )
-    ]
-
-    // Assay add, when no study exists
-    let addAssayContracts = [
-        // create spreadsheet assays/AssayName/isa.assay.xlsx  
-        Contract.create(
-            op = CREATE,
-            path = "path/to/isa.assay.xlsx",
-            dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*assay spreadsheet data here*))
-        ) 
-        // create empty file assays/AssayName/dataset/.gitkeep 
-        Contract.create(
-            op = CREATE,
-            path = "path/to/dataset/.gitkeep"
-        )        
-        // create text assays/AssayName/README.md
-        Contract.create(
-            op = CREATE,
-            path = "path/to/README.md",
-            dtoType = DTOType.Markdown,
-            dto = DTO.Text "# Markdown"
-            
-        )
-        // create empty file assays/AssayName/protocols/.gitkeep
-        Contract.create(
-            op = CREATE,
-            path = "path/to/protocols/.gitkeep"
-        )
-        // create spreadsheet studies/StudyName/isa.study.xlsx  
-        Contract.create(
-            op = CREATE,
-            path = "path/to/study.xlsx",
-            dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*study spreadsheet data here*))
-        )
-        // create empty file studies/StudyName/resources/.gitkeep 
-        Contract.create(
-            op = CREATE,
-            path = "path/to/resources/.gitkeep"
-        )        
-        // create text studies/StudyName/README.md
-        Contract.create(
-            op = CREATE,
-            path = "path/to/README.md",
-            dtoType = DTOType.Markdown,
-            dto = DTO.Text "# Markdown"
-        )
-        // create empty file studies/StudyName/protocols/.gitkeep
-        Contract.create(
-            op = CREATE,
-            path = "path/to/protocols/.gitkeep"
-        )
-        // update spreadsheet isa.investigation.xlsx
-        Contract.create(
-            op = UPDATE,
-            path = "path/to/investigation.xlsx",
-            dtoType = DTOType.Spreadsheet,
-            dto = DTO.Spreadsheet ((*investigation spreadsheet data here*))
-            ) 
-    ]

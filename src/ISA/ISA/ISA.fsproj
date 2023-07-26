@@ -45,6 +45,7 @@
     <Compile Include="JsonTypes\Study.fs" />
     <Compile Include="JsonTypes\Investigation.fs" />
     <Compile Include="JsonTypes\ColumnIndex.fs" />
+    <Compile Include="ArcTypes\Path.fs" />
     <Compile Include="ArcTypes\CompositeHeader.fs" />
     <Compile Include="ArcTypes\CompositeCell.fs" />
     <Compile Include="ArcTypes\CompositeColumn.fs" />
@@ -54,19 +55,12 @@
     <Compile Include="ArcTypes\ArcAssay.fs" />
     <Compile Include="ArcTypes\ArcStudy.fs" />
     <Compile Include="ArcTypes\ArcInvestigation.fs" />
+    <Compile Include="ArcTypes\Identifier.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />
     <Compile Include="Builder\Transform.fs" />
     <Compile Include="ValueIndex.fs" />
-  </ItemGroup>
-  
-  <ItemGroup>
-    <EmbeddedResource Remove="JsonIO\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Remove="JsonIO\**" />
   </ItemGroup>
 
   <ItemGroup>

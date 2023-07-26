@@ -16,6 +16,9 @@
     <Compile Include="CompositeColumn.Tests.fs" />
     <Compile Include="ArcTable.Tests.fs" />
     <Compile Include="ArcAssay.Tests.fs" />
+    <Compile Include="ArcStudy.Tests.fs" />
+    <Compile Include="ArcInvestigation.Tests.fs" />
+    <Compile Include="Identifier.Tests.fs" />
     <Compile Include="DataModel.Tests.fs" />
     <Compile Include="Update.Tests.fs" />
     <Compile Include="Fable.Tests.fs" />
