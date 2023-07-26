@@ -676,8 +676,33 @@ module ProcessParsing =
             ]
         )
         
+    let compositeHeaderEqual (ch1 : CompositeHeader) (ch2 : CompositeHeader) = 
+        ch1.ToString() = ch2.ToString()
 
-    //let headersFromProcesses (ps : Process list) = 
-    //    ps
-    //    |> List.map 
+    let alignByHeaders (vals : ((CompositeHeader * CompositeCell) list) list) = 
+        let headers : ResizeArray<CompositeHeader> = ResizeArray()
+        let values : Dictionary<int*int,CompositeCell> = Dictionary()
+        let getFirstElem (vals : ('T list) list) : 'T =
+            List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) vals
+        let rec loop colI (vals : ((CompositeHeader * CompositeCell) list) list) =
+            if List.exists (List.isEmpty >> not) vals then 
+                headers,values
+            else 
+                let firstElem = vals |> getFirstElem |> fst
+                headers.Add firstElem
+                let vals = 
+                    vals
+                    |> List.mapi (fun rowI l ->
+                        match l with
+                        | [] -> []
+                        | (h,c)::t ->
+                            if compositeHeaderEqual h firstElem then
+                                values.Add((colI,rowI),c)
+                                t
+                            else
+                                l
+                    )
+                loop (colI+1) vals
+        loop 0 vals
+                
         

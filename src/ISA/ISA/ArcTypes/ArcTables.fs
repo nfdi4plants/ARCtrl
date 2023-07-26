@@ -57,7 +57,7 @@ module ArcTablesAux =
                 failwith $"Cannot create tables with the names {same}, as table names must be unique."
 
 open ArcTablesAux
-
+open ArcTableAux
 /// This type only includes mutable options and only static members, the MUST be referenced and used in all record types implementing `ResizeArray<ArcTable>`
 type ArcTables(thisTables:ResizeArray<ArcTable>) = 
     
@@ -67,6 +67,9 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
     member this.TableNames 
         with get() = 
             [for s in thisTables do yield s.Name]
+
+    member this.Tables = 
+        thisTables |> Seq.toList
 
     // - Table API - //
     // remark should this return ArcTable?
@@ -242,3 +245,20 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
     member this.GetRow(tableName: string, rowIndex: int) =
         (indexByTableName tableName thisTables, rowIndex)
         |> this.GetRowAt
+
+
+    member this.GetProcesses() : Process list = 
+        this.Tables
+        |> List.collect (fun t -> t.GetProcesses())
+
+    static member fromProcesses (ps : Process list) : ArcTables = 
+        ps
+        |> ProcessParsing.groupProcesses
+        |> List.map (fun (name,ps) ->
+            ps
+            |> List.collect (fun p -> ProcessParsing.processToRows p)
+            |> fun rows -> ProcessParsing.alignByHeaders rows
+            |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
+        )
+        |> ResizeArray
+        |> ArcTables

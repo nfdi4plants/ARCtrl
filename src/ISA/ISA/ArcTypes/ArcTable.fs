@@ -518,26 +518,18 @@ type ArcTable =
             )
             |> List.distinct
 
-    member this.GetProcesses (t : ArcTable) : Process list = 
-        let getter = ArcTableAux.ProcessParsing.getProcessGetter t.Name t.Headers
+    member this.GetProcesses() : Process list = 
+        let getter = ProcessParsing.getProcessGetter this.Name this.Headers
         [
-            for i in 0..t.RowCount-1 do
-                yield getter t.Values i        
+            for i in 0..this.RowCount-1 do
+                yield getter this.Values i        
         ]
 
-
     static member fromProcesses name (ps : Process list) : ArcTable = 
-        let t = ArcTable.init name
-        ps 
-        |> List.iter (fun p ->
-            p 
-            |> ArcTableAux.ProcessParsing.processToRows
-            |> List.iter (fun row ->
-                ArcTableAux.Unchecked.addRow
-            
-            )
-        )
-        t
+        ps
+        |> List.collect (fun p -> ProcessParsing.processToRows p)
+        |> fun rows -> ProcessParsing.alignByHeaders rows
+        |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
 
     override this.ToString() =
         [
