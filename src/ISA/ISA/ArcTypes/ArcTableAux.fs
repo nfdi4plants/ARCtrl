@@ -435,8 +435,8 @@ module ProcessParsing =
     /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
     let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
-        | CompositeHeader.Component oa ->
-            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+        | CompositeHeader.Parameter oa ->
+            let cat = CompositeHeader.Parameter (oa.SetColumnIndex valueI)
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeParameterValue cat matrix.[generalI,i]
             |> Some
@@ -444,8 +444,8 @@ module ProcessParsing =
 
     let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
-        | CompositeHeader.Component oa ->
-            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+        | CompositeHeader.Factor oa ->
+            let cat = CompositeHeader.Factor (oa.SetColumnIndex valueI)
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeFactorValue cat matrix.[generalI,i]
             |> Some
@@ -453,8 +453,8 @@ module ProcessParsing =
 
     let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
-        | CompositeHeader.Component oa ->
-            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+        | CompositeHeader.Characteristic oa ->
+            let cat = CompositeHeader.Characteristic (oa.SetColumnIndex valueI)
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeCharacteristicValue cat matrix.[generalI,i]
             |> Some
@@ -685,7 +685,7 @@ module ProcessParsing =
         let getFirstElem (vals : ('T list) list) : 'T =
             List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) vals
         let rec loop colI (vals : ((CompositeHeader * CompositeCell) list) list) =
-            if List.exists (List.isEmpty >> not) vals then 
+            if List.exists (List.isEmpty >> not) vals |> not then 
                 headers,values
             else 
                 let firstElem = vals |> getFirstElem |> fst

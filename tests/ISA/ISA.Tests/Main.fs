@@ -18,6 +18,7 @@ let all = testSequenced <| testList "All" [
     ArcAssay.Tests.main
     ArcStudy.Tests.main
     ArcInvestigation.Tests.main
+    ArcJsonConversion.Tests.main
     Identifier.Tests.main
     Fable.Tests.main
 ]

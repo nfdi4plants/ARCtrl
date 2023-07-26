@@ -1947,121 +1947,7 @@ let private tests_AddRows =
         )
     ]
 
-let private tests_processTransformation = 
-    testList "Process Transformation" [
-        testCase "ToProcesses" (fun () ->
-            Expect.isFalse true "Not implemented"
-        )
-    ]
 
-let private tests_protocolTransformation =
-    
-    let pName = "ProtocolName"
-    let pType = OntologyAnnotation.fromString("Growth","ABC","ABC:123")
-    let pVersion = "1.0"
-    let pDescription = "Great Protocol"
-
-    let pParam1OA = OntologyAnnotation.fromString("Temperature","NCIT","NCIT:123")
-    let pParam1 = ProtocolParameter.create(ParameterName = pParam1OA)
-
-    testList "Protocol Transformation" [
-        testCase "FromProtocol Empty" (fun () ->
-            let p = Protocol.create()
-            let t = p |> ArcTable.fromProtocol
-
-            Expect.equal t.ColumnCount 0 "ColumnCount should be 0"
-        )
-        testCase "FromProtocol SingleParameter" (fun () ->
-            let p = Protocol.create(Parameters = [pParam1])
-            let t = p |> ArcTable.fromProtocol
-
-            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
-            let c = t.TryGetCellAt(0,0)
-            Expect.isNone c "Cell should not exist"
-        )
-        testCase "FromProtocol SingleProtocolType" (fun () ->
-            let p = Protocol.create(ProtocolType = pType)
-            let t = p |> ArcTable.fromProtocol
-            let expected = CompositeCell.Term pType
-
-            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
-            let c = t.TryGetCellAt(0,0)
-            Expect.isSome c "Cell should exist"
-            let c = c.Value
-            Expect.equal c expected "Cell value does not match"
-        )
-        testCase "FromProtocol SingleName" (fun () ->
-            let p = Protocol.create(Name = pName)
-            let t = p |> ArcTable.fromProtocol
-            let expected = CompositeCell.FreeText pName
-
-            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
-            let c = t.TryGetCellAt(0,0) 
-            Expect.isSome c "Cell should exist"
-            let c = c.Value
-            Expect.equal c expected "Cell value does not match"
-            )
-        testCase "FromProtocol SingleVersion" (fun () ->
-            let p = Protocol.create(Version = pVersion)
-            let t = p |> ArcTable.fromProtocol
-            let expected = CompositeCell.FreeText pVersion
-
-            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
-            let c = t.TryGetCellAt(0,0)
-            Expect.isSome c "Cell should exist"
-            let c = c.Value
-            Expect.equal c expected "Cell value does not match"
-        )
-        testCase "FromProtocol SingleDescription" (fun () ->
-            let p = Protocol.create(Description = pDescription)
-            let t = p |> ArcTable.fromProtocol
-            let expected = CompositeCell.FreeText pDescription
-
-            Expect.equal t.ColumnCount 1 "ColumnCount should be 1"
-            let c = t.TryGetCellAt(0,0)
-            Expect.isSome c "Cell should exist"
-            let c = c.Value
-            Expect.equal c expected "Cell value does not match"
-        )
-
-        testCase "GetProtocols SingleName" (fun () ->           
-            let t = ArcTable.init "TestTable"
-            let name = "Name"
-            t.AddProtocolNameColumn([|name|])
-            let expected = [Protocol.create(Name = name)]
-
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
-        )
-        testCase "GetProtocols SameNames" (fun () ->           
-            let t = ArcTable.init "TestTable"
-            let name = "Name"
-            t.AddProtocolNameColumn([|name;name|])
-            let expected = [Protocol.create(Name = name)]
-
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
-        )
-        testCase "GetProtocols DifferentNames" (fun () ->           
-            let t = ArcTable.init "TestTable"
-            let name1 = "Name"
-            let name2 = "Name2"
-            t.AddProtocolNameColumn([|name1;name2|])
-            let expected = [Protocol.create(Name = name1);Protocol.create(Name = name2)]
-
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
-        )
-        //testCase "GetProtocols Parameters" (fun () ->
-        //    let t = ArcTable.init "TestTable"
-        //    let name1 = "Name"
-        //    let name2 = "Name2"
-        //    t.AddProtocolNameColumn([|name1;name2|])
-        //    t.addpara([|pParam1;pParam1|])
-        //    let expected = [Protocol.create(Name = name1;Parameters = [pParam1]);Protocol.create(Name = name2;Parameters = [pParam1])]
-        //    TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
-        
-        //)
-
-
-    ]
 
 let main = 
     testList "ArcTable" [
@@ -2081,5 +1967,4 @@ let main =
         tests_AddRow
         tests_AddRows
         tests_validate
-        tests_protocolTransformation
     ]
