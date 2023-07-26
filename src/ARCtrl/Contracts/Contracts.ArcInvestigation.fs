@@ -14,6 +14,6 @@ open ARCtrl.Path
 let (|InvestigationPath|_|) (input) =
     match input with
     | [|InvestigationFileName|] -> 
-        let path = FileSystem.Path.combineMany input
+        let path = ARCtrl.Path.combineMany input
         Some path
     | _ -> None

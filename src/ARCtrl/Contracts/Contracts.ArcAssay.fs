@@ -13,6 +13,6 @@ open ARCtrl.Path
 let (|AssayPath|_|) (input) =
     match input with
     | [|AssaysFolderName; anyAssayName; AssayFileName|] -> 
-        let path = FileSystem.Path.combineMany input
+        let path = ARCtrl.Path.combineMany input
         Some path
     | _ -> None

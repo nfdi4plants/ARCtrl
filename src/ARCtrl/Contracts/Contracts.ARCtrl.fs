@@ -16,7 +16,7 @@ open Contracts.ArcStudy
 // 3. We ignore all other .xlsx files.
 /// Tries to create READ contract with DTOType = ISA_Assay, ISA_Study or ISA_Investigation from given path relative to ARC root.
 let tryISAReadContractFromPath (path: string) = 
-    let split = FileSystem.Path.split path
+    let split = ARCtrl.Path.split path
     match split with
     | InvestigationPath p -> 
         Some <| Contract.createRead(p, DTOType.ISA_Investigation) 
