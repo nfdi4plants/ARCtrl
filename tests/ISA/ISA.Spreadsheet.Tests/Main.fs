@@ -13,6 +13,7 @@ let all = testSequenced <| testList "All" [
     CompositeColumnTests.main
     ArcTableTests.main
     ArcAssayTests.main
+    ArcStudyTests.main
     SparseTableTests.main
     IdentifierTests.main
 ]

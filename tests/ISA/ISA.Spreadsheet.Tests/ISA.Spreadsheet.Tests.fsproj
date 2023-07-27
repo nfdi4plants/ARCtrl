@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
+    <Compile Include="TestObjects\Study.fs" />
     <Compile Include="TestObjects\Assay.fs" />
     <Compile Include="TestObjects\ArcTable.fs" />
     <Compile Include="TestObjects\InvestigationFile.fs" />
@@ -19,6 +20,7 @@
     <Compile Include="CompositeColumnTests.fs" />
     <Compile Include="ArcTableTests.fs" />
     <Compile Include="Identifier.Tests.fs" />
+    <Compile Include="StudyFileTests.fs" />
     <Compile Include="AssayFileTests.fs" />
     <Compile Include="InvestigationFileTests.fs" />
     <Compile Include="Main.fs" />
