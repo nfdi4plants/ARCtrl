@@ -22,7 +22,7 @@ let toMetadataSheet (study : ArcStudy) : FsWorksheet =
     |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
     sheet
 
-let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy option =
+let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy =
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         en.MoveNext() |> ignore  
@@ -31,6 +31,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy option =
     sheet.Rows 
     |> Seq.map SparseRow.fromFsRow
     |> fromRows
+    |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()))
 
 /// Reads an assay from a spreadsheet
 let fromFsWorkbook (doc:FsWorkbook) = 
@@ -46,9 +47,8 @@ let fromFsWorkbook (doc:FsWorkbook) =
                 fromMetadataSheet sheet
             | None -> 
                 printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." metaDataSheetName obsoleteMetaDataSheetName
-                None   
-              
-        |> Option.defaultValue (ArcStudy.init(Identifier.createMissingIdentifier()))
+                ArcStudy.create(Identifier.createMissingIdentifier())
+
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet
