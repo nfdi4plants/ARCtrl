@@ -349,3 +349,34 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             performers=this.Performers, 
             comments=this.Comments
         )
+
+    /// Transform an ArcAssay to a ISA Json Assay.
+    member this.ToAssay() : Assay = 
+        let processSeq = ArcTables(this.Tables).GetProcesses()
+        let assayMaterials =
+            AssayMaterials.create(
+                ?Samples = (ProcessSequence.getSamples processSeq |> Option.fromValueWithDefault []),
+                ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
+            )
+            |> Option.fromValueWithDefault AssayMaterials.empty
+        Assay.create(
+            FileName = this.Identifier,
+            ?MeasurementType = this.MeasurementType,
+            ?TechnologyType = this.TechnologyType,
+            ?TechnologyPlatform = this.TechnologyPlatform,
+            ?DataFiles = (ProcessSequence.getData processSeq |> Option.fromValueWithDefault []),
+            ?Materials = assayMaterials,
+            ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
+            ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
+            ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
+            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            )
+
+
+    /// Create a collection of tables from a list of processes.
+    ///
+    /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
+    ///
+    /// Then each group is converted to a table with this nameroot as sheetname
+    static member fromAssay (ps : Process list) : ArcTables = 
+        raise (System.NotImplementedException("ArcAssay.fromAssay not implemented yet"))
