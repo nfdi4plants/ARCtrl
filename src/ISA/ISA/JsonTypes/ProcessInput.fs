@@ -70,6 +70,22 @@ type ProcessInput =
         | ProcessInput.Material _ -> true
         | _ -> false
 
+    /// Returns true, if Process Input is Source
+    member this.isSource() =
+        ProcessInput.isSource this
+
+    /// Returns true, if Process Input is Sample
+    member this.isSample() =
+        ProcessInput.isSample this
+
+    /// Returns true, if Process Input is Data
+    member this.isData() =
+        ProcessInput.isData this
+
+    /// Returns true, if Process Input is Material
+    member this.isMaterial() =
+        ProcessInput.isMaterial this
+
     /// If given process input is a sample, returns it, else returns None
     static member trySample (pi : ProcessInput) =
         match pi with
@@ -124,3 +140,24 @@ type ProcessInput =
         | ProcessInput.Sample s     -> Sample.getUnits s
         | ProcessInput.Material m   -> Material.getUnits m
         | ProcessInput.Data _       -> []
+
+
+    static member createSource (name : string, ?characteristics) =
+        Source.create(Name = name, ?Characteristics = characteristics)
+        |> ProcessInput.Source
+
+    static member createSample (name : string, ?characteristics, ?factors, ?derivesFrom) = 
+        Sample.create(Name = name, ?Characteristics = characteristics, ?FactorValues = factors, ?DerivesFrom = derivesFrom)
+        |> ProcessInput.Sample
+
+    static member createMaterial (name : string, ?characteristics, ?derivesFrom) =
+        Material.create(Name = name, ?Characteristics = characteristics, ?DerivesFrom = derivesFrom)
+        |> ProcessInput.Material
+
+    static member createRawData (name : string) =
+        Data.create(Name = name, DataType = DataFile.RawDataFile)
+        |> ProcessInput.Data
+
+    static member createDerivedData (name : string) =
+        Data.create(Name = name, DataType = DataFile.DerivedDataFile)
+        |> ProcessInput.Data

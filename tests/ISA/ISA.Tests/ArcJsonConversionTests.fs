@@ -165,6 +165,15 @@ let private tests_arcTableProcess =
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
+        testCase "SingleRowMixedValues GetProcesses" (fun () ->
+            let t = singleRowMixedValues.Copy()
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            Expect.equal processes.[0].ParameterValues.Value.Length 1 "Process should have 1 parameter values"
+            Expect.equal processes.[0].Inputs.Value.Length 1 "Process should have 1 input"
+            Expect.equal processes.[0].Outputs.Value.Length 1 "Process should have 1 output"
+        )
+
         testCase "SingleRowMixedValues GetAndFromProcesses" (fun () ->
             let t = singleRowMixedValues.Copy()
             let processes = t.GetProcesses()
@@ -178,6 +187,23 @@ let private tests_arcTableProcess =
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
+        testCase "SingleRowDataInputWithCharacteristic GetProcesses" (fun () ->
+            let t = singleRowDataInputWithCharacteristic.Copy()
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let p = processes.[0]
+            Expect.isNone p.ParameterValues "Process should have no parameter values"
+            Expect.isSome p.Inputs "Process should have inputs"
+            Expect.equal p.Inputs.Value.Length 2 "Process should have 2 inputs"
+            Expect.isSome p.Outputs "Process should have outputs"
+            Expect.equal p.Outputs.Value.Length 2 "Process should have 2 outputs"
+            Expect.isTrue (ProcessInput.isData p.Inputs.Value.[0]) "First input should be data"
+            Expect.isTrue (ProcessInput.isSample p.Inputs.Value.[1]) "Second input should be characteristic"
+            let secondIn = p.Inputs.Value.[1] |> ProcessInput.trySample |> Option.get
+            Expect.isSome secondIn.Characteristics "Second input should have characteristics"
+            Expect.equal secondIn.Characteristics.Value.Length 1 "Second input should have 1 characteristic"
+        )
+
         testCase "SingleRowDataInputWithCharacteristic GetAndFromProcesses" (fun () ->
             let t = singleRowDataInputWithCharacteristic.Copy()
             let processes = t.GetProcesses()
@@ -189,6 +215,23 @@ let private tests_arcTableProcess =
                     1                             
                 ) t
             Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "SingleRowDataOutputWithFactor GetProcesses" (fun () ->
+            let t = singleRowDataOutputWithFactor.Copy()
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let p = processes.[0]
+            Expect.isNone p.ParameterValues "Process should have no parameter values"
+            Expect.isSome p.Inputs "Process should have inputs"
+            Expect.equal p.Inputs.Value.Length 2 "Process should have 2 inputs"
+            Expect.isSome p.Outputs "Process should have outputs"
+            Expect.equal p.Outputs.Value.Length 2 "Process should have 2 outputs"
+            Expect.isTrue (ProcessOutput.isData p.Outputs.Value.[0]) "First output should be data"
+            Expect.isTrue (ProcessOutput.isSample p.Outputs.Value.[1]) "Second output should be sample"
+            let secondOut = p.Outputs.Value.[1] |> ProcessOutput.trySample |> Option.get
+            Expect.isSome secondOut.FactorValues "Second output should have factor values"
+            Expect.equal secondOut.FactorValues.Value.Length 1 "Second output should have 1 factor value"
         )
 
         testCase "SingleRowDataOutputWithFactor GetAndFromProcesses" (fun () ->

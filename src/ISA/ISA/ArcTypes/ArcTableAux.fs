@@ -572,7 +572,15 @@ module ProcessParsing =
             | Some inputGetter ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
-                    inputGetter matrix i
+                    let input = inputGetter matrix i
+
+                    if ((input.isSample() || input.isSource())|> not) && (chars.IsEmpty |> not) then
+                        [
+                        input
+                        ProcessInput.createSample(input.Name, characteristics = chars)
+                        ]
+                    else
+                        input
                     |> ProcessInput.setCharacteristicValues chars
                     |> List.singleton
             | None ->
@@ -586,7 +594,14 @@ module ProcessParsing =
             | Some outputGetter ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
-                    outputGetter matrix i
+                    let output = outputGetter matrix i
+                    if (output.isSample() |> not) && (factors.IsEmpty |> not) then
+                        [
+                        output
+                        ProcessOutput.createSample(output.Name, factors = factors)
+                        ]
+                    else
+                        output
                     |> ProcessOutput.setFactorValues factors
                     |> List.singleton
             | None ->
@@ -614,6 +629,17 @@ module ProcessParsing =
                     (componentGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [])
                     None
 
+
+            let inputs,outputs = 
+                let inputs = inputGetter matrix i
+                let outputs = outputGetter matrix i
+                if inputs.Length = 1 && outputs.Length = 2 then 
+                    [inputs.[0];inputs.[0]],outputs
+                elif inputs.Length = 2 && outputs.Length = 1 then
+                    inputs,[outputs.[0];outputs.[0]]
+                else
+                    inputs,outputs
+
             Process.make 
                 None 
                 pn 
@@ -623,8 +649,8 @@ module ProcessParsing =
                 None
                 None
                 None          
-                (inputGetter matrix i |> Some)
-                (outputGetter matrix i |> Some)
+                (Some inputs)
+                (Some outputs)
                 None
 
     let groupProcesses (ps : Process list) = 
@@ -661,18 +687,39 @@ module ProcessParsing =
             | None -> []
         p.Outputs.Value
         |> List.zip p.Inputs.Value
-        |> List.map (fun (i,o) ->
-            let chars = i |> ProcessInput.getCharacteristicValues |> List.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetCharacteristicColumnIndex cv)
-            let factors = o |> ProcessOutput.getFactorValues |> List.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetFactorColumnIndex fv)
+        // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
+        |> List.groupBy (fun (i,o) ->
+            i.Name,o.Name
+        )
+        |> List.map (fun ((i,o),ios) ->
+            let inputForCharas = 
+                ios
+                |> List.tryPick (fun (i,o) -> if i.isSource() || i.isSample() then Some i else None)
+                |> Option.defaultValue (ios.Head |> fst)
+            let inputForType =
+                ios
+                |> List.tryPick (fun (i,o) -> if i.isData() || i.isMaterial() then Some i  else None)
+                |> Option.defaultValue (ios.Head |> fst)
+            let chars = 
+                inputForCharas |> ProcessInput.getCharacteristicValues |> List.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetCharacteristicColumnIndex cv)
+            let outputForFactors = 
+                ios
+                |> List.tryPick (fun (i,o) -> if o.isSample() then Some o else None)
+                |> Option.defaultValue (ios.Head |> snd)
+            let outputForType = 
+                ios
+                |> List.tryPick (fun (i,o) -> if o.isData() || o.isMaterial() then Some o else None)
+                |> Option.defaultValue (ios.Head |> snd)
+            let factors = outputForFactors |> ProcessOutput.getFactorValues |> List.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetFactorColumnIndex fv)
             let vals = 
                 (chars @ components @ pvs @ factors)
                 |> List.sortBy (snd >> Option.defaultValue 10000)
                 |> List.map fst
             [
-                yield JsonTypes.decomposeProcessInput i
+                yield JsonTypes.decomposeProcessInput inputForType
                 yield! protVals
                 yield! vals
-                yield JsonTypes.decomposeProcessOutput o
+                yield JsonTypes.decomposeProcessOutput outputForType
             ]
         )
         
