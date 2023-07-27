@@ -3,11 +3,12 @@
 open ISA
 open FsSpreadsheet
 
-let [<Literal>] obsoloteAssaysLabel = "ASSAY METADATA"
+let [<Literal>] obsoleteAssaysLabel = "ASSAY METADATA"
 let [<Literal>] assaysLabel = "ASSAY"
 let [<Literal>] contactsLabel = "ASSAY PERFORMERS"
 
-let [<Literal>] metaDataSheetName = "Assay"
+let [<Literal>] obsoleteMetaDataSheetName = "Assay"
+let [<Literal>] metaDataSheetName = "isa_assay"
 
 let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
     let toRows (assay:ArcAssay) =
@@ -31,7 +32,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
                
             match lastLine with
 
-            | Some k when k = assaysLabel || k = obsoloteAssaysLabel -> 
+            | Some k when k = assaysLabel || k = obsoleteAssaysLabel -> 
                 let currentLine,lineNumber,_,assays = Assays.fromRows None (lineNumber + 1) en       
                 loop currentLine assays contacts lineNumber
 
@@ -68,8 +69,12 @@ let fromFsWorkbook (doc:FsWorkbook) =
         | Option.Some sheet ->
             fromMetadataSheet sheet
         | None -> 
-            printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" sheet." metaDataSheetName
-            ArcAssay.create(Identifier.createMissingIdentifier())
+            match doc.TryGetWorksheetByName obsoleteMetaDataSheetName with 
+            | Option.Some sheet ->
+                fromMetadataSheet sheet
+            | None -> 
+                printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" or \"%s\" sheet." metaDataSheetName obsoleteMetaDataSheetName
+                ArcAssay.create(Identifier.createMissingIdentifier())
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet

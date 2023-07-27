@@ -3,10 +3,11 @@
 open ISA
 open FsSpreadsheet
 
-let [<Literal>] obsoloteStudiesLabel = "STUDY METADATA"
+let [<Literal>] obsoleteStudiesLabel = "STUDY METADATA"
 let [<Literal>] studiesLabel = "STUDY"
 
-let [<Literal>] metaDataSheetName = "Study"
+let [<Literal>] obsoleteMetaDataSheetName = "Study"
+let [<Literal>] metaDataSheetName = "isa_study"
 
 
 let toMetadataSheet (study : ArcStudy) : FsWorksheet =
@@ -39,9 +40,14 @@ let fromFsWorkbook (doc:FsWorkbook) =
         match doc.TryGetWorksheetByName metaDataSheetName with 
         | Option.Some sheet ->
             fromMetadataSheet sheet
-        | None -> 
-            printfn "Cannot retrieve metadata: Study file does not contain \"%s\" sheet." metaDataSheetName
-            None   
+        | None ->  
+            match doc.TryGetWorksheetByName obsoleteMetaDataSheetName with 
+            | Option.Some sheet ->
+                fromMetadataSheet sheet
+            | None -> 
+                printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." metaDataSheetName obsoleteMetaDataSheetName
+                None   
+              
         |> Option.defaultValue (ArcStudy.init(Identifier.createMissingIdentifier()))
     let sheets = 
         doc.GetWorksheets()
