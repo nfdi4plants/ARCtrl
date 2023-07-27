@@ -75,13 +75,16 @@ module Studies =
             let i = 1
             let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
             let mutable commentKeys = []
+            let processedIdentifier,processedFileName =
+                if study.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then "","" else 
+                    study.Identifier, Identifier.Study.fileNameFromIdentifier study.Identifier
 
-            do matrix.Matrix.Add ((identifierLabel,i),          study.Identifier)
+            do matrix.Matrix.Add ((identifierLabel,i),          processedIdentifier)
             do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" study.Title))
             do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" study.Description))
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" study.SubmissionDate))
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
-            do matrix.Matrix.Add ((fileNameLabel,i),            ArcStudy.FileName)
+            do matrix.Matrix.Add ((fileNameLabel,i),            processedFileName)
 
             if study.Comments.IsEmpty |> not then
                 study.Comments

@@ -65,7 +65,7 @@ module Assays =
         let mutable commentKeys = []
         assays
         |> List.iteri (fun i a ->
-            let processedIdentifier =
+            let processedFileName =
                 if a.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then Identifier.removeMissingIdentifier(a.Identifier) else Identifier.Assay.fileNameFromIdentifier(a.Identifier)
             let i = i + 1
             let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
@@ -77,7 +77,7 @@ module Assays =
             do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     tt.TermAccessionNumber)
             do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           tt.TermSourceREF)
             do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
-            do matrix.Matrix.Add ((fileNameLabel,i),                              (processedIdentifier))
+            do matrix.Matrix.Add ((fileNameLabel,i),                              processedFileName)
 
             if a.Comments.IsEmpty |> not then
                 a.Comments

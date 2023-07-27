@@ -3,10 +3,11 @@
 open ISA
 open FsSpreadsheet
 
-let [<Literal>] obsoloteStudiesLabel = "STUDY METADATA"
+let [<Literal>] obsoleteStudiesLabel = "STUDY METADATA"
 let [<Literal>] studiesLabel = "STUDY"
 
-let [<Literal>] metaDataSheetName = "Study"
+let [<Literal>] obsoleteMetaDataSheetName = "Study"
+let [<Literal>] metaDataSheetName = "isa_study"
 
 
 let toMetadataSheet (study : ArcStudy) : FsWorksheet =
@@ -21,7 +22,7 @@ let toMetadataSheet (study : ArcStudy) : FsWorksheet =
     |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
     sheet
 
-let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy option =
+let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy =
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()
         en.MoveNext() |> ignore  
@@ -30,6 +31,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy option =
     sheet.Rows 
     |> Seq.map SparseRow.fromFsRow
     |> fromRows
+    |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()))
 
 /// Reads an assay from a spreadsheet
 let fromFsWorkbook (doc:FsWorkbook) = 
@@ -39,10 +41,14 @@ let fromFsWorkbook (doc:FsWorkbook) =
         match doc.TryGetWorksheetByName metaDataSheetName with 
         | Option.Some sheet ->
             fromMetadataSheet sheet
-        | None -> 
-            printfn "Cannot retrieve metadata: Study file does not contain \"%s\" sheet." metaDataSheetName
-            None   
-        |> Option.defaultValue (ArcStudy.init(Identifier.createMissingIdentifier()))
+        | None ->  
+            match doc.TryGetWorksheetByName obsoleteMetaDataSheetName with 
+            | Option.Some sheet ->
+                fromMetadataSheet sheet
+            | None -> 
+                printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." metaDataSheetName obsoleteMetaDataSheetName
+                ArcStudy.create(Identifier.createMissingIdentifier())
+
     let sheets = 
         doc.GetWorksheets()
         |> List.choose ArcTable.tryFromFsWorksheet

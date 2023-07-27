@@ -3,7 +3,7 @@
 open FsSpreadsheet
 
 let assayMetadata = 
-    let ws = FsWorksheet("Assay")
+    let ws = FsWorksheet("isa_assay")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ASSAY"
     let row2 = ws.Row(2)
@@ -78,9 +78,14 @@ let assayMetadata =
     row22.[4].Value <- "Sheet3"
     ws
 
+let assayMetadataObsoleteSheetName = 
+    let cp = assayMetadata.Copy()
+    cp.Name <- "Assay"
+    cp
+
 
 let assayMetadataEmpty = 
-    let ws = FsWorksheet("Assay")
+    let ws = FsWorksheet("isa_assay")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ASSAY"
     let row2 = ws.Row(2)
@@ -126,3 +131,29 @@ let assayMetadataEmpty =
     let row22 = ws.Row(22)
     row22.[1].Value <- "Comment[Worksheet]"
     ws
+
+
+let assayMetadataEmptyObsoleteSheetName = 
+    let cp = assayMetadataEmpty.Copy()
+    cp.Name <- "Assay"
+    cp
+
+let assayMetadataWorkbook = 
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(assayMetadata)
+    wb
+
+let assayMetadataWorkbookObsoleteSheetName = 
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(assayMetadataObsoleteSheetName)
+    wb
+
+let assayMetadataWorkbookEmpty = 
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(assayMetadataEmpty)
+    wb
+
+let assayMetadataWorkbookEmptyObsoleteSheetName = 
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(assayMetadataEmptyObsoleteSheetName)
+    wb
