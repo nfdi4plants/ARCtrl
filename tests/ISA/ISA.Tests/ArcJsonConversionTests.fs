@@ -16,7 +16,10 @@ module Helper =
     let oa_chlamy = OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456")
     let oa_instrumentModel = OntologyAnnotation.fromString("instrument model", "MS", "MS:0123456")
     let oa_SCIEXInstrumentModel = OntologyAnnotation.fromString("SCIEX instrument model", "MS", "MS:654321")
+    let oa_time = OntologyAnnotation.fromString("time", "UO", "UO:0000010")
+    let oa_hour = OntologyAnnotation.fromString("hour", "UO", "UO:0000032")
     let oa_temperature = OntologyAnnotation.fromString("temperature","NCIT","NCIT:0123210")
+    let oa_degreeCel =  OntologyAnnotation.fromString("degree celsius","UO","UO:0000027")
 
     /// This function can be used to put ArcTable.Values into a nice format for printing/writing to IO
     let tableValues_printable (table:ArcTable) = 
@@ -28,8 +31,8 @@ module Helper =
     let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
     let createCells_Sciex (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
     let createCells_chlamy (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
-    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
-
+    let createCells_DegreeCelsius (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,oa_degreeCel))
+    let createCells_Hour (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,oa_hour))
 
     let singleRowSingleParam = 
     /// Input [Source] --> Source_0 .. Source_4
@@ -37,6 +40,76 @@ module Helper =
             [|
             CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
             CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
+    let singleRowMixedValues = 
+    /// Input [Source] --> Source_0 .. Source_4
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
+            CompositeColumn.create(CompositeHeader.Parameter oa_time, createCells_Hour 1)
+            CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_chlamy 1)
+            CompositeColumn.create(CompositeHeader.Factor oa_temperature, createCells_DegreeCelsius 1)
+            CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Sciex 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
+    let singleRowDataInputWithCharacteristic = 
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "RData" 1)
+            CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_chlamy 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.DerivedDataFile, createCells_FreeText "DData" 1)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
+    let singleRowDataOutputWithFactor = 
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "RData" 1)
+            CompositeColumn.create(CompositeHeader.Factor oa_temperature, createCells_DegreeCelsius 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.DerivedDataFile, createCells_FreeText "DData" 1)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
+    let twoRowsSameParamValue = 
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 2)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
+    let twoRowsDifferentParamValue = 
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            CompositeColumn.create(CompositeHeader.Parameter oa_time, createCells_Hour 2)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
+    let singleRowWithProtocolRef = 
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
+            CompositeColumn.create(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "MyProtocol"|])
             CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
             |]
         let t = ArcTable.init(tableName1)
@@ -62,7 +135,7 @@ open Helper
 let private tests_arcTableProcess = 
     testList "ARCTableProcess" [
         testCase "SingleRowSingleParam GetProcesses" (fun () ->
-            let t = singleRowSingleParam
+            let t = singleRowSingleParam.Copy()
             let processes = t.GetProcesses()
             let expectedParam = ProtocolParameter.create(ParameterName = oa_species)
             let expectedValue = Value.Ontology oa_chlamy
@@ -80,7 +153,7 @@ let private tests_arcTableProcess =
             Expect.equal p.Name.Value tableName1 "Process name should match table name"
         )
         testCase "SingleRowSingleParam GetAndFromProcesses" (fun () ->
-            let t = singleRowSingleParam
+            let t = singleRowSingleParam.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
             let expectedTable = 
@@ -90,6 +163,156 @@ let private tests_arcTableProcess =
                     1                             
                 ) t
             Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "SingleRowMixedValues GetAndFromProcesses" (fun () ->
+            let t = singleRowMixedValues.Copy()
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            let expectedTable = 
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "SingleRowDataInputWithCharacteristic GetAndFromProcesses" (fun () ->
+            let t = singleRowDataInputWithCharacteristic.Copy()
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            let expectedTable = 
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "SingleRowDataOutputWithFactor GetAndFromProcesses" (fun () ->
+            let t = singleRowDataOutputWithFactor.Copy()
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            let expectedTable = 
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "TwoRowsSameParamValue GetAndFromProcesses" (fun () ->
+            let t = twoRowsSameParamValue.Copy()
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            let expectedTable = 
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1;CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "TwoRowsDifferentParamValues GetProcesses" (fun () ->
+            let t = twoRowsDifferentParamValue.Copy()
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 2 "Should have 2 processes"
+        )
+
+        testCase "TwoRowsDifferentParamValues GetAndFromProcesses" (fun () ->
+            let t = twoRowsDifferentParamValue.Copy()
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            let expectedTable = 
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1;CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
+        testCase "SingleRowWithProtocolREF GetProcesses" (fun () ->
+            let t = singleRowWithProtocolRef.Copy()
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let p = processes.[0]
+            Expect.isSome p.ExecutesProtocol "Process should have protocol"
+            let prot = p.ExecutesProtocol.Value
+            Expect.isSome prot.Name "Protocol should have name"
+            Expect.equal prot.Name.Value "MyProtocol" "Protocol name should match"
+            Expect.isSome p.Name "Process should have name"
+            Expect.equal p.Name.Value tableName1 "Process name should match table name"
+        )
+
+        testCase "SingleRowWithProtocolREF GetAndFromProcesses" (fun () ->
+            let t = singleRowWithProtocolRef.Copy()
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            Expect.arcTableEqual table t "Table should be equal"
+        )
+    ]
+
+let private tests_arcTablesProcessSeq = 
+    testList "ARCTablesProcessSeq" [
+        testCase "SimpleTables GetAndFromProcesses" (fun () ->
+            let t1 = singleRowSingleParam.Copy()
+            let t2 = 
+                singleRowSingleParam.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
+            let tables = ResizeArray[t1;t2] |> ArcTables
+            let processes = tables.GetProcesses() 
+            Expect.equal processes.Length 2 "Should have 2 processes"
+            let resultTables = (ArcTables.fromProcesses processes).Tables
+                
+            let expectedTables = 
+                [
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t1
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName2|],
+                    1                             
+                ) t2
+                ]
+                
+            Expect.equal resultTables.Length 2 "2 Tables should have been created"
+            Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
+            Expect.arcTableEqual resultTables.[1] expectedTables.[1] "Table 2 should be equal"
+
+        )
+        testCase "OneWithDifferentParamVals GetAndFromProcesses" (fun () ->
+            let t1 = singleRowSingleParam.Copy()
+            let t2 = 
+                twoRowsDifferentParamValue.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
+            let tables = ResizeArray[t1;t2] |> ArcTables
+            let processes = tables.GetProcesses()           
+            Expect.equal processes.Length 3 "Should have 3 processes"
+            let resultTables = (ArcTables.fromProcesses processes).Tables
+                
+            let expectedTables = 
+                [
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName1|],
+                    1                             
+                ) t1
+                ArcTable.addColumn(
+                    CompositeHeader.ProtocolREF,
+                    [|CompositeCell.createFreeText tableName2;CompositeCell.createFreeText tableName2|],
+                    1                             
+                ) t2
+                ]
+                
+            Expect.equal resultTables.Length 2 "2 Tables should have been created"
+            Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
+            Expect.arcTableEqual resultTables.[1] expectedTables.[1] "Table 2 should be equal"
         )
     ]
 
@@ -207,4 +430,5 @@ let main =
     testList "ArcJsonConversion" [
         tests_protocolTransformation
         tests_arcTableProcess
+        tests_arcTablesProcessSeq
     ]

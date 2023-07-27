@@ -412,10 +412,6 @@ type ArcTable =
     static member getParameterValues (t : ArcTable) : ProcessParameterValue [] = 
         raise (System.NotImplementedException())
 
-    // no 
-    static member addProcess = 
-        raise (System.NotImplementedException())
-
     ///
     member this.AddProtocolTypeColumn(?types : OntologyAnnotation [], ?index : int) =
         let header = CompositeHeader.ProtocolType

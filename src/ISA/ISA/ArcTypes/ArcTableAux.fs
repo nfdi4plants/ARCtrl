@@ -388,11 +388,11 @@ module JsonTypes =
         cellOfValue ppv.Value ppv.Unit
 
     let decomposeFactorValue (fv : FactorValue) : CompositeHeader*CompositeCell =
-        CompositeHeader.Parameter (fv.Category.Value.FactorType.Value),
+        CompositeHeader.Factor (fv.Category.Value.FactorType.Value),
         cellOfValue fv.Value fv.Unit
 
     let decomposeCharacteristicValue (cv : MaterialAttributeValue) : CompositeHeader*CompositeCell =
-        CompositeHeader.Parameter (cv.Category.Value.CharacteristicType.Value),
+        CompositeHeader.Characteristic (cv.Category.Value.CharacteristicType.Value),
         cellOfValue cv.Value cv.Unit
 
     let decomposeProcessInput (pi : ProcessInput) : CompositeHeader*CompositeCell =
