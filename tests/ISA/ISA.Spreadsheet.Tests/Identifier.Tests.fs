@@ -6,7 +6,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA.Spreadsheet.Identifier
+open ISA.Identifier
 
 // Function to test identifierFromFileName
 let private testIdentifierFromFileName () =

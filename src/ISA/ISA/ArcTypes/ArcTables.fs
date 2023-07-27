@@ -60,7 +60,9 @@ open ArcTablesAux
 open ArcTableAux
 /// This type only includes mutable options and only static members, the MUST be referenced and used in all record types implementing `ResizeArray<ArcTable>`
 type ArcTables(thisTables:ResizeArray<ArcTable>) = 
-    
+
+    inherit ResizeArray<ArcTable>(thisTables)
+
     member this.TableCount 
         with get() = thisTables.Count
 
@@ -69,7 +71,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
             [for s in thisTables do yield s.Name]
 
     member this.Tables = 
-        thisTables |> Seq.toList
+        thisTables
 
     // - Table API - //
     // remark should this return ArcTable?
@@ -249,6 +251,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
     /// Return a list of all the processes in all the tables.
     member this.GetProcesses() : Process list = 
         this.Tables
+        |> Seq.toList
         |> List.collect (fun t -> t.GetProcesses())
 
     /// Create a collection of tables from a list of processes.

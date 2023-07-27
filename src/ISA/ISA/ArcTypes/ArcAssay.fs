@@ -350,7 +350,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             comments=this.Comments
         )
 
-    /// Transform an ArcAssay to a ISA Json Assay.
+    /// Transform an ArcAssay to an ISA Json Assay.
     member this.ToAssay() : Assay = 
         let processSeq = ArcTables(this.Tables).GetProcesses()
         let assayMaterials =
@@ -372,11 +372,18 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             ?Comments = (this.Comments |> Option.fromValueWithDefault [])
             )
 
-
-    /// Create a collection of tables from a list of processes.
-    ///
-    /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
-    ///
-    /// Then each group is converted to a table with this nameroot as sheetname
-    static member fromAssay (ps : Process list) : ArcTables = 
-        raise (System.NotImplementedException("ArcAssay.fromAssay not implemented yet"))
+    // Create an ArcAssay from an ISA Json Assay.
+    static member fromAssay (a : Assay) : ArcAssay = 
+        let tables = (a.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
+        let identifer = 
+            match a.FileName with
+            | Some fn -> Identifier.Assay.identifierFromFileName fn
+            | None -> Identifier.createMissingIdentifier()
+        ArcAssay.create(
+            identifer,
+            ?measurementType = a.MeasurementType,
+            ?technologyType = a.TechnologyType,
+            ?technologyPlatform = a.TechnologyPlatform,
+            ?tables = tables,
+            ?comments = a.Comments
+            )

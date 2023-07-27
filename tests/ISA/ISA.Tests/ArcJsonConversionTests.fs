@@ -302,6 +302,18 @@ let private tests_arcTableProcess =
 
 let private tests_arcTablesProcessSeq = 
     testList "ARCTablesProcessSeq" [
+        testCase "NoTables GetProcesses" (fun () ->
+            let t = ArcTables(ResizeArray())
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 0 "Should have 0 processes"        
+        )
+        testCase "NoTables GetAndFromProcesses" (fun () ->
+            let t = ArcTables(ResizeArray())
+            let processes = t.GetProcesses()
+            let resultTables = ArcTables.fromProcesses processes
+            Expect.equal resultTables.Count 0 "Should have 0 tables"
+        )
+
         testCase "SimpleTables GetAndFromProcesses" (fun () ->
             let t1 = singleRowSingleParam.Copy()
             let t2 = 
@@ -309,7 +321,7 @@ let private tests_arcTablesProcessSeq =
             let tables = ResizeArray[t1;t2] |> ArcTables
             let processes = tables.GetProcesses() 
             Expect.equal processes.Length 2 "Should have 2 processes"
-            let resultTables = (ArcTables.fromProcesses processes).Tables
+            let resultTables = ArcTables.fromProcesses processes
                 
             let expectedTables = 
                 [
@@ -325,7 +337,7 @@ let private tests_arcTablesProcessSeq =
                 ) t2
                 ]
                 
-            Expect.equal resultTables.Length 2 "2 Tables should have been created"
+            Expect.equal resultTables.Count 2 "2 Tables should have been created"
             Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
             Expect.arcTableEqual resultTables.[1] expectedTables.[1] "Table 2 should be equal"
 
@@ -337,7 +349,7 @@ let private tests_arcTablesProcessSeq =
             let tables = ResizeArray[t1;t2] |> ArcTables
             let processes = tables.GetProcesses()           
             Expect.equal processes.Length 3 "Should have 3 processes"
-            let resultTables = (ArcTables.fromProcesses processes).Tables
+            let resultTables = ArcTables.fromProcesses processes
                 
             let expectedTables = 
                 [
@@ -353,7 +365,7 @@ let private tests_arcTablesProcessSeq =
                 ) t2
                 ]
                 
-            Expect.equal resultTables.Length 2 "2 Tables should have been created"
+            Expect.equal resultTables.Count 2 "2 Tables should have been created"
             Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
             Expect.arcTableEqual resultTables.[1] expectedTables.[1] "Table 2 should be equal"
         )
