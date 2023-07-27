@@ -246,11 +246,16 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         (indexByTableName tableName thisTables, rowIndex)
         |> this.GetRowAt
 
-
+    /// Return a list of all the processes in all the tables.
     member this.GetProcesses() : Process list = 
         this.Tables
         |> List.collect (fun t -> t.GetProcesses())
 
+    /// Create a collection of tables from a list of processes.
+    ///
+    /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
+    ///
+    /// Then each group is converted to a table with this nameroot as sheetname
     static member fromProcesses (ps : Process list) : ArcTables = 
         ps
         |> ProcessParsing.groupProcesses

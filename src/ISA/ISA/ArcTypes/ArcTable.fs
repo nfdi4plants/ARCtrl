@@ -460,6 +460,9 @@ type ArcTable =
         |> Seq.toArray
         |> Array.map (fun h -> this.GetColumnByHeader(h))
 
+    /// Create a new table from an ISA protocol.
+    ///
+    /// The table will have at most one row, with the protocol information and the component values
     static member fromProtocol (p : Protocol) : ArcTable = 
         
         let t = ArcTable.init (p.Name |> Option.defaultValue "")
@@ -483,8 +486,7 @@ type ArcTable =
         p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn([|d|]))         |> ignore
         t
 
-
-
+    /// Returns the list of protocols executed in this ArcTable
     member this.GetProtocols() : Protocol list = 
 
         if this.RowCount = 0 then
@@ -514,6 +516,7 @@ type ArcTable =
             )
             |> List.distinct
 
+    /// Returns the list of processes specidified in this ArcTable
     member this.GetProcesses() : Process list = 
         let getter = ProcessParsing.getProcessGetter this.Name this.Headers
         [
@@ -521,12 +524,18 @@ type ArcTable =
                 yield getter this.Values i        
         ]
 
+    /// Create a new table from a list of processes
+    ///
+    /// The name will be used as the sheet name
+    /// 
+    /// The processes SHOULD have the same headers, or even execute the same protocol
     static member fromProcesses name (ps : Process list) : ArcTable = 
         ps
         |> List.collect (fun p -> ProcessParsing.processToRows p)
         |> fun rows -> ProcessParsing.alignByHeaders rows
         |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
 
+    /// Pretty printer 
     override this.ToString() =
         [
             $"Table: {this.Name}"

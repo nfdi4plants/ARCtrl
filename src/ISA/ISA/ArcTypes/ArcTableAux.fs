@@ -296,77 +296,64 @@ module Unchecked =
             )
         ()
 
+/// Functions for transforming base level ARC Table and ISA Json Objects
 module JsonTypes = 
 
+    /// Convert a CompositeCell to a ISA Value and Unit tuple.
     let valueOfCell (value : CompositeCell) =
         match value with
         | CompositeCell.FreeText (text) -> Value.fromString text, None
         | CompositeCell.Term (term) -> Value.Ontology term, None
         | CompositeCell.Unitized (text,unit) -> Value.fromString text, Some unit
 
+    /// Convert a CompositeHeader and Cell tuple to a ISA Component
     let composeComponent (header : CompositeHeader) (value : CompositeCell) : Component =
         let v,u = valueOfCell value
         Component.fromOptions (Some v) u (header.ToTerm() |> Some)
 
+    /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
     let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : ProcessParameterValue =
         let v,u = valueOfCell value
         let p = ProtocolParameter.create(ParameterName = header.ToTerm())
         ProcessParameterValue.create(p,v,?Unit = u)
 
+    /// Convert a CompositeHeader and Cell tuple to a ISA FactorValue
     let composeFactorValue (header : CompositeHeader) (value : CompositeCell) : FactorValue =
         let v,u = valueOfCell value
         let f = Factor.create(Name = header.ToString(),FactorType = header.ToTerm())
         FactorValue.create(Category = f,Value = v,?Unit = u)
 
+    /// Convert a CompositeHeader and Cell tuple to a ISA MaterialAttributeValue
     let composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : MaterialAttributeValue =
         let v,u = valueOfCell value
         let c = MaterialAttribute.create(CharacteristicType = header.ToTerm())
         MaterialAttributeValue.create(Category = c,Value = v,?Unit = u)
 
+    /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
     let composeProcessInput (header : CompositeHeader) (value : CompositeCell) : ProcessInput =
         match header with
-        | CompositeHeader.Input IOType.Source -> 
-            Source.create(Name = value.ToString())
-            |> ProcessInput.Source
-        | CompositeHeader.Input IOType.Sample ->
-            Sample.create(Name = value.ToString())
-            |> ProcessInput.Sample
-        | CompositeHeader.Input IOType.Material ->
-            Material.create(Name = value.ToString())
-            |> ProcessInput.Material
-        | CompositeHeader.Input IOType.ImageFile -> 
-            Data.create(Name = value.ToString(),DataType = DataFile.ImageFile)
-            |> ProcessInput.Data
-
-        | CompositeHeader.Input IOType.RawDataFile -> 
-            Data.create(Name = value.ToString(),DataType = DataFile.RawDataFile)
-            |> ProcessInput.Data
-        | CompositeHeader.Input IOType.DerivedDataFile ->
-            Data.create(Name = value.ToString(),DataType = DataFile.DerivedDataFile)
-            |> ProcessInput.Data
+        | CompositeHeader.Input IOType.Source -> ProcessInput.createSource(value.ToString())
+        | CompositeHeader.Input IOType.Sample -> ProcessInput.createSample(value.ToString())
+        | CompositeHeader.Input IOType.Material -> ProcessInput.createMaterial(value.ToString())
+        | CompositeHeader.Input IOType.ImageFile -> ProcessInput.createImageFile(value.ToString())
+        | CompositeHeader.Input IOType.RawDataFile ->  ProcessInput.createRawData(value.ToString())
+        | CompositeHeader.Input IOType.DerivedDataFile -> ProcessInput.createDerivedData(value.ToString())
         | _ ->
             failwithf "Could not parse input header %O" header
 
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA ProcessOutput
     let composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : ProcessOutput =
         match header with
-        | CompositeHeader.Output IOType.Sample ->
-            Sample.create(Name = value.ToString())
-            |> ProcessOutput.Sample
-        | CompositeHeader.Output IOType.Material ->
-            Material.create(Name = value.ToString())
-            |> ProcessOutput.Material
-        | CompositeHeader.Output IOType.ImageFile ->
-            Data.create(Name = value.ToString(),DataType = DataFile.ImageFile)
-            |> ProcessOutput.Data
-        | CompositeHeader.Output IOType.RawDataFile ->
-            Data.create(Name = value.ToString(),DataType = DataFile.RawDataFile)
-            |> ProcessOutput.Data
-        | CompositeHeader.Output IOType.DerivedDataFile ->
-            Data.create(Name = value.ToString(),DataType = DataFile.DerivedDataFile)
-            |> ProcessOutput.Data
+        | CompositeHeader.Output IOType.Sample -> ProcessOutput.createSample(value.ToString())
+        | CompositeHeader.Output IOType.Material -> ProcessOutput.createMaterial(value.ToString())
+        | CompositeHeader.Output IOType.ImageFile -> ProcessOutput.createImageFile(value.ToString())
+        | CompositeHeader.Output IOType.RawDataFile -> ProcessOutput.createRawData(value.ToString())
+        | CompositeHeader.Output IOType.DerivedDataFile -> ProcessOutput.createDerivedData(value.ToString())
         | _ ->
             failwithf "Could not parse output header %O" header
 
+    /// Convert an ISA Value and Unit tuple to a CompositeCell
     let cellOfValue (value : Value option) (unit : OntologyAnnotation option) =
         let value = value |> Option.defaultValue (Value.Name "")
         match value,unit with
@@ -379,22 +366,27 @@ module JsonTypes =
         | Value.Int i, None -> CompositeCell.FreeText (i.ToString())
         | _ -> failwithf "Could not parse value %O with unit %O" value unit
 
+    /// Convert an ISA Component to a CompositeHeader and Cell tuple
     let decomposeComponent (c : Component) : CompositeHeader*CompositeCell =
         CompositeHeader.Component (c.ComponentType.Value),
         cellOfValue c.ComponentValue c.ComponentUnit 
 
+    /// Convert an ISA ProcessParameterValue to a CompositeHeader and Cell tuple
     let decomposeParameterValue (ppv : ProcessParameterValue) : CompositeHeader*CompositeCell =
         CompositeHeader.Parameter (ppv.Category.Value.ParameterName.Value),
         cellOfValue ppv.Value ppv.Unit
 
+    /// Convert an ISA FactorValue to a CompositeHeader and Cell tuple
     let decomposeFactorValue (fv : FactorValue) : CompositeHeader*CompositeCell =
         CompositeHeader.Factor (fv.Category.Value.FactorType.Value),
         cellOfValue fv.Value fv.Unit
 
+    /// Convert an ISA MaterialAttributeValue to a CompositeHeader and Cell tuple
     let decomposeCharacteristicValue (cv : MaterialAttributeValue) : CompositeHeader*CompositeCell =
         CompositeHeader.Characteristic (cv.Category.Value.CharacteristicType.Value),
         cellOfValue cv.Value cv.Unit
-
+    
+    /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
     let decomposeProcessInput (pi : ProcessInput) : CompositeHeader*CompositeCell =
         match pi with
         | ProcessInput.Source s -> CompositeHeader.Input IOType.Source, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
@@ -407,6 +399,7 @@ module JsonTypes =
             | DataFile.RawDataFile -> CompositeHeader.Input IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
             | DataFile.DerivedDataFile -> CompositeHeader.Input IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
 
+    /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
     let decomposeProcessOutput (po : ProcessOutput) : CompositeHeader*CompositeCell =
         match po with
         | ProcessOutput.Sample s -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
@@ -418,6 +411,7 @@ module JsonTypes =
             | DataFile.RawDataFile -> CompositeHeader.Output IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
             | DataFile.DerivedDataFile -> CompositeHeader.Output IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
 
+/// Functions for parsing ArcTables to ISA json Processes and vice versa
 module ProcessParsing = 
 
     open ISA.ColumnIndex
@@ -518,7 +512,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
-    /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
+    /// Given the header sequence of an ArcTable, returns a function for parsing each row of the table to a process
     let getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
     
         let headers = 
@@ -567,6 +561,7 @@ module ProcessParsing =
             headers
             |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolVersionGetter generalI header)
 
+        // This is a little more complex, as data and material objects can't contain characteristics. So in the case where the input of the table is a data object but characteristics exist. An additional sample object with the same name is created to contain the characteristics.
         let inputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> tryGetInputGetter generalI header) with
             | Some inputGetter ->
@@ -581,14 +576,15 @@ module ProcessParsing =
                         ]
                     else
                         input
-                    |> ProcessInput.setCharacteristicValues chars
-                    |> List.singleton
+                        |> ProcessInput.setCharacteristicValues chars
+                        |> List.singleton
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
                     ProcessInput.Source (Source.create(Name = $"{processNameRoot}_Input_{i}", Characteristics = chars))
                     |> List.singleton
             
+        // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
         let outputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> tryGetOutputGetter generalI header) with
             | Some outputGetter ->
@@ -602,8 +598,8 @@ module ProcessParsing =
                         ]
                     else
                         output
-                    |> ProcessOutput.setFactorValues factors
-                    |> List.singleton
+                        |> ProcessOutput.setFactorValues factors
+                        |> List.singleton
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
@@ -653,6 +649,11 @@ module ProcessParsing =
                 (Some outputs)
                 None
 
+    /// Groups processes by their name, or by the name of the protocol they execute
+    ///
+    /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
+    /// 
+    /// This function decomposes this name into a root name and a number, and groups processes by root name.
     let groupProcesses (ps : Process list) = 
         ps
         |> List.groupBy (fun x -> 
@@ -667,13 +668,16 @@ module ProcessParsing =
                 x.Name.Value           
         )
 
+    // Transform a isa json process into a isa tab row, where each row is a header+value list
     let processToRows (p : Process) =
         let pvs = p.ParameterValues |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeParameterValue ppv, ColumnIndex.tryGetParameterColumnIndex ppv)
+        // Get the component
         let components = 
             match p.ExecutesProtocol with
             | Some prot ->
                 prot.Components |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeComponent ppv, ColumnIndex.tryGetComponentIndex ppv)
             | None -> []
+        // Get the values of the protocol
         let protVals = 
             match p.ExecutesProtocol with
             | Some prot ->
@@ -685,6 +689,7 @@ module ProcessParsing =
                     if prot.Version.IsSome then CompositeHeader.ProtocolVersion, CompositeCell.FreeText prot.Version.Value
                 ]
             | None -> []
+        // zip the inputs and outpus so they are aligned as rows
         p.Outputs.Value
         |> List.zip p.Inputs.Value
         // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
@@ -723,22 +728,28 @@ module ProcessParsing =
             ]
         )
         
+    /// Returns true, if two composite headers share the same main header string
     let compositeHeaderEqual (ch1 : CompositeHeader) (ch2 : CompositeHeader) = 
         ch1.ToString() = ch2.ToString()
 
-    let alignByHeaders (vals : ((CompositeHeader * CompositeCell) list) list) = 
+    /// From a list of rows consisting of headers and values, creates a list of combined headers and the values as a sparse matrix
+    ///
+    /// The values cant be directly taken as they are, as there is no guarantee that the headers are aligned
+    ///
+    /// This function aligns the headers and values by the main header string
+    let alignByHeaders (rows : ((CompositeHeader * CompositeCell) list) list) = 
         let headers : ResizeArray<CompositeHeader> = ResizeArray()
         let values : Dictionary<int*int,CompositeCell> = Dictionary()
-        let getFirstElem (vals : ('T list) list) : 'T =
-            List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) vals
-        let rec loop colI (vals : ((CompositeHeader * CompositeCell) list) list) =
-            if List.exists (List.isEmpty >> not) vals |> not then 
+        let getFirstElem (rows : ('T list) list) : 'T =
+            List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) rows
+        let rec loop colI (rows : ((CompositeHeader * CompositeCell) list) list) =
+            if List.exists (List.isEmpty >> not) rows |> not then 
                 headers,values
             else 
-                let firstElem = vals |> getFirstElem |> fst
+                let firstElem = rows |> getFirstElem |> fst
                 headers.Add firstElem
-                let vals = 
-                    vals
+                let rows = 
+                    rows
                     |> List.mapi (fun rowI l ->
                         match l with
                         | [] -> []
@@ -749,7 +760,7 @@ module ProcessParsing =
                             else
                                 l
                     )
-                loop (colI+1) vals
-        loop 0 vals
+                loop (colI+1) rows
+        loop 0 rows
                 
         

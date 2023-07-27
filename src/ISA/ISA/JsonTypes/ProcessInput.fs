@@ -154,6 +154,10 @@ type ProcessInput =
         Material.create(Name = name, ?Characteristics = characteristics, ?DerivesFrom = derivesFrom)
         |> ProcessInput.Material
 
+    static member createImageFile (name : string) =
+        Data.create(Name = name, DataType = DataFile.ImageFile)
+        |> ProcessInput.Data
+
     static member createRawData (name : string) =
         Data.create(Name = name, DataType = DataFile.RawDataFile)
         |> ProcessInput.Data
