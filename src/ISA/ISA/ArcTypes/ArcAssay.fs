@@ -359,8 +359,13 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
                 ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
             )
             |> Option.fromValueWithDefault AssayMaterials.empty
+        let fileName = 
+            if ISA.Identifier.isMissingIdentifier this.Identifier then
+                None
+            else 
+                Some (ISA.Identifier.Assay.fileNameFromIdentifier this.Identifier)
         Assay.create(
-            FileName = this.Identifier,
+            ?FileName = fileName,
             ?MeasurementType = this.MeasurementType,
             ?TechnologyType = this.TechnologyType,
             ?TechnologyPlatform = this.TechnologyPlatform,
