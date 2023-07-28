@@ -551,9 +551,15 @@ type ArcTable =
         match other with
         | :? ArcTable as table -> 
             let sameName = this.Name = table.Name
-            let sameHeaders = Seq.forall2 (fun x y -> x = y) this.Headers table.Headers
-            let sameBodyCells = Seq.forall2 (fun x y -> x = y) this.Values table.Values
-            sameName && sameHeaders && sameBodyCells
+            let h1 = this.Headers 
+            let h2 = table.Headers
+            let sameHeaderLength = h1.Count = h2.Count
+            let sameHeaders = Seq.forall2 (fun x y -> x = y) h1 h2 
+            let b1 = this.Values |> Seq.sortBy (fun kv -> kv.Key)
+            let b2 = table.Values |> Seq.sortBy (fun kv -> kv.Key)
+            let sameBodyLength = (Seq.length b1) = (Seq.length b2)
+            let sameBodyCells = Seq.forall2 (fun x y -> x = y) b1 b2
+            sameName && sameHeaderLength && sameHeaders && sameBodyLength && sameBodyCells
         | _ -> false
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:

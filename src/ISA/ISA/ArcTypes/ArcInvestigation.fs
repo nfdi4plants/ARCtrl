@@ -267,11 +267,14 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
 
     /// Transform an ArcInvestigation to an ISA Json Investigation.
-    member this.ToStudy() : Investigation = 
+    member this.ToInvestigation() : Investigation = 
         let studies = this.Studies |> Seq.toList |> List.map (fun a -> a.ToStudy()) |> Option.fromValueWithDefault []
+        let identifier =
+            if ISA.Identifier.isMissingIdentifier this.Identifier then None
+            else Some this.Identifier
         Investigation.create(
             FileName = ARCtrl.Path.InvestigationFileName,
-            Identifier = this.Identifier,
+            ?Identifier = identifier,
             ?Title = this.Title,
             ?Description = this.Description,
             ?SubmissionDate = this.SubmissionDate,
@@ -285,8 +288,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // Create an ArcInvestigation from an ISA Json Investigation.
     static member fromInvestigation (i : Investigation) : ArcInvestigation = 
         let identifer = 
-            match i.FileName with
-            | Some fn -> Identifier.Assay.identifierFromFileName fn
+            match i.Identifier with
+            | Some i -> i
             | None -> Identifier.createMissingIdentifier()
         let studies = i.Studies |> Option.map (List.map ArcStudy.fromStudy >> ResizeArray)
         ArcInvestigation.create(

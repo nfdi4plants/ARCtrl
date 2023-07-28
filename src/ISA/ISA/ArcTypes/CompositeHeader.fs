@@ -114,6 +114,7 @@ type CompositeHeader =
         | Output io             -> io.asOutput
         | FreeText str          -> str
 
+    /// If the column is a term column, returns the term as `OntologyAnnotation`. Otherwise returns an `OntologyAnnotation` with only the name.
     member this.ToTerm() =
         match this with
         | Parameter oa          -> oa
@@ -180,6 +181,8 @@ type CompositeHeader =
     /// Is true if this Building Block type is a CvParamColumn.
     ///
     /// The name "CvParamColumn" refers to all columns with the syntax "Parameter/Factor/etc [TERM-NAME]".
+    ///
+    /// Does return false for featured columns such as Protocol Type.
     /// </summary>
     member this.IsCvParamColumn =
         match this with 

@@ -487,9 +487,14 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
                 ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
             )
             |> Option.fromValueWithDefault StudyMaterials.empty
+        let identifier,fileName = 
+            if ISA.Identifier.isMissingIdentifier this.Identifier then
+                None, None
+            else
+                Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)             
         Study.create(
-            FileName = Identifier.Study.fileNameFromIdentifier this.Identifier,
-            Identifier = this.Identifier,
+            ?FileName = fileName,
+            ?Identifier = identifier,
             ?Title = this.Title,
             ?Description = this.Description,
             ?SubmissionDate = this.SubmissionDate,
@@ -512,7 +517,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let tables = (s.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
         let identifer = 
             match s.FileName with
-            | Some fn -> Identifier.Assay.identifierFromFileName fn
+            | Some fn -> Identifier.Study.identifierFromFileName fn
             | None -> Identifier.createMissingIdentifier()
         let assays = s.Assays |> Option.map (List.map ArcAssay.fromAssay >> ResizeArray)
         ArcStudy.create(
