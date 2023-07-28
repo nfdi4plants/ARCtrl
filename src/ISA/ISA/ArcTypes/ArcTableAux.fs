@@ -661,11 +661,13 @@ module ProcessParsing =
                 (x.Name.Value |> Process.decomposeName |> fst)
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
                 x.ExecutesProtocol.Value.Name.Value 
-            elif x.Name.Value.Contains "_" then
+            elif x.Name.IsSome && x.Name.Value.Contains "_" then
                 let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
                 x.Name.Value.Remove lastUnderScoreIndex
+            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.ID.IsSome then 
+                x.ExecutesProtocol.Value.ID.Value              
             else
-                x.Name.Value           
+                ISA.Identifier.createMissingIdentifier()        
         )
 
     // Transform a isa json process into a isa tab row, where each row is a header+value list

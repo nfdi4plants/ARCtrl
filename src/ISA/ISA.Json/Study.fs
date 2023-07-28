@@ -104,9 +104,20 @@ module Study =
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
         |> Encode.toString 2
 
-    //let fromFile (path : string) = 
-    //    File.ReadAllText path 
-    //    |> fromString
 
-    //let toFile (path : string) (p:Study) = 
-    //    File.WriteAllText(path,toString p)
+module ArcStudy = 
+
+    open Study
+
+    let fromString (s:string) = 
+        GDecode.fromString (decoder (ConverterOptions())) s
+        |> ArcStudy.fromStudy
+
+    let toString (a:ArcStudy) = 
+        encoder (ConverterOptions()) (a.ToStudy())
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (a:ArcStudy) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy())
+        |> Encode.toString 2
