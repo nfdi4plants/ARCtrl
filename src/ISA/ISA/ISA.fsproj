@@ -46,8 +46,10 @@
     <Compile Include="JsonTypes\Investigation.fs" />
     <Compile Include="JsonTypes\ColumnIndex.fs" />
     <Compile Include="ArcTypes\Path.fs" />
+    <Compile Include="ArcTypes\Identifier.fs" />
     <Compile Include="ArcTypes\CompositeHeader.fs" />
     <Compile Include="ArcTypes\CompositeCell.fs" />
+    <Compile Include="ArcTypes\CompositeRow.fs" />
     <Compile Include="ArcTypes\CompositeColumn.fs" />
     <Compile Include="ArcTypes\ArcTableAux.fs" />
     <Compile Include="ArcTypes\ArcTable.fs" />
@@ -55,16 +57,19 @@
     <Compile Include="ArcTypes\ArcAssay.fs" />
     <Compile Include="ArcTypes\ArcStudy.fs" />
     <Compile Include="ArcTypes\ArcInvestigation.fs" />
-    <Compile Include="ArcTypes\Identifier.fs" />
+    <Compile Include="ArcTypes\IdentifierSetters.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />
     <Compile Include="Builder\Transform.fs" />
-    <Compile Include="ValueIndex.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Fable.Core" Version="4.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\FileSystem\FileSystem.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

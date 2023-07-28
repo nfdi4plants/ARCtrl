@@ -39,6 +39,7 @@ type CompositeCell =
         | Unitized _ -> this
         | FreeText text -> CompositeCell.Unitized ("", OntologyAnnotation.create(Name = AnnotationValue.Text text))
         | Term term -> CompositeCell.Unitized ("", term)
+
     /// FreeText string will be converted to term name.
     ///
     /// Unit term will be converted to term and unit value is dropped.
@@ -47,25 +48,30 @@ type CompositeCell =
         | Term _ -> this
         | Unitized (_,unit) -> CompositeCell.Term unit
         | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(Name = AnnotationValue.Text text))
+
     /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
     member this.ToFreeTextCell() =
         match this with
         | FreeText _ -> this
         | Term term -> FreeText(term.NameText)
         | Unitized (v,unit) -> FreeText(unit.NameText)
+
     // Suggest this syntax for easy "of-something" access
     member this.AsUnitized  =
         match this with
         | Unitized (v,u) -> v,u
         | _ -> failwith "Not a Unitized cell."
+
     member this.AsTerm =
         match this with
         | Term c -> c
         | _ -> failwith "Not a Swate TermCell."
+
     member this.AsFreeText =
         match this with
         | FreeText c -> c
         | _ -> failwith "Not a Swate TermCell."
+
     // TODO: i would really love to have an overload here accepting string input
     static member createTerm (oa:OntologyAnnotation) = Term oa
     static member createTermFromString (?name: string, ?tsr: string, ?tan: string) =

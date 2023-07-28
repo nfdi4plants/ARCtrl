@@ -60,6 +60,18 @@ type ProcessOutput =
         | ProcessOutput.Material _ -> true
         | _ -> false
 
+    /// Returns true, if Process Output is Sample
+    member this.isSample() =
+        ProcessOutput.isSample this
+
+    /// Returns true, if Process Output is Data
+    member this.isData() =
+        ProcessOutput.isData this
+
+    /// Returns true, if Process Output is Material
+    member this.isMaterial() =
+        ProcessOutput.isMaterial this
+
     /// If given process output is a sample, returns it, else returns None
     static member trySample (po : ProcessOutput) =
         match po with
@@ -99,9 +111,38 @@ type ProcessOutput =
         | ProcessOutput.Material _   -> None
         | ProcessOutput.Data _       -> None
 
+    static member setFactorValues (values:FactorValue list) (po:ProcessOutput) =
+        match po with
+        | ProcessOutput.Sample s     -> Sample.setFactorValues values s |> Sample
+        | ProcessOutput.Material _   -> po
+        | ProcessOutput.Data _       -> po
+
+    static member getFactorValues (po : ProcessOutput) =
+        po |> ProcessOutput.tryGetFactorValues |> Option.defaultValue []
+
     /// If given process output contains units, returns them
     static member getUnits (po : ProcessOutput) =
         match po with
         | ProcessOutput.Sample s     -> Sample.getUnits s
         | ProcessOutput.Material m   -> Material.getUnits m
         | ProcessOutput.Data _       -> []
+
+    static member createSample (name : string, ?characteristics, ?factors, ?derivesFrom) = 
+        Sample.create(Name = name, ?Characteristics = characteristics, ?FactorValues = factors, ?DerivesFrom = derivesFrom)
+        |> ProcessOutput.Sample
+
+    static member createMaterial (name : string, ?characteristics, ?derivesFrom) =
+        Material.create(Name = name, ?Characteristics = characteristics, ?DerivesFrom = derivesFrom)
+        |> ProcessOutput.Material
+
+    static member createImageFile (name : string) =
+        Data.create(Name = name, DataType = DataFile.ImageFile)
+        |> ProcessOutput.Data
+
+    static member createRawData (name : string) =
+        Data.create(Name = name, DataType = DataFile.RawDataFile)
+        |> ProcessOutput.Data
+
+    static member createDerivedData (name : string) =
+        Data.create(Name = name, DataType = DataFile.DerivedDataFile)
+        |> ProcessOutput.Data

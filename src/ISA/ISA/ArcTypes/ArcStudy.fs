@@ -475,3 +475,63 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             comments = this.Comments
         )
 
+    /// Transform an ArcStudy to an ISA Json Study.
+    member this.ToStudy() : Study = 
+        let processSeq = ArcTables(this.Tables).GetProcesses()
+        let protocols = ProcessSequence.getProtocols processSeq |> Option.fromValueWithDefault []
+        let assays = this.Assays |> Seq.toList |> List.map (fun a -> a.ToAssay()) |> Option.fromValueWithDefault []
+        let studyMaterials =
+            StudyMaterials.create(
+                ?Sources = (ProcessSequence.getSources processSeq |> Option.fromValueWithDefault []),
+                ?Samples = (ProcessSequence.getSamples processSeq |> Option.fromValueWithDefault []),
+                ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
+            )
+            |> Option.fromValueWithDefault StudyMaterials.empty
+        let identifier,fileName = 
+            if ISA.Identifier.isMissingIdentifier this.Identifier then
+                None, None
+            else
+                Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)             
+        Study.create(
+            ?FileName = fileName,
+            ?Identifier = identifier,
+            ?Title = this.Title,
+            ?Description = this.Description,
+            ?SubmissionDate = this.SubmissionDate,
+            ?PublicReleaseDate = this.PublicReleaseDate,
+            ?Publications = (this.Publications |> Option.fromValueWithDefault []),
+            ?Contacts = (this.Contacts |> Option.fromValueWithDefault []),
+            ?StudyDesignDescriptors = (this.StudyDesignDescriptors |> Option.fromValueWithDefault []),
+            ?Protocols = protocols,
+            ?Materials = studyMaterials,
+            ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
+            ?Assays = assays,
+            ?Factors = (this.Factors |> Option.fromValueWithDefault []),
+            ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
+            ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
+            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            )
+
+    // Create an ArcStudy from an ISA Json Study.
+    static member fromStudy (s : Study) : ArcStudy = 
+        let tables = (s.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
+        let identifer = 
+            match s.FileName with
+            | Some fn -> Identifier.Study.identifierFromFileName fn
+            | None -> Identifier.createMissingIdentifier()
+        let assays = s.Assays |> Option.map (List.map ArcAssay.fromAssay >> ResizeArray)
+        ArcStudy.create(
+            identifer,
+            ?title = s.Title,
+            ?description = s.Description,
+            ?submissionDate = s.SubmissionDate,
+            ?publicReleaseDate = s.PublicReleaseDate,
+            ?publications = s.Publications,
+            ?contacts = s.Contacts,
+            ?studyDesignDescriptors = s.StudyDesignDescriptors,
+            ?tables = tables,
+            ?assays = assays,
+            ?factors = s.Factors,
+            ?comments = s.Comments
+            )
+

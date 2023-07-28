@@ -70,6 +70,22 @@ type ProcessInput =
         | ProcessInput.Material _ -> true
         | _ -> false
 
+    /// Returns true, if Process Input is Source
+    member this.isSource() =
+        ProcessInput.isSource this
+
+    /// Returns true, if Process Input is Sample
+    member this.isSample() =
+        ProcessInput.isSample this
+
+    /// Returns true, if Process Input is Data
+    member this.isData() =
+        ProcessInput.isData this
+
+    /// Returns true, if Process Input is Material
+    member this.isMaterial() =
+        ProcessInput.isMaterial this
+
     /// If given process input is a sample, returns it, else returns None
     static member trySample (pi : ProcessInput) =
         match pi with
@@ -94,6 +110,13 @@ type ProcessInput =
         | ProcessInput.Material m -> Some m
         | _ -> None
 
+    static member setCharacteristicValues (characteristics : MaterialAttributeValue list) (pi : ProcessInput) =
+        match pi with
+        | ProcessInput.Sample s     -> ProcessInput.Sample (Sample.setCharacteristicValues characteristics s)
+        | ProcessInput.Source s     -> ProcessInput.Source (Source.setCharacteristicValues characteristics s)
+        | ProcessInput.Material m   -> ProcessInput.Material (Material.setCharacteristicValues characteristics m)
+        | ProcessInput.Data _       -> pi
+
     /// If given process input contains characteristics, returns them
     static member tryGetCharacteristicValues (pi : ProcessInput) =
         match pi with
@@ -107,6 +130,9 @@ type ProcessInput =
         ProcessInput.tryGetCharacteristicValues pi
         |> Option.map (List.choose (fun c -> c.Category))
 
+    static member getCharacteristicValues (pi : ProcessInput) = 
+        pi |> ProcessInput.tryGetCharacteristicValues |> Option.defaultValue []
+
     /// If given process output contains units, returns them
     static member getUnits (pi : ProcessInput) =
         match pi with
@@ -114,3 +140,28 @@ type ProcessInput =
         | ProcessInput.Sample s     -> Sample.getUnits s
         | ProcessInput.Material m   -> Material.getUnits m
         | ProcessInput.Data _       -> []
+
+
+    static member createSource (name : string, ?characteristics) =
+        Source.create(Name = name, ?Characteristics = characteristics)
+        |> ProcessInput.Source
+
+    static member createSample (name : string, ?characteristics, ?factors, ?derivesFrom) = 
+        Sample.create(Name = name, ?Characteristics = characteristics, ?FactorValues = factors, ?DerivesFrom = derivesFrom)
+        |> ProcessInput.Sample
+
+    static member createMaterial (name : string, ?characteristics, ?derivesFrom) =
+        Material.create(Name = name, ?Characteristics = characteristics, ?DerivesFrom = derivesFrom)
+        |> ProcessInput.Material
+
+    static member createImageFile (name : string) =
+        Data.create(Name = name, DataType = DataFile.ImageFile)
+        |> ProcessInput.Data
+
+    static member createRawData (name : string) =
+        Data.create(Name = name, DataType = DataFile.RawDataFile)
+        |> ProcessInput.Data
+
+    static member createDerivedData (name : string) =
+        Data.create(Name = name, DataType = DataFile.DerivedDataFile)
+        |> ProcessInput.Data

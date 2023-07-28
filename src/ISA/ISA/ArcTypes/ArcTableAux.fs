@@ -295,3 +295,474 @@ module Unchecked =
                 setCellAt (columnIndex,rowIndex,cell) values
             )
         ()
+
+/// Functions for transforming base level ARC Table and ISA Json Objects
+module JsonTypes = 
+
+    /// Convert a CompositeCell to a ISA Value and Unit tuple.
+    let valueOfCell (value : CompositeCell) =
+        match value with
+        | CompositeCell.FreeText (text) -> Value.fromString text, None
+        | CompositeCell.Term (term) -> Value.Ontology term, None
+        | CompositeCell.Unitized (text,unit) -> Value.fromString text, Some unit
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA Component
+    let composeComponent (header : CompositeHeader) (value : CompositeCell) : Component =
+        let v,u = valueOfCell value
+        Component.fromOptions (Some v) u (header.ToTerm() |> Some)
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
+    let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : ProcessParameterValue =
+        let v,u = valueOfCell value
+        let p = ProtocolParameter.create(ParameterName = header.ToTerm())
+        ProcessParameterValue.create(p,v,?Unit = u)
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA FactorValue
+    let composeFactorValue (header : CompositeHeader) (value : CompositeCell) : FactorValue =
+        let v,u = valueOfCell value
+        let f = Factor.create(Name = header.ToString(),FactorType = header.ToTerm())
+        FactorValue.create(Category = f,Value = v,?Unit = u)
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA MaterialAttributeValue
+    let composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : MaterialAttributeValue =
+        let v,u = valueOfCell value
+        let c = MaterialAttribute.create(CharacteristicType = header.ToTerm())
+        MaterialAttributeValue.create(Category = c,Value = v,?Unit = u)
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
+    let composeProcessInput (header : CompositeHeader) (value : CompositeCell) : ProcessInput =
+        match header with
+        | CompositeHeader.Input IOType.Source -> ProcessInput.createSource(value.ToString())
+        | CompositeHeader.Input IOType.Sample -> ProcessInput.createSample(value.ToString())
+        | CompositeHeader.Input IOType.Material -> ProcessInput.createMaterial(value.ToString())
+        | CompositeHeader.Input IOType.ImageFile -> ProcessInput.createImageFile(value.ToString())
+        | CompositeHeader.Input IOType.RawDataFile ->  ProcessInput.createRawData(value.ToString())
+        | CompositeHeader.Input IOType.DerivedDataFile -> ProcessInput.createDerivedData(value.ToString())
+        | _ ->
+            failwithf "Could not parse input header %O" header
+
+
+    /// Convert a CompositeHeader and Cell tuple to a ISA ProcessOutput
+    let composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : ProcessOutput =
+        match header with
+        | CompositeHeader.Output IOType.Sample -> ProcessOutput.createSample(value.ToString())
+        | CompositeHeader.Output IOType.Material -> ProcessOutput.createMaterial(value.ToString())
+        | CompositeHeader.Output IOType.ImageFile -> ProcessOutput.createImageFile(value.ToString())
+        | CompositeHeader.Output IOType.RawDataFile -> ProcessOutput.createRawData(value.ToString())
+        | CompositeHeader.Output IOType.DerivedDataFile -> ProcessOutput.createDerivedData(value.ToString())
+        | _ ->
+            failwithf "Could not parse output header %O" header
+
+    /// Convert an ISA Value and Unit tuple to a CompositeCell
+    let cellOfValue (value : Value option) (unit : OntologyAnnotation option) =
+        let value = value |> Option.defaultValue (Value.Name "")
+        match value,unit with
+        | Value.Ontology oa, None -> CompositeCell.Term oa
+        | Value.Name text, None -> CompositeCell.FreeText text
+        | Value.Name "", Some u -> CompositeCell.Unitized ("",u)
+        | Value.Float f, Some u -> CompositeCell.Unitized (f.ToString(),u)
+        | Value.Float f, None -> CompositeCell.FreeText (f.ToString())
+        | Value.Int i, Some u -> CompositeCell.Unitized (i.ToString(),u)
+        | Value.Int i, None -> CompositeCell.FreeText (i.ToString())
+        | _ -> failwithf "Could not parse value %O with unit %O" value unit
+
+    /// Convert an ISA Component to a CompositeHeader and Cell tuple
+    let decomposeComponent (c : Component) : CompositeHeader*CompositeCell =
+        CompositeHeader.Component (c.ComponentType.Value),
+        cellOfValue c.ComponentValue c.ComponentUnit 
+
+    /// Convert an ISA ProcessParameterValue to a CompositeHeader and Cell tuple
+    let decomposeParameterValue (ppv : ProcessParameterValue) : CompositeHeader*CompositeCell =
+        CompositeHeader.Parameter (ppv.Category.Value.ParameterName.Value),
+        cellOfValue ppv.Value ppv.Unit
+
+    /// Convert an ISA FactorValue to a CompositeHeader and Cell tuple
+    let decomposeFactorValue (fv : FactorValue) : CompositeHeader*CompositeCell =
+        CompositeHeader.Factor (fv.Category.Value.FactorType.Value),
+        cellOfValue fv.Value fv.Unit
+
+    /// Convert an ISA MaterialAttributeValue to a CompositeHeader and Cell tuple
+    let decomposeCharacteristicValue (cv : MaterialAttributeValue) : CompositeHeader*CompositeCell =
+        CompositeHeader.Characteristic (cv.Category.Value.CharacteristicType.Value),
+        cellOfValue cv.Value cv.Unit
+    
+    /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
+    let decomposeProcessInput (pi : ProcessInput) : CompositeHeader*CompositeCell =
+        match pi with
+        | ProcessInput.Source s -> CompositeHeader.Input IOType.Source, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
+        | ProcessInput.Sample s -> CompositeHeader.Input IOType.Sample, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
+        | ProcessInput.Material m -> CompositeHeader.Input IOType.Material, CompositeCell.FreeText (m.Name |> Option.defaultValue "")
+        | ProcessInput.Data d -> 
+            let dataType = d.DataType.Value
+            match dataType with
+            | DataFile.ImageFile -> CompositeHeader.Input IOType.ImageFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.RawDataFile -> CompositeHeader.Input IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.DerivedDataFile -> CompositeHeader.Input IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+
+    /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
+    let decomposeProcessOutput (po : ProcessOutput) : CompositeHeader*CompositeCell =
+        match po with
+        | ProcessOutput.Sample s -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (s.Name |> Option.defaultValue "")
+        | ProcessOutput.Material m -> CompositeHeader.Output IOType.Material, CompositeCell.FreeText (m.Name |> Option.defaultValue "")
+        | ProcessOutput.Data d -> 
+            let dataType = d.DataType.Value
+            match dataType with
+            | DataFile.ImageFile -> CompositeHeader.Output IOType.ImageFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.RawDataFile -> CompositeHeader.Output IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.DerivedDataFile -> CompositeHeader.Output IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+
+/// Functions for parsing ArcTables to ISA json Processes and vice versa
+module ProcessParsing = 
+
+    open ISA.ColumnIndex
+
+    /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
+    let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Component oa ->
+            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeComponent cat matrix.[generalI,i]
+            |> Some
+        | _ -> None    
+            
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Parameter oa ->
+            let cat = CompositeHeader.Parameter (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeParameterValue cat matrix.[generalI,i]
+            |> Some
+        | _ -> None 
+
+    let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Factor oa ->
+            let cat = CompositeHeader.Factor (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeFactorValue cat matrix.[generalI,i]
+            |> Some
+        | _ -> None 
+
+    let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+        match valueHeader with
+        | CompositeHeader.Characteristic oa ->
+            let cat = CompositeHeader.Characteristic (oa.SetColumnIndex valueI)
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeCharacteristicValue cat matrix.[generalI,i]
+            |> Some
+        | _ -> None 
+
+    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    let tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolType ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsTerm
+            |> Some
+        | _ -> None 
+
+
+    let tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolREF ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolDescription ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolUri ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.ProtocolVersion ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                matrix.[generalI,i].AsFreeText
+            |> Some
+        | _ -> None
+
+    let tryGetInputGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Input io ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeProcessInput header matrix.[generalI,i]
+            |> Some
+        | _ -> None
+
+    let tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Output io ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                JsonTypes.composeProcessOutput header matrix.[generalI,i]
+            |> Some
+        | _ -> None
+
+    /// Given the header sequence of an ArcTable, returns a function for parsing each row of the table to a process
+    let getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
+    
+        let headers = 
+            headers
+            |> Seq.indexed
+
+        let valueHeaders =
+            headers
+            |> Seq.filter (snd >> fun h -> h.IsCvParamColumn)
+            |> Seq.indexed
+            |> Seq.toList
+
+        let charGetters =
+            valueHeaders 
+            |> List.choose (fun (valueI,(generalI,header)) -> tryCharacteristicGetter generalI valueI header)
+
+        let factorValueGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> tryFactorGetter generalI valueI header)
+
+        let parameterValueGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> tryParameterGetter generalI valueI header)
+
+        let componentGetters =
+            valueHeaders
+            |> List.choose (fun (valueI,(generalI,header)) -> tryComponentGetter generalI valueI header)
+
+        let protocolTypeGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolTypeGetter generalI header)
+
+        let protocolREFGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolREFGetter generalI header)
+
+        let protocolDescriptionGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolDescriptionGetter generalI header)
+
+        let protocolURIGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolURIGetter generalI header)
+
+        let protocolVersionGetter =
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolVersionGetter generalI header)
+
+        // This is a little more complex, as data and material objects can't contain characteristics. So in the case where the input of the table is a data object but characteristics exist. An additional sample object with the same name is created to contain the characteristics.
+        let inputGetter =
+            match headers |> Seq.tryPick (fun (generalI,header) -> tryGetInputGetter generalI header) with
+            | Some inputGetter ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    let input = inputGetter matrix i
+
+                    if ((input.isSample() || input.isSource())|> not) && (chars.IsEmpty |> not) then
+                        [
+                        input
+                        ProcessInput.createSample(input.Name, characteristics = chars)
+                        ]
+                    else
+                        input
+                        |> ProcessInput.setCharacteristicValues chars
+                        |> List.singleton
+            | None ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    ProcessInput.Source (Source.create(Name = $"{processNameRoot}_Input_{i}", Characteristics = chars))
+                    |> List.singleton
+            
+        // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
+        let outputGetter =
+            match headers |> Seq.tryPick (fun (generalI,header) -> tryGetOutputGetter generalI header) with
+            | Some outputGetter ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    let output = outputGetter matrix i
+                    if (output.isSample() |> not) && (factors.IsEmpty |> not) then
+                        [
+                        output
+                        ProcessOutput.createSample(output.Name, factors = factors)
+                        ]
+                    else
+                        output
+                        |> ProcessOutput.setFactorValues factors
+                        |> List.singleton
+            | None ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    ProcessOutput.Sample (Sample.create(Name = $"{processNameRoot}_Output_{i}", FactorValues = factors))
+                    |> List.singleton
+
+        fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+
+            let pn = processNameRoot |> Aux.Option.fromValueWithDefault ""
+
+            let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [] 
+            let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
+
+            let protocol : Protocol = 
+                Protocol.make 
+                    None
+                    (protocolREFGetter |> Aux.Option.mapOrDefault pn (fun f -> f matrix i))
+                    (protocolTypeGetter |> Option.map (fun f -> f matrix i))
+                    (protocolDescriptionGetter |> Option.map (fun f -> f matrix i))
+                    (protocolURIGetter |> Option.map (fun f -> f matrix i))
+                    (protocolVersionGetter |> Option.map (fun f -> f matrix i))
+                    (parameters)
+                    (componentGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [])
+                    None
+
+
+            let inputs,outputs = 
+                let inputs = inputGetter matrix i
+                let outputs = outputGetter matrix i
+                if inputs.Length = 1 && outputs.Length = 2 then 
+                    [inputs.[0];inputs.[0]],outputs
+                elif inputs.Length = 2 && outputs.Length = 1 then
+                    inputs,[outputs.[0];outputs.[0]]
+                else
+                    inputs,outputs
+
+            Process.make 
+                None 
+                pn 
+                (Some protocol) 
+                (paramvalues)
+                None
+                None
+                None
+                None          
+                (Some inputs)
+                (Some outputs)
+                None
+
+    /// Groups processes by their name, or by the name of the protocol they execute
+    ///
+    /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
+    /// 
+    /// This function decomposes this name into a root name and a number, and groups processes by root name.
+    let groupProcesses (ps : Process list) = 
+        ps
+        |> List.groupBy (fun x -> 
+            if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
+                (x.Name.Value |> Process.decomposeName |> fst)
+            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                x.ExecutesProtocol.Value.Name.Value 
+            elif x.Name.IsSome && x.Name.Value.Contains "_" then
+                let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
+                x.Name.Value.Remove lastUnderScoreIndex
+            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.ID.IsSome then 
+                x.ExecutesProtocol.Value.ID.Value              
+            else
+                ISA.Identifier.createMissingIdentifier()        
+        )
+
+    // Transform a isa json process into a isa tab row, where each row is a header+value list
+    let processToRows (p : Process) =
+        let pvs = p.ParameterValues |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeParameterValue ppv, ColumnIndex.tryGetParameterColumnIndex ppv)
+        // Get the component
+        let components = 
+            match p.ExecutesProtocol with
+            | Some prot ->
+                prot.Components |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeComponent ppv, ColumnIndex.tryGetComponentIndex ppv)
+            | None -> []
+        // Get the values of the protocol
+        let protVals = 
+            match p.ExecutesProtocol with
+            | Some prot ->
+                [
+                    if prot.Name.IsSome then CompositeHeader.ProtocolREF, CompositeCell.FreeText prot.Name.Value
+                    if prot.ProtocolType.IsSome then CompositeHeader.ProtocolType, CompositeCell.Term prot.ProtocolType.Value
+                    if prot.Description.IsSome then CompositeHeader.ProtocolDescription, CompositeCell.FreeText prot.Description.Value
+                    if prot.Uri.IsSome then CompositeHeader.ProtocolUri, CompositeCell.FreeText prot.Uri.Value
+                    if prot.Version.IsSome then CompositeHeader.ProtocolVersion, CompositeCell.FreeText prot.Version.Value
+                ]
+            | None -> []
+        // zip the inputs and outpus so they are aligned as rows
+        p.Outputs.Value
+        |> List.zip p.Inputs.Value
+        // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
+        |> List.groupBy (fun (i,o) ->
+            i.Name,o.Name
+        )
+        |> List.map (fun ((i,o),ios) ->
+            let inputForCharas = 
+                ios
+                |> List.tryPick (fun (i,o) -> if i.isSource() || i.isSample() then Some i else None)
+                |> Option.defaultValue (ios.Head |> fst)
+            let inputForType =
+                ios
+                |> List.tryPick (fun (i,o) -> if i.isData() || i.isMaterial() then Some i  else None)
+                |> Option.defaultValue (ios.Head |> fst)
+            let chars = 
+                inputForCharas |> ProcessInput.getCharacteristicValues |> List.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetCharacteristicColumnIndex cv)
+            let outputForFactors = 
+                ios
+                |> List.tryPick (fun (i,o) -> if o.isSample() then Some o else None)
+                |> Option.defaultValue (ios.Head |> snd)
+            let outputForType = 
+                ios
+                |> List.tryPick (fun (i,o) -> if o.isData() || o.isMaterial() then Some o else None)
+                |> Option.defaultValue (ios.Head |> snd)
+            let factors = outputForFactors |> ProcessOutput.getFactorValues |> List.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetFactorColumnIndex fv)
+            let vals = 
+                (chars @ components @ pvs @ factors)
+                |> List.sortBy (snd >> Option.defaultValue 10000)
+                |> List.map fst
+            [
+                yield JsonTypes.decomposeProcessInput inputForType
+                yield! protVals
+                yield! vals
+                yield JsonTypes.decomposeProcessOutput outputForType
+            ]
+        )
+        
+    /// Returns true, if two composite headers share the same main header string
+    let compositeHeaderEqual (ch1 : CompositeHeader) (ch2 : CompositeHeader) = 
+        ch1.ToString() = ch2.ToString()
+
+    /// From a list of rows consisting of headers and values, creates a list of combined headers and the values as a sparse matrix
+    ///
+    /// The values cant be directly taken as they are, as there is no guarantee that the headers are aligned
+    ///
+    /// This function aligns the headers and values by the main header string
+    let alignByHeaders (rows : ((CompositeHeader * CompositeCell) list) list) = 
+        let headers : ResizeArray<CompositeHeader> = ResizeArray()
+        let values : Dictionary<int*int,CompositeCell> = Dictionary()
+        let getFirstElem (rows : ('T list) list) : 'T =
+            List.pick (fun l -> if List.isEmpty l then None else List.head l |> Some) rows
+        let rec loop colI (rows : ((CompositeHeader * CompositeCell) list) list) =
+            if List.exists (List.isEmpty >> not) rows |> not then 
+                headers,values
+            else 
+                let firstElem = rows |> getFirstElem |> fst
+                headers.Add firstElem
+                let rows = 
+                    rows
+                    |> List.mapi (fun rowI l ->
+                        match l with
+                        | [] -> []
+                        | (h,c)::t ->
+                            if compositeHeaderEqual h firstElem then
+                                values.Add((colI,rowI),c)
+                                t
+                            else
+                                l
+                    )
+                loop (colI+1) rows
+        loop 0 rows
+                
+        

@@ -49,3 +49,9 @@ type Sample =
 
     static member getUnits (s:Sample) =
         List.append (Sample.getCharacteristicUnits s) (Sample.getFactorUnits s)
+
+    static member setCharacteristicValues (values:MaterialAttributeValue list) (s:Sample) =
+        { s with Characteristics = Some values }
+
+    static member setFactorValues (values:FactorValue list) (s:Sample) =
+        { s with FactorValues = Some values }

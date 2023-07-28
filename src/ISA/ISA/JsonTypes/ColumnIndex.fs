@@ -16,6 +16,18 @@ let tryGetIndex (comments : Comment list) =
     |> CommentList.tryItem orderName 
     |> Option.bind tryInt
 
+let setOntologyAnnotationIndex i (oa : OntologyAnnotation) =
+    {
+        oa with 
+            Comments = 
+                match oa.Comments with
+                | Some cs -> Some <| createOrderComment i :: cs
+                | None -> Some <| [createOrderComment i]
+    }
+
+let tryGetOntologyAnnotationIndex (oa : OntologyAnnotation) =
+    oa.Comments |> Option.bind tryGetIndex
+
 let tryGetParameterIndex (param : ProtocolParameter) =
     param.ParameterName 
     |> Option.bind (fun oa -> 
@@ -56,6 +68,24 @@ let tryGetComponentIndex (comp : Component) =
 [<AutoOpen>]
 module ColumnIndexExtensions = 
     
+    type OntologyAnnotation with
+
+        /// Create a ISAJson Factor from ISATab string entries
+        static member fromStringWithColumnIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
+            Factor.fromString(name,term,source,accession,[createOrderComment valueIndex])
+
+        static member getColumnIndex(f) = tryGetOntologyAnnotationIndex f |> Option.get
+
+        member this.GetColumnIndex() = tryGetOntologyAnnotationIndex this |> Option.get
+
+        static member tryGetColumnIndex(f) = tryGetOntologyAnnotationIndex f
+
+        member this.TryGetColumnIndex() = tryGetOntologyAnnotationIndex this
+
+        static member setColumnIndex i oa = setOntologyAnnotationIndex i oa
+
+        member this.SetColumnIndex i = setOntologyAnnotationIndex i this
+
     type Factor with
         
         /// Create a ISAJson Factor from ISATab string entries

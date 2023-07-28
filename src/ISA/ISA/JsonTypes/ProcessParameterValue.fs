@@ -19,7 +19,7 @@ type ProcessParameterValue =
         ProcessParameterValue.make Category Value Unit
 
     static member empty =
-        ProcessParameterValue.create()
+        ProcessParameterValue.create()     
 
     /// Returns the name of the category as string
     member this.NameText =
@@ -93,6 +93,10 @@ type ProcessParameterValue =
     /// Returns true if the given name matches the name of the parameter value
     static member nameEqualsString (name : string) (pv : ProcessParameterValue) =
         pv.NameText = name
+
+
+    static member getCategory (pv : ProcessParameterValue) =
+        pv.Category
 
     ///// Returns the value of the parameter value as string if it exists (with unit)
     //static member tryGetValueAsString (pv : ProcessParameterValue) =

@@ -266,4 +266,40 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         )
 
 
-    
+    /// Transform an ArcInvestigation to an ISA Json Investigation.
+    member this.ToInvestigation() : Investigation = 
+        let studies = this.Studies |> Seq.toList |> List.map (fun a -> a.ToStudy()) |> Option.fromValueWithDefault []
+        let identifier =
+            if ISA.Identifier.isMissingIdentifier this.Identifier then None
+            else Some this.Identifier
+        Investigation.create(
+            FileName = ARCtrl.Path.InvestigationFileName,
+            ?Identifier = identifier,
+            ?Title = this.Title,
+            ?Description = this.Description,
+            ?SubmissionDate = this.SubmissionDate,
+            ?PublicReleaseDate = this.PublicReleaseDate,
+            ?Publications = (this.Publications |> Option.fromValueWithDefault []),
+            ?Contacts = (this.Contacts |> Option.fromValueWithDefault []),
+            ?Studies = studies,
+            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            )
+
+    // Create an ArcInvestigation from an ISA Json Investigation.
+    static member fromInvestigation (i : Investigation) : ArcInvestigation = 
+        let identifer = 
+            match i.Identifier with
+            | Some i -> i
+            | None -> Identifier.createMissingIdentifier()
+        let studies = i.Studies |> Option.map (List.map ArcStudy.fromStudy >> ResizeArray)
+        ArcInvestigation.create(
+            identifer,
+            ?title = i.Title,
+            ?description = i.Description,
+            ?submissionDate = i.SubmissionDate,
+            ?publicReleaseDate = i.PublicReleaseDate,
+            ?publications = i.Publications,
+            ?contacts = i.Contacts,
+            ?studies = studies,
+            ?comments = i.Comments
+            )

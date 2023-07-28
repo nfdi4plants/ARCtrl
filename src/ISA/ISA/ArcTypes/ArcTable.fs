@@ -412,10 +412,6 @@ type ArcTable =
     static member getParameterValues (t : ArcTable) : ProcessParameterValue [] = 
         raise (System.NotImplementedException())
 
-    // no 
-    static member addProcess = 
-        raise (System.NotImplementedException())
-
     ///
     member this.AddProtocolTypeColumn(?types : OntologyAnnotation [], ?index : int) =
         let header = CompositeHeader.ProtocolType
@@ -464,17 +460,18 @@ type ArcTable =
         |> Seq.toArray
         |> Array.map (fun h -> this.GetColumnByHeader(h))
 
+    /// Create a new table from an ISA protocol.
+    ///
+    /// The table will have at most one row, with the protocol information and the component values
     static member fromProtocol (p : Protocol) : ArcTable = 
         
         let t = ArcTable.init (p.Name |> Option.defaultValue "")
-
 
         for pp in p.Parameters |> Option.defaultValue [] do
 
             //t.AddParameterColumn(pp, ?index = pp.TryGetColumnIndex())
 
             t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
-
 
         for c in p.Components |> Option.defaultValue [] do
             let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> Array.singleton)
@@ -489,6 +486,7 @@ type ArcTable =
         p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn([|d|]))         |> ignore
         t
 
+    /// Returns the list of protocols executed in this ArcTable
     member this.GetProtocols() : Protocol list = 
 
         if this.RowCount = 0 then
@@ -514,34 +512,30 @@ type ArcTable =
             List.init this.RowCount (fun i ->
                 this.GetRow(i) 
                 |> Seq.zip this.Headers
-                |> Seq.fold (fun p hc ->
-                    match hc with
-                    | CompositeHeader.ProtocolType, CompositeCell.Term oa -> 
-                        Protocol.setProtocolType p oa
-                    | CompositeHeader.ProtocolVersion, CompositeCell.FreeText v -> Protocol.setVersion p v
-                    | CompositeHeader.ProtocolUri, CompositeCell.FreeText v -> Protocol.setUri p v
-                    | CompositeHeader.ProtocolDescription, CompositeCell.FreeText v -> Protocol.setDescription p v
-                    | CompositeHeader.ProtocolREF, CompositeCell.FreeText v -> Protocol.setName p v
-                    | CompositeHeader.Parameter oa, _ -> 
-                        let pp = ProtocolParameter.create(ParameterName = oa)
-                        Protocol.addParameter (pp) p
-                    | CompositeHeader.Component oa, CompositeCell.Unitized(v,unit) -> 
-                        let c = Component.create(ComponentType = oa, Value = Value.fromString v, Unit = unit)
-                        Protocol.addComponent c p        
-                    | CompositeHeader.Component oa, CompositeCell.Term t -> 
-                        let c = Component.create(ComponentType = oa, Value = Value.Ontology t)
-                        Protocol.addComponent c p     
-                    | _ -> p
-                ) Protocol.empty                    
+                |> CompositeRow.toProtocol                    
             )
             |> List.distinct
 
-    static member getProcesses (t : ArcTable) : Process list = 
-        raise (System.NotImplementedException())
+    /// Returns the list of processes specidified in this ArcTable
+    member this.GetProcesses() : Process list = 
+        let getter = ProcessParsing.getProcessGetter this.Name this.Headers
+        [
+            for i in 0..this.RowCount-1 do
+                yield getter this.Values i        
+        ]
 
-    static member fromProcesses (ps : Process list) : ArcTable = 
-        raise (System.NotImplementedException())
+    /// Create a new table from a list of processes
+    ///
+    /// The name will be used as the sheet name
+    /// 
+    /// The processes SHOULD have the same headers, or even execute the same protocol
+    static member fromProcesses name (ps : Process list) : ArcTable = 
+        ps
+        |> List.collect (fun p -> ProcessParsing.processToRows p)
+        |> fun rows -> ProcessParsing.alignByHeaders rows
+        |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
 
+    /// Pretty printer 
     override this.ToString() =
         [
             $"Table: {this.Name}"
@@ -557,9 +551,15 @@ type ArcTable =
         match other with
         | :? ArcTable as table -> 
             let sameName = this.Name = table.Name
-            let sameHeaders = Seq.forall2 (fun x y -> x = y) this.Headers table.Headers
-            let sameBodyCells = Seq.forall2 (fun x y -> x = y) this.Values table.Values
-            sameName && sameHeaders && sameBodyCells
+            let h1 = this.Headers 
+            let h2 = table.Headers
+            let sameHeaderLength = h1.Count = h2.Count
+            let sameHeaders = Seq.forall2 (fun x y -> x = y) h1 h2 
+            let b1 = this.Values |> Seq.sortBy (fun kv -> kv.Key)
+            let b2 = table.Values |> Seq.sortBy (fun kv -> kv.Key)
+            let sameBodyLength = (Seq.length b1) = (Seq.length b2)
+            let sameBodyCells = Seq.forall2 (fun x y -> x = y) b1 b2
+            sameName && sameHeaderLength && sameHeaders && sameBodyLength && sameBodyCells
         | _ -> false
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:

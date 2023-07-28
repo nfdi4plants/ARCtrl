@@ -349,3 +349,46 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             performers=this.Performers, 
             comments=this.Comments
         )
+
+    /// Transform an ArcAssay to an ISA Json Assay.
+    member this.ToAssay() : Assay = 
+        let processSeq = ArcTables(this.Tables).GetProcesses()
+        let assayMaterials =
+            AssayMaterials.create(
+                ?Samples = (ProcessSequence.getSamples processSeq |> Option.fromValueWithDefault []),
+                ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
+            )
+            |> Option.fromValueWithDefault AssayMaterials.empty
+        let fileName = 
+            if ISA.Identifier.isMissingIdentifier this.Identifier then
+                None
+            else 
+                Some (ISA.Identifier.Assay.fileNameFromIdentifier this.Identifier)
+        Assay.create(
+            ?FileName = fileName,
+            ?MeasurementType = this.MeasurementType,
+            ?TechnologyType = this.TechnologyType,
+            ?TechnologyPlatform = this.TechnologyPlatform,
+            ?DataFiles = (ProcessSequence.getData processSeq |> Option.fromValueWithDefault []),
+            ?Materials = assayMaterials,
+            ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
+            ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
+            ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
+            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            )
+
+    // Create an ArcAssay from an ISA Json Assay.
+    static member fromAssay (a : Assay) : ArcAssay = 
+        let tables = (a.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
+        let identifer = 
+            match a.FileName with
+            | Some fn -> Identifier.Assay.identifierFromFileName fn
+            | None -> Identifier.createMissingIdentifier()
+        ArcAssay.create(
+            identifer,
+            ?measurementType = a.MeasurementType,
+            ?technologyType = a.TechnologyType,
+            ?technologyPlatform = a.TechnologyPlatform,
+            ?tables = tables,
+            ?comments = a.Comments
+            )

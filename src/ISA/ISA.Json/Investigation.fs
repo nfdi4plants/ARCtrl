@@ -72,9 +72,19 @@ module Investigation =
         encoder (ConverterOptions(SetID=true,IncludeType=true)) i
         |> Encode.toString 2
 
-    //let fromFile (path : string) = 
-    //    File.ReadAllText path 
-    //    |> fromString
+module ArcInvestigation = 
 
-    //let toFile (path : string) (p:Investigation) = 
-    //    File.WriteAllText(path,toString p)
+    open Investigation
+
+    let fromString (s:string) = 
+        GDecode.fromString (decoder (ConverterOptions())) s
+        |> ArcInvestigation.fromInvestigation
+
+    let toString (a:ArcInvestigation) = 
+        encoder (ConverterOptions()) (a.ToInvestigation())
+        |> Encode.toString 2
+
+    /// exports in json-ld format
+    let toStringLD (a:ArcInvestigation) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToInvestigation())
+        |> Encode.toString 2
