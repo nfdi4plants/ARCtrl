@@ -244,7 +244,7 @@ let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)=
 
 let initTableCols (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c,t = initTable appendOperations
-    t.Columns(c)
+    t.GetColumns(c)
     |> Seq.toList
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 

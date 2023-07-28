@@ -5,9 +5,7 @@ open FsSpreadsheet
 
 let emptyInvestigation = 
     let wb = new FsWorkbook()
-    let ws = 
-        wb.AddWorksheet("Investigation")
-        wb.GetWorksheetByName("Investigation")
+    let ws = wb.InitWorksheet("Investigation")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ONTOLOGY SOURCE REFERENCE"
     let row2 = ws.Row(2)
@@ -194,9 +192,7 @@ let emptyInvestigation =
 
 let fullInvestigation =
     let wb = new FsWorkbook()
-    let ws = 
-        wb.AddWorksheet("Investigation")
-        wb.GetWorksheetByName("Investigation")
+    let ws = wb.InitWorksheet("Investigation")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ONTOLOGY SOURCE REFERENCE"
     let row2 = ws.Row(2)

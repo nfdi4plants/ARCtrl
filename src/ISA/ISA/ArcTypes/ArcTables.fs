@@ -61,9 +61,7 @@ open ArcTableAux
 /// This type only includes mutable options and only static members, the MUST be referenced and used in all record types implementing `ResizeArray<ArcTable>`
 type ArcTables(thisTables:ResizeArray<ArcTable>) = 
 
-    inherit ResizeArray<ArcTable>(thisTables)
-
-    member this.TableCount 
+    member this.Count 
         with get() = thisTables.Count
 
     member this.TableNames 
@@ -73,24 +71,28 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
     member this.Tables = 
         thisTables
 
+    member this.Item 
+        with get(index) = 
+            thisTables.[index] 
+
     // - Table API - //
     // remark should this return ArcTable?
     member this.AddTable(table:ArcTable, ?index: int) = 
-        let index = defaultArg index this.TableCount
+        let index = defaultArg index this.Count
         SanityChecks.validateSheetIndex index true thisTables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
         thisTables.Insert(index, table)
 
     // - Table API - //
     member this.AddTables(tables:seq<ArcTable>, ?index: int) = 
-        let index = defaultArg index this.TableCount
+        let index = defaultArg index this.Count
         SanityChecks.validateSheetIndex index true thisTables
         SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
         thisTables.InsertRange(index, tables)
 
     // - Table API - //
     member this.InitTable(tableName:string, ?index: int) = 
-        let index = defaultArg index this.TableCount
+        let index = defaultArg index this.Count
         let table = ArcTable.init(tableName)
         SanityChecks.validateSheetIndex index true thisTables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
@@ -98,7 +100,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Table API - //
     member this.InitTables(tableNames:seq<string>, ?index: int) = 
-        let index = defaultArg index this.TableCount
+        let index = defaultArg index this.Count
         let tables = tableNames |> Seq.map (fun x -> ArcTable.init(x))
         SanityChecks.validateSheetIndex index true thisTables
         SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames

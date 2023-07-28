@@ -16,15 +16,13 @@ let tests_typeTranspilation = testList "type transpilation" [
         Expect.isTrue true ""
     testCase "FsWorksheet" <| fun _ ->
         let wb = new FsWorkbook()
-        let ws = new FsWorksheet()
-        ws.Name <- "My Worksheet"
+        let ws = FsWorksheet.init ("My Worksheet")
         wb.AddWorksheet(ws)
         Expect.equal (wb.GetWorksheets().Length) 1 "length"
         Expect.equal (wb.GetWorksheets().[0].Name) "My Worksheet" "length"
     testCase "FsTable" <| fun _ ->
         let wb = new FsWorkbook()
-        let ws = new FsWorksheet()
-        ws.Name <- "My Worksheet"
+        let ws = FsWorksheet.init ("My Worksheet")
         wb.AddWorksheet(ws)
         Expect.equal (wb.GetWorksheets().Length) 1 "length"
         Expect.equal (wb.GetWorksheets().[0].Name) "My Worksheet" "length"

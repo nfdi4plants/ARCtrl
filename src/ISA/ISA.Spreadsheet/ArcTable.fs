@@ -86,7 +86,7 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
     match tryAnnotationTable sheet with
     | Some (t: FsTable) -> 
         let compositeColumns = 
-            t.Columns(sheet.CellCollection)
+            t.GetColumns(sheet.CellCollection)
             |> composeColumns
         ArcTable.init sheet.Name
         |> ArcTable.addColumns compositeColumns 
