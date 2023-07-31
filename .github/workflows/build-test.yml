@@ -4,7 +4,7 @@ on:
   push:
     branches: [ developer ]
   pull_request:
-    branches: [ developer ]
+    branches: [ developer, arctrl ]
 
 jobs:
   build-and-test-linux:
