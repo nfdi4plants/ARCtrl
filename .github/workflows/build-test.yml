@@ -24,6 +24,7 @@ jobs:
       with:
           node-version: 16
     - name: install node modules
+      working-directory: ./
       run: npm install
     - name: make script executable
       run: chmod u+x build.sh
