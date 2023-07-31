@@ -20,7 +20,7 @@
     "testJavaScript": "mocha tests/JavaScript",
     "pretestPython": "dotnet fable src/ARCtrl -o tests/Python/ARCtrl --lang py ",
     "testPython": "",
-    "postinstall": "cd src/ISA & npm install"
+    "postinstall": "cd src/ISA & npm install --ignore-scripts"
   },
   "repository": {
     "type": "git",
