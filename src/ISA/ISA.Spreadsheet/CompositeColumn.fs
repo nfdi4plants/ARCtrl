@@ -3,6 +3,22 @@
 open ISA
 open FsSpreadsheet
 
+/// Checks if the column header is a deprecated IO Header. If so, fixes it.
+///
+/// The old format of IO Headers was only the type of IO so, e.g. "Source Name" or "Raw Data File".
+///
+/// A "Source Name" column will now be mapped to the propper "Input [Source Name]", and all other IO types will be mapped to "Output [<IO Type>]".
+let fixDeprecatedIOHeader (col : FsColumn) = 
+    match IOType.ofString col.[1].Value with
+    | IOType.FreeText _ -> col
+    | IOType.Source -> 
+        let comp = CompositeHeader.Input (IOType.Source)       
+        col.[1].SetValueAs(comp.ToString())
+        col
+    | ioType ->
+        let comp = CompositeHeader.Output (ioType)       
+        col.[1].SetValueAs(comp.ToString())
+        col
 
 let fromFsColumns (columns : list<FsColumn>) : CompositeColumn =
     let header = 

@@ -162,7 +162,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     ////////////////////////////////////
     
     member this.TableCount 
-        with get() = ArcTables(this.Tables).TableCount
+        with get() = ArcTables(this.Tables).Count
 
     member this.TableNames 
         with get() = ArcTables(this.Tables).TableNames

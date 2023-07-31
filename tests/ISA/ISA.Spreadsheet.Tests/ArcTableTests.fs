@@ -247,6 +247,53 @@ let private ioTable =
         )
     ]
 
+
+
+let private deprecatedColumnTable = 
+    testList "deprecatedIOColumnTable" [
+        let wsName = "MyWorksheet"
+        let ws = 
+                initWorksheet wsName
+                    [
+                        Input.appendDeprecatedSourceColumn      1
+                        Protocol.REF.appendLolColumn            1
+                        Protocol.Type.appendCollectionColumn    1
+                        Parameter.appendTemperatureColumn       1
+                        Output.appendDeprecatedSampleColumn     1
+                    ]
+        testCase "Read" (fun () -> 
+                    
+            let table = ArcTable.tryFromFsWorksheet ws        
+        
+            Expect.isSome table "Table was not created"
+            let table = table.Value
+
+            Expect.equal table.Name wsName "Name did not match"
+            Expect.equal table.ColumnCount 5 "Wrong number of columns"
+            Expect.equal table.RowCount 1 "Wrong number of rows"
+
+            let expectedHeaders = 
+                [
+                        Input.deprecatedSourceHeader
+                        Protocol.REF.lolHeader
+                        Protocol.Type.collectionHeader
+                        Parameter.temperatureHeader
+                        Output.deprecatedSampleHeader
+                ]
+            mySequenceEqual table.Headers expectedHeaders "Headers did not match"
+
+            let expectedCells = 
+                [
+                        Input.sampleValue
+                        Protocol.REF.lolValue
+                        Protocol.Type.collectionValue
+                        Parameter.temperatureValue
+                        Output.rawDataValue
+                ]
+            mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+        )
+    ]
+
 let private writeOrder = 
     testList "writeOrder" [
         
@@ -290,5 +337,6 @@ let main =
         mixedTable
         ioTable
         emptyTable
+        deprecatedColumnTable
         writeOrder
     ]

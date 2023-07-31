@@ -41,7 +41,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
 
     member this.TableCount 
-        with get() = ArcTables(this.Tables).TableCount
+        with get() = ArcTables(this.Tables).Count
 
     member this.TableNames 
         with get() = ArcTables(this.Tables).TableNames

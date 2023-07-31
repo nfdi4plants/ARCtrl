@@ -25,6 +25,7 @@ module Aux =
             ) []
             |> List.map List.rev
             |> List.rev
+ 
 
 type ColumnOrder =
     | InputClass = 1
@@ -86,7 +87,8 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
     match tryAnnotationTable sheet with
     | Some (t: FsTable) -> 
         let compositeColumns = 
-            t.Columns(sheet.CellCollection)
+            t.GetColumns(sheet.CellCollection)
+            |> Seq.map CompositeColumn.fixDeprecatedIOHeader
             |> composeColumns
         ArcTable.init sheet.Name
         |> ArcTable.addColumns compositeColumns 

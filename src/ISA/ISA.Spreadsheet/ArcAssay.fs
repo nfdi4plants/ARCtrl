@@ -7,6 +7,9 @@ let [<Literal>] obsoleteAssaysLabel = "ASSAY METADATA"
 let [<Literal>] assaysLabel = "ASSAY"
 let [<Literal>] contactsLabel = "ASSAY PERFORMERS"
 
+let [<Literal>] assaysPrefix = "Assay"
+let [<Literal>] contactsPrefix = "Assay Person"
+
 let [<Literal>] obsoleteMetaDataSheetName = "Assay"
 let [<Literal>] metaDataSheetName = "isa_assay"
 
@@ -14,10 +17,10 @@ let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
     let toRows (assay:ArcAssay) =
         seq {          
             yield  SparseRow.fromValues [assaysLabel]
-            yield! Assays.toRows (None) [assay]
+            yield! Assays.toRows (Some assaysPrefix) [assay]
 
             yield SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (None) (assay.Performers)
+            yield! Contacts.toRows (Some contactsPrefix) (assay.Performers)
         }
     let sheet = FsWorksheet(metaDataSheetName)
     assay
@@ -26,20 +29,23 @@ let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
     sheet
 
 let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
-    let fromRows (rows: seq<SparseRow>) =
+    let fromRows (usePrefixes : bool) (rows: seq<SparseRow>) =
+        let aPrefix,cPrefix = 
+            if usePrefixes then 
+                Some assaysPrefix,Some contactsPrefix
+            else None,None
         let en = rows.GetEnumerator()
         let rec loop lastLine assays contacts lineNumber =
                
             match lastLine with
 
             | Some k when k = assaysLabel || k = obsoleteAssaysLabel -> 
-                let currentLine,lineNumber,_,assays = Assays.fromRows None (lineNumber + 1) en       
+                let currentLine,lineNumber,_,assays = Assays.fromRows aPrefix (lineNumber + 1) en       
                 loop currentLine assays contacts lineNumber
 
             | Some k when k = contactsLabel -> 
-                let currentLine,lineNumber,_,contacts = Contacts.fromRows None (lineNumber + 1) en  
+                let currentLine,lineNumber,_,contacts = Contacts.fromRows cPrefix (lineNumber + 1) en  
                 loop currentLine assays contacts lineNumber
-
             | k -> 
                 match assays, contacts with
                 | [], [] -> ArcAssay.create(Identifier.createMissingIdentifier())
@@ -55,10 +61,14 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
             
         else
             failwith "empty assay metadata sheet"
-    sheet.Rows 
-    |> Seq.map SparseRow.fromFsRow
-    |> fromRows
-
+    let rows =        
+        sheet.Rows 
+        |> Seq.map SparseRow.fromFsRow
+    let hasPrefix = 
+        rows
+        |> Seq.exists (fun row -> row |> Seq.head |> snd |> fun s -> s.StartsWith(assaysPrefix))
+    rows
+    |> fromRows hasPrefix
 
 /// Reads an assay from a spreadsheet
 let fromFsWorkbook (doc:FsWorkbook) = 

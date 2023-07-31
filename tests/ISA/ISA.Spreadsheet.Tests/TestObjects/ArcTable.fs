@@ -174,6 +174,17 @@ module Input =
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
 
+    let deprecatedSourceHeader = CompositeHeader.Input IOType.Source
+
+    let deprecatedSourceHeaderV1 = "Source Name"
+
+    let appendDeprecatedSourceColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs deprecatedSourceHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
+
+
 module Output = 
     let rawDataHeader = 
         CompositeHeader.Output IOType.RawDataFile
@@ -188,6 +199,16 @@ module Output =
     let appendRawDataColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs rawDataHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs rawDataValueV1
+
+    let deprecatedSampleHeader = CompositeHeader.Output IOType.Sample
+
+    let deprecatedSampleHeaderV1 = "Sample Name"
+    
+    let appendDeprecatedSampleColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs deprecatedSampleHeaderV1
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs rawDataValueV1
 
@@ -244,7 +265,7 @@ let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)=
 
 let initTableCols (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c,t = initTable appendOperations
-    t.Columns(c)
+    t.GetColumns(c)
     |> Seq.toList
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 

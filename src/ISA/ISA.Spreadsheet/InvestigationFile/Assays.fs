@@ -90,15 +90,10 @@ module Assays =
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
     let fromRows (prefix : string option) lineNumber (rows : IEnumerator<SparseRow>) =
-        match prefix with
-        | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
-        | None -> SparseTable.FromRows(rows,labels,lineNumber)
+        SparseTable.FromRows(rows,labels,lineNumber,?prefix = prefix)
         |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
  
     let toRows prefix (assays : ArcAssay list) =
         assays
         |> toSparseTable
-        |> fun m -> 
-            match prefix with 
-            | Some prefix -> SparseTable.ToRows(m,prefix)
-            | None -> SparseTable.ToRows(m)
+        |> fun m -> SparseTable.ToRows(m,?prefix = prefix)
