@@ -4,7 +4,7 @@ on:
   push:
     branches: [ developer ]
   pull_request:
-    branches: [ developer ]
+    branches: [ developer, arctrl ]
 
 jobs:
   build-and-test-linux:
@@ -24,6 +24,10 @@ jobs:
       with:
           node-version: 16
     - name: install node modules
+      working-directory: ./
+      run: npm install --ignore-scripts
+    - name: install node modules ISA
+      working-directory: ./src/ISA
       run: npm install
     - name: make script executable
       run: chmod u+x build.sh

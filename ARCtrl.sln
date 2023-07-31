@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{326188FB-2CC0-4610-A082-708885BF47AA}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		.github\workflows\build-test.yml = .github\workflows\build-test.yml
 		build.cmd = build.cmd
 		build.sh = build.sh
 		.config\dotnet-tools.json = .config\dotnet-tools.json
@@ -115,7 +116,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JavaScript", "JavaScript", 
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl", "src\ARCtrl\ARCtrl.fsproj", "{9BE5D83D-EA90-4382-A132-174FD158227F}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "ARCtrl.Tests", "tests\ARCtrl\ARCtrl.Tests.fsproj", "{801247D5-7EE5-49C8-AB26-F822A415BA49}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Tests", "tests\ARCtrl\ARCtrl.Tests.fsproj", "{801247D5-7EE5-49C8-AB26-F822A415BA49}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
