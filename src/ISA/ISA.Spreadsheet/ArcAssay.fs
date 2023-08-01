@@ -87,8 +87,8 @@ let fromFsWorkbook (doc:FsWorkbook) =
                 ArcAssay.create(Identifier.createMissingIdentifier())
     let sheets = 
         doc.GetWorksheets()
-        |> List.choose ArcTable.tryFromFsWorksheet
-    if sheets.IsEmpty then
+        |> Seq.choose ArcTable.tryFromFsWorksheet
+    if sheets |> Seq.isEmpty then
         assayMetaData
     else 
         assayMetaData.Tables <- ResizeArray(sheets)

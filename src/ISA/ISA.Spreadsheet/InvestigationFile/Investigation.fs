@@ -192,7 +192,7 @@ module ArcInvestigation =
     let fromFsWorkbook (doc:FsWorkbook) =  
         try
             doc.GetWorksheets()
-            |> List.head
+            |> Seq.head
             |> FsWorksheet.getRows
             |> Seq.map SparseRow.fromFsRow
             |> fromRows 
