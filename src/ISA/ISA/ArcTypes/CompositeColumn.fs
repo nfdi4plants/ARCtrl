@@ -32,8 +32,7 @@ type CompositeColumn = {
             true
         | h, c -> 
             if raiseExeption then 
-                let n = System.Math.Min(c.Length,3)
-                let exampleCells = c.[n]
+                let exampleCells = c.[0]
                 let msg = $"Invalid combination of header `{h}` and cells `{exampleCells}`"
                 failwith msg
             // Maybe still return `msg` somehow if `raiseExeption` is false?

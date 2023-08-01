@@ -36,7 +36,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s\((?<id>.+)\)"   
+    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s\((?<id>.*)\)"   
 
     /// Hits Term Accession Number column header
     ///
@@ -44,7 +44,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let TermSourceREFColumnPattern = @"Term Source REF\s\((?<id>.+)\)" 
+    let TermSourceREFColumnPattern = @"Term Source REF\s\((?<id>.*)\)" 
 
     /// Hits Term Source REF column header
     ///
@@ -52,7 +52,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.+)\)" 
+    let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.*)\)" 
 
     /// Hits term accession, without id: ENVO:01001831
     [<LiteralAttribute>]
@@ -106,6 +106,14 @@ module ActivePatterns =
         let m = Regex.Match(input.Trim(), pattern)
         if m.Success then Some(m)
         else None
+
+    /// Matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
+    let (|ReferenceColumnHeader|_|) input = 
+        match input with
+        | Regex Pattern.ReferenceColumnPattern r ->
+            {|Annotation = r.Groups.["id"].Value|}
+            |> Some
+        | _ -> None
 
     /// Matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
     let (|TermColumn|_|) input = 
@@ -191,7 +199,7 @@ module ActivePatterns =
         | Regex Pattern.TermSourceREFColumnPattern r ->
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
-            | _ -> None
+            | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
          | _ -> None
 
     /// Matches a "Term Accession Number (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
@@ -202,6 +210,7 @@ module ActivePatterns =
         | Regex Pattern.TermAccessionNumberColumnPattern r ->
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
+            | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
             | _ -> None
          | _ -> None
 
@@ -235,6 +244,11 @@ open System
 open System.Text.RegularExpressions
     
 
+let tryParseReferenceColumnHeader (str : string) =
+    match str.Trim() with
+    | ReferenceColumnHeader v -> 
+        Some v
+    | _ -> None
 
 let tryParseTermAnnotationShort (str:string) =
     match str.Trim() with

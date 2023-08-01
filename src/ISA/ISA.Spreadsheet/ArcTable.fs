@@ -62,11 +62,11 @@ let annotationTablePrefix = "annotationTable"
 
 let groupColumnsByHeader (columns : list<FsColumn>) = 
     columns
-    |> Aux.List.groupWhen (fun c ->         
-        ISA.Regex.tryParseTermAnnotation c.[1].Value 
+    |> Aux.List.groupWhen (fun c -> 
+        ISA.Regex.tryParseReferenceColumnHeader c.[1].Value 
         |> Option.isNone
         &&
-        c.[1].Value <> "Unit"
+        (c.[1].Value.StartsWith "Unit" |> not)
     )
 
 /// Returns the annotation table of the worksheet if it exists, else returns None

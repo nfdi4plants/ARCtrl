@@ -35,6 +35,6 @@ let private tests_checkValidCharacters = testList "checkValidCharacters" [
 
 
 let main = 
-    testList "ArcInvestigation" [
+    testList "Identifier" [
         tests_checkValidCharacters
     ]
