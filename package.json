@@ -4,8 +4,10 @@
   "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
   "scripts": {
-    "fable-js": "dotnet fable ./src/ARC -o ./js",
-    "fable-ts": "dotnet fable ./src/ARC -o ./ts --lang ts",
+    "prefable-js": "dotnet fable clean -o ./js --yes",
+    "fable-js": "dotnet fable ./src/ARCtrl -o ./js",
+    "prefable-ts": "dotnet fable clean -o ./ts --yes --extension .ts",
+    "fable-ts": "dotnet fable ./src/ARCtrl -o ./ts --lang ts",
     "pretestJson": "dotnet fable tests/ISA/ISA.Json.Tests -o tests/ISA/ISA.Json.Tests/js",
     "testJson": "mocha tests/ISA/ISA.Json.Tests/js --timeout 20000",
     "pretestSpreadsheet": "dotnet fable tests/ISA/ISA.Spreadsheet.Tests -o tests/ISA/ISA.Spreadsheet.Tests/js",

@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ArcContract\Contract.fsproj" />
+    <ProjectReference Include="..\Contract\Contract.fsproj" />
     <ProjectReference Include="..\CWL\CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\FileSystem.fsproj" />
     <ProjectReference Include="..\ISA\ISA\ISA.fsproj" />
