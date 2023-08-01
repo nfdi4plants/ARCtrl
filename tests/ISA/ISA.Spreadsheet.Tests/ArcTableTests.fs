@@ -13,6 +13,43 @@ open ISA.Spreadsheet
 open TestingUtils
 open TestObjects.ArcTable
 
+let private ensureCorrectTestHeaders = 
+    testList "ensureCorrectTestHeaders" [
+        testCase "duplicateParam" (fun () -> 
+            let ws = 
+                initWorksheet "TestWorksheet"
+                    [
+                        Parameter.appendInstrumentColumn     1
+                        Parameter.appendInstrumentColumn     1
+                    ]
+            Expect.equal ws.Name "TestWorksheet" "Worksheet name did not match"
+
+            let expectedHeaders = 
+                [
+                    Parameter.instrumentHeaderV1
+                    Parameter.instrumentHeaderV2
+                    Parameter.instrumentHeaderV3
+                    Parameter.instrumentHeaderV1 + " "
+                    Parameter.instrumentHeaderV2 + " "
+                    Parameter.instrumentHeaderV3 + " "
+                
+                ]
+            mySequenceEqual (ws.Row(1).Cells |> Seq.map (fun c -> c.Value)) expectedHeaders "Headers did not match"
+
+            let expectedValues = 
+                [
+                    Parameter.instrumentValueV1
+                    Parameter.instrumentValueV2
+                    Parameter.instrumentValueV3
+                    Parameter.instrumentValueV1
+                    Parameter.instrumentValueV2
+                    Parameter.instrumentValueV3
+                ]
+
+            mySequenceEqual (ws.Row(2).Cells |> Seq.map (fun c -> c.Value)) expectedValues "Values did not match"
+        )
+    ]
+
 let private groupCols = 
     testList "groupCols" [
         testCase "simpleTable" (fun () ->
@@ -335,6 +372,7 @@ let private writeOrder =
 
 let main = 
     testList "ArcTableTests" [
+        ensureCorrectTestHeaders
         groupCols
         simpleTable
         mixedTable
