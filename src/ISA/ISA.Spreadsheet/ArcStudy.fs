@@ -51,8 +51,8 @@ let fromFsWorkbook (doc:FsWorkbook) =
 
     let sheets = 
         doc.GetWorksheets()
-        |> List.choose ArcTable.tryFromFsWorksheet
-    if sheets.IsEmpty then
+        |> Seq.choose ArcTable.tryFromFsWorksheet
+    if sheets |> Seq.isEmpty then
         studyMetadata
     else
         studyMetadata.Tables <- ResizeArray(sheets)

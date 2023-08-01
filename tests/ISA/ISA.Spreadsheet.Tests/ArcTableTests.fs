@@ -52,6 +52,7 @@ let private simpleTable =
                     [
                         Protocol.REF.appendLolColumn            1
                         Protocol.Type.appendCollectionColumn    1
+                        Protocol.Component.appendInstrumentColumn 1
                         Parameter.appendTemperatureColumn       1
                         Parameter.appendInstrumentColumn        1
                         Characteristic.appendOrganismColumn     1
@@ -65,13 +66,14 @@ let private simpleTable =
             let table = table.Value
 
             Expect.equal table.Name wsName "Name did not match"
-            Expect.equal table.ColumnCount 6 "Wrong number of columns"
+            Expect.equal table.ColumnCount 7 "Wrong number of columns"
             Expect.equal table.RowCount 1 "Wrong number of rows"
 
             let expectedHeaders = 
                 [
                         Protocol.REF.lolHeader
                         Protocol.Type.collectionHeader
+                        Protocol.Component.instrumentHeader
                         Parameter.temperatureHeader
                         Parameter.instrumentHeader
                         Characteristic.organismHeader
@@ -83,6 +85,7 @@ let private simpleTable =
                 [
                         Protocol.REF.lolValue
                         Protocol.Type.collectionValue
+                        Protocol.Component.instrumentValue
                         Parameter.temperatureValue
                         Parameter.instrumentValue
                         Characteristic.organismValue

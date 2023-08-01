@@ -256,6 +256,35 @@ module Protocol =
                 t.Cell(FsAddress(i, colCount + 2),c).SetValueAs collectionValueV2
                 t.Cell(FsAddress(i, colCount + 3),c).SetValueAs collectionValueV3
 
+    module Component = 
+
+        let instrumentHeader = 
+            CompositeHeader.Component 
+                (OntologyAnnotation.fromString("instrument model","MS","MS:1000031"))
+        let instrumentValue = 
+            CompositeCell.createTermFromString
+                ("Thermo Fisher Scientific instrument model","MS","http://purl.obolibrary.org/obo/MS_1000483")
+
+
+        let instrumentHeaderV1 = "Component [instrument model]"
+        let instrumentHeaderV2 = "Term Source REF (MS:1000031)"
+        let instrumentHeaderV3 = "Term Accession Number (MS:1000031)"
+
+        let instrumentValueV1 = "Thermo Fisher Scientific instrument model"
+        let instrumentValueV2 = "MS"
+        let instrumentValueV3 = "http://purl.obolibrary.org/obo/MS_1000483"
+
+        let appendInstrumentColumn l (c : FsCellsCollection) (t : FsTable) = 
+            let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+            t.Cell(FsAddress(1, colCount + 1),c).SetValueAs instrumentHeaderV1
+            t.Cell(FsAddress(1, colCount + 2),c).SetValueAs instrumentHeaderV2
+            t.Cell(FsAddress(1, colCount + 3),c).SetValueAs instrumentHeaderV3
+            for i = 2 to l + 1 do  
+                t.Cell(FsAddress(i, colCount + 1),c).SetValueAs instrumentValueV1
+                t.Cell(FsAddress(i, colCount + 2),c).SetValueAs instrumentValueV2
+                t.Cell(FsAddress(i, colCount + 3),c).SetValueAs instrumentValueV3
+
+
 let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c = FsCellsCollection()
     let t = FsTable(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))

@@ -36,7 +36,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s\((?<id>.+)\)"   
+    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s\((?<id>.*)\)"   
 
     /// Hits Term Accession Number column header
     ///
@@ -44,7 +44,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let TermSourceREFColumnPattern = @"Term Source REF\s\((?<id>.+)\)" 
+    let TermSourceREFColumnPattern = @"Term Source REF\s\((?<id>.*)\)" 
 
     /// Hits Term Source REF column header
     ///
@@ -52,7 +52,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.+)\)" 
+    let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.*)\)" 
 
     /// Hits term accession, without id: ENVO:01001831
     [<LiteralAttribute>]
@@ -108,6 +108,14 @@ module ActivePatterns =
         else None
 
     /// Matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
+    let (|ReferenceColumnHeader|_|) input = 
+        match input with
+        | Regex Pattern.ReferenceColumnPattern r ->
+            {|Annotation = r.Groups.["id"].Value|}
+            |> Some
+        | _ -> None
+
+    /// Matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
     let (|TermColumn|_|) input = 
         match input with
         | Regex Pattern.TermColumnPattern r ->
@@ -152,6 +160,15 @@ module ActivePatterns =
             | _ -> None
         | _ -> None
 
+    /// Matches a "Component [Term]" or "Component Value [Term]" column header and returns the Term string.
+    let (|ComponentColumnHeader|_|) input = 
+        match input with
+        | TermColumn r ->
+            match r.TermColumnType with
+            | "Component" 
+            | "Component Value" -> Some r.TermName
+            | _ -> None
+        | _ -> None
 
     /// Matches a short term string and returns the term source ref and the annotation number strings.
     /// 
@@ -191,7 +208,7 @@ module ActivePatterns =
         | Regex Pattern.TermSourceREFColumnPattern r ->
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
-            | _ -> None
+            | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
          | _ -> None
 
     /// Matches a "Term Accession Number (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
@@ -202,7 +219,7 @@ module ActivePatterns =
         | Regex Pattern.TermAccessionNumberColumnPattern r ->
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
-            | _ -> None
+            | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
          | _ -> None
 
     /// Matches a "Input [InputType]" column header and returns the InputType as string.
@@ -235,6 +252,11 @@ open System
 open System.Text.RegularExpressions
     
 
+let tryParseReferenceColumnHeader (str : string) =
+    match str.Trim() with
+    | ReferenceColumnHeader v -> 
+        Some v
+    | _ -> None
 
 let tryParseTermAnnotationShort (str:string) =
     match str.Trim() with
@@ -332,6 +354,12 @@ let tryParseFactorColumnHeader input =
 let tryParseCharacteristicColumnHeader input = 
     match input with
     | CharacteristicColumnHeader r -> Some r
+    | _ -> None
+
+/// Matches a "Component [Term]" or "Characteristics [Term]" or "Component Value [Term]" column header and returns the Term string.
+let tryParseComponentColumnHeader input = 
+    match input with
+    | ComponentColumnHeader r -> Some r
     | _ -> None
 
 /// Matches a "Term Source REF (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
