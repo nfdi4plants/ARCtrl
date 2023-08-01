@@ -49,6 +49,12 @@ module ActivePattern =
             Some r
         | _ -> None
     
+    let (|Component|_|) (cells : FsCell list) =
+        match cells with
+        | Term Regex.tryParseComponentColumnHeader CompositeHeader.Component r ->
+            Some r
+        | _ -> None
+
     let (|Input|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.Value)
         match cellValues with
@@ -95,11 +101,13 @@ let fromFsCells (cells : list<FsCell>) : CompositeHeader =
     | Parameter p -> p
     | Factor f -> f
     | Characteristic c -> c
+    | Component c -> c
     | Input i -> i
     | Output o -> o
     | ProtocolHeader ph -> ph 
     | FreeText ft -> ft
-    | _ -> raise (System.NotImplementedException("parseCompositeHeader"))
+    | _ -> failwithf "Could not parse header group %O" cells
+  
 
 let toFsCells (hasUnit : bool) (header : CompositeHeader) : list<FsCell> = 
     if header.IsSingleColumn then

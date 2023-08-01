@@ -160,6 +160,15 @@ module ActivePatterns =
             | _ -> None
         | _ -> None
 
+    /// Matches a "Component [Term]" or "Component Value [Term]" column header and returns the Term string.
+    let (|ComponentColumnHeader|_|) input = 
+        match input with
+        | TermColumn r ->
+            match r.TermColumnType with
+            | "Component" 
+            | "Component Value" -> Some r.TermName
+            | _ -> None
+        | _ -> None
 
     /// Matches a short term string and returns the term source ref and the annotation number strings.
     /// 
@@ -211,7 +220,6 @@ module ActivePatterns =
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
             | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
-            | _ -> None
          | _ -> None
 
     /// Matches a "Input [InputType]" column header and returns the InputType as string.
@@ -346,6 +354,12 @@ let tryParseFactorColumnHeader input =
 let tryParseCharacteristicColumnHeader input = 
     match input with
     | CharacteristicColumnHeader r -> Some r
+    | _ -> None
+
+/// Matches a "Component [Term]" or "Characteristics [Term]" or "Component Value [Term]" column header and returns the Term string.
+let tryParseComponentColumnHeader input = 
+    match input with
+    | ComponentColumnHeader r -> Some r
     | _ -> None
 
 /// Matches a "Term Source REF (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
