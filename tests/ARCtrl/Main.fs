@@ -8,6 +8,7 @@ open Expecto
 [<Tests>]
 #endif
 let all = testSequenced <| testList "All" [
+    ARCtrl.Contracts.Tests.main
     ARCtrl.Tests.main
 ]
 
