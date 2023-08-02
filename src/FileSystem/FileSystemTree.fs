@@ -133,7 +133,6 @@ type FileSystemTree =
     static member initInvestigationFile() = 
         FileSystemTree.createFile "isa.investigation.xlsx"
 
-
     static member createAssaysFolder(assays : FileSystemTree array) =
         FileSystemTree.createFolder("assays", Array.append [|FileSystemTree.createFile ".gitkeep"|] assays)
 
@@ -141,7 +140,7 @@ type FileSystemTree =
         FileSystemTree.createFolder("studies", Array.append [|FileSystemTree.createFile ".gitkeep"|] studies)
 
     static member createWorkflowsFolder(workflows : FileSystemTree array) =
-        FileSystemTree.createFolder("assays", Array.append [|FileSystemTree.createFile ".gitkeep"|] workflows)
+        FileSystemTree.createFolder("workflows", Array.append [|FileSystemTree.createFile ".gitkeep"|] workflows)
 
     static member createRunsFolder(runs : FileSystemTree array) = 
         FileSystemTree.createFolder("runs", Array.append [|FileSystemTree.createFile ".gitkeep"|] runs)

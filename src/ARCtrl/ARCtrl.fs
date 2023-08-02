@@ -164,32 +164,27 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
         {this with ISA = Some investigation}
 
 
-    static member updateFileSystemTree(arc) =       
-        match arc.ISA,arc.FileSystem with
-        | Some inv,_ -> 
-            let studyNames,assayNames =
+    static member updateFileSystemTree(arc) =   
+        let investigationName,(studyNames,assayNames) = 
+            match arc.ISA with
+            | Some inv ->         
+                inv.Identifier,
                 inv.Studies
                 |> Seq.fold (fun (studyNames,assayNames) s ->
                     Array.append studyNames [|s.Identifier|],
                     Array.append assayNames (s.Assays |> Seq.map (fun a -> a.Identifier) |> Array.ofSeq)
             
                 ) ([||],[||])
-            let workflows = FileSystemTree.createWorkflowsFolder [||]
-            let runs = FileSystemTree.createRunsFolder [||]
-            let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.initAssayFolder)
-            let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.initStudyFolder)
-            let investigation = FileSystemTree.createFile "isa.investigation.xlsx"
-            let tree = FileSystemTree.createFolder(inv.Identifier, [|investigation;assays;studies;workflows;runs|])
-            let fs = FileSystem.create(tree)
-            ARC.create(inv,fs = fs)
-        | _ -> 
-            let workflows = FileSystemTree.createWorkflowsFolder [||]
-            let runs = FileSystemTree.createRunsFolder [||]
-            let assays = FileSystemTree.createAssaysFolder [||]
-            let studies = FileSystemTree.createStudiesFolder [||]
-            let tree = FileSystemTree.createFolder(Identifier.createMissingIdentifier(), [|assays;studies;workflows;runs|])
-            let fs = FileSystem.create(tree)
-            ARC.create(fs = fs)
+            | None -> Identifier.createMissingIdentifier(), ([||],[||])
+        let workflows = FileSystemTree.createWorkflowsFolder [||]
+        let runs = FileSystemTree.createRunsFolder [||]
+        let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.initAssayFolder)
+        let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.initStudyFolder)
+        let investigation = FileSystemTree.createFile "isa.investigation.xlsx"
+        let tree = FileSystemTree.createFolder(investigationName, [|investigation;assays;studies;workflows;runs|])
+        let fs = FileSystem.create(tree)
+        ARC.create(?isa = arc.ISA,fs = fs)
+        
 
 
     /// <summary>
