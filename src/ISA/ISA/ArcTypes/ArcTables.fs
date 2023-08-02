@@ -97,6 +97,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         SanityChecks.validateSheetIndex index true thisTables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
         thisTables.Insert(index, table)
+        table
 
     // - Table API - //
     member this.InitTables(tableNames:seq<string>, ?index: int) = 

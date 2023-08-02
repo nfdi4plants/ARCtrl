@@ -70,12 +70,13 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.InitStudy (studyName: string) =
         let study = ArcStudy.init(studyName)
         this.AddStudy(study)
+        study
 
     static member initStudy(studyName: string) =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
             copy.InitStudy(studyName)
-            copy
+
 
     // - Study API - CRUD //
     member this.RemoveStudyAt(index: int) =
@@ -178,12 +179,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.InitAssay(studyIdentifier: string, assayName: string) =
         let assay = ArcAssay.init(assayName)
         this.AddAssay(studyIdentifier, assay)
+        assay
 
     static member initAssay(studyIdentifier: string, assayName: string) =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
             copy.InitAssay(studyIdentifier, assayName)
-            copy
 
     // - Study API - CRUD //
     member this.RemoveAssayAt(studyIdentifier: string, index: int) =
