@@ -12,19 +12,19 @@ module ARCAux =
     let getArcAssaysFromContracts (contracts: Contract []) = 
         contracts 
         |> Array.choose Contracts.ArcAssay.tryFromContract
-        |> Array.map ISA.Spreadsheet.ArcAssay.fromFsWorkbook
+        |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcAssay.fromFsWorkbook)
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
         |> Array.choose Contracts.ArcStudy.tryFromContract
-        |> Array.map ISA.Spreadsheet.ArcStudy.fromFsWorkbook
+        |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcStudy.fromFsWorkbook)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 
         |> Array.choose Contracts.ArcInvestigation.tryFromContract
         |> Array.exactlyOne 
-        |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
+        |> fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 
 [<AttachMembers>]
 type ARC =

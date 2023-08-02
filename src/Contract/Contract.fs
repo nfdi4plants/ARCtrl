@@ -29,7 +29,7 @@ type CLITool =
 [<Erase>]
 [<RequireQualifiedAccess>]
 type DTO =
-    | Spreadsheet of FsWorkbook
+    | Spreadsheet of obj
     | Text of string
     | CLITool of CLITool
 
