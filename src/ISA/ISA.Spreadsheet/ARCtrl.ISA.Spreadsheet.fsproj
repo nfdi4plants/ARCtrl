@@ -33,7 +33,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="3.2.0" />
+    <PackageReference Include="FsSpreadsheet" Version="3.3.0" />
   </ItemGroup>
 
   <ItemGroup>
