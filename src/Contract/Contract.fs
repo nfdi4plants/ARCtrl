@@ -56,7 +56,7 @@ type Contract =
     /// <param name="dtoType">The file type.</param>
     /// <param name="dto">The file data.</param>
     /// <returns>Returns a CREATE contract.</returns>
-    static member createCreate(path, dtoType: DTOType, dto: DTO) = {Operation= Operation.CREATE; Path = path; DTOType = Some dtoType; DTO = Some dto}
+    static member createCreate(path, dtoType: DTOType, ?dto: DTO) = {Operation= Operation.CREATE; Path = path; DTOType = Some dtoType; DTO = dto}
     /// <summary>Create a UPDATE contract with all necessary information.
     /// 
     /// Update contracts will overwrite in case of a string as DTO and will specifically update relevant changes only for spreadsheet files.

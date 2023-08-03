@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Path.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
 

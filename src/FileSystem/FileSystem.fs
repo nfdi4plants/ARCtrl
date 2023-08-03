@@ -30,4 +30,7 @@ type FileSystem =
         let tree = FileSystemTree.fromFilePaths paths
         FileSystem.create(tree)
 
-    
+    member this.Union(other : FileSystem) : FileSystem =
+        let tree = this.Tree.Union(other.Tree)
+        let history = Array.append this.History other.History
+        FileSystem.create(tree, history)

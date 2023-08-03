@@ -11,6 +11,9 @@ let [<Literal>] READMEFileName = "README.md"
 let [<Literal>] AssayProtocolsFolderName = "protocols"
 let [<Literal>] AssayDatasetFolderName = "dataset"
 
+let [<Literal>] StudiesProtocolsFolderName = "protocols"
+let [<Literal>] StudiesResourcesFolderName = "resources"
+
 //let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]
 
 //let combineAssayFolderPath (assay : ISA.ArcAssay) = 

@@ -26,20 +26,52 @@ module ARCAux =
         |> Array.exactlyOne 
         |> fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 
-[<AttachMembers>]
-type ARC =
-    {
-       ISA : ISA.ArcInvestigation option
-       CWL : CWL.CWL option
-       FileSystem : FileSystem.FileSystem option
-    }
+    let updateFSByISA (isa : ArcInvestigation option) (fs : FileSystem) = 
+        let (studyNames,assayNames) = 
+            match isa with
+            | Some inv ->         
+                inv.Studies
+                |> Seq.fold (fun (studyNames,assayNames) s ->
+                    Array.append studyNames [|s.Identifier|],
+                    Array.append assayNames (s.Assays |> Seq.map (fun a -> a.Identifier) |> Array.ofSeq)
+            
+                ) ([||],[||])
+            | None -> ([||],[||])
+        let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.createAssayFolder)
+        let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.createStudyFolder)
+        let investigation = FileSystemTree.createInvestigationFile()
+        let tree = 
+            FileSystemTree.createRootFolder [|investigation;assays;studies|]
+            |> FileSystem.create
+        fs.Union(tree)    
 
-    static member create(?isa: ISA.ArcInvestigation,?cwl: CWL.CWL, ?fs: FileSystem.FileSystem) =
-        {
-           ISA = isa
-           CWL = cwl
-           FileSystem = fs
-        }
+    let updateFSByCWL (cwl : CWL.CWL option) (fs : FileSystem) =       
+        let workflows = FileSystemTree.createWorkflowsFolder [||]
+        let runs = FileSystemTree.createRunsFolder [||]       
+        let tree = 
+            FileSystemTree.createRootFolder [|workflows;runs|]
+            |> FileSystem.create
+        fs.Union(tree)    
+
+[<AttachMembers>]
+type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
+
+    let mutable isa = isa
+    let mutable cwl = cwl
+    let mutable fs = 
+        fs
+        |> Option.defaultValue (FileSystem.create(FileSystemTree.Folder ("",[||])))
+        |> ARCAux.updateFSByISA isa
+        |> ARCAux.updateFSByCWL cwl
+
+    member this.ISA 
+        with get() = isa
+
+    member this.CWL 
+        with get() = cwl
+
+    member this.FileSystem 
+        with get() = fs
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -110,27 +142,23 @@ type ARC =
 
     static member fromFilePaths (filePaths : string array) : ARC = 
         let fs : FileSystem = FileSystem.fromFilePaths filePaths
-        ARC.create(fs=fs)
+        ARC(fs=fs)
 
-    // Maybe add forceReplace flag?
-    member this.addFSFromFilePaths (filePaths : string array) : ARC = 
-        let fs : FileSystem = FileSystem.fromFilePaths filePaths
-        { this with FileSystem = Some fs }
+    //// Maybe add forceReplace flag?
+    //member this.SetFSFromFilePaths (filePaths : string array) = 
+    //    let newFS : FileSystem = FileSystem.fromFilePaths filePaths
+    //    fs <- Some newFS
 
     // to-do: function that returns read contracts based on a list of paths.
-    member this.getReadContracts () =
-        match this.FileSystem with
-        | Some fs -> fs.Tree.ToFilePaths() |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath
-        | None -> failwith "Cannot create READ contracts from ARC without FileSystem.
-
-You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFromFilePaths` to avoid this issue."
+    member this.GetReadContracts () =
+        fs.Tree.ToFilePaths() |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath 
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
     /// </summary>
     /// <param name="cArr">The fullfilled READ contracts.</param>
     /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
-    member this.addISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
+    member this.SetISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
         let enableLogging = defaultArg enableLogging false
         /// get investigation from xlsx
         let investigation = ARCAux.getArcInvestigationFromContracts contracts
@@ -161,68 +189,51 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
             | None -> 
                 if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
         )
-        {this with ISA = Some investigation}
+        isa <- Some investigation
 
 
-    static member updateFileSystemTree(arc) =   
-        let investigationName,(studyNames,assayNames) = 
-            match arc.ISA with
-            | Some inv ->         
-                inv.Identifier,
-                inv.Studies
-                |> Seq.fold (fun (studyNames,assayNames) s ->
-                    Array.append studyNames [|s.Identifier|],
-                    Array.append assayNames (s.Assays |> Seq.map (fun a -> a.Identifier) |> Array.ofSeq)
-            
-                ) ([||],[||])
-            | None -> Identifier.createMissingIdentifier(), ([||],[||])
-        let workflows = FileSystemTree.createWorkflowsFolder [||]
-        let runs = FileSystemTree.createRunsFolder [||]
-        let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.initAssayFolder)
-        let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.initStudyFolder)
-        let investigation = FileSystemTree.createFile "isa.investigation.xlsx"
-        let tree = FileSystemTree.createFolder(investigationName, [|investigation;assays;studies;workflows;runs|])
-        let fs = FileSystem.create(tree)
-        ARC.create(?isa = arc.ISA,fs = fs)
-        
+    member this.UpdateFileSystem() =   
+        let newFS = 
+            ARCAux.updateFSByISA isa fs
+            |> ARCAux.updateFSByCWL cwl
+        fs <- newFS        
 
 
     /// <summary>
-    /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
-    /// </summary>
-    /// <param name="cArr">The fullfilled READ contracts.</param>
-    /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
-    member this.getWriteContracts () =
-        let arc = ARC.updateFileSystemTree this
+    /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
+    /// </summary>  
+    member this.GetWriteContracts () =
+
+        /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
-        match arc.ISA with
+        match this.ISA with
         | Some inv -> 
-            workbooks.Add ("isa.investigation.xlsx", (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
             inv.Studies
             |> Seq.iter (fun s ->
                 workbooks.Add (
-                    Path.combineMany[|"studies";s.Identifier;"isa.study.xlsx"|],
+                    Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ISA.Spreadsheet.ArcStudy.toFsWorkbook s))
                 s.Assays
                 |> Seq.iter (fun a ->
                     workbooks.Add (
-                        Path.combineMany[|"assays";a.Identifier;"isa.assay.xlsx"|],
+                        Identifier.Assay.fileNameFromIdentifier a.Identifier,
                         (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
                 )
             )
-        | None -> printfn "ARC contains no ISA part."
-        match arc.FileSystem with
-        | Some fs -> 
-            fs.Tree.ToFilePaths(true)
-            |> Array.map (fun fp ->
-                match Dictionary.tryGet fp workbooks with
-                | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
-                | None -> Contract.createCreate(fp, DTOType.PlainText, DTO.Text "")
-           
-            )
         | None -> 
-            printfn "ARC contains no FileSystem part."
-            [||]
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            printfn "ARC contains no ISA part."
+
+        /// Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
+        fs.Tree.ToFilePaths(true)
+        |> Array.map (fun fp ->
+            match Dictionary.tryGet fp workbooks with
+            | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
+            | None -> Contract.createCreate(fp, DTOType.PlainText)
+           
+        )
+        
 
 
 //-Pseudo code-//

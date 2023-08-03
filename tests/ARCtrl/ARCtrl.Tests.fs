@@ -7,13 +7,13 @@ open Expecto
 #endif
 
 open ARCtrl
+open ISA
 
 let private test_model = testList "model" [
     testCase "create" <| fun _ ->
-        let arc = ARC.create()
+        let arc = ARC()
         Expect.isNone arc.CWL "cwl"
         Expect.isNone arc.ISA "isa"
-        Expect.isNone arc.FileSystem "fs"
     testCase "fromFilePath" <| fun _ ->
         let input = 
             [|@"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
@@ -44,11 +44,58 @@ let private test_model = testList "model" [
         let arc = ARC.fromFilePaths(input)
         Expect.isNone arc.CWL "cwl"
         Expect.isNone arc.ISA "isa"
-        Expect.isSome arc.FileSystem "isSome fs"
-        let actualFilePaths = arc.FileSystem.Value.Tree.ToFilePaths() |> Array.sort
+        let actualFilePaths = arc.FileSystem.Tree.ToFilePaths() |> Array.sort
         Expect.equal actualFilePaths input "isSome fs"
+]
+
+let private test_writeContracts = testList "write_contracts" [
+    testCase "empty" (fun _ ->
+        let arc = ARC()
+        let contracts = arc.GetWriteContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 5 $"Should contain exactly as much contracts as base folders but contained: {contractPathsString}" 
+        Expect.exists contracts (fun c -> c.Path = "workflows/.gitkeep") "Contract for workflows folder missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/.gitkeep") "Contract for runs folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/.gitkeep") "Contract for assays folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/.gitkeep") "Contract for studies folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
+
+    )
+    testCase "simpleISA" (fun _ ->
+        let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+        inv.InitStudy("MyStudy").InitAssay("MyAssay") |> ignore
+        let arc = ARC(isa = inv)
+        let contracts = arc.GetWriteContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 13 $"Should contain exactly as much contracts as base folders but contained: {contractPathsString}"
+
+        // Base 
+        Expect.exists contracts (fun c -> c.Path = "workflows/.gitkeep") "Contract for workflows folder missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/.gitkeep") "Contract for runs folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/.gitkeep") "Contract for assays folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/.gitkeep") "Contract for studies folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
+
+        // Study folder
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/README.md") "study readme missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/protocols/.gitkeep") "study protocols folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/resources/.gitkeep") "study resources folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/isa.study.xlsx") "study file missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/isa.study.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Study) "study file exisiting but has wrong DTO type"
+
+        // Assay folder
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/README.md") "assay readme missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/protocols/.gitkeep") "assay protocols folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/dataset/.gitkeep") "assay dataset folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx") "assay file missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
+
+    )
 ]
 
 let main = testList "main" [
     test_model
+    test_writeContracts
 ]
