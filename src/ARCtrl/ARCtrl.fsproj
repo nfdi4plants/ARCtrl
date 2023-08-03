@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <Compile Include="Path.fs" />
+    <Compile Include="FileSystemTree.fs" />
     <Compile Include="Contracts\Contracts.ArcAssay.fs" />
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />

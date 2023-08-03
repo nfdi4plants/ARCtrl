@@ -28,11 +28,6 @@ module ARCAux =
 
 [<AttachMembers>]
 type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
-    {
-       ISA : ISA.ArcInvestigation option
-       CWL : CWL.CWL option
-       FileSystem : FileSystem.FileSystem option
-    }
 
     let mutable isa = isa
     let mutable cwl = cwl
@@ -184,46 +179,46 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
             | None -> Identifier.createMissingIdentifier(), ([||],[||])
         let workflows = FileSystemTree.createWorkflowsFolder [||]
         let runs = FileSystemTree.createRunsFolder [||]
-        let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.initAssayFolder)
-        let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.initStudyFolder)
-        let investigation = FileSystemTree.createFile "isa.investigation.xlsx"
+        let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.createAssayFolder)
+        let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.createStudyFolder)
+        let investigation = FileSystemTree.createInvestigationFile()
         let tree = FileSystemTree.createFolder(investigationName, [|investigation;assays;studies;workflows;runs|])
         let newFS = FileSystem.create(tree)
         fs <- Some newFS        
-        
 
 
     /// <summary>
-    /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
-    /// </summary>
+    /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
+    /// </summary>  
     member this.GetWriteContracts () =
 
         /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
-        match arc.ISA with
+        match this.ISA with
         | Some inv -> 
-            workbooks.Add ("isa.investigation.xlsx", (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
             inv.Studies
             |> Seq.iter (fun s ->
                 workbooks.Add (
-                    Path.combineMany[|"studies";s.Identifier;"isa.study.xlsx"|],
+                    Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ISA.Spreadsheet.ArcStudy.toFsWorkbook s))
                 s.Assays
                 |> Seq.iter (fun a ->
                     workbooks.Add (
-                        Path.combineMany[|"assays";a.Identifier;"isa.assay.xlsx"|],
+                        Identifier.Assay.fileNameFromIdentifier a.Identifier,
                         (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
                 )
             )
         | None -> printfn "ARC contains no ISA part."
-        match arc.FileSystem with
+
+        /// Iterates over filesystem and creates a write contract for every file. If possible, include DTO.
         match this.FileSystem with
         | Some fs -> 
             fs.Tree.ToFilePaths(true)
             |> Array.map (fun fp ->
                 match Dictionary.tryGet fp workbooks with
                 | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
-                | None -> Contract.createCreate(fp, DTOType.PlainText, DTO.Text "")
+                | None -> Contract.createCreate(fp, DTOType.PlainText)
            
             )
         | None -> 
