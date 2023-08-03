@@ -16,12 +16,12 @@ let private test_create =
             let description = "Investigation Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let ontologySourceReferences = [OntologySourceReference.create("Reference 1")]
-            let publications = [Publication.create("Publication 1")]
-            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
-            let studies = ResizeArray([ArcStudy.init("Study 1")])
-            let comments = [Comment.create("Comment 1")]
-            let remarks = [Remark.create(1, "Remark 1")]
+            let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
+            let publications = [|Publication.create("Publication 1")|]
+            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let studies = ResizeArray([|ArcStudy.init("Study 1")|])
+            let comments = [|Comment.create("Comment 1")|]
+            let remarks = [|Remark.create(1, "Remark 1")|]
 
             let actual =
                 ArcInvestigation(
@@ -56,12 +56,12 @@ let private test_create =
             let description = "Investigation Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let ontologySourceReferences = [OntologySourceReference.create("Reference 1")]
-            let publications = [Publication.create("Publication 1")]
-            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
-            let studies = ResizeArray([ArcStudy.init("Study 1")])
-            let comments = [Comment.create("Comment 1")]
-            let remarks = [Remark.create(1, "Remark 1")]
+            let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
+            let publications = [|Publication.create("Publication 1")|]
+            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let studies = ResizeArray([|ArcStudy.init("Study 1")|])
+            let comments = [|Comment.create("Comment 1")|]
+            let remarks = [|Remark.create(1, "Remark 1")|]
 
             let actual = ArcInvestigation.create(
                 identifier = identifier,
@@ -112,12 +112,12 @@ let private test_create =
             let description = Some "Investigation Description"
             let submissionDate = Some "2023-07-19"
             let publicReleaseDate = Some "2023-12-31"
-            let ontologySourceReferences = [OntologySourceReference.create("Reference 1")]
-            let publications = [Publication.create("Publication 1")]
-            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
-            let studies = ResizeArray([ArcStudy.init("Study 1")])
-            let comments = [Comment.create("Comment 1")]
-            let remarks = [Remark.create(1, "Remark 1")]
+            let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
+            let publications = [|Publication.create("Publication 1")|]
+            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let studies = ResizeArray([|ArcStudy.init("Study 1")|])
+            let comments = [|Comment.create("Comment 1")|]
+            let remarks = [|Remark.create(1, "Remark 1")|]
 
             let actual = 
                 ArcInvestigation.make
@@ -152,7 +152,7 @@ let tests_MutableFields = testList "MutableFields" [
         Expect.equal i.Description None ""
     testCase "test mutable fields" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
+        let persons = [|Person.create(FirstName="Kevin", LastName="Frey")|]
         i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
@@ -164,7 +164,7 @@ let tests_MutableFields = testList "MutableFields" [
 let tests_Copy = testList "Copy" [
     testCase "test mutable fields" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
+        let persons = [|Person.create(FirstName="Kevin", LastName="Frey")|]
         i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
@@ -172,7 +172,7 @@ let tests_Copy = testList "Copy" [
         Expect.equal i.Contacts persons "Contacts"
         Expect.equal i.Title (Some "Awesome Title") "Title"
         let copy = i.Copy()
-        let nextPersons = [Person.create(FirstName="Pascal", LastName="Gevangen")]
+        let nextPersons = [|Person.create(FirstName="Pascal", LastName="Gevangen")|]
         copy.Description <- Some "Next FileName"
         copy.Contacts <- nextPersons
         copy.Title <- Some "Next Title"
@@ -184,7 +184,7 @@ let tests_Copy = testList "Copy" [
         Expect.equal copy.Title (Some "Next Title") "copy Title"
     testCase "test mutable fields on study" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        let persons = [Person.create(FirstName="Kevin", LastName="Frey")]
+        let persons = [|Person.create(FirstName="Kevin", LastName="Frey")|]
         i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
@@ -199,7 +199,7 @@ let tests_Copy = testList "Copy" [
         Expect.equal sNext.Description (Some "My Test Desciption") "study description"
         // Create `copy` and change params. Then `i` should still be the same while `copy` must be changed
         let copy = i.Copy()
-        let nextPersons = [Person.create(FirstName="Pascal", LastName="Gevangen")]
+        let nextPersons = [|Person.create(FirstName="Pascal", LastName="Gevangen")|]
         copy.Description <- Some "Next FileName"
         copy.Contacts <- nextPersons
         copy.Title <- Some "Next Title"

@@ -23,7 +23,7 @@ type MaterialAttribute =
         MaterialAttribute.create()
 
     /// Create a ISAJson MaterialAttribute from ISATab string entries
-    static member fromString (term:string, source:string, accession:string, ?comments : Comment list) =
+    static member fromString (term:string, source:string, accession:string, ?comments : Comment []) =
         let oa = OntologyAnnotation.fromString (term, source, accession, ?comments = comments)
         MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 

@@ -25,7 +25,7 @@ module Publications =
             (Option.fromValueWithDefault "" author)
             (Option.fromValueWithDefault "" title) 
             (Option.fromValueWithDefault OntologyAnnotation.empty status) 
-            (Option.fromValueWithDefault [] comments)
+            (Option.fromValueWithDefault [||] comments)
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -39,6 +39,7 @@ module Publications =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                    |> Array.ofList
 
                 fromString
                     (matrix.TryGetValueDefault("",(pubMedIDLabel,i)))            
@@ -70,7 +71,7 @@ module Publications =
             | None -> ()
             | Some c ->
                 c
-                |> List.iter (fun comment -> 
+                |> Array.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
                     matrix.Matrix.Add((n,i),v)

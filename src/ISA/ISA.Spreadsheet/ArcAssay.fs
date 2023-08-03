@@ -20,7 +20,7 @@ let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
             yield! Assays.toRows (Some assaysPrefix) [assay]
 
             yield SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsPrefix) (assay.Performers)
+            yield! Contacts.toRows (Some contactsPrefix) (List.ofArray assay.Performers)
         }
     let sheet = FsWorksheet(metaDataSheetName)
     assay
@@ -53,7 +53,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
                     assays
                     |> Seq.tryHead 
                     |> Option.defaultValue (ArcAssay.create(Identifier.createMissingIdentifier()))
-                    |> ArcAssay.setPerformers contacts
+                    |> ArcAssay.setPerformers (Array.ofList contacts)
         
         if en.MoveNext () then
             let currentLine = en.Current |> SparseRow.tryGetValueAt 0

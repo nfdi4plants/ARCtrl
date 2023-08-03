@@ -41,7 +41,7 @@ module Publication =
                 Authors = get.Optional.Field "authorList" Decode.string
                 Title = get.Optional.Field "title" Decode.string
                 Status = get.Optional.Field "status" (OntologyAnnotation.decoder options)
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
+                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))
             }
             
         )

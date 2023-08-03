@@ -8,7 +8,7 @@ type Factor =
         ID : URI option
         Name : string option
         FactorType : OntologyAnnotation option
-        Comments : Comment list option
+        Comments : Comment [] option
     }
 
     static member make id name factorType comments =
@@ -26,7 +26,7 @@ type Factor =
         Factor.create()
 
     /// Create a ISAJson Factor from ISATab string entries
-    static member fromString (name : string, term:string, source:string, accession:string, ?comments : Comment list) =
+    static member fromString (name : string, term:string, source:string, accession:string, ?comments : Comment []) =
         let oa = OntologyAnnotation.fromString (term, source, accession, ?comments = comments)
         Factor.make None (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
 
@@ -82,12 +82,12 @@ type Factor =
         factor.Comments
 
     /// Applies function f on comments of a factor
-    static member mapComments (f : Comment list -> Comment list) (factor : Factor) =
+    static member mapComments (f : Comment [] -> Comment []) (factor : Factor) =
         { factor with 
             Comments = Option.map f factor.Comments}
 
     /// Replaces comments of a factor by given comment list
-    static member setComments (factor : Factor) (comments : Comment list) =
+    static member setComments (factor : Factor) (comments : Comment []) =
         { factor with
             Comments = Some comments }
 

@@ -23,7 +23,7 @@ type ProtocolParameter =
         ProtocolParameter.create()
 
     /// Create a ISAJson Protocol Parameter from ISATab string entries
-    static member fromString (term:string, source:string, accession:string, ?comments : Comment list) =
+    static member fromString (term:string, source:string, accession:string, ?comments : Comment []) =
         let oa = OntologyAnnotation.fromString (term, source, accession, ?comments = comments)
         ProtocolParameter.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
 

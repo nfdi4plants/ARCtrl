@@ -10,7 +10,7 @@ type Publication =
         Authors : string option
         Title : string option
         Status : OntologyAnnotation option
-        Comments : Comment list option
+        Comments : Comment [] option
     }
 
     static member make pubMedID doi authors title status comments =
@@ -93,11 +93,11 @@ type Publication =
         publication.Comments
     
     /// Applies function f on comments of a protocol
-    static member mapComments (f : Comment list -> Comment list) (publication : Publication) =
+    static member mapComments (f : Comment [] -> Comment []) (publication : Publication) =
         { publication with 
-            Comments = Option.mapDefault [] f publication.Comments}
+            Comments = Option.mapDefault [||] f publication.Comments}
     
     /// Replaces comments of a protocol by given comment list
-    static member setComments (publication : Publication) (comments : Comment list) =
+    static member setComments (publication : Publication) (comments : Comment []) =
         { publication with
             Comments = Some comments }

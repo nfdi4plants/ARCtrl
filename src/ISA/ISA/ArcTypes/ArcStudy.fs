@@ -14,13 +14,13 @@ module ArcStudyAux =
 
 [<AttachMembers>]
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
-    let publications = defaultArg publications []
-    let contacts = defaultArg contacts []
-    let studyDesignDescriptors = defaultArg studyDesignDescriptors []
+    let publications = defaultArg publications [||]
+    let contacts = defaultArg contacts [||]
+    let studyDesignDescriptors = defaultArg studyDesignDescriptors [||]
     let tables = defaultArg tables <| ResizeArray()
     let assays = defaultArg assays <| ResizeArray()
-    let factors = defaultArg factors []
-    let comments = defaultArg comments []
+    let factors = defaultArg factors [||]
+    let comments = defaultArg comments [||]
 
     let mutable identifier = identifier
     /// Must be unique in one investigation
@@ -32,13 +32,13 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member val Description : string option = description with get, set
     member val SubmissionDate : string option = submissionDate with get, set
     member val PublicReleaseDate : string option = publicReleaseDate with get, set
-    member val Publications : Publication list = publications with get, set
-    member val Contacts : Person list = contacts with get, set
-    member val StudyDesignDescriptors : OntologyAnnotation list = studyDesignDescriptors with get, set
+    member val Publications : Publication [] = publications with get, set
+    member val Contacts : Person [] = contacts with get, set
+    member val StudyDesignDescriptors : OntologyAnnotation [] = studyDesignDescriptors with get, set
     member val Tables : ResizeArray<ArcTable> = tables with get, set
     member val Assays : ResizeArray<ArcAssay> = assays with get, set
-    member val Factors : Factor list = factors with get, set
-    member val Comments : Comment list= comments with get, set
+    member val Factors : Factor [] = factors with get, set
+    member val Comments : Comment []= comments with get, set
 
     static member init(identifier : string) = ArcStudy identifier
 
@@ -57,13 +57,13 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             (this.Description = None) &&
             (this.SubmissionDate = None) &&
             (this.PublicReleaseDate = None) &&
-            (this.Publications = []) &&
-            (this.Contacts = []) &&
-            (this.StudyDesignDescriptors = []) &&
+            (this.Publications = [||]) &&
+            (this.Contacts = [||]) &&
+            (this.StudyDesignDescriptors = [||]) &&
             (this.Tables.Count = 0) &&
             (this.Assays.Count = 0) &&
-            (this.Factors = []) &&
-            (this.Comments = [])
+            (this.Factors = [||]) &&
+            (this.Comments = [||])
 
     // Not sure how to handle this best case.
     static member FileName = ARCtrl.Path.StudyFileName
@@ -499,17 +499,17 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             ?Description = this.Description,
             ?SubmissionDate = this.SubmissionDate,
             ?PublicReleaseDate = this.PublicReleaseDate,
-            ?Publications = (this.Publications |> Option.fromValueWithDefault []),
-            ?Contacts = (this.Contacts |> Option.fromValueWithDefault []),
-            ?StudyDesignDescriptors = (this.StudyDesignDescriptors |> Option.fromValueWithDefault []),
+            ?Publications = (this.Publications |> List.ofArray |> Option.fromValueWithDefault []),
+            ?Contacts = (this.Contacts |> List.ofArray |> Option.fromValueWithDefault []),
+            ?StudyDesignDescriptors = (this.StudyDesignDescriptors |> List.ofArray |> Option.fromValueWithDefault []),
             ?Protocols = protocols,
             ?Materials = studyMaterials,
             ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
             ?Assays = assays,
-            ?Factors = (this.Factors |> Option.fromValueWithDefault []),
+            ?Factors = (this.Factors |> List.ofArray |> Option.fromValueWithDefault []),
             ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
             ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
-            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            ?Comments = (this.Comments |> List.ofArray |> Option.fromValueWithDefault [])
             )
 
     // Create an ArcStudy from an ISA Json Study.
@@ -526,12 +526,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             ?description = s.Description,
             ?submissionDate = s.SubmissionDate,
             ?publicReleaseDate = s.PublicReleaseDate,
-            ?publications = s.Publications,
-            ?contacts = s.Contacts,
-            ?studyDesignDescriptors = s.StudyDesignDescriptors,
+            ?publications = (s.Publications |> Option.map Array.ofList),
+            ?contacts = (s.Contacts|> Option.map Array.ofList),
+            ?studyDesignDescriptors = (s.StudyDesignDescriptors |> Option.map Array.ofList),
             ?tables = tables,
             ?assays = assays,
-            ?factors = s.Factors,
-            ?comments = s.Comments
+            ?factors = (s.Factors |> Option.map Array.ofList),
+            ?comments = (s.Comments |> Option.map Array.ofList)
             )
 

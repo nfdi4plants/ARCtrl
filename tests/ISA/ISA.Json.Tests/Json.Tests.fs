@@ -83,7 +83,7 @@ let testEncode =
 
         testCase "tryGetPropertyValueSequence" (fun () ->
             
-            let comments = [ISA.Comment.fromString "k1" "v1"; ISA.Comment.fromString "k2" "vv"]
+            let comments = [|ISA.Comment.fromString "k1" "v1"; ISA.Comment.fromString "k2" "vv"|]
             let oa = ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC", comments)
 
             let field = "Comments" 
@@ -96,7 +96,7 @@ let testEncode =
                 #if FABLE_COMPILER
                 !!result.Value
                 #else
-                result.Value :?> Comment list
+                result.Value :?> Comment []
                 #endif
 
             let expected = comments
@@ -143,7 +143,7 @@ let testOntoloyAnnotation =
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
                 let expected = 
-                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [comment])
+                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
                 
                 Expect.equal result expected "Source did not match"
             )
@@ -174,7 +174,7 @@ let testOntoloyAnnotationLD =
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
                 let expected = 
-                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [comment])
+                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
                 
                 Expect.equal result expected "Source did not match"
             )
@@ -1244,7 +1244,7 @@ let testInvestigationFile =
                     (Some "pso")
                     (Some "published")
                     (Some "http://purl.org/spar/pso/published")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let publication =
                 Publication.make
@@ -1253,7 +1253,7 @@ let testInvestigationFile =
                     (Some "Lukas Weil, Other Gzúy")
                     (Some "Fair is great")
                     (Some publicationStatus)
-                    (Some [comment])
+                    (Some [|comment|])
 
             let role = 
                 OntologyAnnotation.make 
@@ -1262,7 +1262,7 @@ let testInvestigationFile =
                     (Some "swo")
                     (Some "0000392")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let person =
                 Person.make
@@ -1275,8 +1275,8 @@ let testInvestigationFile =
                     (Some "9876 543210")
                     (Some "fantasyStreet 23, 123 Town")
                     (Some "Universiteee")
-                    (Some [role])
-                    (Some [comment])
+                    (Some [|role|])
+                    (Some [|comment|])
 
             let characteristic = 
                 MaterialAttribute.make 
@@ -1288,7 +1288,7 @@ let testInvestigationFile =
                             (Some "obi")
                             (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-                            (Some [comment])
+                            (Some [|comment|])
                     ))
 
             let characteristicValue = 
@@ -1302,7 +1302,7 @@ let testInvestigationFile =
                             (Some "obi")
                             (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-                            (Some [comment])
+                            (Some [|comment|])
                         |> Value.Ontology
                     ))
                     None
@@ -1314,7 +1314,7 @@ let testInvestigationFile =
                     (Some "ncit")
                     (Some "C18235")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
-                    (Some [comment])
+                    (Some [|comment|])
 
             let protocolType = 
                 OntologyAnnotation.make
@@ -1323,7 +1323,7 @@ let testInvestigationFile =
                     (Some "dfbo")
                     (Some "DFBA_0000001")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let parameter = 
                 ProtocolParameter.make
@@ -1335,7 +1335,7 @@ let testInvestigationFile =
                             (Some "uo")
                             (Some "UO_0000005")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
-                            (Some [comment])
+                            (Some [|comment|])
                     ))
 
             let parameterUnit =              
@@ -1345,7 +1345,7 @@ let testInvestigationFile =
                     (Some "uo")
                     (Some "UO_0000027")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let parameterValue = 
                 ProcessParameterValue.make
@@ -1363,7 +1363,7 @@ let testInvestigationFile =
                             (Some "obi")
                             (Some "0001110")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
-                            (Some [comment])
+                            (Some [|comment|])
                         |> Value.Ontology
                     ))
                     None
@@ -1374,7 +1374,7 @@ let testInvestigationFile =
                             (Some "obi")
                             (Some "0000989")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
-                            (Some [comment])
+                            (Some [|comment|])
                     ))
                 
             let protocol = 
@@ -1400,9 +1400,9 @@ let testInvestigationFile =
                                 (Some "pato")
                                 (Some "0000165")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
-                                (Some [comment])
+                                (Some [|comment|])
                         ))
-                        (Some [comment])
+                        (Some [|comment|])
 
             let factorUnit = 
                 OntologyAnnotation.make
@@ -1411,7 +1411,7 @@ let testInvestigationFile =
                     (Some "uo")
                     (Some "0000032")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
-                    (Some [comment])
+                    (Some [|comment|])
                     
 
             let factorValue = 
@@ -1500,7 +1500,7 @@ let testInvestigationFile =
                     (Some "ncit")
                     (Some "C161813")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let technologyType = 
                 OntologyAnnotation.make
@@ -1509,7 +1509,7 @@ let testInvestigationFile =
                     (Some "ncit")
                     (Some "C70698")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let assayMaterials =
                 AssayMaterials.make
@@ -1680,7 +1680,7 @@ let testInvestigationFileLD =
                     (Some "pso")
                     (Some "published")
                     (Some "http://purl.org/spar/pso/published")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let publication =
                 Publication.make
@@ -1689,7 +1689,7 @@ let testInvestigationFileLD =
                     (Some "Lukas Weil, Other Gzúy")
                     (Some "Fair is great")
                     (Some publicationStatus)
-                    (Some [comment])
+                    (Some [|comment|])
 
             let role = 
                 OntologyAnnotation.make 
@@ -1698,7 +1698,7 @@ let testInvestigationFileLD =
                     (Some "swo")
                     (Some "0000392")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let person =
                 Person.make
@@ -1711,8 +1711,8 @@ let testInvestigationFileLD =
                     (Some "9876 543210")
                     (Some "fantasyStreet 23, 123 Town")
                     (Some "Universiteee")
-                    (Some [role])
-                    (Some [comment])
+                    (Some [|role|])
+                    (Some [|comment|])
 
             let characteristic = 
                 MaterialAttribute.make 
@@ -1724,7 +1724,7 @@ let testInvestigationFileLD =
                             (Some "obi")
                             (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-                            (Some [comment])
+                            (Some [|comment|])
                     ))
 
             let characteristicValue = 
@@ -1738,7 +1738,7 @@ let testInvestigationFileLD =
                             (Some "obi")
                             (Some "0100026")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-                            (Some [comment])
+                            (Some [|comment|])
                         |> Value.Ontology
                     ))
                     None
@@ -1750,7 +1750,7 @@ let testInvestigationFileLD =
                     (Some "ncit")
                     (Some "C18235")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
-                    (Some [comment])
+                    (Some [|comment|])
 
             let protocolType = 
                 OntologyAnnotation.make
@@ -1759,7 +1759,7 @@ let testInvestigationFileLD =
                     (Some "dfbo")
                     (Some "0000001")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let parameter = 
                 ProtocolParameter.make
@@ -1771,7 +1771,7 @@ let testInvestigationFileLD =
                             (Some "uo")
                             (Some "UO_0000005")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
-                            (Some [comment])
+                            (Some [|comment|])
                     ))
 
             let parameterUnit =              
@@ -1781,7 +1781,7 @@ let testInvestigationFileLD =
                     (Some "uo")
                     (Some "0000027")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let parameterValue = 
                 ProcessParameterValue.make
@@ -1799,7 +1799,7 @@ let testInvestigationFileLD =
                             (Some "obi")
                             (Some "0001110")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
-                            (Some [comment])
+                            (Some [|comment|])
                         |> Value.Ontology
                     ))
                     None
@@ -1810,7 +1810,7 @@ let testInvestigationFileLD =
                             (Some "obi")
                             (Some "0000989")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
-                            (Some [comment])
+                            (Some [|comment|])
                     ))
                 
             let protocol = 
@@ -1836,9 +1836,9 @@ let testInvestigationFileLD =
                                 (Some "pato")
                                 (Some "0000165")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
-                                (Some [comment])
+                                (Some [|comment|])
                         ))
-                        (Some [comment])
+                        (Some [|comment|])
 
             let factorUnit = 
                 OntologyAnnotation.make
@@ -1847,7 +1847,7 @@ let testInvestigationFileLD =
                     (Some "uo")
                     (Some "0000032")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
-                    (Some [comment])
+                    (Some [|comment|])
                     
 
             let factorValue = 
@@ -1936,7 +1936,7 @@ let testInvestigationFileLD =
                     (Some "ncit")
                     (Some "C161813")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let technologyType = 
                 OntologyAnnotation.make
@@ -1945,7 +1945,7 @@ let testInvestigationFileLD =
                     (Some "ncit")
                     (Some "C70698")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let assayMaterials =
                 AssayMaterials.make

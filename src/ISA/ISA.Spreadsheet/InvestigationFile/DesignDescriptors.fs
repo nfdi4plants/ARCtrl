@@ -25,6 +25,7 @@ module DesignDescriptors =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                    |> Array.ofList
 
                 OntologyAnnotation.fromString(
                     (matrix.TryGetValueDefault("",(designTypeLabel,i))),
@@ -49,7 +50,7 @@ module DesignDescriptors =
             | None -> ()
             | Some c ->
                 c
-                |> List.iter (fun comment -> 
+                |> Array.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
                     matrix.Matrix.Add((n,i),v)
