@@ -23,6 +23,9 @@ type FileSystemTree =
         let children = defaultArg children [||]
         Folder(name,children)
 
+    static member createRootFolder(children:FileSystemTree array) = 
+        Folder(FileSystemTree.ROOT_NAME,children)
+
     member this.AddFile (path: string) : FileSystemTree =
         let existingPaths = this.ToFilePaths()
         let filePaths = [|
@@ -114,3 +117,8 @@ type FileSystemTree =
     static member filter (predicate: string -> bool) =
         fun (tree: FileSystemTree) -> tree.Filter predicate
 
+    member this.Union(otherFST : FileSystemTree) =
+        this.ToFilePaths() 
+        |> Array.append (otherFST.ToFilePaths())
+        |> Array.distinct
+        |> FileSystemTree.fromFilePaths
