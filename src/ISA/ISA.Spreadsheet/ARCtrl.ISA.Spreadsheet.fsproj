@@ -41,8 +41,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ISA\ISA.fsproj" />
-    <ProjectReference Include="..\..\FileSystem\FileSystem.fsproj" />
+    <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
+    <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
   
   <PropertyGroup>
