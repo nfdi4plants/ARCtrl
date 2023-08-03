@@ -97,6 +97,8 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
         None
 
 let toFsWorksheet (table : ArcTable) =
+    /// This dictionary is used to add spaces at the end of duplicate headers.
+    let stringCount = System.Collections.Generic.Dictionary<string,string>()
     let ws = FsWorksheet(table.Name)
     let columns = 
         table.Columns
@@ -109,8 +111,18 @@ let toFsWorksheet (table : ArcTable) =
     |> List.iteri (fun colI col ->         
         col
         |> List.iteri (fun rowI cell -> 
+            let value = 
+                if rowI = 0 then
+                    match Dictionary.tryGet cell.Value stringCount with
+                    | Some spaces ->
+                        stringCount.[cell.Value] <- spaces + " "
+                        cell.Value + " " + spaces
+                    | None ->
+                        stringCount.Add(cell.Value,"")
+                        cell.Value
+                else cell.Value
             let address = FsAddress(rowI+1,colI+1)
-            fsTable.Cell(address, ws.CellCollection).SetValueAs cell.Value
+            fsTable.Cell(address, ws.CellCollection).SetValueAs value
         )  
     )
     ws

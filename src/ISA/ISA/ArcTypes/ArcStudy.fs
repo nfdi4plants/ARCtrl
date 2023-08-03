@@ -90,12 +90,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member this.InitAssay(assayName: string) =
         let assay = ArcAssay(assayName)
         this.AddAssay(assay)
+        assay
 
     static member initAssay(assayName: string) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
             newStudy.InitAssay(assayName)
-            newStudy
 
     // - Assay API - CRUD //
     member this.RemoveAssayAt(index: int) =
@@ -193,7 +193,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         fun (study:ArcStudy) ->
             let c = study.Copy()
             c.InitTable(tableName, ?index=index)
-            c
+            
 
     // - Table API - //
     member this.InitTables(tableNames:seq<string>, ?index: int) =  ArcTables(this.Tables).InitTables(tableNames, ?index = index)

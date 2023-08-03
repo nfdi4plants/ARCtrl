@@ -285,6 +285,19 @@ module Protocol =
                 t.Cell(FsAddress(i, colCount + 3),c).SetValueAs instrumentValueV3
 
 
+let addSpacesToEnd (cc : FsCellsCollection) (t : FsTable) =
+    let count = System.Collections.Generic.Dictionary<string,string>()
+    t.HeadersRow().Cells(cc) |> Seq.iter  (fun c -> 
+        match Dictionary.tryGet c.Value count with
+        | Some v -> 
+            let newV = v + " "
+            c.SetValueAs (c.Value + newV)
+            count.[c.Value] <- newV
+        | None ->
+            count.[c.Value] <- ""
+    
+    )
+
 let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c = FsCellsCollection()
     let t = FsTable(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))
@@ -302,4 +315,6 @@ let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTa
     let t  = w.Table(ArcTable.annotationTablePrefix, FsRangeAddress("A1:A1"))
     appendOperations 
     |> List.iter (fun o -> o w.CellCollection t)
+    addSpacesToEnd w.CellCollection t
+    t.RescanFieldNames(w.CellCollection)
     w

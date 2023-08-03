@@ -113,3 +113,35 @@ type FileSystemTree =
 
     static member filter (predicate: string -> bool) =
         fun (tree: FileSystemTree) -> tree.Filter predicate
+
+
+
+    static member initAssayFolder(assayName : string) = 
+        let dataset = FileSystemTree.createFolder("dataset", [|FileSystemTree.createFile ".gitkeep"|])
+        let protocols = FileSystemTree.createFolder("protocols", [|FileSystemTree.createFile ".gitkeep"|])
+        let readme = FileSystemTree.createFile "README.md"
+        let assayFile = FileSystemTree.createFile "isa.assay.xlsx"
+        FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
+
+    static member initStudyFolder(studyName : string) = 
+        let resources = FileSystemTree.createFolder("resources", [|FileSystemTree.createFile ".gitkeep"|])
+        let protocols = FileSystemTree.createFolder("protocols", [|FileSystemTree.createFile ".gitkeep"|])
+        let readme = FileSystemTree.createFile "README.md"
+        let studyFile = FileSystemTree.createFile "isa.study.xlsx"
+        FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
+
+    static member initInvestigationFile() = 
+        FileSystemTree.createFile "isa.investigation.xlsx"
+
+    static member createAssaysFolder(assays : FileSystemTree array) =
+        FileSystemTree.createFolder("assays", Array.append [|FileSystemTree.createFile ".gitkeep"|] assays)
+
+    static member createStudiesFolder(studies : FileSystemTree array) =
+        FileSystemTree.createFolder("studies", Array.append [|FileSystemTree.createFile ".gitkeep"|] studies)
+
+    static member createWorkflowsFolder(workflows : FileSystemTree array) =
+        FileSystemTree.createFolder("workflows", Array.append [|FileSystemTree.createFile ".gitkeep"|] workflows)
+
+    static member createRunsFolder(runs : FileSystemTree array) = 
+        FileSystemTree.createFolder("runs", Array.append [|FileSystemTree.createFile ".gitkeep"|] runs)
+

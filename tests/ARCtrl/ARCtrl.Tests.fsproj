@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ARCtrl.Contracts.Tests.fs" />
     <Compile Include="ARCtrl.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

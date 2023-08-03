@@ -72,7 +72,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
             c.InitTable(tableName, ?index=index)
-            c
+            
 
     // - Table API - //
     member this.InitTables(tableNames:seq<string>, ?index: int) =  ArcTables(this.Tables).InitTables(tableNames, ?index = index)
