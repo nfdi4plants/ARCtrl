@@ -1,7 +1,7 @@
-﻿namespace ISA
+﻿namespace ARCtrl.ISA
 
 open Fable.Core
-open ISA.Aux
+open ARCtrl.ISA.Aux
 
 module ArcStudyAux =
     module SanityChecks = 
@@ -488,7 +488,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             )
             |> Option.fromValueWithDefault StudyMaterials.empty
         let identifier,fileName = 
-            if ISA.Identifier.isMissingIdentifier this.Identifier then
+            if ARCtrl.ISA.Identifier.isMissingIdentifier this.Identifier then
                 None, None
             else
                 Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)             

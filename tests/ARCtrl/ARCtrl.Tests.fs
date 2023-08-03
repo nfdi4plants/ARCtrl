@@ -7,7 +7,7 @@ open Expecto
 #endif
 
 open ARCtrl
-open ISA
+open ARCtrl.ISA
 
 let private test_model = testList "model" [
     testCase "create" <| fun _ ->

@@ -1,4 +1,4 @@
-﻿namespace ISA.Json
+﻿namespace ARCtrl.ISA.Json
 
 type ConverterOptions() = 
 

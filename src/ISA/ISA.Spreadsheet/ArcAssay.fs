@@ -1,6 +1,6 @@
-﻿module ISA.Spreadsheet.ArcAssay
+﻿module ARCtrl.ISA.Spreadsheet.ArcAssay
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 
 let [<Literal>] obsoleteAssaysLabel = "ASSAY METADATA"

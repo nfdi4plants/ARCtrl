@@ -1,5 +1,5 @@
 ﻿/// This module contains helper functions to handle study/assay/investigation identifiers in an unsafe, forced way.
-module ISA.Identifier
+module ARCtrl.ISA.Identifier
 
 open System.Text.RegularExpressions
 

@@ -1,6 +1,6 @@
-﻿module ISA.Spreadsheet.ArcStudy
+﻿module ARCtrl.ISA.Spreadsheet.ArcStudy
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 
 let [<Literal>] obsoleteStudiesLabel = "STUDY METADATA"

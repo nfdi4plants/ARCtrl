@@ -7,8 +7,8 @@ open Expecto
 #endif
 
 
-open ISA
-open ISA.Spreadsheet
+open ARCtrl.ISA
+open ARCtrl.ISA.Spreadsheet
 
 open TestingUtils
 open TestObjects.ArcTable

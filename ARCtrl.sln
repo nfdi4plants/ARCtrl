@@ -16,9 +16,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "CWL", "src\CWL\CWL.fsproj", "{1CD34A01-D19A-441F-8F3D-6EF69D9DDA8D}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.CWL", "src\CWL\ARCtrl.CWL.fsproj", "{1CD34A01-D19A-441F-8F3D-6EF69D9DDA8D}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FileSystem", "src\FileSystem\FileSystem.fsproj", "{F47E23C3-8415-4725-9E85-57271694DEB3}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.FileSystem", "src\FileSystem\ARCtrl.FileSystem.fsproj", "{F47E23C3-8415-4725-9E85-57271694DEB3}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{A3669129-8963-4F6E-A1D6-C691555EF125}"
 	ProjectSection(SolutionItems) = preProject
@@ -76,13 +76,14 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Build", "build\Build.fsproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA", "ISA", "{C61B3F43-2255-4585-9110-F8AB74F02654}"
 	ProjectSection(SolutionItems) = preProject
+		src\ISA\ISA\ArcTypes\ArcInvestigation.fs = src\ISA\ISA\ArcTypes\ArcInvestigation.fs
 		src\ISA\package.json = src\ISA\package.json
 		src\ISA\README.md = src\ISA\README.md
 	EndProjectSection
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA", "src\ISA\ISA\ISA.fsproj", "{67CF6725-6AC0-47FB-A725-6DC2192713B5}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ISA", "src\ISA\ISA\ARCtrl.ISA.fsproj", "{67CF6725-6AC0-47FB-A725-6DC2192713B5}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Json", "src\ISA\ISA.Json\ISA.Json.fsproj", "{2CA397B2-0220-49A3-AD79-2F9F53633EC1}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ISA.Json", "src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj", "{2CA397B2-0220-49A3-AD79-2F9F53633EC1}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{64B34A6E-318D-4E6E-9262-CE52C9B85A38}"
 EndProject
@@ -92,7 +93,7 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Tests", "tests\ISA\ISA.
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Json.Tests", "tests\ISA\ISA.Json.Tests\ISA.Json.Tests.fsproj", "{04789F17-3DC2-4A09-848D-376E5D269740}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet", "src\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj", "{07C7942E-FC34-4C27-82C1-6B2972654BA7}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ISA.Spreadsheet", "src\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj", "{07C7942E-FC34-4C27-82C1-6B2972654BA7}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet.Tests", "tests\ISA\ISA.Spreadsheet.Tests\ISA.Spreadsheet.Tests.fsproj", "{656E8DAF-EFCF-472E-91D0-987D09B74523}"
 EndProject
@@ -115,7 +116,7 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl", "src\ARCtrl\ARCtrl
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Tests", "tests\ARCtrl\ARCtrl.Tests.fsproj", "{801247D5-7EE5-49C8-AB26-F822A415BA49}"
 EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Contract", "src\Contract\Contract.fsproj", "{1945EE8A-F105-43A9-91C9-8C4422B9873E}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Contract", "src\Contract\ARCtrl.Contract.fsproj", "{1945EE8A-F105-43A9-91C9-8C4422B9873E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

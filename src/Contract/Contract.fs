@@ -1,4 +1,4 @@
-﻿namespace Contract
+﻿namespace ARCtrl.Contract
 
 open Fable.Core
 open FsSpreadsheet

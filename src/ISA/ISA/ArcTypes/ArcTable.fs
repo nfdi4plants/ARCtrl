@@ -1,4 +1,4 @@
-﻿namespace ISA
+﻿namespace ARCtrl.ISA
 
 open Fable.Core
 open System.Collections.Generic

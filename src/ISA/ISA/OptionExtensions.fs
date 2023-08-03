@@ -1,4 +1,4 @@
-﻿namespace ISA.Aux
+﻿namespace ARCtrl.ISA.Aux
 
 [<RequireQualifiedAccess>]
 module Option =

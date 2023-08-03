@@ -69,7 +69,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\FileSystem\FileSystem.fsproj" />
+    <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

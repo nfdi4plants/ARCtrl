@@ -1,6 +1,6 @@
-﻿module ISA.Spreadsheet.CompositeCell
+﻿module ARCtrl.ISA.Spreadsheet.CompositeCell
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 
 let fromFsCells (cells : list<FsCell>) : CompositeCell =

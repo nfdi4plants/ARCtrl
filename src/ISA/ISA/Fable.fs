@@ -1,5 +1,5 @@
 ﻿[<RequireQualifiedAccess>]
-module ISA.Fable
+module ARCtrl.ISA.Fable
 
 open Fable.Core
 open Fable.Core.JsInterop

@@ -1,7 +1,7 @@
 ﻿module ARCtrl.Path
 
-open ISA
-open FileSystem
+open ARCtrl.ISA
+open ARCtrl.FileSystem
 
 // Files
 let [<Literal>] GitKeepFileName = ".gitkeep" 

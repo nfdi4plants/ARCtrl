@@ -21,12 +21,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Contract\Contract.fsproj" />
-    <ProjectReference Include="..\CWL\CWL.fsproj" />
-    <ProjectReference Include="..\FileSystem\FileSystem.fsproj" />
-    <ProjectReference Include="..\ISA\ISA\ISA.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Json\ISA.Json.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Spreadsheet\ISA.Spreadsheet.fsproj" />
+    <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
+    <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
+    <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
+    <ProjectReference Include="..\ISA\ISA\ARCtrl.ISA.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

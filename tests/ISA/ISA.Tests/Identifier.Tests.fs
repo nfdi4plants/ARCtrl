@@ -1,6 +1,6 @@
 ﻿module Identifier.Tests
 
-open ISA
+open ARCtrl.ISA
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -8,7 +8,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA.Identifier
+open ARCtrl.ISA.Identifier
 
 let private tests_checkValidCharacters = testList "checkValidCharacters" [
     // Function to test the checkValidCharacters function with a given identifier

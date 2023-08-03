@@ -1,6 +1,6 @@
 ﻿module ArcJsonConversion.Tests
 
-open ISA
+open ARCtrl.ISA
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -390,25 +390,25 @@ let private tests_arcAssay =
             let arcAssay = ArcAssay.create(identifier)
             let assay = arcAssay.ToAssay()
             Expect.isSome assay.FileName "Assay should have fileName" 
-            let expectedFileName = ISA.Identifier.Assay.fileNameFromIdentifier identifier
+            let expectedFileName = Identifier.Assay.fileNameFromIdentifier identifier
             Expect.equal assay.FileName.Value expectedFileName "Assay fileName should match"
             let resultArcAssay = ArcAssay.fromAssay assay
             Expect.equal resultArcAssay.Identifier identifier "ArcAssay identifier should match"            
         )
         testCase "No Identifier Set" (fun () ->
-            let identifier = ISA.Identifier.createMissingIdentifier()
+            let identifier = Identifier.createMissingIdentifier()
             let arcAssay = ArcAssay.create(identifier)
             let assay = arcAssay.ToAssay()
             Expect.isNone assay.FileName "Assay should not have fileName" 
             let resultArcAssay = ArcAssay.fromAssay assay
-            Expect.isTrue (ISA.Identifier.isMissingIdentifier resultArcAssay.Identifier) "ArcAssay identifier should be missing"
+            Expect.isTrue (Identifier.isMissingIdentifier resultArcAssay.Identifier) "ArcAssay identifier should be missing"
         )
         testCase "FullAssay ToAssay" (fun () ->
             let arcAssay = fullArcAssay.Copy()
             let assay = arcAssay.ToAssay()
 
             Expect.isSome assay.FileName "Assay should have fileName"
-            let expectedFileName = ISA.Identifier.Assay.fileNameFromIdentifier identifier
+            let expectedFileName = Identifier.Assay.fileNameFromIdentifier identifier
             Expect.equal assay.FileName.Value expectedFileName "Assay fileName should match"
         
             Expect.isSome assay.MeasurementType "Assay should have measurementType"
@@ -475,12 +475,12 @@ let private tests_arcStudy =
             Expect.equal resultArcStudy.Identifier identifier "ArcStudy identifier should match"
         )
         testCase "No Identifier Set" (fun () ->
-            let identifier = ISA.Identifier.createMissingIdentifier()
+            let identifier = Identifier.createMissingIdentifier()
             let arcStudy = ArcStudy.create(identifier)
             let study = arcStudy.ToStudy()
             Expect.isNone study.Identifier "Study should not have identifier" 
             let resultArcStudy = ArcStudy.fromStudy study
-            Expect.isTrue (ISA.Identifier.isMissingIdentifier resultArcStudy.Identifier) "ArcStudy identifier should be missing"
+            Expect.isTrue (Identifier.isMissingIdentifier resultArcStudy.Identifier) "ArcStudy identifier should be missing"
         )
     ]
 
@@ -498,12 +498,12 @@ let private tests_arcInvestigation =
             Expect.equal resultArcInvestigation.Identifier identifier "ArcInvestigation identifier should match"
         )
         testCase "No Identifier Set" (fun () ->
-            let identifier = ISA.Identifier.createMissingIdentifier()
+            let identifier = Identifier.createMissingIdentifier()
             let arcInvestigation = ArcInvestigation.create(identifier)
             let investigation = arcInvestigation.ToInvestigation()
             Expect.isNone investigation.Identifier "Investigation should not have identifier" 
             let resultArcInvestigation = ArcInvestigation.fromInvestigation investigation
-            Expect.isTrue (ISA.Identifier.isMissingIdentifier resultArcInvestigation.Identifier) "ArcInvestigation identifier should be missing"
+            Expect.isTrue (Identifier.isMissingIdentifier resultArcInvestigation.Identifier) "ArcInvestigation identifier should be missing"
         )
     ]
 

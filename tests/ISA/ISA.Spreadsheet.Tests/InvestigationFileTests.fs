@@ -6,10 +6,10 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 open TestingUtils
-open ISA.Spreadsheet
+open ARCtrl.ISA.Spreadsheet
 
 let private testInvestigationWriterComponents = 
 /// Test the single components of invesigation file writing

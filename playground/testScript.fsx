@@ -10,8 +10,8 @@
 #r "ISA.dll"
 
 open ARC
-open FileSystem
-open ISA
+open ARCtrl.FileSystem
+open ARCtrl.ISA
 open System.IO
 
 let arcPath = Path.Combine(__SOURCE_DIRECTORY__, "testArc")

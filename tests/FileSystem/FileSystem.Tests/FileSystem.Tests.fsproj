@@ -21,6 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\FileSystem\FileSystem.fsproj" />
+    <ProjectReference Include="..\..\..\src\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
 </Project>

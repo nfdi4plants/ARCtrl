@@ -1,6 +1,6 @@
-﻿module ISA.IdentifierSetters
+﻿module ARCtrl.ISA.IdentifierSetters
 
-open ISA.Identifier
+open ARCtrl.ISA.Identifier
 
 let setAssayIdentifier (newIdentifier: string) (assay: ArcAssay) =
     checkValidCharacters newIdentifier

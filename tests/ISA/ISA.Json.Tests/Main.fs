@@ -1,4 +1,4 @@
-﻿module ISA.Json.Tests
+﻿module ARCtrl.ISA.Json.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha

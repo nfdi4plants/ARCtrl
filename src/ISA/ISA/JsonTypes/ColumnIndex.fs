@@ -1,4 +1,4 @@
-﻿module ISA.ColumnIndex
+﻿module ARCtrl.ISA.ColumnIndex
 
 
 let private tryInt (str:string) =

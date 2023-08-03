@@ -1,8 +1,8 @@
 ﻿namespace ARCtrl
 
-open FileSystem
-open Contract
-open ISA
+open ARCtrl.FileSystem
+open ARCtrl.Contract
+open ARCtrl.ISA
 open FsSpreadsheet
 open Fable.Core
 
@@ -11,18 +11,18 @@ module ARCAux =
     // No idea where to move this
     let getArcAssaysFromContracts (contracts: Contract []) = 
         contracts 
-        |> Array.choose Contracts.ArcAssay.tryFromContract
+        |> Array.choose ARCtrl.Contract.ArcAssay.tryFromContract
         |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcAssay.fromFsWorkbook)
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
-        |> Array.choose Contracts.ArcStudy.tryFromContract
+        |> Array.choose Contract.ArcStudy.tryFromContract
         |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcStudy.fromFsWorkbook)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 
-        |> Array.choose Contracts.ArcInvestigation.tryFromContract
+        |> Array.choose Contract.ArcInvestigation.tryFromContract
         |> Array.exactlyOne 
         |> fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 
@@ -151,7 +151,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
 
     // to-do: function that returns read contracts based on a list of paths.
     member this.GetReadContracts () =
-        fs.Tree.ToFilePaths() |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath 
+        fs.Tree.ToFilePaths() |> Array.choose Contract.ARC.tryISAReadContractFromPath 
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.

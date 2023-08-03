@@ -1,6 +1,4 @@
-﻿module Contracts.ArcAssay
-
-open Contract
+﻿module ARCtrl.Contract.ArcAssay
 
 let tryFromContract (c:Contract) =
     match c with

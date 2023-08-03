@@ -1,6 +1,6 @@
-﻿module ISA.ArcTableAux
+﻿module ARCtrl.ISA.ArcTableAux
 
-open ISA
+open ARCtrl.ISA
 open System.Collections.Generic
 
 // Taken from FSharpAux.Core
@@ -414,7 +414,7 @@ module JsonTypes =
 /// Functions for parsing ArcTables to ISA json Processes and vice versa
 module ProcessParsing = 
 
-    open ISA.ColumnIndex
+    open ARCtrl.ISA.ColumnIndex
 
     /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
     let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
@@ -667,7 +667,7 @@ module ProcessParsing =
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.ID.IsSome then 
                 x.ExecutesProtocol.Value.ID.Value              
             else
-                ISA.Identifier.createMissingIdentifier()        
+                ARCtrl.ISA.Identifier.createMissingIdentifier()        
         )
 
     // Transform a isa json process into a isa tab row, where each row is a header+value list

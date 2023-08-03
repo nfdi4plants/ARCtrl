@@ -24,7 +24,7 @@ let mySequenceEqual actual expected message =
     | i,Some a,None ->
         failwithf "%s. Sequence actual longer than expected, at pos %i found item %A." message i a
 
-open FileSystem
+open ARCtrl.FileSystem
 
 #if FABLE_COMPILER
 open Fable.Mocha

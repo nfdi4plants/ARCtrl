@@ -6,7 +6,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA.Json
+open ARCtrl.ISA.Json
 
 /// ⚠️ This testlist is only used to test correct execution of Fable bindings on `JsonValidation.js` functions.
 /// ⚠️ Never execute in dotnet environment
@@ -38,7 +38,7 @@ let tests_FableBindings = testList "FableBindings" [
     }
 ]
 
-open ISA
+open ARCtrl.ISA
 
 let tests_Process =     
 

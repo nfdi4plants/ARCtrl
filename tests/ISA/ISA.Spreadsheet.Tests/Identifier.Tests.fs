@@ -6,7 +6,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA.Identifier
+open ARCtrl.ISA.Identifier
 
 // Function to test identifierFromFileName
 let private testIdentifierFromFileName () =

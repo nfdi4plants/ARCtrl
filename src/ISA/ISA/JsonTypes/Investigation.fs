@@ -1,6 +1,6 @@
-namespace ISA
+namespace ARCtrl.ISA
 
-open ISA.Aux
+open ARCtrl.ISA.Aux
 
 type Investigation = 
     {

@@ -7,9 +7,9 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA
+open ARCtrl.ISA
 open TestingUtils
-open ISA.Spreadsheet
+open ARCtrl.ISA.Spreadsheet
 
 
 let testMetaDataFunctions = 
