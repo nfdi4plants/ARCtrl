@@ -37,24 +37,23 @@ module OntologyAnnotation =
         ) 0
 
     /// Returns a list of ISAJson OntologyAnnotation objects from ISATab aggregated strings
-    let fromAggregatedStrings (separator:char) (terms:string) (source:string) (accessions:string) : OntologyAnnotation list=
+    let fromAggregatedStrings (separator:char) (terms:string) (source:string) (accessions:string) : OntologyAnnotation []=
         let l = getLengthOfAggregatedStrings separator [|terms;source;accessions|]
-        if l = 0 then []
+        if l = 0 then [||]
         else 
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
             Array.map3 (fun a b c -> OntologyAnnotation.fromString(a,b,c)) terms sources accessions
-            |> Array.toList
 
     /// Returns the aggregated ISATab OntologyAnnotation Name, ontology source and Accession number from a list of ISAJson OntologyAnnotation objects
-    let toAggregatedStrings (separator:char) (oas : OntologyAnnotation list) =
+    let toAggregatedStrings (separator:char) (oas : OntologyAnnotation []) =
         let mutable first = true
-        if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}       
+        if oas = [||] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}       
         else
             oas
-            |> List.map OntologyAnnotation.toString
-            |> List.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
+            |> Array.map OntologyAnnotation.toString
+            |> Array.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
                 if first then 
                     first <- false
                     term.TermName,term.TermSourceREF,term.TermAccessionNumber
@@ -103,7 +102,7 @@ module ProtocolParameter =
     /// Returns a list of ISAJson ProtocolParameter objects from ISATab aggregated strings
     let fromAggregatedStrings (separator:char) (terms:string) (source:string) (accessions:string) =
         OntologyAnnotation.fromAggregatedStrings separator terms source accessions
-        |> List.map (Some >> (ProtocolParameter.make None))
+        |> Array.map (Some >> (ProtocolParameter.make None))
 
     /// Returns the aggregated ISATAb Ontology Annotation value, Accession number and ontology source from a list of ISAJson ProtocolParameter objects
     let toAggregatedStrings (separator:char) (oas : ProtocolParameter list) =

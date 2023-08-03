@@ -26,7 +26,7 @@ module OntologySourceReference =
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
             let comments = SparseTable.GetEmptyComments matrix
-            OntologySourceReference.create(Comments = comments)
+            OntologySourceReference.create(Comments = List.ofArray comments)
             |> List.singleton
         else
             List.init matrix.ColumnCount (fun i -> 

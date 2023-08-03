@@ -128,7 +128,7 @@ module OntologyAnnotation =
                 //LocalID = try get.Optional.Field "termAccession" localIDDecoder with | _ -> None
                 LocalID = get.Optional.Field "termAccession" localIDDecoder |> Option.bind (fun s -> if s = "" then None else Some s)
                 TermAccessionNumber = get.Optional.Field "termAccession" Decode.string
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
+                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
             }
         )
 

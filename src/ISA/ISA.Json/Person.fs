@@ -15,7 +15,7 @@ module Person =
         | Some id -> URI.toString id
         | None -> 
             let orcid = match p.Comments with
-                        | Some cl -> cl |> List.tryPick (fun c ->
+                        | Some cl -> cl |> Array.tryPick (fun c ->
                             match (c.Name,c.Value) with
                             | (Some n,Some v) -> if (n="orcid" || n="Orcid" || n="ORCID") then Some v else None
                             | _ -> None )
@@ -62,8 +62,8 @@ module Person =
                 Fax = get.Optional.Field "fax" Decode.string
                 Address = get.Optional.Field "address" Decode.string
                 Affiliation = get.Optional.Field "affiliation" Decode.string
-                Roles = get.Optional.Field "roles" (Decode.list (OntologyAnnotation.decoder options))
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
+                Roles = get.Optional.Field "roles" (Decode.array (OntologyAnnotation.decoder options))
+                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))
             }
             
         )

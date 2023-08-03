@@ -86,9 +86,9 @@ module Studies =
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
             do matrix.Matrix.Add ((fileNameLabel,i),            processedFileName)
 
-            if study.Comments.IsEmpty |> not then
+            if Array.isEmpty study.Comments |> not then
                 study.Comments
-                |> List.iter (fun comment -> 
+                |> Array.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
                     matrix.Matrix.Add((n,i),v)
@@ -105,20 +105,20 @@ module Studies =
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
     
-    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) publications factors (assays: ArcAssay list) (protocols : Protocol list) contacts =
+    let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) (publications: Publication list) (factors: Factor list) (assays: ArcAssay list) (protocols : Protocol list) (contacts: Person list) =
         ArcStudy.make 
             (studyInfo.Identifier)
             (Option.fromValueWithDefault "" studyInfo.Title)
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
             (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
-            (publications)
-            (contacts)
-            (designDescriptors)  
+            (Array.ofList publications)
+            (Array.ofList contacts)
+            (Array.ofList designDescriptors)  
             (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
             (ResizeArray(assays))
-            (factors) 
-            (studyInfo.Comments)
+            (Array.ofList factors) 
+            (Array.ofList studyInfo.Comments)
         |> fun arcstudy -> if arcstudy.isEmpty && arcstudy.Identifier = "" then None else Some arcstudy
 
     let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
@@ -164,13 +164,13 @@ module Studies =
             yield! StudyInfo.toRows study
 
             yield  SparseRow.fromValues [designDescriptorsLabel]
-            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (study.StudyDesignDescriptors)
+            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (List.ofArray study.StudyDesignDescriptors)
 
             yield  SparseRow.fromValues [publicationsLabel]
-            yield! Publications.toRows (Some publicationsLabelPrefix) (study.Publications)
+            yield! Publications.toRows (Some publicationsLabelPrefix) (List.ofArray study.Publications)
 
             yield  SparseRow.fromValues [factorsLabel]
-            yield! Factors.toRows (Some factorsLabelPrefix) (study.Factors)
+            yield! Factors.toRows (Some factorsLabelPrefix) (List.ofArray study.Factors)
 
             yield  SparseRow.fromValues [assaysLabel]
             yield! Assays.toRows (Some assaysLabelPrefix) (List.ofSeq study.Assays)
@@ -179,5 +179,5 @@ module Studies =
             yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
             yield  SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsLabelPrefix) (study.Contacts)
+            yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofArray study.Contacts)
         }

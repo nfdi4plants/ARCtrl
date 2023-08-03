@@ -78,8 +78,8 @@ let private test_create =
             let oa_tt = OntologyAnnotation.fromString("technology type")
             let technologyPlatform = "tp"
             let tables = ResizeArray([ArcTable.init("MyTable1")])
-            let performers = [Person.create(FirstName = "Kevin", LastName = "Frey")]
-            let comments = [Comment.create("Comment Name")]
+            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
+            let comments = Comment.create("Comment Name") |> Array.singleton
             let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
@@ -94,8 +94,8 @@ let private test_create =
             let oa_tt = OntologyAnnotation.fromString("technology type")
             let technologyPlatform = "tp"
             let tables = ResizeArray([ArcTable.init("MyTable1")])
-            let performers = [Person.create(FirstName = "Kevin", LastName = "Frey")]
-            let comments = [Comment.create("Comment Name")]
+            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
+            let comments = Comment.create("Comment Name") |> Array.singleton
             let actual = ArcAssay.create(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
@@ -120,8 +120,8 @@ let private test_create =
             let technologyType = Some (OntologyAnnotation.fromString("Technology Type"))
             let technologyPlatform = Some "Technology Platform"
             let tables = ResizeArray([ArcTable.init("Table 1")])
-            let performers = [Person.create(FirstName = "John", LastName = "Doe")]
-            let comments = [Comment.create("Comment 1")]
+            let performers = Person.create(FirstName = "John", LastName = "Doe") |> Array.singleton
+            let comments = Comment.create("Comment 1") |> Array.singleton
 
             let actual = 
                 ArcAssay.make

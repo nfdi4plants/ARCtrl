@@ -11,7 +11,7 @@ type OntologyAnnotation =
         TermSourceREF : string option
         LocalID : string option
         TermAccessionNumber : URI option
-        Comments : Comment list option
+        Comments : Comment [] option
     }
 
     static member make id name termSourceREF localID termAccessionNumber comments= 
@@ -74,7 +74,7 @@ type OntologyAnnotation =
     ///</summary>
     ///<param name="tsr">Term source reference</param>
     ///<param name="tan">Term accession number</param>
-    static member fromString (?term:string, ?tsr:string, ?tan:string, ?comments : Comment list) =
+    static member fromString (?term:string, ?tsr:string, ?tan:string, ?comments : Comment []) =
 
         let tsr,localID = 
             match tan with
@@ -221,11 +221,11 @@ type OntologyAnnotation =
         annotation.Comments
     
     /// Applies function f on comments of a ontology annotation
-    static member mapComments (f : Comment list -> Comment list) (annotation : OntologyAnnotation) =
+    static member mapComments (f : Comment [] -> Comment []) (annotation : OntologyAnnotation) =
         { annotation with 
-            Comments = Option.mapDefault [] f annotation.Comments}
+            Comments = Option.mapDefault [||] f annotation.Comments}
     
     /// Replaces comments of a ontology annotation by given comment list
-    static member setComments (annotation : OntologyAnnotation) (comments : Comment list) =
+    static member setComments (annotation : OntologyAnnotation) (comments : Comment []) =
         { annotation with
             Comments = Some comments }

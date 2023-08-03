@@ -11,9 +11,9 @@ let orderName = "ColumnIndex"
 let createOrderComment (index : int) =
     Comment.fromString orderName (string index)
 
-let tryGetIndex (comments : Comment list) =
+let tryGetIndex (comments : Comment []) =
     comments 
-    |> CommentList.tryItem orderName 
+    |> CommentArray.tryItem orderName 
     |> Option.bind tryInt
 
 let setOntologyAnnotationIndex i (oa : OntologyAnnotation) =
@@ -21,8 +21,8 @@ let setOntologyAnnotationIndex i (oa : OntologyAnnotation) =
         oa with 
             Comments = 
                 match oa.Comments with
-                | Some cs -> Some <| createOrderComment i :: cs
-                | None -> Some <| [createOrderComment i]
+                | Some cs -> Some <| Array.append [|createOrderComment i|] cs
+                | None -> Some <| [|createOrderComment i|]
     }
 
 let tryGetOntologyAnnotationIndex (oa : OntologyAnnotation) =
@@ -72,7 +72,7 @@ module ColumnIndexExtensions =
 
         /// Create a ISAJson Factor from ISATab string entries
         static member fromStringWithColumnIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Factor.fromString(name,term,source,accession,[createOrderComment valueIndex])
+            Factor.fromString(name,term,source,accession,[|createOrderComment valueIndex|])
 
         static member getColumnIndex(f) = tryGetOntologyAnnotationIndex f |> Option.get
 
@@ -90,7 +90,7 @@ module ColumnIndexExtensions =
         
         /// Create a ISAJson Factor from ISATab string entries
         static member fromStringWithColumnIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Factor.fromString(name,term,source,accession,[createOrderComment valueIndex])
+            Factor.fromString(name,term,source,accession,[|createOrderComment valueIndex|])
 
         static member getColumnIndex(f) = tryGetFactorIndex f |> Option.get
 
@@ -114,7 +114,7 @@ module ColumnIndexExtensions =
     
         /// Create a ISAJson characteristic from ISATab string entries
         static member fromStringWithColumnIndex (term:string) (source:string) (accession:string) valueIndex =
-            MaterialAttribute.fromString(term,source,accession,[createOrderComment valueIndex])
+            MaterialAttribute.fromString(term,source,accession,[|createOrderComment valueIndex|])
 
         static member getColumnIndex(m) = tryGetCharacteristicIndex m |> Option.get
 
@@ -138,7 +138,7 @@ module ColumnIndexExtensions =
     
         /// Create a ISAJson parameter from ISATab string entries
         static member fromStringWithColumnIndex (term:string) (source:string) (accession:string) valueIndex =
-            ProtocolParameter.fromString(term,source,accession,[createOrderComment valueIndex])
+            ProtocolParameter.fromString(term,source,accession,[|createOrderComment valueIndex|])
 
         static member getColumnIndex(p) = tryGetParameterIndex p |> Option.get
 
@@ -162,7 +162,7 @@ module ColumnIndexExtensions =
 
         /// Create a ISAJson Factor from ISATab string entries
         static member fromStringWithColumnIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Component.fromString(name,term,source,accession,[createOrderComment valueIndex])
+            Component.fromString(name,term,source,accession,[|createOrderComment valueIndex|])
 
         static member getColumnIndex(f) = tryGetComponentIndex f |> Option.get
 

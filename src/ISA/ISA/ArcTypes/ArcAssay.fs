@@ -6,10 +6,10 @@ open ISA.Aux
 // "MyAssay"; "assays/MyAssay/isa.assay.xlsx"
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
     let tables = defaultArg tables <| ResizeArray()
-    let performers = defaultArg performers []
-    let comments = defaultArg comments []
+    let performers = defaultArg performers [||]
+    let comments = defaultArg comments [||]
     let mutable identifier : string = identifier
 
     /// Must be unique in one study
@@ -23,11 +23,11 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member val TechnologyType : OntologyAnnotation option = technologyType with get, set
     member val TechnologyPlatform : string option = technologyPlatform with get, set
     member val Tables : ResizeArray<ArcTable> = tables with get, set
-    member val Performers : Person list = performers with get, set
-    member val Comments : Comment list = comments with get, set
+    member val Performers : Person [] = performers with get, set
+    member val Comments : Comment [] = comments with get, set
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person list, ?comments : Comment list) = 
+    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?performers = performers, ?comments = comments)
 
     static member make 
@@ -36,8 +36,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : string option)
         (tables : ResizeArray<ArcTable>)
-        (performers : Person list)
-        (comments : Comment list) = 
+        (performers : Person [])
+        (comments : Comment []) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
 
     member this.TableCount 
@@ -374,7 +374,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
             ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
             ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
-            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            ?Comments = (this.Comments |> List.ofArray |> Option.fromValueWithDefault [])
             )
 
     // Create an ArcAssay from an ISA Json Assay.
@@ -390,5 +390,5 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             ?technologyType = a.TechnologyType,
             ?technologyPlatform = a.TechnologyPlatform,
             ?tables = tables,
-            ?comments = a.Comments
+            ?comments = (a.Comments |> Option.map Array.ofList)
             )

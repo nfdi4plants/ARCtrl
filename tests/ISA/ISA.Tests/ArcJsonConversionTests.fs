@@ -382,7 +382,7 @@ let private tests_arcAssay =
         let t2 = 
             singleRowDataInputWithCharacteristic.Copy() |> fun t -> ArcTable.create(tableName2, t.Headers, t.Values)
         let tables = ResizeArray[t1;t2] |> ArcTables
-        let comments = [Comment.create("Comment 1")]
+        let comments = [|Comment.create("Comment 1")|]
         let fullArcAssay =  ArcAssay.create(identifier, measurementType, technologyType, technologyPlatform, tables.Tables, Comments = comments)
 
         testCase "Identifier Set" (fun () ->

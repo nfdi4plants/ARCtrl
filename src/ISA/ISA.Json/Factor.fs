@@ -79,7 +79,7 @@ module Factor =
                 ID = get.Optional.Field "@id" GDecode.uri
                 Name = get.Optional.Field "factorName" Decode.string
                 FactorType = get.Optional.Field "factorType" (OntologyAnnotation.decoder options)
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
+                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
             }
         )
 

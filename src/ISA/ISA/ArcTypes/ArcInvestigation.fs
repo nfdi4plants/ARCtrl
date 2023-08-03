@@ -13,14 +13,14 @@ module ArcInvestigationAux =
                 ()
 
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?studies : ResizeArray<ArcStudy>, ?comments : Comment [], ?remarks : Remark []) = 
 
-    let ontologySourceReferences = defaultArg ontologySourceReferences []
-    let publications = defaultArg publications []
-    let contacts = defaultArg contacts []
+    let ontologySourceReferences = defaultArg ontologySourceReferences [||]
+    let publications = defaultArg publications [||]
+    let contacts = defaultArg contacts [||]
     let studies = defaultArg studies (ResizeArray())
-    let comments = defaultArg comments []
-    let remarks = defaultArg remarks []
+    let comments = defaultArg comments [||]
+    let remarks = defaultArg remarks [||]
 
     let mutable identifier = identifier
     /// Must be unique in one investigation
@@ -32,22 +32,21 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member val Description : string option = description with get, set
     member val SubmissionDate : string option = submissionDate with get, set
     member val PublicReleaseDate : string option = publicReleaseDate with get, set
-    member val OntologySourceReferences : OntologySourceReference list = ontologySourceReferences with get, set
-    member val Publications : Publication list = publications with get, set
-    member val Contacts : Person list = contacts with get, set
+    member val OntologySourceReferences : OntologySourceReference [] = ontologySourceReferences with get, set
+    member val Publications : Publication [] = publications with get, set
+    member val Contacts : Person [] = contacts with get, set
     member val Studies : ResizeArray<ArcStudy> = studies with get, set
-    member val Comments : Comment list = comments with get, set
-    member val Remarks : Remark list = remarks with get, set
+    member val Comments : Comment [] = comments with get, set
+    member val Remarks : Remark [] = remarks with get, set
 
     static member FileName = ARCtrl.Path.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
-    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference list, ?publications : Publication list, ?contacts : Person list, ?studies : ResizeArray<ArcStudy>, ?comments : Comment list, ?remarks : Remark list) = 
+    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?studies : ResizeArray<ArcStudy>, ?comments : Comment [], ?remarks : Remark []) = 
         ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?studies = studies, ?comments = comments, ?remarks = remarks)
 
-    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences : OntologySourceReference list) (publications : Publication list) (contacts : Person list) (studies : ResizeArray<ArcStudy>) (comments : Comment list) (remarks : Remark list) : ArcInvestigation =
+    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences : OntologySourceReference []) (publications : Publication []) (contacts : Person []) (studies : ResizeArray<ArcStudy>) (comments : Comment []) (remarks : Remark []) : ArcInvestigation =
         ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, studies = studies, comments = comments, remarks = remarks)
-
 
     member this.StudyCount 
         with get() = this.Studies.Count
@@ -280,10 +279,10 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?Description = this.Description,
             ?SubmissionDate = this.SubmissionDate,
             ?PublicReleaseDate = this.PublicReleaseDate,
-            ?Publications = (this.Publications |> Option.fromValueWithDefault []),
-            ?Contacts = (this.Contacts |> Option.fromValueWithDefault []),
+            ?Publications = (this.Publications |> List.ofArray |> Option.fromValueWithDefault []),
+            ?Contacts = (this.Contacts |> List.ofArray |> Option.fromValueWithDefault []),
             ?Studies = studies,
-            ?Comments = (this.Comments |> Option.fromValueWithDefault [])
+            ?Comments = (this.Comments |> List.ofArray |> Option.fromValueWithDefault [])
             )
 
     // Create an ArcInvestigation from an ISA Json Investigation.
@@ -299,8 +298,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?description = i.Description,
             ?submissionDate = i.SubmissionDate,
             ?publicReleaseDate = i.PublicReleaseDate,
-            ?publications = i.Publications,
-            ?contacts = i.Contacts,
+            ?publications = (i.Publications |> Option.map Array.ofList),
+            ?contacts = (i.Contacts |> Option.map Array.ofList),
             ?studies = studies,
-            ?comments = i.Comments
+            ?comments = (i.Comments |> Option.map Array.ofList)
             )

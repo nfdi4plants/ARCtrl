@@ -31,7 +31,7 @@ module Protocols =
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
         let protocolType = OntologyAnnotation.fromString(protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
-        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber
+        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> List.ofArray
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
         Protocol.make 
@@ -49,7 +49,7 @@ module Protocols =
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
             let comments = SparseTable.GetEmptyComments matrix
-            Protocol.create(Comments = comments)
+            Protocol.create(Comments = List.ofArray comments)
             |> List.singleton
         else
             List.init matrix.ColumnCount (fun i -> 

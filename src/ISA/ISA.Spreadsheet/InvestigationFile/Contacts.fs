@@ -33,8 +33,8 @@ module Contacts =
             (Option.fromValueWithDefault "" fax        )
             (Option.fromValueWithDefault "" address    )
             (Option.fromValueWithDefault "" affiliation) 
-            (Option.fromValueWithDefault [] roles      )
-            (Option.fromValueWithDefault [] comments   )
+            (Option.fromValueWithDefault [||] roles    )
+            (Option.fromValueWithDefault [||] comments )
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -47,6 +47,7 @@ module Contacts =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                    |> Array.ofList
                 fromString
                     (matrix.TryGetValueDefault("",(lastNameLabel,i)))
                     (matrix.TryGetValueDefault("",(firstNameLabel,i)))
@@ -68,7 +69,7 @@ module Contacts =
         persons
         |> List.iteri (fun i p ->
             let i = i + 1
-            let rAgg = Option.defaultValue [] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
+            let rAgg = Option.defaultValue [||] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
             do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
             do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))
             do matrix.Matrix.Add ((midInitialsLabel,i),                 (Option.defaultValue ""  p.MidInitials  ))
@@ -85,7 +86,7 @@ module Contacts =
             | None -> ()
             | Some c ->
                 c
-                |> List.iter (fun comment -> 
+                |> Array.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
                     matrix.Matrix.Add((n,i),v)

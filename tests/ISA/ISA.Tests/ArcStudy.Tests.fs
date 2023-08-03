@@ -16,13 +16,13 @@ let private test_create =
             let description = "Study Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let publications = [Publication.create("Publication 1")]
-            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
-            let studyDesignDescriptors = [OntologyAnnotation.fromString("Design Descriptor")]
-            let tables = ResizeArray([ArcTable.init("Table 1")])
-            let assays = ResizeArray([ArcAssay.init("Assay 1")])
-            let factors = [Factor.create("Factor 1")]
-            let comments = [Comment.create("Comment 1")]
+            let publications = [|Publication.create("Publication 1")|]
+            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+            let tables = ResizeArray([|ArcTable.init("Table 1")|])
+            let assays = ResizeArray([|ArcAssay.init("Assay 1")|])
+            let factors = [|Factor.create("Factor 1")|]
+            let comments = [|Comment.create("Comment 1")|]
 
             let actual =
                 ArcStudy(
@@ -59,13 +59,13 @@ let private test_create =
             let description = "Study Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let publications = [Publication.create("Publication 1")]
-            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
-            let studyDesignDescriptors = [OntologyAnnotation.fromString("Design Descriptor")]
-            let tables = ResizeArray([ArcTable.init("Table 1")])
-            let assays = ResizeArray([ArcAssay.init("Assay 1")])
-            let factors = [Factor.create("Factor 1")]
-            let comments = [Comment.create("Comment 1")]
+            let publications = [|Publication.create("Publication 1")|]
+            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+            let tables = ResizeArray([|ArcTable.init("Table 1")|])
+            let assays = ResizeArray([|ArcAssay.init("Assay 1")|])
+            let factors = [|Factor.create("Factor 1")|]
+            let comments = [|Comment.create("Comment 1")|]
 
             let actual = ArcStudy.create(
                 identifier = identifier,
@@ -116,13 +116,13 @@ let private test_create =
             let description = Some "Study Description"
             let submissionDate = Some "2023-07-19"
             let publicReleaseDate = Some "2023-12-31"
-            let publications = [Publication.create("Publication 1")]
-            let contacts = [Person.create(FirstName = "John", LastName = "Doe")]
-            let studyDesignDescriptors = [OntologyAnnotation.fromString("Design Descriptor")]
-            let tables = ResizeArray([ArcTable.init("Table 1")])
-            let assays = ResizeArray([ArcAssay.init("Assay 1")])
-            let factors = [Factor.create("Factor 1")]
-            let comments = [Comment.create("Comment 1")]
+            let publications = [|Publication.create("Publication 1")|]
+            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+            let tables = ResizeArray([|ArcTable.init("Table 1")|])
+            let assays = ResizeArray([|ArcAssay.init("Assay 1")|])
+            let factors = [|Factor.create("Factor 1")|]
+            let comments = [|Comment.create("Comment 1")|]
 
             let actual = 
                 ArcStudy.make

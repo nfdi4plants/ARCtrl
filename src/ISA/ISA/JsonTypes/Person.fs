@@ -14,8 +14,8 @@ type Person =
         Fax : string option
         Address : string option
         Affiliation : string option
-        Roles : OntologyAnnotation list option
-        Comments : Comment list option  
+        Roles : OntologyAnnotation [] option
+        Comments : Comment [] option  
     }
 
     static member make id lastName firstName midInitials email phone fax address affiliation roles comments : Person =
@@ -39,8 +39,8 @@ type Person =
     static member empty =
         Person.create ()
 
-    static member tryGetByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.tryFind (fun p -> 
+    static member tryGetByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person []) =
+        Array.tryFind (fun p -> 
             if midInitials = "" then 
                 p.FirstName = Some firstName && p.LastName = Some lastName
             else 
@@ -58,8 +58,8 @@ type Person =
     //    exists ((=) person) investigation
 
     /// If an person with the given FirstName, MidInitials and LastName exists in the list, returns true
-    static member existsByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.exists (fun p -> 
+    static member existsByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person []) =
+        Array.exists (fun p -> 
             if midInitials = "" then 
                 p.FirstName = Some firstName && p.LastName = Some lastName
             else 
@@ -72,21 +72,21 @@ type Person =
         List.append persons [person]
 
     /// Updates all persons for which the predicate returns true with the given person values
-    static member updateBy (predicate : Person -> bool) (updateOption:UpdateOptions) (person : Person) (persons : Person list) =
-        if List.exists predicate persons 
+    static member updateBy (predicate : Person -> bool) (updateOption:UpdateOptions) (person : Person) (persons : Person []) =
+        if Array.exists predicate persons 
         then
             persons
-            |> List.map (fun p -> if predicate p then updateOption.updateRecordType p person else p) 
+            |> Array.map (fun p -> if predicate p then updateOption.updateRecordType p person else p) 
         else 
             persons
 
     /// Updates all persons with the same FirstName, MidInitials and LastName as the given person with its values
-    static member updateByFullName (updateOption:UpdateOptions) (person : Person) (persons : Person list) =
+    static member updateByFullName (updateOption:UpdateOptions) (person : Person) (persons : Person []) =
         Person.updateBy (fun p -> p.FirstName = person.FirstName && p.MidInitials = person.MidInitials && p.LastName = person.LastName) updateOption person persons
     
     /// If a person with the given FirstName, MidInitials and LastName exists in the list, removes it
-    static member removeByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person list) =
-        List.filter (fun p ->
+    static member removeByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person []) =
+        Array.filter (fun p ->
             if midInitials = "" then
                 (p.FirstName = Some firstName && p.LastName = Some lastName)
                 |> not
@@ -102,12 +102,12 @@ type Person =
         person.Roles
     
     /// Applies function f on roles of a person
-    static member mapRoles (f : OntologyAnnotation list -> OntologyAnnotation list) (person : Person) =
+    static member mapRoles (f : OntologyAnnotation [] -> OntologyAnnotation []) (person : Person) =
         { person with 
-            Roles = Option.mapDefault [] f person.Roles}
+            Roles = Option.mapDefault [||] f person.Roles}
     
     /// Replaces roles of a person with the given roles
-    static member setRoles (person : Person) (roles : OntologyAnnotation list) =
+    static member setRoles (person : Person) (roles : OntologyAnnotation []) =
         { person with
             Roles = Some roles }
 
@@ -118,12 +118,12 @@ type Person =
         person.Comments
     
     /// Applies function f on comments of a person
-    static member mapComments (f : Comment list -> Comment list) (person : Person) =
+    static member mapComments (f : Comment [] -> Comment []) (person : Person) =
         { person with 
-            Comments = Option.mapDefault [] f person.Comments}
+            Comments = Option.mapDefault [||] f person.Comments}
     
     /// Replaces comments of a person by given comment list
-    static member setComments (person : Person) (comments : Comment list) =
+    static member setComments (person : Person) (comments : Comment []) =
         { person with
             Comments = Some comments }
 
