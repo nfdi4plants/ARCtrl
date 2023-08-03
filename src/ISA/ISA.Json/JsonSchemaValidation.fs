@@ -1,4 +1,4 @@
-﻿namespace ISA.Validation
+﻿namespace ARCtrl.ISA.Validation
 
 module JSchema = 
    

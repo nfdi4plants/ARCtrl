@@ -1,4 +1,4 @@
-﻿namespace FileSystem
+﻿namespace ARCtrl.FileSystem
 
 open Fable.Core
 

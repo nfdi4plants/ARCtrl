@@ -1,6 +1,6 @@
-namespace ISA.Spreadsheet
+namespace ARCtrl.ISA.Spreadsheet
 
-open ISA
+open ARCtrl.ISA
 open System.Text.RegularExpressions
 
 module Comment = 

@@ -1,7 +1,7 @@
-namespace ISA.Spreadsheet
+namespace ARCtrl.ISA.Spreadsheet
 
-open ISA
-open ISA.Aux
+open ARCtrl.ISA
+open ARCtrl.ISA.Aux
 open System.Collections.Generic
 open FsSpreadsheet.DSL
 open FsSpreadsheet

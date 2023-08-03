@@ -1,4 +1,4 @@
-﻿namespace ISA.Spreadsheet
+﻿namespace ARCtrl.ISA.Spreadsheet
 
         
 module Seq = 

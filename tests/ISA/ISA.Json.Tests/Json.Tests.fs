@@ -1,8 +1,8 @@
 ﻿module Json.Tests
 
-open ISA
-open ISA.Json
-open ISA
+open ARCtrl.ISA
+open ARCtrl.ISA.Json
+open ARCtrl.ISA
 
 #if FABLE_COMPILER
 open Fable.Core
@@ -55,7 +55,7 @@ let testEncode =
     testList "Encode" [
         testCase "tryGetPropertyValueExists" (fun () -> 
             
-            let oa = ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC") 
+            let oa = ARCtrl.ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC") 
                 
             let field = "Name" 
 
@@ -72,7 +72,7 @@ let testEncode =
 
         testCase "tryGetPropertyValueMissing" (fun () -> 
             
-            let oa = ISA.OntologyAnnotation.fromString("MyAnnotation", "ABC:123", "ABC") 
+            let oa = ARCtrl.ISA.OntologyAnnotation.fromString("MyAnnotation", "ABC:123", "ABC") 
                 
             let field = "FantasyValue" 
 
@@ -83,12 +83,12 @@ let testEncode =
 
         testCase "tryGetPropertyValueSequence" (fun () ->
             
-            let comments = [|ISA.Comment.fromString "k1" "v1"; ISA.Comment.fromString "k2" "vv"|]
-            let oa = ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC", comments)
+            let comments = [|ARCtrl.ISA.Comment.fromString "k1" "v1"; ARCtrl.ISA.Comment.fromString "k2" "vv"|]
+            let oa = ARCtrl.ISA.OntologyAnnotation.fromString ("MyAnnotation", "ABC:123", "ABC", comments)
 
             let field = "Comments" 
 
-            let result = GEncode.tryGetPropertyValue field oa
+            let result : obj option = GEncode.tryGetPropertyValue field oa
             
             Expect.isSome result "Could not find the field, even though it exists"
 

@@ -5,7 +5,7 @@ open Fable.Mocha
 #else
 open Expecto
 #endif
-open ISA
+open ARCtrl.ISA
 
 
 let componentCastingTests =

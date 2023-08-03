@@ -1,4 +1,4 @@
-﻿module ISADotnet.Tests
+﻿module ARCtrl.ISADotnet.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha

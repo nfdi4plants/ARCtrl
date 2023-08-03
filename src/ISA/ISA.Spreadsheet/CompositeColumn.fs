@@ -1,6 +1,6 @@
-﻿module ISA.Spreadsheet.CompositeColumn
+﻿module ARCtrl.ISA.Spreadsheet.CompositeColumn
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 
 /// Checks if the column header is a deprecated IO Header. If so, fixes it.

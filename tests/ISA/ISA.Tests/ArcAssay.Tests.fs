@@ -1,6 +1,6 @@
 ﻿module ArcAssay.Tests
 
-open ISA
+open ARCtrl.ISA
 
 #if FABLE_COMPILER
 open Fable.Mocha

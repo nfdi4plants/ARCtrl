@@ -1,7 +1,7 @@
-﻿namespace ISA
+﻿namespace ARCtrl.ISA
 
 open Fable.Core
-open ISA.Aux
+open ARCtrl.ISA.Aux
 
 module ArcInvestigationAux =
     module SanityChecks = 
@@ -270,7 +270,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.ToInvestigation() : Investigation = 
         let studies = this.Studies |> Seq.toList |> List.map (fun a -> a.ToStudy()) |> Option.fromValueWithDefault []
         let identifier =
-            if ISA.Identifier.isMissingIdentifier this.Identifier then None
+            if ARCtrl.ISA.Identifier.isMissingIdentifier this.Identifier then None
             else Some this.Identifier
         Investigation.create(
             FileName = ARCtrl.Path.InvestigationFileName,

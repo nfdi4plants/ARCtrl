@@ -1,7 +1,7 @@
 ﻿/// <summary>
 /// This module contains unified regex patterns and matching functions to parse isa tab column headers to BuildingBlock information.
 /// </summary>
-module ISA.Regex
+module ARCtrl.ISA.Regex
 
 open System
 

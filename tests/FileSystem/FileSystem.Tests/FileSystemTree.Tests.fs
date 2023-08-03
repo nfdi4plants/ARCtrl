@@ -1,4 +1,4 @@
-module FileSystemTree.Tests
+module ARCtrl.FileSystemTree.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -6,7 +6,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open FileSystem
+open ARCtrl.FileSystem
 
 let private newArcRelativePaths = [|
     @"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";

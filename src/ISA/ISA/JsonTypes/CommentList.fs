@@ -1,4 +1,4 @@
-﻿module ISA.CommentArray
+﻿module ARCtrl.ISA.CommentArray
 
 /// If a comment with the given key exists in the [], return its value, else return None
 let tryItem (key: string) (comments : Comment []) =

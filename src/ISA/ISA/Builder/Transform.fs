@@ -1,6 +1,6 @@
-﻿namespace ISA.Builder
+﻿namespace ARCtrl.ISA.Builder
 
-open ISA
+open ARCtrl.ISA
 
 //module Transform =
     

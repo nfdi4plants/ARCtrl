@@ -1,4 +1,4 @@
-﻿namespace ISA.Json
+﻿namespace ARCtrl.ISA.Json
 
 #if FABLE_COMPILER
 open Thoth.Json
@@ -7,7 +7,7 @@ open Thoth.Json.Net
 open Newtonsoft.Json.Linq
 #endif
 
-open ISA
+open ARCtrl.ISA
 open Fable.Core
 
 module GDecode =

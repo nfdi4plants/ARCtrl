@@ -1,4 +1,4 @@
-﻿namespace ISA.Json
+﻿namespace ARCtrl.ISA.Json
 
 #if FABLE_COMPILER
 open Thoth.Json
@@ -26,7 +26,7 @@ module GEncode =
         property
         |> Option.bind (fun property -> 
             match FSharp.Reflection.FSharpValue.GetRecordField (object,property) with
-            | ISA.Aux.Update.SomeObj o -> 
+            | ARCtrl.ISA.Aux.Update.SomeObj o -> 
                 Some o
             | o when isNull o -> 
                 None

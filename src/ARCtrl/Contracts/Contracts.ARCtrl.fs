@@ -1,11 +1,10 @@
-﻿module Contracts.ARCtrl 
+﻿module ARCtrl.Contract.ARC
 
 open ARCtrl.Path
-open Contract
 
-open Contracts.ArcInvestigation
-open Contracts.ArcAssay
-open Contracts.ArcStudy
+open ARCtrl.Contract.ArcInvestigation
+open ARCtrl.Contract.ArcAssay
+open ARCtrl.Contract.ArcStudy
 
 // Assumptions: 
 // 1. All ISA .xlsx files MUST have the same names, either "isa.investigation.xlsx", "isa.assay.xlsx" or "isa.study.xlsx"

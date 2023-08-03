@@ -1,6 +1,6 @@
 ﻿module FableTests
 
-open ISA.Spreadsheet
+open ARCtrl.ISA.Spreadsheet
 open FsSpreadsheet
 
 #if FABLE_COMPILER

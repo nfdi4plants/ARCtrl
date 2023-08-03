@@ -1,4 +1,4 @@
-﻿module ISA.CompositeRow
+﻿module ARCtrl.ISA.CompositeRow
 
 let toProtocol (row : (CompositeHeader*CompositeCell) seq) =
     row

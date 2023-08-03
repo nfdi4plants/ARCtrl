@@ -7,7 +7,7 @@ open Expecto
 #endif
 
 open ARCtrl
-open Contract
+open ARCtrl.Contract
 open FsSpreadsheet
 
 let tests_tryFromContract = testList "tryFromContract" [
@@ -21,7 +21,7 @@ let tests_tryFromContract = testList "tryFromContract" [
                 DTO.Spreadsheet fswb
             )
         |]
-        let investigation = contracts |> Array.choose Contracts.ArcInvestigation.tryFromContract
+        let investigation = contracts |> Array.choose ArcInvestigation.tryFromContract
         Expect.hasLength investigation 1 ""
 ]
 

@@ -1,7 +1,7 @@
 ﻿module TestingUtils
 
 open Expecto
-open ISA.Json
+open ARCtrl.ISA.Json
 
 module Async = 
 

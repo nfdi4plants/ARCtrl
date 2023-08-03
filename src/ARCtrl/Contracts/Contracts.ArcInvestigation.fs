@@ -1,6 +1,4 @@
-﻿module Contracts.ArcInvestigation
-
-open Contract
+﻿module ARCtrl.Contract.ArcInvestigation
 
 let tryFromContract (c:Contract) =
     match c with

@@ -6,7 +6,7 @@ open Fable.Mocha
 open Expecto
 #endif
 
-open ISA.Aux
+open ARCtrl.ISA.Aux
 open Update
 
 module TestTypes = 

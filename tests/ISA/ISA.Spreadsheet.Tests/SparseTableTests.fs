@@ -1,6 +1,6 @@
 ﻿module SparseTableTests
 
-open ISA.Spreadsheet
+open ARCtrl.ISA.Spreadsheet
 
 #if FABLE_COMPILER
 open Fable.Mocha

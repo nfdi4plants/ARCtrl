@@ -1,4 +1,4 @@
-﻿module FileSystem.Tests
+﻿module ARCtrl.FileSystem.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha
@@ -8,7 +8,7 @@ open Expecto
 [<Tests>]
 #endif
 let all = testSequenced <| testList "All" [
-    FileSystemTree.Tests.main
+    ARCtrl.FileSystemTree.Tests.main
 ]
 
 let [<EntryPoint>] main argv = 

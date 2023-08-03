@@ -1,4 +1,4 @@
-﻿module ISA.XLSX.Tests
+﻿module ARCtrl.ISA.XLSX.Tests
 
 #if FABLE_COMPILER
 open Fable.Mocha

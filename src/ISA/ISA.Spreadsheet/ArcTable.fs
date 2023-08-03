@@ -1,6 +1,6 @@
-﻿module ISA.Spreadsheet.ArcTable
+﻿module ARCtrl.ISA.Spreadsheet.ArcTable
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 
 // I think we really should not add FSharpAux for exactly one function.
@@ -63,7 +63,7 @@ let annotationTablePrefix = "annotationTable"
 let groupColumnsByHeader (columns : list<FsColumn>) = 
     columns
     |> Aux.List.groupWhen (fun c -> 
-        ISA.Regex.tryParseReferenceColumnHeader c.[1].Value 
+        Regex.tryParseReferenceColumnHeader c.[1].Value 
         |> Option.isNone
         &&
         (c.[1].Value.StartsWith "Unit" |> not)

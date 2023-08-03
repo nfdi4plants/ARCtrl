@@ -1,3 +1,3 @@
-﻿namespace CWL
+﻿namespace ARCtrl.CWL
 
 type CWL = unit

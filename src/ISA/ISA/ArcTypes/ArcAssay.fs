@@ -1,7 +1,7 @@
-﻿namespace ISA
+﻿namespace ARCtrl.ISA
 
 open Fable.Core
-open ISA.Aux
+open ARCtrl.ISA.Aux
 
 // "MyAssay"; "assays/MyAssay/isa.assay.xlsx"
 
@@ -360,10 +360,10 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             )
             |> Option.fromValueWithDefault AssayMaterials.empty
         let fileName = 
-            if ISA.Identifier.isMissingIdentifier this.Identifier then
+            if ARCtrl.ISA.Identifier.isMissingIdentifier this.Identifier then
                 None
             else 
-                Some (ISA.Identifier.Assay.fileNameFromIdentifier this.Identifier)
+                Some (ARCtrl.ISA.Identifier.Assay.fileNameFromIdentifier this.Identifier)
         Assay.create(
             ?FileName = fileName,
             ?MeasurementType = this.MeasurementType,

@@ -1,4 +1,4 @@
-namespace ISA.Json
+namespace ARCtrl.ISA.Json
 
 
 #if FABLE_COMPILER
@@ -6,7 +6,7 @@ open Thoth.Json
 #else
 open Thoth.Json.Net
 #endif
-open ISA
+open ARCtrl.ISA
 open System.IO
 
 module Comment = 

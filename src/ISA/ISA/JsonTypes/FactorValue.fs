@@ -1,4 +1,4 @@
-﻿namespace ISA
+﻿namespace ARCtrl.ISA
     
 type FactorValue =
     {

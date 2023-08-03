@@ -1,11 +1,11 @@
-﻿module ISA.Spreadsheet.CompositeHeader
+﻿module ARCtrl.ISA.Spreadsheet.CompositeHeader
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 
 module ActivePattern = 
 
-    open ISA.Regex.ActivePatterns
+    open ARCtrl.ISA.Regex.ActivePatterns
 
     let mergeTerms tsr1 tan1 tsr2 tan2 =
         if tsr1 <> tsr2 then failwithf "TermSourceRef %s and %s do not match" tsr1 tsr2

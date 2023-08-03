@@ -15,7 +15,7 @@
 let [<Literal>] rootPath = @"C:\Users\Kevin\Desktop\TestARC"
 open Contract
 open ARCtrl
-open FileSystem
+open ARCtrl.FileSystem
 
 module ARC_IO =
     open FsSpreadsheet
@@ -45,10 +45,10 @@ let myarc = ARC_IO.initExistingARC(rootPath)
 
 let newArcPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "TestArc") 
 
-open ISA
+open ARCtrl.ISA
 open FsSpreadsheet
 open FsSpreadsheet.ExcelIO
-open ISA.Spreadsheet
+open ARCtrl.ISA.Spreadsheet
 
 module WriteContracts =
 

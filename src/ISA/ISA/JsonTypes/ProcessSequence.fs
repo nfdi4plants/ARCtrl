@@ -1,6 +1,6 @@
-﻿module ISA.ProcessSequence
+﻿module ARCtrl.ISA.ProcessSequence
 
-open ISA.Aux
+open ARCtrl.ISA.Aux
 open Update
 
 /// Returns the names of the protocols the given processes impelement
