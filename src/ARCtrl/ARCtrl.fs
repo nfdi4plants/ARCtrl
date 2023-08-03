@@ -27,19 +27,25 @@ module ARCAux =
         |> fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 
 [<AttachMembers>]
-type ARC =
+type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
     {
        ISA : ISA.ArcInvestigation option
        CWL : CWL.CWL option
        FileSystem : FileSystem.FileSystem option
     }
 
-    static member create(?isa: ISA.ArcInvestigation,?cwl: CWL.CWL, ?fs: FileSystem.FileSystem) =
-        {
-           ISA = isa
-           CWL = cwl
-           FileSystem = fs
-        }
+    let mutable isa = isa
+    let mutable cwl = cwl
+    let mutable fs = fs
+
+    member this.ISA 
+        with get() = isa
+
+    member this.CWL 
+        with get() = cwl
+
+    member this.FileSystem 
+        with get() = fs
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -110,15 +116,15 @@ type ARC =
 
     static member fromFilePaths (filePaths : string array) : ARC = 
         let fs : FileSystem = FileSystem.fromFilePaths filePaths
-        ARC.create(fs=fs)
+        ARC(fs=fs)
 
     // Maybe add forceReplace flag?
-    member this.addFSFromFilePaths (filePaths : string array) : ARC = 
-        let fs : FileSystem = FileSystem.fromFilePaths filePaths
-        { this with FileSystem = Some fs }
+    member this.SetFSFromFilePaths (filePaths : string array) = 
+        let newFS : FileSystem = FileSystem.fromFilePaths filePaths
+        fs <- Some newFS
 
     // to-do: function that returns read contracts based on a list of paths.
-    member this.getReadContracts () =
+    member this.GetReadContracts () =
         match this.FileSystem with
         | Some fs -> fs.Tree.ToFilePaths() |> Array.choose Contracts.ARCtrl.tryISAReadContractFromPath
         | None -> failwith "Cannot create READ contracts from ARC without FileSystem.
@@ -130,7 +136,7 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
     /// </summary>
     /// <param name="cArr">The fullfilled READ contracts.</param>
     /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
-    member this.addISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
+    member this.AddISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
         let enableLogging = defaultArg enableLogging false
         /// get investigation from xlsx
         let investigation = ARCAux.getArcInvestigationFromContracts contracts
@@ -161,12 +167,12 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
             | None -> 
                 if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
         )
-        {this with ISA = Some investigation}
+        isa <- Some investigation
 
 
-    static member updateFileSystemTree(arc) =   
+    member this.UpdateFileSystem() =   
         let investigationName,(studyNames,assayNames) = 
-            match arc.ISA with
+            match this.ISA with
             | Some inv ->         
                 inv.Identifier,
                 inv.Studies
@@ -182,18 +188,17 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
         let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.initStudyFolder)
         let investigation = FileSystemTree.createFile "isa.investigation.xlsx"
         let tree = FileSystemTree.createFolder(investigationName, [|investigation;assays;studies;workflows;runs|])
-        let fs = FileSystem.create(tree)
-        ARC.create(?isa = arc.ISA,fs = fs)
+        let newFS = FileSystem.create(tree)
+        fs <- Some newFS        
         
 
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
     /// </summary>
-    /// <param name="cArr">The fullfilled READ contracts.</param>
-    /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
-    member this.getWriteContracts () =
-        let arc = ARC.updateFileSystemTree this
+    member this.GetWriteContracts () =
+
+        /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match arc.ISA with
         | Some inv -> 
@@ -212,6 +217,7 @@ You could initialized your ARC with `ARC.fromFilePaths` or run `yourArc.addFSFro
             )
         | None -> printfn "ARC contains no ISA part."
         match arc.FileSystem with
+        match this.FileSystem with
         | Some fs -> 
             fs.Tree.ToFilePaths(true)
             |> Array.map (fun fp ->
