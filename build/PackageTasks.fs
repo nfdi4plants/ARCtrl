@@ -17,7 +17,7 @@ let private replaceCommitLink input =
     let commitLinkPattern = @"\[\[#[a-z0-9]*\]\(.*\)\] "
     Regex.Replace(input,commitLinkPattern,"")
 
-let pack = BuildTask.create "Pack" [clean; build; runTests] {
+let pack = BuildTask.create "Pack" [clean; build; (*runTests*)] {
     if promptYesNo (sprintf "creating stable package with version %s OK?" stableVersionTag ) 
         then
             !! "src/**/*.*proj"

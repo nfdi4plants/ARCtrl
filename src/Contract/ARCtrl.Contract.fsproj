@@ -6,8 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Fable.Core" Version="[4.0.0]" />
-    <PackageReference Include="FsSpreadsheet" Version="2.0.1" />
+    <PackageReference Include="Fable.Core" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -15,6 +14,20 @@
     <Compile Include="Contract.fs" />
   </ItemGroup>
 
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  </ItemGroup>
 
+  <PropertyGroup>
+    <Authors>nfdi4plants, Kevin Frey, Lukas Weil, Kevin Schneider, Oliver Maus</Authors>
+    <Description>ARC helper functions for contracts management.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>https://raw.githubusercontent.com/nfdi4plants/Branding/138420e3b6f9ec9e125c1ca8840874b2be2a1262/logos/DataPLANT_logo_minimal_rounded_bg_transparent.svg</PackageIcon>
+    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/Contract</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  
+  
 </Project>

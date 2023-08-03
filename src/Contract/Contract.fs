@@ -1,7 +1,6 @@
 ﻿namespace ARCtrl.Contract
 
 open Fable.Core
-open FsSpreadsheet
 open Fable.Core.JsInterop
 
 [<StringEnum>]
