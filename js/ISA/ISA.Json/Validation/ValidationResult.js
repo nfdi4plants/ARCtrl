@@ -13,7 +13,7 @@ export class ValidationResult extends Union {
 }
 
 export function ValidationResult_$reflection() {
-    return union_type("ISA.Json.ValidationTypes.ValidationResult", [], ValidationResult, () => [[], [["Item", array_type(string_type)]]]);
+    return union_type("ARCtrl.ISA.Json.ValidationTypes.ValidationResult", [], ValidationResult, () => [[], [["Item", array_type(string_type)]]]);
 }
 
 export function ValidationResult__get_Success(this$) {

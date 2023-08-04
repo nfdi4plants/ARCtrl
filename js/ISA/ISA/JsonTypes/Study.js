@@ -6,7 +6,7 @@ import { OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
 import { Protocol_$reflection } from "./Protocol.js";
 import { StudyMaterials_get_empty, StudyMaterials_make, StudyMaterials_$reflection } from "./StudyMaterials.js";
 import { Process_$reflection } from "./Process.js";
-import { Assay_update_Z269B5B97, Assay_updateProtocols, Assay_getMaterials_Z269B5B97, Assay_getSamples_Z269B5B97, Assay_getSources_Z269B5B97, Assay_getUnitCategories_Z269B5B97, Assay_getFactors_Z269B5B97, Assay_getCharacteristics_Z269B5B97, Assay_getProtocols_Z269B5B97, Assay_$reflection } from "./Assay.js";
+import { Assay_update_722A269D, Assay_updateProtocols, Assay_getMaterials_722A269D, Assay_getSamples_722A269D, Assay_getSources_722A269D, Assay_getUnitCategories_722A269D, Assay_getFactors_722A269D, Assay_getCharacteristics_722A269D, Assay_getProtocols_722A269D, Assay_$reflection } from "./Assay.js";
 import { Factor_$reflection } from "./Factor.js";
 import { MaterialAttribute_$reflection } from "./MaterialAttribute.js";
 import { Comment$_$reflection } from "./Comment.js";
@@ -21,7 +21,7 @@ import { Update_UpdateOptions } from "../Update.js";
 import { List_distinct } from "../../../fable_modules/fable-library.4.1.4/Seq2.js";
 import { Source_$reflection } from "./Source.js";
 import { Sample_$reflection } from "./Sample.js";
-import { AssayMaterials_getMaterials_E3447B1 } from "./AssayMaterials.js";
+import { AssayMaterials_getMaterials_35E61745 } from "./AssayMaterials.js";
 import { Material_$reflection } from "./Material.js";
 import { toFail } from "../../../fable_modules/fable-library.4.1.4/String.js";
 
@@ -50,19 +50,19 @@ export class Study extends Record {
 }
 
 export function Study_$reflection() {
-    return record_type("ISA.Study", [], Study, () => [["ID", option_type(string_type)], ["FileName", option_type(string_type)], ["Identifier", option_type(string_type)], ["Title", option_type(string_type)], ["Description", option_type(string_type)], ["SubmissionDate", option_type(string_type)], ["PublicReleaseDate", option_type(string_type)], ["Publications", option_type(list_type(Publication_$reflection()))], ["Contacts", option_type(list_type(Person_$reflection()))], ["StudyDesignDescriptors", option_type(list_type(OntologyAnnotation_$reflection()))], ["Protocols", option_type(list_type(Protocol_$reflection()))], ["Materials", option_type(StudyMaterials_$reflection())], ["ProcessSequence", option_type(list_type(Process_$reflection()))], ["Assays", option_type(list_type(Assay_$reflection()))], ["Factors", option_type(list_type(Factor_$reflection()))], ["CharacteristicCategories", option_type(list_type(MaterialAttribute_$reflection()))], ["UnitCategories", option_type(list_type(OntologyAnnotation_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Study", [], Study, () => [["ID", option_type(string_type)], ["FileName", option_type(string_type)], ["Identifier", option_type(string_type)], ["Title", option_type(string_type)], ["Description", option_type(string_type)], ["SubmissionDate", option_type(string_type)], ["PublicReleaseDate", option_type(string_type)], ["Publications", option_type(list_type(Publication_$reflection()))], ["Contacts", option_type(list_type(Person_$reflection()))], ["StudyDesignDescriptors", option_type(list_type(OntologyAnnotation_$reflection()))], ["Protocols", option_type(list_type(Protocol_$reflection()))], ["Materials", option_type(StudyMaterials_$reflection())], ["ProcessSequence", option_type(list_type(Process_$reflection()))], ["Assays", option_type(list_type(Assay_$reflection()))], ["Factors", option_type(list_type(Factor_$reflection()))], ["CharacteristicCategories", option_type(list_type(MaterialAttribute_$reflection()))], ["UnitCategories", option_type(list_type(OntologyAnnotation_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
 }
 
 export function Study_make(id, filename, identifier, title, description, submissionDate, publicReleaseDate, publications, contacts, studyDesignDescriptors, protocols, materials, processSequence, assays, factors, characteristicCategories, unitCategories, comments) {
     return new Study(id, filename, identifier, title, description, submissionDate, publicReleaseDate, publications, contacts, studyDesignDescriptors, protocols, materials, processSequence, assays, factors, characteristicCategories, unitCategories, comments);
 }
 
-export function Study_create_Z6C8AB268(Id, FileName, Identifier, Title, Description, SubmissionDate, PublicReleaseDate, Publications, Contacts, StudyDesignDescriptors, Protocols, Materials, ProcessSequence, Assays, Factors, CharacteristicCategories, UnitCategories, Comments) {
+export function Study_create_Z2D28E954(Id, FileName, Identifier, Title, Description, SubmissionDate, PublicReleaseDate, Publications, Contacts, StudyDesignDescriptors, Protocols, Materials, ProcessSequence, Assays, Factors, CharacteristicCategories, UnitCategories, Comments) {
     return Study_make(Id, FileName, Identifier, Title, Description, SubmissionDate, PublicReleaseDate, Publications, Contacts, StudyDesignDescriptors, Protocols, Materials, ProcessSequence, Assays, Factors, CharacteristicCategories, UnitCategories, Comments);
 }
 
 export function Study_get_empty() {
-    return Study_create_Z6C8AB268();
+    return Study_create_Z2D28E954();
 }
 
 /**
@@ -118,7 +118,7 @@ export function Study_removeByIdentifier(identifier, studies) {
 /**
  * Returns assays of a study
  */
-export function Study_getAssays_Z27CB2981(study) {
+export function Study_getAssays_7312BC8B(study) {
     return defaultArg(study.Assays, empty());
 }
 
@@ -167,7 +167,7 @@ export function Study_setProtocols(study, protocols) {
 /**
  * Returns all contacts of a study
  */
-export function Study_getContacts_Z27CB2981(study) {
+export function Study_getContacts_7312BC8B(study) {
     return defaultArg(study.Contacts, empty());
 }
 
@@ -188,7 +188,7 @@ export function Study_setContacts(study, persons) {
 /**
  * Returns publications of a study
  */
-export function Study_getPublications_Z27CB2981(study) {
+export function Study_getPublications_7312BC8B(study) {
     return defaultArg(study.Publications, empty());
 }
 
@@ -209,7 +209,7 @@ export function Study_setPublications(study, publications) {
 /**
  * Returns study design descriptors of a study
  */
-export function Study_getDescriptors_Z27CB2981(study) {
+export function Study_getDescriptors_7312BC8B(study) {
     return defaultArg(study.StudyDesignDescriptors, empty());
 }
 
@@ -230,16 +230,16 @@ export function Study_setDescriptors(study, descriptors) {
 /**
  * Returns processSequence of study
  */
-export function Study_getProcesses_Z27CB2981(study) {
+export function Study_getProcesses_7312BC8B(study) {
     return defaultArg(study.ProcessSequence, empty());
 }
 
 /**
  * Returns protocols of a study
  */
-export function Study_getProtocols_Z27CB2981(study) {
-    const processSequenceProtocols = getProtocols(Study_getProcesses_Z27CB2981(study));
-    const assaysProtocols = collect(Assay_getProtocols_Z269B5B97, Study_getAssays_Z27CB2981(study));
+export function Study_getProtocols_7312BC8B(study) {
+    const processSequenceProtocols = getProtocols(Study_getProcesses_7312BC8B(study));
+    const assaysProtocols = collect(Assay_getProtocols_722A269D, Study_getAssays_7312BC8B(study));
     const updateOptions_2 = new Update_UpdateOptions(3, []);
     const mapping_6 = (p_1) => p_1.Name;
     const list1_1 = defaultArg(study.Protocols, empty());
@@ -399,8 +399,8 @@ ${err_1.message}`);
 /**
  * Returns Characteristics of the study
  */
-export function Study_getCharacteristics_Z27CB2981(study) {
-    return List_distinct(append(getCharacteristics(Study_getProcesses_Z27CB2981(study)), append(collect(Assay_getCharacteristics_Z269B5B97, Study_getAssays_Z27CB2981(study)), defaultArg(study.CharacteristicCategories, empty()))), {
+export function Study_getCharacteristics_7312BC8B(study) {
+    return List_distinct(append(getCharacteristics(Study_getProcesses_7312BC8B(study)), append(collect(Assay_getCharacteristics_722A269D, Study_getAssays_7312BC8B(study)), defaultArg(study.CharacteristicCategories, empty()))), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -409,8 +409,8 @@ export function Study_getCharacteristics_Z27CB2981(study) {
 /**
  * Returns factors of the study
  */
-export function Study_getFactors_Z27CB2981(study) {
-    return List_distinct(append(getFactors(Study_getProcesses_Z27CB2981(study)), append(collect(Assay_getFactors_Z269B5B97, Study_getAssays_Z27CB2981(study)), defaultArg(study.Factors, empty()))), {
+export function Study_getFactors_7312BC8B(study) {
+    return List_distinct(append(getFactors(Study_getProcesses_7312BC8B(study)), append(collect(Assay_getFactors_722A269D, Study_getAssays_7312BC8B(study)), defaultArg(study.Factors, empty()))), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -419,8 +419,8 @@ export function Study_getFactors_Z27CB2981(study) {
 /**
  * Returns unit categories of the study
  */
-export function Study_getUnitCategories_Z27CB2981(study) {
-    return List_distinct(append(getUnits(Study_getProcesses_Z27CB2981(study)), append(collect(Assay_getUnitCategories_Z269B5B97, Study_getAssays_Z27CB2981(study)), defaultArg(study.UnitCategories, empty()))), {
+export function Study_getUnitCategories_7312BC8B(study) {
+    return List_distinct(append(getUnits(Study_getProcesses_7312BC8B(study)), append(collect(Assay_getUnitCategories_722A269D, Study_getAssays_7312BC8B(study)), defaultArg(study.UnitCategories, empty()))), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -429,9 +429,9 @@ export function Study_getUnitCategories_Z27CB2981(study) {
 /**
  * Returns sources of the study
  */
-export function Study_getSources_Z27CB2981(study) {
-    const processSequenceSources = getSources(Study_getProcesses_Z27CB2981(study));
-    const assaysSources = collect(Assay_getSources_Z269B5B97, Study_getAssays_Z27CB2981(study));
+export function Study_getSources_7312BC8B(study) {
+    const processSequenceSources = getSources(Study_getProcesses_7312BC8B(study));
+    const assaysSources = collect(Assay_getSources_722A269D, Study_getAssays_7312BC8B(study));
     const updateOptions_2 = new Update_UpdateOptions(3, []);
     const mapping_6 = (s_2) => defaultArg(s_2.Name, "");
     let list1_1;
@@ -593,9 +593,9 @@ ${err_1.message}`);
 /**
  * Returns sources of the study
  */
-export function Study_getSamples_Z27CB2981(study) {
-    const processSequenceSamples = getSamples(Study_getProcesses_Z27CB2981(study));
-    const assaysSamples = collect(Assay_getSamples_Z269B5B97, Study_getAssays_Z27CB2981(study));
+export function Study_getSamples_7312BC8B(study) {
+    const processSequenceSamples = getSamples(Study_getProcesses_7312BC8B(study));
+    const assaysSamples = collect(Assay_getSamples_722A269D, Study_getAssays_7312BC8B(study));
     const updateOptions_2 = new Update_UpdateOptions(3, []);
     const mapping_6 = (s_2) => defaultArg(s_2.Name, "");
     let list1_1;
@@ -757,9 +757,9 @@ ${err_1.message}`);
 /**
  * Returns materials of the study
  */
-export function Study_getMaterials_Z27CB2981(study) {
-    const processSequenceMaterials = getMaterials(Study_getProcesses_Z27CB2981(study));
-    const assaysMaterials = collect((arg_2) => AssayMaterials_getMaterials_E3447B1(Assay_getMaterials_Z269B5B97(arg_2)), Study_getAssays_Z27CB2981(study));
+export function Study_getMaterials_7312BC8B(study) {
+    const processSequenceMaterials = getMaterials(Study_getProcesses_7312BC8B(study));
+    const assaysMaterials = collect((arg_2) => AssayMaterials_getMaterials_35E61745(Assay_getMaterials_722A269D(arg_2)), Study_getAssays_7312BC8B(study));
     let materials;
     const updateOptions_2 = new Update_UpdateOptions(3, []);
     const mapping_6 = (s_2) => s_2.Name;
@@ -917,22 +917,22 @@ ${err.message}`);
         throw new Error(`Could not mergeUpdate ${"Material"} list: 
 ${err_1.message}`);
     }
-    const sources = Study_getSources_Z27CB2981(study);
-    const samples = Study_getSamples_Z27CB2981(study);
+    const sources = Study_getSources_7312BC8B(study);
+    const samples = Study_getSamples_7312BC8B(study);
     return StudyMaterials_make(fromValueWithDefault(empty(), sources), fromValueWithDefault(empty(), samples), fromValueWithDefault(empty(), materials));
 }
 
-export function Study_update_Z27CB2981(study) {
+export function Study_update_7312BC8B(study) {
     try {
-        const protocols = Study_getProtocols_Z27CB2981(study);
+        const protocols = Study_getProtocols_7312BC8B(study);
         let Materials;
-        const v = Study_getMaterials_Z27CB2981(study);
+        const v = Study_getMaterials_7312BC8B(study);
         Materials = fromValueWithDefault(StudyMaterials_get_empty(), v);
-        const Assays = map_1((list) => map((arg_3) => ((arg_2) => Assay_updateProtocols(protocols, arg_2))(Assay_update_Z269B5B97(arg_3)), list), study.Assays);
+        const Assays = map_1((list) => map((arg_3) => ((arg_2) => Assay_updateProtocols(protocols, arg_2))(Assay_update_722A269D(arg_3)), list), study.Assays);
         const Protocols = fromValueWithDefault(empty(), protocols);
-        const Factors = fromValueWithDefault(empty(), Study_getFactors_Z27CB2981(study));
-        const CharacteristicCategories = fromValueWithDefault(empty(), Study_getCharacteristics_Z27CB2981(study));
-        const UnitCategories = fromValueWithDefault(empty(), Study_getUnitCategories_Z27CB2981(study));
+        const Factors = fromValueWithDefault(empty(), Study_getFactors_7312BC8B(study));
+        const CharacteristicCategories = fromValueWithDefault(empty(), Study_getCharacteristics_7312BC8B(study));
+        const UnitCategories = fromValueWithDefault(empty(), Study_getUnitCategories_7312BC8B(study));
         return new Study(study.ID, study.FileName, study.Identifier, study.Title, study.Description, study.SubmissionDate, study.PublicReleaseDate, study.Publications, study.Contacts, study.StudyDesignDescriptors, Protocols, Materials, map_1((processSequence) => updateProtocols(protocols, processSequence), study.ProcessSequence), Assays, Factors, CharacteristicCategories, UnitCategories, study.Comments);
     }
     catch (err) {

@@ -13,6 +13,6 @@ export class Commit extends Record {
 }
 
 export function Commit_$reflection() {
-    return record_type("FileSystem.Commit", [], Commit, () => [["Hash", string_type], ["UserName", string_type], ["UserEmail", string_type], ["Date", class_type("System.DateTime")], ["Message", string_type]]);
+    return record_type("ARCtrl.FileSystem.Commit", [], Commit, () => [["Hash", string_type], ["UserName", string_type], ["UserEmail", string_type], ["Date", class_type("System.DateTime")], ["Message", string_type]]);
 }
 

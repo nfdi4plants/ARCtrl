@@ -1,6 +1,6 @@
 import { replace } from "../../fable_modules/fable-library.4.1.4/String.js";
-import { ProtocolParameter_getNameText_2762A46F } from "../ISA/JsonTypes/ProtocolParameter.js";
-import { Value_getText_Z277CD705 } from "../ISA/JsonTypes/Value.js";
+import { ProtocolParameter_getNameText_Z3A4310A5 } from "../ISA/JsonTypes/ProtocolParameter.js";
+import { Value_getText_72E9EF0F } from "../ISA/JsonTypes/Value.js";
 import { list as list_2, toString, nil, object as object_22 } from "../../fable_modules/Thoth.Json.10.1.0/Encode.fs.js";
 import { map, choose } from "../../fable_modules/fable-library.4.1.4/List.js";
 import { uncurry2, equals } from "../../fable_modules/fable-library.4.1.4/Util.js";
@@ -41,7 +41,7 @@ export function ProcessParameterValue_genID(p) {
     }
     switch (matchResult) {
         case 0:
-            return (("#Param_" + replace(ProtocolParameter_getNameText_2762A46F(c), " ", "_")) + "_") + replace(Value_getText_Z277CD705(v), " ", "_");
+            return (("#Param_" + replace(ProtocolParameter_getNameText_Z3A4310A5(c), " ", "_")) + "_") + replace(Value_getText_72E9EF0F(v), " ", "_");
         default:
             return "#EmptyParameterValue";
     }

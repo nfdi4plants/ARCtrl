@@ -13,7 +13,7 @@ export class MaterialType extends Union {
 }
 
 export function MaterialType_$reflection() {
-    return union_type("ISA.MaterialType", [], MaterialType, () => [[], []]);
+    return union_type("ARCtrl.ISA.MaterialType", [], MaterialType, () => [[], []]);
 }
 
 export function MaterialType_create_Z721C83C5(t) {

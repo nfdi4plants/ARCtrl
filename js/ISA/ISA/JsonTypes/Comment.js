@@ -12,7 +12,7 @@ export class Comment$ extends Record {
 }
 
 export function Comment$_$reflection() {
-    return record_type("ISA.Comment", [], Comment$, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["Value", option_type(string_type)]]);
+    return record_type("ARCtrl.ISA.Comment", [], Comment$, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["Value", option_type(string_type)]]);
 }
 
 export function Comment_make(id, name, value) {
@@ -27,7 +27,7 @@ export function Comment_fromString(name, value) {
     return Comment_create_250E0578(void 0, name, value);
 }
 
-export function Comment_toString_6AAB8F23(comment) {
+export function Comment_toString_ZFA4E8A9(comment) {
     return [defaultArg(comment.Name, ""), defaultArg(comment.Value, "")];
 }
 
@@ -40,7 +40,7 @@ export class Remark extends Record {
 }
 
 export function Remark_$reflection() {
-    return record_type("ISA.Remark", [], Remark, () => [["Line", int32_type], ["Value", string_type]]);
+    return record_type("ARCtrl.ISA.Remark", [], Remark, () => [["Line", int32_type], ["Value", string_type]]);
 }
 
 export function Remark_make(line, value) {
@@ -51,7 +51,7 @@ export function Remark_create_Z176EF219(line, value) {
     return Remark_make(line, value);
 }
 
-export function Remark_toTuple_Z2023CF4E(remark) {
+export function Remark_toTuple_Z26CAFFFA(remark) {
     return [remark.Line, remark.Value];
 }
 

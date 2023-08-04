@@ -1,7 +1,7 @@
 import { singleton, ofArray, head, tail, isEmpty, map } from "../../fable_modules/fable-library.4.1.4/List.js";
 import { CompositeCell } from "../ISA/ArcTypes/CompositeCell.js";
 import { printf, toFail } from "../../fable_modules/fable-library.4.1.4/String.js";
-import { FsCell } from "../../fable_modules/FsSpreadsheet.3.1.1/Cells/FsCell.fs.js";
+import { FsCell } from "../../fable_modules/FsSpreadsheet.3.3.0/Cells/FsCell.fs.js";
 import { OntologyAnnotation__get_TermAccessionOntobeeUrl, OntologyAnnotation__get_TermSourceREFString, OntologyAnnotation__get_NameText } from "../ISA/JsonTypes/OntologyAnnotation.js";
 
 export function fromFsCells(cells) {

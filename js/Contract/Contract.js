@@ -14,7 +14,7 @@ export class CLITool extends Record {
 }
 
 export function CLITool_$reflection() {
-    return record_type("Contract.CLITool", [], CLITool, () => [["Name", string_type], ["Arguments", array_type(string_type)]]);
+    return record_type("ARCtrl.Contract.CLITool", [], CLITool, () => [["Name", string_type], ["Arguments", array_type(string_type)]]);
 }
 
 export class Contract extends Record {
@@ -46,6 +46,6 @@ export class Contract extends Record {
 }
 
 export function Contract_$reflection() {
-    return record_type("Contract.Contract", [], Contract, () => [["Operation", string_type], ["Path", string_type], ["DTOType", option_type(string_type)], ["DTO", option_type(class_type("Contract.DTO"))]]);
+    return record_type("ARCtrl.Contract.Contract", [], Contract, () => [["Operation", string_type], ["Path", string_type], ["DTOType", option_type(string_type)], ["DTO", option_type(class_type("ARCtrl.Contract.DTO"))]]);
 }
 

@@ -8,7 +8,7 @@ export class ConverterOptions {
 }
 
 export function ConverterOptions_$reflection() {
-    return class_type("ISA.Json.ConverterOptions", void 0, ConverterOptions);
+    return class_type("ARCtrl.ISA.Json.ConverterOptions", void 0, ConverterOptions);
 }
 
 export function ConverterOptions_$ctor() {

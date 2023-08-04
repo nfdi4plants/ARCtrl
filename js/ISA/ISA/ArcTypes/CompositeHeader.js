@@ -1,11 +1,11 @@
 import { Union, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { ActivePatterns_$007CTermColumn$007C_$007C, ActivePatterns_$007CRegex$007C_$007C, tryParseIOTypeHeader } from "../Regex.js";
 import { union_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
-import { OntologyAnnotation_$reflection, OntologyAnnotation__get_TermAccessionShort, OntologyAnnotation_fromString_Z7D8EB286, OntologyAnnotation__get_NameText } from "../JsonTypes/OntologyAnnotation.js";
-import { ProtocolParameter_create_2769312B } from "../JsonTypes/ProtocolParameter.js";
-import { Factor_create_Z3D2B374F } from "../JsonTypes/Factor.js";
-import { MaterialAttribute_create_2769312B } from "../JsonTypes/MaterialAttribute.js";
-import { Component_create_Z33AADEE0 } from "../JsonTypes/Component.js";
+import { OntologyAnnotation_$reflection, OntologyAnnotation__get_TermAccessionShort, OntologyAnnotation_fromString_2EB0E147, OntologyAnnotation__get_NameText } from "../JsonTypes/OntologyAnnotation.js";
+import { ProtocolParameter_create_Z6C54B221 } from "../JsonTypes/ProtocolParameter.js";
+import { Factor_create_3A99E5B8 } from "../JsonTypes/Factor.js";
+import { MaterialAttribute_create_Z6C54B221 } from "../JsonTypes/MaterialAttribute.js";
+import { Component_create_61502994 } from "../JsonTypes/Component.js";
 
 export class IOType extends Union {
     constructor(tag, fields) {
@@ -55,7 +55,7 @@ export class IOType extends Union {
 }
 
 export function IOType_$reflection() {
-    return union_type("ISA.IOType", [], IOType, () => [[], [], [], [], [], [], [["Item", string_type]]]);
+    return union_type("ARCtrl.ISA.IOType", [], IOType, () => [[], [], [], [], [], [], [["Item", string_type]]]);
 }
 
 export class CompositeHeader extends Union {
@@ -73,7 +73,7 @@ export class CompositeHeader extends Union {
     }
     ToTerm() {
         const this$ = this;
-        return (this$.tag === 2) ? this$.fields[0] : ((this$.tag === 1) ? this$.fields[0] : ((this$.tag === 0) ? this$.fields[0] : ((this$.tag === 4) ? OntologyAnnotation_fromString_Z7D8EB286("Protocol Type") : ((this$.tag === 8) ? OntologyAnnotation_fromString_Z7D8EB286("Protocol REF") : ((this$.tag === 5) ? OntologyAnnotation_fromString_Z7D8EB286("Protocol Description") : ((this$.tag === 6) ? OntologyAnnotation_fromString_Z7D8EB286("Protocol Uri") : ((this$.tag === 7) ? OntologyAnnotation_fromString_Z7D8EB286("Protocol Version") : ((this$.tag === 9) ? OntologyAnnotation_fromString_Z7D8EB286("Performer") : ((this$.tag === 10) ? OntologyAnnotation_fromString_Z7D8EB286("Date") : ((this$.tag === 11) ? OntologyAnnotation_fromString_Z7D8EB286(this$.fields[0].asInput) : ((this$.tag === 12) ? OntologyAnnotation_fromString_Z7D8EB286(this$.fields[0].asOutput) : ((this$.tag === 13) ? OntologyAnnotation_fromString_Z7D8EB286(this$.fields[0]) : this$.fields[0]))))))))))));
+        return (this$.tag === 2) ? this$.fields[0] : ((this$.tag === 1) ? this$.fields[0] : ((this$.tag === 0) ? this$.fields[0] : ((this$.tag === 4) ? OntologyAnnotation_fromString_2EB0E147("Protocol Type") : ((this$.tag === 8) ? OntologyAnnotation_fromString_2EB0E147("Protocol REF") : ((this$.tag === 5) ? OntologyAnnotation_fromString_2EB0E147("Protocol Description") : ((this$.tag === 6) ? OntologyAnnotation_fromString_2EB0E147("Protocol Uri") : ((this$.tag === 7) ? OntologyAnnotation_fromString_2EB0E147("Protocol Version") : ((this$.tag === 9) ? OntologyAnnotation_fromString_2EB0E147("Performer") : ((this$.tag === 10) ? OntologyAnnotation_fromString_2EB0E147("Date") : ((this$.tag === 11) ? OntologyAnnotation_fromString_2EB0E147(this$.fields[0].asInput) : ((this$.tag === 12) ? OntologyAnnotation_fromString_2EB0E147(this$.fields[0].asOutput) : ((this$.tag === 13) ? OntologyAnnotation_fromString_2EB0E147(this$.fields[0]) : this$.fields[0]))))))))))));
     }
     static OfHeaderString(str) {
         const matchValue = str.trim();
@@ -98,16 +98,16 @@ export class CompositeHeader extends Union {
                     switch (matchValue_1) {
                         case "Parameter":
                         case "Parameter Value":
-                            return new CompositeHeader(3, [OntologyAnnotation_fromString_Z7D8EB286(r_2.TermName)]);
+                            return new CompositeHeader(3, [OntologyAnnotation_fromString_2EB0E147(r_2.TermName)]);
                         case "Factor":
                         case "Factor Value":
-                            return new CompositeHeader(2, [OntologyAnnotation_fromString_Z7D8EB286(r_2.TermName)]);
+                            return new CompositeHeader(2, [OntologyAnnotation_fromString_2EB0E147(r_2.TermName)]);
                         case "Characteristic":
                         case "Characteristics":
                         case "Characteristics Value":
-                            return new CompositeHeader(1, [OntologyAnnotation_fromString_Z7D8EB286(r_2.TermName)]);
+                            return new CompositeHeader(1, [OntologyAnnotation_fromString_2EB0E147(r_2.TermName)]);
                         case "Component":
-                            return new CompositeHeader(0, [OntologyAnnotation_fromString_Z7D8EB286(r_2.TermName)]);
+                            return new CompositeHeader(0, [OntologyAnnotation_fromString_2EB0E147(r_2.TermName)]);
                         default:
                             return new CompositeHeader(13, [str]);
                     }
@@ -312,23 +312,23 @@ export class CompositeHeader extends Union {
     }
     TryParameter() {
         const this$ = this;
-        return (this$.tag === 3) ? ProtocolParameter_create_2769312B(void 0, this$.fields[0]) : void 0;
+        return (this$.tag === 3) ? ProtocolParameter_create_Z6C54B221(void 0, this$.fields[0]) : void 0;
     }
     TryFactor() {
         const this$ = this;
-        return (this$.tag === 2) ? Factor_create_Z3D2B374F(void 0, void 0, this$.fields[0]) : void 0;
+        return (this$.tag === 2) ? Factor_create_3A99E5B8(void 0, void 0, this$.fields[0]) : void 0;
     }
     TryCharacteristic() {
         const this$ = this;
-        return (this$.tag === 1) ? MaterialAttribute_create_2769312B(void 0, this$.fields[0]) : void 0;
+        return (this$.tag === 1) ? MaterialAttribute_create_Z6C54B221(void 0, this$.fields[0]) : void 0;
     }
     TryComponent() {
         const this$ = this;
-        return (this$.tag === 0) ? Component_create_Z33AADEE0(void 0, void 0, void 0, this$.fields[0]) : void 0;
+        return (this$.tag === 0) ? Component_create_61502994(void 0, void 0, void 0, this$.fields[0]) : void 0;
     }
 }
 
 export function CompositeHeader_$reflection() {
-    return union_type("ISA.CompositeHeader", [], CompositeHeader, () => [[["Item", OntologyAnnotation_$reflection()]], [["Item", OntologyAnnotation_$reflection()]], [["Item", OntologyAnnotation_$reflection()]], [["Item", OntologyAnnotation_$reflection()]], [], [], [], [], [], [], [], [["Item", IOType_$reflection()]], [["Item", IOType_$reflection()]], [["Item", string_type]]]);
+    return union_type("ARCtrl.ISA.CompositeHeader", [], CompositeHeader, () => [[["Item", OntologyAnnotation_$reflection()]], [["Item", OntologyAnnotation_$reflection()]], [["Item", OntologyAnnotation_$reflection()]], [["Item", OntologyAnnotation_$reflection()]], [], [], [], [], [], [], [], [["Item", IOType_$reflection()]], [["Item", IOType_$reflection()]], [["Item", string_type]]]);
 }
 

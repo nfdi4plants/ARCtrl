@@ -1,6 +1,6 @@
 import { AnnotationValue } from "../ISA/JsonTypes/AnnotationValue.js";
 import { toString, object as object_10, nil } from "../../fable_modules/Thoth.Json.10.1.0/Encode.fs.js";
-import { list as list_1, object as object_11, string, float, int } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
+import { array, list as list_1, object as object_11, string, float, int } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
 import { FSharpResult$2 } from "../../fable_modules/fable-library.4.1.4/Choice.js";
 import { replace } from "../../fable_modules/fable-library.4.1.4/String.js";
 import { choose } from "../../fable_modules/fable-library.4.1.4/List.js";
@@ -214,7 +214,7 @@ export function OntologyAnnotation_decoder(options) {
             else {
                 return s_3;
             }
-        }, (objectArg_3 = get$.Optional, objectArg_3.Field("termAccession", OntologyAnnotation_localIDDecoder))), (objectArg_4 = get$.Optional, objectArg_4.Field("termAccession", string)), (arg_11 = ((decoder = decoder_1(options), (path_2) => ((value_2) => list_1(uncurry2(decoder), path_2, value_2)))), (objectArg_5 = get$.Optional, objectArg_5.Field("comments", uncurry2(arg_11)))));
+        }, (objectArg_3 = get$.Optional, objectArg_3.Field("termAccession", OntologyAnnotation_localIDDecoder))), (objectArg_4 = get$.Optional, objectArg_4.Field("termAccession", string)), (arg_11 = ((decoder = decoder_1(options), (path_2) => ((value_2) => array(uncurry2(decoder), path_2, value_2)))), (objectArg_5 = get$.Optional, objectArg_5.Field("comments", uncurry2(arg_11)))));
     }, path_3, v));
 }
 

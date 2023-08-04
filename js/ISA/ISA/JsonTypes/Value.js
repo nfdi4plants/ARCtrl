@@ -1,12 +1,12 @@
 import { Union, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { printf, toText } from "../../../fable_modules/fable-library.4.1.4/String.js";
-import { OntologyAnnotation_fromString_Z7D8EB286, OntologyAnnotation_$reflection, OntologyAnnotation__get_NameText } from "./OntologyAnnotation.js";
+import { OntologyAnnotation_fromString_2EB0E147, OntologyAnnotation_$reflection, OntologyAnnotation__get_NameText } from "./OntologyAnnotation.js";
 import { union_type, string_type, float64_type, int32_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { parse } from "../../../fable_modules/fable-library.4.1.4/Double.js";
 import { parse as parse_1 } from "../../../fable_modules/fable-library.4.1.4/Int32.js";
 import { map, defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { int32ToString } from "../../../fable_modules/fable-library.4.1.4/Util.js";
-import { AnnotationValue_toString_Z3C00A204 } from "./AnnotationValue.js";
+import { AnnotationValue_toString_Z6FAD7738 } from "./AnnotationValue.js";
 
 export class Value extends Union {
     constructor(tag, fields) {
@@ -28,7 +28,7 @@ export class Value extends Union {
 }
 
 export function Value_$reflection() {
-    return union_type("ISA.Value", [], Value, () => [[["Item", OntologyAnnotation_$reflection()]], [["Item", int32_type]], [["Item", float64_type]], [["Item", string_type]]]);
+    return union_type("ARCtrl.ISA.Value", [], Value, () => [[["Item", OntologyAnnotation_$reflection()]], [["Item", int32_type]], [["Item", float64_type]], [["Item", string_type]]]);
 }
 
 export function Value_fromString_Z721C83C5(value) {
@@ -90,11 +90,11 @@ export function Value_fromOptions(value, termSource, termAccesssion) {
         case 1:
             return void 0;
         default:
-            return new Value(0, [OntologyAnnotation_fromString_Z7D8EB286(defaultArg(value, ""), termSource, termAccesssion)]);
+            return new Value(0, [OntologyAnnotation_fromString_2EB0E147(defaultArg(value, ""), termSource, termAccesssion)]);
     }
 }
 
-export function Value_toOptions_Z277CD705(value) {
+export function Value_toOptions_72E9EF0F(value) {
     switch (value.tag) {
         case 1:
             return [int32ToString(value.fields[0]), void 0, void 0];
@@ -104,7 +104,7 @@ export function Value_toOptions_Z277CD705(value) {
             return [value.fields[0], void 0, void 0];
         default: {
             const oa = value.fields[0];
-            return [map(AnnotationValue_toString_Z3C00A204, oa.Name), oa.TermAccessionNumber, oa.TermSourceREF];
+            return [map(AnnotationValue_toString_Z6FAD7738, oa.Name), oa.TermAccessionNumber, oa.TermSourceREF];
         }
     }
 }
@@ -204,7 +204,7 @@ export function Value__get_IsAText(this$) {
     }
 }
 
-export function Value_getText_Z277CD705(v) {
+export function Value_getText_72E9EF0F(v) {
     return Value__get_Text(v);
 }
 

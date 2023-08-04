@@ -2,12 +2,12 @@ import { append as append_1, delay, tryItem, length as length_1, isEmpty, iterat
 import { defaultArg, map as map_1 } from "../../fable_modules/fable-library.4.1.4/Option.js";
 import { tryFind, ofSeq } from "../../fable_modules/fable-library.4.1.4/Map.js";
 import { arrayHash, equalArrays, equals, comparePrimitives } from "../../fable_modules/fable-library.4.1.4/Util.js";
-import { RowBuilder_get_Empty, RowBuilder__Combine_19F30600, RowBuilder_$ctor } from "../../fable_modules/FsSpreadsheet.3.1.1/DSL/RowBuilder.fs.js";
-import { CellBuilder_$ctor, CellBuilder__AsCellElement_825BA8D } from "../../fable_modules/FsSpreadsheet.3.1.1/DSL/CellBuilder.fs.js";
-import { Messages_format, SheetEntity$1_some_2B595 } from "../../fable_modules/FsSpreadsheet.3.1.1/DSL/Types.fs.js";
-import { DataType } from "../../fable_modules/FsSpreadsheet.3.1.1/Cells/FsCell.fs.js";
-import { map as map_2, initialize as initialize_1, exists, find, cons, append, empty, singleton } from "../../fable_modules/fable-library.4.1.4/List.js";
-import { ColumnIndex, RowElement } from "../../fable_modules/FsSpreadsheet.3.1.1/DSL/Types.fs.js";
+import { RowBuilder_get_Empty, RowBuilder__Combine_19F30600, RowBuilder_$ctor } from "../../fable_modules/FsSpreadsheet.3.3.0/DSL/RowBuilder.fs.js";
+import { CellBuilder_$ctor, CellBuilder__AsCellElement_825BA8D } from "../../fable_modules/FsSpreadsheet.3.3.0/DSL/CellBuilder.fs.js";
+import { Messages_format, SheetEntity$1_some_2B595 } from "../../fable_modules/FsSpreadsheet.3.3.0/DSL/Types.fs.js";
+import { DataType } from "../../fable_modules/FsSpreadsheet.3.3.0/Cells/FsCell.fs.js";
+import { map as map_2, toArray, initialize as initialize_1, exists, find, cons, append, empty, singleton } from "../../fable_modules/fable-library.4.1.4/List.js";
+import { ColumnIndex, RowElement } from "../../fable_modules/FsSpreadsheet.3.3.0/DSL/Types.fs.js";
 import { Record } from "../../fable_modules/fable-library.4.1.4/Types.js";
 import { record_type, list_type, class_type, tuple_type, int32_type, string_type } from "../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { Seq_trySkip, Dictionary_tryGetValue } from "./CollectionAux.js";
@@ -281,7 +281,7 @@ export class SparseTable extends Record {
 }
 
 export function SparseTable_$reflection() {
-    return record_type("ISA.Spreadsheet.SparseTable", [], SparseTable, () => [["Matrix", class_type("System.Collections.Generic.Dictionary`2", [tuple_type(string_type, int32_type), string_type])], ["Keys", list_type(string_type)], ["CommentKeys", list_type(string_type)], ["ColumnCount", int32_type]]);
+    return record_type("ARCtrl.ISA.Spreadsheet.SparseTable", [], SparseTable, () => [["Matrix", class_type("System.Collections.Generic.Dictionary`2", [tuple_type(string_type, int32_type), string_type])], ["Keys", list_type(string_type)], ["CommentKeys", list_type(string_type)], ["ColumnCount", int32_type]]);
 }
 
 export function SparseTable__TryGetValue_11FD62A8(this$, key) {
@@ -430,12 +430,12 @@ export function SparseTable_FromRows_Z5579EC29(en, labels, lineNumber, prefix) {
     }
 }
 
-export function SparseTable_ToRows_584133C0(matrix, prefix) {
+export function SparseTable_ToRows_6A3D4534(matrix, prefix) {
     const prefix_1 = (prefix == null) ? "" : (prefix + " ");
     return delay(() => append_1(map((key) => SparseRowModule_fromValues(cons(prefix_1 + key, initialize_1(matrix.ColumnCount - 1, (i) => SparseTable__TryGetValueDefault_5BAE6133(matrix, "", [key, i + 1])))), matrix.Keys), delay(() => map((key_1) => SparseRowModule_fromValues(cons(Comment_wrapCommentKey(key_1), initialize_1(matrix.ColumnCount - 1, (i_1) => SparseTable__TryGetValueDefault_5BAE6133(matrix, "", [key_1, i_1 + 1])))), matrix.CommentKeys))));
 }
 
-export function SparseTable_GetEmptyComments_Z15A4F148(matrix) {
-    return map_2((key) => Comment_create_250E0578(void 0, key), matrix.CommentKeys);
+export function SparseTable_GetEmptyComments_651559CC(matrix) {
+    return toArray(map_2((key) => Comment_create_250E0578(void 0, key), matrix.CommentKeys));
 }
 

@@ -66,10 +66,10 @@ export class ArcTables {
 }
 
 export function ArcTables_$reflection() {
-    return class_type("ISA.ArcTables", void 0, ArcTables);
+    return class_type("ARCtrl.ISA.ArcTables", void 0, ArcTables);
 }
 
-export function ArcTables_$ctor_Z68BECB99(thisTables) {
+export function ArcTables_$ctor_Z18C2F36D(thisTables) {
     return new ArcTables(thisTables);
 }
 
@@ -89,14 +89,14 @@ export function ArcTables__get_Item_Z524259A4(this$, index) {
     return this$.thisTables[index];
 }
 
-export function ArcTables__AddTable_16F700A1(this$, table, index) {
+export function ArcTables__AddTable_EC12B15(this$, table, index) {
     const index_1 = defaultArg(index, ArcTables__get_Count(this$)) | 0;
     ArcTablesAux_SanityChecks_validateSheetIndex(index_1, true, this$.thisTables);
     ArcTablesAux_SanityChecks_validateNewNameUnique(table.Name, ArcTables__get_TableNames(this$));
     this$.thisTables.splice(index_1, 0, table);
 }
 
-export function ArcTables__AddTables_3601F24E(this$, tables, index) {
+export function ArcTables__AddTables_Z2D453886(this$, tables, index) {
     const index_1 = defaultArg(index, ArcTables__get_Count(this$)) | 0;
     ArcTablesAux_SanityChecks_validateSheetIndex(index_1, true, this$.thisTables);
     ArcTablesAux_SanityChecks_validateNewNamesUnique(map((x) => x.Name, tables), ArcTables__get_TableNames(this$));
@@ -109,6 +109,7 @@ export function ArcTables__InitTable_3B406CA4(this$, tableName, index) {
     ArcTablesAux_SanityChecks_validateSheetIndex(index_1, true, this$.thisTables);
     ArcTablesAux_SanityChecks_validateNewNameUnique(table.Name, ArcTables__get_TableNames(this$));
     this$.thisTables.splice(index_1, 0, table);
+    return table;
 }
 
 export function ArcTables__InitTables_7B28792B(this$, tableNames, index) {
@@ -128,15 +129,15 @@ export function ArcTables__GetTable_Z721C83C5(this$, name) {
     return ArcTables__GetTableAt_Z524259A4(this$, ArcTablesAux_indexByTableName(name, this$.thisTables));
 }
 
-export function ArcTables__UpdateTableAt_66578202(this$, index, table) {
+export function ArcTables__UpdateTableAt_7E571736(this$, index, table) {
     ArcTablesAux_SanityChecks_validateSheetIndex(index, false, this$.thisTables);
     ArcTablesAux_SanityChecks_validateNewNameUnique(table.Name, ArcTables__get_TableNames(this$));
     this$.thisTables[index] = table;
 }
 
-export function ArcTables__UpdateTable_4976F045(this$, name, table) {
+export function ArcTables__UpdateTable_51766571(this$, name, table) {
     const tupledArg = [ArcTablesAux_indexByTableName(name, this$.thisTables), table];
-    ArcTables__UpdateTableAt_66578202(this$, tupledArg[0], tupledArg[1]);
+    ArcTables__UpdateTableAt_7E571736(this$, tupledArg[0], tupledArg[1]);
 }
 
 export function ArcTables__RemoveTableAt_Z524259A4(this$, index) {
@@ -148,21 +149,21 @@ export function ArcTables__RemoveTable_Z721C83C5(this$, name) {
     ArcTables__RemoveTableAt_Z524259A4(this$, ArcTablesAux_indexByTableName(name, this$.thisTables));
 }
 
-export function ArcTables__MapTableAt_61602D68(this$, index, updateFun) {
+export function ArcTables__MapTableAt_8FC095C(this$, index, updateFun) {
     ArcTablesAux_SanityChecks_validateSheetIndex(index, false, this$.thisTables);
     updateFun(this$.thisTables[index]);
 }
 
-export function ArcTables__MapTable_4E415F2F(this$, name, updateFun) {
+export function ArcTables__MapTable_27DD7B1B(this$, name, updateFun) {
     const tupledArg = [ArcTablesAux_indexByTableName(name, this$.thisTables), updateFun];
-    ArcTables__MapTableAt_61602D68(this$, tupledArg[0], tupledArg[1]);
+    ArcTables__MapTableAt_8FC095C(this$, tupledArg[0], tupledArg[1]);
 }
 
 export function ArcTables__RenameTableAt_Z176EF219(this$, index, newName) {
     ArcTablesAux_SanityChecks_validateSheetIndex(index, false, this$.thisTables);
     ArcTablesAux_SanityChecks_validateNewNameUnique(newName, ArcTables__get_TableNames(this$));
     const table = ArcTables__GetTableAt_Z524259A4(this$, index);
-    ArcTables__UpdateTableAt_66578202(this$, index, new ArcTable(newName, table.Headers, table.Values));
+    ArcTables__UpdateTableAt_7E571736(this$, index, new ArcTable(newName, table.Headers, table.Values));
 }
 
 export function ArcTables__RenameTable_Z384F8060(this$, name, newName) {
@@ -170,18 +171,18 @@ export function ArcTables__RenameTable_Z384F8060(this$, name, newName) {
     ArcTables__RenameTableAt_Z176EF219(this$, tupledArg[0], tupledArg[1]);
 }
 
-export function ArcTables__AddColumnAt_6647579B(this$, tableIndex, header, cells, columnIndex, forceReplace) {
-    ArcTables__MapTableAt_61602D68(this$, tableIndex, (table) => {
+export function ArcTables__AddColumnAt_6A9784DB(this$, tableIndex, header, cells, columnIndex, forceReplace) {
+    ArcTables__MapTableAt_8FC095C(this$, tableIndex, (table) => {
         table.AddColumn(header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
     });
 }
 
-export function ArcTables__AddColumn_Z4FC90944(this$, tableName, header, cells, columnIndex, forceReplace) {
-    ArcTables__AddColumnAt_6647579B(this$, ArcTablesAux_indexByTableName(tableName, this$.thisTables), header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
+export function ArcTables__AddColumn_1FF50D3C(this$, tableName, header, cells, columnIndex, forceReplace) {
+    ArcTables__AddColumnAt_6A9784DB(this$, ArcTablesAux_indexByTableName(tableName, this$.thisTables), header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
 }
 
 export function ArcTables__RemoveColumnAt_Z37302880(this$, tableIndex, columnIndex) {
-    ArcTables__MapTableAt_61602D68(this$, tableIndex, (table) => {
+    ArcTables__MapTableAt_8FC095C(this$, tableIndex, (table) => {
         table.RemoveColumn(columnIndex);
     });
 }
@@ -191,14 +192,14 @@ export function ArcTables__RemoveColumn_Z18115A39(this$, tableName, columnIndex)
     ArcTables__RemoveColumnAt_Z37302880(this$, tupledArg[0], tupledArg[1]);
 }
 
-export function ArcTables__UpdateColumnAt_Z155350AF(this$, tableIndex, columnIndex, header, cells) {
-    ArcTables__MapTableAt_61602D68(this$, tableIndex, (table) => {
+export function ArcTables__UpdateColumnAt_21300791(this$, tableIndex, columnIndex, header, cells) {
+    ArcTables__MapTableAt_8FC095C(this$, tableIndex, (table) => {
         table.UpdateColumn(columnIndex, header, unwrap(cells));
     });
 }
 
-export function ArcTables__UpdateColumn_Z774BF72A(this$, tableName, columnIndex, header, cells) {
-    ArcTables__UpdateColumnAt_Z155350AF(this$, ArcTablesAux_indexByTableName(tableName, this$.thisTables), columnIndex, header, unwrap(cells));
+export function ArcTables__UpdateColumn_Z6083042A(this$, tableName, columnIndex, header, cells) {
+    ArcTables__UpdateColumnAt_21300791(this$, ArcTablesAux_indexByTableName(tableName, this$.thisTables), columnIndex, header, unwrap(cells));
 }
 
 export function ArcTables__GetColumnAt_Z37302880(this$, tableIndex, columnIndex) {
@@ -211,18 +212,18 @@ export function ArcTables__GetColumn_Z18115A39(this$, tableName, columnIndex) {
     return ArcTables__GetColumnAt_Z37302880(this$, tupledArg[0], tupledArg[1]);
 }
 
-export function ArcTables__AddRowAt_Z57F91678(this$, tableIndex, cells, rowIndex) {
-    ArcTables__MapTableAt_61602D68(this$, tableIndex, (table) => {
+export function ArcTables__AddRowAt_Z12CDB784(this$, tableIndex, cells, rowIndex) {
+    ArcTables__MapTableAt_8FC095C(this$, tableIndex, (table) => {
         table.AddRow(unwrap(cells), unwrap(rowIndex));
     });
 }
 
-export function ArcTables__AddRow_1177C4AF(this$, tableName, cells, rowIndex) {
-    ArcTables__AddRowAt_Z57F91678(this$, ArcTablesAux_indexByTableName(tableName, this$.thisTables), unwrap(cells), unwrap(rowIndex));
+export function ArcTables__AddRow_Z16315DE5(this$, tableName, cells, rowIndex) {
+    ArcTables__AddRowAt_Z12CDB784(this$, ArcTablesAux_indexByTableName(tableName, this$.thisTables), unwrap(cells), unwrap(rowIndex));
 }
 
 export function ArcTables__RemoveRowAt_Z37302880(this$, tableIndex, rowIndex) {
-    ArcTables__MapTableAt_61602D68(this$, tableIndex, (table) => {
+    ArcTables__MapTableAt_8FC095C(this$, tableIndex, (table) => {
         table.RemoveRow(rowIndex);
     });
 }
@@ -232,15 +233,15 @@ export function ArcTables__RemoveRow_Z18115A39(this$, tableName, rowIndex) {
     ArcTables__RemoveRowAt_Z37302880(this$, tupledArg[0], tupledArg[1]);
 }
 
-export function ArcTables__UpdateRowAt_Z596C2D98(this$, tableIndex, rowIndex, cells) {
-    ArcTables__MapTableAt_61602D68(this$, tableIndex, (table) => {
+export function ArcTables__UpdateRowAt_1CF7B5DC(this$, tableIndex, rowIndex, cells) {
+    ArcTables__MapTableAt_8FC095C(this$, tableIndex, (table) => {
         table.UpdateRow(rowIndex, cells);
     });
 }
 
-export function ArcTables__UpdateRow_Z5E65B4B1(this$, tableName, rowIndex, cells) {
+export function ArcTables__UpdateRow_1BFE2CFB(this$, tableName, rowIndex, cells) {
     const tupledArg = [ArcTablesAux_indexByTableName(tableName, this$.thisTables), rowIndex, cells];
-    ArcTables__UpdateRowAt_Z596C2D98(this$, tupledArg[0], tupledArg[1], tupledArg[2]);
+    ArcTables__UpdateRowAt_1CF7B5DC(this$, tupledArg[0], tupledArg[1], tupledArg[2]);
 }
 
 export function ArcTables__GetRowAt_Z37302880(this$, tableIndex, rowIndex) {
@@ -267,9 +268,9 @@ export function ArcTables__GetProcesses(this$) {
  * 
  * Then each group is converted to a table with this nameroot as sheetname
  */
-export function ArcTables_fromProcesses_Z31821267(ps) {
+export function ArcTables_fromProcesses_134EBDED(ps) {
     let arg;
-    return ArcTables_$ctor_Z68BECB99((arg = map_1((tupledArg) => {
+    return ArcTables_$ctor_Z18C2F36D((arg = map_1((tupledArg) => {
         const tupledArg_1 = ProcessParsing_alignByHeaders(collect(ProcessParsing_processToRows, tupledArg[1]));
         return ArcTable.create(tupledArg[0], tupledArg_1[0], tupledArg_1[1]);
     }, ProcessParsing_groupProcesses(ps)), Array.from(arg)));

@@ -1,12 +1,12 @@
 import { equals } from "../../fable_modules/fable-library.4.1.4/Util.js";
 import { value, some } from "../../fable_modules/fable-library.4.1.4/Option.js";
-import { fill, map3, fold } from "../../fable_modules/fable-library.4.1.4/Array.js";
+import { map, equalsWith, fill, map3, fold } from "../../fable_modules/fable-library.4.1.4/Array.js";
 import { toText, printf, toFail } from "../../fable_modules/fable-library.4.1.4/String.js";
-import { map, fold as fold_1, ofArray, empty } from "../../fable_modules/fable-library.4.1.4/List.js";
-import { OntologyAnnotation_toString_473B9D79, OntologyAnnotation_fromString_Z7D8EB286 } from "../ISA/JsonTypes/OntologyAnnotation.js";
+import { OntologyAnnotation_toString_5E3DAF0D, OntologyAnnotation_fromString_2EB0E147 } from "../ISA/JsonTypes/OntologyAnnotation.js";
+import { map as map_1, fold as fold_1, ofArray, empty } from "../../fable_modules/fable-library.4.1.4/List.js";
 import { Array_map4 } from "./CollectionAux.js";
-import { Component_toString_Z7E9B32A1, Component_fromString_55205B02 } from "../ISA/JsonTypes/Component.js";
-import { ProtocolParameter_toString_2762A46F, ProtocolParameter_make } from "../ISA/JsonTypes/ProtocolParameter.js";
+import { Component_toString_Z609B8895, Component_fromString_Z61E08C1 } from "../ISA/JsonTypes/Component.js";
+import { ProtocolParameter_toString_Z3A4310A5, ProtocolParameter_make } from "../ISA/JsonTypes/ProtocolParameter.js";
 
 /**
  * If the value matches the default, a None is returned, else a Some is returned
@@ -57,10 +57,10 @@ export function OntologyAnnotation_getLengthOfAggregatedStrings(separator, strin
 export function OntologyAnnotation_fromAggregatedStrings(separator, terms, source, accessions) {
     const l = OntologyAnnotation_getLengthOfAggregatedStrings(separator, [terms, source, accessions]) | 0;
     if (l === 0) {
-        return empty();
+        return [];
     }
     else {
-        return ofArray(map3(OntologyAnnotation_fromString_Z7D8EB286, (terms === "") ? fill(new Array(l), 0, l, "") : terms.split(separator), (source === "") ? fill(new Array(l), 0, l, "") : source.split(separator), (accessions === "") ? fill(new Array(l), 0, l, "") : accessions.split(separator)));
+        return map3(OntologyAnnotation_fromString_2EB0E147, (terms === "") ? fill(new Array(l), 0, l, "") : terms.split(separator), (source === "") ? fill(new Array(l), 0, l, "") : source.split(separator), (accessions === "") ? fill(new Array(l), 0, l, "") : accessions.split(separator));
     }
 }
 
@@ -69,7 +69,7 @@ export function OntologyAnnotation_fromAggregatedStrings(separator, terms, sourc
  */
 export function OntologyAnnotation_toAggregatedStrings(separator, oas) {
     let first = true;
-    if (equals(oas, empty())) {
+    if (equalsWith(equals, oas, [])) {
         return {
             TermAccessionNumberAgg: "",
             TermNameAgg: "",
@@ -77,7 +77,7 @@ export function OntologyAnnotation_toAggregatedStrings(separator, oas) {
         };
     }
     else {
-        const tupledArg_1 = fold_1((tupledArg, term) => {
+        const tupledArg_1 = fold((tupledArg, term) => {
             if (first) {
                 first = false;
                 return [term.TermName, term.TermSourceREF, term.TermAccessionNumber];
@@ -85,7 +85,7 @@ export function OntologyAnnotation_toAggregatedStrings(separator, oas) {
             else {
                 return [toText(printf("%s%c%s"))(tupledArg[0])(separator)(term.TermName), toText(printf("%s%c%s"))(tupledArg[1])(separator)(term.TermSourceREF), toText(printf("%s%c%s"))(tupledArg[2])(separator)(term.TermAccessionNumber)];
             }
-        }, ["", "", ""], map(OntologyAnnotation_toString_473B9D79, oas));
+        }, ["", "", ""], map(OntologyAnnotation_toString_5E3DAF0D, oas));
         return {
             TermAccessionNumberAgg: tupledArg_1[2],
             TermNameAgg: tupledArg_1[0],
@@ -103,7 +103,7 @@ export function Component_fromAggregatedStrings(separator, names, terms, source,
         return empty();
     }
     else {
-        return ofArray(Array_map4(Component_fromString_55205B02, (names === "") ? fill(new Array(l), 0, l, "") : names.split(separator), (terms === "") ? fill(new Array(l), 0, l, "") : terms.split(separator), (source === "") ? fill(new Array(l), 0, l, "") : source.split(separator), (accessions === "") ? fill(new Array(l), 0, l, "") : accessions.split(separator)));
+        return ofArray(Array_map4(Component_fromString_Z61E08C1, (names === "") ? fill(new Array(l), 0, l, "") : names.split(separator), (terms === "") ? fill(new Array(l), 0, l, "") : terms.split(separator), (source === "") ? fill(new Array(l), 0, l, "") : source.split(separator), (accessions === "") ? fill(new Array(l), 0, l, "") : accessions.split(separator)));
     }
 }
 
@@ -131,7 +131,7 @@ export function Component_toAggregatedStrings(separator, cs) {
             else {
                 return [toText(printf("%s%c%s"))(tupledArg[0])(separator)(name), toText(printf("%s%c%s"))(tupledArg[1])(separator)(term.TermName), toText(printf("%s%c%s"))(tupledArg[2])(separator)(term.TermSourceREF), toText(printf("%s%c%s"))(tupledArg[3])(separator)(term.TermAccessionNumber)];
             }
-        }, ["", "", "", ""], map(Component_toString_Z7E9B32A1, cs));
+        }, ["", "", "", ""], map_1(Component_toString_Z609B8895, cs));
         return {
             NameAgg: tupledArg_2[0],
             TermAccessionNumberAgg: tupledArg_2[3],
@@ -169,7 +169,7 @@ export function ProtocolParameter_toAggregatedStrings(separator, oas) {
             else {
                 return [toText(printf("%s%c%s"))(tupledArg[0])(separator)(term.TermName), toText(printf("%s%c%s"))(tupledArg[1])(separator)(term.TermSourceREF), toText(printf("%s%c%s"))(tupledArg[2])(separator)(term.TermAccessionNumber)];
             }
-        }, ["", "", ""], map(ProtocolParameter_toString_2762A46F, oas));
+        }, ["", "", ""], map_1(ProtocolParameter_toString_Z3A4310A5, oas));
         return {
             TermAccessionNumberAgg: tupledArg_1[2],
             TermNameAgg: tupledArg_1[0],

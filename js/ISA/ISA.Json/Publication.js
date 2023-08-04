@@ -7,7 +7,7 @@ import { ConverterOptions__set_IncludeType_Z1FBCCD16, ConverterOptions__set_SetI
 import { tryInclude } from "./GEncode.js";
 import { OntologyAnnotation_decoder, OntologyAnnotation_encoder } from "./Ontology.js";
 import { decoder as decoder_2, encoder as encoder_1 } from "./Comment.js";
-import { list as list_1, string, object as object_13 } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
+import { array, string, object as object_13 } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
 import { fromString as fromString_1, uri } from "./Decode.js";
 import { Publication } from "../ISA/JsonTypes/Publication.js";
 
@@ -70,7 +70,7 @@ export function encoder(options, oa) {
 export function decoder(options) {
     return (path_4) => ((v) => object_13((get$) => {
         let objectArg, objectArg_1, objectArg_2, objectArg_3, arg_9, objectArg_4, arg_11, decoder_1, objectArg_5;
-        return new Publication((objectArg = get$.Optional, objectArg.Field("pubMedID", uri)), (objectArg_1 = get$.Optional, objectArg_1.Field("doi", string)), (objectArg_2 = get$.Optional, objectArg_2.Field("authorList", string)), (objectArg_3 = get$.Optional, objectArg_3.Field("title", string)), (arg_9 = OntologyAnnotation_decoder(options), (objectArg_4 = get$.Optional, objectArg_4.Field("status", uncurry2(arg_9)))), (arg_11 = ((decoder_1 = decoder_2(options), (path_3) => ((value_3) => list_1(uncurry2(decoder_1), path_3, value_3)))), (objectArg_5 = get$.Optional, objectArg_5.Field("comments", uncurry2(arg_11)))));
+        return new Publication((objectArg = get$.Optional, objectArg.Field("pubMedID", uri)), (objectArg_1 = get$.Optional, objectArg_1.Field("doi", string)), (objectArg_2 = get$.Optional, objectArg_2.Field("authorList", string)), (objectArg_3 = get$.Optional, objectArg_3.Field("title", string)), (arg_9 = OntologyAnnotation_decoder(options), (objectArg_4 = get$.Optional, objectArg_4.Field("status", uncurry2(arg_9)))), (arg_11 = ((decoder_1 = decoder_2(options), (path_3) => ((value_3) => array(uncurry2(decoder_1), path_3, value_3)))), (objectArg_5 = get$.Optional, objectArg_5.Field("comments", uncurry2(arg_11)))));
     }, path_4, v));
 }
 

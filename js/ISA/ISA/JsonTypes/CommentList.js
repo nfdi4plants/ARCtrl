@@ -1,10 +1,10 @@
-import { filter, map, singleton, append, choose, exists, tryPick } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { map, append, choose, tryPick } from "../../../fable_modules/fable-library.4.1.4/Array.js";
 import { value } from "../../../fable_modules/fable-library.4.1.4/Option.js";
-import { ofList } from "../../../fable_modules/fable-library.4.1.4/Map.js";
+import { ofArray } from "../../../fable_modules/fable-library.4.1.4/Map.js";
 import { equals, comparePrimitives } from "../../../fable_modules/fable-library.4.1.4/Util.js";
 
 /**
- * If a comment with the given key exists in the list, return its value, else return None
+ * If a comment with the given key exists in the [], return its value, else return None
  */
 export function tryItem(key, comments) {
     return tryPick((c) => {
@@ -32,10 +32,10 @@ export function tryItem(key, comments) {
 }
 
 /**
- * Returns true, if the key exists in the list
+ * Returns true, if the key exists in the []
  */
 export function containsKey(key, comments) {
-    return exists((c) => {
+    return comments.some((c) => {
         const matchValue = c.Name;
         let matchResult, n_1;
         if (matchValue != null) {
@@ -56,11 +56,11 @@ export function containsKey(key, comments) {
             default:
                 return false;
         }
-    }, comments);
+    });
 }
 
 /**
- * If a comment with the given key exists in the list, return its value
+ * If a comment with the given key exists in the [], return its value
  */
 export function item(key, comments) {
     return value(tryItem(key, comments));
@@ -70,7 +70,7 @@ export function item(key, comments) {
  * Create a map of comment keys to comment values
  */
 export function toMap(comments) {
-    return ofList(choose((c) => {
+    return ofArray(choose((c) => {
         const matchValue = c.Name;
         if (matchValue != null) {
             return [matchValue, c.Value];
@@ -84,14 +84,14 @@ export function toMap(comments) {
 }
 
 /**
- * Adds the given comment to the comment list
+ * Adds the given comment to the comment []
  */
 export function add(comment, comments) {
-    return append(comments, singleton(comment));
+    return append(comments, [comment]);
 }
 
 /**
- * Add the given comment to the comment list if it doesnt exist, else replace it
+ * Add the given comment to the comment [] if it doesnt exist, else replace it
  */
 export function set$(comment, comments) {
     if (containsKey(value(comment.Name), comments)) {
@@ -105,15 +105,15 @@ export function set$(comment, comments) {
         }, comments);
     }
     else {
-        return append(comments, singleton(comment));
+        return append(comments, [comment]);
     }
 }
 
 /**
- * Returns a new comment list where comments with the given key are filtered out
+ * Returns a new comment [] where comments with the given key are filtered out
  */
 export function dropByKey(key, comments) {
-    return filter((c) => {
+    return comments.filter((c) => {
         const matchValue = c.Name;
         let matchResult, n_1;
         if (matchValue != null) {
@@ -134,6 +134,6 @@ export function dropByKey(key, comments) {
             default:
                 return true;
         }
-    }, comments);
+    });
 }
 

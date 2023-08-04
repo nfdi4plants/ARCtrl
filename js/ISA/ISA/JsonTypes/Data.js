@@ -34,19 +34,19 @@ export class Data extends Record {
 }
 
 export function Data_$reflection() {
-    return record_type("ISA.Data", [], Data, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["DataType", option_type(DataFile_$reflection())], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Data", [], Data, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["DataType", option_type(DataFile_$reflection())], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
 }
 
 export function Data_make(id, name, dataType, comments) {
     return new Data(id, name, dataType, comments);
 }
 
-export function Data_create_Z748D099(Id, Name, DataType, Comments) {
+export function Data_create_Z326CF519(Id, Name, DataType, Comments) {
     return Data_make(Id, Name, DataType, Comments);
 }
 
 export function Data_get_empty() {
-    return Data_create_Z748D099();
+    return Data_create_Z326CF519();
 }
 
 export function Data__get_NameAsString(this$) {

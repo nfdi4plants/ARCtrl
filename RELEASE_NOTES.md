@@ -1,3 +1,10 @@
+### 1.0.0+4892f43 (Released 2023-8-3)
+* Additions:
+    * Complete overhaul of the API. 
+    * Shifted focus from only ISA to include full ARC. 
+    * Included Fable compilation to Javascript as first citizen design principles. 
+    * No direct filesystem access but contract based IO, which allows language agnostic IO.
+
 ### 0.7.0+ac83329 (Released 2023-1-26)
 * Additions:
     * latest commit #ac83329
@@ -271,22 +278,21 @@
 * Bugfixes:
     * [[#fa4d1c5](https://github.com/nfdi4plants/ISADotNet/commit/fa4d1c50975765e3838fcebe2aa642220938a77e)] fix remove functions fixes #8
 
-### 0.0.4+2f78a5fa - Wednesday, February 03, 2021
+### 0.0.4+2f78a5fa (Released 2023-8-3)
 * Additions:
     * latest commit #2f78a5fa
-	* Add append optional list functionality when updating record types
-	* Add tests
-	* Soften version constraint of FSharp.Core package dependancy
+    * 	* Add append optional list functionality when updating record types
+    * 	* Add tests
+    * 	* Soften version constraint of FSharp.Core package dependancy
 
-#### 0.0.2 - Thursday, January 21, 2021
+### 0.0.2 (Released 2023-8-3)
+    * Increased the minimum version of the System.Json.Text dependancy
+    * Minor additions to the API functions
 
-* Increased the minimum version of the System.Json.Text dependancy
-* Minor additions to the API functions
+### 0.0.1 (Released 2023-8-3)
+    * Moved Project from nfdi4Plants/ArcCommander
+    * Full ISA Datamodel
+    * Reworked API
+    * ISA XLSX Investigation file parser
+    * Added ISA Json IO
 
-#### 0.0.1 - Monday, January 11, 2021
-
-* Moved Project from nfdi4Plants/ArcCommander
-* Full ISA Datamodel
-* Reworked API
-* ISA XLSX Investigation file parser
-* Added ISA Json IO

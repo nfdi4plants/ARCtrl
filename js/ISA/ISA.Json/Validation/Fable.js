@@ -21,7 +21,7 @@ export class ValidationError extends Record {
 }
 
 export function ValidationError_$reflection() {
-    return record_type("ISA.Json.Fable.ValidationError", [], ValidationError, () => [["path", obj_type], ["property", string_type], ["message", string_type], ["schema", obj_type], ["instance", obj_type], ["name", string_type], ["argument", obj_type], ["stack", string_type]]);
+    return record_type("ARCtrl.ISA.Json.Fable.ValidationError", [], ValidationError, () => [["path", obj_type], ["property", string_type], ["message", string_type], ["schema", obj_type], ["instance", obj_type], ["name", string_type], ["argument", obj_type], ["stack", string_type]]);
 }
 
 export function ValidationError__ToErrorString(this$) {
@@ -45,7 +45,7 @@ export class ValidatorResult extends Record {
 }
 
 export function ValidatorResult_$reflection() {
-    return record_type("ISA.Json.Fable.ValidatorResult", [], ValidatorResult, () => [["instance", obj_type], ["schema", obj_type], ["options", obj_type], ["path", array_type(obj_type)], ["propertyPath", string_type], ["errors", array_type(ValidationError_$reflection())], ["throwError", option_type(obj_type)], ["throFirst", option_type(obj_type)], ["throwAll", option_type(obj_type)], ["disableFormat", bool_type]]);
+    return record_type("ARCtrl.ISA.Json.Fable.ValidatorResult", [], ValidatorResult, () => [["instance", obj_type], ["schema", obj_type], ["options", obj_type], ["path", array_type(obj_type)], ["propertyPath", string_type], ["errors", array_type(ValidationError_$reflection())], ["throwError", option_type(obj_type)], ["throFirst", option_type(obj_type)], ["throwAll", option_type(obj_type)], ["disableFormat", bool_type]]);
 }
 
 export function ValidatorResult__ToValidationResult(this$) {

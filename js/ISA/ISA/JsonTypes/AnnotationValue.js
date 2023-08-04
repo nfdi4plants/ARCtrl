@@ -16,7 +16,7 @@ export class AnnotationValue extends Union {
 }
 
 export function AnnotationValue_$reflection() {
-    return union_type("ISA.AnnotationValue", [], AnnotationValue, () => [[["Item", string_type]], [["Item", float64_type]], [["Item", int32_type]]]);
+    return union_type("ARCtrl.ISA.AnnotationValue", [], AnnotationValue, () => [[["Item", string_type]], [["Item", float64_type]], [["Item", int32_type]]]);
 }
 
 export function AnnotationValue_get_empty() {
@@ -43,7 +43,7 @@ export function AnnotationValue_fromString_Z721C83C5(s) {
 /**
  * Get a ISATab string Annotation Name from a ISAJson object
  */
-export function AnnotationValue_toString_Z3C00A204(v) {
+export function AnnotationValue_toString_Z6FAD7738(v) {
     switch (v.tag) {
         case 2:
             return int32ToString(v.fields[0]);

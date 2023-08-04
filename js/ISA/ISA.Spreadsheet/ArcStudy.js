@@ -1,21 +1,20 @@
-import { FsWorksheet } from "../../fable_modules/FsSpreadsheet.3.1.1/FsWorksheet.fs.js";
-import { iterate, map, singleton, append, delay, iterateIndexed } from "../../fable_modules/fable-library.4.1.4/Seq.js";
+import { FsWorksheet } from "../../fable_modules/FsSpreadsheet.3.3.0/FsWorksheet.fs.js";
+import { iterate, isEmpty, choose, map, singleton, append, delay, iterateIndexed } from "../../fable_modules/fable-library.4.1.4/Seq.js";
 import { SparseRowModule_fromFsRow, SparseRowModule_fromValues, SparseRowModule_writeToSheet } from "./SparseTable.js";
-import { fromRows as fromRows_1, StudyInfo_toRows_331096F } from "./InvestigationFile/Study.js";
+import { fromRows as fromRows_1, StudyInfo_toRows_1B3D5E9B } from "./InvestigationFile/Study.js";
 import { defaultArg } from "../../fable_modules/fable-library.4.1.4/Option.js";
 import { getEnumerator } from "../../fable_modules/fable-library.4.1.4/Util.js";
 import { ArcStudy } from "../ISA/ArcTypes/ArcStudy.js";
 import { createMissingIdentifier } from "../ISA/ArcTypes/Identifier.js";
 import { printf, toConsole } from "../../fable_modules/fable-library.4.1.4/String.js";
-import { isEmpty, choose } from "../../fable_modules/fable-library.4.1.4/List.js";
 import { toFsWorksheet, tryFromFsWorksheet } from "./ArcTable.js";
-import { FsWorkbook } from "../../fable_modules/FsSpreadsheet.3.1.1/FsWorkbook.fs.js";
+import { FsWorkbook } from "../../fable_modules/FsSpreadsheet.3.3.0/FsWorkbook.fs.js";
 
 export function toMetadataSheet(study) {
     const sheet = new FsWorksheet("isa_study");
     iterateIndexed((rowI, r) => {
         SparseRowModule_writeToSheet(rowI + 1, r, sheet);
-    }, delay(() => append(singleton(SparseRowModule_fromValues(["STUDY"])), delay(() => StudyInfo_toRows_331096F(study)))));
+    }, delay(() => append(singleton(SparseRowModule_fromValues(["STUDY"])), delay(() => StudyInfo_toRows_1B3D5E9B(study)))));
     return sheet;
 }
 

@@ -9,20 +9,20 @@ import { iterateIndexed } from "../../../fable_modules/fable-library.4.1.4/Array
 import { FSharpSet__get_MinimumElement, FSharpSet__get_IsEmpty, difference, ofSeq as ofSeq_1 } from "../../../fable_modules/fable-library.4.1.4/Set.js";
 import { Value_fromString_Z721C83C5, Value } from "../JsonTypes/Value.js";
 import { Component_fromOptions } from "../JsonTypes/Component.js";
-import { ProcessParameterValue_create_2A3A2A47 } from "../JsonTypes/ProcessParameterValue.js";
-import { ProtocolParameter_create_2769312B } from "../JsonTypes/ProtocolParameter.js";
-import { FactorValue_create_Z54E26173 } from "../JsonTypes/FactorValue.js";
-import { Factor_create_Z3D2B374F } from "../JsonTypes/Factor.js";
+import { ProcessParameterValue_create_569825F3 } from "../JsonTypes/ProcessParameterValue.js";
+import { ProtocolParameter_create_Z6C54B221 } from "../JsonTypes/ProtocolParameter.js";
+import { FactorValue_create_18335379 } from "../JsonTypes/FactorValue.js";
+import { Factor_create_3A99E5B8 } from "../JsonTypes/Factor.js";
 import { toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
-import { MaterialAttributeValue_create_163BDE77 } from "../JsonTypes/MaterialAttributeValue.js";
-import { MaterialAttribute_create_2769312B } from "../JsonTypes/MaterialAttribute.js";
-import { ProcessInput_getCharacteristicValues_Z38E7E853, ProcessInput__isMaterial, ProcessInput__isData, ProcessInput_setCharacteristicValues, ProcessInput__get_Name, ProcessInput__isSource, ProcessInput__isSample, ProcessInput, ProcessInput_createDerivedData_Z721C83C5, ProcessInput_createRawData_Z721C83C5, ProcessInput_createImageFile_Z721C83C5, ProcessInput_createMaterial_ZEED0B34, ProcessInput_createSample_Z445EF6B3, ProcessInput_createSource_Z3083890A } from "../JsonTypes/ProcessInput.js";
+import { MaterialAttributeValue_create_7F714043 } from "../JsonTypes/MaterialAttributeValue.js";
+import { MaterialAttribute_create_Z6C54B221 } from "../JsonTypes/MaterialAttribute.js";
+import { ProcessInput_getCharacteristicValues_102B6859, ProcessInput__isMaterial, ProcessInput__isData, ProcessInput_setCharacteristicValues, ProcessInput__get_Name, ProcessInput__isSource, ProcessInput__isSample, ProcessInput, ProcessInput_createDerivedData_Z721C83C5, ProcessInput_createRawData_Z721C83C5, ProcessInput_createImageFile_Z721C83C5, ProcessInput_createMaterial_2363974C, ProcessInput_createSample_Z6DF16D07, ProcessInput_createSource_7888CE42 } from "../JsonTypes/ProcessInput.js";
 import { remove, printf, toFail } from "../../../fable_modules/fable-library.4.1.4/String.js";
-import { ProcessOutput_getFactorValues_Z4A02997C, ProcessOutput__isMaterial, ProcessOutput__isData, ProcessOutput_setFactorValues, ProcessOutput__get_Name, ProcessOutput__isSample, ProcessOutput, ProcessOutput_createDerivedData_Z721C83C5, ProcessOutput_createRawData_Z721C83C5, ProcessOutput_createImageFile_Z721C83C5, ProcessOutput_createMaterial_ZEED0B34, ProcessOutput_createSample_Z445EF6B3 } from "../JsonTypes/ProcessOutput.js";
+import { ProcessOutput_getFactorValues_11830B70, ProcessOutput__isMaterial, ProcessOutput__isData, ProcessOutput_setFactorValues, ProcessOutput__get_Name, ProcessOutput__isSample, ProcessOutput, ProcessOutput_createDerivedData_Z721C83C5, ProcessOutput_createRawData_Z721C83C5, ProcessOutput_createImageFile_Z721C83C5, ProcessOutput_createMaterial_2363974C, ProcessOutput_createSample_Z6DF16D07 } from "../JsonTypes/ProcessOutput.js";
 import { IOType, CompositeHeader } from "./CompositeHeader.js";
-import { tryGetFactorColumnIndex, tryGetCharacteristicColumnIndex, tryGetComponentIndex, tryGetParameterColumnIndex, ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4 } from "../JsonTypes/ColumnIndex.js";
-import { Source_create_Z32235993 } from "../JsonTypes/Source.js";
-import { Sample_create_3A6378D6 } from "../JsonTypes/Sample.js";
+import { tryGetFactorColumnIndex, tryGetCharacteristicColumnIndex, tryGetComponentIndex, tryGetParameterColumnIndex, ARCtrl_ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4 } from "../JsonTypes/ColumnIndex.js";
+import { Source_create_7A281ED9 } from "../JsonTypes/Source.js";
+import { Sample_create_E50ED22 } from "../JsonTypes/Sample.js";
 import { mapOrDefault, fromValueWithDefault } from "../OptionExtensions.js";
 import { Protocol_make } from "../JsonTypes/Protocol.js";
 import { Process_decomposeName_Z721C83C5, Process_make } from "../JsonTypes/Process.js";
@@ -426,7 +426,7 @@ export function JsonTypes_composeComponent(header, value) {
  */
 export function JsonTypes_composeParameterValue(header, value) {
     const patternInput = JsonTypes_valueOfCell(value);
-    return ProcessParameterValue_create_2A3A2A47(ProtocolParameter_create_2769312B(void 0, header.ToTerm()), patternInput[0], unwrap(patternInput[1]));
+    return ProcessParameterValue_create_569825F3(ProtocolParameter_create_Z6C54B221(void 0, header.ToTerm()), patternInput[0], unwrap(patternInput[1]));
 }
 
 /**
@@ -434,7 +434,7 @@ export function JsonTypes_composeParameterValue(header, value) {
  */
 export function JsonTypes_composeFactorValue(header, value) {
     const patternInput = JsonTypes_valueOfCell(value);
-    return FactorValue_create_Z54E26173(void 0, Factor_create_Z3D2B374F(void 0, toString(header), header.ToTerm()), patternInput[0], unwrap(patternInput[1]));
+    return FactorValue_create_18335379(void 0, Factor_create_3A99E5B8(void 0, toString(header), header.ToTerm()), patternInput[0], unwrap(patternInput[1]));
 }
 
 /**
@@ -442,7 +442,7 @@ export function JsonTypes_composeFactorValue(header, value) {
  */
 export function JsonTypes_composeCharacteristicValue(header, value) {
     const patternInput = JsonTypes_valueOfCell(value);
-    return MaterialAttributeValue_create_163BDE77(void 0, MaterialAttribute_create_2769312B(void 0, header.ToTerm()), patternInput[0], unwrap(patternInput[1]));
+    return MaterialAttributeValue_create_7F714043(void 0, MaterialAttribute_create_Z6C54B221(void 0, header.ToTerm()), patternInput[0], unwrap(patternInput[1]));
 }
 
 /**
@@ -485,11 +485,11 @@ export function JsonTypes_composeProcessInput(header, value) {
     }
     switch (matchResult) {
         case 0:
-            return ProcessInput_createSource_Z3083890A(toString(value));
+            return ProcessInput_createSource_7888CE42(toString(value));
         case 1:
-            return ProcessInput_createSample_Z445EF6B3(toString(value));
+            return ProcessInput_createSample_Z6DF16D07(toString(value));
         case 2:
-            return ProcessInput_createMaterial_ZEED0B34(toString(value));
+            return ProcessInput_createMaterial_2363974C(toString(value));
         case 3:
             return ProcessInput_createImageFile_Z721C83C5(toString(value));
         case 4:
@@ -537,9 +537,9 @@ export function JsonTypes_composeProcessOutput(header, value) {
     }
     switch (matchResult) {
         case 0:
-            return ProcessOutput_createSample_Z445EF6B3(toString(value));
+            return ProcessOutput_createSample_Z6DF16D07(toString(value));
         case 1:
-            return ProcessOutput_createMaterial_ZEED0B34(toString(value));
+            return ProcessOutput_createMaterial_2363974C(toString(value));
         case 2:
             return ProcessOutput_createImageFile_Z721C83C5(toString(value));
         case 3:
@@ -710,7 +710,7 @@ export function JsonTypes_decomposeProcessOutput(po) {
  */
 export function ProcessParsing_tryComponentGetter(generalI, valueI, valueHeader) {
     if (valueHeader.tag === 0) {
-        const cat = new CompositeHeader(0, [ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
+        const cat = new CompositeHeader(0, [ARCtrl_ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
         return (matrix) => ((i) => JsonTypes_composeComponent(cat, getItemFromDict(matrix, [generalI, i])));
     }
     else {
@@ -723,7 +723,7 @@ export function ProcessParsing_tryComponentGetter(generalI, valueI, valueHeader)
  */
 export function ProcessParsing_tryParameterGetter(generalI, valueI, valueHeader) {
     if (valueHeader.tag === 3) {
-        const cat = new CompositeHeader(3, [ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
+        const cat = new CompositeHeader(3, [ARCtrl_ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
         return (matrix) => ((i) => JsonTypes_composeParameterValue(cat, getItemFromDict(matrix, [generalI, i])));
     }
     else {
@@ -733,7 +733,7 @@ export function ProcessParsing_tryParameterGetter(generalI, valueI, valueHeader)
 
 export function ProcessParsing_tryFactorGetter(generalI, valueI, valueHeader) {
     if (valueHeader.tag === 2) {
-        const cat = new CompositeHeader(2, [ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
+        const cat = new CompositeHeader(2, [ARCtrl_ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
         return (matrix) => ((i) => JsonTypes_composeFactorValue(cat, getItemFromDict(matrix, [generalI, i])));
     }
     else {
@@ -743,7 +743,7 @@ export function ProcessParsing_tryFactorGetter(generalI, valueI, valueHeader) {
 
 export function ProcessParsing_tryCharacteristicGetter(generalI, valueI, valueHeader) {
     if (valueHeader.tag === 1) {
-        const cat = new CompositeHeader(1, [ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
+        const cat = new CompositeHeader(1, [ARCtrl_ISA_OntologyAnnotation__OntologyAnnotation_SetColumnIndex_Z524259A4(valueHeader.fields[0], valueI)]);
         return (matrix) => ((i) => JsonTypes_composeCharacteristicValue(cat, getItemFromDict(matrix, [generalI, i])));
     }
     else {
@@ -847,27 +847,27 @@ export function ProcessParsing_getProcessGetter(processNameRoot, headers) {
     let inputGetter_1;
     const matchValue = tryPick((tupledArg_9) => ProcessParsing_tryGetInputGetter(tupledArg_9[0], tupledArg_9[1]), headers_1);
     if (matchValue == null) {
-        inputGetter_1 = ((matrix_1) => ((i_1) => singleton(new ProcessInput(0, [Source_create_Z32235993(void 0, `${processNameRoot}_Input_${i_1}`, toList(map((f_1) => f_1(matrix_1)(i_1), charGetters)))]))));
+        inputGetter_1 = ((matrix_1) => ((i_1) => singleton(new ProcessInput(0, [Source_create_7A281ED9(void 0, `${processNameRoot}_Input_${i_1}`, toList(map((f_1) => f_1(matrix_1)(i_1), charGetters)))]))));
     }
     else {
         const inputGetter = matchValue;
         inputGetter_1 = ((matrix) => ((i) => {
             const chars = toList(map((f) => f(matrix)(i), charGetters));
             const input = inputGetter(matrix)(i);
-            return (!(ProcessInput__isSample(input) ? true : ProcessInput__isSource(input)) && !isEmpty(chars)) ? ofArray([input, ProcessInput_createSample_Z445EF6B3(ProcessInput__get_Name(input), chars)]) : singleton(ProcessInput_setCharacteristicValues(chars, input));
+            return (!(ProcessInput__isSample(input) ? true : ProcessInput__isSource(input)) && !isEmpty(chars)) ? ofArray([input, ProcessInput_createSample_Z6DF16D07(ProcessInput__get_Name(input), chars)]) : singleton(ProcessInput_setCharacteristicValues(chars, input));
         }));
     }
     let outputGetter_1;
     const matchValue_1 = tryPick((tupledArg_10) => ProcessParsing_tryGetOutputGetter(tupledArg_10[0], tupledArg_10[1]), headers_1);
     if (matchValue_1 == null) {
-        outputGetter_1 = ((matrix_3) => ((i_3) => singleton(new ProcessOutput(0, [Sample_create_3A6378D6(void 0, `${processNameRoot}_Output_${i_3}`, void 0, toList(map((f_3) => f_3(matrix_3)(i_3), factorValueGetters)))]))));
+        outputGetter_1 = ((matrix_3) => ((i_3) => singleton(new ProcessOutput(0, [Sample_create_E50ED22(void 0, `${processNameRoot}_Output_${i_3}`, void 0, toList(map((f_3) => f_3(matrix_3)(i_3), factorValueGetters)))]))));
     }
     else {
         const outputGetter = matchValue_1;
         outputGetter_1 = ((matrix_2) => ((i_2) => {
             const factors = toList(map((f_2) => f_2(matrix_2)(i_2), factorValueGetters));
             const output = outputGetter(matrix_2)(i_2);
-            return (!ProcessOutput__isSample(output) && !isEmpty(factors)) ? ofArray([output, ProcessOutput_createSample_Z445EF6B3(ProcessOutput__get_Name(output), void 0, factors)]) : singleton(ProcessOutput_setFactorValues(factors, output));
+            return (!ProcessOutput__isSample(output) && !isEmpty(factors)) ? ofArray([output, ProcessOutput_createSample_Z6DF16D07(ProcessOutput__get_Name(output), void 0, factors)]) : singleton(ProcessOutput_setFactorValues(factors, output));
         }));
     }
     return (matrix_4) => ((i_4) => {
@@ -949,7 +949,7 @@ export function ProcessParsing_processToRows(p) {
                 return void 0;
             }
         }, ios), head(ios)[0]);
-        const chars = map_1((cv) => [JsonTypes_decomposeCharacteristicValue(cv), tryGetCharacteristicColumnIndex(cv)], ProcessInput_getCharacteristicValues_Z38E7E853(inputForCharas));
+        const chars = map_1((cv) => [JsonTypes_decomposeCharacteristicValue(cv), tryGetCharacteristicColumnIndex(cv)], ProcessInput_getCharacteristicValues_102B6859(inputForCharas));
         const outputForFactors = defaultArg(tryPick_1((tupledArg_4) => {
             const o_4 = tupledArg_4[1];
             if (ProcessOutput__isSample(o_4)) {
@@ -968,7 +968,7 @@ export function ProcessParsing_processToRows(p) {
                 return void 0;
             }
         }, ios), head(ios)[1]);
-        const vals = map_1((tuple_5) => tuple_5[0], sortBy((arg_2) => defaultArg(arg_2[1], 10000), append_1(chars, append_1(components, append_1(pvs, map_1((fv) => [JsonTypes_decomposeFactorValue(fv), tryGetFactorColumnIndex(fv)], ProcessOutput_getFactorValues_Z4A02997C(outputForFactors))))), {
+        const vals = map_1((tuple_5) => tuple_5[0], sortBy((arg_2) => defaultArg(arg_2[1], 10000), append_1(chars, append_1(components, append_1(pvs, map_1((fv) => [JsonTypes_decomposeFactorValue(fv), tryGetFactorColumnIndex(fv)], ProcessOutput_getFactorValues_11830B70(outputForFactors))))), {
             Compare: comparePrimitives,
         }));
         return toList(delay(() => append(singleton_1(JsonTypes_decomposeProcessInput(inputForType)), delay(() => append(protVals, delay(() => append(vals, delay(() => singleton_1(JsonTypes_decomposeProcessOutput(outputForType))))))))));

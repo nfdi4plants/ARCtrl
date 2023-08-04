@@ -1,10 +1,10 @@
 import { Record } from "../../../fable_modules/fable-library.4.1.4/Types.js";
-import { getRecordFields, makeRecord, record_type, list_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
+import { getRecordFields, makeRecord, record_type, array_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
 import { Comment$_$reflection } from "./Comment.js";
-import { empty, filter, map, singleton, append, exists, tryFind } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { map2, map, tryFind } from "../../../fable_modules/fable-library.4.1.4/Array.js";
 import { equals } from "../../../fable_modules/fable-library.4.1.4/Util.js";
-import { map2 } from "../../../fable_modules/fable-library.4.1.4/Array.js";
+import { singleton, append } from "../../../fable_modules/fable-library.4.1.4/List.js";
 import { Update_updateOnlyByExistingAppend, Update_updateOnlyByExisting, Update_updateAppend } from "../Update.js";
 import { mapDefault } from "../OptionExtensions.js";
 
@@ -26,19 +26,19 @@ export class Person extends Record {
 }
 
 export function Person_$reflection() {
-    return record_type("ISA.Person", [], Person, () => [["ID", option_type(string_type)], ["LastName", option_type(string_type)], ["FirstName", option_type(string_type)], ["MidInitials", option_type(string_type)], ["EMail", option_type(string_type)], ["Phone", option_type(string_type)], ["Fax", option_type(string_type)], ["Address", option_type(string_type)], ["Affiliation", option_type(string_type)], ["Roles", option_type(list_type(OntologyAnnotation_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Person", [], Person, () => [["ID", option_type(string_type)], ["LastName", option_type(string_type)], ["FirstName", option_type(string_type)], ["MidInitials", option_type(string_type)], ["EMail", option_type(string_type)], ["Phone", option_type(string_type)], ["Fax", option_type(string_type)], ["Address", option_type(string_type)], ["Affiliation", option_type(string_type)], ["Roles", option_type(array_type(OntologyAnnotation_$reflection()))], ["Comments", option_type(array_type(Comment$_$reflection()))]]);
 }
 
 export function Person_make(id, lastName, firstName, midInitials, email, phone, fax, address, affiliation, roles, comments) {
     return new Person(id, lastName, firstName, midInitials, email, phone, fax, address, affiliation, roles, comments);
 }
 
-export function Person_create_28E835CB(Id, LastName, FirstName, MidInitials, Email, Phone, Fax, Address, Affiliation, Roles, Comments) {
+export function Person_create_4538B98B(Id, LastName, FirstName, MidInitials, Email, Phone, Fax, Address, Affiliation, Roles, Comments) {
     return Person_make(Id, LastName, FirstName, MidInitials, Email, Phone, Fax, Address, Affiliation, Roles, Comments);
 }
 
 export function Person_get_empty() {
-    return Person_create_28E835CB();
+    return Person_create_4538B98B();
 }
 
 export function Person_tryGetByFullName(firstName, midInitials, lastName, persons) {
@@ -49,7 +49,7 @@ export function Person_tryGetByFullName(firstName, midInitials, lastName, person
  * If an person with the given FirstName, MidInitials and LastName exists in the list, returns true
  */
 export function Person_existsByFullName(firstName, midInitials, lastName, persons) {
-    return exists((p) => ((midInitials === "") ? (equals(p.FirstName, firstName) && equals(p.LastName, lastName)) : ((equals(p.FirstName, firstName) && equals(p.MidInitials, midInitials)) && equals(p.LastName, lastName))), persons);
+    return persons.some((p) => ((midInitials === "") ? (equals(p.FirstName, firstName) && equals(p.LastName, lastName)) : ((equals(p.FirstName, firstName) && equals(p.MidInitials, midInitials)) && equals(p.LastName, lastName))));
 }
 
 /**
@@ -63,7 +63,7 @@ export function Person_add(persons, person) {
  * Updates all persons for which the predicate returns true with the given person values
  */
 export function Person_updateBy(predicate, updateOption, person, persons) {
-    if (exists(predicate, persons)) {
+    if (persons.some(predicate)) {
         return map((p) => {
             if (predicate(p)) {
                 const this$ = updateOption;
@@ -108,13 +108,13 @@ export function Person_updateByFullName(updateOption, person, persons) {
  * If a person with the given FirstName, MidInitials and LastName exists in the list, removes it
  */
 export function Person_removeByFullName(firstName, midInitials, lastName, persons) {
-    return filter((p) => ((midInitials === "") ? !(equals(p.FirstName, firstName) && equals(p.LastName, lastName)) : !((equals(p.FirstName, firstName) && equals(p.MidInitials, midInitials)) && equals(p.LastName, lastName))), persons);
+    return persons.filter((p) => ((midInitials === "") ? !(equals(p.FirstName, firstName) && equals(p.LastName, lastName)) : !((equals(p.FirstName, firstName) && equals(p.MidInitials, midInitials)) && equals(p.LastName, lastName))));
 }
 
 /**
  * Returns roles of a person
  */
-export function Person_getRoles_Z2DD38D1B(person) {
+export function Person_getRoles_Z22779EAF(person) {
     return person.Roles;
 }
 
@@ -122,7 +122,7 @@ export function Person_getRoles_Z2DD38D1B(person) {
  * Applies function f on roles of a person
  */
 export function Person_mapRoles(f, person) {
-    return new Person(person.ID, person.LastName, person.FirstName, person.MidInitials, person.EMail, person.Phone, person.Fax, person.Address, person.Affiliation, mapDefault(empty(), f, person.Roles), person.Comments);
+    return new Person(person.ID, person.LastName, person.FirstName, person.MidInitials, person.EMail, person.Phone, person.Fax, person.Address, person.Affiliation, mapDefault([], f, person.Roles), person.Comments);
 }
 
 /**
@@ -135,7 +135,7 @@ export function Person_setRoles(person, roles) {
 /**
  * Returns comments of a person
  */
-export function Person_getComments_Z2DD38D1B(person) {
+export function Person_getComments_Z22779EAF(person) {
     return person.Comments;
 }
 
@@ -143,7 +143,7 @@ export function Person_getComments_Z2DD38D1B(person) {
  * Applies function f on comments of a person
  */
 export function Person_mapComments(f, person) {
-    return new Person(person.ID, person.LastName, person.FirstName, person.MidInitials, person.EMail, person.Phone, person.Fax, person.Address, person.Affiliation, person.Roles, mapDefault(empty(), f, person.Comments));
+    return new Person(person.ID, person.LastName, person.FirstName, person.MidInitials, person.EMail, person.Phone, person.Fax, person.Address, person.Affiliation, person.Roles, mapDefault([], f, person.Comments));
 }
 
 /**

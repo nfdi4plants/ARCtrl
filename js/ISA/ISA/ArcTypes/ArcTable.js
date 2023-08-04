@@ -11,11 +11,11 @@ import { StringBuilder__AppendLine_Z721C83C5, StringBuilder_$ctor } from "../../
 import { Record, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { CompositeCell_$reflection, CompositeCell } from "./CompositeCell.js";
 import { CompositeHeader_$reflection, CompositeHeader } from "./CompositeHeader.js";
-import { ISA_Component__Component_TryGetColumnIndex, ISA_ProtocolParameter__ProtocolParameter_TryGetColumnIndex } from "../JsonTypes/ColumnIndex.js";
+import { ARCtrl_ISA_Component__Component_TryGetColumnIndex, ARCtrl_ISA_ProtocolParameter__ProtocolParameter_TryGetColumnIndex } from "../JsonTypes/ColumnIndex.js";
 import { Protocol_get_empty, Protocol_addComponent, Protocol_addParameter, Protocol_setName, Protocol_setDescription, Protocol_setUri, Protocol_setVersion, Protocol_setProtocolType } from "../JsonTypes/Protocol.js";
 import { OntologyAnnotation_get_empty } from "../JsonTypes/OntologyAnnotation.js";
-import { ProtocolParameter_create_2769312B } from "../JsonTypes/ProtocolParameter.js";
-import { Component_create_Z33AADEE0 } from "../JsonTypes/Component.js";
+import { ProtocolParameter_create_Z6C54B221 } from "../JsonTypes/ProtocolParameter.js";
+import { Component_create_61502994 } from "../JsonTypes/Component.js";
 import { List_distinct } from "../../../fable_modules/fable-library.4.1.4/Seq2.js";
 import { toProtocol } from "./CompositeRow.js";
 import { join } from "../../../fable_modules/fable-library.4.1.4/String.js";
@@ -483,7 +483,7 @@ export class ArcTable extends Record {
         try {
             while (enumerator["System.Collections.IEnumerator.MoveNext"]()) {
                 const pp = enumerator["System.Collections.Generic.IEnumerator`1.get_Current"]();
-                t.AddColumn(new CompositeHeader(3, [value_9(pp.ParameterName)]), void 0, ISA_ProtocolParameter__ProtocolParameter_TryGetColumnIndex(pp));
+                t.AddColumn(new CompositeHeader(3, [value_9(pp.ParameterName)]), void 0, ARCtrl_ISA_ProtocolParameter__ProtocolParameter_TryGetColumnIndex(pp));
             }
         }
         finally {
@@ -494,7 +494,7 @@ export class ArcTable extends Record {
             while (enumerator_1["System.Collections.IEnumerator.MoveNext"]()) {
                 const c = enumerator_1["System.Collections.Generic.IEnumerator`1.get_Current"]();
                 const v_1 = map_2((arg) => singleton_1(CompositeCell.fromValue(arg, unwrap(c.ComponentUnit))), c.ComponentValue);
-                t.AddColumn(new CompositeHeader(3, [value_9(c.ComponentType)]), v_1, ISA_Component__Component_TryGetColumnIndex(c));
+                t.AddColumn(new CompositeHeader(3, [value_9(c.ComponentType)]), v_1, ARCtrl_ISA_Component__Component_TryGetColumnIndex(c));
             }
         }
         finally {
@@ -532,9 +532,9 @@ export class ArcTable extends Record {
                 case 8:
                     return Protocol_setName(p, "");
                 case 3:
-                    return Protocol_addParameter(ProtocolParameter_create_2769312B(void 0, h.fields[0]), p);
+                    return Protocol_addParameter(ProtocolParameter_create_Z6C54B221(void 0, h.fields[0]), p);
                 case 0:
-                    return Protocol_addComponent(Component_create_Z33AADEE0(void 0, void 0, void 0, h.fields[0]), p);
+                    return Protocol_addComponent(Component_create_61502994(void 0, void 0, void 0, h.fields[0]), p);
                 default:
                     return p;
             }
@@ -589,6 +589,6 @@ export class ArcTable extends Record {
 }
 
 export function ArcTable_$reflection() {
-    return record_type("ISA.ArcTable", [], ArcTable, () => [["Name", string_type], ["Headers", array_type(CompositeHeader_$reflection())], ["Values", class_type("System.Collections.Generic.Dictionary`2", [tuple_type(int32_type, int32_type), CompositeCell_$reflection()])]]);
+    return record_type("ARCtrl.ISA.ArcTable", [], ArcTable, () => [["Name", string_type], ["Headers", array_type(CompositeHeader_$reflection())], ["Values", class_type("System.Collections.Generic.Dictionary`2", [tuple_type(int32_type, int32_type), CompositeCell_$reflection()])]]);
 }
 

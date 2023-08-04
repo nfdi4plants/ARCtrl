@@ -1,5 +1,5 @@
 import { int32ToString } from "../../../fable_modules/fable-library.4.1.4/Util.js";
-import { OntologyAnnotation_$reflection, OntologyAnnotation_get_empty, OntologyAnnotation_fromString_Z7D8EB286, OntologyAnnotation__get_NameText, OntologyAnnotation_create_131C8C9D } from "../JsonTypes/OntologyAnnotation.js";
+import { OntologyAnnotation_$reflection, OntologyAnnotation_get_empty, OntologyAnnotation_fromString_2EB0E147, OntologyAnnotation__get_NameText, OntologyAnnotation_create_Z61CCDEEC } from "../JsonTypes/OntologyAnnotation.js";
 import { AnnotationValue } from "../JsonTypes/AnnotationValue.js";
 import { defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { Union } from "../../../fable_modules/fable-library.4.1.4/Types.js";
@@ -91,11 +91,11 @@ export class CompositeCell extends Union {
     }
     ToUnitizedCell() {
         const this$ = this;
-        return (this$.tag === 1) ? (new CompositeCell(2, ["", OntologyAnnotation_create_131C8C9D(void 0, new AnnotationValue(0, [this$.fields[0]]))])) : ((this$.tag === 0) ? (new CompositeCell(2, ["", this$.fields[0]])) : this$);
+        return (this$.tag === 1) ? (new CompositeCell(2, ["", OntologyAnnotation_create_Z61CCDEEC(void 0, new AnnotationValue(0, [this$.fields[0]]))])) : ((this$.tag === 0) ? (new CompositeCell(2, ["", this$.fields[0]])) : this$);
     }
     ToTermCell() {
         const this$ = this;
-        return (this$.tag === 2) ? (new CompositeCell(0, [this$.fields[1]])) : ((this$.tag === 1) ? (new CompositeCell(0, [OntologyAnnotation_create_131C8C9D(void 0, new AnnotationValue(0, [this$.fields[0]]))])) : this$);
+        return (this$.tag === 2) ? (new CompositeCell(0, [this$.fields[1]])) : ((this$.tag === 1) ? (new CompositeCell(0, [OntologyAnnotation_create_Z61CCDEEC(void 0, new AnnotationValue(0, [this$.fields[0]]))])) : this$);
     }
     ToFreeTextCell() {
         const this$ = this;
@@ -132,13 +132,13 @@ export class CompositeCell extends Union {
         return new CompositeCell(0, [oa]);
     }
     static createTermFromString(name, tsr, tan) {
-        return new CompositeCell(0, [OntologyAnnotation_fromString_Z7D8EB286(name, tsr, tan)]);
+        return new CompositeCell(0, [OntologyAnnotation_fromString_2EB0E147(name, tsr, tan)]);
     }
     static createUnitized(value, oa) {
         return new CompositeCell(2, [value, defaultArg(oa, OntologyAnnotation_get_empty())]);
     }
     static createUnitizedFromString(value, name, tsr, tan) {
-        const tupledArg = [value, OntologyAnnotation_fromString_Z7D8EB286(name, tsr, tan)];
+        const tupledArg = [value, OntologyAnnotation_fromString_2EB0E147(name, tsr, tan)];
         return new CompositeCell(2, [tupledArg[0], tupledArg[1]]);
     }
     static createFreeText(value) {
@@ -160,6 +160,6 @@ export class CompositeCell extends Union {
 }
 
 export function CompositeCell_$reflection() {
-    return union_type("ISA.CompositeCell", [], CompositeCell, () => [[["Item", OntologyAnnotation_$reflection()]], [["Item", string_type]], [["Item1", string_type], ["Item2", OntologyAnnotation_$reflection()]]]);
+    return union_type("ARCtrl.ISA.CompositeCell", [], CompositeCell, () => [[["Item", OntologyAnnotation_$reflection()]], [["Item", string_type]], [["Item1", string_type], ["Item2", OntologyAnnotation_$reflection()]]]);
 }
 

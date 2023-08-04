@@ -1,4 +1,4 @@
-import { FsWorkbook } from "../fable_modules/FsSpreadsheet.3.1.1/FsWorkbook.fs.js";
+import { some } from "../fable_modules/fable-library.4.1.4/Option.js";
 import { combineMany } from "../FileSystem/Path.js";
 import { equalsWith } from "../fable_modules/fable-library.4.1.4/Array.js";
 import { defaultOf } from "../fable_modules/fable-library.4.1.4/Util.js";
@@ -9,13 +9,8 @@ export function tryFromContract(c) {
         if (c.DTOType != null) {
             if (c.DTOType === "ISA_Assay") {
                 if (c.DTO != null) {
-                    if (c.DTO instanceof FsWorkbook) {
-                        matchResult = 0;
-                        fsworkbook = c.DTO;
-                    }
-                    else {
-                        matchResult = 1;
-                    }
+                    matchResult = 0;
+                    fsworkbook = c.DTO;
                 }
                 else {
                     matchResult = 1;
@@ -34,7 +29,7 @@ export function tryFromContract(c) {
     }
     switch (matchResult) {
         case 0:
-            return fsworkbook;
+            return some(fsworkbook);
         default:
             return void 0;
     }

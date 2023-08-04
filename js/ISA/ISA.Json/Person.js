@@ -1,14 +1,15 @@
-import { choose, tryPick } from "../../fable_modules/fable-library.4.1.4/List.js";
+import { tryPick } from "../../fable_modules/fable-library.4.1.4/Array.js";
 import { replace } from "../../fable_modules/fable-library.4.1.4/String.js";
 import { URIModule_toString } from "../ISA/JsonTypes/URI.js";
 import { toString as toString_1, nil, object as object_22 } from "../../fable_modules/Thoth.Json.10.1.0/Encode.fs.js";
+import { choose } from "../../fable_modules/fable-library.4.1.4/List.js";
 import { uncurry2, equals } from "../../fable_modules/fable-library.4.1.4/Util.js";
 import { empty, singleton, append, delay, toList } from "../../fable_modules/fable-library.4.1.4/Seq.js";
 import { ConverterOptions__set_IncludeType_Z1FBCCD16, ConverterOptions__set_SetID_Z1FBCCD16, ConverterOptions_$ctor, ConverterOptions__get_IncludeType, ConverterOptions__get_SetID } from "./ConverterOptions.js";
 import { tryInclude } from "./GEncode.js";
 import { OntologyAnnotation_decoder, OntologyAnnotation_encoder } from "./Ontology.js";
 import { decoder as decoder_3, encoder as encoder_1 } from "./Comment.js";
-import { list as list_1, string, object as object_23 } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
+import { array as array_1, string, object as object_23 } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
 import { fromString as fromString_1, uri } from "./Decode.js";
 import { Person } from "../ISA/JsonTypes/Person.js";
 
@@ -176,7 +177,7 @@ export function decoder(options) {
         let FirstName;
         const objectArg_1 = get$.Optional;
         FirstName = objectArg_1.Field("firstName", string);
-        return new Person(ID, (objectArg_2 = get$.Optional, objectArg_2.Field("lastName", string)), FirstName, (objectArg_3 = get$.Optional, objectArg_3.Field("midInitials", string)), (objectArg_4 = get$.Optional, objectArg_4.Field("email", string)), (objectArg_5 = get$.Optional, objectArg_5.Field("phone", string)), (objectArg_6 = get$.Optional, objectArg_6.Field("fax", string)), (objectArg_7 = get$.Optional, objectArg_7.Field("address", string)), (objectArg_8 = get$.Optional, objectArg_8.Field("affiliation", string)), (arg_19 = ((decoder_1 = OntologyAnnotation_decoder(options), (path_8) => ((value_8) => list_1(uncurry2(decoder_1), path_8, value_8)))), (objectArg_9 = get$.Optional, objectArg_9.Field("roles", uncurry2(arg_19)))), (arg_21 = ((decoder_2 = decoder_3(options), (path_9) => ((value_9) => list_1(uncurry2(decoder_2), path_9, value_9)))), (objectArg_10 = get$.Optional, objectArg_10.Field("comments", uncurry2(arg_21)))));
+        return new Person(ID, (objectArg_2 = get$.Optional, objectArg_2.Field("lastName", string)), FirstName, (objectArg_3 = get$.Optional, objectArg_3.Field("midInitials", string)), (objectArg_4 = get$.Optional, objectArg_4.Field("email", string)), (objectArg_5 = get$.Optional, objectArg_5.Field("phone", string)), (objectArg_6 = get$.Optional, objectArg_6.Field("fax", string)), (objectArg_7 = get$.Optional, objectArg_7.Field("address", string)), (objectArg_8 = get$.Optional, objectArg_8.Field("affiliation", string)), (arg_19 = ((decoder_1 = OntologyAnnotation_decoder(options), (path_8) => ((value_8) => array_1(uncurry2(decoder_1), path_8, value_8)))), (objectArg_9 = get$.Optional, objectArg_9.Field("roles", uncurry2(arg_19)))), (arg_21 = ((decoder_2 = decoder_3(options), (path_9) => ((value_9) => array_1(uncurry2(decoder_2), path_9, value_9)))), (objectArg_10 = get$.Optional, objectArg_10.Field("comments", uncurry2(arg_21)))));
     }, path_10, v));
 }
 

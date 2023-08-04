@@ -1,7 +1,7 @@
 import { reverse, cons, iterate, iterateIndexed, map, initialize, singleton, length, empty, ofArray } from "../../../fable_modules/fable-library.4.1.4/List.js";
-import { OntologySourceReference_create_55205B02, OntologySourceReference_make } from "../../ISA/JsonTypes/OntologySourceReference.js";
+import { OntologySourceReference_create_5CD5B036, OntologySourceReference_make } from "../../ISA/JsonTypes/OntologySourceReference.js";
 import { Option_fromValueWithDefault } from "../Conversions.js";
-import { SparseTable_ToRows_584133C0, SparseTable_FromRows_Z5579EC29, SparseTable, SparseTable_Create_Z2192E64B, SparseTable__TryGetValueDefault_5BAE6133, SparseTable_GetEmptyComments_Z15A4F148 } from "../SparseTable.js";
+import { SparseTable_ToRows_6A3D4534, SparseTable_FromRows_Z5579EC29, SparseTable, SparseTable_Create_Z2192E64B, SparseTable__TryGetValueDefault_5BAE6133, SparseTable_GetEmptyComments_651559CC } from "../SparseTable.js";
 import { Comment_toString, Comment_fromString } from "../Comment.js";
 import { addToDict } from "../../../fable_modules/fable-library.4.1.4/MapUtil.js";
 import { defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
@@ -24,7 +24,7 @@ export function fromString(description, file, name, version, comments) {
 
 export function fromSparseTable(matrix) {
     if ((matrix.ColumnCount === 0) && (length(matrix.CommentKeys) !== 0)) {
-        return singleton(OntologySourceReference_create_55205B02(void 0, void 0, void 0, void 0, SparseTable_GetEmptyComments_Z15A4F148(matrix)));
+        return singleton(OntologySourceReference_create_5CD5B036(void 0, void 0, void 0, void 0, ofArray(SparseTable_GetEmptyComments_651559CC(matrix))));
     }
     else {
         return initialize(matrix.ColumnCount, (i) => {
@@ -65,6 +65,6 @@ export function fromRows(lineNumber, rows) {
 }
 
 export function toRows(termSources) {
-    return SparseTable_ToRows_584133C0(toSparseTable(termSources));
+    return SparseTable_ToRows_6A3D4534(toSparseTable(termSources));
 }
 

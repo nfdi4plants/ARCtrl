@@ -1,8 +1,8 @@
 import { Record } from "../../../fable_modules/fable-library.4.1.4/Types.js";
-import { getRecordFields, makeRecord, record_type, list_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
+import { getRecordFields, makeRecord, record_type, array_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
 import { Comment$_$reflection } from "./Comment.js";
-import { empty, filter, map, tryFind, exists, singleton, append } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { filter, map, tryFind, exists, singleton, append } from "../../../fable_modules/fable-library.4.1.4/List.js";
 import { equals } from "../../../fable_modules/fable-library.4.1.4/Util.js";
 import { map2 } from "../../../fable_modules/fable-library.4.1.4/Array.js";
 import { Update_updateOnlyByExistingAppend, Update_updateOnlyByExisting, Update_updateAppend } from "../Update.js";
@@ -22,19 +22,19 @@ export class Publication extends Record {
 }
 
 export function Publication_$reflection() {
-    return record_type("ISA.Publication", [], Publication, () => [["PubMedID", option_type(string_type)], ["DOI", option_type(string_type)], ["Authors", option_type(string_type)], ["Title", option_type(string_type)], ["Status", option_type(OntologyAnnotation_$reflection())], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Publication", [], Publication, () => [["PubMedID", option_type(string_type)], ["DOI", option_type(string_type)], ["Authors", option_type(string_type)], ["Title", option_type(string_type)], ["Status", option_type(OntologyAnnotation_$reflection())], ["Comments", option_type(array_type(Comment$_$reflection()))]]);
 }
 
 export function Publication_make(pubMedID, doi, authors, title, status, comments) {
     return new Publication(pubMedID, doi, authors, title, status, comments);
 }
 
-export function Publication_create_Z3E55064F(PubMedID, Doi, Authors, Title, Status, Comments) {
+export function Publication_create_496BCAB8(PubMedID, Doi, Authors, Title, Status, Comments) {
     return Publication_make(PubMedID, Doi, Authors, Title, Status, Comments);
 }
 
 export function Publication_get_empty() {
-    return Publication_create_Z3E55064F();
+    return Publication_create_496BCAB8();
 }
 
 /**
@@ -128,7 +128,7 @@ export function Publication_removeByPubMedID(pubMedID, publications) {
  * Status
  * Returns publication status of a publication
  */
-export function Publication_getStatus_Z3C2FFBB4(publication) {
+export function Publication_getStatus_Z3279EA88(publication) {
     return publication.Status;
 }
 
@@ -149,7 +149,7 @@ export function Publication_setStatus(publication, status) {
 /**
  * Returns comments of a protocol
  */
-export function Publication_getComments_Z3C2FFBB4(publication) {
+export function Publication_getComments_Z3279EA88(publication) {
     return publication.Comments;
 }
 
@@ -157,7 +157,7 @@ export function Publication_getComments_Z3C2FFBB4(publication) {
  * Applies function f on comments of a protocol
  */
 export function Publication_mapComments(f, publication) {
-    return new Publication(publication.PubMedID, publication.DOI, publication.Authors, publication.Title, publication.Status, mapDefault(empty(), f, publication.Comments));
+    return new Publication(publication.PubMedID, publication.DOI, publication.Authors, publication.Title, publication.Status, mapDefault([], f, publication.Comments));
 }
 
 /**

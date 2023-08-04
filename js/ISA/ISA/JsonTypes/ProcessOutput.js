@@ -1,8 +1,8 @@
 import { Union, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { printf, toText } from "../../../fable_modules/fable-library.4.1.4/String.js";
-import { Sample_create_3A6378D6, Sample_getUnits_Z23050B6A, Sample_setFactorValues, Sample_get_empty, Sample_$reflection } from "./Sample.js";
-import { Data_create_Z748D099, Data_$reflection } from "./Data.js";
-import { Material_create_76090C97, Material_getUnits_43A4149B, Material_$reflection } from "./Material.js";
+import { Sample_create_E50ED22, Sample_getUnits_Z29207F1E, Sample_setFactorValues, Sample_get_empty, Sample_$reflection } from "./Sample.js";
+import { Data_create_Z326CF519, Data_$reflection } from "./Data.js";
+import { Material_create_Z31BE6CDD, Material_getUnits_Z42815C11, Material_$reflection } from "./Material.js";
 import { union_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { unwrap, map, defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { empty, choose } from "../../../fable_modules/fable-library.4.1.4/List.js";
@@ -41,7 +41,7 @@ export class ProcessOutput extends Union {
 }
 
 export function ProcessOutput_$reflection() {
-    return union_type("ISA.ProcessOutput", [], ProcessOutput, () => [[["Item", Sample_$reflection()]], [["Item", Data_$reflection()]], [["Item", Material_$reflection()]]]);
+    return union_type("ARCtrl.ISA.ProcessOutput", [], ProcessOutput, () => [[["Item", Sample_$reflection()]], [["Item", Data_$reflection()]], [["Item", Material_$reflection()]]]);
 }
 
 export function ProcessOutput__get_TryName(this$) {
@@ -66,14 +66,14 @@ export function ProcessOutput_get_Default() {
 /**
  * Returns name of processOutput
  */
-export function ProcessOutput_tryGetName_Z4A02997C(po) {
+export function ProcessOutput_tryGetName_11830B70(po) {
     return ProcessOutput__get_TryName(po);
 }
 
 /**
  * Returns name of processInput
  */
-export function ProcessOutput_getName_Z4A02997C(po) {
+export function ProcessOutput_getName_11830B70(po) {
     return ProcessOutput__get_Name(po);
 }
 
@@ -87,7 +87,7 @@ export function ProcessOutput_nameEquals(name, po) {
 /**
  * Returns true, if Process Output is Sample
  */
-export function ProcessOutput_isSample_Z4A02997C(po) {
+export function ProcessOutput_isSample_11830B70(po) {
     if (po.tag === 0) {
         return true;
     }
@@ -99,7 +99,7 @@ export function ProcessOutput_isSample_Z4A02997C(po) {
 /**
  * Returns true, if Process Output is Data
  */
-export function ProcessOutput_isData_Z4A02997C(po) {
+export function ProcessOutput_isData_11830B70(po) {
     if (po.tag === 1) {
         return true;
     }
@@ -111,7 +111,7 @@ export function ProcessOutput_isData_Z4A02997C(po) {
 /**
  * Returns true, if Process Output is Material
  */
-export function ProcessOutput_isMaterial_Z4A02997C(po) {
+export function ProcessOutput_isMaterial_11830B70(po) {
     if (po.tag === 2) {
         return true;
     }
@@ -124,27 +124,27 @@ export function ProcessOutput_isMaterial_Z4A02997C(po) {
  * Returns true, if Process Output is Sample
  */
 export function ProcessOutput__isSample(this$) {
-    return ProcessOutput_isSample_Z4A02997C(this$);
+    return ProcessOutput_isSample_11830B70(this$);
 }
 
 /**
  * Returns true, if Process Output is Data
  */
 export function ProcessOutput__isData(this$) {
-    return ProcessOutput_isData_Z4A02997C(this$);
+    return ProcessOutput_isData_11830B70(this$);
 }
 
 /**
  * Returns true, if Process Output is Material
  */
 export function ProcessOutput__isMaterial(this$) {
-    return ProcessOutput_isMaterial_Z4A02997C(this$);
+    return ProcessOutput_isMaterial_11830B70(this$);
 }
 
 /**
  * If given process output is a sample, returns it, else returns None
  */
-export function ProcessOutput_trySample_Z4A02997C(po) {
+export function ProcessOutput_trySample_11830B70(po) {
     if (po.tag === 0) {
         return po.fields[0];
     }
@@ -156,7 +156,7 @@ export function ProcessOutput_trySample_Z4A02997C(po) {
 /**
  * If given process output is a data, returns it, else returns None
  */
-export function ProcessOutput_tryData_Z4A02997C(po) {
+export function ProcessOutput_tryData_11830B70(po) {
     if (po.tag === 1) {
         return po.fields[0];
     }
@@ -168,7 +168,7 @@ export function ProcessOutput_tryData_Z4A02997C(po) {
 /**
  * If given process output is a material, returns it, else returns None
  */
-export function ProcessOutput_tryMaterial_Z4A02997C(po) {
+export function ProcessOutput_tryMaterial_11830B70(po) {
     if (po.tag === 2) {
         return po.fields[0];
     }
@@ -180,7 +180,7 @@ export function ProcessOutput_tryMaterial_Z4A02997C(po) {
 /**
  * If given process output contains characteristics, returns them
  */
-export function ProcessOutput_tryGetCharacteristicValues_Z4A02997C(po) {
+export function ProcessOutput_tryGetCharacteristicValues_11830B70(po) {
     switch (po.tag) {
         case 2:
             return po.fields[0].Characteristics;
@@ -194,14 +194,14 @@ export function ProcessOutput_tryGetCharacteristicValues_Z4A02997C(po) {
 /**
  * If given process output contains characteristics, returns them
  */
-export function ProcessOutput_tryGetCharacteristics_Z4A02997C(po) {
-    return map((list) => choose((c) => c.Category, list), ProcessOutput_tryGetCharacteristicValues_Z4A02997C(po));
+export function ProcessOutput_tryGetCharacteristics_11830B70(po) {
+    return map((list) => choose((c) => c.Category, list), ProcessOutput_tryGetCharacteristicValues_11830B70(po));
 }
 
 /**
  * If given process output contains factors, returns them
  */
-export function ProcessOutput_tryGetFactorValues_Z4A02997C(po) {
+export function ProcessOutput_tryGetFactorValues_11830B70(po) {
     switch (po.tag) {
         case 2:
             return void 0;
@@ -223,41 +223,41 @@ export function ProcessOutput_setFactorValues(values, po) {
     }
 }
 
-export function ProcessOutput_getFactorValues_Z4A02997C(po) {
-    return defaultArg(ProcessOutput_tryGetFactorValues_Z4A02997C(po), empty());
+export function ProcessOutput_getFactorValues_11830B70(po) {
+    return defaultArg(ProcessOutput_tryGetFactorValues_11830B70(po), empty());
 }
 
 /**
  * If given process output contains units, returns them
  */
-export function ProcessOutput_getUnits_Z4A02997C(po) {
+export function ProcessOutput_getUnits_11830B70(po) {
     switch (po.tag) {
         case 2:
-            return Material_getUnits_43A4149B(po.fields[0]);
+            return Material_getUnits_Z42815C11(po.fields[0]);
         case 1:
             return empty();
         default:
-            return Sample_getUnits_Z23050B6A(po.fields[0]);
+            return Sample_getUnits_Z29207F1E(po.fields[0]);
     }
 }
 
-export function ProcessOutput_createSample_Z445EF6B3(name, characteristics, factors, derivesFrom) {
-    return new ProcessOutput(0, [Sample_create_3A6378D6(void 0, name, unwrap(characteristics), unwrap(factors), unwrap(derivesFrom))]);
+export function ProcessOutput_createSample_Z6DF16D07(name, characteristics, factors, derivesFrom) {
+    return new ProcessOutput(0, [Sample_create_E50ED22(void 0, name, unwrap(characteristics), unwrap(factors), unwrap(derivesFrom))]);
 }
 
-export function ProcessOutput_createMaterial_ZEED0B34(name, characteristics, derivesFrom) {
-    return new ProcessOutput(2, [Material_create_76090C97(void 0, name, void 0, unwrap(characteristics), unwrap(derivesFrom))]);
+export function ProcessOutput_createMaterial_2363974C(name, characteristics, derivesFrom) {
+    return new ProcessOutput(2, [Material_create_Z31BE6CDD(void 0, name, void 0, unwrap(characteristics), unwrap(derivesFrom))]);
 }
 
 export function ProcessOutput_createImageFile_Z721C83C5(name) {
-    return new ProcessOutput(1, [Data_create_Z748D099(void 0, name, new DataFile(2, []))]);
+    return new ProcessOutput(1, [Data_create_Z326CF519(void 0, name, new DataFile(2, []))]);
 }
 
 export function ProcessOutput_createRawData_Z721C83C5(name) {
-    return new ProcessOutput(1, [Data_create_Z748D099(void 0, name, new DataFile(0, []))]);
+    return new ProcessOutput(1, [Data_create_Z326CF519(void 0, name, new DataFile(0, []))]);
 }
 
 export function ProcessOutput_createDerivedData_Z721C83C5(name) {
-    return new ProcessOutput(1, [Data_create_Z748D099(void 0, name, new DataFile(1, []))]);
+    return new ProcessOutput(1, [Data_create_Z326CF519(void 0, name, new DataFile(1, []))]);
 }
 

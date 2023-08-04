@@ -1,9 +1,9 @@
 import { Record } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { record_type, list_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { Comment$_$reflection } from "../../ISA/JsonTypes/Comment.js";
-import { ofSeq, append, reverse, cons, iterate, isEmpty, empty, map, ofArray } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { ofSeq, append, toArray, reverse, cons, empty, map, ofArray } from "../../../fable_modules/fable-library.4.1.4/List.js";
 import { Comment_toString, Comment_fromString } from "../Comment.js";
-import { SparseRowModule_fromValues, SparseTable_ToRows_584133C0, SparseTable_FromRows_Z5579EC29, SparseTable, SparseTable_Create_Z2192E64B, SparseTable__TryGetValueDefault_5BAE6133 } from "../SparseTable.js";
+import { SparseRowModule_fromValues, SparseTable_ToRows_6A3D4534, SparseTable_FromRows_Z5579EC29, SparseTable, SparseTable_Create_Z2192E64B, SparseTable__TryGetValueDefault_5BAE6133 } from "../SparseTable.js";
 import { Study_fileNameFromIdentifier } from "../../ISA/ArcTypes/Identifier.js";
 import { addToDict } from "../../../fable_modules/fable-library.4.1.4/MapUtil.js";
 import { defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
@@ -34,7 +34,7 @@ export class StudyInfo extends Record {
 }
 
 export function StudyInfo_$reflection() {
-    return record_type("ISA.Spreadsheet.Studies.StudyInfo", [], StudyInfo, () => [["Identifier", string_type], ["Title", string_type], ["Description", string_type], ["SubmissionDate", string_type], ["PublicReleaseDate", string_type], ["FileName", string_type], ["Comments", list_type(Comment$_$reflection())]]);
+    return record_type("ARCtrl.ISA.Spreadsheet.Studies.StudyInfo", [], StudyInfo, () => [["Identifier", string_type], ["Title", string_type], ["Description", string_type], ["SubmissionDate", string_type], ["PublicReleaseDate", string_type], ["FileName", string_type], ["Comments", list_type(Comment$_$reflection())]]);
 }
 
 export function StudyInfo_create(identifier, title, description, submissionDate, publicReleaseDate, fileName, comments) {
@@ -45,12 +45,12 @@ export function StudyInfo_get_Labels() {
     return ofArray(["Study Identifier", "Study Title", "Study Description", "Study Submission Date", "Study Public Release Date", "Study File Name"]);
 }
 
-export function StudyInfo_FromSparseTable_Z15A4F148(matrix) {
+export function StudyInfo_FromSparseTable_651559CC(matrix) {
     const comments = map((k) => Comment_fromString(k, SparseTable__TryGetValueDefault_5BAE6133(matrix, "", [k, 0])), matrix.CommentKeys);
     return StudyInfo_create(SparseTable__TryGetValueDefault_5BAE6133(matrix, "", ["Study Identifier", 0]), SparseTable__TryGetValueDefault_5BAE6133(matrix, "", ["Study Title", 0]), SparseTable__TryGetValueDefault_5BAE6133(matrix, "", ["Study Description", 0]), SparseTable__TryGetValueDefault_5BAE6133(matrix, "", ["Study Submission Date", 0]), SparseTable__TryGetValueDefault_5BAE6133(matrix, "", ["Study Public Release Date", 0]), SparseTable__TryGetValueDefault_5BAE6133(matrix, "", ["Study File Name", 0]), comments);
 }
 
-export function StudyInfo_ToSparseTable_331096F(study) {
+export function StudyInfo_ToSparseTable_1B3D5E9B(study) {
     const matrix = SparseTable_Create_Z2192E64B(void 0, StudyInfo_get_Labels(), void 0, 2);
     let commentKeys = empty();
     const patternInput = (study.Identifier.indexOf("MISSING_IDENTIFIER_") === 0) ? ["", ""] : [study.Identifier, Study_fileNameFromIdentifier(study.Identifier)];
@@ -60,13 +60,14 @@ export function StudyInfo_ToSparseTable_331096F(study) {
     addToDict(matrix.Matrix, ["Study Submission Date", 1], defaultArg(study.SubmissionDate, ""));
     addToDict(matrix.Matrix, ["Study Public Release Date", 1], defaultArg(study.PublicReleaseDate, ""));
     addToDict(matrix.Matrix, ["Study File Name", 1], patternInput[1]);
-    if (!isEmpty(study.Comments)) {
-        iterate((comment) => {
+    if (!(study.Comments.length === 0)) {
+        const array = study.Comments;
+        array.forEach((comment) => {
             const patternInput_1 = Comment_toString(comment);
             const n = patternInput_1[0];
             commentKeys = cons(n, commentKeys);
             addToDict(matrix.Matrix, [n, 1], patternInput_1[1]);
-        }, study.Comments);
+        });
     }
     return new SparseTable(matrix.Matrix, matrix.Keys, reverse(List_distinct(commentKeys, {
         Equals: (x, y) => (x === y),
@@ -76,11 +77,11 @@ export function StudyInfo_ToSparseTable_331096F(study) {
 
 export function StudyInfo_fromRows(lineNumber, rows) {
     const tupledArg = SparseTable_FromRows_Z5579EC29(rows, StudyInfo_get_Labels(), lineNumber);
-    return [tupledArg[0], tupledArg[1], tupledArg[2], StudyInfo_FromSparseTable_Z15A4F148(tupledArg[3])];
+    return [tupledArg[0], tupledArg[1], tupledArg[2], StudyInfo_FromSparseTable_651559CC(tupledArg[3])];
 }
 
-export function StudyInfo_toRows_331096F(study) {
-    return SparseTable_ToRows_584133C0(StudyInfo_ToSparseTable_331096F(study));
+export function StudyInfo_toRows_1B3D5E9B(study) {
+    return SparseTable_ToRows_6A3D4534(StudyInfo_ToSparseTable_1B3D5E9B(study));
 }
 
 export function fromParts(studyInfo, designDescriptors, publications, factors, assays, protocols, contacts) {
@@ -89,11 +90,16 @@ export function fromParts(studyInfo, designDescriptors, publications, factors, a
     const arg_2 = Option_fromValueWithDefault("", studyInfo.Description);
     const arg_3 = Option_fromValueWithDefault("", studyInfo.SubmissionDate);
     const arg_4 = Option_fromValueWithDefault("", studyInfo.PublicReleaseDate);
+    const arg_5 = toArray(publications);
+    const arg_6 = toArray(contacts);
+    const arg_7 = toArray(designDescriptors);
     let arg_8;
     const arg_13 = map((arg_12) => ArcTable.fromProtocol(arg_12), protocols);
     arg_8 = Array.from(arg_13);
     const arg_9 = Array.from(assays);
-    arcstudy = ArcStudy.make(studyInfo.Identifier, arg_1, arg_2, arg_3, arg_4, publications, contacts, designDescriptors, arg_8, arg_9, factors, studyInfo.Comments);
+    const arg_10 = toArray(factors);
+    const arg_11 = toArray(studyInfo.Comments);
+    arcstudy = ArcStudy.make(studyInfo.Identifier, arg_1, arg_2, arg_3, arg_4, arg_5, arg_6, arg_7, arg_8, arg_9, arg_10, arg_11);
     if (arcstudy.isEmpty && (arcstudy.Identifier === "")) {
         return void 0;
     }
@@ -247,6 +253,6 @@ export function fromRows(lineNumber, en) {
 
 export function toRows(study) {
     const protocols = ofSeq(collect((p) => p.GetProtocols(), study.Tables));
-    return delay(() => append_1(StudyInfo_toRows_331096F(study), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY DESIGN DESCRIPTORS"])), delay(() => append_1(toRows_1("Study Design", study.StudyDesignDescriptors), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY PUBLICATIONS"])), delay(() => append_1(toRows_2("Study Publication", study.Publications), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY FACTORS"])), delay(() => append_1(toRows_3("Study Factor", study.Factors), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY ASSAYS"])), delay(() => append_1(toRows_4("Study Assay", ofSeq(study.Assays)), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY PROTOCOLS"])), delay(() => append_1(toRows_5("Study Protocol", protocols), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY CONTACTS"])), delay(() => toRows_6("Study Person", study.Contacts))))))))))))))))))))))))));
+    return delay(() => append_1(StudyInfo_toRows_1B3D5E9B(study), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY DESIGN DESCRIPTORS"])), delay(() => append_1(toRows_1("Study Design", ofArray(study.StudyDesignDescriptors)), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY PUBLICATIONS"])), delay(() => append_1(toRows_2("Study Publication", ofArray(study.Publications)), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY FACTORS"])), delay(() => append_1(toRows_3("Study Factor", ofArray(study.Factors)), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY ASSAYS"])), delay(() => append_1(toRows_4("Study Assay", ofSeq(study.Assays)), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY PROTOCOLS"])), delay(() => append_1(toRows_5("Study Protocol", protocols), delay(() => append_1(singleton(SparseRowModule_fromValues(["STUDY CONTACTS"])), delay(() => toRows_6("Study Person", ofArray(study.Contacts)))))))))))))))))))))))))));
 }
 

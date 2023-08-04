@@ -37,19 +37,19 @@ export class Assay extends Record {
 }
 
 export function Assay_$reflection() {
-    return record_type("ISA.Assay", [], Assay, () => [["ID", option_type(string_type)], ["FileName", option_type(string_type)], ["MeasurementType", option_type(OntologyAnnotation_$reflection())], ["TechnologyType", option_type(OntologyAnnotation_$reflection())], ["TechnologyPlatform", option_type(string_type)], ["DataFiles", option_type(list_type(Data_$reflection()))], ["Materials", option_type(AssayMaterials_$reflection())], ["CharacteristicCategories", option_type(list_type(MaterialAttribute_$reflection()))], ["UnitCategories", option_type(list_type(OntologyAnnotation_$reflection()))], ["ProcessSequence", option_type(list_type(Process_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Assay", [], Assay, () => [["ID", option_type(string_type)], ["FileName", option_type(string_type)], ["MeasurementType", option_type(OntologyAnnotation_$reflection())], ["TechnologyType", option_type(OntologyAnnotation_$reflection())], ["TechnologyPlatform", option_type(string_type)], ["DataFiles", option_type(list_type(Data_$reflection()))], ["Materials", option_type(AssayMaterials_$reflection())], ["CharacteristicCategories", option_type(list_type(MaterialAttribute_$reflection()))], ["UnitCategories", option_type(list_type(OntologyAnnotation_$reflection()))], ["ProcessSequence", option_type(list_type(Process_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
 }
 
 export function Assay_make(id, fileName, measurementType, technologyType, technologyPlatform, dataFiles, materials, characteristicCategories, unitCategories, processSequence, comments) {
     return new Assay(id, fileName, measurementType, technologyType, technologyPlatform, dataFiles, materials, characteristicCategories, unitCategories, processSequence, comments);
 }
 
-export function Assay_create_ABF59A4(Id, FileName, MeasurementType, TechnologyType, TechnologyPlatform, DataFiles, Materials, CharacteristicCategories, UnitCategories, ProcessSequence, Comments) {
+export function Assay_create_3D372A24(Id, FileName, MeasurementType, TechnologyType, TechnologyPlatform, DataFiles, Materials, CharacteristicCategories, UnitCategories, ProcessSequence, Comments) {
     return Assay_make(Id, FileName, MeasurementType, TechnologyType, TechnologyPlatform, DataFiles, Materials, CharacteristicCategories, UnitCategories, ProcessSequence, Comments);
 }
 
 export function Assay_get_empty() {
-    return Assay_create_ABF59A4();
+    return Assay_create_3D372A24();
 }
 
 /**
@@ -121,7 +121,7 @@ export function Assay_removeByFileName(fileName, assays) {
 /**
  * Returns comments of an assay
  */
-export function Assay_getComments_Z269B5B97(assay) {
+export function Assay_getComments_722A269D(assay) {
     return assay.Comments;
 }
 
@@ -142,7 +142,7 @@ export function Assay_setComments(assay, comments) {
 /**
  * Returns data files of an assay
  */
-export function Assay_getData_Z269B5B97(assay) {
+export function Assay_getData_722A269D(assay) {
     const processSequenceData = getData(defaultArg(assay.ProcessSequence, empty()));
     const updateOptions = new Update_UpdateOptions(3, []);
     const mapping = (d) => d.Name;
@@ -240,7 +240,7 @@ export function Assay_setData(assay, dataFiles) {
 /**
  * Returns unit categories of an assay
  */
-export function Assay_getUnitCategories_Z269B5B97(assay) {
+export function Assay_getUnitCategories_722A269D(assay) {
     return List_distinct(append(getUnits(defaultArg(assay.ProcessSequence, empty())), defaultArg(assay.UnitCategories, empty())), {
         Equals: equals,
         GetHashCode: safeHash,
@@ -264,7 +264,7 @@ export function Assay_setUnitCategories(assay, unitCategories) {
 /**
  * Returns characteristic categories of an assay
  */
-export function Assay_getCharacteristics_Z269B5B97(assay) {
+export function Assay_getCharacteristics_722A269D(assay) {
     return List_distinct(append(getCharacteristics(defaultArg(assay.ProcessSequence, empty())), defaultArg(assay.CharacteristicCategories, empty())), {
         Equals: equals,
         GetHashCode: safeHash,
@@ -288,7 +288,7 @@ export function Assay_setCharacteristics(assay, characteristics) {
 /**
  * Returns measurement type of an assay
  */
-export function Assay_getMeasurementType_Z269B5B97(assay) {
+export function Assay_getMeasurementType_722A269D(assay) {
     return assay.MeasurementType;
 }
 
@@ -309,7 +309,7 @@ export function Assay_setMeasurementType(assay, measurementType) {
 /**
  * Returns technology type of an assay
  */
-export function Assay_getTechnologyType_Z269B5B97(assay) {
+export function Assay_getTechnologyType_722A269D(assay) {
     return assay.TechnologyType;
 }
 
@@ -330,7 +330,7 @@ export function Assay_setTechnologyType(assay, technologyType) {
 /**
  * Returns processes of an assay
  */
-export function Assay_getProcesses_Z269B5B97(assay) {
+export function Assay_getProcesses_722A269D(assay) {
     return defaultArg(assay.ProcessSequence, empty());
 }
 
@@ -348,18 +348,18 @@ export function Assay_setProcesses(assay, processes) {
     return new Assay(assay.ID, assay.FileName, assay.MeasurementType, assay.TechnologyType, assay.TechnologyPlatform, assay.DataFiles, assay.Materials, assay.CharacteristicCategories, assay.UnitCategories, processes, assay.Comments);
 }
 
-export function Assay_getSources_Z269B5B97(assay) {
-    return getSources(Assay_getProcesses_Z269B5B97(assay));
+export function Assay_getSources_722A269D(assay) {
+    return getSources(Assay_getProcesses_722A269D(assay));
 }
 
-export function Assay_getSamples_Z269B5B97(assay) {
-    return getSamples(Assay_getProcesses_Z269B5B97(assay));
+export function Assay_getSamples_722A269D(assay) {
+    return getSamples(Assay_getProcesses_722A269D(assay));
 }
 
 /**
  * Returns materials of an assay
  */
-export function Assay_getMaterials_Z269B5B97(assay) {
+export function Assay_getMaterials_722A269D(assay) {
     const processSequenceMaterials = getMaterials(defaultArg(assay.ProcessSequence, empty()));
     const processSequenceSamples = getSamples(defaultArg(assay.ProcessSequence, empty()));
     const matchValue = assay.Materials;
@@ -559,7 +559,7 @@ export function Assay_getOutputsWithParameterBy(predicate, assay) {
 /**
  * Returns the parameters implemented by the processes contained in this assay
  */
-export function Assay_getParameters_Z269B5B97(assay) {
+export function Assay_getParameters_722A269D(assay) {
     return map_1(getParameters, assay.ProcessSequence);
 }
 
@@ -587,21 +587,21 @@ export function Assay_getOutputsWithFactorBy(predicate, assay) {
 /**
  * Returns the factors implemented by the processes contained in this assay
  */
-export function Assay_getFactors_Z269B5B97(assay) {
+export function Assay_getFactors_722A269D(assay) {
     return getFactors(defaultArg(assay.ProcessSequence, empty()));
 }
 
 /**
  * Returns the protocols implemented by the processes contained in this assay
  */
-export function Assay_getProtocols_Z269B5B97(assay) {
+export function Assay_getProtocols_722A269D(assay) {
     return getProtocols(defaultArg(assay.ProcessSequence, empty()));
 }
 
-export function Assay_update_Z269B5B97(assay) {
+export function Assay_update_722A269D(assay) {
     let v_1;
     try {
-        return new Assay(assay.ID, assay.FileName, assay.MeasurementType, assay.TechnologyType, assay.TechnologyPlatform, fromValueWithDefault(empty(), Assay_getData_Z269B5B97(assay)), (v_1 = Assay_getMaterials_Z269B5B97(assay), fromValueWithDefault(AssayMaterials_get_empty(), v_1)), fromValueWithDefault(empty(), Assay_getCharacteristics_Z269B5B97(assay)), fromValueWithDefault(empty(), Assay_getUnitCategories_Z269B5B97(assay)), assay.ProcessSequence, assay.Comments);
+        return new Assay(assay.ID, assay.FileName, assay.MeasurementType, assay.TechnologyType, assay.TechnologyPlatform, fromValueWithDefault(empty(), Assay_getData_722A269D(assay)), (v_1 = Assay_getMaterials_722A269D(assay), fromValueWithDefault(AssayMaterials_get_empty(), v_1)), fromValueWithDefault(empty(), Assay_getCharacteristics_722A269D(assay)), fromValueWithDefault(empty(), Assay_getUnitCategories_722A269D(assay)), assay.ProcessSequence, assay.Comments);
     }
     catch (err) {
         return toFail(`Could not update assay ${assay.FileName}: 

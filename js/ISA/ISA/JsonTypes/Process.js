@@ -5,8 +5,8 @@ import { printf, toText } from "../../../fable_modules/fable-library.4.1.4/Strin
 import { getRecordFields, makeRecord, record_type, list_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { Protocol_$reflection } from "./Protocol.js";
 import { ProcessParameterValue_$reflection } from "./ProcessParameterValue.js";
-import { ProcessInput_tryMaterial_Z38E7E853, ProcessInput_trySample_Z38E7E853, ProcessInput_tryData_Z38E7E853, ProcessInput_trySource_Z38E7E853, ProcessInput_tryGetCharacteristicValues_Z38E7E853, ProcessInput_$reflection } from "./ProcessInput.js";
-import { ProcessOutput_tryGetFactorValues_Z4A02997C, ProcessOutput_tryGetCharacteristicValues_Z4A02997C, ProcessOutput_$reflection } from "./ProcessOutput.js";
+import { ProcessInput_tryMaterial_102B6859, ProcessInput_trySample_102B6859, ProcessInput_tryData_102B6859, ProcessInput_trySource_102B6859, ProcessInput_tryGetCharacteristicValues_102B6859, ProcessInput_$reflection } from "./ProcessInput.js";
+import { ProcessOutput_tryGetFactorValues_11830B70, ProcessOutput_tryGetCharacteristicValues_11830B70, ProcessOutput_$reflection } from "./ProcessOutput.js";
 import { Comment$_$reflection } from "./Comment.js";
 import { create, match } from "../../../fable_modules/fable-library.4.1.4/RegExp.js";
 import { parse } from "../../../fable_modules/fable-library.4.1.4/Int32.js";
@@ -48,19 +48,19 @@ export class Process extends Record {
 }
 
 export function Process_$reflection() {
-    return record_type("ISA.Process", [], Process, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["ExecutesProtocol", option_type(Protocol_$reflection())], ["ParameterValues", option_type(list_type(ProcessParameterValue_$reflection()))], ["Performer", option_type(string_type)], ["Date", option_type(string_type)], ["PreviousProcess", option_type(Process_$reflection())], ["NextProcess", option_type(Process_$reflection())], ["Inputs", option_type(list_type(ProcessInput_$reflection()))], ["Outputs", option_type(list_type(ProcessOutput_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Process", [], Process, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["ExecutesProtocol", option_type(Protocol_$reflection())], ["ParameterValues", option_type(list_type(ProcessParameterValue_$reflection()))], ["Performer", option_type(string_type)], ["Date", option_type(string_type)], ["PreviousProcess", option_type(Process_$reflection())], ["NextProcess", option_type(Process_$reflection())], ["Inputs", option_type(list_type(ProcessInput_$reflection()))], ["Outputs", option_type(list_type(ProcessOutput_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
 }
 
 export function Process_make(id, name, executesProtocol, parameterValues, performer, date, previousProcess, nextProcess, inputs, outputs, comments) {
     return new Process(id, name, executesProtocol, parameterValues, performer, date, previousProcess, nextProcess, inputs, outputs, comments);
 }
 
-export function Process_create_236DF576(Id, Name, ExecutesProtocol, ParameterValues, Performer, Date$, PreviousProcess, NextProcess, Inputs, Outputs, Comments) {
+export function Process_create_Z42860F3E(Id, Name, ExecutesProtocol, ParameterValues, Performer, Date$, PreviousProcess, NextProcess, Inputs, Outputs, Comments) {
     return Process_make(Id, Name, ExecutesProtocol, ParameterValues, Performer, Date$, PreviousProcess, NextProcess, Inputs, Outputs, Comments);
 }
 
 export function Process_get_empty() {
-    return Process_create_236DF576();
+    return Process_create_Z42860F3E();
 }
 
 export function Process_composeName(processNameRoot, i) {
@@ -80,41 +80,41 @@ export function Process_decomposeName_Z721C83C5(name) {
 /**
  * Returns the name of the protocol the given process executes
  */
-export function Process_tryGetProtocolName_30EF9E7B(p) {
+export function Process_tryGetProtocolName_716E708F(p) {
     return bind((p_1) => p_1.Name, p.ExecutesProtocol);
 }
 
 /**
  * Returns the name of the protocol the given process executes
  */
-export function Process_getProtocolName_30EF9E7B(p) {
+export function Process_getProtocolName_716E708F(p) {
     return value_4(bind((p_1) => p_1.Name, p.ExecutesProtocol));
 }
 
 /**
  * Returns the parameter values describing the process
  */
-export function Process_getParameterValues_30EF9E7B(p) {
+export function Process_getParameterValues_716E708F(p) {
     return defaultArg(p.ParameterValues, empty());
 }
 
 /**
  * Returns the parameters describing the process
  */
-export function Process_getParameters_30EF9E7B(p) {
-    return choose((pv) => pv.Category, Process_getParameterValues_30EF9E7B(p));
+export function Process_getParameters_716E708F(p) {
+    return choose((pv) => pv.Category, Process_getParameterValues_716E708F(p));
 }
 
 /**
  * Returns the characteristics describing the inputs of the process
  */
-export function Process_getInputCharacteristicValues_30EF9E7B(p) {
+export function Process_getInputCharacteristicValues_716E708F(p) {
     const matchValue = p.Inputs;
     if (matchValue == null) {
         return empty();
     }
     else {
-        return List_distinct(collect((inp) => defaultArg(ProcessInput_tryGetCharacteristicValues_Z38E7E853(inp), empty()), matchValue), {
+        return List_distinct(collect((inp) => defaultArg(ProcessInput_tryGetCharacteristicValues_102B6859(inp), empty()), matchValue), {
             Equals: equals,
             GetHashCode: safeHash,
         });
@@ -124,13 +124,13 @@ export function Process_getInputCharacteristicValues_30EF9E7B(p) {
 /**
  * Returns the characteristics describing the outputs of the process
  */
-export function Process_getOutputCharacteristicValues_30EF9E7B(p) {
+export function Process_getOutputCharacteristicValues_716E708F(p) {
     const matchValue = p.Outputs;
     if (matchValue == null) {
         return empty();
     }
     else {
-        return List_distinct(collect((out) => defaultArg(ProcessOutput_tryGetCharacteristicValues_Z4A02997C(out), empty()), matchValue), {
+        return List_distinct(collect((out) => defaultArg(ProcessOutput_tryGetCharacteristicValues_11830B70(out), empty()), matchValue), {
             Equals: equals,
             GetHashCode: safeHash,
         });
@@ -140,8 +140,8 @@ export function Process_getOutputCharacteristicValues_30EF9E7B(p) {
 /**
  * Returns the characteristic values describing the inputs and outputs of the process
  */
-export function Process_getCharacteristicValues_30EF9E7B(p) {
-    return List_distinct(append(Process_getInputCharacteristicValues_30EF9E7B(p), Process_getOutputCharacteristicValues_30EF9E7B(p)), {
+export function Process_getCharacteristicValues_716E708F(p) {
+    return List_distinct(append(Process_getInputCharacteristicValues_716E708F(p), Process_getOutputCharacteristicValues_716E708F(p)), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -150,8 +150,8 @@ export function Process_getCharacteristicValues_30EF9E7B(p) {
 /**
  * Returns the characteristics describing the inputs and outputs of the process
  */
-export function Process_getCharacteristics_30EF9E7B(p) {
-    return List_distinct(choose((cv) => cv.Category, Process_getCharacteristicValues_30EF9E7B(p)), {
+export function Process_getCharacteristics_716E708F(p) {
+    return List_distinct(choose((cv) => cv.Category, Process_getCharacteristicValues_716E708F(p)), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -160,8 +160,8 @@ export function Process_getCharacteristics_30EF9E7B(p) {
 /**
  * Returns the factor values of the samples of the process
  */
-export function Process_getFactorValues_30EF9E7B(p) {
-    return List_distinct(collect((arg_1) => defaultArg(ProcessOutput_tryGetFactorValues_Z4A02997C(arg_1), empty()), defaultArg(p.Outputs, empty())), {
+export function Process_getFactorValues_716E708F(p) {
+    return List_distinct(collect((arg_1) => defaultArg(ProcessOutput_tryGetFactorValues_11830B70(arg_1), empty()), defaultArg(p.Outputs, empty())), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -170,8 +170,8 @@ export function Process_getFactorValues_30EF9E7B(p) {
 /**
  * Returns the factors of the samples of the process
  */
-export function Process_getFactors_30EF9E7B(p) {
-    return List_distinct(choose((fv) => fv.Category, Process_getFactorValues_30EF9E7B(p)), {
+export function Process_getFactors_716E708F(p) {
+    return List_distinct(choose((fv) => fv.Category, Process_getFactorValues_716E708F(p)), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -180,8 +180,8 @@ export function Process_getFactors_30EF9E7B(p) {
 /**
  * Returns the units of the process
  */
-export function Process_getUnits_30EF9E7B(p) {
-    return append(choose((cv) => cv.Unit, Process_getCharacteristicValues_30EF9E7B(p)), append(choose((pv) => pv.Unit, Process_getParameterValues_30EF9E7B(p)), choose((fv) => fv.Unit, Process_getFactorValues_30EF9E7B(p))));
+export function Process_getUnits_716E708F(p) {
+    return append(choose((cv) => cv.Unit, Process_getCharacteristicValues_716E708F(p)), append(choose((pv) => pv.Unit, Process_getParameterValues_716E708F(p)), choose((fv) => fv.Unit, Process_getFactorValues_716E708F(p))));
 }
 
 /**
@@ -254,7 +254,7 @@ export function Process_tryGetInputsWithCharacteristicBy(predicate, p) {
                 default:
                     return void 0;
             }
-        }, defaultArg(ProcessInput_tryGetCharacteristicValues_Z38E7E853(i), empty())), matchValue));
+        }, defaultArg(ProcessInput_tryGetCharacteristicValues_102B6859(i), empty())), matchValue));
     }
 }
 
@@ -301,7 +301,7 @@ export function Process_tryGetOutputsWithCharacteristicBy(predicate, p) {
                     default:
                         return void 0;
                 }
-            }, defaultArg(ProcessInput_tryGetCharacteristicValues_Z38E7E853(tupledArg[0]), empty())), zip(is, os)));
+            }, defaultArg(ProcessInput_tryGetCharacteristicValues_102B6859(tupledArg[0]), empty())), zip(is, os)));
         default:
             return void 0;
     }
@@ -337,33 +337,33 @@ export function Process_tryGetOutputsWithFactorBy(predicate, p) {
                 default:
                     return void 0;
             }
-        }, defaultArg(ProcessOutput_tryGetFactorValues_Z4A02997C(o), empty())), matchValue));
+        }, defaultArg(ProcessOutput_tryGetFactorValues_11830B70(o), empty())), matchValue));
     }
 }
 
-export function Process_getSources_30EF9E7B(p) {
-    return List_distinct(choose(ProcessInput_trySource_Z38E7E853, defaultArg(p.Inputs, empty())), {
+export function Process_getSources_716E708F(p) {
+    return List_distinct(choose(ProcessInput_trySource_102B6859, defaultArg(p.Inputs, empty())), {
         Equals: equals,
         GetHashCode: safeHash,
     });
 }
 
-export function Process_getData_30EF9E7B(p) {
-    return List_distinct(append(choose(ProcessInput_tryData_Z38E7E853, defaultArg(p.Inputs, empty())), choose(ProcessInput_tryData_Z38E7E853, defaultArg(p.Inputs, empty()))), {
+export function Process_getData_716E708F(p) {
+    return List_distinct(append(choose(ProcessInput_tryData_102B6859, defaultArg(p.Inputs, empty())), choose(ProcessInput_tryData_102B6859, defaultArg(p.Inputs, empty()))), {
         Equals: equals,
         GetHashCode: safeHash,
     });
 }
 
-export function Process_getSamples_30EF9E7B(p) {
-    return List_distinct(append(choose(ProcessInput_trySample_Z38E7E853, defaultArg(p.Inputs, empty())), choose(ProcessInput_trySample_Z38E7E853, defaultArg(p.Inputs, empty()))), {
+export function Process_getSamples_716E708F(p) {
+    return List_distinct(append(choose(ProcessInput_trySample_102B6859, defaultArg(p.Inputs, empty())), choose(ProcessInput_trySample_102B6859, defaultArg(p.Inputs, empty()))), {
         Equals: equals,
         GetHashCode: safeHash,
     });
 }
 
-export function Process_getMaterials_30EF9E7B(p) {
-    return List_distinct(append(choose(ProcessInput_tryMaterial_Z38E7E853, defaultArg(p.Inputs, empty())), choose(ProcessInput_tryMaterial_Z38E7E853, defaultArg(p.Inputs, empty()))), {
+export function Process_getMaterials_716E708F(p) {
+    return List_distinct(append(choose(ProcessInput_tryMaterial_102B6859, defaultArg(p.Inputs, empty())), choose(ProcessInput_tryMaterial_102B6859, defaultArg(p.Inputs, empty()))), {
         Equals: equals,
         GetHashCode: safeHash,
     });

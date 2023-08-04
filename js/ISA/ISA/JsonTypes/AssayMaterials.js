@@ -14,26 +14,26 @@ export class AssayMaterials extends Record {
 }
 
 export function AssayMaterials_$reflection() {
-    return record_type("ISA.AssayMaterials", [], AssayMaterials, () => [["Samples", option_type(list_type(Sample_$reflection()))], ["OtherMaterials", option_type(list_type(Material_$reflection()))]]);
+    return record_type("ARCtrl.ISA.AssayMaterials", [], AssayMaterials, () => [["Samples", option_type(list_type(Sample_$reflection()))], ["OtherMaterials", option_type(list_type(Material_$reflection()))]]);
 }
 
 export function AssayMaterials_make(samples, otherMaterials) {
     return new AssayMaterials(samples, otherMaterials);
 }
 
-export function AssayMaterials_create_1CB3546D(Samples, OtherMaterials) {
+export function AssayMaterials_create_Z253F0553(Samples, OtherMaterials) {
     return AssayMaterials_make(Samples, OtherMaterials);
 }
 
 export function AssayMaterials_get_empty() {
-    return AssayMaterials_create_1CB3546D();
+    return AssayMaterials_create_Z253F0553();
 }
 
-export function AssayMaterials_getMaterials_E3447B1(am) {
+export function AssayMaterials_getMaterials_35E61745(am) {
     return defaultArg(am.OtherMaterials, empty());
 }
 
-export function AssayMaterials_getSamples_E3447B1(am) {
+export function AssayMaterials_getSamples_35E61745(am) {
     return defaultArg(am.Samples, empty());
 }
 

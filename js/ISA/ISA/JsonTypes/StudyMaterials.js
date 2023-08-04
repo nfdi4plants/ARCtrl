@@ -16,30 +16,30 @@ export class StudyMaterials extends Record {
 }
 
 export function StudyMaterials_$reflection() {
-    return record_type("ISA.StudyMaterials", [], StudyMaterials, () => [["Sources", option_type(list_type(Source_$reflection()))], ["Samples", option_type(list_type(Sample_$reflection()))], ["OtherMaterials", option_type(list_type(Material_$reflection()))]]);
+    return record_type("ARCtrl.ISA.StudyMaterials", [], StudyMaterials, () => [["Sources", option_type(list_type(Source_$reflection()))], ["Samples", option_type(list_type(Sample_$reflection()))], ["OtherMaterials", option_type(list_type(Material_$reflection()))]]);
 }
 
 export function StudyMaterials_make(sources, samples, otherMaterials) {
     return new StudyMaterials(sources, samples, otherMaterials);
 }
 
-export function StudyMaterials_create_Z460D555F(Sources, Samples, OtherMaterials) {
+export function StudyMaterials_create_1BE9FA55(Sources, Samples, OtherMaterials) {
     return StudyMaterials_make(Sources, Samples, OtherMaterials);
 }
 
 export function StudyMaterials_get_empty() {
-    return StudyMaterials_create_Z460D555F();
+    return StudyMaterials_create_1BE9FA55();
 }
 
-export function StudyMaterials_getMaterials_6A1922E7(am) {
+export function StudyMaterials_getMaterials_Z34D4FD6D(am) {
     return defaultArg(am.OtherMaterials, empty());
 }
 
-export function StudyMaterials_getSamples_6A1922E7(am) {
+export function StudyMaterials_getSamples_Z34D4FD6D(am) {
     return defaultArg(am.Samples, empty());
 }
 
-export function StudyMaterials_getSources_6A1922E7(am) {
+export function StudyMaterials_getSources_Z34D4FD6D(am) {
     return defaultArg(am.Sources, empty());
 }
 

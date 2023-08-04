@@ -24,10 +24,10 @@ export class ProtocolTransformation extends Union {
 }
 
 export function ProtocolTransformation_$reflection() {
-    return union_type("ISA.Builder.ProtocolTransformation", [], ProtocolTransformation, () => [[["Item", string_type]], [["Item", OntologyAnnotation_$reflection()]], [["Item", string_type]]]);
+    return union_type("ARCtrl.ISA.Builder.ProtocolTransformation", [], ProtocolTransformation, () => [[["Item", string_type]], [["Item", OntologyAnnotation_$reflection()]], [["Item", string_type]]]);
 }
 
-export function ProtocolTransformation__Transform_4D8AC666(this$, p) {
+export function ProtocolTransformation__Transform_Z5F51792E(this$, p) {
     switch (this$.tag) {
         case 1:
             return new Protocol(p.ID, p.Name, this$.fields[0], p.Description, p.Uri, p.Version, p.Parameters, p.Components, p.Comments);
@@ -38,7 +38,7 @@ export function ProtocolTransformation__Transform_4D8AC666(this$, p) {
     }
 }
 
-export function ProtocolTransformation__Equals_4D8AC666(this$, p) {
+export function ProtocolTransformation__Equals_Z5F51792E(this$, p) {
     const matchValue = p.Name;
     let matchResult, n_1, n$0027_1;
     if (this$.tag === 0) {
@@ -79,10 +79,10 @@ export class ProcessTransformation extends Union {
 }
 
 export function ProcessTransformation_$reflection() {
-    return union_type("ISA.Builder.ProcessTransformation", [], ProcessTransformation, () => [[["Item", string_type]], [["Item", ProcessParameterValue_$reflection()]], [["Item", MaterialAttributeValue_$reflection()]], [["Item", FactorValue_$reflection()]], [["Item", list_type(ProtocolTransformation_$reflection())]]]);
+    return union_type("ARCtrl.ISA.Builder.ProcessTransformation", [], ProcessTransformation, () => [[["Item", string_type]], [["Item", ProcessParameterValue_$reflection()]], [["Item", MaterialAttributeValue_$reflection()]], [["Item", FactorValue_$reflection()]], [["Item", list_type(ProtocolTransformation_$reflection())]]]);
 }
 
-export function ProcessTransformation__Transform_30EF9E7B(this$, p) {
+export function ProcessTransformation__Transform_716E708F(this$, p) {
     let pro;
     switch (this$.tag) {
         case 1: {
@@ -95,13 +95,13 @@ export function ProcessTransformation__Transform_30EF9E7B(this$, p) {
         case 3:
             return new Process(p.ID, p.Name, p.ExecutesProtocol, p.ParameterValues, p.Performer, p.Date, p.PreviousProcess, p.NextProcess, p.Inputs, map((i_1) => i_1, p.Outputs), p.Comments);
         case 4:
-            return new Process(p.ID, p.Name, fold((pro_2, trans) => ProtocolTransformation__Transform_4D8AC666(trans, pro_2), defaultArg(p.ExecutesProtocol, Protocol_get_empty()), this$.fields[0]), p.ParameterValues, p.Performer, p.Date, p.PreviousProcess, p.NextProcess, p.Inputs, p.Outputs, p.Comments);
+            return new Process(p.ID, p.Name, fold((pro_2, trans) => ProtocolTransformation__Transform_Z5F51792E(trans, pro_2), defaultArg(p.ExecutesProtocol, Protocol_get_empty()), this$.fields[0]), p.ParameterValues, p.Performer, p.Date, p.PreviousProcess, p.NextProcess, p.Inputs, p.Outputs, p.Comments);
         default:
             return new Process(p.ID, this$.fields[0], p.ExecutesProtocol, p.ParameterValues, p.Performer, p.Date, p.PreviousProcess, p.NextProcess, p.Inputs, p.Outputs, p.Comments);
     }
 }
 
-export function ProcessTransformation__Equals_30EF9E7B(this$, p) {
+export function ProcessTransformation__Equals_716E708F(this$, p) {
     const matchValue = p.Name;
     let matchResult, n_1, n$0027_1;
     if (this$.tag === 0) {
@@ -142,22 +142,22 @@ export class AssayTransformation extends Union {
 }
 
 export function AssayTransformation_$reflection() {
-    return union_type("ISA.Builder.AssayTransformation", [], AssayTransformation, () => [[["Item", string_type]], [["Item", ProcessParameterValue_$reflection()]], [["Item", MaterialAttributeValue_$reflection()]], [["Item", FactorValue_$reflection()]], [["Item", list_type(ProcessTransformation_$reflection())]]]);
+    return union_type("ARCtrl.ISA.Builder.AssayTransformation", [], AssayTransformation, () => [[["Item", string_type]], [["Item", ProcessParameterValue_$reflection()]], [["Item", MaterialAttributeValue_$reflection()]], [["Item", FactorValue_$reflection()]], [["Item", list_type(ProcessTransformation_$reflection())]]]);
 }
 
-export function AssayTransformation__Transform_Z269B5B97(this$, a) {
+export function AssayTransformation__Transform_722A269D(this$, a) {
     switch (this$.tag) {
         case 4: {
             const pts = this$.fields[0];
             const processes = defaultArg(a.ProcessSequence, empty());
-            return new Assay(a.ID, a.FileName, a.MeasurementType, a.TechnologyType, a.TechnologyPlatform, a.DataFiles, a.Materials, a.CharacteristicCategories, a.UnitCategories, exists((p) => exists((trans) => ProcessTransformation__Equals_30EF9E7B(trans, p), pts), processes) ? map_1((p_1) => {
-                if (exists((trans_1) => ProcessTransformation__Equals_30EF9E7B(trans_1, p_1), pts)) {
-                    return fold((p_2, trans_2) => ProcessTransformation__Transform_30EF9E7B(trans_2, p_2), p_1, pts);
+            return new Assay(a.ID, a.FileName, a.MeasurementType, a.TechnologyType, a.TechnologyPlatform, a.DataFiles, a.Materials, a.CharacteristicCategories, a.UnitCategories, exists((p) => exists((trans) => ProcessTransformation__Equals_716E708F(trans, p), pts), processes) ? map_1((p_1) => {
+                if (exists((trans_1) => ProcessTransformation__Equals_716E708F(trans_1, p_1), pts)) {
+                    return fold((p_2, trans_2) => ProcessTransformation__Transform_716E708F(trans_2, p_2), p_1, pts);
                 }
                 else {
                     return p_1;
                 }
-            }, processes) : append(processes, singleton(fold((p_3, trans_3) => ProcessTransformation__Transform_30EF9E7B(trans_3, p_3), Process_get_empty(), pts))), a.Comments);
+            }, processes) : append(processes, singleton(fold((p_3, trans_3) => ProcessTransformation__Transform_716E708F(trans_3, p_3), Process_get_empty(), pts))), a.Comments);
         }
         case 0:
             return new Assay(a.ID, this$.fields[0], a.MeasurementType, a.TechnologyType, a.TechnologyPlatform, a.DataFiles, a.Materials, a.CharacteristicCategories, a.UnitCategories, a.ProcessSequence, a.Comments);
@@ -166,7 +166,7 @@ export function AssayTransformation__Transform_Z269B5B97(this$, a) {
     }
 }
 
-export function AssayTransformation__Equals_Z269B5B97(this$, a) {
+export function AssayTransformation__Equals_722A269D(this$, a) {
     const matchValue = a.FileName;
     let matchResult, n_1, n$0027_1;
     if (this$.tag === 0) {
@@ -207,34 +207,34 @@ export class StudyTransformation extends Union {
 }
 
 export function StudyTransformation_$reflection() {
-    return union_type("ISA.Builder.StudyTransformation", [], StudyTransformation, () => [[["Item", ProcessParameterValue_$reflection()]], [["Item", MaterialAttributeValue_$reflection()]], [["Item", FactorValue_$reflection()]], [["Item", list_type(ProcessTransformation_$reflection())]], [["Item", list_type(AssayTransformation_$reflection())]]]);
+    return union_type("ARCtrl.ISA.Builder.StudyTransformation", [], StudyTransformation, () => [[["Item", ProcessParameterValue_$reflection()]], [["Item", MaterialAttributeValue_$reflection()]], [["Item", FactorValue_$reflection()]], [["Item", list_type(ProcessTransformation_$reflection())]], [["Item", list_type(AssayTransformation_$reflection())]]]);
 }
 
-export function StudyTransformation__Transform_Z27CB2981(this$, s) {
+export function StudyTransformation__Transform_7312BC8B(this$, s) {
     switch (this$.tag) {
         case 3: {
             const pts = this$.fields[0];
             const processes = defaultArg(s.ProcessSequence, empty());
-            return new Study(s.ID, s.FileName, s.Identifier, s.Title, s.Description, s.SubmissionDate, s.PublicReleaseDate, s.Publications, s.Contacts, s.StudyDesignDescriptors, s.Protocols, s.Materials, exists((p) => exists((trans) => ProcessTransformation__Equals_30EF9E7B(trans, p), pts), processes) ? map_1((p_1) => {
-                if (exists((trans_1) => ProcessTransformation__Equals_30EF9E7B(trans_1, p_1), pts)) {
-                    return fold((p_2, trans_2) => ProcessTransformation__Transform_30EF9E7B(trans_2, p_2), p_1, pts);
+            return new Study(s.ID, s.FileName, s.Identifier, s.Title, s.Description, s.SubmissionDate, s.PublicReleaseDate, s.Publications, s.Contacts, s.StudyDesignDescriptors, s.Protocols, s.Materials, exists((p) => exists((trans) => ProcessTransformation__Equals_716E708F(trans, p), pts), processes) ? map_1((p_1) => {
+                if (exists((trans_1) => ProcessTransformation__Equals_716E708F(trans_1, p_1), pts)) {
+                    return fold((p_2, trans_2) => ProcessTransformation__Transform_716E708F(trans_2, p_2), p_1, pts);
                 }
                 else {
                     return p_1;
                 }
-            }, processes) : append(processes, singleton(fold((p_3, trans_3) => ProcessTransformation__Transform_30EF9E7B(trans_3, p_3), Process_get_empty(), pts))), s.Assays, s.Factors, s.CharacteristicCategories, s.UnitCategories, s.Comments);
+            }, processes) : append(processes, singleton(fold((p_3, trans_3) => ProcessTransformation__Transform_716E708F(trans_3, p_3), Process_get_empty(), pts))), s.Assays, s.Factors, s.CharacteristicCategories, s.UnitCategories, s.Comments);
         }
         case 4: {
             const ats = this$.fields[0];
             const assays = defaultArg(s.Assays, empty());
-            return new Study(s.ID, s.FileName, s.Identifier, s.Title, s.Description, s.SubmissionDate, s.PublicReleaseDate, s.Publications, s.Contacts, s.StudyDesignDescriptors, s.Protocols, s.Materials, s.ProcessSequence, exists((a) => exists((trans_4) => AssayTransformation__Equals_Z269B5B97(trans_4, a), ats), assays) ? map_1((a_1) => {
-                if (exists((trans_5) => AssayTransformation__Equals_Z269B5B97(trans_5, a_1), ats)) {
-                    return fold((a_2, trans_6) => AssayTransformation__Transform_Z269B5B97(trans_6, a_2), a_1, ats);
+            return new Study(s.ID, s.FileName, s.Identifier, s.Title, s.Description, s.SubmissionDate, s.PublicReleaseDate, s.Publications, s.Contacts, s.StudyDesignDescriptors, s.Protocols, s.Materials, s.ProcessSequence, exists((a) => exists((trans_4) => AssayTransformation__Equals_722A269D(trans_4, a), ats), assays) ? map_1((a_1) => {
+                if (exists((trans_5) => AssayTransformation__Equals_722A269D(trans_5, a_1), ats)) {
+                    return fold((a_2, trans_6) => AssayTransformation__Transform_722A269D(trans_6, a_2), a_1, ats);
                 }
                 else {
                     return a_1;
                 }
-            }, assays) : append(assays, singleton(fold((a_3, trans_7) => AssayTransformation__Transform_Z269B5B97(trans_7, a_3), Assay_get_empty(), ats))), s.Factors, s.CharacteristicCategories, s.UnitCategories, s.Comments);
+            }, assays) : append(assays, singleton(fold((a_3, trans_7) => AssayTransformation__Transform_722A269D(trans_7, a_3), Assay_get_empty(), ats))), s.Factors, s.CharacteristicCategories, s.UnitCategories, s.Comments);
         }
         default:
             return toFail(printf("Builder failed: Case %O Not implemented"))(this$);

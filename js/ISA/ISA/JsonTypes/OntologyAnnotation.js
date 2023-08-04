@@ -1,11 +1,11 @@
 import { equals, int32ToString, stringHash } from "../../../fable_modules/fable-library.4.1.4/Util.js";
 import { Record, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
-import { getRecordFields, makeRecord, record_type, list_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
-import { AnnotationValue_toString_Z3C00A204, AnnotationValue_fromString_Z721C83C5, AnnotationValue_$reflection } from "./AnnotationValue.js";
+import { getRecordFields, makeRecord, record_type, array_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
+import { AnnotationValue_toString_Z6FAD7738, AnnotationValue_fromString_Z721C83C5, AnnotationValue_$reflection } from "./AnnotationValue.js";
 import { Comment$_$reflection } from "./Comment.js";
 import { value as value_4, map, defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { ActivePatterns_$007CRegex$007C_$007C, tryParseTermAnnotation, ActivePatterns_$007CTermAnnotation$007C_$007C } from "../Regex.js";
-import { empty, filter, map as map_1, singleton, append, exists, tryFind } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { filter, map as map_1, singleton, append, exists, tryFind } from "../../../fable_modules/fable-library.4.1.4/List.js";
 import { map2 } from "../../../fable_modules/fable-library.4.1.4/Array.js";
 import { Update_updateOnlyByExistingAppend, Update_updateOnlyByExisting, Update_updateAppend } from "../Update.js";
 import { mapDefault } from "../OptionExtensions.js";
@@ -52,7 +52,7 @@ export class OntologyAnnotation extends Record {
 }
 
 export function OntologyAnnotation_$reflection() {
-    return record_type("ISA.OntologyAnnotation", [], OntologyAnnotation, () => [["ID", option_type(string_type)], ["Name", option_type(AnnotationValue_$reflection())], ["TermSourceREF", option_type(string_type)], ["LocalID", option_type(string_type)], ["TermAccessionNumber", option_type(string_type)], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.OntologyAnnotation", [], OntologyAnnotation, () => [["ID", option_type(string_type)], ["Name", option_type(AnnotationValue_$reflection())], ["TermSourceREF", option_type(string_type)], ["LocalID", option_type(string_type)], ["TermAccessionNumber", option_type(string_type)], ["Comments", option_type(array_type(Comment$_$reflection()))]]);
 }
 
 export function OntologyAnnotation_make(id, name, termSourceREF, localID, termAccessionNumber, comments) {
@@ -62,12 +62,12 @@ export function OntologyAnnotation_make(id, name, termSourceREF, localID, termAc
 /**
  * This function creates the type exactly as given. If you want a more streamlined approach use `OntologyAnnotation.fromString`.
  */
-export function OntologyAnnotation_create_131C8C9D(Id, Name, TermSourceREF, LocalID, TermAccessionNumber, Comments) {
+export function OntologyAnnotation_create_Z61CCDEEC(Id, Name, TermSourceREF, LocalID, TermAccessionNumber, Comments) {
     return OntologyAnnotation_make(Id, Name, TermSourceREF, LocalID, TermAccessionNumber, Comments);
 }
 
 export function OntologyAnnotation_get_empty() {
-    return OntologyAnnotation_create_131C8C9D();
+    return OntologyAnnotation_create_Z61CCDEEC();
 }
 
 /**
@@ -128,7 +128,7 @@ export function OntologyAnnotation_createUriAnnotation(termSourceRef, localTAN) 
  * 
  * Exmp. 1: http://purl.obolibrary.org/obo/GO_000001 --> GO:000001
  */
-export function OntologyAnnotation_fromString_Z7D8EB286(term, tsr, tan, comments) {
+export function OntologyAnnotation_fromString_2EB0E147(term, tsr, tan, comments) {
     let activePatternResult, tan_1;
     const patternInput = (tan != null) ? ((activePatternResult = ActivePatterns_$007CTermAnnotation$007C_$007C(tan), (activePatternResult != null) ? ((tan_1 = activePatternResult, [(tsr != null) ? tsr : tan_1.TermSourceREF, tan_1.LocalTAN])) : [tsr, void 0])) : [tsr, void 0];
     return OntologyAnnotation_make(void 0, map(AnnotationValue_fromString_Z721C83C5, term), patternInput[0], patternInput[1], tan, comments);
@@ -139,7 +139,7 @@ export function OntologyAnnotation_fromString_Z7D8EB286(term, tsr, tan, comments
  */
 export function OntologyAnnotation_fromTermAnnotation_Z721C83C5(termAnnotation) {
     const r = value_4(tryParseTermAnnotation(termAnnotation));
-    return OntologyAnnotation_fromString_Z7D8EB286("", r.TermSourceREF, (r.TermSourceREF + ":") + r.LocalTAN);
+    return OntologyAnnotation_fromString_2EB0E147("", r.TermSourceREF, (r.TermSourceREF + ":") + r.LocalTAN);
 }
 
 /**
@@ -218,10 +218,10 @@ export function OntologyAnnotation__get_TermAccessionAndOntobeeUrlIfShort(this$)
  * 
  * `asOntobeePurlUrl`: option to return term accession in Ontobee purl-url format (`http://purl.obolibrary.org/obo/MS_1000121`)
  */
-export function OntologyAnnotation_toString_473B9D79(oa, asOntobeePurlUrlIfShort) {
+export function OntologyAnnotation_toString_5E3DAF0D(oa, asOntobeePurlUrlIfShort) {
     let url;
     const asOntobeePurlUrlIfShort_1 = defaultArg(asOntobeePurlUrlIfShort, false);
-    const TermName = defaultArg(map(AnnotationValue_toString_Z3C00A204, oa.Name), "");
+    const TermName = defaultArg(map(AnnotationValue_toString_Z6FAD7738, oa.Name), "");
     const TermSourceREF = defaultArg(oa.TermSourceREF, "");
     return {
         TermAccessionNumber: asOntobeePurlUrlIfShort_1 ? ((url = OntologyAnnotation__get_TermAccessionAndOntobeeUrlIfShort(oa), (url === "") ? defaultArg(oa.TermAccessionNumber, "") : url)) : defaultArg(oa.TermAccessionNumber, ""),
@@ -233,14 +233,14 @@ export function OntologyAnnotation_toString_473B9D79(oa, asOntobeePurlUrlIfShort
 /**
  * Returns the name of the ontology as string if it has a name
  */
-export function OntologyAnnotation_tryGetNameText_2FC95D30(oa) {
+export function OntologyAnnotation_tryGetNameText_Z4C0FE73C(oa) {
     return OntologyAnnotation__get_TryNameText(oa);
 }
 
 /**
  * Returns the name of the ontology as string if it has a name
  */
-export function OntologyAnnotation_getNameText_2FC95D30(oa) {
+export function OntologyAnnotation_getNameText_Z4C0FE73C(oa) {
     return OntologyAnnotation__get_NameText(oa);
 }
 
@@ -320,7 +320,7 @@ export function OntologyAnnotation_removeByName(name, annotations) {
 /**
  * Returns comments of a ontology annotation
  */
-export function OntologyAnnotation_getComments_2FC95D30(annotation) {
+export function OntologyAnnotation_getComments_Z4C0FE73C(annotation) {
     return annotation.Comments;
 }
 
@@ -328,7 +328,7 @@ export function OntologyAnnotation_getComments_2FC95D30(annotation) {
  * Applies function f on comments of a ontology annotation
  */
 export function OntologyAnnotation_mapComments(f, annotation) {
-    return new OntologyAnnotation(annotation.ID, annotation.Name, annotation.TermSourceREF, annotation.LocalID, annotation.TermAccessionNumber, mapDefault(empty(), f, annotation.Comments));
+    return new OntologyAnnotation(annotation.ID, annotation.Name, annotation.TermSourceREF, annotation.LocalID, annotation.TermAccessionNumber, mapDefault([], f, annotation.Comments));
 }
 
 /**

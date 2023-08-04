@@ -1,6 +1,6 @@
 import { unwrap, defaultArg } from "../fable_modules/fable-library.4.1.4/Option.js";
 import { singleton, append, delay, toArray } from "../fable_modules/fable-library.4.1.4/Seq.js";
-import { choose, equalsWith, tail, head, map } from "../fable_modules/fable-library.4.1.4/Array.js";
+import { append as append_1, choose, equalsWith, tail, head, map } from "../fable_modules/fable-library.4.1.4/Array.js";
 import { Array_distinct, Array_groupBy } from "../fable_modules/fable-library.4.1.4/Seq2.js";
 import { curry2, arrayHash, stringHash } from "../fable_modules/fable-library.4.1.4/Util.js";
 import { combineMany, split } from "./Path.js";
@@ -44,6 +44,9 @@ export class FileSystemTree extends Union {
     }
     static createFolder(name, children) {
         return new FileSystemTree(1, [name, defaultArg(children, [])]);
+    }
+    static createRootFolder(children) {
+        return new FileSystemTree(1, [FileSystemTree.ROOT_NAME, children]);
     }
     AddFile(path) {
         const this$ = this;
@@ -137,9 +140,18 @@ export class FileSystemTree extends Union {
     static filter(predicate) {
         return (tree) => tree.Filter(predicate);
     }
+    Union(otherFST) {
+        let array_1;
+        const this$ = this;
+        const arg = Array_distinct((array_1 = this$.ToFilePaths(), append_1(otherFST.ToFilePaths(), array_1)), {
+            Equals: (x, y) => (x === y),
+            GetHashCode: stringHash,
+        });
+        return FileSystemTree.fromFilePaths(arg);
+    }
 }
 
 export function FileSystemTree_$reflection() {
-    return union_type("FileSystem.FileSystemTree", [], FileSystemTree, () => [[["name", string_type]], [["name", string_type], ["children", array_type(FileSystemTree_$reflection())]]]);
+    return union_type("ARCtrl.FileSystem.FileSystemTree", [], FileSystemTree, () => [[["name", string_type]], [["name", string_type], ["children", array_type(FileSystemTree_$reflection())]]]);
 }
 

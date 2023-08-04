@@ -1,26 +1,27 @@
 import { defaultArg, map as map_2, unwrap } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { disposeSafe, getEnumerator, equals } from "../../../fable_modules/fable-library.4.1.4/Util.js";
-import { map as map_1, empty } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { equalsWith } from "../../../fable_modules/fable-library.4.1.4/Array.js";
 import { toList, removeAt, tryFindIndex, map } from "../../../fable_modules/fable-library.4.1.4/Seq.js";
 import { ArcAssay } from "./ArcAssay.js";
-import { ArcTables_fromProcesses_Z31821267, ArcTables__get_Tables, ArcTables__GetProcesses, ArcTables__GetRow_Z18115A39, ArcTables__GetRowAt_Z37302880, ArcTables__UpdateRow_Z5E65B4B1, ArcTables__UpdateRowAt_Z596C2D98, ArcTables__RemoveRow_Z18115A39, ArcTables__RemoveRowAt_Z37302880, ArcTables__AddRow_1177C4AF, ArcTables__AddRowAt_Z57F91678, ArcTables__GetColumn_Z18115A39, ArcTables__GetColumnAt_Z37302880, ArcTables__UpdateColumn_Z774BF72A, ArcTables__UpdateColumnAt_Z155350AF, ArcTables__RemoveColumn_Z18115A39, ArcTables__RemoveColumnAt_Z37302880, ArcTables__AddColumn_Z4FC90944, ArcTables__AddColumnAt_6647579B, ArcTables__RenameTable_Z384F8060, ArcTables__RenameTableAt_Z176EF219, ArcTables__MapTable_4E415F2F, ArcTables__MapTableAt_61602D68, ArcTables__RemoveTable_Z721C83C5, ArcTables__RemoveTableAt_Z524259A4, ArcTables__UpdateTable_4976F045, ArcTables__UpdateTableAt_66578202, ArcTables__GetTable_Z721C83C5, ArcTables__GetTableAt_Z524259A4, ArcTables__InitTables_7B28792B, ArcTables__InitTable_3B406CA4, ArcTables__AddTables_3601F24E, ArcTables__AddTable_16F700A1, ArcTables__get_TableNames, ArcTables_$ctor_Z68BECB99, ArcTables__get_Count } from "./ArcTables.js";
+import { ArcTables_fromProcesses_134EBDED, ArcTables__get_Tables, ArcTables__GetProcesses, ArcTables__GetRow_Z18115A39, ArcTables__GetRowAt_Z37302880, ArcTables__UpdateRow_1BFE2CFB, ArcTables__UpdateRowAt_1CF7B5DC, ArcTables__RemoveRow_Z18115A39, ArcTables__RemoveRowAt_Z37302880, ArcTables__AddRow_Z16315DE5, ArcTables__AddRowAt_Z12CDB784, ArcTables__GetColumn_Z18115A39, ArcTables__GetColumnAt_Z37302880, ArcTables__UpdateColumn_Z6083042A, ArcTables__UpdateColumnAt_21300791, ArcTables__RemoveColumn_Z18115A39, ArcTables__RemoveColumnAt_Z37302880, ArcTables__AddColumn_1FF50D3C, ArcTables__AddColumnAt_6A9784DB, ArcTables__RenameTable_Z384F8060, ArcTables__RenameTableAt_Z176EF219, ArcTables__MapTable_27DD7B1B, ArcTables__MapTableAt_8FC095C, ArcTables__RemoveTable_Z721C83C5, ArcTables__RemoveTableAt_Z524259A4, ArcTables__UpdateTable_51766571, ArcTables__UpdateTableAt_7E571736, ArcTables__GetTable_Z721C83C5, ArcTables__GetTableAt_Z524259A4, ArcTables__InitTables_7B28792B, ArcTables__InitTable_3B406CA4, ArcTables__AddTables_Z2D453886, ArcTables__AddTable_EC12B15, ArcTables__get_TableNames, ArcTables_$ctor_Z18C2F36D, ArcTables__get_Count } from "./ArcTables.js";
 import { fromValueWithDefault } from "../OptionExtensions.js";
+import { toArray, ofArray, map as map_1, empty } from "../../../fable_modules/fable-library.4.1.4/List.js";
 import { getUnits, getCharacteristics, getMaterials, getSamples, getSources, getProtocols } from "../JsonTypes/ProcessSequence.js";
-import { StudyMaterials_get_empty, StudyMaterials_create_Z460D555F } from "../JsonTypes/StudyMaterials.js";
+import { StudyMaterials_get_empty, StudyMaterials_create_1BE9FA55 } from "../JsonTypes/StudyMaterials.js";
 import { Study_identifierFromFileName, createMissingIdentifier, Study_fileNameFromIdentifier, isMissingIdentifier } from "./Identifier.js";
-import { Study_create_Z6C8AB268 } from "../JsonTypes/Study.js";
+import { Study_create_Z2D28E954 } from "../JsonTypes/Study.js";
 import { class_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 
 export class ArcStudy {
     constructor(identifier, title, description, submissionDate, publicReleaseDate, publications, contacts, studyDesignDescriptors, tables, assays, factors, comments) {
         this.submissionDate = submissionDate;
-        const publications_1 = defaultArg(publications, empty());
-        const contacts_1 = defaultArg(contacts, empty());
-        const studyDesignDescriptors_1 = defaultArg(studyDesignDescriptors, empty());
+        const publications_1 = defaultArg(publications, []);
+        const contacts_1 = defaultArg(contacts, []);
+        const studyDesignDescriptors_1 = defaultArg(studyDesignDescriptors, []);
         const tables_1 = defaultArg(tables, []);
         const assays_1 = defaultArg(assays, []);
-        const factors_1 = defaultArg(factors, empty());
-        const comments_1 = defaultArg(comments, empty());
+        const factors_1 = defaultArg(factors, []);
+        const comments_1 = defaultArg(comments, []);
         this["identifier@25"] = identifier;
         this["Title@"] = title;
         this["Description@"] = description;
@@ -141,7 +142,7 @@ export class ArcStudy {
     }
     get isEmpty() {
         const this$ = this;
-        return (((((((((equals(this$.Title, void 0) && equals(this$.Description, void 0)) && equals(this$.SubmissionDate, void 0)) && equals(this$.PublicReleaseDate, void 0)) && equals(this$.Publications, empty())) && equals(this$.Contacts, empty())) && equals(this$.StudyDesignDescriptors, empty())) && (this$.Tables.length === 0)) && (this$.Assays.length === 0)) && equals(this$.Factors, empty())) && equals(this$.Comments, empty());
+        return (((((((((equals(this$.Title, void 0) && equals(this$.Description, void 0)) && equals(this$.SubmissionDate, void 0)) && equals(this$.PublicReleaseDate, void 0)) && equalsWith(equals, this$.Publications, [])) && equalsWith(equals, this$.Contacts, [])) && equalsWith(equals, this$.StudyDesignDescriptors, [])) && (this$.Tables.length === 0)) && (this$.Assays.length === 0)) && equalsWith(equals, this$.Factors, [])) && equalsWith(equals, this$.Comments, []);
     }
     static get FileName() {
         return "isa.study.xlsx";
@@ -176,12 +177,12 @@ export class ArcStudy {
         const this$ = this;
         const assay = new ArcAssay(assayName);
         this$.AddAssay(assay);
+        return assay;
     }
     static initAssay(assayName) {
         return (study) => {
             const newStudy = study.Copy();
-            newStudy.InitAssay(assayName);
-            return newStudy;
+            return newStudy.InitAssay(assayName);
         };
     }
     RemoveAssayAt(index) {
@@ -259,15 +260,15 @@ export class ArcStudy {
     }
     get TableCount() {
         const this$ = this;
-        return ArcTables__get_Count(ArcTables_$ctor_Z68BECB99(this$.Tables)) | 0;
+        return ArcTables__get_Count(ArcTables_$ctor_Z18C2F36D(this$.Tables)) | 0;
     }
     get TableNames() {
         const this$ = this;
-        return ArcTables__get_TableNames(ArcTables_$ctor_Z68BECB99(this$.Tables));
+        return ArcTables__get_TableNames(ArcTables_$ctor_Z18C2F36D(this$.Tables));
     }
     AddTable(table, index) {
         const this$ = this;
-        ArcTables__AddTable_16F700A1(ArcTables_$ctor_Z68BECB99(this$.Tables), table, unwrap(index));
+        ArcTables__AddTable_EC12B15(ArcTables_$ctor_Z18C2F36D(this$.Tables), table, unwrap(index));
     }
     static addTable(table, index) {
         return (study) => {
@@ -278,7 +279,7 @@ export class ArcStudy {
     }
     AddTables(tables, index) {
         const this$ = this;
-        ArcTables__AddTables_3601F24E(ArcTables_$ctor_Z68BECB99(this$.Tables), tables, unwrap(index));
+        ArcTables__AddTables_Z2D453886(ArcTables_$ctor_Z18C2F36D(this$.Tables), tables, unwrap(index));
     }
     static addTables(tables, index) {
         return (study) => {
@@ -289,18 +290,17 @@ export class ArcStudy {
     }
     InitTable(tableName, index) {
         const this$ = this;
-        ArcTables__InitTable_3B406CA4(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, unwrap(index));
+        return ArcTables__InitTable_3B406CA4(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, unwrap(index));
     }
     static initTable(tableName, index) {
         return (study) => {
             const c = study.Copy();
-            c.InitTable(tableName, unwrap(index));
-            return c;
+            return c.InitTable(tableName, unwrap(index));
         };
     }
     InitTables(tableNames, index) {
         const this$ = this;
-        ArcTables__InitTables_7B28792B(ArcTables_$ctor_Z68BECB99(this$.Tables), tableNames, unwrap(index));
+        ArcTables__InitTables_7B28792B(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableNames, unwrap(index));
     }
     static initTables(tableNames, index) {
         return (study) => {
@@ -311,7 +311,7 @@ export class ArcStudy {
     }
     GetTableAt(index) {
         const this$ = this;
-        return ArcTables__GetTableAt_Z524259A4(ArcTables_$ctor_Z68BECB99(this$.Tables), index);
+        return ArcTables__GetTableAt_Z524259A4(ArcTables_$ctor_Z18C2F36D(this$.Tables), index);
     }
     static getTableAt(index) {
         return (study) => {
@@ -321,7 +321,7 @@ export class ArcStudy {
     }
     GetTable(name) {
         const this$ = this;
-        return ArcTables__GetTable_Z721C83C5(ArcTables_$ctor_Z68BECB99(this$.Tables), name);
+        return ArcTables__GetTable_Z721C83C5(ArcTables_$ctor_Z18C2F36D(this$.Tables), name);
     }
     static getTable(name) {
         return (study) => {
@@ -331,7 +331,7 @@ export class ArcStudy {
     }
     UpdateTableAt(index, table) {
         const this$ = this;
-        ArcTables__UpdateTableAt_66578202(ArcTables_$ctor_Z68BECB99(this$.Tables), index, table);
+        ArcTables__UpdateTableAt_7E571736(ArcTables_$ctor_Z18C2F36D(this$.Tables), index, table);
     }
     static updateTableAt(index, table) {
         return (study) => {
@@ -342,7 +342,7 @@ export class ArcStudy {
     }
     UpdateTable(name, table) {
         const this$ = this;
-        ArcTables__UpdateTable_4976F045(ArcTables_$ctor_Z68BECB99(this$.Tables), name, table);
+        ArcTables__UpdateTable_51766571(ArcTables_$ctor_Z18C2F36D(this$.Tables), name, table);
     }
     static updateTable(name, table) {
         return (study) => {
@@ -353,7 +353,7 @@ export class ArcStudy {
     }
     RemoveTableAt(index) {
         const this$ = this;
-        ArcTables__RemoveTableAt_Z524259A4(ArcTables_$ctor_Z68BECB99(this$.Tables), index);
+        ArcTables__RemoveTableAt_Z524259A4(ArcTables_$ctor_Z18C2F36D(this$.Tables), index);
     }
     static removeTableAt(index) {
         return (study) => {
@@ -364,7 +364,7 @@ export class ArcStudy {
     }
     RemoveTable(name) {
         const this$ = this;
-        ArcTables__RemoveTable_Z721C83C5(ArcTables_$ctor_Z68BECB99(this$.Tables), name);
+        ArcTables__RemoveTable_Z721C83C5(ArcTables_$ctor_Z18C2F36D(this$.Tables), name);
     }
     static removeTable(name) {
         return (study) => {
@@ -375,7 +375,7 @@ export class ArcStudy {
     }
     MapTableAt(index, updateFun) {
         const this$ = this;
-        ArcTables__MapTableAt_61602D68(ArcTables_$ctor_Z68BECB99(this$.Tables), index, updateFun);
+        ArcTables__MapTableAt_8FC095C(ArcTables_$ctor_Z18C2F36D(this$.Tables), index, updateFun);
     }
     static mapTableAt(index, updateFun) {
         return (study) => {
@@ -386,7 +386,7 @@ export class ArcStudy {
     }
     MapTable(name, updateFun) {
         const this$ = this;
-        ArcTables__MapTable_4E415F2F(ArcTables_$ctor_Z68BECB99(this$.Tables), name, updateFun);
+        ArcTables__MapTable_27DD7B1B(ArcTables_$ctor_Z18C2F36D(this$.Tables), name, updateFun);
     }
     static mapTable(name, updateFun) {
         return (study) => {
@@ -397,7 +397,7 @@ export class ArcStudy {
     }
     RenameTableAt(index, newName) {
         const this$ = this;
-        ArcTables__RenameTableAt_Z176EF219(ArcTables_$ctor_Z68BECB99(this$.Tables), index, newName);
+        ArcTables__RenameTableAt_Z176EF219(ArcTables_$ctor_Z18C2F36D(this$.Tables), index, newName);
     }
     static renameTableAt(index, newName) {
         return (study) => {
@@ -408,7 +408,7 @@ export class ArcStudy {
     }
     RenameTable(name, newName) {
         const this$ = this;
-        ArcTables__RenameTable_Z384F8060(ArcTables_$ctor_Z68BECB99(this$.Tables), name, newName);
+        ArcTables__RenameTable_Z384F8060(ArcTables_$ctor_Z18C2F36D(this$.Tables), name, newName);
     }
     static renameTable(name, newName) {
         return (study) => {
@@ -419,7 +419,7 @@ export class ArcStudy {
     }
     AddColumnAt(tableIndex, header, cells, columnIndex, forceReplace) {
         const this$ = this;
-        ArcTables__AddColumnAt_6647579B(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
+        ArcTables__AddColumnAt_6A9784DB(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
     }
     static addColumnAt(tableIndex, header, cells, columnIndex, forceReplace) {
         return (study) => {
@@ -430,7 +430,7 @@ export class ArcStudy {
     }
     AddColumn(tableName, header, cells, columnIndex, forceReplace) {
         const this$ = this;
-        ArcTables__AddColumn_Z4FC90944(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
+        ArcTables__AddColumn_1FF50D3C(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, header, unwrap(cells), unwrap(columnIndex), unwrap(forceReplace));
     }
     static addColumn(tableName, header, cells, columnIndex, forceReplace) {
         return (study) => {
@@ -441,7 +441,7 @@ export class ArcStudy {
     }
     RemoveColumnAt(tableIndex, columnIndex) {
         const this$ = this;
-        ArcTables__RemoveColumnAt_Z37302880(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, columnIndex);
+        ArcTables__RemoveColumnAt_Z37302880(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, columnIndex);
     }
     static removeColumnAt(tableIndex, columnIndex) {
         return (study) => {
@@ -452,7 +452,7 @@ export class ArcStudy {
     }
     RemoveColumn(tableName, columnIndex) {
         const this$ = this;
-        ArcTables__RemoveColumn_Z18115A39(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, columnIndex);
+        ArcTables__RemoveColumn_Z18115A39(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, columnIndex);
     }
     static removeColumn(tableName, columnIndex) {
         return (study) => {
@@ -463,7 +463,7 @@ export class ArcStudy {
     }
     UpdateColumnAt(tableIndex, columnIndex, header, cells) {
         const this$ = this;
-        ArcTables__UpdateColumnAt_Z155350AF(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, columnIndex, header, unwrap(cells));
+        ArcTables__UpdateColumnAt_21300791(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, columnIndex, header, unwrap(cells));
     }
     static updateColumnAt(tableIndex, columnIndex, header, cells) {
         return (study) => {
@@ -474,7 +474,7 @@ export class ArcStudy {
     }
     UpdateColumn(tableName, columnIndex, header, cells) {
         const this$ = this;
-        ArcTables__UpdateColumn_Z774BF72A(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, columnIndex, header, unwrap(cells));
+        ArcTables__UpdateColumn_Z6083042A(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, columnIndex, header, unwrap(cells));
     }
     static updateColumn(tableName, columnIndex, header, cells) {
         return (study) => {
@@ -485,7 +485,7 @@ export class ArcStudy {
     }
     GetColumnAt(tableIndex, columnIndex) {
         const this$ = this;
-        return ArcTables__GetColumnAt_Z37302880(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, columnIndex);
+        return ArcTables__GetColumnAt_Z37302880(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, columnIndex);
     }
     static getColumnAt(tableIndex, columnIndex) {
         return (study) => {
@@ -495,7 +495,7 @@ export class ArcStudy {
     }
     GetColumn(tableName, columnIndex) {
         const this$ = this;
-        return ArcTables__GetColumn_Z18115A39(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, columnIndex);
+        return ArcTables__GetColumn_Z18115A39(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, columnIndex);
     }
     static getColumn(tableName, columnIndex) {
         return (study) => {
@@ -505,7 +505,7 @@ export class ArcStudy {
     }
     AddRowAt(tableIndex, cells, rowIndex) {
         const this$ = this;
-        ArcTables__AddRowAt_Z57F91678(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, unwrap(cells), unwrap(rowIndex));
+        ArcTables__AddRowAt_Z12CDB784(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, unwrap(cells), unwrap(rowIndex));
     }
     static addRowAt(tableIndex, cells, rowIndex) {
         return (study) => {
@@ -516,7 +516,7 @@ export class ArcStudy {
     }
     AddRow(tableName, cells, rowIndex) {
         const this$ = this;
-        ArcTables__AddRow_1177C4AF(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, unwrap(cells), unwrap(rowIndex));
+        ArcTables__AddRow_Z16315DE5(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, unwrap(cells), unwrap(rowIndex));
     }
     static addRow(tableName, cells, rowIndex) {
         return (study) => {
@@ -527,7 +527,7 @@ export class ArcStudy {
     }
     RemoveRowAt(tableIndex, rowIndex) {
         const this$ = this;
-        ArcTables__RemoveRowAt_Z37302880(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, rowIndex);
+        ArcTables__RemoveRowAt_Z37302880(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, rowIndex);
     }
     static removeRowAt(tableIndex, rowIndex) {
         return (study) => {
@@ -538,7 +538,7 @@ export class ArcStudy {
     }
     RemoveRow(tableName, rowIndex) {
         const this$ = this;
-        ArcTables__RemoveRow_Z18115A39(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, rowIndex);
+        ArcTables__RemoveRow_Z18115A39(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, rowIndex);
     }
     static removeRow(tableName, rowIndex) {
         return (study) => {
@@ -549,7 +549,7 @@ export class ArcStudy {
     }
     UpdateRowAt(tableIndex, rowIndex, cells) {
         const this$ = this;
-        ArcTables__UpdateRowAt_Z596C2D98(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, rowIndex, cells);
+        ArcTables__UpdateRowAt_1CF7B5DC(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, rowIndex, cells);
     }
     static updateRowAt(tableIndex, rowIndex, cells) {
         return (study) => {
@@ -560,7 +560,7 @@ export class ArcStudy {
     }
     UpdateRow(tableName, rowIndex, cells) {
         const this$ = this;
-        ArcTables__UpdateRow_Z5E65B4B1(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, rowIndex, cells);
+        ArcTables__UpdateRow_1BFE2CFB(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, rowIndex, cells);
     }
     static updateRow(tableName, rowIndex, cells) {
         return (study) => {
@@ -571,7 +571,7 @@ export class ArcStudy {
     }
     GetRowAt(tableIndex, rowIndex) {
         const this$ = this;
-        return ArcTables__GetRowAt_Z37302880(ArcTables_$ctor_Z68BECB99(this$.Tables), tableIndex, rowIndex);
+        return ArcTables__GetRowAt_Z37302880(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableIndex, rowIndex);
     }
     static getRowAt(tableIndex, rowIndex) {
         return (study) => {
@@ -581,7 +581,7 @@ export class ArcStudy {
     }
     GetRow(tableName, rowIndex) {
         const this$ = this;
-        return ArcTables__GetRow_Z18115A39(ArcTables_$ctor_Z68BECB99(this$.Tables), tableName, rowIndex);
+        return ArcTables__GetRow_Z18115A39(ArcTables_$ctor_Z18C2F36D(this$.Tables), tableName, rowIndex);
     }
     static getRow(tableName, rowIndex) {
         return (study) => {
@@ -619,17 +619,17 @@ export class ArcStudy {
     }
     ToStudy() {
         const this$ = this;
-        const processSeq = ArcTables__GetProcesses(ArcTables_$ctor_Z68BECB99(this$.Tables));
+        const processSeq = ArcTables__GetProcesses(ArcTables_$ctor_Z18C2F36D(this$.Tables));
         const protocols = fromValueWithDefault(empty(), getProtocols(processSeq));
         const assays = fromValueWithDefault(empty(), map_1((a) => a.ToAssay(), toList(this$.Assays)));
         let studyMaterials;
-        const v_5 = StudyMaterials_create_Z460D555F(unwrap(fromValueWithDefault(empty(), getSources(processSeq))), unwrap(fromValueWithDefault(empty(), getSamples(processSeq))), unwrap(fromValueWithDefault(empty(), getMaterials(processSeq))));
+        const v_5 = StudyMaterials_create_1BE9FA55(unwrap(fromValueWithDefault(empty(), getSources(processSeq))), unwrap(fromValueWithDefault(empty(), getSamples(processSeq))), unwrap(fromValueWithDefault(empty(), getMaterials(processSeq))));
         studyMaterials = fromValueWithDefault(StudyMaterials_get_empty(), v_5);
         const patternInput = isMissingIdentifier(this$.Identifier) ? [void 0, void 0] : [this$.Identifier, Study_fileNameFromIdentifier(this$.Identifier)];
-        return Study_create_Z6C8AB268(void 0, unwrap(patternInput[1]), unwrap(patternInput[0]), unwrap(this$.Title), unwrap(this$.Description), unwrap(this$.SubmissionDate), unwrap(this$.PublicReleaseDate), unwrap(fromValueWithDefault(empty(), this$.Publications)), unwrap(fromValueWithDefault(empty(), this$.Contacts)), unwrap(fromValueWithDefault(empty(), this$.StudyDesignDescriptors)), unwrap(protocols), unwrap(studyMaterials), unwrap(fromValueWithDefault(empty(), processSeq)), unwrap(assays), unwrap(fromValueWithDefault(empty(), this$.Factors)), unwrap(fromValueWithDefault(empty(), getCharacteristics(processSeq))), unwrap(fromValueWithDefault(empty(), getUnits(processSeq))), unwrap(fromValueWithDefault(empty(), this$.Comments)));
+        return Study_create_Z2D28E954(void 0, unwrap(patternInput[1]), unwrap(patternInput[0]), unwrap(this$.Title), unwrap(this$.Description), unwrap(this$.SubmissionDate), unwrap(this$.PublicReleaseDate), unwrap(fromValueWithDefault(empty(), ofArray(this$.Publications))), unwrap(fromValueWithDefault(empty(), ofArray(this$.Contacts))), unwrap(fromValueWithDefault(empty(), ofArray(this$.StudyDesignDescriptors))), unwrap(protocols), unwrap(studyMaterials), unwrap(fromValueWithDefault(empty(), processSeq)), unwrap(assays), unwrap(fromValueWithDefault(empty(), ofArray(this$.Factors))), unwrap(fromValueWithDefault(empty(), getCharacteristics(processSeq))), unwrap(fromValueWithDefault(empty(), getUnits(processSeq))), unwrap(fromValueWithDefault(empty(), ofArray(this$.Comments))));
     }
     static fromStudy(s) {
-        const tables = map_2((arg_1) => ArcTables__get_Tables(ArcTables_fromProcesses_Z31821267(arg_1)), s.ProcessSequence);
+        const tables = map_2((arg_1) => ArcTables__get_Tables(ArcTables_fromProcesses_134EBDED(arg_1)), s.ProcessSequence);
         let identifer;
         const matchValue = s.FileName;
         identifer = ((matchValue == null) ? createMissingIdentifier() : Study_identifierFromFileName(matchValue));
@@ -637,15 +637,15 @@ export class ArcStudy {
             const arg_3 = map_1((arg_2) => ArcAssay.fromAssay(arg_2), arg_4);
             return Array.from(arg_3);
         }, s.Assays);
-        return ArcStudy.create(identifer, unwrap(s.Title), unwrap(s.Description), unwrap(s.SubmissionDate), unwrap(s.PublicReleaseDate), unwrap(s.Publications), unwrap(s.Contacts), unwrap(s.StudyDesignDescriptors), unwrap(tables), unwrap(assays), unwrap(s.Factors), unwrap(s.Comments));
+        return ArcStudy.create(identifer, unwrap(s.Title), unwrap(s.Description), unwrap(s.SubmissionDate), unwrap(s.PublicReleaseDate), unwrap(map_2(toArray, s.Publications)), unwrap(map_2(toArray, s.Contacts)), unwrap(map_2(toArray, s.StudyDesignDescriptors)), unwrap(tables), unwrap(assays), unwrap(map_2(toArray, s.Factors)), unwrap(map_2(toArray, s.Comments)));
     }
 }
 
 export function ArcStudy_$reflection() {
-    return class_type("ISA.ArcStudy", void 0, ArcStudy);
+    return class_type("ARCtrl.ISA.ArcStudy", void 0, ArcStudy);
 }
 
-export function ArcStudy_$ctor_Z337E69A6(identifier, title, description, submissionDate, publicReleaseDate, publications, contacts, studyDesignDescriptors, tables, assays, factors, comments) {
+export function ArcStudy_$ctor_1627F9A7(identifier, title, description, submissionDate, publicReleaseDate, publications, contacts, studyDesignDescriptors, tables, assays, factors, comments) {
     return new ArcStudy(identifier, title, description, submissionDate, publicReleaseDate, publications, contacts, studyDesignDescriptors, tables, assays, factors, comments);
 }
 

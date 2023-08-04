@@ -30,35 +30,35 @@ export class Sample extends Record {
 }
 
 export function Sample_$reflection() {
-    return record_type("ISA.Sample", [], Sample, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["Characteristics", option_type(list_type(MaterialAttributeValue_$reflection()))], ["FactorValues", option_type(list_type(FactorValue_$reflection()))], ["DerivesFrom", option_type(list_type(Source_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Sample", [], Sample, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["Characteristics", option_type(list_type(MaterialAttributeValue_$reflection()))], ["FactorValues", option_type(list_type(FactorValue_$reflection()))], ["DerivesFrom", option_type(list_type(Source_$reflection()))]]);
 }
 
 export function Sample_make(id, name, characteristics, factorValues, derivesFrom) {
     return new Sample(id, name, characteristics, factorValues, derivesFrom);
 }
 
-export function Sample_create_3A6378D6(Id, Name, Characteristics, FactorValues, DerivesFrom) {
+export function Sample_create_E50ED22(Id, Name, Characteristics, FactorValues, DerivesFrom) {
     return Sample_make(Id, Name, Characteristics, FactorValues, DerivesFrom);
 }
 
 export function Sample_get_empty() {
-    return Sample_create_3A6378D6();
+    return Sample_create_E50ED22();
 }
 
 export function Sample__get_NameAsString(this$) {
     return defaultArg(this$.Name, "");
 }
 
-export function Sample_getCharacteristicUnits_Z23050B6A(s) {
+export function Sample_getCharacteristicUnits_Z29207F1E(s) {
     return choose((c) => c.Unit, defaultArg(s.Characteristics, empty()));
 }
 
-export function Sample_getFactorUnits_Z23050B6A(s) {
+export function Sample_getFactorUnits_Z29207F1E(s) {
     return choose((c) => c.Unit, defaultArg(s.FactorValues, empty()));
 }
 
-export function Sample_getUnits_Z23050B6A(s) {
-    return append(Sample_getCharacteristicUnits_Z23050B6A(s), Sample_getFactorUnits_Z23050B6A(s));
+export function Sample_getUnits_Z29207F1E(s) {
+    return append(Sample_getCharacteristicUnits_Z29207F1E(s), Sample_getFactorUnits_Z29207F1E(s));
 }
 
 export function Sample_setCharacteristicValues(values, s) {

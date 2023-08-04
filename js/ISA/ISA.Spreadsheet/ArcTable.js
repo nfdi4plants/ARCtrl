@@ -1,13 +1,15 @@
 import { iterateIndexed, length, sortBy, collect, toArray, empty, tail, head, isEmpty, cons, singleton, fold, map, reverse } from "../../fable_modules/fable-library.4.1.4/List.js";
-import { tryParseTermAnnotation } from "../ISA/Regex.js";
+import { tryParseReferenceColumnHeader } from "../ISA/Regex.js";
 import { map as map_1, toList, tryFind } from "../../fable_modules/fable-library.4.1.4/Seq.js";
 import { toFsColumns, fixDeprecatedIOHeader, fromFsColumns } from "./CompositeColumn.js";
 import { ArcTable } from "../ISA/ArcTypes/ArcTable.js";
-import { FsWorksheet } from "../../fable_modules/FsSpreadsheet.3.1.1/FsWorksheet.fs.js";
+import { FsWorksheet } from "../../fable_modules/FsSpreadsheet.3.3.0/FsWorksheet.fs.js";
 import { comparePrimitives } from "../../fable_modules/fable-library.4.1.4/Util.js";
-import { FsRangeAddress_$ctor_7E77A4A0 } from "../../fable_modules/FsSpreadsheet.3.1.1/Ranges/FsRangeAddress.fs.js";
-import { FsAddress_$ctor_Z37302880 } from "../../fable_modules/FsSpreadsheet.3.1.1/FsAddress.fs.js";
-import { FsRangeBase__Cell_Z3407A44B } from "../../fable_modules/FsSpreadsheet.3.1.1/Ranges/FsRangeBase.fs.js";
+import { FsRangeAddress_$ctor_7E77A4A0 } from "../../fable_modules/FsSpreadsheet.3.3.0/Ranges/FsRangeAddress.fs.js";
+import { FsAddress_$ctor_Z37302880 } from "../../fable_modules/FsSpreadsheet.3.3.0/FsAddress.fs.js";
+import { Dictionary_tryGet } from "../../fable_modules/FsSpreadsheet.3.3.0/Cells/FsCellsCollection.fs.js";
+import { addToDict } from "../../fable_modules/fable-library.4.1.4/MapUtil.js";
+import { FsRangeBase__Cell_Z3407A44B } from "../../fable_modules/FsSpreadsheet.3.3.0/Ranges/FsRangeBase.fs.js";
 
 /**
  * Iterates over elements of the input list and groups adjacent elements.
@@ -61,8 +63,8 @@ export function classifyColumnOrder(column) {
 
 export function groupColumnsByHeader(columns) {
     return Aux_List_groupWhen((c) => {
-        if (tryParseTermAnnotation(c.Item(1).Value) == null) {
-            return c.Item(1).Value !== "Unit";
+        if (tryParseReferenceColumnHeader(c.Item(1).Value) == null) {
+            return !(c.Item(1).Value.indexOf("Unit") === 0);
         }
         else {
             return false;
@@ -100,6 +102,7 @@ export function tryFromFsWorksheet(sheet) {
 }
 
 export function toFsWorksheet(table) {
+    const stringCount = new Map([]);
     const ws = new FsWorksheet(table.Name);
     const columns = collect(toFsColumns, sortBy(classifyColumnOrder, table.Columns, {
         Compare: comparePrimitives,
@@ -109,8 +112,24 @@ export function toFsWorksheet(table) {
     const fsTable = ws.Table("annotationTable", FsRangeAddress_$ctor_7E77A4A0(FsAddress_$ctor_Z37302880(1, 1), FsAddress_$ctor_Z37302880(maxRow, maxCol)));
     iterateIndexed((colI, col) => {
         iterateIndexed((rowI, cell) => {
+            let value;
+            if (rowI === 0) {
+                const matchValue = Dictionary_tryGet(cell.Value, stringCount);
+                if (matchValue == null) {
+                    addToDict(stringCount, cell.Value, "");
+                    value = cell.Value;
+                }
+                else {
+                    const spaces = matchValue;
+                    stringCount.set(cell.Value, spaces + " ");
+                    value = ((cell.Value + " ") + spaces);
+                }
+            }
+            else {
+                value = cell.Value;
+            }
             const address = FsAddress_$ctor_Z37302880(rowI + 1, colI + 1);
-            FsRangeBase__Cell_Z3407A44B(fsTable, address, ws.CellCollection).SetValueAs(cell.Value);
+            FsRangeBase__Cell_Z3407A44B(fsTable, address, ws.CellCollection).SetValueAs(value);
         }, col);
     }, columns);
     return ws;

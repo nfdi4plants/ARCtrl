@@ -19,19 +19,19 @@ export class OntologySourceReference extends Record {
 }
 
 export function OntologySourceReference_$reflection() {
-    return record_type("ISA.OntologySourceReference", [], OntologySourceReference, () => [["Description", option_type(string_type)], ["File", option_type(string_type)], ["Name", option_type(string_type)], ["Version", option_type(string_type)], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.OntologySourceReference", [], OntologySourceReference, () => [["Description", option_type(string_type)], ["File", option_type(string_type)], ["Name", option_type(string_type)], ["Version", option_type(string_type)], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
 }
 
 export function OntologySourceReference_make(description, file, name, version, comments) {
     return new OntologySourceReference(description, file, name, version, comments);
 }
 
-export function OntologySourceReference_create_55205B02(Description, File, Name, Version, Comments) {
+export function OntologySourceReference_create_5CD5B036(Description, File, Name, Version, Comments) {
     return OntologySourceReference_make(Description, File, Name, Version, Comments);
 }
 
 export function OntologySourceReference_get_empty() {
-    return OntologySourceReference_create_55205B02();
+    return OntologySourceReference_create_5CD5B036();
 }
 
 /**
@@ -103,7 +103,7 @@ export function OntologySourceReference_removeByName(name, ontologies) {
 /**
  * Returns comments of ontology source ref
  */
-export function OntologySourceReference_getComments_Z68D7813F(ontology) {
+export function OntologySourceReference_getComments_Z79C650B(ontology) {
     return ontology.Comments;
 }
 

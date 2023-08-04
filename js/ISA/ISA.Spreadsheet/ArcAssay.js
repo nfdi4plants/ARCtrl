@@ -1,8 +1,8 @@
-import { FsWorksheet } from "../../fable_modules/FsSpreadsheet.3.1.1/FsWorksheet.fs.js";
-import { iterate, tryHead, head, exists, map, singleton, append, delay, iterateIndexed } from "../../fable_modules/fable-library.4.1.4/Seq.js";
+import { FsWorksheet } from "../../fable_modules/FsSpreadsheet.3.3.0/FsWorksheet.fs.js";
+import { iterate, isEmpty as isEmpty_1, choose, tryHead, head, exists, map, singleton, append, delay, iterateIndexed } from "../../fable_modules/fable-library.4.1.4/Seq.js";
 import { SparseRowModule_tryGetValueAt, SparseRowModule_fromFsRow, SparseRowModule_fromValues, SparseRowModule_writeToSheet } from "./SparseTable.js";
 import { fromRows as fromRows_1, toRows as toRows_1 } from "./InvestigationFile/Assays.js";
-import { choose, empty, isEmpty, singleton as singleton_1 } from "../../fable_modules/fable-library.4.1.4/List.js";
+import { empty, isEmpty, toArray, ofArray, singleton as singleton_1 } from "../../fable_modules/fable-library.4.1.4/List.js";
 import { fromRows as fromRows_2, toRows as toRows_2 } from "./InvestigationFile/Contacts.js";
 import { getEnumerator } from "../../fable_modules/fable-library.4.1.4/Util.js";
 import { ArcAssay } from "../ISA/ArcTypes/ArcAssay.js";
@@ -10,14 +10,14 @@ import { createMissingIdentifier } from "../ISA/ArcTypes/Identifier.js";
 import { defaultArg } from "../../fable_modules/fable-library.4.1.4/Option.js";
 import { printf, toConsole } from "../../fable_modules/fable-library.4.1.4/String.js";
 import { toFsWorksheet, tryFromFsWorksheet } from "./ArcTable.js";
-import { FsWorkbook } from "../../fable_modules/FsSpreadsheet.3.1.1/FsWorkbook.fs.js";
+import { FsWorkbook } from "../../fable_modules/FsSpreadsheet.3.3.0/FsWorkbook.fs.js";
 
 export function toMetadataSheet(assay) {
     let assay_1;
     const sheet = new FsWorksheet("isa_assay");
     iterateIndexed((rowI, r) => {
         SparseRowModule_writeToSheet(rowI + 1, r, sheet);
-    }, (assay_1 = assay, delay(() => append(singleton(SparseRowModule_fromValues(["ASSAY"])), delay(() => append(toRows_1("Assay", singleton_1(assay_1)), delay(() => append(singleton(SparseRowModule_fromValues(["ASSAY PERFORMERS"])), delay(() => toRows_2("Assay Person", assay_1.Performers))))))))));
+    }, (assay_1 = assay, delay(() => append(singleton(SparseRowModule_fromValues(["ASSAY"])), delay(() => append(toRows_1("Assay", singleton_1(assay_1)), delay(() => append(singleton(SparseRowModule_fromValues(["ASSAY PERFORMERS"])), delay(() => toRows_2("Assay Person", ofArray(assay_1.Performers)))))))))));
     return sheet;
 }
 
@@ -90,8 +90,9 @@ export function fromMetadataSheet(sheet) {
                         case 0:
                             return ArcAssay.create(createMissingIdentifier());
                         default: {
+                            const arg = toArray(contacts_2);
                             const arg_1 = defaultArg(tryHead(assays_2), ArcAssay.create(createMissingIdentifier()));
-                            return ArcAssay.setPerformers(contacts_2, arg_1);
+                            return ArcAssay.setPerformers(arg, arg_1);
                         }
                     }
                 }
@@ -127,7 +128,7 @@ export function fromFsWorkbook(doc) {
         assayMetaData = fromMetadataSheet(matchValue);
     }
     const sheets = choose(tryFromFsWorksheet, doc.GetWorksheets());
-    if (isEmpty(sheets)) {
+    if (isEmpty_1(sheets)) {
         return assayMetaData;
     }
     else {

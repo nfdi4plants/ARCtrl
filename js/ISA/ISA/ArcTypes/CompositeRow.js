@@ -1,7 +1,7 @@
 import { fold } from "../../../fable_modules/fable-library.4.1.4/Seq.js";
 import { Protocol_get_empty, Protocol_addComponent, Protocol_addParameter, Protocol_setName, Protocol_setDescription, Protocol_setUri, Protocol_setVersion, Protocol_setProtocolType } from "../JsonTypes/Protocol.js";
-import { ProtocolParameter_create_2769312B } from "../JsonTypes/ProtocolParameter.js";
-import { Component_create_Z33AADEE0 } from "../JsonTypes/Component.js";
+import { ProtocolParameter_create_Z6C54B221 } from "../JsonTypes/ProtocolParameter.js";
+import { Component_create_61502994 } from "../JsonTypes/Component.js";
 import { Value, Value_fromString_Z721C83C5 } from "../JsonTypes/Value.js";
 
 export function toProtocol(row) {
@@ -98,11 +98,11 @@ export function toProtocol(row) {
             case 4:
                 return Protocol_setName(p, v_3);
             case 5:
-                return Protocol_addParameter(ProtocolParameter_create_2769312B(void 0, oa_1), p);
+                return Protocol_addParameter(ProtocolParameter_create_Z6C54B221(void 0, oa_1), p);
             case 6:
-                return Protocol_addComponent(Component_create_Z33AADEE0(void 0, Value_fromString_Z721C83C5(v_4), unit, oa_2), p);
+                return Protocol_addComponent(Component_create_61502994(void 0, Value_fromString_Z721C83C5(v_4), unit, oa_2), p);
             case 7:
-                return Protocol_addComponent(Component_create_Z33AADEE0(void 0, new Value(0, [t]), void 0, oa_3), p);
+                return Protocol_addComponent(Component_create_61502994(void 0, new Value(0, [t]), void 0, oa_3), p);
             default:
                 return p;
         }

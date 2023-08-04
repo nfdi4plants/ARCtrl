@@ -15,6 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Fable.Core" Version="4.0.0" />
     <PackageReference Update="FSharp.Core" Version="6.0.7" />
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 
@@ -26,7 +27,7 @@
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil </Authors>
     <Description>ARC helper functions for filesystem management.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>https://raw.githubusercontent.com/nfdi4plants/Branding/138420e3b6f9ec9e125c1ca8840874b2be2a1262/logos/DataPLANT_logo_minimal_rounded_bg_transparent.svg</PackageIcon>
+    <PackageIcon>logo.png</PackageIcon>
     <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
     <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/FileSystem</PackageProjectUrl>
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>

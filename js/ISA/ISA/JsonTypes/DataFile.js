@@ -13,7 +13,7 @@ export class DataFile extends Union {
 }
 
 export function DataFile_$reflection() {
-    return union_type("ISA.DataFile", [], DataFile, () => [[], [], []]);
+    return union_type("ARCtrl.ISA.DataFile", [], DataFile, () => [[], [], []]);
 }
 
 export function DataFile_get_RawDataFileJson() {

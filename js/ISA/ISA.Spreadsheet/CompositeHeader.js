@@ -1,9 +1,9 @@
 import { printf, toFail } from "../../fable_modules/fable-library.4.1.4/String.js";
 import { singleton, tail, head, isEmpty, map } from "../../fable_modules/fable-library.4.1.4/List.js";
-import { OntologyAnnotation_fromString_Z7D8EB286 } from "../ISA/JsonTypes/OntologyAnnotation.js";
-import { ActivePatterns_$007COutputColumnHeader$007C_$007C, ActivePatterns_$007CInputColumnHeader$007C_$007C, tryParseCharacteristicColumnHeader, tryParseFactorColumnHeader, tryParseParameterColumnHeader, ActivePatterns_$007CUnitColumnHeader$007C_$007C, ActivePatterns_$007CTANColumnHeader$007C_$007C, ActivePatterns_$007CTSRColumnHeader$007C_$007C } from "../ISA/Regex.js";
+import { OntologyAnnotation_fromString_2EB0E147 } from "../ISA/JsonTypes/OntologyAnnotation.js";
+import { ActivePatterns_$007COutputColumnHeader$007C_$007C, ActivePatterns_$007CInputColumnHeader$007C_$007C, tryParseComponentColumnHeader, tryParseCharacteristicColumnHeader, tryParseFactorColumnHeader, tryParseParameterColumnHeader, ActivePatterns_$007CUnitColumnHeader$007C_$007C, ActivePatterns_$007CTANColumnHeader$007C_$007C, ActivePatterns_$007CTSRColumnHeader$007C_$007C } from "../ISA/Regex.js";
 import { IOType, CompositeHeader } from "../ISA/ArcTypes/CompositeHeader.js";
-import { FsCell } from "../../fable_modules/FsSpreadsheet.3.1.1/Cells/FsCell.fs.js";
+import { FsCell } from "../../fable_modules/FsSpreadsheet.3.3.0/Cells/FsCell.fs.js";
 import { toString } from "../../fable_modules/fable-library.4.1.4/Types.js";
 import { empty, singleton as singleton_1, append, delay, toList } from "../../fable_modules/fable-library.4.1.4/Seq.js";
 
@@ -44,7 +44,7 @@ export function ActivePattern_$007CTerm$007C_$007C(categoryParser, f, cells) {
     }
     switch (matchResult) {
         case 0:
-            return f(OntologyAnnotation_fromString_Z7D8EB286(name));
+            return f(OntologyAnnotation_fromString_2EB0E147(name));
         default: {
             let matchResult_1, name_1, term1, term2;
             if (!isEmpty(cellValues)) {
@@ -180,7 +180,7 @@ export function ActivePattern_$007CTerm$007C_$007C(categoryParser, f, cells) {
             switch (matchResult_1) {
                 case 0: {
                     const term = ActivePattern_mergeTerms(term1.TermSourceREF, term1.TermAccessionNumber, term2.TermSourceREF, term2.TermAccessionNumber);
-                    return f(OntologyAnnotation_fromString_Z7D8EB286(name_1, term.TermSourceRef, term.TermAccessionNumber));
+                    return f(OntologyAnnotation_fromString_2EB0E147(name_1, term.TermSourceRef, term.TermAccessionNumber));
                 }
                 default:
                     return void 0;
@@ -213,6 +213,17 @@ export function ActivePattern_$007CFactor$007C_$007C(cells) {
 
 export function ActivePattern_$007CCharacteristic$007C_$007C(cells) {
     const activePatternResult = ActivePattern_$007CTerm$007C_$007C(tryParseCharacteristicColumnHeader, (arg) => (new CompositeHeader(1, [arg])), cells);
+    if (activePatternResult != null) {
+        const r = activePatternResult;
+        return r;
+    }
+    else {
+        return void 0;
+    }
+}
+
+export function ActivePattern_$007CComponent$007C_$007C(cells) {
+    const activePatternResult = ActivePattern_$007CTerm$007C_$007C(tryParseComponentColumnHeader, (arg) => (new CompositeHeader(0, [arg])), cells);
     if (activePatternResult != null) {
         const r = activePatternResult;
         return r;
@@ -412,31 +423,38 @@ export function fromFsCells(cells) {
                 return c;
             }
             else {
-                const activePatternResult_3 = ActivePattern_$007CInput$007C_$007C(cells);
+                const activePatternResult_3 = ActivePattern_$007CComponent$007C_$007C(cells);
                 if (activePatternResult_3 != null) {
-                    const i = activePatternResult_3;
-                    return i;
+                    const c_1 = activePatternResult_3;
+                    return c_1;
                 }
                 else {
-                    const activePatternResult_4 = ActivePattern_$007COutput$007C_$007C(cells);
+                    const activePatternResult_4 = ActivePattern_$007CInput$007C_$007C(cells);
                     if (activePatternResult_4 != null) {
-                        const o = activePatternResult_4;
-                        return o;
+                        const i = activePatternResult_4;
+                        return i;
                     }
                     else {
-                        const activePatternResult_5 = ActivePattern_$007CProtocolHeader$007C_$007C(cells);
+                        const activePatternResult_5 = ActivePattern_$007COutput$007C_$007C(cells);
                         if (activePatternResult_5 != null) {
-                            const ph = activePatternResult_5;
-                            return ph;
+                            const o = activePatternResult_5;
+                            return o;
                         }
                         else {
-                            const activePatternResult_6 = ActivePattern_$007CFreeText$007C_$007C(cells);
+                            const activePatternResult_6 = ActivePattern_$007CProtocolHeader$007C_$007C(cells);
                             if (activePatternResult_6 != null) {
-                                const ft = activePatternResult_6;
-                                return ft;
+                                const ph = activePatternResult_6;
+                                return ph;
                             }
                             else {
-                                throw new Error("parseCompositeHeader");
+                                const activePatternResult_7 = ActivePattern_$007CFreeText$007C_$007C(cells);
+                                if (activePatternResult_7 != null) {
+                                    const ft = activePatternResult_7;
+                                    return ft;
+                                }
+                                else {
+                                    return toFail(printf("Could not parse header group %O"))(cells);
+                                }
                             }
                         }
                     }

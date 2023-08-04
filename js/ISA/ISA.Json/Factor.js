@@ -1,7 +1,7 @@
 import { Value } from "../ISA/JsonTypes/Value.js";
 import { OntologyAnnotation_decoder, OntologyAnnotation_encoder } from "./Ontology.js";
 import { object as object_8, toString, nil } from "../../fable_modules/Thoth.Json.10.1.0/Encode.fs.js";
-import { list as list_1, object as object_9, string, float, int } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
+import { array, object as object_9, string, float, int } from "../../fable_modules/Thoth.Json.10.1.0/Decode.fs.js";
 import { FSharpResult$2 } from "../../fable_modules/fable-library.4.1.4/Choice.js";
 import { uri, fromString } from "./Decode.js";
 import { equals, uncurry2 } from "../../fable_modules/fable-library.4.1.4/Util.js";
@@ -117,7 +117,7 @@ export function Factor_encoder(options, oa) {
 export function Factor_decoder(options) {
     return (path_2) => ((v) => object_9((get$) => {
         let objectArg, objectArg_1, arg_5, objectArg_2, arg_7, decoder, objectArg_3;
-        return new Factor((objectArg = get$.Optional, objectArg.Field("@id", uri)), (objectArg_1 = get$.Optional, objectArg_1.Field("factorName", string)), (arg_5 = OntologyAnnotation_decoder(options), (objectArg_2 = get$.Optional, objectArg_2.Field("factorType", uncurry2(arg_5)))), (arg_7 = ((decoder = decoder_1(options), (path_1) => ((value_1) => list_1(uncurry2(decoder), path_1, value_1)))), (objectArg_3 = get$.Optional, objectArg_3.Field("comments", uncurry2(arg_7)))));
+        return new Factor((objectArg = get$.Optional, objectArg.Field("@id", uri)), (objectArg_1 = get$.Optional, objectArg_1.Field("factorName", string)), (arg_5 = OntologyAnnotation_decoder(options), (objectArg_2 = get$.Optional, objectArg_2.Field("factorType", uncurry2(arg_5)))), (arg_7 = ((decoder = decoder_1(options), (path_1) => ((value_1) => array(uncurry2(decoder), path_1, value_1)))), (objectArg_3 = get$.Optional, objectArg_3.Field("comments", uncurry2(arg_7)))));
     }, path_2, v));
 }
 

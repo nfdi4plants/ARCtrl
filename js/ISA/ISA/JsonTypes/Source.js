@@ -25,26 +25,26 @@ export class Source extends Record {
 }
 
 export function Source_$reflection() {
-    return record_type("ISA.Source", [], Source, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["Characteristics", option_type(list_type(MaterialAttributeValue_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Source", [], Source, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["Characteristics", option_type(list_type(MaterialAttributeValue_$reflection()))]]);
 }
 
 export function Source_make(id, name, characteristics) {
     return new Source(id, name, characteristics);
 }
 
-export function Source_create_Z32235993(Id, Name, Characteristics) {
+export function Source_create_7A281ED9(Id, Name, Characteristics) {
     return Source_make(Id, Name, Characteristics);
 }
 
 export function Source_get_empty() {
-    return Source_create_Z32235993();
+    return Source_create_7A281ED9();
 }
 
 export function Source__get_NameAsString(this$) {
     return defaultArg(this$.Name, "");
 }
 
-export function Source_getUnits_Z220A6393(m) {
+export function Source_getUnits_Z28BE5327(m) {
     return choose((c) => c.Unit, defaultArg(m.Characteristics, empty()));
 }
 

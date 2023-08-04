@@ -26,19 +26,19 @@ export class Protocol extends Record {
 }
 
 export function Protocol_$reflection() {
-    return record_type("ISA.Protocol", [], Protocol, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["ProtocolType", option_type(OntologyAnnotation_$reflection())], ["Description", option_type(string_type)], ["Uri", option_type(string_type)], ["Version", option_type(string_type)], ["Parameters", option_type(list_type(ProtocolParameter_$reflection()))], ["Components", option_type(list_type(Component_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Protocol", [], Protocol, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["ProtocolType", option_type(OntologyAnnotation_$reflection())], ["Description", option_type(string_type)], ["Uri", option_type(string_type)], ["Version", option_type(string_type)], ["Parameters", option_type(list_type(ProtocolParameter_$reflection()))], ["Components", option_type(list_type(Component_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
 }
 
 export function Protocol_make(id, name, protocolType, description, uri, version, parameters, components, comments) {
     return new Protocol(id, name, protocolType, description, uri, version, parameters, components, comments);
 }
 
-export function Protocol_create_Z4D717767(Id, Name, ProtocolType, Description, Uri, Version, Parameters, Components, Comments) {
+export function Protocol_create_Z7DFD6E67(Id, Name, ProtocolType, Description, Uri, Version, Parameters, Components, Comments) {
     return Protocol_make(Id, Name, ProtocolType, Description, Uri, Version, Parameters, Components, Comments);
 }
 
 export function Protocol_get_empty() {
-    return Protocol_create_Z4D717767();
+    return Protocol_create_Z7DFD6E67();
 }
 
 /**
@@ -101,7 +101,7 @@ export function Protocol_removeByName(name, protocols) {
 /**
  * Returns comments of a protocol
  */
-export function Protocol_getComments_4D8AC666(protocol) {
+export function Protocol_getComments_Z5F51792E(protocol) {
     return protocol.Comments;
 }
 
@@ -122,7 +122,7 @@ export function Protocol_setComments(protocol, comments) {
 /**
  * Returns protocol type of a protocol
  */
-export function Protocol_getProtocolType_4D8AC666(protocol) {
+export function Protocol_getProtocolType_Z5F51792E(protocol) {
     return protocol.ProtocolType;
 }
 
@@ -143,7 +143,7 @@ export function Protocol_setProtocolType(protocol, protocolType) {
 /**
  * Returns protocol version of a protocol
  */
-export function Protocol_getVersion_4D8AC666(protocol) {
+export function Protocol_getVersion_Z5F51792E(protocol) {
     return protocol.Version;
 }
 
@@ -165,7 +165,7 @@ export function Protocol_setVersion(protocol, version) {
  * Protocol Name
  * Returns protocol name of a protocol
  */
-export function Protocol_getName_4D8AC666(protocol) {
+export function Protocol_getName_Z5F51792E(protocol) {
     return protocol.Name;
 }
 
@@ -186,7 +186,7 @@ export function Protocol_setName(protocol, name) {
 /**
  * Returns protocol description of a protocol
  */
-export function Protocol_getDescription_4D8AC666(protocol) {
+export function Protocol_getDescription_Z5F51792E(protocol) {
     return protocol.Description;
 }
 
@@ -207,7 +207,7 @@ export function Protocol_setDescription(protocol, description) {
 /**
  * Returns protocol URI of a protocol
  */
-export function Protocol_getUri_4D8AC666(protocol) {
+export function Protocol_getUri_Z5F51792E(protocol) {
     return protocol.Uri;
 }
 
@@ -228,7 +228,7 @@ export function Protocol_setUri(protocol, uri) {
 /**
  * Returns components of a protocol
  */
-export function Protocol_getComponents_4D8AC666(protocol) {
+export function Protocol_getComponents_Z5F51792E(protocol) {
     return protocol.Components;
 }
 
@@ -253,7 +253,7 @@ export function Protocol_addComponent(comp, protocol) {
 /**
  * Returns protocol parameters of a protocol
  */
-export function Protocol_getParameters_4D8AC666(protocol) {
+export function Protocol_getParameters_Z5F51792E(protocol) {
     return protocol.Parameters;
 }
 

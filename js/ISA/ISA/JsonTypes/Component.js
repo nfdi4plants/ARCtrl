@@ -1,7 +1,7 @@
 import { Record } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { record_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { Value as Value_1, Value_fromString_Z721C83C5, Value__get_Text, Value_$reflection } from "./Value.js";
-import { OntologyAnnotation_toString_473B9D79, OntologyAnnotation_get_empty, OntologyAnnotation_fromString_Z7D8EB286, OntologyAnnotation, OntologyAnnotation_fromTermAnnotation_Z721C83C5, OntologyAnnotation__get_TermAccessionShort, OntologyAnnotation__get_NameText, OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
+import { OntologyAnnotation_toString_5E3DAF0D, OntologyAnnotation_get_empty, OntologyAnnotation_fromString_2EB0E147, OntologyAnnotation, OntologyAnnotation_fromTermAnnotation_Z721C83C5, OntologyAnnotation__get_TermAccessionShort, OntologyAnnotation__get_NameText, OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
 import { create, match } from "../../../fable_modules/fable-library.4.1.4/RegExp.js";
 import { AnnotationValue } from "./AnnotationValue.js";
 import { map, defaultArg, unwrap } from "../../../fable_modules/fable-library.4.1.4/Option.js";
@@ -19,19 +19,19 @@ export class Component extends Record {
 }
 
 export function Component_$reflection() {
-    return record_type("ISA.Component", [], Component, () => [["ComponentName", option_type(string_type)], ["ComponentValue", option_type(Value_$reflection())], ["ComponentUnit", option_type(OntologyAnnotation_$reflection())], ["ComponentType", option_type(OntologyAnnotation_$reflection())]]);
+    return record_type("ARCtrl.ISA.Component", [], Component, () => [["ComponentName", option_type(string_type)], ["ComponentValue", option_type(Value_$reflection())], ["ComponentUnit", option_type(OntologyAnnotation_$reflection())], ["ComponentType", option_type(OntologyAnnotation_$reflection())]]);
 }
 
 export function Component_make(name, value, unit, componentType) {
     return new Component(name, value, unit, componentType);
 }
 
-export function Component_create_Z33AADEE0(Name, Value, Unit, ComponentType) {
+export function Component_create_61502994(Name, Value, Unit, ComponentType) {
     return Component_make(Name, Value, Unit, ComponentType);
 }
 
 export function Component_get_empty() {
-    return Component_create_Z33AADEE0();
+    return Component_create_61502994();
 }
 
 /**
@@ -86,9 +86,9 @@ export function Component_decomposeName_Z721C83C5(name) {
 /**
  * Create a ISAJson Component from ISATab string entries
  */
-export function Component_fromString_55205B02(name, term, source, accession, comments) {
+export function Component_fromString_Z61E08C1(name, term, source, accession, comments) {
     let cType;
-    const v = OntologyAnnotation_fromString_Z7D8EB286(unwrap(term), unwrap(source), unwrap(accession), unwrap(comments));
+    const v = OntologyAnnotation_fromString_2EB0E147(unwrap(term), unwrap(source), unwrap(accession), unwrap(comments));
     cType = fromValueWithDefault(OntologyAnnotation_get_empty(), v);
     if (name == null) {
         return Component_make(void 0, void 0, void 0, cType);
@@ -106,14 +106,14 @@ export function Component_fromOptions(value, unit, header) {
 /**
  * Get ISATab string entries from an ISAJson Component object
  */
-export function Component_toString_Z7E9B32A1(c) {
+export function Component_toString_Z609B8895(c) {
     let oa;
     const value = {
         TermAccessionNumber: "",
         TermName: "",
         TermSourceREF: "",
     };
-    oa = defaultArg(map(OntologyAnnotation_toString_473B9D79, c.ComponentType), value);
+    oa = defaultArg(map(OntologyAnnotation_toString_5E3DAF0D, c.ComponentType), value);
     return [defaultArg(c.ComponentName, ""), oa];
 }
 
@@ -144,11 +144,11 @@ export function Component__get_ValueWithUnitText(this$) {
     }
 }
 
-export function Component__MapCategory_65D42856(this$, f) {
+export function Component__MapCategory_Z69DD836A(this$, f) {
     return new Component(this$.ComponentName, this$.ComponentValue, this$.ComponentUnit, map(f, this$.ComponentType));
 }
 
-export function Component__SetCategory_2FC95D30(this$, c) {
+export function Component__SetCategory_Z4C0FE73C(this$, c) {
     return new Component(this$.ComponentName, this$.ComponentValue, this$.ComponentUnit, c);
 }
 

@@ -1,6 +1,6 @@
 import { Record, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { bind, defaultArg, map } from "../../../fable_modules/fable-library.4.1.4/Option.js";
-import { MaterialAttribute__SetCategory_2FC95D30, MaterialAttribute_create_2769312B, MaterialAttribute__MapCategory_65D42856, MaterialAttribute__get_TryNameText, MaterialAttribute_$reflection, MaterialAttribute__get_NameText } from "./MaterialAttribute.js";
+import { MaterialAttribute__SetCategory_Z4C0FE73C, MaterialAttribute_create_Z6C54B221, MaterialAttribute__MapCategory_Z69DD836A, MaterialAttribute__get_TryNameText, MaterialAttribute_$reflection, MaterialAttribute__get_NameText } from "./MaterialAttribute.js";
 import { OntologyAnnotation_$reflection, OntologyAnnotation__get_NameText } from "./OntologyAnnotation.js";
 import { record_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 import { Value_$reflection } from "./Value.js";
@@ -38,19 +38,19 @@ export class MaterialAttributeValue extends Record {
 }
 
 export function MaterialAttributeValue_$reflection() {
-    return record_type("ISA.MaterialAttributeValue", [], MaterialAttributeValue, () => [["ID", option_type(string_type)], ["Category", option_type(MaterialAttribute_$reflection())], ["Value", option_type(Value_$reflection())], ["Unit", option_type(OntologyAnnotation_$reflection())]]);
+    return record_type("ARCtrl.ISA.MaterialAttributeValue", [], MaterialAttributeValue, () => [["ID", option_type(string_type)], ["Category", option_type(MaterialAttribute_$reflection())], ["Value", option_type(Value_$reflection())], ["Unit", option_type(OntologyAnnotation_$reflection())]]);
 }
 
 export function MaterialAttributeValue_make(id, category, value, unit) {
     return new MaterialAttributeValue(id, category, value, unit);
 }
 
-export function MaterialAttributeValue_create_163BDE77(Id, Category, Value, Unit) {
+export function MaterialAttributeValue_create_7F714043(Id, Category, Value, Unit) {
     return MaterialAttributeValue_make(Id, Category, Value, Unit);
 }
 
 export function MaterialAttributeValue_get_empty() {
-    return MaterialAttributeValue_create_163BDE77();
+    return MaterialAttributeValue_create_7F714043();
 }
 
 /**
@@ -94,26 +94,26 @@ export function MaterialAttributeValue__get_ValueWithUnitText(this$) {
     }
 }
 
-export function MaterialAttributeValue__MapCategory_65D42856(this$, f) {
-    return new MaterialAttributeValue(this$.ID, map((p) => MaterialAttribute__MapCategory_65D42856(p, f), this$.Category), this$.Value, this$.Unit);
+export function MaterialAttributeValue__MapCategory_Z69DD836A(this$, f) {
+    return new MaterialAttributeValue(this$.ID, map((p) => MaterialAttribute__MapCategory_Z69DD836A(p, f), this$.Category), this$.Value, this$.Unit);
 }
 
-export function MaterialAttributeValue__SetCategory_2FC95D30(this$, c) {
+export function MaterialAttributeValue__SetCategory_Z4C0FE73C(this$, c) {
     let matchValue;
-    return new MaterialAttributeValue(this$.ID, (matchValue = this$.Category, (matchValue == null) ? MaterialAttribute_create_2769312B(void 0, c) : MaterialAttribute__SetCategory_2FC95D30(matchValue, c)), this$.Value, this$.Unit);
+    return new MaterialAttributeValue(this$.ID, (matchValue = this$.Category, (matchValue == null) ? MaterialAttribute_create_Z6C54B221(void 0, c) : MaterialAttribute__SetCategory_Z4C0FE73C(matchValue, c)), this$.Value, this$.Unit);
 }
 
 /**
  * Returns the name of the characteristic value as string if it exists
  */
-export function MaterialAttributeValue_tryGetNameText_6A64994C(mv) {
+export function MaterialAttributeValue_tryGetNameText_43A5B238(mv) {
     return MaterialAttributeValue__get_TryNameText(mv);
 }
 
 /**
  * Returns the name of the characteristic value as string
  */
-export function MaterialAttributeValue_getNameAsString_6A64994C(mv) {
+export function MaterialAttributeValue_getNameAsString_43A5B238(mv) {
     return MaterialAttributeValue__get_TryNameText(mv);
 }
 

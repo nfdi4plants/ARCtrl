@@ -1,5 +1,4 @@
 import { defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
-import { min } from "../../../fable_modules/fable-library.4.1.4/Double.js";
 import { Record } from "../../../fable_modules/fable-library.4.1.4/Types.js";
 import { CompositeHeader_$reflection } from "./CompositeHeader.js";
 import { CompositeCell_$reflection } from "./CompositeCell.js";
@@ -29,9 +28,8 @@ export class CompositeColumn extends Record {
             return true;
         }
         else {
-            const c = cells;
             if (raiseExeption) {
-                throw new Error(`Invalid combination of header \`${header}\` and cells \`${c[min(c.length, 3)]}\``);
+                throw new Error(`Invalid combination of header \`${header}\` and cells \`${cells[0]}\``);
             }
             return false;
         }
@@ -39,6 +37,6 @@ export class CompositeColumn extends Record {
 }
 
 export function CompositeColumn_$reflection() {
-    return record_type("ISA.CompositeColumn", [], CompositeColumn, () => [["Header", CompositeHeader_$reflection()], ["Cells", array_type(CompositeCell_$reflection())]]);
+    return record_type("ARCtrl.ISA.CompositeColumn", [], CompositeColumn, () => [["Header", CompositeHeader_$reflection()], ["Cells", array_type(CompositeCell_$reflection())]]);
 }
 

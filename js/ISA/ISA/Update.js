@@ -262,6 +262,6 @@ export class Update_UpdateOptions extends Union {
 }
 
 export function Update_UpdateOptions_$reflection() {
-    return union_type("ISA.Aux.Update.UpdateOptions", [], Update_UpdateOptions, () => [[], [], [], []]);
+    return union_type("ARCtrl.ISA.Aux.Update.UpdateOptions", [], Update_UpdateOptions, () => [[], [], [], []]);
 }
 

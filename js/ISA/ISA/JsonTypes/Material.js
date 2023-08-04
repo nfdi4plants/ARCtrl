@@ -37,26 +37,26 @@ export class Material extends Record {
 }
 
 export function Material_$reflection() {
-    return record_type("ISA.Material", [], Material, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["MaterialType", option_type(MaterialType_$reflection())], ["Characteristics", option_type(list_type(MaterialAttributeValue_$reflection()))], ["DerivesFrom", option_type(list_type(Material_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Material", [], Material, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["MaterialType", option_type(MaterialType_$reflection())], ["Characteristics", option_type(list_type(MaterialAttributeValue_$reflection()))], ["DerivesFrom", option_type(list_type(Material_$reflection()))]]);
 }
 
 export function Material_make(id, name, materialType, characteristics, derivesFrom) {
     return new Material(id, name, materialType, characteristics, derivesFrom);
 }
 
-export function Material_create_76090C97(Id, Name, MaterialType, Characteristics, DerivesFrom) {
+export function Material_create_Z31BE6CDD(Id, Name, MaterialType, Characteristics, DerivesFrom) {
     return Material_make(Id, Name, MaterialType, Characteristics, DerivesFrom);
 }
 
 export function Material_get_empty() {
-    return Material_create_76090C97();
+    return Material_create_Z31BE6CDD();
 }
 
 export function Material__get_NameText(this$) {
     return defaultArg(this$.Name, "");
 }
 
-export function Material_getUnits_43A4149B(m) {
+export function Material_getUnits_Z42815C11(m) {
     return choose((c) => c.Unit, defaultArg(m.Characteristics, empty()));
 }
 

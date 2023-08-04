@@ -2,10 +2,10 @@ import { List_groupBy, List_distinct } from "../../../fable_modules/fable-librar
 import { singleton, zip, map, empty, collect, concat, filter, choose } from "../../../fable_modules/fable-library.4.1.4/List.js";
 import { value as value_3, defaultArg, bind } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { arrayHash, equalArrays, comparePrimitives, safeHash, equals, stringHash } from "../../../fable_modules/fable-library.4.1.4/Util.js";
-import { Process_updateProtocol, Process_getMaterials_30EF9E7B, Process_getSamples_30EF9E7B, Process_getSources_30EF9E7B, Process_getData_30EF9E7B, Process_getUnits_30EF9E7B, Process_getFactors_30EF9E7B, Process_tryGetOutputsWithFactorBy, Process_tryGetOutputsWithCharacteristicBy, Process_tryGetInputsWithCharacteristicBy, Process_getCharacteristics_30EF9E7B, Process_getParameters_30EF9E7B, Process_tryGetOutputsWithParameterBy, Process_tryGetInputsWithParameterBy } from "./Process.js";
+import { Process_updateProtocol, Process_getMaterials_716E708F, Process_getSamples_716E708F, Process_getSources_716E708F, Process_getData_716E708F, Process_getUnits_716E708F, Process_getFactors_716E708F, Process_tryGetOutputsWithFactorBy, Process_tryGetOutputsWithCharacteristicBy, Process_tryGetInputsWithCharacteristicBy, Process_getCharacteristics_716E708F, Process_getParameters_716E708F, Process_tryGetOutputsWithParameterBy, Process_tryGetInputsWithParameterBy } from "./Process.js";
 import { FSharpSet__Contains, ofList } from "../../../fable_modules/fable-library.4.1.4/Set.js";
-import { ProcessOutput__get_Name, ProcessOutput_getName_Z4A02997C } from "./ProcessOutput.js";
-import { ProcessInput__get_Name, ProcessInput_getName_Z38E7E853 } from "./ProcessInput.js";
+import { ProcessOutput__get_Name, ProcessOutput_getName_11830B70 } from "./ProcessOutput.js";
+import { ProcessInput__get_Name, ProcessInput_getName_102B6859 } from "./ProcessInput.js";
 import { FSharpMap__TryFind, ofList as ofList_1 } from "../../../fable_modules/fable-library.4.1.4/Map.js";
 
 /**
@@ -81,7 +81,7 @@ export function getOutputsWithParameterBy(predicate, processSequence) {
  * Returns the parameters implemented by the processes contained in these processes
  */
 export function getParameters(processSequence) {
-    return List_distinct(collect(Process_getParameters_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getParameters_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -91,7 +91,7 @@ export function getParameters(processSequence) {
  * Returns the characteristics describing the inputs and outputs of the processssequence
  */
 export function getCharacteristics(processSequence) {
-    return List_distinct(collect(Process_getCharacteristics_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getCharacteristics_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -122,7 +122,7 @@ export function getOutputsWithFactorBy(predicate, processSequence) {
  * Returns the factors implemented by the processes contained in these processes
  */
 export function getFactors(processSequence) {
-    return List_distinct(collect(Process_getFactors_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getFactors_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -133,20 +133,20 @@ export function getFactors(processSequence) {
  */
 export function getRootInputs(processSequence) {
     const inputs = collect((p) => defaultArg(p.Inputs, empty()), processSequence);
-    const outputs = ofList(collect((p_1) => map(ProcessOutput_getName_Z4A02997C, defaultArg(p_1.Outputs, empty())), processSequence), {
+    const outputs = ofList(collect((p_1) => map(ProcessOutput_getName_11830B70, defaultArg(p_1.Outputs, empty())), processSequence), {
         Compare: comparePrimitives,
     });
-    return filter((i) => !FSharpSet__Contains(outputs, ProcessInput_getName_Z38E7E853(i)), inputs);
+    return filter((i) => !FSharpSet__Contains(outputs, ProcessInput_getName_102B6859(i)), inputs);
 }
 
 /**
  * Returns the final outputs of the processSequence, which point to no further nodes
  */
 export function getFinalOutputs(processSequence) {
-    const inputs = ofList(collect((p) => map(ProcessInput_getName_Z38E7E853, defaultArg(p.Inputs, empty())), processSequence), {
+    const inputs = ofList(collect((p) => map(ProcessInput_getName_102B6859, defaultArg(p.Inputs, empty())), processSequence), {
         Compare: comparePrimitives,
     });
-    return filter((o) => !FSharpSet__Contains(inputs, ProcessOutput_getName_Z4A02997C(o)), collect((p_1) => defaultArg(p_1.Outputs, empty()), processSequence));
+    return filter((o) => !FSharpSet__Contains(inputs, ProcessOutput_getName_11830B70(o)), collect((p_1) => defaultArg(p_1.Outputs, empty()), processSequence));
 }
 
 /**
@@ -212,7 +212,7 @@ export function getFinalOutputsOf(processSequence, sample) {
 }
 
 export function getUnits(processSequence) {
-    return List_distinct(collect(Process_getUnits_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getUnits_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
@@ -222,28 +222,28 @@ export function getUnits(processSequence) {
  * Returns the data the given processes contain
  */
 export function getData(processSequence) {
-    return List_distinct(collect(Process_getData_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getData_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
 }
 
 export function getSources(processSequence) {
-    return List_distinct(collect(Process_getSources_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getSources_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
 }
 
 export function getSamples(processSequence) {
-    return List_distinct(collect(Process_getSamples_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getSamples_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });
 }
 
 export function getMaterials(processSequence) {
-    return List_distinct(collect(Process_getMaterials_30EF9E7B, processSequence), {
+    return List_distinct(collect(Process_getMaterials_716E708F, processSequence), {
         Equals: equals,
         GetHashCode: safeHash,
     });

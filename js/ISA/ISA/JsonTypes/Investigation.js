@@ -3,7 +3,7 @@ import { getRecordFields, makeRecord, record_type, list_type, option_type, strin
 import { OntologySourceReference_$reflection } from "./OntologySourceReference.js";
 import { Publication_$reflection } from "./Publication.js";
 import { Person_$reflection } from "./Person.js";
-import { Study_update_Z27CB2981, Study_$reflection } from "./Study.js";
+import { Study_update_7312BC8B, Study_$reflection } from "./Study.js";
 import { Remark_$reflection, Comment$_$reflection } from "./Comment.js";
 import { map, defaultArg } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { map as map_1, empty } from "../../../fable_modules/fable-library.4.1.4/List.js";
@@ -32,25 +32,25 @@ export class Investigation extends Record {
 }
 
 export function Investigation_$reflection() {
-    return record_type("ISA.Investigation", [], Investigation, () => [["ID", option_type(string_type)], ["FileName", option_type(string_type)], ["Identifier", option_type(string_type)], ["Title", option_type(string_type)], ["Description", option_type(string_type)], ["SubmissionDate", option_type(string_type)], ["PublicReleaseDate", option_type(string_type)], ["OntologySourceReferences", option_type(list_type(OntologySourceReference_$reflection()))], ["Publications", option_type(list_type(Publication_$reflection()))], ["Contacts", option_type(list_type(Person_$reflection()))], ["Studies", option_type(list_type(Study_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))], ["Remarks", list_type(Remark_$reflection())]]);
+    return record_type("ARCtrl.ISA.Investigation", [], Investigation, () => [["ID", option_type(string_type)], ["FileName", option_type(string_type)], ["Identifier", option_type(string_type)], ["Title", option_type(string_type)], ["Description", option_type(string_type)], ["SubmissionDate", option_type(string_type)], ["PublicReleaseDate", option_type(string_type)], ["OntologySourceReferences", option_type(list_type(OntologySourceReference_$reflection()))], ["Publications", option_type(list_type(Publication_$reflection()))], ["Contacts", option_type(list_type(Person_$reflection()))], ["Studies", option_type(list_type(Study_$reflection()))], ["Comments", option_type(list_type(Comment$_$reflection()))], ["Remarks", list_type(Remark_$reflection())]]);
 }
 
 export function Investigation_make(id, filename, identifier, title, description, submissionDate, publicReleaseDate, ontologySourceReference, publications, contacts, studies, comments, remarks) {
     return new Investigation(id, filename, identifier, title, description, submissionDate, publicReleaseDate, ontologySourceReference, publications, contacts, studies, comments, remarks);
 }
 
-export function Investigation_create_ZB2B0942(Id, FileName, Identifier, Title, Description, SubmissionDate, PublicReleaseDate, OntologySourceReferences, Publications, Contacts, Studies, Comments, Remarks) {
+export function Investigation_create_4AD66BBE(Id, FileName, Identifier, Title, Description, SubmissionDate, PublicReleaseDate, OntologySourceReferences, Publications, Contacts, Studies, Comments, Remarks) {
     return Investigation_make(Id, FileName, Identifier, Title, Description, SubmissionDate, PublicReleaseDate, OntologySourceReferences, Publications, Contacts, Studies, Comments, defaultArg(Remarks, empty()));
 }
 
 export function Investigation_get_empty() {
-    return Investigation_create_ZB2B0942();
+    return Investigation_create_4AD66BBE();
 }
 
 /**
  * Returns contacts of an investigation
  */
-export function Investigation_getContacts_5997CE50(investigation) {
+export function Investigation_getContacts_33B81164(investigation) {
     return investigation.Contacts;
 }
 
@@ -71,7 +71,7 @@ export function Investigation_setContacts(investigation, persons) {
 /**
  * Returns publications of an investigation
  */
-export function Investigation_getPublications_5997CE50(investigation) {
+export function Investigation_getPublications_33B81164(investigation) {
     return investigation.Publications;
 }
 
@@ -92,7 +92,7 @@ export function Investigation_setPublications(investigation, publications) {
 /**
  * Returns ontology source ref of an investigation
  */
-export function Investigation_getOntologies_5997CE50(investigation) {
+export function Investigation_getOntologies_33B81164(investigation) {
     return investigation.OntologySourceReferences;
 }
 
@@ -113,7 +113,7 @@ export function Investigation_setOntologies(investigation, ontologies) {
 /**
  * Returns studies of an investigation
  */
-export function Investigation_getStudies_5997CE50(investigation) {
+export function Investigation_getStudies_33B81164(investigation) {
     return defaultArg(investigation.Studies, empty());
 }
 
@@ -134,7 +134,7 @@ export function Investigation_setStudies(investigation, studies) {
 /**
  * Returns comments of an investigation
  */
-export function Investigation_getComments_5997CE50(investigation) {
+export function Investigation_getComments_33B81164(investigation) {
     return investigation.Comments;
 }
 
@@ -155,7 +155,7 @@ export function Investigation_setComments(investigation, comments) {
 /**
  * Returns remarks of an investigation
  */
-export function Investigation_getRemarks_5997CE50(investigation) {
+export function Investigation_getRemarks_33B81164(investigation) {
     return investigation.Remarks;
 }
 
@@ -192,9 +192,9 @@ export function Investigation_updateBy(updateOption, investigation, newInvestiga
     }
 }
 
-export function Investigation_update_5997CE50(investigation) {
+export function Investigation_update_33B81164(investigation) {
     try {
-        return new Investigation(investigation.ID, investigation.FileName, investigation.Identifier, investigation.Title, investigation.Description, investigation.SubmissionDate, investigation.PublicReleaseDate, investigation.OntologySourceReferences, investigation.Publications, investigation.Contacts, map((list) => map_1(Study_update_Z27CB2981, list), investigation.Studies), investigation.Comments, investigation.Remarks);
+        return new Investigation(investigation.ID, investigation.FileName, investigation.Identifier, investigation.Title, investigation.Description, investigation.SubmissionDate, investigation.PublicReleaseDate, investigation.OntologySourceReferences, investigation.Publications, investigation.Contacts, map((list) => map_1(Study_update_7312BC8B, list), investigation.Studies), investigation.Comments, investigation.Remarks);
     }
     catch (err) {
         return toFail(`Could not update investigation ${investigation.Identifier}: 

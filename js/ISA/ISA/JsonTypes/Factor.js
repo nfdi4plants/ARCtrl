@@ -1,6 +1,6 @@
 import { Record, toString } from "../../../fable_modules/fable-library.4.1.4/Types.js";
-import { getRecordFields, makeRecord, record_type, list_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
-import { OntologyAnnotation_toString_473B9D79, OntologyAnnotation_get_empty, OntologyAnnotation_fromString_Z7D8EB286, OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
+import { getRecordFields, makeRecord, record_type, array_type, option_type, string_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
+import { OntologyAnnotation_toString_5E3DAF0D, OntologyAnnotation_get_empty, OntologyAnnotation_fromString_2EB0E147, OntologyAnnotation_$reflection } from "./OntologyAnnotation.js";
 import { Comment$_$reflection } from "./Comment.js";
 import { map, defaultArg, unwrap } from "../../../fable_modules/fable-library.4.1.4/Option.js";
 import { fromValueWithDefault } from "../OptionExtensions.js";
@@ -28,50 +28,50 @@ export class Factor extends Record {
 }
 
 export function Factor_$reflection() {
-    return record_type("ISA.Factor", [], Factor, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["FactorType", option_type(OntologyAnnotation_$reflection())], ["Comments", option_type(list_type(Comment$_$reflection()))]]);
+    return record_type("ARCtrl.ISA.Factor", [], Factor, () => [["ID", option_type(string_type)], ["Name", option_type(string_type)], ["FactorType", option_type(OntologyAnnotation_$reflection())], ["Comments", option_type(array_type(Comment$_$reflection()))]]);
 }
 
 export function Factor_make(id, name, factorType, comments) {
     return new Factor(id, name, factorType, comments);
 }
 
-export function Factor_create_Z3D2B374F(Id, Name, FactorType, Comments) {
+export function Factor_create_3A99E5B8(Id, Name, FactorType, Comments) {
     return Factor_make(Id, Name, FactorType, Comments);
 }
 
 export function Factor_get_empty() {
-    return Factor_create_Z3D2B374F();
+    return Factor_create_3A99E5B8();
 }
 
 /**
  * Create a ISAJson Factor from ISATab string entries
  */
-export function Factor_fromString_Z5D76503E(name, term, source, accession, comments) {
-    const oa = OntologyAnnotation_fromString_Z7D8EB286(term, source, accession, unwrap(comments));
+export function Factor_fromString_E4803FF(name, term, source, accession, comments) {
+    const oa = OntologyAnnotation_fromString_2EB0E147(term, source, accession, unwrap(comments));
     return Factor_make(void 0, fromValueWithDefault("", name), fromValueWithDefault(OntologyAnnotation_get_empty(), oa), void 0);
 }
 
 /**
  * Get ISATab string entries from an ISAJson Factor object
  */
-export function Factor_toString_E353FDD(factor) {
+export function Factor_toString_Z55333BD7(factor) {
     const value = {
         TermAccessionNumber: "",
         TermName: "",
         TermSourceREF: "",
     };
-    return defaultArg(map(OntologyAnnotation_toString_473B9D79, factor.FactorType), value);
+    return defaultArg(map(OntologyAnnotation_toString_5E3DAF0D, factor.FactorType), value);
 }
 
 export function Factor__get_NameText(this$) {
     return defaultArg(this$.Name, "");
 }
 
-export function Factor__MapCategory_65D42856(this$, f) {
+export function Factor__MapCategory_Z69DD836A(this$, f) {
     return new Factor(this$.ID, this$.Name, map(f, this$.FactorType), this$.Comments);
 }
 
-export function Factor__SetCategory_2FC95D30(this$, c) {
+export function Factor__SetCategory_Z4C0FE73C(this$, c) {
     return new Factor(this$.ID, this$.Name, c, this$.Comments);
 }
 
@@ -135,7 +135,7 @@ export function Factor_removeByName(name, factors) {
 /**
  * Returns comments of a factor
  */
-export function Factor_getComments_E353FDD(factor) {
+export function Factor_getComments_Z55333BD7(factor) {
     return factor.Comments;
 }
 
@@ -156,7 +156,7 @@ export function Factor_setComments(factor, comments) {
 /**
  * Returns factor type of a factor
  */
-export function Factor_getFactorType_E353FDD(factor) {
+export function Factor_getFactorType_Z55333BD7(factor) {
     return factor.FactorType;
 }
 
@@ -177,14 +177,14 @@ export function Factor_setFactorType(factor, factorType) {
 /**
  * Returns the name of the factor as string if it exists
  */
-export function Factor_tryGetName_E353FDD(f) {
+export function Factor_tryGetName_Z55333BD7(f) {
     return f.Name;
 }
 
 /**
  * Returns the name of the factor as string
  */
-export function Factor_getNameAsString_E353FDD(f) {
+export function Factor_getNameAsString_Z55333BD7(f) {
     return Factor__get_NameText(f);
 }
 

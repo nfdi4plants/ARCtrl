@@ -5,19 +5,19 @@ import { tryFind, removeInPlace } from "../../../fable_modules/fable-library.4.1
 import { disposeSafe, getEnumerator, defaultOf, safeHash, equals } from "../../../fable_modules/fable-library.4.1.4/Util.js";
 import { ArcAssay } from "./ArcAssay.js";
 import { fromValueWithDefault } from "../OptionExtensions.js";
-import { map as map_1, empty } from "../../../fable_modules/fable-library.4.1.4/List.js";
-import { Investigation_create_ZB2B0942 } from "../JsonTypes/Investigation.js";
+import { toArray, ofArray, map as map_1, empty } from "../../../fable_modules/fable-library.4.1.4/List.js";
+import { Investigation_create_4AD66BBE } from "../JsonTypes/Investigation.js";
 import { createMissingIdentifier, isMissingIdentifier } from "./Identifier.js";
 import { class_type } from "../../../fable_modules/fable-library.4.1.4/Reflection.js";
 
 export class ArcInvestigation {
     constructor(identifier, title, description, submissionDate, publicReleaseDate, ontologySourceReferences, publications, contacts, studies, comments, remarks) {
-        const ontologySourceReferences_1 = defaultArg(ontologySourceReferences, empty());
-        const publications_1 = defaultArg(publications, empty());
-        const contacts_1 = defaultArg(contacts, empty());
+        const ontologySourceReferences_1 = defaultArg(ontologySourceReferences, []);
+        const publications_1 = defaultArg(publications, []);
+        const contacts_1 = defaultArg(contacts, []);
         const studies_1 = defaultArg(studies, []);
-        const comments_1 = defaultArg(comments, empty());
-        const remarks_1 = defaultArg(remarks, empty());
+        const comments_1 = defaultArg(comments, []);
+        const remarks_1 = defaultArg(remarks, []);
         this["identifier@25"] = identifier;
         this["Title@"] = title;
         this["Description@"] = description;
@@ -160,12 +160,12 @@ export class ArcInvestigation {
         const this$ = this;
         const study = ArcStudy.init(studyName);
         this$.AddStudy(study);
+        return study;
     }
     static initStudy(studyName) {
         return (inv) => {
             const copy = inv.Copy();
-            copy.InitStudy(studyName);
-            return copy;
+            return copy.InitStudy(studyName);
         };
     }
     RemoveStudyAt(index) {
@@ -303,12 +303,12 @@ export class ArcInvestigation {
         const this$ = this;
         const assay = ArcAssay.init(assayName);
         this$.AddAssay(studyIdentifier, assay);
+        return assay;
     }
     static initAssay(studyIdentifier, assayName) {
         return (inv) => {
             const copy = inv.Copy();
-            copy.InitAssay(studyIdentifier, assayName);
-            return copy;
+            return copy.InitAssay(studyIdentifier, assayName);
         };
     }
     RemoveAssayAt(studyIdentifier, index) {
@@ -390,7 +390,7 @@ export class ArcInvestigation {
     ToInvestigation() {
         const this$ = this;
         const studies = fromValueWithDefault(empty(), map_1((a) => a.ToStudy(), toList(this$.Studies)));
-        return Investigation_create_ZB2B0942(void 0, "isa.investigation.xlsx", isMissingIdentifier(this$.Identifier) ? void 0 : this$.Identifier, this$.Title, this$.Description, this$.SubmissionDate, this$.PublicReleaseDate, void 0, fromValueWithDefault(empty(), this$.Publications), fromValueWithDefault(empty(), this$.Contacts), studies, fromValueWithDefault(empty(), this$.Comments));
+        return Investigation_create_4AD66BBE(void 0, "isa.investigation.xlsx", isMissingIdentifier(this$.Identifier) ? void 0 : this$.Identifier, this$.Title, this$.Description, this$.SubmissionDate, this$.PublicReleaseDate, void 0, fromValueWithDefault(empty(), ofArray(this$.Publications)), fromValueWithDefault(empty(), ofArray(this$.Contacts)), studies, fromValueWithDefault(empty(), ofArray(this$.Comments)));
     }
     static fromInvestigation(i) {
         let identifer;
@@ -400,15 +400,15 @@ export class ArcInvestigation {
             const arg_1 = map_1((arg) => ArcStudy.fromStudy(arg), arg_2);
             return Array.from(arg_1);
         }, i.Studies);
-        return ArcInvestigation.create(identifer, i.Title, i.Description, i.SubmissionDate, i.PublicReleaseDate, void 0, i.Publications, i.Contacts, studies, i.Comments);
+        return ArcInvestigation.create(identifer, i.Title, i.Description, i.SubmissionDate, i.PublicReleaseDate, void 0, map_2(toArray, i.Publications), map_2(toArray, i.Contacts), studies, map_2(toArray, i.Comments));
     }
 }
 
 export function ArcInvestigation_$reflection() {
-    return class_type("ISA.ArcInvestigation", void 0, ArcInvestigation);
+    return class_type("ARCtrl.ISA.ArcInvestigation", void 0, ArcInvestigation);
 }
 
-export function ArcInvestigation_$ctor_Z8BBFD6A(identifier, title, description, submissionDate, publicReleaseDate, ontologySourceReferences, publications, contacts, studies, comments, remarks) {
+export function ArcInvestigation_$ctor_12187E3F(identifier, title, description, submissionDate, publicReleaseDate, ontologySourceReferences, publications, contacts, studies, comments, remarks) {
     return new ArcInvestigation(identifier, title, description, submissionDate, publicReleaseDate, ontologySourceReferences, publications, contacts, studies, comments, remarks);
 }
 
