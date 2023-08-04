@@ -2,8 +2,10 @@ namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
 open Update
+open Fable.Core
 
 [<CustomEquality; NoComparison>]
+[<AttachMembers>]
 type OntologyAnnotation =
     {
         ID : URI option
@@ -229,3 +231,7 @@ type OntologyAnnotation =
     static member setComments (annotation : OntologyAnnotation) (comments : Comment []) =
         { annotation with
             Comments = Some comments }
+
+    member this.Copy() =
+        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
+        OntologyAnnotation.make this.ID this.Name this.TermSourceREF this.LocalID this.TermAccessionNumber nextComments

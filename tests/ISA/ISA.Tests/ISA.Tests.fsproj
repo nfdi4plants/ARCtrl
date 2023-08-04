@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="Utils.fs" />
     <Compile Include="Regex.Tests.fs" />
+    <Compile Include="Person.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
     <Compile Include="CompositeColumn.Tests.fs" />

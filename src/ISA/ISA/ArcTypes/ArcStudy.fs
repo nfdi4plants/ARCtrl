@@ -452,27 +452,32 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay.GetRow(tableName, rowIndex)
 
     member this.Copy() : ArcStudy =
-        let newTables = ResizeArray()
-        let newAssays = ResizeArray()
+        let nextTables = ResizeArray()
+        let nextAssays = ResizeArray()
         for table in this.Tables do
             let copy = table.Copy()
-            newTables.Add(copy)
+            nextTables.Add(copy)
         for study in this.Assays do
             let copy = study.Copy()
-            newAssays.Add(copy)
+            nextAssays.Add(copy)
+        let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
+        let nextFactors = this.Factors |> Array.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> Array.map (fun c -> c.Copy())
+        let nextPublications = this.Publications |> Array.map (fun c -> c.Copy())
+        let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> Array.map (fun c -> c.Copy())
         ArcStudy(
             this.Identifier, 
             ?title = this.Title, 
             ?description = this.Description, 
-            ?submissionDate = submissionDate, 
+            ?submissionDate = this.SubmissionDate, 
             ?publicReleaseDate = this.PublicReleaseDate, 
-            publications = this.Publications, 
-            contacts = this.Contacts,
-            studyDesignDescriptors = this.StudyDesignDescriptors,
-            tables = newTables,
-            assays = newAssays,
-            factors = this.Factors,
-            comments = this.Comments
+            publications = nextPublications, 
+            contacts = nextContacts,
+            studyDesignDescriptors = nextStudyDesignDescriptors,
+            tables = nextTables,
+            assays = nextAssays,
+            factors = nextFactors,
+            comments = nextComments
         )
 
     /// Transform an ArcStudy to an ISA Json Study.
