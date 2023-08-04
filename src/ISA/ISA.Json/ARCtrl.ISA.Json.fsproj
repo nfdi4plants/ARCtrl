@@ -1,12 +1,14 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="paket.references" />
     <EmbeddedResource Include="Validation\JsonValidation.js">
-		<CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	</EmbeddedResource>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
     <Compile Include="Validation/ValidationResult.fs" />
     <Compile Include="Validation\Fable.fs" />
     <Compile Include="Validation/JsonSchemaValidation.fs" />
@@ -27,36 +29,28 @@
     <Compile Include="Investigation.fs" />
     <None Include="../../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  
   <ItemGroup>
-	<PackageReference Include="NJsonSchema" Version="10.8.0" />
+    <PackageReference Include="NJsonSchema" Version="10.8.0" />
     <PackageReference Include="Thoth.Json" Version="10.1.0" />
     <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="6.0.7" />
-  </ItemGroup>
   <PropertyGroup>
-  	<NpmDependencies>
-  		<NpmPackage Name="jsonschema" Version="1.1.0" ResolutionStrategy="Max" />
-  		<NpmPackage Name="fable-library" Version="1.4.1" ResolutionStrategy="Max" />
-  	</NpmDependencies>
+    <NpmDependencies>
+      <NpmPackage Name="jsonschema" Version="gte 1.1.0 lt 2.0.0" ResolutionStrategy="Max" />
+      <NpmPackage Name="fable-library" Version="gte 1.4.1 lt 2.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
   </PropertyGroup>
-
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
-
   <PropertyGroup>
     <NpmDependencies>
       <NpmPackage Name="jsonschema" Version="gte 1.4.1 lt 1.5.0" ResolutionStrategy="Max" />
     </NpmDependencies>
   </PropertyGroup>
-  
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
     <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
@@ -67,5 +61,5 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-
+  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>

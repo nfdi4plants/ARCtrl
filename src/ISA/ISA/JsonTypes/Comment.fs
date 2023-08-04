@@ -2,6 +2,9 @@ namespace ARCtrl.ISA
 
 type EMail = string
 
+open Fable.Core
+
+[<AttachMembers>]
 type Comment = 
     {
         ID : URI option
@@ -25,8 +28,11 @@ type Comment =
     static member toString (comment : Comment) =
         Option.defaultValue "" comment.Name, Option.defaultValue "" comment.Value
 
+    member this.Copy() =
+        Comment.make this.ID this.Name this.Value
 
 
+[<AttachMembers>]
 type Remark = 
     {
         Line : int 
@@ -44,3 +50,6 @@ type Remark =
 
     static member toTuple (remark : Remark ) =
         remark.Line, remark.Value
+
+    member this.Copy() =
+        Remark.make this.Line this.Value

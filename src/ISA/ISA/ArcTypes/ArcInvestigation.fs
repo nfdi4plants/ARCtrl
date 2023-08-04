@@ -247,22 +247,27 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     //    )
 
     member this.Copy() : ArcInvestigation =
-        let newStudies = ResizeArray()
+        let nextStudies = ResizeArray()
         for study in this.Studies do
             let copy = study.Copy()
-            newStudies.Add(copy)
+            nextStudies.Add(copy)
+        let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
+        let nextRemarks = this.Remarks |> Array.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> Array.map (fun c -> c.Copy())
+        let nextPublications = this.Publications |> Array.map (fun c -> c.Copy())
+        let nextOntologySourceReferences = this.OntologySourceReferences |> Array.map (fun c -> c.Copy())
         ArcInvestigation(
             this.Identifier,
             ?title = this.Title,
             ?description = this.Description,
             ?submissionDate = this.SubmissionDate,
             ?publicReleaseDate = this.PublicReleaseDate,
-            ontologySourceReferences = this.OntologySourceReferences,
-            publications = this.Publications,
-            contacts = this.Contacts,
-            studies = newStudies, // correct mutable behaviour is tested on this field
-            comments = this.Comments,
-            remarks = this.Remarks
+            ontologySourceReferences = nextOntologySourceReferences,
+            publications = nextPublications,
+            contacts = nextContacts,
+            studies = nextStudies, // correct mutable behaviour is tested on this field
+            comments = nextComments,
+            remarks = nextRemarks
         )
 
 

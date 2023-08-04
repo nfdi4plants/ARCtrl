@@ -2,7 +2,9 @@ namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
 open Update
+open Fable.Core
 
+[<AttachMembers>]
 type Publication = 
     {
         PubMedID : URI option
@@ -101,3 +103,10 @@ type Publication =
     static member setComments (publication : Publication) (comments : Comment []) =
         { publication with
             Comments = Some comments }
+
+
+    //
+
+    member this.Copy() =
+        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
+        Publication.make this.PubMedID this.DOI this.Authors this.Title this.Status nextComments
