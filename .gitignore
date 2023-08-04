@@ -353,7 +353,7 @@ MigrationBackup/
 paket-files/
 
 # Custom ignored files
-dist/pkg/
+dist/
 tmp/
 /tests/FileSystem/FileSystem.Tests/js
 /tests/ISA/ISA.Json.Tests/js
