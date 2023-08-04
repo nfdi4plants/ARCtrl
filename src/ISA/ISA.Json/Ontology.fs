@@ -62,7 +62,7 @@ module OntologySourceReference =
                 File = get.Optional.Field "file" Decode.string
                 Name = get.Optional.Field "name" Decode.string
                 Version = get.Optional.Field "version" Decode.string
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))               
+                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
             }
         )
 

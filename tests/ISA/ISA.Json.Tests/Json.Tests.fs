@@ -1235,7 +1235,7 @@ let testInvestigationFile =
                     (Some "filePath.txt")
                     (Some "OO")
                     (Some "1.3.3")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let publicationStatus = 
                 OntologyAnnotation.make 
@@ -1671,7 +1671,7 @@ let testInvestigationFileLD =
                     (Some "filePath.txt")
                     (Some "OO")
                     (Some "1.3.3")
-                    (Some [comment])
+                    (Some [|comment|])
 
             let publicationStatus = 
                 OntologyAnnotation.make 
