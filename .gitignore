@@ -349,9 +349,11 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+#Paket dependency manager
+paket-files/
 
 # Custom ignored files
-pkg/
+dist/pkg/
 tmp/
 /tests/FileSystem/FileSystem.Tests/js
 /tests/ISA/ISA.Json.Tests/js
@@ -361,3 +363,4 @@ tmp/
 /tests/Python/ARCtrl
 /tests/ARCtrl/js
 /tests/FileSystem/js
+

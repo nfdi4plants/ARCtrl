@@ -4,18 +4,18 @@
   "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
   "scripts": {
-    "prebundle-js": "dotnet fable clean -o ./js --yes",
-    "bundle-js": "dotnet fable ./src/ARCtrl -o ./js",
-    "prebundle-ts": "dotnet fable clean -o ./ts --yes --extension .ts",
-    "bundle-ts": "dotnet fable ./src/ARCtrl -o ./ts --lang ts",
+    "prebundlejs": "mkdirp .\\dist/js && dotnet fable clean -o ./dist/js --yes",
+    "bundlejs": "dotnet fable ./src/ARCtrl -o ./dist/js",
+    "prebundlets": "mkdirp .\\dist/ts && dotnet fable clean -o ./dist/ts --yes --extension .ts",
+    "bundlets": "dotnet fable ./src/ARCtrl -o ./dist/ts --lang ts",
     "pretestJson": "dotnet fable tests/ISA/ISA.Json.Tests -o tests/ISA/ISA.Json.Tests/js",
     "testJson": "mocha tests/ISA/ISA.Json.Tests/js --timeout 20000",
     "pretestSpreadsheet": "dotnet fable tests/ISA/ISA.Spreadsheet.Tests -o tests/ISA/ISA.Spreadsheet.Tests/js",
     "testSpreadsheet": "mocha tests/ISA/ISA.Spreadsheet.Tests/js",
     "pretest": "dotnet fable tests/ISA/ISA.Tests -o tests/ISA/ISA.Tests/js",
     "test": "mocha tests/ISA/ISA.Tests/js",
-    "pretestFS": "dotnet fable tests/FileSystem/FileSystem.Tests -o tests/FileSystem/FileSystem.Tests/js",
-    "testFS": "mocha tests/FileSystem/FileSystem.Tests/js",
+    "pretestFS": "dotnet fable tests/FileSystem -o tests/FileSystem/js",
+    "testFS": "mocha tests/FileSystem/js",
     "pretestARC": "dotnet fable tests/ARCtrl -o tests/ARCtrl/js",
     "testARC": "mocha tests/ARCtrl/js",
     "pretestjs": "dotnet fable src/ARCtrl -o tests/JavaScript/ARCtrl",
@@ -38,6 +38,7 @@
     "fable-library": "^1.1.1"
   },
   "devDependencies": {
-    "mocha": "^10.2.0"
+    "mocha": "^10.2.0",
+    "mkdirp": "3.0.1"
   }
 }
