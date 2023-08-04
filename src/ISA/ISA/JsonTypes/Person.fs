@@ -2,7 +2,9 @@ namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
 open Update
+open Fable.Core
 
+[<AttachMembers>]
 type Person = 
     {   
         ID : URI option
@@ -127,3 +129,18 @@ type Person =
         { person with
             Comments = Some comments }
 
+    member this.Copy() : Person =
+        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
+        let nextRoles = this.Roles |> Option.map (Array.map (fun c -> c.Copy()))
+        Person.make 
+            this.ID 
+            this.LastName 
+            this.FirstName 
+            this.MidInitials 
+            this.EMail 
+            this.Phone 
+            this.Fax 
+            this.Address 
+            this.Affiliation 
+            nextRoles
+            nextComments

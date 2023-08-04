@@ -2,7 +2,9 @@ namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
 open Update
+open Fable.Core
 
+[<AttachMembers>]
 type Factor = 
     {
         ID : URI option
@@ -113,7 +115,10 @@ type Factor =
     static member getNameAsString (f : Factor) =
         f.NameText
 
-
     /// Returns true if the given name matches the name of the factor
     static member nameEqualsString (name : string) (f : Factor) =
         f.NameText = name
+
+    member this.Copy() =
+        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
+        Factor.make this.ID this.Name this.FactorType nextComments
