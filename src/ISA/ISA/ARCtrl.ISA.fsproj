@@ -70,6 +70,9 @@
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Remove="C:\Users\Kevin\.nuget\packages\fable.core\4.0.0\contentFiles\any\netstandard2.0\RELEASE_NOTES.md" />
+  </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Muas</Authors>
     <Description>ARC and ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in the dotnet environment.</Description>
