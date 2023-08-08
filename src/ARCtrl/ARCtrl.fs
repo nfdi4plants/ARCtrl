@@ -56,7 +56,6 @@ module ARCAux =
 [<AttachMembers>]
 type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
-    let mutable isa = isa
     let mutable cwl = cwl
     let mutable fs = 
         fs
@@ -64,8 +63,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         |> ARCAux.updateFSByISA isa
         |> ARCAux.updateFSByCWL cwl
 
-    member this.ISA 
-        with get() = isa
+    member val ISA : ArcInvestigation option = isa with get, set
 
     member this.CWL 
         with get() = cwl
@@ -189,7 +187,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             | None -> 
                 if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
         )
-        isa <- Some investigation
+        this.ISA <- Some investigation
 
 
     member this.UpdateFileSystem() =   
@@ -225,7 +223,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
             printfn "ARC contains no ISA part."
 
-        /// Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
+        // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         fs.Tree.ToFilePaths(true)
         |> Array.map (fun fp ->
             match Dictionary.tryGet fp workbooks with

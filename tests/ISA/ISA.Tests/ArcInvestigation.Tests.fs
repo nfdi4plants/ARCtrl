@@ -392,6 +392,25 @@ let tests_Assay = testList "CRUD Assay" [
             Expect.equal i.Studies.[0].Assays.[0].TechnologyPlatform tech "TechnologyPlatform, direct"
             Expect.equal copy.Studies.[0].Assays.[0].TechnologyPlatform None "TechnologyPlatform, copy direct"
     ]
+    testList "FindAssay" [
+        testCase "by identifier" <| fun _ ->
+            let i = createExampleInvestigation()
+            let a = i.FindAssay("Assay 1")
+            Expect.equal a.Identifier "Assay 1" "Identifier"
+        testCase "mutability" <| fun _ ->
+            let i = createExampleInvestigation()
+            let a = i.FindAssay("Assay 1")
+            let t = a.InitTable("NewTable")
+            t.AddColumn(CompositeHeader.Input IOType.Sample,[|for i in 1 .. 10 do yield CompositeCell.createFreeText $"My awesome probe {i}"|])
+            Expect.equal t.Name "NewTable" "table name"
+            Expect.equal t.ColumnCount 1 "column count"
+            Expect.equal t.RowCount 10 "row count"
+            let aNew = i.FindAssay("Assay 1")
+            Expect.equal aNew.TableCount 1 "table count"
+            Expect.equal aNew.Tables.[0].Name "NewTable" "next table name"
+            Expect.equal aNew.Tables.[0].ColumnCount 1 "next column count"
+            Expect.equal aNew.Tables.[0].RowCount 10 "next row count"
+    ]
 ]
 
 
