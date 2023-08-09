@@ -87,6 +87,6 @@ type CompositeCell =
 
     override this.ToString() = 
         match this with
-        | Term oa -> $"Term{oa.NameText}"
+        | Term oa -> $"{oa.NameText}"
         | FreeText s -> s
         | Unitized (v,oa) -> $"{v} {oa.NameText}"
