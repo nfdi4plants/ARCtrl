@@ -68,6 +68,16 @@ let testMetaDataFunctions =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
+        testCase "WriterCreatesNoEmptyCells" (fun () ->
+
+            let o = 
+                ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata
+                |> ArcAssay.toMetadataSheet
+                
+            o.CellCollection.GetCells()
+            |> Seq.iter (fun c -> Expect.notEqual (c.Value.Trim()) "" $"Cell {c.Address.ToString()} should not contain empty string")  
+        )
+
         testCase "WriterSuccessObsoleteSheetName" (fun () ->
 
             let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataObsoleteSheetName
