@@ -32,7 +32,7 @@ type OntologyAnnotation =
         OntologyAnnotation.create()
 
 
-    member this.IDInfo = 
+    member this.TANInfo = 
         this.TermAccessionNumber
         |> Option.bind Regex.tryParseTermAnnotation 
 
@@ -101,12 +101,12 @@ type OntologyAnnotation =
     ///
     /// If `TermAccessionString` cannot be parsed to this format, returns empty string!
     member this.TermAccessionShort = 
-        match this.IDInfo with
+        match this.TANInfo with
         | Some id -> $"{id.IDSpace}:{id.LocalID}"
         | _ -> ""
 
     member this.TermAccessionOntobeeUrl = 
-        match this.IDInfo with
+        match this.TANInfo with
         | Some id -> OntologyAnnotation.createUriAnnotation id.IDSpace id.LocalID
         | _ -> ""
 
