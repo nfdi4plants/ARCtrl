@@ -881,6 +881,48 @@ let testPersonFile =
 
             mySequenceEqual actual expected "Written person file does not match read person file"
         )
+
+        
+        testCase "WithORCID ReaderCorrectness" (fun () -> 
+            
+            let p = Person.fromString TestObjects.Person.personWithORCID
+            Expect.isNone p.Comments "Comments should be None"
+            Expect.isSome p.ORCID "ORCID should be Some"
+            Expect.equal p.ORCID.Value "0000-0002-1825-0097" "ORCID not as expected"
+
+        )
+
+        testAsync "WithORCID WriterSchemaCorrectness" {
+
+            let a = Person.fromString TestObjects.Person.personWithORCID
+
+            let s = Person.toString a
+
+            let! validation = Validation.validatePerson s
+
+            Expect.isTrue validation.Success $"Person did not match schema: {validation.GetErrors()}"
+        }
+
+        testCase "WithORCID OutputMatchesInput" (fun () ->
+
+            let o = 
+                Person.fromString TestObjects.Person.personWithORCID
+                |> Person.toString
+
+            let expected = 
+                TestObjects.Person.personWithORCID
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            mySequenceEqual actual expected "Written person file does not match read person file"
+        )
     ]
 
 let testPersonFileLD =
@@ -1265,6 +1307,7 @@ let testInvestigationFile =
             let person =
                 Person.make
                     (Some "Persons/LukasWeil")
+                    None
                     (Some "Weil")
                     (Some "Lukas")
                     (Some "H")
@@ -1687,6 +1730,7 @@ let testInvestigationFileLD =
             let person =
                 Person.make
                     (Some "Persons/LukasWeil")
+                    None
                     (Some "Weil")
                     (Some "Lukas")
                     (Some "H")
