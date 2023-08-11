@@ -109,27 +109,16 @@ module OntologyAnnotation =
         |> GEncode.choose
         |> Encode.object
 
-    let localIDDecoder : Decoder<string> =
-        fun s json ->
-            match Decode.string s json with
-            | Ok (Regex.ActivePatterns.TermAnnotation tan) -> 
-                Ok (tan.TermSourceREF)
-            | _ -> Ok ""
-            //| Ok s -> Error (DecoderError(s,ErrorReason.FailMessage "Could not parse local ID from string"))
-            //| Error e -> Error e
-
 
     let decoder (options : ConverterOptions) : Decoder<OntologyAnnotation> =
         Decode.object (fun get ->
-            {
-                ID = get.Optional.Field "@id" GDecode.uri
-                Name = get.Optional.Field "annotationValue" (AnnotationValue.decoder options)
-                TermSourceREF = get.Optional.Field "termSource" Decode.string
-                //LocalID = try get.Optional.Field "termAccession" localIDDecoder with | _ -> None
-                LocalID = get.Optional.Field "termAccession" localIDDecoder |> Option.bind (fun s -> if s = "" then None else Some s)
-                TermAccessionNumber = get.Optional.Field "termAccession" Decode.string
-                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
-            }
+            OntologyAnnotation.create(
+                ?Id = get.Optional.Field "@id" GDecode.uri,
+                ?Name = get.Optional.Field "annotationValue" (AnnotationValue.decoder options),
+                ?TermSourceREF = get.Optional.Field "termSource" Decode.string,
+                ?TermAccessionNumber = get.Optional.Field "termAccession" Decode.string,
+                ?Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
+            )
         )
 
     let fromString (s:string) = 

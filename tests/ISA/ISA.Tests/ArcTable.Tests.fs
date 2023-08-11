@@ -446,21 +446,21 @@ let private tests_UpdateColumn =
         )
         testCase "set valid, at invalid index = columnCount" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
             let cells = createCells_Term 5
             let eval() = table.UpdateColumn(table.ColumnCount, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid, at invalid negative index" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
             let cells = createCells_Term 5
             let eval() = table.UpdateColumn(-1, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
             let cells = createCells_Term 5
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
@@ -498,7 +498,7 @@ let private tests_UpdateColumn =
         )
         testCase "set valid, less rows" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
             let cells = createCells_Term 2
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
@@ -514,7 +514,7 @@ let private tests_UpdateColumn =
         )
         testCase "set valid, more rows" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(term="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
             let cells = createCells_Term 7
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 7 "RowCount"
