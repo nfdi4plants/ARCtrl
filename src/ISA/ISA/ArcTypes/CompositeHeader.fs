@@ -140,10 +140,10 @@ type CompositeHeader =
         // Input/Output have similiar naming as Term, but are more specific. 
         // So they have to be called first.
         | Regex.ActivePatterns.Regex Regex.Pattern.InputPattern r ->
-            let iotype = r.Groups.["iotype"].Value
+            let iotype = r.Groups.[Regex.Pattern.MatchGroups.iotype].Value
             Input <| IOType.ofString (iotype)
         | Regex.ActivePatterns.Regex Regex.Pattern.OutputPattern r ->
-            let iotype = r.Groups.["iotype"].Value
+            let iotype = r.Groups.[Regex.Pattern.MatchGroups.iotype].Value
             Output <| IOType.ofString (iotype)
         // Is term column
         | Regex.ActivePatterns.TermColumn r ->

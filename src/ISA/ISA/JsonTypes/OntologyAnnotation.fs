@@ -11,27 +11,30 @@ type OntologyAnnotation =
         ID : URI option
         Name : AnnotationValue option
         TermSourceREF : string option
-        LocalID : string option
         TermAccessionNumber : URI option
         Comments : Comment [] option
     }
 
-    static member make id name termSourceREF localID termAccessionNumber comments= 
+    static member make id name termSourceREF termAccessionNumber comments= 
         {
             ID = id
             Name = name 
             TermSourceREF = termSourceREF
-            LocalID = localID
             TermAccessionNumber = termAccessionNumber  
             Comments = comments
         }
-
+    
     /// This function creates the type exactly as given. If you want a more streamlined approach use `OntologyAnnotation.fromString`.
-    static member create(?Id,?Name,?TermSourceREF,?LocalID,?TermAccessionNumber,?Comments) : OntologyAnnotation =
-        OntologyAnnotation.make Id Name TermSourceREF LocalID TermAccessionNumber Comments
+    static member create(?Id,?Name,?TermSourceREF,?TermAccessionNumber,?Comments) : OntologyAnnotation =
+        OntologyAnnotation.make Id Name TermSourceREF TermAccessionNumber Comments
 
     static member empty =
         OntologyAnnotation.create()
+
+
+    member this.IDInfo = 
+        this.TermAccessionNumber
+        |> Option.bind Regex.tryParseTermAnnotation 
 
     /// Returns the name of the ontology as string
     // TODO: Why is this called Text, while everything else is called string?
@@ -76,20 +79,12 @@ type OntologyAnnotation =
     ///</summary>
     ///<param name="tsr">Term source reference</param>
     ///<param name="tan">Term accession number</param>
-    static member fromString (?term:string, ?tsr:string, ?tan:string, ?comments : Comment []) =
-
-        let tsr,localID = 
-            match tan with
-            | Some (Regex.ActivePatterns.TermAnnotation tan) -> 
-                (if tsr.IsSome then tsr else Some tan.TermSourceREF),
-                Some tan.LocalTAN
-            | _ -> tsr,None
+    static member fromString (?termName:string, ?tsr:string, ?tan:string, ?comments : Comment []) =
 
         OntologyAnnotation.make 
             None 
-            (term |> Option.map AnnotationValue.fromString)
+            (termName |> Option.map AnnotationValue.fromString)
             tsr
-            localID
             tan
             comments
 
@@ -99,20 +94,20 @@ type OntologyAnnotation =
         |> Regex.tryParseTermAnnotation
         |> Option.get 
         |> fun r ->
-            let accession = r.TermSourceREF + ":" + r.LocalTAN
-            OntologyAnnotation.fromString ("", r.TermSourceREF, accession)
+            let accession = r.IDSpace + ":" + r.LocalID
+            OntologyAnnotation.fromString ("", r.IDSpace, accession)
 
     /// Parses any value in `TermAccessionString` to term accession format "termsourceref:localtan". Exmp.: "MS:000001".
     ///
     /// If `TermAccessionString` cannot be parsed to this format, returns empty string!
     member this.TermAccessionShort = 
-        match this.TermSourceREF, this.LocalID with
-        | Some tsr, Some id -> $"{tsr}:{id}"
+        match this.IDInfo with
+        | Some id -> $"{id.IDSpace}:{id.LocalID}"
         | _ -> ""
 
     member this.TermAccessionOntobeeUrl = 
-        match this.TermSourceREF, this.LocalID with
-        | Some tsr, Some id -> OntologyAnnotation.createUriAnnotation tsr id
+        match this.IDInfo with
+        | Some id -> OntologyAnnotation.createUriAnnotation id.IDSpace id.LocalID
         | _ -> ""
 
     member this.TermAccessionAndOntobeeUrlIfShort = 
@@ -234,4 +229,4 @@ type OntologyAnnotation =
 
     member this.Copy() =
         let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
-        OntologyAnnotation.make this.ID this.Name this.TermSourceREF this.LocalID this.TermAccessionNumber nextComments
+        OntologyAnnotation.make this.ID this.Name this.TermSourceREF this.TermAccessionNumber nextComments

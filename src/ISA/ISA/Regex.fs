@@ -7,6 +7,20 @@ open System
 
 module Pattern =
 
+    module MatchGroups =
+        
+        [<Literal>]
+        let numberFormat = "numberFormat"
+
+        [<Literal>]
+        let localID = "localid"
+
+        [<Literal>]
+        let idspace = "idspace"
+
+        [<Literal>]
+        let iotype = "iotype"
+
     /// This pattern is only used to remove any leftover #id attributes from previous Swate version. 
     /// `"Parameter [biological replicate#2]"` This #id is deprecated but the pattern can still be used to remove any from files. 
     /// Was deprecated before 2023.
@@ -21,8 +35,7 @@ module Pattern =
     let SquaredBracketsTermNamePattern = "\[.*\]" //  @"(?<= \[)[^#\]]*(?=[\]#])" <- Cannot be used in IE11
 
     /// Used to get unit name from Excel numberFormat: 0.00 "degree Celsius" --> degree Celsius
-    [<LiteralAttribute>]
-    let ExcelNumberFormat = "\"(?<numberFormat>(.*?))\""
+    let ExcelNumberFormat = $"\"(?<{MatchGroups.numberFormat}>(.*?))\""
 
     /// Hits Unit column header
     [<LiteralAttribute>]
@@ -55,29 +68,23 @@ module Pattern =
     let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.*)\)" 
 
     /// Hits term accession, without id: ENVO:01001831
-    [<LiteralAttribute>]
-    let TermAnnotationShortPattern = @"(?<termsourceref>\w+?):(?<localtan>\w+)" //prev: @"[\w]+?:[\d]+"
+    let TermAnnotationShortPattern = $@"(?<{MatchGroups.idspace}>\w+?):(?<{MatchGroups.localID}>\w+)" //prev: @"[\w]+?:[\d]+"
 
     // https://obofoundry.org/id-policy.html#mapping-of-owl-ids-to-obo-format-ids
     /// <summary>Regex pattern is designed to hit only Foundry-compliant URIs.</summary>
-    [<LiteralAttribute>]
-    let TermAnnotationURIPattern = @"http://purl.obolibrary.org/obo/(?<termsourceref>\w+?)_(?<localtan>\w+)"
+    let TermAnnotationURIPattern = $@"http://purl.obolibrary.org/obo/(?<{MatchGroups.idspace}>\w+?)_(?<{MatchGroups.localID}>\w+)"
 
     /// Watch this closely, this could hit some edge cases we do not want to cover.
-    [<LiteralAttribute>]
-    let TermAnnotationURIPattern_lessRestrictive = @".*\/(?<termsourceref>\w+?)[:_](?<localtan>\w+)"
+    let TermAnnotationURIPattern_lessRestrictive = $@".*\/(?<{MatchGroups.idspace}>\w+?)[:_](?<{MatchGroups.localID}>\w+)"
 
     /// This pattern is used to match both Input and Output columns and capture the IOType as `iotype` group.
-    [<LiteralAttribute>]
-    let IOTypePattern = @"(Input|Output)\s\[(?<iotype>.+)\]"
+    let IOTypePattern = $@"(Input|Output)\s\[(?<{MatchGroups.iotype}>.+)\]"
 
     /// This pattern is used to match Input column and capture the IOType as `iotype` group.
-    [<LiteralAttribute>]
-    let InputPattern = @"Input\s\[(?<iotype>.+)\]"
+    let InputPattern = $@"Input\s\[(?<{MatchGroups.iotype}>.+)\]"
 
     /// This pattern is used to match Output column and capture the IOType as `iotype` group.
-    [<LiteralAttribute>]
-    let OutputPattern = @"Output\s\[(?<iotype>.+)\]"
+    let OutputPattern = $@"Output\s\[(?<{MatchGroups.iotype}>.+)\]"
 
     /// This pattern matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
     ///
@@ -176,9 +183,9 @@ module ActivePatterns =
     let (|TermAnnotationShort|_|) input =
         match input with
         | Regex Pattern.TermAnnotationShortPattern value ->
-            let termsourceref = value.Groups.["termsourceref"].Value
-            let localtan = value.Groups.["localtan"].Value
-            {|TermSourceREF = termsourceref; LocalTAN = localtan|}
+            let idspace = value.Groups.[Pattern.MatchGroups.idspace].Value
+            let localID = value.Groups.[Pattern.MatchGroups.localID].Value
+            {|IDSpace = idspace; LocalID = localID|}
             |> Some
         | _ ->
             None
@@ -193,9 +200,9 @@ module ActivePatterns =
         | Regex Pattern.TermAnnotationShortPattern value 
         | Regex Pattern.TermAnnotationURIPattern value 
         | Regex Pattern.TermAnnotationURIPattern_lessRestrictive value ->
-            let termsourceref = value.Groups.["termsourceref"].Value
-            let localtan = value.Groups.["localtan"].Value
-            {|TermSourceREF = termsourceref; LocalTAN = localtan; TermAccessionNumber = input|}
+            let idspace = value.Groups.[Pattern.MatchGroups.idspace].Value
+            let localID = value.Groups.[Pattern.MatchGroups.localID].Value
+            {|IDSpace = idspace; LocalID = localID|}
             |> Some
         | _ ->
             None
@@ -208,7 +215,7 @@ module ActivePatterns =
         | Regex Pattern.TermSourceREFColumnPattern r ->
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
-            | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
+            | _ -> Some {|IDSpace = ""; LocalID = ""|}
          | _ -> None
 
     /// Matches a "Term Accession Number (ShortTerm)" column header and returns the ShortTerm as Term Source Ref and Annotation Number.
@@ -219,21 +226,21 @@ module ActivePatterns =
         | Regex Pattern.TermAccessionNumberColumnPattern r ->
             match r.Groups.["id"].Value with
             | TermAnnotation r -> Some r 
-            | _ -> Some {|LocalTAN = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
+            | _ -> Some {|IDSpace = ""; LocalID = ""|}
          | _ -> None
 
     /// Matches a "Input [InputType]" column header and returns the InputType as string.
     let (|InputColumnHeader|_|) input = 
         match input with
         | Regex Pattern.InputPattern r ->
-            Some r.Groups.["iotype"].Value          
+            Some r.Groups.[Pattern.MatchGroups.iotype].Value          
          | _ -> None
 
     /// Matches a "Output [OutputType]" column header and returns the OutputType as string.
     let (|OutputColumnHeader|_|) input =
         match input with
         | Regex Pattern.OutputPattern r ->
-            Some r.Groups.["iotype"].Value
+            Some r.Groups.[Pattern.MatchGroups.iotype].Value
         | _ -> None
 
 
@@ -261,9 +268,9 @@ let tryParseReferenceColumnHeader (str : string) =
 let tryParseTermAnnotationShort (str:string) =
     match str.Trim() with
     | Regex TermAnnotationShortPattern value ->
-        let termsourceref = value.Groups.["termsourceref"].Value
-        let localtan = value.Groups.["localtan"].Value
-        {|TermSourceREF = termsourceref; LocalTAN = localtan|} 
+        let idspace = value.Groups.[Pattern.MatchGroups.idspace].Value
+        let localid = value.Groups.[Pattern.MatchGroups.localID].Value
+        {|IDSpace = idspace; LocalID = localid|} 
         |> Some
     | _ -> None
 
@@ -279,9 +286,9 @@ let tryParseTermAnnotation (str:string) =
     | Regex TermAnnotationShortPattern value 
     | Regex TermAnnotationURIPattern value 
     | Regex TermAnnotationURIPattern_lessRestrictive value ->
-        let termsourceref = value.Groups.["termsourceref"].Value
-        let localtan = value.Groups.["localtan"].Value
-        {|TermSourceREF = termsourceref; LocalTAN = localtan|}
+        let idspace = value.Groups.[Pattern.MatchGroups.idspace].Value
+        let localid = value.Groups.[Pattern.MatchGroups.localID].Value
+        {|IDSpace = idspace; LocalID = localid|}
         |> Some
     | _ ->
         None
@@ -289,7 +296,7 @@ let tryParseTermAnnotation (str:string) =
 /// Tries to parse 'str' to term accession and returns it in the format `Some "termsourceref:localtan"`. Exmp.: `Some "MS:000001"`
 let tryGetTermAnnotationShortString (str:string) = 
     tryParseTermAnnotation str
-    |> Option.map (fun r -> r.TermSourceREF + ":" + r.LocalTAN)
+    |> Option.map (fun r -> r.IDSpace + ":" + r.LocalID)
 
 /// Parses 'str' to term accession and returns it in the format "termsourceref:localtan". Exmp.: "MS:000001"
 let getTermAnnotationShortString (str:string) =
@@ -320,7 +327,7 @@ let tryParseIOTypeHeader (headerStr: string) =
     match headerStr.Trim() with
     | Regex IOTypePattern value ->
         // remove quotes at beginning and end of matched string
-        let numberFormat = value.Groups.["iotype"].Value
+        let numberFormat = value.Groups.[Pattern.MatchGroups.iotype].Value
         Some numberFormat
     | _ ->
         None
