@@ -76,6 +76,10 @@ let assayMetadata =
     row22.[2].Value <- "Sheet1;Sheet2"
     row22.[3].Value <- "Sheet2"
     row22.[4].Value <- "Sheet3"
+    let row23 = ws.Row(23)
+    row23.[1].Value <- "Comment[ORCID]"
+    row23.[2].Value <- "0000-0002-1825-0097"
+    row23.[4].Value <- "0000-0002-1825-0098"
     ws
 
 let assayMetadataDeprecatedKeys = 
@@ -152,6 +156,10 @@ let assayMetadataDeprecatedKeys =
     row22.[2].Value <- "Sheet1;Sheet2"
     row22.[3].Value <- "Sheet2"
     row22.[4].Value <- "Sheet3"
+    let row23 = ws.Row(23)
+    row23.[1].Value <- "Comment[Assay ORCID]"
+    row23.[2].Value <- "0000-0002-1825-0097"
+    row23.[4].Value <- "0000-0002-1825-0098"
     ws
 
 let assayMetadataObsoleteSheetName = 

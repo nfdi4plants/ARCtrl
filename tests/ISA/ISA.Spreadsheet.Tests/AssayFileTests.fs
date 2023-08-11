@@ -29,6 +29,18 @@ let testMetaDataFunctions =
 
         )
 
+        testCase "ReaderReadsORCID" (fun () -> 
+            
+            let assay = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata 
+            Expect.equal assay.Performers.Length 3 "Assay should have 3 performers"
+            Expect.isSome assay.Performers.[0].ORCID "ORCID should be set"
+            Expect.equal assay.Performers.[0].ORCID.Value "0000-0002-1825-0097" "ORCID not read correctly"
+            Expect.isNone assay.Performers.[1].ORCID "ORCID should not be set"
+            Expect.isSome assay.Performers.[2].ORCID "ORCID should be set"
+            Expect.equal assay.Performers.[2].ORCID.Value "0000-0002-1825-0098" "ORCID not read correctly"
+
+        )
+
         testCase "ReaderSuccessObsoleteSheetName" (fun () -> 
             
             let readingSuccess = 
