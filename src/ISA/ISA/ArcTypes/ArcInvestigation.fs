@@ -240,11 +240,24 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInv = inv.Copy()
             newInv.GetAssay(studyIdentifier, assayIdentifier)
 
-    //member this.TryFindStudyForAssay(assayIdentifier: string) =
-    //    let idents = this.Studies |> Seq.map (fun s -> s.Identifier, s.AssayIdentifiers)
-    //    idents |> Seq.tryFind (fun (s, aArr) ->
-    //        aArr |> Seq.contains assayIdentifier
-    //    )
+    member this.TryFindAssay(assayIdentifier: string) : ArcAssay option =
+        let assays = this.Studies |> Seq.collect (fun s -> s.Assays) |> Array.ofSeq
+        assays |> Array.tryFind (fun a -> a.Identifier = assayIdentifier)
+
+    member this.FindAssay(assayIdentifier: string) : ArcAssay =
+        match this.TryFindAssay(assayIdentifier) with
+        | Some a -> a
+        | None -> failwith $"Unable to find assay with identifier '{assayIdentifier}'."
+
+    static member tryFindAssay(assayIdentifier: string) : ArcInvestigation -> ArcAssay option =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.TryFindAssay(assayIdentifier)
+
+    static member findAssay(assayIdentifier: string) : ArcInvestigation -> ArcAssay =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.FindAssay(assayIdentifier)
 
     member this.Copy() : ArcInvestigation =
         let nextStudies = ResizeArray()
