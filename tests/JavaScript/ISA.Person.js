@@ -5,8 +5,10 @@ import { Comment$ as Comment } from "./ARCtrl/ISA/ISA/JsonTypes/Comment.js";
 describe('ISA.Person', function () {
     describe('copy', function () {
         it('check mutable', function () {
-            const person = Person.create(void 0, "Frey", "Kevin", void 0, "MyAwesomeMail@Awesome.mail");
+            const person = Person.create(void 0, "0000-0002-1825-0097", "Frey", "Kevin", void 0, "MyAwesomeMail@Awesome.mail");
             const copy = person.Copy()
+            equal(person.ORCID, "0000-0002-1825-0097")
+            equal(copy.ORCID, "0000-0002-1825-0097")
             equal(person.FirstName, "Kevin");
             equal(copy.FirstName, "Kevin");
             person.FirstName = "NotKevin"
@@ -15,7 +17,7 @@ describe('ISA.Person', function () {
         });
         it('check nested mutable', function(){
             const comment = Comment.fromString("TestKey", "TestValue")
-            const person = Person.create(void 0, "Frey", "Kevin", void 0, "MyAwesomeMail@Awesome.mail", void 0, void 0, void 0, void 0, void 0, [comment]);
+            const person = Person.create(void 0, void 0, "Frey", "Kevin", void 0, "MyAwesomeMail@Awesome.mail", void 0, void 0, void 0, void 0, void 0, [comment]);
             const copy = person.Copy()
             equal(person.Comments.length,1)
             deepEqual(person.Comments,copy.Comments, "Should be same")
