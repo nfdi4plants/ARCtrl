@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TestObjects/ISAContracts.fs" />
     <None Include="paket.references" />
     <Compile Include="ARCtrl.Contracts.Tests.fs" />
     <Compile Include="ARCtrl.Tests.fs" />
@@ -13,6 +14,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
+    <ProjectReference Include="..\ISA\ISA.Spreadsheet.Tests\ISA.Spreadsheet.Tests.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

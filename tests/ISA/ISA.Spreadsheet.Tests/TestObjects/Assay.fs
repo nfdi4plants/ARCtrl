@@ -2,6 +2,9 @@
 
 open FsSpreadsheet
 
+[<Literal>]
+let assayIdentifier = "proteome"
+
 let assayMetadata = 
     let ws = FsWorksheet("isa_assay")
     let row1 = ws.Row(1)
@@ -28,7 +31,7 @@ let assayMetadata =
     row8.[2].Value <- "iTRAQ"
     let row9 = ws.Row(9)
     row9.[1].Value <- "Assay File Name"
-    row9.[2].Value <- "assays/myassay/isa.assay.xlsx"
+    row9.[2].Value <- $"assays/{assayIdentifier}/isa.assay.xlsx"
     let row10 = ws.Row(10)
     row10.[1].Value <- "ASSAY PERFORMERS"    
     let row11 = ws.Row(11)
@@ -108,7 +111,7 @@ let assayMetadataDeprecatedKeys =
     row8.[2].Value <- "iTRAQ"
     let row9 = ws.Row(9)
     row9.[1].Value <- "File Name"
-    row9.[2].Value <- "assays/myassay/isa.assay.xlsx"
+    row9.[2].Value <- $"assays/{assayIdentifier}/isa.assay.xlsx"
     let row10 = ws.Row(10)
     row10.[1].Value <- "ASSAY PERFORMERS"    
     let row11 = ws.Row(11)

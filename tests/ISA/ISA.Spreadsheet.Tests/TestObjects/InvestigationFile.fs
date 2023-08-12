@@ -190,6 +190,9 @@ let emptyInvestigation =
     row91.[1].Value <- "Study Person Roles Term Source REF"
     wb
 
+[<Literal>]
+let investigationIdentifier = "BII-I-1"
+
 let fullInvestigation =
     let wb = new FsWorkbook()
     let ws = wb.InitWorksheet("Investigation")
@@ -232,7 +235,7 @@ let fullInvestigation =
     row7.[1].Value <- "INVESTIGATION"
     let row8 = ws.Row(8)
     row8.[1].Value <- "Investigation Identifier"
-    row8.[2].Value <- "BII-I-1"
+    row8.[2].Value <- investigationIdentifier
     let row9 = ws.Row(9)
     row9.[1].Value <- "Investigation Title"
     row9.[2].Value <- "Growth control of the eukaryote cell: a systems biology study in yeast"
@@ -319,7 +322,7 @@ let fullInvestigation =
     row36.[1].Value <- "STUDY"
     let row37 = ws.Row(37)
     row37.[1].Value <- "Study Identifier"
-    row37.[2].Value <- "BII-S-1"
+    row37.[2].Value <- Study.studyIdentifier
     let row38 = ws.Row(38)
     row38.[1].Value <- "Study Title"
     row38.[2].Value <- "Study of the impact of changes in flux on the transcriptome, proteome, endometabolome and exometabolome of the yeast Saccharomyces cerevisiae under different nutrient limitations"
@@ -334,7 +337,7 @@ let fullInvestigation =
     row41.[2].Value <- "2009-03-10"
     let row42 = ws.Row(42)
     row42.[1].Value <- "Study File Name"
-    row42.[2].Value <- "s_BII-S-1.txt"
+    row42.[2].Value <- $"studies/{Study.studyIdentifier}/isa.study.xlsx"
     let row43 = ws.Row(43)
     row43.[1].Value <- "Comment[Study Grant Number]"
     let row44 = ws.Row(44)
@@ -426,9 +429,9 @@ let fullInvestigation =
     row70.[4].Value <- "Affymetrix"
     let row71 = ws.Row(71)
     row71.[1].Value <- "Study Assay File Name"
-    row71.[2].Value <- "a_proteome.txt"
-    row71.[3].Value <- "a_metabolome.txt"
-    row71.[4].Value <- "a_transcriptome.txt"
+    row71.[2].Value <- $"assays/{Assay.assayIdentifier}/isa.assay.xlsx"
+    row71.[3].Value <- "assays/metabolome/isa.assay.xlsx"
+    row71.[4].Value <- "assays/transcriptome/isa.assay.xlsx"
     let row72 = ws.Row(72)
     row72.[1].Value <- "STUDY PROTOCOLS"
     let row73 = ws.Row(73)
@@ -547,7 +550,7 @@ let fullInvestigation =
     row106.[2].Value <- "2009-03-10"
     let row107 = ws.Row(107)
     row107.[1].Value <- "Study File Name"
-    row107.[2].Value <- "s_BII-S-2.txt"
+    row107.[2].Value <- "studies/BII-S-2/isa.study.xlsx"
     let row108 = ws.Row(108)
     row108.[1].Value <- "Comment[Study Grant Number]"
     let row109 = ws.Row(109)
@@ -627,7 +630,7 @@ let fullInvestigation =
     row134.[2].Value <- "Affymetrix"
     let row135 = ws.Row(135)
     row135.[1].Value <- "Study Assay File Name"
-    row135.[2].Value <- "a_microarray.txt"
+    row135.[2].Value <- "assays/microarray/isa.assay.xlsx"
     let row136 = ws.Row(136)
     row136.[1].Value <- "STUDY PROTOCOLS"
     let row137 = ws.Row(137)
