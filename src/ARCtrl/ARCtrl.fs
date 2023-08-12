@@ -164,28 +164,28 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let studies = ARCAux.getArcStudiesFromContracts contracts
         /// get assays from xlsx
         let assays = ARCAux.getArcAssaysFromContracts contracts
-        /// Necessary, else: System.InvalidOperationException: Collection was modified; enumeration operation may not execute.
-        let copy = investigation.Copy()
-        copy.StudyIdentifiers |> Seq.iter (fun studyRegisteredIdent ->
+
+        investigation.Studies |> Seq.iter (fun registeredStudy ->
             /// Try find registered study in parsed READ contracts
-            let studyOpt = studies |> Array.tryFind (fun s -> s.Identifier = studyRegisteredIdent)
+            let studyOpt = studies |> Array.tryFind (fun s -> s.Identifier = registeredStudy.Identifier)
             match studyOpt with
             | Some study -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
-                if enableLogging then printfn "Found study: %s" studyRegisteredIdent
-                let registeredAssays = copy.GetStudy(studyRegisteredIdent).AssayIdentifiers
-                registeredAssays |> Seq.iter (fun assayRegisteredIdent ->
+                
+                if enableLogging then printfn "Found study: %s" registeredStudy.Identifier
+                registeredStudy.Assays |> Seq.iter (fun registeredAssay ->
                     /// Try find registered assay in parsed READ contracts
-                    let assayOpt = assays |> Array.tryFind (fun a -> a.Identifier = assayRegisteredIdent)
+                    let assayOpt = assays |> Array.tryFind (fun a -> a.Identifier = registeredAssay.Identifier)
                     match assayOpt with
                     | Some assay -> 
-                        if enableLogging then printfn "Found assay: %s - %s" studyRegisteredIdent assayRegisteredIdent 
-                        study.AddAssay(assay)
+                        if enableLogging then printfn "Found assay: %s - %s" registeredStudy.Identifier registeredAssay.Identifier
+                        registeredAssay.AddTables(assay.Tables)
                     | None -> 
-                        if enableLogging then printfn "Unable to find registered assay '%s' in fullfilled READ contracts!" assayRegisteredIdent
+                        if enableLogging then printfn "Unable to find registered assay '%s' in fullfilled READ contracts!" registeredAssay.Identifier
                 )
-                investigation.SetStudy(studyRegisteredIdent, study)
+                study.Tables
+                |> Seq.iter (fun table -> registeredStudy.SetTable(table.Name , table))
             | None -> 
-                if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" studyRegisteredIdent
+                if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" registeredStudy.Identifier
         )
         this.ISA <- Some investigation
 

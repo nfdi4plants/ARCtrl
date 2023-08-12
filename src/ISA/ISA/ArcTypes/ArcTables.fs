@@ -24,6 +24,9 @@ module ArcTablesAux =
     //            |> findNextNumber
     //    ArcTable.init($"New Table {nextNumber}")
 
+    let tryIndexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
+        Seq.tryFindIndex (fun t -> t.Name = name) tables
+
     let indexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
         match Seq.tryFindIndex (fun t -> t.Name = name) tables with
         | Some index -> index
@@ -44,6 +47,15 @@ module ArcTablesAux =
         let validateNewNameUnique (newName:string) (existingNames:seq<string>) =
             match Seq.tryFindIndex (fun x -> x = newName) existingNames with
             | Some i ->
+                failwith $"Cannot create table with name {newName}, as table names must be unique and table at index {i} has the same name."
+            | None ->
+                ()
+
+        /// Does not fail, if the newName is the same as the one in the given position
+        let validateNewNameAtUnique (index : int) (newName:string) (existingNames:seq<string>) =
+            match Seq.tryFindIndex (fun x -> x = newName) existingNames with
+            | Some i when index = i-> ()
+            | Some i -> 
                 failwith $"Cannot create table with name {newName}, as table names must be unique and table at index {i} has the same name."
             | None ->
                 ()
@@ -120,7 +132,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
     // - Table API - //
     member this.UpdateTableAt(index:int, table:ArcTable) =
         SanityChecks.validateSheetIndex index false thisTables
-        SanityChecks.validateNewNameUnique table.Name this.TableNames
+        SanityChecks.validateNewNameAtUnique index table.Name this.TableNames
         thisTables.[index] <- table
 
     // - Table API - //
@@ -128,6 +140,17 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         (indexByTableName name thisTables, table)
         |> this.UpdateTableAt
 
+    // - Table API - //
+    member this.SetTableAt(index:int, table:ArcTable) =
+        SanityChecks.validateSheetIndex index true thisTables
+        SanityChecks.validateNewNameAtUnique index table.Name this.TableNames
+        thisTables.[index] <- table
+
+    // - Table API - //
+    member this.SetTable(name: string, table:ArcTable) : unit =
+        match tryIndexByTableName name thisTables with
+        | Some index -> this.SetTableAt(index, table)
+        | None -> this.AddTable(table)
 
     // - Table API - //
     member this.RemoveTableAt(index:int) : unit =
