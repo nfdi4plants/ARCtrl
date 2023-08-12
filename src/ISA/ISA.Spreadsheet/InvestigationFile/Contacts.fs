@@ -25,6 +25,7 @@ module Contacts =
         let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermSourceREF rolesTermAccessionNumber
         Person.make 
             None 
+            None
             (Option.fromValueWithDefault "" lastName   ) 
             (Option.fromValueWithDefault "" firstName  )
             (Option.fromValueWithDefault "" midInitials) 
@@ -35,6 +36,7 @@ module Contacts =
             (Option.fromValueWithDefault "" affiliation) 
             (Option.fromValueWithDefault [||] roles    )
             (Option.fromValueWithDefault [||] comments )
+        |> Person.setOrcidFromComments
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -67,6 +69,7 @@ module Contacts =
         let matrix = SparseTable.Create (keys = labels,length=persons.Length + 1)
         let mutable commentKeys = []
         persons
+        |> List.map Person.setCommentFromORCID
         |> List.iteri (fun i p ->
             let i = i + 1
             let rAgg = Option.defaultValue [||] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
