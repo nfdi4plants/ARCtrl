@@ -120,6 +120,24 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
+    member this.SetTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).SetTableAt(index, table)
+
+    static member setTableAt(index:int, table:ArcTable) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetTableAt(index, table)
+            newAssay
+
+    // - Table API - //
+    member this.SetTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).SetTable(name, table)
+
+    static member setTable(name: string, table:ArcTable) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetTable(name, table)
+            newAssay
+
+    // - Table API - //
     member this.RemoveTableAt(index:int) : unit = ArcTables(this.Tables).RemoveTableAt(index)
 
     static member removeTableAt(index:int) : ArcAssay -> ArcAssay =

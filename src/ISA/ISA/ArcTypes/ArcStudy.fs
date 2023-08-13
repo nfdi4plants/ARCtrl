@@ -240,6 +240,25 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay.UpdateTable(name, table)
             newAssay
 
+
+    // - Table API - //
+    member this.SetTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).SetTableAt(index, table)
+
+    static member setTableAt(index:int, table:ArcTable) : ArcStudy -> ArcStudy =
+        fun (study:ArcStudy) ->
+            let newAssay = study.Copy()
+            newAssay.SetTableAt(index, table)
+            newAssay
+
+    // - Table API - //
+    member this.SetTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).SetTable(name, table)
+
+    static member setTable(name: string, table:ArcTable) : ArcStudy -> ArcStudy =
+        fun (study:ArcStudy) ->
+            let newAssay = study.Copy()
+            newAssay.SetTable(name, table)
+            newAssay
+
     // - Table API - //
     member this.RemoveTableAt(index:int) : unit = ArcTables(this.Tables).RemoveTableAt(index)
 
