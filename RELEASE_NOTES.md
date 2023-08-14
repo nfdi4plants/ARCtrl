@@ -1,8 +1,8 @@
-### 1.0.0+4892f43 (Released 2023-8-3)
+### 1.0.0+67b2cab (Released 2023-8-14)
 * Additions:
-    * Complete overhaul of the API. 
-    * Shifted focus from only ISA to include full ARC. 
-    * Included Fable compilation to Javascript as first citizen design principles. 
+    * Complete overhaul of the API.
+    * Shifted focus from only ISA to include full ARC.
+    * Included Fable compilation to Javascript as first citizen design principles.
     * No direct filesystem access but contract based IO, which allows language agnostic IO.
 
 ### 0.7.0+ac83329 (Released 2023-1-26)
