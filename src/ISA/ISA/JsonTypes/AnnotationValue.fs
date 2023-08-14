@@ -1,5 +1,7 @@
 ﻿namespace ARCtrl.ISA
 
+open Fable.Core
+
 type AnnotationValue = 
     | Text of string
     | Float of float

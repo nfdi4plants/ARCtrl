@@ -24,26 +24,45 @@ module ArcTablesAux =
     //            |> findNextNumber
     //    ArcTable.init($"New Table {nextNumber}")
 
-    let indexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
+    /// If a table with the given name exists in the TableList, returns it, else returns None.
+    let tryFindIndexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
+        Seq.tryFindIndex (fun t -> t.Name = name) tables
+
+    /// If a table with the given name exists in the TableList, returns it, else fails.
+    let findIndexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
         match Seq.tryFindIndex (fun t -> t.Name = name) tables with
         | Some index -> index
         | None -> failwith $"Unable to find table with name '{name}'!"
 
     module SanityChecks =
         
+        /// Fails, if the index is out of range of the Tables collection. When allowAppend is set to true, it may be out of range by at most 1. 
         let validateSheetIndex (index: int) (allowAppend: bool) (sheets: ResizeArray<ArcTable>) =
             let eval x y = if allowAppend then x > y else x >= y
             if index < 0 then failwith "Cannot insert ArcTable at index < 0."
             if eval index sheets.Count then failwith $"Specified index is out of range! Assay contains only {sheets.Count} tables."
 
+        /// Fails, if two tables have the same name.
         let validateNamesUnique (names:seq<string>) =
             let isDistinct = (Seq.length names) = (Seq.distinct names |> Seq.length)
             if not isDistinct then 
                 failwith "Cannot add multiple tables with the same name! Table names inside one assay must be unqiue"
 
+        /// Fails, if the name is already used by another table.
         let validateNewNameUnique (newName:string) (existingNames:seq<string>) =
             match Seq.tryFindIndex (fun x -> x = newName) existingNames with
             | Some i ->
+                failwith $"Cannot create table with name {newName}, as table names must be unique and table at index {i} has the same name."
+            | None ->
+                ()
+
+        /// Fails, if the name is already used by another table at a different position.
+        ///
+        /// Does not fail, if the newName is the same as the one in the given position.
+        let validateNewNameAtUnique (index : int) (newName:string) (existingNames:seq<string>) =
+            match Seq.tryFindIndex (fun x -> x = newName) existingNames with
+            | Some i when index = i-> ()
+            | Some i -> 
                 failwith $"Cannot create table with name {newName}, as table names must be unique and table at index {i} has the same name."
             | None ->
                 ()
@@ -76,7 +95,6 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
             thisTables.[index] 
 
     // - Table API - //
-    // remark should this return ArcTable?
     member this.AddTable(table:ArcTable, ?index: int) = 
         let index = defaultArg index this.Count
         SanityChecks.validateSheetIndex index true thisTables
@@ -114,20 +132,31 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Table API - //
     member this.GetTable(name: string) : ArcTable =
-        indexByTableName name thisTables
+        findIndexByTableName name thisTables
         |> this.GetTableAt
 
     // - Table API - //
     member this.UpdateTableAt(index:int, table:ArcTable) =
         SanityChecks.validateSheetIndex index false thisTables
-        SanityChecks.validateNewNameUnique table.Name this.TableNames
+        SanityChecks.validateNewNameAtUnique index table.Name this.TableNames
         thisTables.[index] <- table
 
     // - Table API - //
     member this.UpdateTable(name: string, table:ArcTable) : unit =
-        (indexByTableName name thisTables, table)
+        (findIndexByTableName name thisTables, table)
         |> this.UpdateTableAt
 
+    // - Table API - //
+    member this.SetTableAt(index:int, table:ArcTable) =
+        SanityChecks.validateSheetIndex index true thisTables
+        SanityChecks.validateNewNameAtUnique index table.Name this.TableNames
+        thisTables.[index] <- table
+
+    // - Table API - //
+    member this.SetTable(name: string, table:ArcTable) : unit =
+        match tryFindIndexByTableName name thisTables with
+        | Some index -> this.SetTableAt(index, table)
+        | None -> this.AddTable(table)
 
     // - Table API - //
     member this.RemoveTableAt(index:int) : unit =
@@ -136,7 +165,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Table API - //
     member this.RemoveTable(name: string) : unit =
-        indexByTableName name thisTables
+        findIndexByTableName name thisTables
         |> this.RemoveTableAt
 
 
@@ -149,7 +178,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Table API - //
     member this.MapTable(name: string, updateFun: ArcTable -> unit) : unit =
-        (indexByTableName name thisTables, updateFun)
+        (findIndexByTableName name thisTables, updateFun)
         |> this.MapTableAt
 
     // - Table API - //
@@ -162,7 +191,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Table API - //
     member this.RenameTable(name: string, newName: string) : unit =
-        (indexByTableName name thisTables, newName)
+        (findIndexByTableName name thisTables, newName)
         |> this.RenameTableAt
 
     // - Column CRUD API - //
@@ -173,7 +202,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
-        indexByTableName tableName thisTables
+        findIndexByTableName tableName thisTables
         |> fun i -> this.AddColumnAt(i, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
 
     // - Column CRUD API - //
@@ -184,7 +213,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.RemoveColumn(tableName: string, columnIndex: int) : unit =
-        (indexByTableName tableName thisTables, columnIndex)
+        (findIndexByTableName tableName thisTables, columnIndex)
         |> this.RemoveColumnAt
 
     // - Column CRUD API - //
@@ -195,7 +224,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        indexByTableName tableName thisTables
+        findIndexByTableName tableName thisTables
         |> fun tableIndex -> this.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
 
     // - Column CRUD API - //
@@ -205,7 +234,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.GetColumn(tableName: string, columnIndex: int) =
-        (indexByTableName tableName thisTables, columnIndex)
+        (findIndexByTableName tableName thisTables, columnIndex)
         |> this.GetColumnAt
 
     // - Row CRUD API - //
@@ -216,7 +245,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
-        indexByTableName tableName thisTables
+        findIndexByTableName tableName thisTables
         |> fun i -> this.AddRowAt(i, ?cells=cells, ?rowIndex=rowIndex)
 
     // - Row CRUD API - //
@@ -227,7 +256,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.RemoveRow(tableName: string, rowIndex: int) : unit =
-        (indexByTableName tableName thisTables, rowIndex)
+        (findIndexByTableName tableName thisTables, rowIndex)
         |> this.RemoveRowAt
 
     // - Row CRUD API - //
@@ -238,7 +267,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.UpdateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
-        (indexByTableName tableName thisTables, rowIndex, cells)
+        (findIndexByTableName tableName thisTables, rowIndex, cells)
         |> this.UpdateRowAt
 
     // - Row CRUD API - //
@@ -248,7 +277,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.GetRow(tableName: string, rowIndex: int) =
-        (indexByTableName tableName thisTables, rowIndex)
+        (findIndexByTableName tableName thisTables, rowIndex)
         |> this.GetRowAt
 
     /// Return a list of all the processes in all the tables.

@@ -69,7 +69,7 @@ type Component =
 
     /// Create a ISAJson Component from ISATab string entries
     static member fromString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : Comment []) = 
-        let cType = OntologyAnnotation.fromString (?term = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
+        let cType = OntologyAnnotation.fromString (?termName = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
         match name with
         | Some n -> 
             let v,u = Component.decomposeName n

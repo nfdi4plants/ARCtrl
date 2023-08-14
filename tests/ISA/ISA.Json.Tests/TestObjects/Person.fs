@@ -26,6 +26,20 @@ let person =
 }
     """
 
+let personWithORCID = 
+    """
+    {
+  "firstName": "Juan",
+  "lastName": "Castrillo",
+  "comments": [
+    {
+      "value": "0000-0002-1825-0097",
+      "name": "ORCID"
+    }
+  ]
+  }
+    """
+
 let personLD = 
     """
     {

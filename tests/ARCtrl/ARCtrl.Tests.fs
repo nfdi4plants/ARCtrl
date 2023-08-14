@@ -48,6 +48,39 @@ let private test_model = testList "model" [
         Expect.equal actualFilePaths input "isSome fs"
 ]
 
+
+let private test_isaFromContracts = testList "read_contracts" [
+    testCase "simpleISA" (fun () ->
+        let iContract = TestObjects.ISAContracts.SimpleISA.investigationReadContract
+        let sContract = TestObjects.ISAContracts.SimpleISA.studyReadContract
+        let aContract = TestObjects.ISAContracts.SimpleISA.assayReadContract
+        let arc = ARC()
+        arc.SetISAFromContracts([|iContract; sContract; aContract|])
+        Expect.isSome arc.ISA "isa should be fille out"
+        let inv = arc.ISA.Value
+        Expect.equal inv.Identifier TestObjects.Investigation.investigationIdentifier "investigation identifier should have been read from investigation contract"
+
+        Expect.equal inv.Studies.Count 2 "should have read two studies"
+        let study1 = inv.Studies.[0]
+        let study2 = inv.Studies.[1]
+        Expect.equal study1.Identifier TestObjects.Study.studyIdentifier "study 1 identifier should have been read from study contract"
+        Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
+        Expect.equal study2.TableCount 4 "study 2 should have exactly as many tables as stated in investigation file"
+        
+        Expect.equal study1.AssayCount 3 "study 1 should have read three assays"
+        let assay1 = study1.Assays.[0]
+        let assay2 = study1.Assays.[1]
+        let assay3 = study1.Assays.[2]
+        Expect.equal assay1.Identifier TestObjects.Assay.assayIdentifier "assay 1 identifier should have been read from assay contract"
+        Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
+        Expect.equal assay2.TableCount 0 "assay 2 should have read no tables"
+        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"
+    
+    
+    )
+
+]
+
 let private test_writeContracts = testList "write_contracts" [
     testCase "empty" (fun _ ->
         let arc = ARC()
@@ -97,5 +130,6 @@ let private test_writeContracts = testList "write_contracts" [
 
 let main = testList "main" [
     test_model
+    test_isaFromContracts
     test_writeContracts
 ]

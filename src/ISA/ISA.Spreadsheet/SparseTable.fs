@@ -48,7 +48,8 @@ module SparseRow =
     let writeToSheet (rowI : int) (row : SparseRow) (sheet : FsWorksheet) =
         let fsRow = sheet.Row(rowI)
         row
-        |> Seq.iter (fun (colI,v) -> fsRow.[colI + 1].SetValueAs v)
+        |> Seq.iter (fun (colI,v) -> 
+            if v.Trim() <> "" then fsRow.[colI + 1].SetValueAs v)
 
 type SparseTable = 
 

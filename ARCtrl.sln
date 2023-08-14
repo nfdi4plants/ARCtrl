@@ -12,6 +12,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.config\dotnet-tools.json = .config\dotnet-tools.json
 		global.json = global.json
 		package.json = package.json
+		paket.dependencies = paket.dependencies
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
 	EndProjectSection
@@ -20,63 +21,12 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.CWL", "src\CWL\ARCtr
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.FileSystem", "src\FileSystem\ARCtrl.FileSystem.fsproj", "{F47E23C3-8415-4725-9E85-57271694DEB3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{A3669129-8963-4F6E-A1D6-C691555EF125}"
-	ProjectSection(SolutionItems) = preProject
-		js\ARC.js = js\ARC.js
-		js\ARCPath.js = js\ARCPath.js
-		js\ARCStrich.js = js\ARCStrich.js
-		test.js = test.js
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ts", "ts", "{DB179B36-D77B-4340-A6AB-0C9F52882624}"
-	ProjectSection(SolutionItems) = preProject
-		ts\ARC.ts = ts\ARC.ts
-		ts\ARCPath.ts = ts\ARCPath.ts
-		ts\ARCStrich.ts = ts\ARCStrich.ts
-		ts\test.ts = ts\test.ts
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CWL", "CWL", "{D55C23D0-6A31-4727-850C-4BE604EE3A25}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{6A68446C-46F7-4DEB-BBD1-EE2CBB696EE2}"
-	ProjectSection(SolutionItems) = preProject
-		js\FileSystem\Commit.js = js\FileSystem\Commit.js
-		js\FileSystem\FileSystem.js = js\FileSystem\FileSystem.js
-		js\FileSystem\FileSystemTree.js = js\FileSystem\FileSystemTree.js
-		js\FileSystem\Path.js = js\FileSystem\Path.js
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA", "ISA", "{A4B8D64B-8B9A-4BEC-B56E-7B5E0DE4F823}"
-	ProjectSection(SolutionItems) = preProject
-		js\ISA\Assay.js = js\ISA\Assay.js
-		js\ISA\Investigation.js = js\ISA\Investigation.js
-		js\ISA\Study.js = js\ISA\Study.js
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA", "ISA", "{C3E09F95-660E-49B9-AE59-979BA3E347B8}"
-	ProjectSection(SolutionItems) = preProject
-		ts\ISA\Assay.ts = ts\ISA\Assay.ts
-		ts\ISA\Investigation.ts = ts\ISA\Investigation.ts
-		ts\ISA\Study.ts = ts\ISA\Study.ts
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CWL", "CWL", "{8C99A701-CC88-4710-94BD-38843B437621}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{49B4F154-3E60-4FAD-9924-9409DAA5DCD6}"
-	ProjectSection(SolutionItems) = preProject
-		ts\FileSystem\Commit.ts = ts\FileSystem\Commit.ts
-		ts\FileSystem\FileSystem.ts = ts\FileSystem\FileSystem.ts
-		ts\FileSystem\FileSystemTree.ts = ts\FileSystem\FileSystemTree.ts
-		ts\FileSystem\Path.ts = ts\FileSystem\Path.ts
-	EndProjectSection
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6DA2330B-D407-4FB1-AF05-B0184034EC44}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "Build", "build\Build.fsproj", "{5EAFB0CD-1168-4FCA-AA61-E96AD6C85819}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISA", "ISA", "{C61B3F43-2255-4585-9110-F8AB74F02654}"
 	ProjectSection(SolutionItems) = preProject
-		src\ISA\ISA\ArcTypes\ArcInvestigation.fs = src\ISA\ISA\ArcTypes\ArcInvestigation.fs
 		src\ISA\package.json = src\ISA\package.json
 		src\ISA\README.md = src\ISA\README.md
 	EndProjectSection
@@ -97,10 +47,6 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ISA.Spreadsheet", "s
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ISA.Spreadsheet.Tests", "tests\ISA\ISA.Spreadsheet.Tests\ISA.Spreadsheet.Tests.fsproj", "{656E8DAF-EFCF-472E-91D0-987D09B74523}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FileSystem", "FileSystem", "{E36B41EF-DD2A-45EB-912C-E637BBDBFDDE}"
-EndProject
-Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FileSystem.Tests", "tests\FileSystem\FileSystem.Tests\FileSystem.Tests.fsproj", "{D7397A55-93AE-4165-9E2D-D83A52C22D41}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", "{45E972BE-0BFA-4DE3-B84A-D9F13C4E9D08}"
 	ProjectSection(SolutionItems) = preProject
 		playground\KevinF.fsx = playground\KevinF.fsx
@@ -109,6 +55,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JavaScript", "JavaScript", "{913222CA-261F-49CB-A823-CC7C335F964A}"
 	ProjectSection(SolutionItems) = preProject
+		tests\JavaScript\ISA.Person.js = tests\JavaScript\ISA.Person.js
 		tests\JavaScript\Main.js = tests\JavaScript\Main.js
 	EndProjectSection
 EndProject
@@ -117,6 +64,8 @@ EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Tests", "tests\ARCtrl\ARCtrl.Tests.fsproj", "{801247D5-7EE5-49C8-AB26-F822A415BA49}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Contract", "src\Contract\ARCtrl.Contract.fsproj", "{1945EE8A-F105-43A9-91C9-8C4422B9873E}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FileSystem.Tests", "tests\FileSystem\FileSystem.Tests.fsproj", "{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -160,10 +109,6 @@ Global
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{656E8DAF-EFCF-472E-91D0-987D09B74523}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D7397A55-93AE-4165-9E2D-D83A52C22D41}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9BE5D83D-EA90-4382-A132-174FD158227F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{9BE5D83D-EA90-4382-A132-174FD158227F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9BE5D83D-EA90-4382-A132-174FD158227F}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -176,6 +121,10 @@ Global
 		{1945EE8A-F105-43A9-91C9-8C4422B9873E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1945EE8A-F105-43A9-91C9-8C4422B9873E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1945EE8A-F105-43A9-91C9-8C4422B9873E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -183,12 +132,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{1CD34A01-D19A-441F-8F3D-6EF69D9DDA8D} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 		{F47E23C3-8415-4725-9E85-57271694DEB3} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
-		{D55C23D0-6A31-4727-850C-4BE604EE3A25} = {A3669129-8963-4F6E-A1D6-C691555EF125}
-		{6A68446C-46F7-4DEB-BBD1-EE2CBB696EE2} = {A3669129-8963-4F6E-A1D6-C691555EF125}
-		{A4B8D64B-8B9A-4BEC-B56E-7B5E0DE4F823} = {A3669129-8963-4F6E-A1D6-C691555EF125}
-		{C3E09F95-660E-49B9-AE59-979BA3E347B8} = {DB179B36-D77B-4340-A6AB-0C9F52882624}
-		{8C99A701-CC88-4710-94BD-38843B437621} = {DB179B36-D77B-4340-A6AB-0C9F52882624}
-		{49B4F154-3E60-4FAD-9924-9409DAA5DCD6} = {DB179B36-D77B-4340-A6AB-0C9F52882624}
 		{C61B3F43-2255-4585-9110-F8AB74F02654} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 		{67CF6725-6AC0-47FB-A725-6DC2192713B5} = {C61B3F43-2255-4585-9110-F8AB74F02654}
 		{2CA397B2-0220-49A3-AD79-2F9F53633EC1} = {C61B3F43-2255-4585-9110-F8AB74F02654}
@@ -197,12 +140,11 @@ Global
 		{04789F17-3DC2-4A09-848D-376E5D269740} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
 		{07C7942E-FC34-4C27-82C1-6B2972654BA7} = {C61B3F43-2255-4585-9110-F8AB74F02654}
 		{656E8DAF-EFCF-472E-91D0-987D09B74523} = {D1BBD7AE-35C8-498F-BABA-C93FFAE68037}
-		{E36B41EF-DD2A-45EB-912C-E637BBDBFDDE} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
-		{D7397A55-93AE-4165-9E2D-D83A52C22D41} = {E36B41EF-DD2A-45EB-912C-E637BBDBFDDE}
 		{913222CA-261F-49CB-A823-CC7C335F964A} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{9BE5D83D-EA90-4382-A132-174FD158227F} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 		{801247D5-7EE5-49C8-AB26-F822A415BA49} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{1945EE8A-F105-43A9-91C9-8C4422B9873E} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
+		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}

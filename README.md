@@ -1,4 +1,4 @@
-# ARCtrl
+﻿# ARCtrl
 Top level ARC DataModel and API function descriptions.
 
 - [ARCtrl](#arctrl)
@@ -265,3 +265,13 @@ export class Study extends Record implements IEquatable<Study>, IComparable<Stud
         return new Study(Identifier, Assays);
     }
 ```
+
+## Development
+
+### Setup
+
+1. `dotnet tool restore`
+2. `dotnet paket install`
+3. `npm install`
+
+Verify correct setup with `./build.cmd runtests` ✨

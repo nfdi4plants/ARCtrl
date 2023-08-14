@@ -32,8 +32,9 @@ module Person =
                                 | _ -> "#EmptyPerson"
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
+        let oa = oa :?> Person |> Person.setCommentFromORCID
         [
-            if options.SetID then "@id", GEncode.string (oa :?> Person |> genID)
+            if options.SetID then "@id", GEncode.string (oa |> genID)
                 else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.string "Person"
             GEncode.tryInclude "firstName" GEncode.string (oa |> GEncode.tryGetPropertyValue "FirstName")
@@ -54,6 +55,7 @@ module Person =
         Decode.object (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
+                ORCID = None
                 FirstName = get.Optional.Field "firstName" Decode.string
                 LastName = get.Optional.Field "lastName" Decode.string
                 MidInitials = get.Optional.Field "midInitials" Decode.string
@@ -65,6 +67,7 @@ module Person =
                 Roles = get.Optional.Field "roles" (Decode.array (OntologyAnnotation.decoder options))
                 Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))
             }
+            |> Person.setOrcidFromComments
             
         )
 

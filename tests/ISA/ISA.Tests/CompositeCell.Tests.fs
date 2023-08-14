@@ -113,8 +113,27 @@ let private tests_create =
         )
     ]
 
+let private tests_ToString = testList "ToString" [
+    testCase "FreeText" <| fun _ ->
+        let cc = CompositeCell.createFreeText "My Text"
+        let actual = cc.ToString()
+        let expected = "My Text"
+        Expect.equal actual expected ""
+    testCase "Term" <| fun _ ->
+        let cc = CompositeCell.createTermFromString("instrument model", "MS", "MS:0000000")
+        let actual = cc.ToString()
+        let expected = "instrument model"
+        Expect.equal actual expected ""
+    testCase "Unitized" <| fun _ ->
+        let cc = CompositeCell.createUnitizedFromString("20", "degree celcius", "UO", "UO:0000000")
+        let actual = cc.ToString()
+        let expected = "20 degree celcius"
+        Expect.equal actual expected ""
+]
+
 let main = 
     testList "CompositeCell" [
         tests_cellConverter
         tests_create
+        tests_ToString
     ]

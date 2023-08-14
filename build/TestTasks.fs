@@ -114,7 +114,7 @@ module RunTests =
         run npm "run testJson" ""
         run npm "run testSpreadsheet" ""
         run npm "run testFS" ""
-        run npm "run testJavaScript" ""
+        run npm "run testjs" ""
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {

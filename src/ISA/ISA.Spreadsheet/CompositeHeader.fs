@@ -7,10 +7,10 @@ module ActivePattern =
 
     open ARCtrl.ISA.Regex.ActivePatterns
 
-    let mergeTerms tsr1 tan1 tsr2 tan2 =
-        if tsr1 <> tsr2 then failwithf "TermSourceRef %s and %s do not match" tsr1 tsr2
-        if tan1 <> tan2 then failwithf "TermAccessionNumber %s and %s do not match" tan1 tan2
-        {|TermSourceRef = tsr1; TermAccessionNumber = tan1|}
+    let mergeIDInfo idSpace1 localID1 idSpace2 localID2 =
+        if idSpace1 <> idSpace2 then failwithf "TermSourceRef %s and %s do not match" idSpace1 idSpace2
+        if localID1 <> localID2 then failwithf "LocalID %s and %s do not match" localID1 localID2
+        {|TermSourceRef = idSpace1; TermAccessionNumber = $"{idSpace1}:{localID1}"|}
 
     let (|Term|_|) (categoryParser : string -> string option) (f : OntologyAnnotation -> CompositeHeader) (cells : FsCell list) =
         let (|AC|_|) s =
@@ -25,7 +25,7 @@ module ActivePattern =
         //| [AC name; TermAccessionNumber term1; TermSourceREF term2] 
         //| [AC name; Unit; TermAccessionNumber term1; TermSourceREF term2] 
         | [AC name; UnitColumnHeader; TSRColumnHeader term1; TANColumnHeader term2] ->
-            let term = mergeTerms term1.TermSourceREF term1.TermAccessionNumber term2.TermSourceREF term2.TermAccessionNumber
+            let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
             let ont = OntologyAnnotation.fromString(name, term.TermSourceRef, term.TermAccessionNumber)
             f ont
             |> Some

@@ -21,12 +21,12 @@ module OntologySourceReference =
             (Option.fromValueWithDefault "" file)
             (Option.fromValueWithDefault "" name)
             (Option.fromValueWithDefault "" version)
-            (Option.fromValueWithDefault [] comments)
+            (Option.fromValueWithDefault [||] comments)
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
             let comments = SparseTable.GetEmptyComments matrix
-            OntologySourceReference.create(Comments = List.ofArray comments)
+            OntologySourceReference.create(Comments = comments)
             |> List.singleton
         else
             List.init matrix.ColumnCount (fun i -> 
@@ -35,6 +35,7 @@ module OntologySourceReference =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                    |> Array.ofList
 
                 fromString
                     (matrix.TryGetValueDefault("",(descriptionLabel,i)))
@@ -59,7 +60,7 @@ module OntologySourceReference =
             | None -> ()
             | Some c ->
                 c
-                |> List.iter (fun comment -> 
+                |> Array.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
                     matrix.Matrix.Add((n,i),v)

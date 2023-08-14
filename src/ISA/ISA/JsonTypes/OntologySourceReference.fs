@@ -2,14 +2,16 @@
 
 open ARCtrl.ISA.Aux
 open Update
+open Fable.Core
 
+[<AttachMembers>]
 type OntologySourceReference =
     {
         Description : string option
         File : string option
         Name : string option
         Version : string option
-        Comments : Comment list option
+        Comments : Comment [] option
     }
 
     static member make description file name version comments  =
@@ -62,11 +64,15 @@ type OntologySourceReference =
         ontology.Comments
 
     /// Applies function f on comments in ontology source ref
-    static member mapComments (f : Comment list -> Comment list) (ontology : OntologySourceReference) =
+    static member mapComments (f : Comment [] -> Comment []) (ontology : OntologySourceReference) =
         { ontology with 
-            Comments = Option.mapDefault [] f ontology.Comments}
+            Comments = Option.mapDefault [||] f ontology.Comments}
 
     /// Replaces comments in ontology source ref by given comment list
-    static member setComments (ontology : OntologySourceReference) (comments : Comment list) =
+    static member setComments (ontology : OntologySourceReference) (comments : Comment []) =
         { ontology with
             Comments = Some comments }
+
+    member this.Copy() =
+        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
+        OntologySourceReference.make this.Description this.File this.Name this.Version nextComments

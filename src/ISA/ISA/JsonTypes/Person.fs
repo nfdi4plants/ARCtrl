@@ -2,10 +2,13 @@ namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
 open Update
+open Fable.Core
 
+[<AttachMembers>]
 type Person = 
     {   
         ID : URI option
+        ORCID : string option
         LastName : string option
         FirstName : string option
         MidInitials : string option
@@ -18,9 +21,10 @@ type Person =
         Comments : Comment [] option  
     }
 
-    static member make id lastName firstName midInitials email phone fax address affiliation roles comments : Person =
+    static member make id orcid lastName firstName midInitials email phone fax address affiliation roles comments : Person =
         {
             ID = id
+            ORCID = orcid
             LastName = lastName
             FirstName = firstName
             MidInitials = midInitials
@@ -33,8 +37,8 @@ type Person =
             Comments = comments
         }
 
-    static member create (?Id,?LastName,?FirstName,?MidInitials,?Email,?Phone,?Fax,?Address,?Affiliation,?Roles,?Comments) : Person =
-        Person.make Id LastName FirstName MidInitials Email Phone Fax Address Affiliation Roles Comments
+    static member create (?Id,?ORCID,?LastName,?FirstName,?MidInitials,?Email,?Phone,?Fax,?Address,?Affiliation,?Roles,?Comments) : Person =
+        Person.make Id ORCID LastName FirstName MidInitials Email Phone Fax Address Affiliation Roles Comments
 
     static member empty =
         Person.create ()
@@ -127,3 +131,52 @@ type Person =
         { person with
             Comments = Some comments }
 
+    static member orcidKey = "ORCID"
+
+    static member setOrcidFromComments (person : Person) =
+        let isOrcidComment (c : Comment) = 
+            c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(Person.orcidKey))
+        let orcid,comments = 
+            person.Comments
+            |> Option.map (fun comments ->
+                let orcid = 
+                    comments
+                    |> Array.tryPick (fun c -> if isOrcidComment c then c.Value else None)
+                let comments = 
+                    comments
+                    |> Array.filter (isOrcidComment >> not)
+                    |> Option.fromValueWithDefault [||]
+                (orcid, comments)
+            )
+            |> Option.defaultValue (None, person.Comments)
+        {person with ORCID = orcid; Comments = comments}
+
+    static member setCommentFromORCID (person : Person) =
+        let comments = 
+            match person.ORCID, person.Comments with
+            | Some orcid, Some comments -> 
+                let comment = Comment.create (Name = Person.orcidKey, Value = orcid)
+                Array.append comments [|comment|]
+                |> Some
+            | Some orcid, None -> 
+                [|Comment.create (Name = Person.orcidKey, Value = orcid)|]
+                |> Some
+            | None, comments -> comments
+        {person with Comments = comments}
+
+    member this.Copy() : Person =
+        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
+        let nextRoles = this.Roles |> Option.map (Array.map (fun c -> c.Copy()))
+        Person.make 
+            this.ID 
+            this.ORCID
+            this.LastName 
+            this.FirstName 
+            this.MidInitials 
+            this.EMail 
+            this.Phone 
+            this.Fax 
+            this.Address 
+            this.Affiliation 
+            nextRoles
+            nextComments

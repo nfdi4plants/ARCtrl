@@ -9,7 +9,7 @@ let testProjects =
         "tests/ISA/ISA.Tests"
         "tests/ISA/ISA.Json.Tests"
         "tests/ISA/ISA.Spreadsheet.Tests"
-        "tests/FileSystem/FileSystem.Tests"
+        "tests/FileSystem"
     ]
 
 let solutionFile  = $"{project}.sln"
@@ -22,7 +22,7 @@ let gitHome = $"https://github.com/{gitOwner}"
 
 let projectRepo = $"https://github.com/{gitOwner}/{project}"
 
-let pkgDir = "pkg"
+let pkgDir = "dist/pkg"
 
 // Create RELEASE_NOTES.md if not existing. Or "release" would throw an error.
 Fake.Extensions.Release.ReleaseNotes.ensure()

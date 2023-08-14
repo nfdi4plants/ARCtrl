@@ -120,6 +120,24 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
+    member this.SetTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).SetTableAt(index, table)
+
+    static member setTableAt(index:int, table:ArcTable) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetTableAt(index, table)
+            newAssay
+
+    // - Table API - //
+    member this.SetTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).SetTable(name, table)
+
+    static member setTable(name: string, table:ArcTable) : ArcAssay -> ArcAssay =
+        fun (assay:ArcAssay) ->
+            let newAssay = assay.Copy()
+            newAssay.SetTable(name, table)
+            newAssay
+
+    // - Table API - //
     member this.RemoveTableAt(index:int) : unit = ArcTables(this.Tables).RemoveTableAt(index)
 
     static member removeTableAt(index:int) : ArcAssay -> ArcAssay =
@@ -336,18 +354,20 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         assay
 
     member this.Copy() : ArcAssay =
-        let newTables = ResizeArray()
+        let nextTables = ResizeArray()
         for table in this.Tables do
             let copy = table.Copy()
-            newTables.Add(copy)
+            nextTables.Add(copy)
+        let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
+        let nextPerformers = this.Performers |> Array.map (fun c -> c.Copy())
         ArcAssay(
             this.Identifier,
             ?measurementType = this.MeasurementType,
             ?technologyType = this.TechnologyType, 
             ?technologyPlatform = this.TechnologyPlatform, 
-            tables=newTables, 
-            performers=this.Performers, 
-            comments=this.Comments
+            tables=nextTables, 
+            performers=nextPerformers, 
+            comments=nextComments
         )
 
     /// Transform an ArcAssay to an ISA Json Assay.
@@ -386,8 +406,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             | None -> Identifier.createMissingIdentifier()
         ArcAssay.create(
             identifer,
-            ?measurementType = a.MeasurementType,
-            ?technologyType = a.TechnologyType,
+            ?measurementType = (a.MeasurementType |> Option.map (fun x -> x.Copy())),
+            ?technologyType = (a.TechnologyType |> Option.map (fun x -> x.Copy())),
             ?technologyPlatform = a.TechnologyPlatform,
             ?tables = tables,
             ?comments = (a.Comments |> Option.map Array.ofList)

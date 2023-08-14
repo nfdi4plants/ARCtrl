@@ -65,9 +65,8 @@ let private tests_AnnotationTableColums =
                 | _ -> None
             Expect.isSome r "Could not match TSRColumnHeader"
             let rv = r.Value
-            Expect.equal rv.LocalTAN localID "LocalId did not match"
-            Expect.equal rv.TermSourceREF space "TermSourceREF did not match"
-            Expect.equal rv.TermAccessionNumber $"{space}:{localID}" "TermAccessionNumber did not match"
+            Expect.equal rv.LocalID localID "LocalId did not match"
+            Expect.equal rv.IDSpace space "TermSourceREF did not match"
         )
         testCase "Term Source REF Empty" (fun () ->
             let testString = $"Term Source REF ()"
@@ -77,9 +76,8 @@ let private tests_AnnotationTableColums =
                 | _ -> None
             Expect.isSome r "Could not match TSRColumnHeader"
             let rv = r.Value
-            Expect.equal rv.LocalTAN "" "LocalID should be empty"
-            Expect.equal rv.TermSourceREF "" "TermSourceREF should be empty"
-            Expect.equal rv.TermAccessionNumber "" "TermAccessionNumber should be empty"
+            Expect.equal rv.LocalID "" "LocalID should be empty"
+            Expect.equal rv.IDSpace "" "TermSourceREF should be empty"
         )
         testCase "Term Accession Number" (fun () ->
             let localID = "12345"
@@ -91,9 +89,8 @@ let private tests_AnnotationTableColums =
                 | _ -> None
             Expect.isSome r "Could not match TANColumnHeader"
             let rv = r.Value
-            Expect.equal rv.LocalTAN localID "LocalId did not match"
-            Expect.equal rv.TermSourceREF space "TermSourceREF did not match"
-            Expect.equal rv.TermAccessionNumber $"{space}:{localID}" "TermAccessionNumber did not match"      
+            Expect.equal rv.LocalID localID "LocalId did not match"
+            Expect.equal rv.IDSpace space "TermSourceREF did not match"
         )
         testCase "Term Accession Number Empty" (fun () ->
             let testString = $"Term Accession Number ()"
@@ -103,9 +100,8 @@ let private tests_AnnotationTableColums =
                 | _ -> None
             Expect.isSome r "Could not match TANColumnHeader"
             let rv = r.Value
-            Expect.equal rv.LocalTAN "" "LocalID should be empty"
-            Expect.equal rv.TermSourceREF "" "TermSourceREF should be empty"
-            Expect.equal rv.TermAccessionNumber "" "TermAccessionNumber should be empty"
+            Expect.equal rv.LocalID "" "LocalID should be empty"
+            Expect.equal rv.IDSpace "" "TermSourceREF should be empty"
         )
         testCase "Reference Column Header Empty" (fun () ->
 
