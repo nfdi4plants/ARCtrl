@@ -158,7 +158,7 @@ let tests_copy =
         let _study_identifier = "My Study"
         let _study_description = Some "Lorem Ipsum"
         let _assay_identifier = "My Assay"
-        let _assay_technologyPlatform = "Awesome Technology"
+        let _assay_technologyPlatform = OntologyAnnotation.fromString("Awesome Technology")
         let createTestStudy() =
             let s = ArcStudy(_study_identifier)
             s.Description <- _study_description
@@ -198,7 +198,7 @@ let tests_copy =
                 Expect.equal assay.TechnologyPlatform (Some _assay_technologyPlatform) "copy _assay_technologyPlatform"
             ()
         testCase "test mutable fields on assay children" <| fun _ -> 
-            let newTechnologyPlatform = Some "New TechnologyPlatform"
+            let newTechnologyPlatform = Some (OntologyAnnotation.fromString("New TechnologyPlatform"))
             let newTechnologyType = Some <| OntologyAnnotation.fromString("nice technology type")
             let study = createTestStudy()
             let copy = study.Copy()
