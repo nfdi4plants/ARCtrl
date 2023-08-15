@@ -523,6 +523,7 @@ let private tests_protocolTransformation =
             let t = p |> ArcTable.fromProtocol
 
             Expect.equal t.ColumnCount 0 "ColumnCount should be 0"
+            Expect.isTrue (Identifier.isMissingIdentifier t.Name) $"Name should be missing identifier, not \"{t.Name}\""
         )
         testCase "FromProtocol SingleParameter" (fun () ->
             let p = Protocol.create(Parameters = [pParam1])
@@ -576,7 +577,12 @@ let private tests_protocolTransformation =
             let c = c.Value
             Expect.equal c expected "Cell value does not match"
         )
+        testCase "GetProtocols NoName" (fun () ->           
+            let t = ArcTable.init "TestTable"
+            let expected = [Protocol.create(Name = "TestTable")]
 
+            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocol Name should be ArcTable name."
+        )
         testCase "GetProtocols SingleName" (fun () ->           
             let t = ArcTable.init "TestTable"
             let name = "Name"
