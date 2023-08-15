@@ -88,6 +88,22 @@ let private test_create =
             Expect.equal actual.Tables tables "tables"
             Expect.equal actual.Performers performers "performers"
             Expect.equal actual.Comments comments "Comments"
+        testCase "constructor_tpOntology" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let oa_mt = OntologyAnnotation.fromString("measurement type")
+            let oa_tt = OntologyAnnotation.fromString("technology type")
+            let technologyPlatform = OntologyAnnotation.fromString("tp","ABC","ABC:123")
+            let tables = ResizeArray([ArcTable.init("MyTable1")])
+            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
+            let comments = Comment.create("Comment Name") |> Array.singleton
+            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
+            Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
+            Expect.equal actual.TechnologyPlatform (Some technologyPlatform) "technologyPlatform"
+            Expect.equal actual.Tables tables "tables"
+            Expect.equal actual.Performers performers "performers"
+            Expect.equal actual.Comments comments "Comments"
         testCase "create" <| fun _ ->
             let identifier = "MyIdentifier"
             let oa_mt = OntologyAnnotation.fromString("measurement type")
