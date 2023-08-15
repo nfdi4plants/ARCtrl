@@ -465,7 +465,7 @@ type ArcTable =
     /// The table will have at most one row, with the protocol information and the component values
     static member fromProtocol (p : Protocol) : ArcTable = 
         
-        let t = ArcTable.init (p.Name |> Option.defaultValue "")
+        let t = ArcTable.init (p.Name |> Option.defaultValue (Identifier.createMissingIdentifier()))
 
         for pp in p.Parameters |> Option.defaultValue [] do
 
@@ -506,13 +506,13 @@ type ArcTable =
                     let c = Component.create(ComponentType = oa)
                     Protocol.addComponent c p
                 | _ -> p
-            ) Protocol.empty
+            ) (Protocol.create(Name = this.Name))
             |> List.singleton
         else
             List.init this.RowCount (fun i ->
                 this.GetRow(i) 
                 |> Seq.zip this.Headers
-                |> CompositeRow.toProtocol                    
+                |> CompositeRow.toProtocol this.Name                   
             )
             |> List.distinct
 

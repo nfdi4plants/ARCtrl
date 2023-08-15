@@ -1,6 +1,6 @@
 ﻿module ARCtrl.ISA.CompositeRow
 
-let toProtocol (row : (CompositeHeader*CompositeCell) seq) =
+let toProtocol (tableName : string) (row : (CompositeHeader*CompositeCell) seq) =
     row
     |> Seq.fold (fun p hc ->
         match hc with
@@ -20,4 +20,4 @@ let toProtocol (row : (CompositeHeader*CompositeCell) seq) =
             let c = Component.create(ComponentType = oa, Value = Value.Ontology t)
             Protocol.addComponent c p     
         | _ -> p
-    ) Protocol.empty
+    ) (Protocol.create(Name = tableName))
