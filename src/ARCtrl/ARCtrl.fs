@@ -217,9 +217,11 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                     (DTOType.ISA_Study, ISA.Spreadsheet.ArcStudy.toFsWorkbook s))
                 s.Assays
                 |> Seq.iter (fun a ->
-                    workbooks.Add (
-                        Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                        (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
+                    let key = Identifier.Assay.fileNameFromIdentifier a.Identifier
+                    if workbooks.ContainsKey key |> not then
+                        workbooks.Add (
+                            key,
+                            (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
                 )
             )
         | None -> 
