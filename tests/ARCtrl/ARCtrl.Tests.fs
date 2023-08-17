@@ -56,7 +56,7 @@ let private test_isaFromContracts = testList "read_contracts" [
         let aContract = TestObjects.ISAContracts.SimpleISA.assayReadContract
         let arc = ARC()
         arc.SetISAFromContracts([|iContract; sContract; aContract|])
-        Expect.isSome arc.ISA "isa should be fille out"
+        Expect.isSome arc.ISA "isa should be filled out"
         let inv = arc.ISA.Value
         Expect.equal inv.Identifier TestObjects.Investigation.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
@@ -128,8 +128,52 @@ let private test_writeContracts = testList "write_contracts" [
     )
 ]
 
+let private test_updateFileSystem = testList "update_Filesystem" [
+    testCase "empty noChanges" (fun () ->
+        let arc = ARC()
+        let oldFS = arc.FileSystem.Copy()
+        arc.UpdateFileSystem()
+        let newFS = arc.FileSystem
+        Expect.equal oldFS.Tree newFS.Tree "Tree should be equal"
+    )
+    testCase "empty addInvestigationWithStudy" (fun () ->
+        let arc = ARC()
+        let oldFS = arc.FileSystem.Copy()
+        let study = ArcStudy("MyStudy")
+        let inv = ArcInvestigation("MyInvestigation")
+        inv.AddStudy(study)
+        arc.ISA <- Some (inv)
+        arc.UpdateFileSystem()
+        let newFS = arc.FileSystem
+        Expect.notEqual oldFS.Tree newFS.Tree "Tree should be unequal"
+    )
+    testCase "simple noChanges" (fun () ->
+        let study = ArcStudy("MyStudy")
+        let inv = ArcInvestigation("MyInvestigation")
+        inv.AddStudy(study)
+        let arc = ARC(isa = inv)
+        let oldFS = arc.FileSystem.Copy()   
+        arc.UpdateFileSystem()
+        let newFS = arc.FileSystem
+        Expect.equal oldFS.Tree newFS.Tree "Tree should be equal"
+    )
+    testCase "simple addAssayToStudy" (fun () ->
+        let study = ArcStudy("MyStudy")
+        let inv = ArcInvestigation("MyInvestigation")
+        inv.AddStudy(study)
+        let arc = ARC(isa = inv)
+        let oldFS = arc.FileSystem.Copy()   
+        let assay = ArcAssay("MyAssay")
+        study.AddAssay(assay)
+        arc.UpdateFileSystem()
+        let newFS = arc.FileSystem
+        Expect.notEqual oldFS.Tree newFS.Tree "Tree should be unequal"
+    )
+]
+
 let main = testList "main" [
     test_model
+    test_updateFileSystem
     test_isaFromContracts
     test_writeContracts
 ]

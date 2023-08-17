@@ -25,6 +25,28 @@ type FileSystemTree =
 
     static member createRootFolder(children:FileSystemTree array) = 
         Folder(FileSystemTree.ROOT_NAME,children)
+        
+    /// Non-recursive lookup of child with the given name
+    member this.TryGetChildByName(name : string) = 
+        match this with
+        | Folder (_,children) ->
+            children
+            |> Array.tryFind (fun c -> c.Name = name)
+        | File _ -> None
+
+    static member tryGetChildByName (name : string) =
+        fun (fst : FileSystemTree) -> fst.TryGetChildByName name
+
+    /// Non-recursive lookup of child with the given name
+    member this.ContainsChildWithName(name : string) =
+        match this with
+        | Folder (_,children) ->
+            children
+            |> Array.exists (fun c -> c.Name = name)
+        | File _ -> false
+
+    static member containsChildWithName (name : string) =
+        fun (fst : FileSystemTree) -> fst.ContainsChildWithName name
 
     member this.AddFile (path: string) : FileSystemTree =
         let existingPaths = this.ToFilePaths()
@@ -122,3 +144,10 @@ type FileSystemTree =
         |> Array.append (otherFST.ToFilePaths())
         |> Array.distinct
         |> FileSystemTree.fromFilePaths
+
+    member this.Copy() =
+        match this with
+        | Folder(name,children) -> 
+            Folder (name, children |> Array.map (fun c -> c.Copy()))
+        | File(name) -> 
+            File name

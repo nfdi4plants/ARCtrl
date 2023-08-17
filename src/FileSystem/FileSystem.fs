@@ -34,3 +34,8 @@ type FileSystem =
         let tree = this.Tree.Union(other.Tree)
         let history = Array.append this.History other.History
         FileSystem.create(tree, history)
+
+    member this.Copy() =
+        let fstCopy = this.Tree.Copy()
+        let historyCopy = this.History |> Array.map id
+        FileSystem.create(fstCopy,historyCopy)
