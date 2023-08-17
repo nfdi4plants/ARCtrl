@@ -30,7 +30,7 @@ module Assays =
             (fileName)
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
             (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
-            (Option.fromValueWithDefault "" technologyPlatform)
+            (Option.fromValueWithDefault "" technologyPlatform |> Option.map ArcAssay.decomposeTechnologyPlatform)
             (ResizeArray())             
             [||] 
             (comments)
@@ -77,7 +77,7 @@ module Assays =
             do matrix.Matrix.Add ((technologyTypeLabel,i),                        tt.TermName)
             do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     tt.TermAccessionNumber)
             do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           tt.TermSourceREF)
-            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" a.TechnologyPlatform))
+            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" (a.TechnologyPlatform |> Option.map ArcAssay.composeTechnologyPlatform)))
             do matrix.Matrix.Add ((fileNameLabel,i),                              processedFileName)
 
             if Array.isEmpty a.Comments |> not then

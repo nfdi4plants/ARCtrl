@@ -318,7 +318,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = "Assay Tech"
+            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.AddAssayAt(0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -329,7 +329,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = "Assay Tech"
+            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.AddAssay("Study 1", expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -342,7 +342,18 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = "Assay Tech"
+            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
+            let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
+            i.SetAssayAt("Study 1", 0, expected)
+            Expect.equal i.StudyCount 2 "StudyCount"
+            let s = i.Studies.Item 0 
+            Expect.equal s.AssayCount 2 "AssayCount"
+            let actual = s.GetAssayAt 0
+            Expect.equal actual expected "equal"
+        testCase "by index tpOntology" <| fun _ ->
+            let i = createExampleInvestigation()
+            let assay_ident = "New Assay"
+            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech","ABC","ABC:123")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssayAt("Study 1", 0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -353,7 +364,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = "Assay Tech"
+            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssay("Study 1", "Assay 2", expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -373,7 +384,7 @@ let tests_Assay = testList "CRUD Assay" [
             Expect.equal a.Identifier "Assay 2" "FileName"
         testCase "mutable propagation" <| fun _ ->
             let i = createExampleInvestigation()
-            let tech = Some "New Tech Stuff"
+            let tech = Some (OntologyAnnotation.fromString("New Tech Stuff"))
             let a = i.GetAssayAt("Study 1", 0)
             Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
@@ -383,7 +394,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "mutable propagation, copy" <| fun _ ->
             let i = createExampleInvestigation()
             let copy = createExampleInvestigation()
-            let tech = Some "New Tech Stuff"
+            let tech = Some (OntologyAnnotation.fromString("New Tech Stuff"))
             let a = i.GetAssayAt("Study 1", 0)
             Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"

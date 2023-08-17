@@ -6,7 +6,7 @@ open ARCtrl.ISA.Aux
 // "MyAssay"; "assays/MyAssay/isa.assay.xlsx"
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
     let tables = defaultArg tables <| ResizeArray()
     let performers = defaultArg performers [||]
     let comments = defaultArg comments [||]
@@ -21,20 +21,20 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
 
     member val MeasurementType : OntologyAnnotation option = measurementType with get, set
     member val TechnologyType : OntologyAnnotation option = technologyType with get, set
-    member val TechnologyPlatform : string option = technologyPlatform with get, set
+    member val TechnologyPlatform : OntologyAnnotation option = technologyPlatform with get, set
     member val Tables : ResizeArray<ArcTable> = tables with get, set
     member val Performers : Person [] = performers with get, set
     member val Comments : Comment [] = comments with get, set
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : string, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
+    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?performers = performers, ?comments = comments)
 
     static member make 
         (identifier : string)
         (measurementType : OntologyAnnotation option)
         (technologyType : OntologyAnnotation option)
-        (technologyPlatform : string option)
+        (technologyPlatform : OntologyAnnotation option)
         (tables : ResizeArray<ArcTable>)
         (performers : Person [])
         (comments : Comment []) = 
@@ -370,6 +370,36 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             comments=nextComments
         )
 
+    /// This function creates a string containing the name and the ontology short-string of the given ontology annotation term
+    ///
+    /// TechnologyPlatforms are plain strings in ISA-JSON.
+    ///
+    /// This function allows us, to parse them as an ontology term.
+    static member composeTechnologyPlatform (tp : OntologyAnnotation) = 
+        match tp.TANInfo with
+        | Some _ ->
+            $"{tp.NameText} ({tp.TermAccessionShort})"
+        | None ->
+            $"{tp.NameText}"
+
+    /// This function parses the given string containing the name and the ontology short-string of the given ontology annotation term
+    ///
+    /// TechnologyPlatforms are plain strings in ISA-JSON.
+    ///
+    /// This function allows us, to parse them as an ontology term.
+    static member decomposeTechnologyPlatform (name : string) = 
+        let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
+
+        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
+        
+
+        if r.Success then
+            let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
+            let v =  (r.Groups.Item "value").Value      |> Value.fromString
+            {oa with Name = (Some (AnnotationValue.Text v.Text))}
+        else 
+            OntologyAnnotation.fromString(termName = name)
+
     /// Transform an ArcAssay to an ISA Json Assay.
     member this.ToAssay() : Assay = 
         let processSeq = ArcTables(this.Tables).GetProcesses()
@@ -388,7 +418,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             ?FileName = fileName,
             ?MeasurementType = this.MeasurementType,
             ?TechnologyType = this.TechnologyType,
-            ?TechnologyPlatform = this.TechnologyPlatform,
+            ?TechnologyPlatform = (this.TechnologyPlatform |> Option.map ArcAssay.composeTechnologyPlatform),
             ?DataFiles = (ProcessSequence.getData processSeq |> Option.fromValueWithDefault []),
             ?Materials = assayMaterials,
             ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
@@ -408,7 +438,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             identifer,
             ?measurementType = (a.MeasurementType |> Option.map (fun x -> x.Copy())),
             ?technologyType = (a.TechnologyType |> Option.map (fun x -> x.Copy())),
-            ?technologyPlatform = a.TechnologyPlatform,
+            ?technologyPlatform = (a.TechnologyPlatform |> Option.map ArcAssay.decomposeTechnologyPlatform),
             ?tables = tables,
             ?comments = (a.Comments |> Option.map Array.ofList)
             )

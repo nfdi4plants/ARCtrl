@@ -76,7 +76,23 @@ let private test_create =
             let identifier = "MyIdentifier"
             let oa_mt = OntologyAnnotation.fromString("measurement type")
             let oa_tt = OntologyAnnotation.fromString("technology type")
-            let technologyPlatform = "tp"
+            let technologyPlatform = OntologyAnnotation.fromString("tp")
+            let tables = ResizeArray([ArcTable.init("MyTable1")])
+            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
+            let comments = Comment.create("Comment Name") |> Array.singleton
+            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            Expect.equal actual.Identifier identifier "identifier"
+            Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
+            Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
+            Expect.equal actual.TechnologyPlatform (Some technologyPlatform) "technologyPlatform"
+            Expect.equal actual.Tables tables "tables"
+            Expect.equal actual.Performers performers "performers"
+            Expect.equal actual.Comments comments "Comments"
+        testCase "constructor_tpOntology" <| fun _ ->
+            let identifier = "MyIdentifier"
+            let oa_mt = OntologyAnnotation.fromString("measurement type")
+            let oa_tt = OntologyAnnotation.fromString("technology type")
+            let technologyPlatform = OntologyAnnotation.fromString("tp","ABC","ABC:123")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
             let comments = Comment.create("Comment Name") |> Array.singleton
@@ -92,7 +108,7 @@ let private test_create =
             let identifier = "MyIdentifier"
             let oa_mt = OntologyAnnotation.fromString("measurement type")
             let oa_tt = OntologyAnnotation.fromString("technology type")
-            let technologyPlatform = "tp"
+            let technologyPlatform = OntologyAnnotation.fromString("tp")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
             let comments = Comment.create("Comment Name") |> Array.singleton
@@ -118,7 +134,7 @@ let private test_create =
             let identifier = "MyIdentifier"
             let measurementType = Some (OntologyAnnotation.fromString("Measurement Type"))
             let technologyType = Some (OntologyAnnotation.fromString("Technology Type"))
-            let technologyPlatform = Some "Technology Platform"
+            let technologyPlatform = Some (OntologyAnnotation.fromString("Technology Platform"))
             let tables = ResizeArray([ArcTable.init("Table 1")])
             let performers = Person.create(FirstName = "John", LastName = "Doe") |> Array.singleton
             let comments = Comment.create("Comment 1") |> Array.singleton
@@ -457,6 +473,35 @@ let private tests_updateTable =
         )
     ]
 
+let private tests_technologyPlatform = 
+    testList "technologyPlatformTests" [
+        let name = "MyOntology"
+        let tsr = "ABC"
+        let tan = "ABC:123"
+        let tp_Term = OntologyAnnotation.fromString(name,tsr,tan)
+        let tp_String = OntologyAnnotation.fromString(name)
+        testCase "compose Term" (fun () ->
+            let s = ArcAssay.composeTechnologyPlatform tp_Term
+            Expect.equal s $"{name} ({tan})" "Term was not correctly composed as string."
+        )
+        testCase "decompose Term" (fun () ->
+            let s = ArcAssay.composeTechnologyPlatform tp_Term
+            let pt_new = ArcAssay.decomposeTechnologyPlatform s
+            Expect.equal pt_new.NameText name "NameText should match"
+            Expect.equal pt_new.TermAccessionShort tan "ShortTan should match"
+        )
+        testCase "compose String" (fun () ->
+            let s = ArcAssay.composeTechnologyPlatform tp_String
+            Expect.equal s $"{name}" "String was not correctly composed as string."
+        )
+        testCase "decompose String" (fun () ->
+            let s = ArcAssay.composeTechnologyPlatform tp_String
+            let pt_new = ArcAssay.decomposeTechnologyPlatform s
+            Expect.equal pt_new.NameText name "NameText should match"
+            Expect.isNone pt_new.TermAccessionNumber "TermAccessionNumber should be None"
+            Expect.equal pt_new.TermAccessionShort "" "ShortTan should match"
+        )
+    ]
 let main = 
     testList "ArcAssay" [
         test_create
@@ -467,4 +512,5 @@ let main =
         tests_UpdateTableAt
         tests_UpdateTable
         tests_updateTable
+        tests_technologyPlatform
     ]
