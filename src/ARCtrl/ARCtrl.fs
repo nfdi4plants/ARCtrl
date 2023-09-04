@@ -56,20 +56,24 @@ module ARCAux =
 [<AttachMembers>]
 type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
-    let mutable cwl = cwl
-    let mutable fs = 
+    let mutable _isa = isa
+    let mutable _cwl = cwl
+    let mutable _fs = 
         fs
         |> Option.defaultValue (FileSystem.create(FileSystemTree.Folder ("",[||])))
         |> ARCAux.updateFSByISA isa
         |> ARCAux.updateFSByCWL cwl
 
-    member val ISA : ArcInvestigation option = isa with get, set
+    member this.ISA 
+        with get() = _isa
+        and set(newISA : ArcInvestigation option) =
+            _isa <- newISA
 
     member this.CWL 
         with get() = cwl
 
     member this.FileSystem 
-        with get() = fs
+        with get() = _fs
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -149,7 +153,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
 
     // to-do: function that returns read contracts based on a list of paths.
     member this.GetReadContracts () =
-        fs.Tree.ToFilePaths() |> Array.choose Contract.ARC.tryISAReadContractFromPath 
+        _fs.Tree.ToFilePaths() |> Array.choose Contract.ARC.tryISAReadContractFromPath 
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.
@@ -189,12 +193,11 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         )
         this.ISA <- Some investigation
 
-
     member this.UpdateFileSystem() =   
         let newFS = 
-            ARCAux.updateFSByISA isa fs
-            |> ARCAux.updateFSByCWL cwl
-        fs <- newFS        
+            ARCAux.updateFSByISA _isa _fs
+            |> ARCAux.updateFSByCWL _cwl
+        _fs <- newFS        
 
 
     /// <summary>
@@ -224,13 +227,18 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             printfn "ARC contains no ISA part."
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
-        fs.Tree.ToFilePaths(true)
+        _fs.Tree.ToFilePaths(true)
         |> Array.map (fun fp ->
             match Dictionary.tryGet fp workbooks with
             | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
             | None -> Contract.createCreate(fp, DTOType.PlainText)
            
         )
+
+    member this.Copy() = 
+        let isaCopy = _isa |> Option.map (fun i -> i.Copy())
+        let fsCopy = _fs.Copy()
+        new ARC(?isa = isaCopy, ?cwl = _cwl, fs = fsCopy)
         
 
 
