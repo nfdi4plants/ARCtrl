@@ -1,6 +1,6 @@
 {
   "name": "arcapi",
-  "version": "1.0.0+67b2cab",
+  "version": "1.0.0+ece863d",
   "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
   "scripts": {
