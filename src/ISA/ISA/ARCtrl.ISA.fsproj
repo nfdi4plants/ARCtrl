@@ -6,6 +6,8 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <Compile Include="Path.fs" />
+    <Compile Include="Identifier.fs" />
     <Compile Include="Url.fs" />
     <Compile Include="Regex.fs" />
     <Compile Include="Fable.fs" />
@@ -45,8 +47,6 @@
     <Compile Include="JsonTypes\Study.fs" />
     <Compile Include="JsonTypes\Investigation.fs" />
     <Compile Include="JsonTypes\ColumnIndex.fs" />
-    <Compile Include="ArcTypes\Path.fs" />
-    <Compile Include="ArcTypes\Identifier.fs" />
     <Compile Include="ArcTypes\CompositeHeader.fs" />
     <Compile Include="ArcTypes\CompositeCell.fs" />
     <Compile Include="ArcTypes\CompositeRow.fs" />
@@ -66,9 +66,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
   <ItemGroup>
     <Content Remove="C:\Users\Kevin\.nuget\packages\fable.core\4.0.0\contentFiles\any\netstandard2.0\RELEASE_NOTES.md" />
