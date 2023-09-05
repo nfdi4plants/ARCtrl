@@ -23,6 +23,7 @@ module ArcInvestigation =
     let [<Literal>] publicationsLabelPrefix = "Investigation Publication"
     let [<Literal>] contactsLabelPrefix = "Investigation Person"
 
+    let [<Literal>] metaDataSheetName = "isa_study"
     
     type InvestigationInfo =
         {

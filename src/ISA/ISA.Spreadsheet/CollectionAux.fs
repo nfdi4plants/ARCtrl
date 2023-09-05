@@ -11,51 +11,6 @@ module Seq =
         with
         | _ -> None
 
-    /// Iterates over elements of the input sequence and groups adjacent elements.
-    /// A new group is started when the specified predicate holds about the element
-    /// of the sequence (and at the beginning of the iteration).
-    ///
-    /// For example: 
-    ///    Seq.groupWhen isOdd [3;3;2;4;1;2] = seq [[3]; [3; 2; 4]; [1; 2]]
-    let private groupWhen (withOverlap : bool) predicate (input:seq<'a>) =
-        use en = input.GetEnumerator()
-    
-        let rec loop cont =
-            if en.MoveNext() then
-                let temp = en.Current
-                if predicate temp then
-                    
-                    loop (fun y -> 
-                        cont 
-                            (   match y with
-                                | h::t when withOverlap -> [temp]::(temp::h)::t
-                                | h::t -> []::(temp::h)::t
-                                //| h::t -> [temp]::(h)::t
-                                | [] -> [[temp]]
-                            )
-                         )
-                else
-                    loop (fun y -> 
-                        cont 
-                            (   match y with
-                                | h::t -> (temp::h)::t
-                                | []   -> [[temp]]
-                            )
-                         )
-            else
-                cont []
-        // Remove when first element is empty due to "[]::(temp::h)::t"
-        let tmp:seq<seq<'a>> = 
-            match (loop id) with
-            | h::t ->   match h with
-                        | [x] when predicate x && withOverlap -> t
-                        | [] -> t
-                        | _  -> h::t
-            | [] -> []
-            |> Seq.cast
-    
-        tmp
-
 module internal Array = 
     
     let ofIndexedSeq (s : seq<int*string>) = 
