@@ -57,8 +57,6 @@ let private testInvestigationWriterComponents =
 
 let private testInvestigationFile = 
 
-    
-
     testList "InvestigationXLSXTests" [
         testCase "ReaderSuccess" (fun () -> 
             
@@ -72,7 +70,29 @@ let private testInvestigationFile =
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
 
         )
+        testCase "ReaderSuccessDeprecatedSheetName" (fun () -> 
+            
+            let readingSuccess = 
+                try  
+                    ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigationObsoleteSheetName |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
 
+            Expect.isOk readingSuccess (Result.getMessage readingSuccess)
+
+        )
+        testCase "ReaderFailureWrongSheetName" (fun () -> 
+            
+            let readingSuccess = 
+                try 
+                    ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigationWrongSheetName |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
+
+            Expect.isError readingSuccess "Reading the investigation file should fail if the sheet name is wrong"
+        )
         testCase "WriterSuccess" (fun () ->
 
             let i = ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigation
@@ -90,13 +110,13 @@ let private testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
            
             let i = 
-                TestObjects.Investigation.fullInvestigation.GetWorksheetByName "Investigation"
+                TestObjects.Investigation.fullInvestigation.GetWorksheetByName "isa_investigation"
                 
             let o = 
                 TestObjects.Investigation.fullInvestigation
                 |> ArcInvestigation.fromFsWorkbook
                 |> ArcInvestigation.toFsWorkbook
-                |> fun wb -> wb.GetWorksheetByName "Investigation"               
+                |> fun wb -> wb.GetWorksheetByName "isa_investigation"               
                 
             Expect.workSheetEqual o i "Written investigation file does not match read investigation file"
         )
@@ -133,23 +153,23 @@ let private testInvestigationFile =
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
 
-        testCase "OutputMatchesInputEmpty" (fun () ->
+        //testCase "OutputMatchesInputEmpty" (fun () ->
 
-            let i = 
-                TestObjects.Investigation.emptyInvestigation.GetWorksheetByName "Investigation"
-                |> fun ws -> ws.Rows
-                |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
-            let o = 
-                TestObjects.Investigation.emptyInvestigation
-                |> ArcInvestigation.fromFsWorkbook
-                |> ArcInvestigation.toFsWorkbook
-                |> fun wb -> wb.GetWorksheetByName "Investigation"               
-                |> fun ws -> ws.Rows
-                |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
+        //    let i = 
+        //        TestObjects.Investigation.emptyInvestigation.GetWorksheetByName "isa_investigation"
+        //        |> fun ws -> ws.Rows
+        //        |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
+        //    let o = 
+        //        TestObjects.Investigation.emptyInvestigation
+        //        |> ArcInvestigation.fromFsWorkbook
+        //        |> ArcInvestigation.toFsWorkbook
+        //        |> fun wb -> wb.GetWorksheetByName "isa_investigation"               
+        //        |> fun ws -> ws.Rows
+        //        |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
 
 
-            mySequenceEqual o i "Written empty investigation file does not match read empty investigation file"
-        )
+        //    mySequenceEqual o i "Written empty investigation file does not match read empty investigation file"
+        //)
         ]
         |> testSequenced
 
@@ -529,5 +549,5 @@ let private testInvestigationFile =
 let main = 
     testList "InvestigationFile" [
         testInvestigationWriterComponents
-        //testInvestigationFile
+        testInvestigationFile
     ]

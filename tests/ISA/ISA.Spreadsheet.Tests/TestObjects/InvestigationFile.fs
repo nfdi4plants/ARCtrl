@@ -5,7 +5,7 @@ open FsSpreadsheet
 
 let emptyInvestigation = 
     let wb = new FsWorkbook()
-    let ws = wb.InitWorksheet("Investigation")
+    let ws = wb.InitWorksheet("isa_investigation")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ONTOLOGY SOURCE REFERENCE"
     let row2 = ws.Row(2)
@@ -195,7 +195,7 @@ let investigationIdentifier = "BII-I-1"
 
 let fullInvestigation =
     let wb = new FsWorkbook()
-    let ws = wb.InitWorksheet("Investigation")
+    let ws = wb.InitWorksheet("isa_investigation")
     let row1 = ws.Row(1)
     row1.[1].Value <- "ONTOLOGY SOURCE REFERENCE"
     let row2 = ws.Row(2)
@@ -721,4 +721,18 @@ let fullInvestigation =
     row164.[1].Value <- "#TestRemark4"
     let row165 = ws.Row(165)
     row165.[1].Value <- "#TestRemark5"
+    wb
+
+let fullInvestigationObsoleteSheetName =
+    let cp =  (fullInvestigation.GetWorksheetByName "isa_investigation").Copy()
+    cp.Name <- "Investigation"
+    let wb = new FsWorkbook()
+    wb.AddWorksheet cp
+    wb
+
+let fullInvestigationWrongSheetName =
+    let cp =  (fullInvestigation.GetWorksheetByName "isa_investigation").Copy()
+    cp.Name <- "Gibberish"
+    let wb = new FsWorkbook()
+    wb.AddWorksheet cp
     wb

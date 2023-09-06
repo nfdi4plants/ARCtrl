@@ -23,7 +23,10 @@ module ArcInvestigation =
     let [<Literal>] publicationsLabelPrefix = "Investigation Publication"
     let [<Literal>] contactsLabelPrefix = "Investigation Person"
 
-    
+    let [<Literal>] metaDataSheetName = "isa_investigation"
+    let [<Literal>] metaDataSheetName_deprecated = "Investigation"
+
+
     type InvestigationInfo =
         {
         Identifier : string
@@ -191,8 +194,12 @@ module ArcInvestigation =
 
     let fromFsWorkbook (doc:FsWorkbook) =  
         try
-            doc.GetWorksheets()
-            |> Seq.head
+            match doc.TryGetWorksheetByName metaDataSheetName with
+            | Some sheet -> sheet
+            | None -> 
+                match doc.TryGetWorksheetByName metaDataSheetName_deprecated with
+                | Some sheet -> sheet
+                | None -> failwith "Could not find metadata sheet with sheetname \"isa_investigation\" or deprecated sheetname \"Investigation\""
             |> FsWorksheet.getRows
             |> Seq.map SparseRow.fromFsRow
             |> fromRows 
@@ -202,7 +209,7 @@ module ArcInvestigation =
     let toFsWorkbook (investigation:ArcInvestigation) : FsWorkbook =           
         try
             let wb = new FsWorkbook()
-            let sheet = FsWorksheet("Investigation")
+            let sheet = FsWorksheet(metaDataSheetName)
             investigation
             |> toRows
             |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
