@@ -54,9 +54,7 @@
     <Compile Include="ArcTypes\ArcTableAux.fs" />
     <Compile Include="ArcTypes\ArcTable.fs" />
     <Compile Include="ArcTypes\ArcTables.fs" />
-    <Compile Include="ArcTypes\ArcAssay.fs" />
-    <Compile Include="ArcTypes\ArcStudy.fs" />
-    <Compile Include="ArcTypes\ArcInvestigation.fs" />
+    <Compile Include="ArcTypes\ArcTypes.fs" />
     <Compile Include="ArcTypes\IdentifierSetters.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
