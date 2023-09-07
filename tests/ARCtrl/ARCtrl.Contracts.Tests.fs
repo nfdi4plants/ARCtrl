@@ -59,12 +59,23 @@ let tests_gitContracts = testList "gitContracts" [
 
     testCase "init_GitIgnore" <| fun _ ->
         let arc = ARC()
-        let contracts = arc.GetGitInitContracts(defaultGitIgnore = true)
+        let contracts = arc.GetGitInitContracts(defaultGitignore = true)
         Expect.equal contracts.Length 2 "Should be two contracts"
         Expect.equal contracts.[1].Operation Operation.CREATE "Should be an create operation"
         let dto = contracts.[1].DTO.Value
         Expect.isTrue dto.isText "Should be text"
         Expect.equal contracts.[1].Path ".gitignore" "Should be a gitignore"
+    testCase "clone_AllOptions" <| fun _ ->
+        let remoteURL = @"https://git.fantasyGit.net/MyAccount/MyRepo"
+        let user = "Lukas"
+        let token = "12345"
+        let tokenFormattedURL = @$"https://{user}:{token}@git.fantasyGit.net/MyAccount/MyRepo"
+        let branch = "myBranch"
+        let noLFSConfig = "-c \"filter.lfs.smudge = git-lfs smudge --skip -- %f\" -c \"filter.lfs.process = git-lfs filter-process --skip\""
+        let contract = ARC.getCloneContract(remoteURL,merge = true,branch = branch,token = (user,token),nolfs = true)
+        let dto = contract.DTO.Value
+        let cli = dto.AsCLITool()
+        mySequenceEqual cli.Arguments [|"clone";noLFSConfig;"-b";branch;tokenFormattedURL;"."|] "some option was wrong"
     ]
 
 
