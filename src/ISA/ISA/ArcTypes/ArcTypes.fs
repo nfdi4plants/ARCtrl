@@ -11,7 +11,7 @@ module ArcTypesAux =
             | None -> failwith "Cannot execute this function. Object is not part of ArcInvestigation."
             | Some i -> i
 
-        let inline validateAssayRegister (assayIdent: string) (existingAssayIdents: seq<string>) =
+        let inline validateAssayRegisterInInvestigation (assayIdent: string) (existingAssayIdents: seq<string>) =
             match existingAssayIdents |> Seq.tryFind (fun x -> x = assayIdent)  with
             | None ->
                 failwith $"The given assay must be added to Investigation before it can be registered."
@@ -607,6 +607,16 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             let copy = study.Copy()
             copy.DeregisterAssay(assayIdentifier)
             copy
+
+    member this.GetRegisteredAssay(assayIdentifier: string) =
+        if Seq.contains assayIdentifier this.Assays |> not then failwith $"Assay `{assayIdentifier}` is not registered on the study."
+        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+        inv.GetAssay(assayIdentifier)
+
+    static member getRegisteredAssay(assayIdentifier: string) =
+        fun (study: ArcStudy) ->
+            let copy = study.Copy()
+            copy.GetRegisteredAssay(assayIdentifier)
 
     member this.GetRegisteredAssays() = 
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
@@ -1305,7 +1315,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     /// <param name="assay"></param>
     member this.RegisterAssayAt(studyIndex: int, assayIdentifier: string) =
         let study = this.GetStudyAt(studyIndex)
-        ArcTypesAux.SanityChecks.validateAssayRegister assayIdentifier (this.Assays |> Seq.map (fun a -> a.Identifier))
+        ArcTypesAux.SanityChecks.validateAssayRegisterInInvestigation assayIdentifier (this.Assays |> Seq.map (fun a -> a.Identifier))
         ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assayIdentifier study.Assays
         study.RegisterAssay(assayIdentifier)
 

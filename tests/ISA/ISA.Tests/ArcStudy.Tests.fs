@@ -160,6 +160,44 @@ let private test_create =
             Expect.equal actual.Comments comments "Comments"
     ]
 
+let tests_RegisteredAssays = testList "RegisteredAssays" [
+    let _study_identifier = "My Study"
+    let _study_description = Some "Lorem Ipsum"
+    let _assay_identifier = "My Assay"
+    let createTestStudy() =
+        let s = ArcStudy(_study_identifier)
+        s.Description <- _study_description
+        s
+    testCase "RegisterAssay, no parent" <| fun _ ->
+        let study = createTestStudy()
+        study.RegisterAssay(_assay_identifier)
+        Expect.equal study.AssayCount 1 "registered assay count"
+    testCase "GetRegisteredAssay, no parent" <| fun _ ->
+        let study = createTestStudy()
+        study.RegisterAssay(_assay_identifier)
+        let eval() = study.GetRegisteredAssay(_assay_identifier) |> ignore
+        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+    testCase "GetRegisteredAssays, no parent" <| fun _ ->
+        let study = createTestStudy()
+        study.RegisterAssay(_assay_identifier)
+        let eval() = study.GetRegisteredAssays() |> ignore
+        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+    testCase "DeregisterAssay, no parent" <| fun _ ->
+        let study = createTestStudy()
+        study.RegisterAssay(_assay_identifier)
+        Expect.equal study.AssayCount 1 "registered assay count"
+        study.DeregisterAssay(_assay_identifier)
+        Expect.equal study.AssayCount 0 "registered assay count 2"
+    testCase "InitAssay, no parent" <| fun _ ->
+        let study = createTestStudy()
+        let eval() = study.InitAssay(_assay_identifier) |> ignore
+        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+    testCase "AddAssay, no parent" <| fun _ ->
+        let study = createTestStudy()
+        let eval() = study.AddAssay(ArcAssay(_assay_identifier)) |> ignore
+        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+]
+
 let tests_copy = 
     testList "copy" [
         let _study_identifier = "My Study"
@@ -201,9 +239,11 @@ let tests_copy =
             ()
     ]
 
+
 let main = 
     testList "ArcStudy" [
         tests_copy
+        tests_RegisteredAssays
         test_create
     ]
 
