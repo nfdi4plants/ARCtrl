@@ -113,11 +113,11 @@ module ArcStudy =
         GDecode.fromString (decoder (ConverterOptions())) s
         |> ArcStudy.fromStudy
 
-    let toString (a:ArcStudy) = 
-        encoder (ConverterOptions()) (a.ToStudy())
+    let toString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+        encoder (ConverterOptions()) (a.ToStudy(assays))
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (a:ArcStudy) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy())
+    let toStringLD (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy(assays))
         |> Encode.toString 2

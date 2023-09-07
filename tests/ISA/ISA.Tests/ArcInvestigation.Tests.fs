@@ -8,6 +8,11 @@ open Fable.Mocha
 open Expecto
 #endif
 
+let private assay_Identifier = "MyAssay"
+let private assay_MeasurementType = OntologyAnnotation.fromString("My Measurement Type", "MST", "MST:42424242")
+let private create_ExampleAssay() = ArcAssay.create(assay_Identifier,assay_MeasurementType)
+let private create_ExampleAssays() = ResizeArray([create_ExampleAssay()])
+
 let private test_create =
     testList "create" [
         testCase "constructor" <| fun _ ->
@@ -19,6 +24,7 @@ let private test_create =
             let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
             let publications = [|Publication.create("Publication 1")|]
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
             let comments = [|Comment.create("Comment 1")|]
             let remarks = [|Remark.create(1, "Remark 1")|]
@@ -33,6 +39,7 @@ let private test_create =
                     ontologySourceReferences = ontologySourceReferences,
                     publications = publications,
                     contacts = contacts,
+                    assays = assays,
                     studies = studies,
                     comments = comments,
                     remarks = remarks
@@ -46,6 +53,7 @@ let private test_create =
             Expect.equal actual.OntologySourceReferences ontologySourceReferences "OntologySourceReferences"
             Expect.equal actual.Publications publications "Publications"
             Expect.equal actual.Contacts contacts "Contacts"
+            Expect.equal actual.Assays assays "Assays"
             Expect.equal actual.Studies studies "Studies"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
@@ -59,6 +67,7 @@ let private test_create =
             let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
             let publications = [|Publication.create("Publication 1")|]
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
             let comments = [|Comment.create("Comment 1")|]
             let remarks = [|Remark.create(1, "Remark 1")|]
@@ -72,6 +81,7 @@ let private test_create =
                 ontologySourceReferences = ontologySourceReferences,
                 publications = publications,
                 contacts = contacts,
+                assays = assays,
                 studies = studies,
                 comments = comments,
                 remarks = remarks
@@ -85,6 +95,7 @@ let private test_create =
             Expect.equal actual.OntologySourceReferences ontologySourceReferences "OntologySourceReferences"
             Expect.equal actual.Publications publications "Publications"
             Expect.equal actual.Contacts contacts "Contacts"
+            Expect.equal actual.Assays assays "Assays"
             Expect.equal actual.Studies studies "Studies"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
@@ -102,6 +113,7 @@ let private test_create =
             Expect.isEmpty actual.OntologySourceReferences "OntologySourceReferences"
             Expect.isEmpty actual.Publications "Publications"
             Expect.isEmpty actual.Contacts "Contacts"
+            Expect.isEmpty actual.Assays "Assays"
             Expect.isEmpty actual.Studies "Studies"
             Expect.isEmpty actual.Comments "Comments"
             Expect.isEmpty actual.Remarks "Remarks"
@@ -115,6 +127,7 @@ let private test_create =
             let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
             let publications = [|Publication.create("Publication 1")|]
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
             let comments = [|Comment.create("Comment 1")|]
             let remarks = [|Remark.create(1, "Remark 1")|]
@@ -129,6 +142,7 @@ let private test_create =
                     ontologySourceReferences
                     publications
                     contacts
+                    assays
                     studies
                     comments
                     remarks
@@ -141,10 +155,80 @@ let private test_create =
             Expect.equal actual.OntologySourceReferences ontologySourceReferences "OntologySourceReferences"
             Expect.equal actual.Publications publications "Publications"
             Expect.equal actual.Contacts contacts "Contacts"
+            Expect.equal actual.Assays assays "Assays"
             Expect.equal actual.Studies studies "Studies"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
     ]
+
+let test_RegisteredAssays = testList "RegisteredAssay" [
+    testCase "Investigation.RegisterAssay" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        i.RegisterAssay(s.Identifier, a.Identifier)
+        Expect.equal s.AssayCount 1 "registered assay count"
+        Expect.equal s.Assays.[0] a.Identifier "identifier"
+    testCase "Study.RegisterAssay" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        s.RegisterAssay(a.Identifier)
+        Expect.equal s.AssayCount 1 "registered assay count"
+        Expect.equal s.Assays.[0] a.Identifier "identifier"
+    testCase "Investigation.DeregisterAssay" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        i.RegisterAssay(s.Identifier, a.Identifier)
+        Expect.equal s.AssayCount 1 "registered assay count"
+        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        i.DeregisterAssay(s.Identifier,a.Identifier)
+        Expect.equal s.AssayCount 0 "registered assay count 2"
+    testCase "Study.DeregisterAssay" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        s.RegisterAssay(a.Identifier)
+        Expect.equal s.AssayCount 1 "registered assay count"
+        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        s.DeregisterAssay(a.Identifier)
+        Expect.equal s.AssayCount 0 "registered assay count 2"
+    testCase "Remove registered assay from investigation" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        s.RegisterAssay(a.Identifier)
+        Expect.equal s.AssayCount 1 "registered assay count"
+        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        i.RemoveAssayAt 0 
+        Expect.equal i.AssayCount 0 "assay count 2"
+        Expect.equal s.AssayCount 0 "registered assay count 2"
+    testCase "Investigation.DeregisterMissingAssays" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        s.RegisterAssay(a.Identifier)
+        Expect.equal s.AssayCount 1 "registered assay count"
+        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        i.Assays <- (ResizeArray())
+        Expect.equal i.AssayCount 0 "assay count 2"
+        Expect.equal s.AssayCount 1 "registered assay count 2"
+        i.DeregisterMissingAssays()
+        Expect.equal s.AssayCount 0 "registered assay count 3"
+]
 
 let tests_MutableFields = testList "MutableFields" [
     testCase "ensure investigation" <| fun _ ->
@@ -159,6 +243,23 @@ let tests_MutableFields = testList "MutableFields" [
         Expect.equal i.Description (Some "MyName") "FileName"
         Expect.equal i.Contacts persons "Contacts"
         Expect.equal i.Title (Some "Awesome Title") "Title"
+    testCase "test mutable fields on registered assay" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let assay = create_ExampleAssay()
+        let study_identifier = "MyStudy"
+        i.AddAssay(assay)
+        let study = i.InitStudy(study_identifier)
+        study.RegisterAssay(assay.Identifier)
+        Expect.equal i.AssayCount 1 "assay count"
+        Expect.equal i.StudyCount 1 "study count"
+        Expect.equal study.AssayCount 1 "registered assay count"
+        Expect.equal assay.TableCount 0 "assay table count"
+        Expect.equal study.Assays.[0] assay.Identifier "registered assay identifier"
+        let registeredAssay = study.GetRegisteredAssays().[0]
+        Expect.equal registeredAssay.Identifier assay.Identifier "full registered assay identifier"
+        let table = registeredAssay.InitTable("My New Table")
+        Expect.equal assay.TableCount 1 "table count to init table"
+        Expect.equal i.Assays.[0].TableCount 1 "table count from investigation"
 ]
 
 let tests_Copy = testList "Copy" [
@@ -297,21 +398,24 @@ let tests_Assay = testList "CRUD Assay" [
     let createExampleInvestigation() =
         let i = ArcInvestigation.init("MyInvestigation")
         let s = ArcStudy.init("Study 1")
+        let s2 = ArcStudy.create("Study 2",title="Study 2 Title")
         let a = ArcAssay.init("Assay 1")
         let a2 = ArcAssay.init("Assay 2")
-        s.AddAssay(a)
-        s.AddAssay(a2)
-        let s2 = ArcStudy.create("Study 2",title="Study 2 Title")
         i.AddStudy s
         i.AddStudy s2
+        i.AddAssay(a)
+        i.AddAssay(a2)
+        i.RegisterAssay(s.Identifier, a.Identifier)
+        i.RegisterAssay(s.Identifier, a2.Identifier)
         i
     testCase "ensure example" <| fun _ ->
         let i = createExampleInvestigation()
         Expect.equal i.StudyCount 2 "StudyCount"
-        TestingUtils.mySequenceEqual i.StudyIdentifiers (seq {"Study 1"; "Study 2"}) "StudyCount"
+        Expect.equal i.AssayCount 2 "AssayCount"
+        TestingUtils.mySequenceEqual i.StudyIdentifiers (seq {"Study 1"; "Study 2"}) "StudyIdentifiers"
+        TestingUtils.mySequenceEqual i.AssayIdentifiers (seq {"Assay 1"; "Assay 2"}) "AssayIdentifiers"
         let s = i.Studies.Item 0 
-        Expect.equal s.AssayCount 2 "AssayCount"
-        TestingUtils.mySequenceEqual s.AssayIdentifiers (seq {"Assay 1"; "Assay 2"}) "AssayIdentifiers"
+        Expect.equal s.AssayCount 2 "Registered AssayCount"
         let s2 = i.Studies.Item 1 
         Expect.equal s2.Title (Some "Study 2 Title") "Study 2 Title"
     testList "AddAssay" [ 
@@ -320,22 +424,24 @@ let tests_Assay = testList "CRUD Assay" [
             let assay_ident = "New Assay"
             let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
-            i.AddAssayAt(0, expected)
+            i.AddAssay(expected)
+            i.RegisterAssayAt(0, expected.Identifier)
             Expect.equal i.StudyCount 2 "StudyCount"
             let s = i.Studies.Item 0 
             Expect.equal s.AssayCount 3 "AssayCount"
-            let actual = s.GetAssayAt 2
+            let actual = i.GetAssayAt 2
             Expect.equal actual expected "equal"
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
-            i.AddAssay("Study 1", expected)
+            i.AddAssay(expected)
+            i.RegisterAssay("Study 1", expected.Identifier)
             Expect.equal i.StudyCount 2 "StudyCount"
             let s = i.Studies.Item 0 
             Expect.equal s.AssayCount 3 "AssayCount"
-            let actual = s.GetAssayAt 2
+            let actual = i.GetAssayAt 2
             Expect.equal actual expected "equal"
     ]
     testList "SetAssay" [ 
@@ -344,83 +450,65 @@ let tests_Assay = testList "CRUD Assay" [
             let assay_ident = "New Assay"
             let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
-            i.SetAssayAt("Study 1", 0, expected)
+            i.SetAssayAt(0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
+            Expect.equal i.AssayCount 2 "AssayCount"
+            Expect.equal i.Assays.[0] expected "equal"
             let s = i.Studies.Item 0 
-            Expect.equal s.AssayCount 2 "AssayCount"
-            let actual = s.GetAssayAt 0
-            Expect.equal actual expected "equal"
+            Expect.equal s.AssayCount 1 "Registered AssayCount. should be 1 less due to different identifier"
         testCase "by index tpOntology" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech","ABC","ABC:123")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
-            i.SetAssayAt("Study 1", 0, expected)
+            i.SetAssayAt(0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
+            Expect.equal i.AssayCount 2 "AssayCount"
             let s = i.Studies.Item 0 
-            Expect.equal s.AssayCount 2 "AssayCount"
-            let actual = s.GetAssayAt 0
-            Expect.equal actual expected "equal"
+            Expect.equal s.AssayCount 1 "Registered AssayCount. should be 1 less due to different identifier"
+            Expect.equal i.Assays.[0] expected "equal"
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
             let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
-            i.SetAssay("Study 1", "Assay 2", expected)
+            i.SetAssay("Assay 2", expected)
             Expect.equal i.StudyCount 2 "StudyCount"
+            Expect.equal i.AssayCount 2 "AssayCount"
             let s = i.Studies.Item 0 
-            Expect.equal s.AssayCount 2 "AssayCount"
-            let actual = s.GetAssayAt 1
+            Expect.equal s.AssayCount 1 "Registered AssayCount. should be 1 less due to different identifier"
+            let actual = i.Assays.[1]
             Expect.equal actual expected "equal"
     ]
     testList "GetAssay" [ 
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
-            let a = i.GetAssayAt("Study 1", 0)
+            let a = i.GetAssayAt(0)
             Expect.equal a.Identifier "Assay 1" "FileName"
         testCase "by ident" <| fun _ ->
             let i = createExampleInvestigation()
-            let a = i.GetAssay("Study 1", "Assay 2")
+            let a = i.GetAssay("Assay 2")
             Expect.equal a.Identifier "Assay 2" "FileName"
         testCase "mutable propagation" <| fun _ ->
             let i = createExampleInvestigation()
             let tech = Some (OntologyAnnotation.fromString("New Tech Stuff"))
-            let a = i.GetAssayAt("Study 1", 0)
+            let a = i.GetAssayAt(0)
             Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
             a.TechnologyPlatform <- tech
             Expect.equal a.TechnologyPlatform tech "TechnologyPlatform, a"
-            Expect.equal i.Studies.[0].Assays.[0].TechnologyPlatform tech "TechnologyPlatform, direct"
+            Expect.equal i.Assays.[0].TechnologyPlatform tech "TechnologyPlatform, direct"
         testCase "mutable propagation, copy" <| fun _ ->
             let i = createExampleInvestigation()
             let copy = createExampleInvestigation()
             let tech = Some (OntologyAnnotation.fromString("New Tech Stuff"))
-            let a = i.GetAssayAt("Study 1", 0)
+            let a = i.GetAssayAt(0)
             Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
             a.TechnologyPlatform <- tech
             Expect.equal a.TechnologyPlatform tech "TechnologyPlatform, a"
-            Expect.equal i.Studies.[0].Assays.[0].TechnologyPlatform tech "TechnologyPlatform, direct"
-            Expect.equal copy.Studies.[0].Assays.[0].TechnologyPlatform None "TechnologyPlatform, copy direct"
-    ]
-    testList "FindAssay" [
-        testCase "by identifier" <| fun _ ->
-            let i = createExampleInvestigation()
-            let a = i.FindAssay("Assay 1")
-            Expect.equal a.Identifier "Assay 1" "Identifier"
-        testCase "mutability" <| fun _ ->
-            let i = createExampleInvestigation()
-            let a = i.FindAssay("Assay 1")
-            let t = a.InitTable("NewTable")
-            t.AddColumn(CompositeHeader.Input IOType.Sample,[|for i in 1 .. 10 do yield CompositeCell.createFreeText $"My awesome probe {i}"|])
-            Expect.equal t.Name "NewTable" "table name"
-            Expect.equal t.ColumnCount 1 "column count"
-            Expect.equal t.RowCount 10 "row count"
-            let aNew = i.FindAssay("Assay 1")
-            Expect.equal aNew.TableCount 1 "table count"
-            Expect.equal aNew.Tables.[0].Name "NewTable" "next table name"
-            Expect.equal aNew.Tables.[0].ColumnCount 1 "next column count"
-            Expect.equal aNew.Tables.[0].RowCount 10 "next row count"
+            Expect.equal i.Assays.[0].TechnologyPlatform tech "TechnologyPlatform, direct"
+            Expect.equal copy.Assays.[0].TechnologyPlatform None "TechnologyPlatform, copy direct"
     ]
 ]
 
@@ -428,6 +516,7 @@ let tests_Assay = testList "CRUD Assay" [
 let main = 
     testList "ArcInvestigation" [
         test_create
+        test_RegisteredAssays
         tests_MutableFields
         tests_Copy
         tests_Study

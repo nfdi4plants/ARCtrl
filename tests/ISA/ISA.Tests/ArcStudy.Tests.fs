@@ -8,6 +8,10 @@ open Fable.Mocha
 open Expecto
 #endif
 
+let createExampleAssays() = ResizeArray([|ArcAssay.init("Assay 1")|])
+
+let getAssayIdentifiers(assays: ResizeArray<ArcAssay>) = assays |> Seq.map (fun a -> a.Identifier) |> ResizeArray
+
 let private test_create =
     testList "create" [
         testCase "constructor" <| fun _ ->
@@ -20,7 +24,8 @@ let private test_create =
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
             let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
             let tables = ResizeArray([|ArcTable.init("Table 1")|])
-            let assays = ResizeArray([|ArcAssay.init("Assay 1")|])
+            let assays = createExampleAssays()
+            let assay_identifiers = getAssayIdentifiers assays
             let factors = [|Factor.create("Factor 1")|]
             let comments = [|Comment.create("Comment 1")|]
 
@@ -35,7 +40,7 @@ let private test_create =
                     contacts = contacts,
                     studyDesignDescriptors = studyDesignDescriptors,
                     tables = tables,
-                    assays = assays,
+                    assays = assay_identifiers,
                     factors = factors,
                     comments = comments
                 )
@@ -49,7 +54,7 @@ let private test_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
-            Expect.equal actual.Assays assays "Assays"
+            Expect.equal actual.Assays assay_identifiers "Assays"
             Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
 
@@ -63,7 +68,8 @@ let private test_create =
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
             let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
             let tables = ResizeArray([|ArcTable.init("Table 1")|])
-            let assays = ResizeArray([|ArcAssay.init("Assay 1")|])
+            let assays = createExampleAssays()
+            let assay_identifiers = getAssayIdentifiers assays
             let factors = [|Factor.create("Factor 1")|]
             let comments = [|Comment.create("Comment 1")|]
 
@@ -77,7 +83,7 @@ let private test_create =
                 contacts = contacts,
                 studyDesignDescriptors = studyDesignDescriptors,
                 tables = tables,
-                assays = assays,
+                assays = assay_identifiers,
                 factors = factors,
                 comments = comments
             )
@@ -91,7 +97,7 @@ let private test_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
-            Expect.equal actual.Assays assays "Assays"
+            Expect.equal actual.Assays assay_identifiers "Assays"
             Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
 
@@ -120,7 +126,8 @@ let private test_create =
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
             let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
             let tables = ResizeArray([|ArcTable.init("Table 1")|])
-            let assays = ResizeArray([|ArcAssay.init("Assay 1")|])
+            let assays = createExampleAssays()
+            let assay_identifiers = getAssayIdentifiers assays
             let factors = [|Factor.create("Factor 1")|]
             let comments = [|Comment.create("Comment 1")|]
 
@@ -135,7 +142,7 @@ let private test_create =
                     contacts
                     studyDesignDescriptors
                     tables
-                    assays
+                    assay_identifiers
                     factors
                     comments
 
@@ -148,7 +155,7 @@ let private test_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
-            Expect.equal actual.Assays assays "Assays"
+            Expect.equal actual.Assays assay_identifiers "Assays"
             Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
     ]
@@ -158,21 +165,18 @@ let tests_copy =
         let _study_identifier = "My Study"
         let _study_description = Some "Lorem Ipsum"
         let _assay_identifier = "My Assay"
-        let _assay_technologyPlatform = OntologyAnnotation.fromString("Awesome Technology")
         let createTestStudy() =
             let s = ArcStudy(_study_identifier)
             s.Description <- _study_description
-            let a = ArcAssay(_assay_identifier, technologyPlatform = _assay_technologyPlatform)
-            s.AddAssay(a)
+            s.RegisterAssay(_assay_identifier)
             s
         testCase "ensure test study" <| fun _ -> 
             let study = createTestStudy()
             Expect.equal study.Identifier _study_identifier "_study_identifier"
             Expect.equal study.Description _study_description "_study_description"
             Expect.equal study.AssayCount 1 "AssayCount"
-            let assay = study.GetAssayAt(0)
-            Expect.equal assay.Identifier _assay_identifier "_assay_identifier"
-            Expect.equal assay.TechnologyPlatform (Some _assay_technologyPlatform) "_assay_technologyPlatform"
+            let assayIdentifier = study.AssayIdentifiers.[0]
+            Expect.equal assayIdentifier _assay_identifier "_assay_identifier"
         testCase "test mutable fields" <| fun _ -> 
             let newDesciption = Some "New Description"
             let newPublicReleaseDate = Some "01.01.2000"
@@ -185,43 +189,15 @@ let tests_copy =
                 Expect.equal study.Description _study_description "_study_description"
                 Expect.equal study.PublicReleaseDate None "PublicReleaseDate"
                 Expect.equal study.AssayCount 1 "AssayCount"
-                let assay = study.GetAssayAt(0)
-                Expect.equal assay.Identifier _assay_identifier "_assay_identifier"
-                Expect.equal assay.TechnologyPlatform (Some _assay_technologyPlatform) "_assay_technologyPlatform"
+                let assayIdentifier = study.AssayIdentifiers.[0]
+                Expect.equal assayIdentifier _assay_identifier "_assay_identifier"
             let checkCopy =
                 Expect.equal copy.Identifier _study_identifier "copy _study_identifier"
                 Expect.equal copy.Description newDesciption "copy _study_description"
                 Expect.equal copy.PublicReleaseDate newPublicReleaseDate "copy PublicReleaseDate"
                 Expect.equal copy.AssayCount 1 "copy AssayCount"
-                let assay = copy.GetAssayAt(0)
-                Expect.equal assay.Identifier _assay_identifier "copy _assay_identifier"
-                Expect.equal assay.TechnologyPlatform (Some _assay_technologyPlatform) "copy _assay_technologyPlatform"
-            ()
-        testCase "test mutable fields on assay children" <| fun _ -> 
-            let newTechnologyPlatform = Some (OntologyAnnotation.fromString("New TechnologyPlatform"))
-            let newTechnologyType = Some <| OntologyAnnotation.fromString("nice technology type")
-            let study = createTestStudy()
-            let copy = study.Copy()
-            let copy_assay = copy.GetAssayAt(0)
-            copy_assay.TechnologyType <- newTechnologyType
-            copy_assay.TechnologyPlatform <- newTechnologyPlatform
-            let checkSourceStudy =
-                Expect.equal study.Identifier _study_identifier "_study_identifier"
-                Expect.equal study.Description _study_description "_study_description"
-                Expect.equal study.PublicReleaseDate None "PublicReleaseDate"
-                Expect.equal study.AssayCount 1 "AssayCount"
-                let assay = study.GetAssayAt(0)
-                Expect.equal assay.Identifier _assay_identifier "_assay_identifier"
-                Expect.equal assay.TechnologyPlatform (Some _assay_technologyPlatform) "_assay_technologyPlatform"
-                Expect.equal assay.TechnologyType None "TechnologyType"
-            let checkCopy =
-                Expect.equal copy.Identifier _study_identifier "copy _study_identifier"
-                Expect.equal copy.Description _study_description "copy _study_description"
-                Expect.equal copy.AssayCount 1 "copy AssayCount"
-                let assay = copy.GetAssayAt(0)
-                Expect.equal assay.Identifier _assay_identifier "copy _assay_identifier"
-                Expect.equal assay.TechnologyPlatform newTechnologyPlatform "copy _assay_technologyPlatform"
-                Expect.equal assay.TechnologyType newTechnologyType "TechnologyType"
+                let assayIdentifier = study.AssayIdentifiers.[0]
+                Expect.equal assayIdentifier _assay_identifier "copy _assay_identifier"
             ()
     ]
 

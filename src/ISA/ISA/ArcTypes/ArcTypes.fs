@@ -39,7 +39,8 @@ module ArcTypesAux =
     let inline removeMissingRegisteredAssays (inv: ArcInvestigation) : unit =
         let existingAssays = inv.AssayIdentifiers
         for study in inv.Studies do
-            for registeredAssay in study.Assays do
+            let registeredAssays = study.AssayIdentifiers 
+            for registeredAssay in registeredAssays do
                 if Seq.contains registeredAssay existingAssays |> not then
                     study.Assays.Remove registeredAssay |> ignore
 
@@ -560,31 +561,31 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         with get() = this.Assays.Count
 
     member this.AssayIdentifiers
-        with get(): seq<string> = seq this.Assays
+        with get(): string [] = Array.ofSeq this.Assays
 
     // - Assay API - CRUD //
     /// <summary>
     /// Add assay to investigation and register it to study.
     /// </summary>
     /// <param name="assay"></param>
-    member internal this.AddAssay(assay: ArcAssay) =
+    member this.AddAssay(assay: ArcAssay) =
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation 
         inv.AddAssay(assay)
         inv.RegisterAssay(this.Identifier,assay.Identifier)
 
-    static member internal addAssay(assay: ArcAssay) =
+    static member addAssay(assay: ArcAssay) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
             newStudy.AddAssay(assay)
             newStudy
 
     // - Assay API - CRUD //
-    member internal this.InitAssay(assayIdentifier: string) =
+    member this.InitAssay(assayIdentifier: string) =
         let assay = ArcAssay(assayIdentifier)
         this.AddAssay(assay)
         assay
 
-    static member internal initAssay(assayIdentifier: string) =
+    static member initAssay(assayIdentifier: string) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
             newStudy.InitAssay(assayIdentifier)
@@ -619,6 +620,26 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         fun (study: ArcStudy) ->
             let copy = study.Copy()
             copy.GetRegisteredAssays()
+
+    /// <summary>
+    /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
+    /// </summary>
+    member this.GetRegisteredAssaysOrIdentifier() = 
+        // Two Options:
+        // 1. Init new assays with only identifier. This is possible without ArcInvestigation parent.
+        // 2. Get full assays from ArcInvestigation parent.
+        match this.Investigation with
+        | Some i -> 
+            this.GetRegisteredAssays()
+        | None ->
+            this.Assays |> Seq.map (fun x -> ArcAssay.init(x)) |> ResizeArray
+        |> Seq.toList 
+        |> List.map (fun a -> a.ToAssay()) 
+
+    static member getRegisteredAssaysOrIdentifier() =
+        fun (study: ArcStudy) ->
+            let copy = study.Copy()
+            copy.GetRegisteredAssaysOrIdentifier()
 
     ////////////////////////////////////
     // - Copy & Paste from ArcAssay - //
@@ -966,21 +987,9 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         )
 
     /// Transform an ArcStudy to an ISA Json Study.
-    member this.ToStudy() : Study = 
+    member this.ToStudy(arcAssays: ResizeArray<ArcAssay>) : Study = 
         let processSeq = ArcTables(this.Tables).GetProcesses()
         let protocols = ProcessSequence.getProtocols processSeq |> Option.fromValueWithDefault []
-        /// Two Options:
-        /// 1. Init new assays with only identifier. This is possible without ArcInvestigation parent.
-        /// 2. Get full assays from ArcInvestigation parent.
-        let assays = 
-            match this.Investigation with
-            | Some i -> 
-                this.GetRegisteredAssays()
-            | None ->
-                this.Assays |> Seq.map (fun x -> ArcAssay.init(x)) |> ResizeArray
-            |> Seq.toList 
-            |> List.map (fun a -> a.ToAssay()) 
-            |> Option.fromValueWithDefault []
         let studyMaterials =
             StudyMaterials.create(
                 ?Sources = (ProcessSequence.getSources processSeq |> Option.fromValueWithDefault []),
@@ -992,7 +1001,8 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             if ARCtrl.ISA.Identifier.isMissingIdentifier this.Identifier then
                 None, None
             else
-                Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)             
+                Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)
+        let assays = arcAssays |> List.ofSeq |> List.map (fun a -> a.ToAssay())
         Study.create(
             ?FileName = fileName,
             ?Identifier = identifier,
@@ -1006,7 +1016,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             ?Protocols = protocols,
             ?Materials = studyMaterials,
             ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
-            ?Assays = assays,
+            ?Assays = (assays |> Option.fromValueWithDefault []),
             ?Factors = (this.Factors |> List.ofArray |> Option.fromValueWithDefault []),
             ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
             ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
@@ -1014,14 +1024,14 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             )
 
     // Create an ArcStudy from an ISA Json Study.
-    static member fromStudy (s : Study) : (ArcStudy * ResizeArray<ArcAssay> option) = 
+    static member fromStudy (s : Study) : (ArcStudy * ResizeArray<ArcAssay>) = 
         let tables = (s.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
         let identifer = 
             match s.FileName with
             | Some fn -> Identifier.Study.identifierFromFileName fn
             | None -> Identifier.createMissingIdentifier()
-        let assays = s.Assays |> Option.map (List.map ArcAssay.fromAssay >> ResizeArray)
-        let assaysIdentifiers = assays |> Option.map (fun aArr -> aArr |> Seq.map (fun a -> a.Identifier) |> ResizeArray) 
+        let assays = s.Assays |> Option.map (List.map ArcAssay.fromAssay >> ResizeArray) |> Option.defaultValue (ResizeArray())
+        let assaysIdentifiers = assays |> Seq.map (fun a -> a.Identifier) |> ResizeArray
         ArcStudy.create(
             identifer,
             ?title = s.Title,
@@ -1032,7 +1042,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             ?contacts = (s.Contacts|> Option.map Array.ofList),
             ?studyDesignDescriptors = (s.StudyDesignDescriptors |> Option.map Array.ofList),
             ?tables = tables,
-            ?assays = assaysIdentifiers,
+            ?assays = Some assaysIdentifiers,
             ?factors = (s.Factors |> Option.map Array.ofList),
             ?comments = (s.Comments |> Option.map Array.ofList)
             ),
@@ -1044,7 +1054,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     let ontologySourceReferences = defaultArg ontologySourceReferences [||]
     let publications = defaultArg publications [||]
     let contacts = defaultArg contacts [||]
-    let assays = defaultArg assays <| ResizeArray()
+    let assays = defaultArg assays (ResizeArray())
     let studies = defaultArg studies (ResizeArray())
     let comments = defaultArg comments [||]
     let remarks = defaultArg remarks [||]
@@ -1194,6 +1204,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // - Study API - CRUD //
     member this.AddStudy(study: ArcStudy) =
         ArcTypesAux.SanityChecks.validateUniqueStudyIdentifier study this.Studies
+        study.Investigation <- Some this
         this.Studies.Add(study)
 
     static member addStudy(study: ArcStudy) =
@@ -1332,6 +1343,17 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy
 
     // - Study API - CRUD //
+    member this.DeregisterAssay(studyIdentifier: string, assayIdentifier: string) =
+        let index = this.GetStudyIndex(studyIdentifier)
+        this.DeregisterAssayAt(index, assayIdentifier)
+
+    static member deregisterAssay(studyIdentifier: string, assayIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.DeregisterAssay(studyIdentifier, assayIdentifier)
+            copy
+
+    // - Study API - CRUD //
     /// <summary>
     /// Deregisters assays not found in ArcInvestigation.Assays from all studies.
     /// </summary>
@@ -1376,7 +1398,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     /// Transform an ArcInvestigation to an ISA Json Investigation.
     member this.ToInvestigation() : Investigation = 
-        let studies = this.Studies |> Seq.toList |> List.map (fun a -> a.ToStudy()) |> Option.fromValueWithDefault []
+        let studies = this.Studies |> Seq.toList |> List.map (fun a -> a.ToStudy(a.GetRegisteredAssays())) |> Option.fromValueWithDefault []
         let identifier =
             if ARCtrl.ISA.Identifier.isMissingIdentifier this.Identifier then None
             else Some this.Identifier
@@ -1399,7 +1421,13 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             match i.Identifier with
             | Some i -> i
             | None -> Identifier.createMissingIdentifier()
-        let studies = i.Studies |> Option.map (List.map ArcStudy.fromStudy >> ResizeArray)
+        let studiesRaw, assaysRaw = 
+            i.Studies 
+            |> Option.defaultValue []
+            |> List.map ArcStudy.fromStudy
+            |> List.unzip
+        let studies = ResizeArray(studiesRaw)
+        let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray
         ArcInvestigation.create(
             identifer,
             ?title = i.Title,
@@ -1408,6 +1436,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?publicReleaseDate = i.PublicReleaseDate,
             ?publications = (i.Publications |> Option.map Array.ofList),
             ?contacts = (i.Contacts |> Option.map Array.ofList),
-            ?studies = studies,
+            ?assays = Some assays,
+            ?studies = Some studies,
             ?comments = (i.Comments |> Option.map Array.ofList)
             )
