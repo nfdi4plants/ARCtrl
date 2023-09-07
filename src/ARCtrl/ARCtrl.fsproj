@@ -12,6 +12,7 @@
     <Compile Include="Contracts\Contracts.ArcAssay.fs" />
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
+    <Compile Include="Contracts\Contracts.Git.fs" />
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
     <Compile Include="Templates\Templates.fs" />
     <Compile Include="Templates\Templates.Json.fs" />
@@ -29,6 +30,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>

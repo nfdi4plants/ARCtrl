@@ -237,6 +237,14 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
            
         )
 
+    member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitIgnore : bool) = 
+        let defaultGitIgnore = defaultArg defaultGitIgnore false
+        [|
+            Contract.Git.Init.createInitContract branch
+            if defaultGitIgnore then Contract.Git.gitIgnoreContract
+            if repositoryAddress.IsSome then Contract.Git.Init.createAddRemoteContract repositoryAddress.Value
+        |]
+
     member this.Copy() = 
         let isaCopy = _isa |> Option.map (fun i -> i.Copy())
         let fsCopy = _fs.Copy()
