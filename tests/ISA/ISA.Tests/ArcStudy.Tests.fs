@@ -40,7 +40,7 @@ let private test_create =
                     contacts = contacts,
                     studyDesignDescriptors = studyDesignDescriptors,
                     tables = tables,
-                    assays = assay_identifiers,
+                    registeredAssayIdentifiers = assay_identifiers,
                     factors = factors,
                     comments = comments
                 )
@@ -54,7 +54,7 @@ let private test_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
-            Expect.equal actual.Assays assay_identifiers "Assays"
+            Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
             Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
 
@@ -83,7 +83,7 @@ let private test_create =
                 contacts = contacts,
                 studyDesignDescriptors = studyDesignDescriptors,
                 tables = tables,
-                assays = assay_identifiers,
+                registeredAssayIdentifiers = assay_identifiers,
                 factors = factors,
                 comments = comments
             )
@@ -97,7 +97,7 @@ let private test_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
-            Expect.equal actual.Assays assay_identifiers "Assays"
+            Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
             Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
 
@@ -155,7 +155,7 @@ let private test_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
-            Expect.equal actual.Assays assay_identifiers "Assays"
+            Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
             Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
     ]
@@ -178,12 +178,12 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         testCase "GetRegisteredAssay" <| fun _ ->
             let study = createTestStudy()
             study.RegisterAssay(_assay_identifier)
-            let eval() = study.GetRegisteredAssay(_assay_identifier) |> ignore
+            let eval() = study.GetAssay(_assay_identifier) |> ignore
             Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
         testCase "GetRegisteredAssays" <| fun _ ->
             let study = createTestStudy()
             study.RegisterAssay(_assay_identifier)
-            let eval() = study.GetRegisteredAssays() |> ignore
+            let eval() = study.Assays |> ignore
             Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
         testCase "DeregisterAssay" <| fun _ ->
             let study = createTestStudy()
@@ -218,7 +218,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
             i.AddStudy(study)
             i.AddAssay(assay)
             study.RegisterAssay(_assay_identifier)
-            let actual = study.GetRegisteredAssay(_assay_identifier)
+            let actual = study.GetAssay(_assay_identifier)
             Expect.equal actual assay "equal"
         testCase "GetRegisteredAssays" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
@@ -227,7 +227,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
             i.AddStudy(study)
             i.AddAssay(assay)
             study.RegisterAssay(_assay_identifier)
-            let actual = study.GetRegisteredAssays()
+            let actual = study.Assays
             Expect.equal actual.[0] assay "equal"
         testCase "DeregisterAssay" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
@@ -288,7 +288,7 @@ let tests_copy =
             Expect.equal study.Identifier _study_identifier "_study_identifier"
             Expect.equal study.Description _study_description "_study_description"
             Expect.equal study.AssayCount 1 "AssayCount"
-            let assayIdentifier = study.AssayIdentifiers.[0]
+            let assayIdentifier = study.RegisteredAssayIdentifiers.[0]
             Expect.equal assayIdentifier _assay_identifier "_assay_identifier"
         testCase "test mutable fields" <| fun _ -> 
             let newDesciption = Some "New Description"
@@ -302,14 +302,14 @@ let tests_copy =
                 Expect.equal study.Description _study_description "_study_description"
                 Expect.equal study.PublicReleaseDate None "PublicReleaseDate"
                 Expect.equal study.AssayCount 1 "AssayCount"
-                let assayIdentifier = study.AssayIdentifiers.[0]
+                let assayIdentifier = study.RegisteredAssayIdentifiers.[0]
                 Expect.equal assayIdentifier _assay_identifier "_assay_identifier"
             let checkCopy =
                 Expect.equal copy.Identifier _study_identifier "copy _study_identifier"
                 Expect.equal copy.Description newDesciption "copy _study_description"
                 Expect.equal copy.PublicReleaseDate newPublicReleaseDate "copy PublicReleaseDate"
                 Expect.equal copy.AssayCount 1 "copy AssayCount"
-                let assayIdentifier = study.AssayIdentifiers.[0]
+                let assayIdentifier = study.RegisteredAssayIdentifiers.[0]
                 Expect.equal assayIdentifier _assay_identifier "copy _assay_identifier"
             ()
     ]

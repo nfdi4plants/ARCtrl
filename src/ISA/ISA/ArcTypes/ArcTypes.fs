@@ -18,6 +18,20 @@ module ArcTypesAux =
             | Some _ ->
                 ()
 
+        let inline validateExistingStudyRegisterInInvestigation (studyIdent: string) (existingStudyIdents: seq<string>) =
+            match existingStudyIdents |> Seq.tryFind (fun x -> x = studyIdent)  with
+            | None ->
+                failwith $"The given study with identifier '{studyIdent}' must be added to Investigation before it can be registered."
+            | Some _ ->
+                ()
+        
+        let inline validateUniqueRegisteredStudyIdentifiers (studyIdent: string) (studyIdents: seq<string>) =
+            match studyIdents |> Seq.contains studyIdent with
+            | true ->
+                failwith $"Study with identifier '{studyIdent}' is already registered!"
+            | false ->
+                ()
+
         let inline validateUniqueAssayIdentifier (assayIdent: string) (existingAssayIdents: seq<string>) =
             match existingAssayIdents |> Seq.tryFindIndex (fun x -> x = assayIdent)  with
             | Some i ->
@@ -39,10 +53,10 @@ module ArcTypesAux =
     let inline removeMissingRegisteredAssays (inv: ArcInvestigation) : unit =
         let existingAssays = inv.AssayIdentifiers
         for study in inv.Studies do
-            let registeredAssays = study.AssayIdentifiers 
+            let registeredAssays = study.RegisteredAssayIdentifiers |> Seq.map id
             for registeredAssay in registeredAssays do
                 if Seq.contains registeredAssay existingAssays |> not then
-                    study.Assays.Remove registeredAssay |> ignore
+                    study.DeregisterAssay registeredAssay |> ignore
 
 
 [<AttachMembers>]
@@ -117,7 +131,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     static member initTable(tableName: string, ?index: int) =
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
-            c.InitTable(tableName, ?index=index)
+            c,c.InitTable(tableName, ?index=index)
             
 
     // - Table API - //
@@ -452,7 +466,9 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member internal this.RemoveFromInvestigation () =
         this.Investigation <- None
 
-    /// Transform an ArcAssay to an ISA Json Assay.
+    /// Copies ArcAssay object without the pointer to the parent ArcInvestigation
+    ///
+    /// In order to copy the pointer to the parent ArcInvestigation as well, use the Copy() method of the ArcInvestigation instead.
     member this.ToAssay() : Assay = 
         let processSeq = ArcTables(this.Tables).GetProcesses()
         let assayMaterials =
@@ -496,12 +512,12 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             )
 
 [<AttachMembers>]
-type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays: ResizeArray<string>, ?factors, ?comments) = 
+type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
     let publications = defaultArg publications [||]
     let contacts = defaultArg contacts [||]
     let studyDesignDescriptors = defaultArg studyDesignDescriptors [||]
     let tables = defaultArg tables <| ResizeArray()
-    let assays = defaultArg assays <| ResizeArray()
+    let registeredAssayIdentifiers = defaultArg registeredAssayIdentifiers <| ResizeArray()
     let factors = defaultArg factors [||]
     let comments = defaultArg comments [||]
 
@@ -524,17 +540,17 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member val Contacts : Person [] = contacts with get, set
     member val StudyDesignDescriptors : OntologyAnnotation [] = studyDesignDescriptors with get, set
     member val Tables : ResizeArray<ArcTable> = tables with get, set
-    member val Assays : ResizeArray<string> = assays with get, set
+    member val RegisteredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers with get, set
     member val Factors : Factor [] = factors with get, set
     member val Comments : Comment []= comments with get, set
 
     static member init(identifier : string) = ArcStudy identifier
 
-    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?assays, ?factors, ?comments) = 
-        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, ?publications = publications, ?contacts = contacts, ?studyDesignDescriptors = studyDesignDescriptors, ?tables = tables, ?assays = assays, ?factors = factors, ?comments = comments)
+    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers, ?factors, ?comments) = 
+        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, ?publications = publications, ?contacts = contacts, ?studyDesignDescriptors = studyDesignDescriptors, ?tables = tables, ?registeredAssayIdentifiers = registeredAssayIdentifiers, ?factors = factors, ?comments = comments)
 
-    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables assays factors comments = 
-        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, publications = publications, contacts = contacts, studyDesignDescriptors = studyDesignDescriptors, tables = tables, assays = assays, factors = factors, comments = comments)
+    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables registeredAssayIdentifiers factors comments = 
+        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, publications = publications, contacts = contacts, studyDesignDescriptors = studyDesignDescriptors, tables = tables, registeredAssayIdentifiers = registeredAssayIdentifiers, factors = factors, comments = comments)
 
     /// <summary>
     /// Returns true if all fields are None/ empty sequences **except** Identifier.
@@ -549,7 +565,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             (this.Contacts = [||]) &&
             (this.StudyDesignDescriptors = [||]) &&
             (this.Tables.Count = 0) &&
-            (this.Assays.Count = 0) &&
+            (this.RegisteredAssayIdentifiers.Count = 0) &&
             (this.Factors = [||]) &&
             (this.Comments = [||])
 
@@ -558,10 +574,16 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     //member this.FileName = ArcStudy.FileName
 
     member this.AssayCount 
-        with get() = this.Assays.Count
+        with get() = this.RegisteredAssayIdentifiers.Count
 
-    member this.AssayIdentifiers
-        with get(): string [] = Array.ofSeq this.Assays
+    member this.Assays
+        with get(): ResizeArray<ArcAssay> = 
+            let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+            let assays = ResizeArray()
+            for assay in inv.Assays do
+                if Seq.contains assay.Identifier this.RegisteredAssayIdentifiers then
+                    assays.Add assay
+            assays
 
     // - Assay API - CRUD //
     /// <summary>
@@ -587,11 +609,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
     static member initAssay(assayIdentifier: string) =
         fun (study:ArcStudy) ->
-            let newStudy = study.Copy()
-            newStudy.InitAssay(assayIdentifier)
+            let copy = study.Copy()
+            copy,copy.InitAssay(assayIdentifier)
 
     member this.RegisterAssay(assayIdentifier: string) =
-        this.Assays.Add(assayIdentifier)
+        if Seq.contains assayIdentifier this.RegisteredAssayIdentifiers then failwith $"Assay `{assayIdentifier}` is already registered on the study."
+        this.RegisteredAssayIdentifiers.Add(assayIdentifier)
 
     static member registerAssay(assayIdentifier: string) =
         fun (study: ArcStudy) ->
@@ -600,7 +623,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             copy
 
     member this.DeregisterAssay(assayIdentifier: string) =
-        this.Assays.Remove(assayIdentifier) |> ignore
+        this.RegisteredAssayIdentifiers.Remove(assayIdentifier) |> ignore
 
     static member deregisterAssay(assayIdentifier: string) =
         fun (study: ArcStudy) ->
@@ -608,28 +631,21 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             copy.DeregisterAssay(assayIdentifier)
             copy
 
-    member this.GetRegisteredAssay(assayIdentifier: string) =
-        if Seq.contains assayIdentifier this.Assays |> not then failwith $"Assay `{assayIdentifier}` is not registered on the study."
+    member this.GetAssay(assayIdentifier: string) =
+        if Seq.contains assayIdentifier this.RegisteredAssayIdentifiers |> not then failwith $"Assay `{assayIdentifier}` is not registered on the study."
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
         inv.GetAssay(assayIdentifier)
 
-    static member getRegisteredAssay(assayIdentifier: string) =
+    static member getAssay(assayIdentifier: string) =
         fun (study: ArcStudy) ->
             let copy = study.Copy()
-            copy.GetRegisteredAssay(assayIdentifier)
+            copy.GetAssay(assayIdentifier)
 
-    member this.GetRegisteredAssays() = 
-        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-        let assays = ResizeArray()
-        for assay in inv.Assays do
-            if Seq.contains assay.Identifier this.AssayIdentifiers then
-                assays.Add assay
-        assays
-
-    static member getRegisteredAssays() =
+       
+    static member getAssays() =
         fun (study: ArcStudy) ->
             let copy = study.Copy()
-            copy.GetRegisteredAssays()
+            copy.Assays
 
     /// <summary>
     /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
@@ -640,12 +656,13 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         // 2. Get full assays from ArcInvestigation parent.
         match this.Investigation with
         | Some i -> 
-            this.GetRegisteredAssays()
+            this.Assays
         | None ->
-            this.Assays |> Seq.map (fun x -> ArcAssay.init(x)) |> ResizeArray
-        |> Seq.toList 
-        |> List.map (fun a -> a.ToAssay()) 
+            this.RegisteredAssayIdentifiers |> Seq.map (fun identifier -> ArcAssay.init(identifier)) |> ResizeArray       
 
+    /// <summary>
+    /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
+    /// </summary>
     static member getRegisteredAssaysOrIdentifier() =
         fun (study: ArcStudy) ->
             let copy = study.Copy()
@@ -686,7 +703,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     static member initTable(tableName: string, ?index: int) =
         fun (study:ArcStudy) ->
             let c = study.Copy()
-            c.InitTable(tableName, ?index=index)
+            c,c.InitTable(tableName, ?index=index)
             
 
     // - Table API - //
@@ -970,9 +987,15 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member internal this.RemoveFromInvestigation () =
         this.Investigation <- None
 
+
+    /// Copies ArcStudy objec without the pointer to the parent ArcInvestigation
+    ///
+    /// This copy does only contain the identifiers of the registered ArcAssays and not the actual objects.
+    ///
+    /// In order to copy the ArcAssays as well, use the Copy() method of the ArcInvestigation.
     member this.Copy() : ArcStudy =
         let nextTables = ResizeArray()
-        let nextAssays = ResizeArray(this.Assays)
+        let nextAssayIdentifiers = ResizeArray(this.RegisteredAssayIdentifiers)
         for table in this.Tables do
             let copy = table.Copy()
             nextTables.Add(copy)
@@ -991,13 +1014,16 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             contacts = nextContacts,
             studyDesignDescriptors = nextStudyDesignDescriptors,
             tables = nextTables,
-            assays = nextAssays,
+            registeredAssayIdentifiers = nextAssayIdentifiers,
             factors = nextFactors,
             comments = nextComments
         )
 
-    /// Transform an ArcStudy to an ISA Json Study.
-    member this.ToStudy(arcAssays: ResizeArray<ArcAssay>) : Study = 
+    /// <summary>
+    /// Creates an ISA-Json compatible Study from ArcStudy.
+    /// </summary>
+    /// <param name="arcAssays">If this parameter is given, will transform these ArcAssays to Assays and include them as children of the Study. If not, tries to get them from the parent ArcInvestigation instead. If ArcStudy has no parent ArcInvestigation either, initializes new ArcAssay from registered Identifiers.</param>
+    member this.ToStudy(?arcAssays: ResizeArray<ArcAssay>) : Study = 
         let processSeq = ArcTables(this.Tables).GetProcesses()
         let protocols = ProcessSequence.getProtocols processSeq |> Option.fromValueWithDefault []
         let studyMaterials =
@@ -1012,7 +1038,9 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
                 None, None
             else
                 Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)
-        let assays = arcAssays |> List.ofSeq |> List.map (fun a -> a.ToAssay())
+        let assays = 
+            arcAssays |> Option.defaultValue (this.GetRegisteredAssaysOrIdentifier())
+            |> List.ofSeq |> List.map (fun a -> a.ToAssay())
         Study.create(
             ?FileName = fileName,
             ?Identifier = identifier,
@@ -1052,20 +1080,21 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             ?contacts = (s.Contacts|> Option.map Array.ofList),
             ?studyDesignDescriptors = (s.StudyDesignDescriptors |> Option.map Array.ofList),
             ?tables = tables,
-            ?assays = Some assaysIdentifiers,
+            ?registeredAssayIdentifiers = Some assaysIdentifiers,
             ?factors = (s.Factors |> Option.map Array.ofList),
             ?comments = (s.Comments |> Option.map Array.ofList)
             ),
         assays
 
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?comments : Comment [], ?remarks : Remark []) = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) = 
 
     let ontologySourceReferences = defaultArg ontologySourceReferences [||]
     let publications = defaultArg publications [||]
     let contacts = defaultArg contacts [||]
     let assays = defaultArg assays (ResizeArray())
     let studies = defaultArg studies (ResizeArray())
+    let registeredStudyIdentifiers = defaultArg registeredStudyIdentifiers (ResizeArray())
     let comments = defaultArg comments [||]
     let remarks = defaultArg remarks [||]
 
@@ -1084,17 +1113,18 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member val Contacts : Person [] = contacts with get, set
     member val Assays : ResizeArray<ArcAssay> = assays with get, set
     member val Studies : ResizeArray<ArcStudy> = studies with get, set
+    member val RegisteredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers with get, set
     member val Comments : Comment [] = comments with get, set
     member val Remarks : Remark [] = remarks with get, set
 
     static member FileName = ARCtrl.Path.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
-    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?comments : Comment [], ?remarks : Remark []) = 
-        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?comments = comments, ?remarks = remarks)
+    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>,?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) = 
+        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks)
 
-    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences : OntologySourceReference []) (publications : Publication []) (contacts : Person []) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (comments : Comment []) (remarks : Remark []) : ArcInvestigation =
-        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, assays = assays, studies = studies, comments = comments, remarks = remarks)
+    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences : OntologySourceReference []) (publications : Publication []) (contacts : Person []) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (registeredStudyIdentifiers : ResizeArray<string>) (comments : Comment []) (remarks : Remark []) : ArcInvestigation =
+        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, assays = assays, studies = studies, registeredStudyIdentifiers = registeredStudyIdentifiers, comments = comments, remarks = remarks)
 
     member this.AssayCount 
         with get() = this.Assays.Count
@@ -1105,6 +1135,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // - Assay API - CRUD //
     member this.AddAssay(assay: ArcAssay) =
         ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assay.Identifier (this.Assays |> Seq.map (fun x -> x.Identifier))
+        assay.Investigation <- Some(this)
         this.Assays.Add(assay)
 
     static member addAssay(assay: ArcAssay) =
@@ -1157,6 +1188,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // - Assay API - CRUD //
     member this.SetAssayAt(index: int, assay: ArcAssay) =
         ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assay.Identifier (this.Assays |> Seq.removeAt index |> Seq.map (fun a -> a.Identifier))
+        assay.Investigation <- Some(this)
         this.Assays.[index] <- assay
         this.DeregisterMissingAssays()
 
@@ -1205,6 +1237,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInvestigation = inv.Copy()
             newInvestigation.GetAssay(assayIdentifier)
 
+    member this.RegisteredStudies 
+        with get() = 
+            this.RegisteredStudyIdentifiers 
+            |> Seq.map (fun identifier -> this.GetStudy identifier)
+            |> ResizeArray
+
     member this.StudyCount 
         with get() = this.Studies.Count
 
@@ -1224,15 +1262,27 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy
 
     // - Study API - CRUD //
-    member this.InitStudy (studyName: string) =
-        let study = ArcStudy.init(studyName)
+    member this.InitStudy (studyIdentifier: string) =
+        let study = ArcStudy.init(studyIdentifier)
         this.AddStudy(study)
         study
 
-    static member initStudy(studyName: string) =
+    static member initStudy(studyIdentifier: string) =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
-            copy.InitStudy(studyName)
+            copy,copy.InitStudy(studyIdentifier)
+
+    // - Study API - CRUD //
+    member this.RegisterStudy (studyIdentifier : string) = 
+        ArcTypesAux.SanityChecks.validateExistingStudyRegisterInInvestigation studyIdentifier this.StudyIdentifiers 
+        ArcTypesAux.SanityChecks.validateUniqueRegisteredStudyIdentifiers studyIdentifier this.RegisteredStudyIdentifiers       
+        this.RegisteredStudyIdentifiers.Add(studyIdentifier)
+
+    static member registerStudy(studyIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.RegisterStudy(studyIdentifier)
+            copy
 
     // - Study API - CRUD //
     member this.RemoveStudyAt(index: int) =
@@ -1259,6 +1309,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // - Study API - CRUD //
     member this.SetStudyAt(index: int, study: ArcStudy) =
         ArcTypesAux.SanityChecks.validateUniqueStudyIdentifier study (this.Studies |> Seq.removeAt index)
+        study.Investigation <- Some this
         this.Studies.[index] <- study
 
     static member setStudyAt(index: int, study: ArcStudy) =
@@ -1270,8 +1321,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // - Study API - CRUD //
     member this.SetStudy(studyIdentifier: string, study: ArcStudy) =
         let index = this.GetStudyIndex studyIdentifier
-        ArcTypesAux.SanityChecks.validateUniqueStudyIdentifier study (this.Studies |> Seq.removeAt index)
-        this.Studies.[index] <- study
+        this.SetStudyAt(index,study)
 
     static member setStudy(studyIdentifier: string, study: ArcStudy) =
         fun (inv: ArcInvestigation) ->
@@ -1316,7 +1366,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.RegisterAssayAt(studyIndex: int, assayIdentifier: string) =
         let study = this.GetStudyAt(studyIndex)
         ArcTypesAux.SanityChecks.validateAssayRegisterInInvestigation assayIdentifier (this.Assays |> Seq.map (fun a -> a.Identifier))
-        ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assayIdentifier study.Assays
+        ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assayIdentifier study.RegisteredAssayIdentifiers
         study.RegisterAssay(assayIdentifier)
 
     static member registerAssayAt(studyIndex: int, assayIdentifier: string) =
@@ -1390,25 +1440,32 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         let nextContacts = this.Contacts |> Array.map (fun c -> c.Copy())
         let nextPublications = this.Publications |> Array.map (fun c -> c.Copy())
         let nextOntologySourceReferences = this.OntologySourceReferences |> Array.map (fun c -> c.Copy())
-        ArcInvestigation(
+        let nextStudyIdentifiers = ResizeArray(this.RegisteredStudyIdentifiers)
+        let i = ArcInvestigation(
             this.Identifier,
             ?title = this.Title,
             ?description = this.Description,
             ?submissionDate = this.SubmissionDate,
             ?publicReleaseDate = this.PublicReleaseDate,
+            registeredStudyIdentifiers = nextStudyIdentifiers,
             ontologySourceReferences = nextOntologySourceReferences,
             publications = nextPublications,
             contacts = nextContacts,
-            assays = nextAssays,
-            studies = nextStudies, // correct mutable behaviour is tested on this field
             comments = nextComments,
             remarks = nextRemarks
         )
+        // This is necessary, so the studies and assays know which investigation they belong to.
+        for study in nextStudies do           
+            i.AddStudy study
+        for assay in nextAssays do
+            i.AddAssay assay
+
+        i
 
 
     /// Transform an ArcInvestigation to an ISA Json Investigation.
     member this.ToInvestigation() : Investigation = 
-        let studies = this.Studies |> Seq.toList |> List.map (fun a -> a.ToStudy(a.GetRegisteredAssays())) |> Option.fromValueWithDefault []
+        let studies = this.RegisteredStudies |> Seq.toList |> List.map (fun a -> a.ToStudy()) |> Option.fromValueWithDefault []
         let identifier =
             if ARCtrl.ISA.Identifier.isMissingIdentifier this.Identifier then None
             else Some this.Identifier
@@ -1438,15 +1495,21 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             |> List.unzip
         let studies = ResizeArray(studiesRaw)
         let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray
-        ArcInvestigation.create(
+        let i = ArcInvestigation.create(
             identifer,
             ?title = i.Title,
             ?description = i.Description,
             ?submissionDate = i.SubmissionDate,
             ?publicReleaseDate = i.PublicReleaseDate,
             ?publications = (i.Publications |> Option.map Array.ofList),
-            ?contacts = (i.Contacts |> Option.map Array.ofList),
-            ?assays = Some assays,
-            ?studies = Some studies,
+            ?contacts = (i.Contacts |> Option.map Array.ofList),            
             ?comments = (i.Comments |> Option.map Array.ofList)
             )
+        
+        // This is necessary, so the studies and assays know which investigation they belong to.
+        for study in studies do      
+            i.AddStudy study
+        for assay in assays do
+            i.AddAssay assay
+
+        i

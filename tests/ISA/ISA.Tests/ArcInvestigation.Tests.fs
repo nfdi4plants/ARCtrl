@@ -129,6 +129,7 @@ let private test_create =
             let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
             let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
+            let registeredStudyIdentifiers = ResizeArray(["Study 1"])
             let comments = [|Comment.create("Comment 1")|]
             let remarks = [|Remark.create(1, "Remark 1")|]
 
@@ -144,6 +145,7 @@ let private test_create =
                     contacts
                     assays
                     studies
+                    registeredStudyIdentifiers
                     comments
                     remarks
 
@@ -170,7 +172,7 @@ let test_RegisteredAssays = testList "RegisteredAssay" [
         Expect.equal i.StudyCount 1 "study count"
         i.RegisterAssay(s.Identifier, a.Identifier)
         Expect.equal s.AssayCount 1 "registered assay count"
-        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
     testCase "Study.RegisterAssay" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -179,7 +181,7 @@ let test_RegisteredAssays = testList "RegisteredAssay" [
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
         Expect.equal s.AssayCount 1 "registered assay count"
-        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
     testCase "Investigation.DeregisterAssay" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -188,7 +190,7 @@ let test_RegisteredAssays = testList "RegisteredAssay" [
         Expect.equal i.StudyCount 1 "study count"
         i.RegisterAssay(s.Identifier, a.Identifier)
         Expect.equal s.AssayCount 1 "registered assay count"
-        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         i.DeregisterAssay(s.Identifier,a.Identifier)
         Expect.equal s.AssayCount 0 "registered assay count 2"
     testCase "Study.DeregisterAssay" <| fun _ ->
@@ -199,7 +201,7 @@ let test_RegisteredAssays = testList "RegisteredAssay" [
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
         Expect.equal s.AssayCount 1 "registered assay count"
-        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         s.DeregisterAssay(a.Identifier)
         Expect.equal s.AssayCount 0 "registered assay count 2"
     testCase "Remove registered assay from investigation" <| fun _ ->
@@ -210,7 +212,7 @@ let test_RegisteredAssays = testList "RegisteredAssay" [
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
         Expect.equal s.AssayCount 1 "registered assay count"
-        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         i.RemoveAssayAt 0 
         Expect.equal i.AssayCount 0 "assay count 2"
         Expect.equal s.AssayCount 0 "registered assay count 2"
@@ -222,7 +224,7 @@ let test_RegisteredAssays = testList "RegisteredAssay" [
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
         Expect.equal s.AssayCount 1 "registered assay count"
-        Expect.equal s.Assays.[0] a.Identifier "identifier"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         i.Assays <- (ResizeArray())
         Expect.equal i.AssayCount 0 "assay count 2"
         Expect.equal s.AssayCount 1 "registered assay count 2"
@@ -254,8 +256,8 @@ let tests_MutableFields = testList "MutableFields" [
         Expect.equal i.StudyCount 1 "study count"
         Expect.equal study.AssayCount 1 "registered assay count"
         Expect.equal assay.TableCount 0 "assay table count"
-        Expect.equal study.Assays.[0] assay.Identifier "registered assay identifier"
-        let registeredAssay = study.GetRegisteredAssays().[0]
+        Expect.equal study.RegisteredAssayIdentifiers.[0] assay.Identifier "registered assay identifier"
+        let registeredAssay = study.Assays.[0]
         Expect.equal registeredAssay.Identifier assay.Identifier "full registered assay identifier"
         let table = registeredAssay.InitTable("My New Table")
         Expect.equal assay.TableCount 1 "table count to init table"
