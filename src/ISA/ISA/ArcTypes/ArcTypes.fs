@@ -1090,13 +1090,21 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         assays
 
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
 
     let ontologySourceReferences = defaultArg ontologySourceReferences [||]
     let publications = defaultArg publications [||]
     let contacts = defaultArg contacts [||]
-    let assays = defaultArg assays (ResizeArray())
-    let studies = defaultArg studies (ResizeArray())
+    let assays = 
+        let ass = defaultArg assays (ResizeArray())
+        for a in ass do 
+            a.Investigation <- Some this
+        ass
+    let studies = 
+        let sss = defaultArg studies (ResizeArray())
+        for s in sss do 
+            s.Investigation <- Some this
+        sss
     let registeredStudyIdentifiers = defaultArg registeredStudyIdentifiers (ResizeArray())
     let comments = defaultArg comments [||]
     let remarks = defaultArg remarks [||]
@@ -1450,6 +1458,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?description = this.Description,
             ?submissionDate = this.SubmissionDate,
             ?publicReleaseDate = this.PublicReleaseDate,
+            studies = nextStudies,
+            assays = nextAssays,
             registeredStudyIdentifiers = nextStudyIdentifiers,
             ontologySourceReferences = nextOntologySourceReferences,
             publications = nextPublications,
@@ -1457,12 +1467,6 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             comments = nextComments,
             remarks = nextRemarks
         )
-        // This is necessary, so the studies and assays know which investigation they belong to.
-        for study in nextStudies do           
-            i.AddStudy study
-        for assay in nextAssays do
-            i.AddAssay assay
-
         i
 
 
@@ -1497,6 +1501,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             |> List.map ArcStudy.fromStudy
             |> List.unzip
         let studies = ResizeArray(studiesRaw)
+        let studyIdentifiers = studiesRaw |> Seq.map (fun a -> a.Identifier) |> ResizeArray
         let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray
         let i = ArcInvestigation.create(
             identifer,
@@ -1505,14 +1510,10 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?submissionDate = i.SubmissionDate,
             ?publicReleaseDate = i.PublicReleaseDate,
             ?publications = (i.Publications |> Option.map Array.ofList),
+            studies = studies,
+            assays = assays,
+            registeredStudyIdentifiers = studyIdentifiers,
             ?contacts = (i.Contacts |> Option.map Array.ofList),            
             ?comments = (i.Comments |> Option.map Array.ofList)
-            )
-        
-        // This is necessary, so the studies and assays know which investigation they belong to.
-        for study in studies do      
-            i.AddStudy study
-        for assay in assays do
-            i.AddAssay assay
-
+            )      
         i

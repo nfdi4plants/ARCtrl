@@ -1,69 +1,77 @@
-﻿module ARCtrl.ISA.Spreadsheet.ArcStudy
+﻿namespace ARCtrl.ISA.Spreadsheet
 
 open ARCtrl.ISA
 open FsSpreadsheet
 
-let [<Literal>] obsoleteStudiesLabel = "STUDY METADATA"
-let [<Literal>] studiesLabel = "STUDY"
 
-let [<Literal>] obsoleteMetaDataSheetName = "Study"
-let [<Literal>] metaDataSheetName = "isa_study"
+module ArcStudy = 
 
+    let [<Literal>] obsoleteStudiesLabel = "STUDY METADATA"
+    let [<Literal>] studiesLabel = "STUDY"
 
-let toMetadataSheet (study : ArcStudy) : FsWorksheet =
-    let toRows (study:ArcStudy) =
-        seq {          
-            yield  SparseRow.fromValues [studiesLabel]
-            yield! Studies.StudyInfo.toRows study
-        }
-    let sheet = FsWorksheet(metaDataSheetName)
-    study
-    |> toRows
-    |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
-    sheet
+    let [<Literal>] obsoleteMetaDataSheetName = "Study"
+    let [<Literal>] metaDataSheetName = "isa_study"
 
-let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy =
-    let fromRows (rows: seq<SparseRow>) =
-        let en = rows.GetEnumerator()
-        en.MoveNext() |> ignore  
-        let _,_,_,study = Studies.fromRows 2 en
-        study
-    sheet.Rows 
-    |> Seq.map SparseRow.fromFsRow
-    |> fromRows
-    |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()))
+    let toMetadataSheet (study : ArcStudy) (assays : ArcAssay list option) : FsWorksheet =
+        //let toRows (study:ArcStudy) assays =
+        //    seq {          
+        //        yield  SparseRow.fromValues [studiesLabel]
+        //        yield! Studies.StudyInfo.toRows study
+        //    }
+        let sheet = FsWorksheet(metaDataSheetName)
+        Studies.toRows study assays
+        |> Seq.append [SparseRow.fromValues [studiesLabel]]
+        |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
+        sheet
 
-/// Reads an assay from a spreadsheet
-let fromFsWorkbook (doc:FsWorkbook) = 
-    // Reading the "Assay" metadata sheet. Here metadata 
-    let studyMetadata = 
+    let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy*ArcAssay list =
+        let fromRows (rows: seq<SparseRow>) =
+            let en = rows.GetEnumerator()
+            en.MoveNext() |> ignore  
+            let _,_,_,study = Studies.fromRows 2 en
+            study
+        sheet.Rows 
+        |> Seq.map SparseRow.fromFsRow
+        |> fromRows
+        |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()),[])
+
+[<AutoOpen>]
+module Extensions =
+
+    type ArcStudy with
+    
+        /// Reads an assay from a spreadsheet
+        static member fromFsWorkbook (doc:FsWorkbook) = 
+            // Reading the "Assay" metadata sheet. Here metadata 
+            let studyMetadata,assays = 
         
-        match doc.TryGetWorksheetByName metaDataSheetName with 
-        | Option.Some sheet ->
-            fromMetadataSheet sheet
-        | None ->  
-            match doc.TryGetWorksheetByName obsoleteMetaDataSheetName with 
-            | Option.Some sheet ->
-                fromMetadataSheet sheet
-            | None -> 
-                printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." metaDataSheetName obsoleteMetaDataSheetName
-                ArcStudy.create(Identifier.createMissingIdentifier())
+                match doc.TryGetWorksheetByName ArcStudy.metaDataSheetName with 
+                | Option.Some sheet ->
+                    ArcStudy.fromMetadataSheet sheet
+                | None ->  
+                    match doc.TryGetWorksheetByName ArcStudy.obsoleteMetaDataSheetName with 
+                    | Option.Some sheet ->
+                        ArcStudy.fromMetadataSheet sheet
+                    | None -> 
+                        printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." ArcStudy.metaDataSheetName ArcStudy.obsoleteMetaDataSheetName
+                        ArcStudy.create(Identifier.createMissingIdentifier()),[]
 
-    let sheets = 
-        doc.GetWorksheets()
-        |> Seq.choose ArcTable.tryFromFsWorksheet
-    if sheets |> Seq.isEmpty then
-        studyMetadata
-    else
-        studyMetadata.Tables <- ResizeArray(sheets)
-        studyMetadata
+            let sheets = 
+                doc.GetWorksheets()
+                |> Seq.choose ArcTable.tryFromFsWorksheet
+            if sheets |> Seq.isEmpty then
+                studyMetadata
+            else
+                studyMetadata.Tables <- ResizeArray(sheets)
+                studyMetadata
+            ,assays
 
-let toFsWorkbook (study : ArcStudy) =
-    let doc = new FsWorkbook()
-    let metaDataSheet = toMetadataSheet study
-    doc.AddWorksheet metaDataSheet
+        static member toFsWorkbook (study : ArcStudy,?assays : ArcAssay list) =
+            let doc = new FsWorkbook()
+            let metaDataSheet = ArcStudy.toMetadataSheet study assays
+            doc.AddWorksheet metaDataSheet
 
-    study.Tables
-    |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+            study.Tables
+            |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
 
-    doc
+            doc

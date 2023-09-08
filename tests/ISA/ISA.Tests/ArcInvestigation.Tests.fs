@@ -161,6 +161,37 @@ let private test_create =
             Expect.equal actual.Studies studies "Studies"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
+        testCase "constructorAppliesReference" <| fun _ ->
+            let assayName = "MyAssay"
+            let studyName = "MyStudy"
+            let tableName = "MyTable"
+            let investigationName = "MyInvestigation"
+
+            let myAssay = ArcAssay.init(assayName)
+            myAssay.InitTable(tableName) |> ignore
+            let myStudy = ArcStudy.init(studyName)
+            myStudy.RegisterAssay(assayName)
+
+            let assays = ResizeArray([myAssay])
+            let studies = ResizeArray([|myStudy|])
+            let registeredStudyIdentifiers = ResizeArray([studyName])
+
+            let myInvestigation = 
+                ArcInvestigation(
+                    investigationName,
+                    assays = assays,
+                    studies = studies,
+                    registeredStudyIdentifiers = registeredStudyIdentifiers
+                )
+
+            let result = myStudy.GetRegisteredAssay(assayName)
+
+            Expect.equal result myAssay "Retrieved assay should be equal"
+
+            result.InitTable("MySecondTable") |> ignore
+
+            Expect.equal result.TableCount 2 "Table count should be 2"
+            Expect.equal myAssay.TableCount 2 "Table count should also be 2"
     ]
 
 let test_RegisteredAssays = testList "RegisteredAssays" [

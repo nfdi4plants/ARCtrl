@@ -98,7 +98,8 @@ module ArcInvestigation =
             |> InvestigationInfo.ToSparseTable
             |> SparseTable.ToRows
  
-    let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) (publications: Publication list) (contacts: Person list) (studies: ArcStudy list) (remarks: Remark list) =
+    let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) (publications: Publication list) (contacts: Person list) (studies: ArcStudy list) (assays: ArcAssay list) (remarks: Remark list) =
+        let studyIdentifiers = studies |> List.map (fun s -> s.Identifier)
         ArcInvestigation.make 
             (investigationInfo.Identifier)
             (Option.fromValueWithDefault "" investigationInfo.Title)
@@ -108,7 +109,9 @@ module ArcInvestigation =
             (Array.ofList ontologySourceReference) 
             (Array.ofList publications)  
             (Array.ofList contacts)  
+            (ResizeArray(assays))
             (ResizeArray(studies))  
+            (ResizeArray(studyIdentifiers))
             (Array.ofList investigationInfo.Comments)  
             (Array.ofList remarks)
 
@@ -145,7 +148,13 @@ module ArcInvestigation =
                     loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | k -> 
-                fromParts investigationInfo ontologySourceReferences publications contacts (List.rev studies) remarks
+                let studies,assays = 
+                    studies 
+                    |> List.unzip 
+                    |> fun (s,a) -> 
+                        s |> List.rev, 
+                        a |> List.concat |> List.distinctBy (fun a -> a.Identifier)
+                fromParts investigationInfo ontologySourceReferences publications contacts studies assays remarks
 
         if en.MoveNext () then
             let currentLine = en.Current |> SparseRow.tryGetValueAt 0
@@ -187,7 +196,7 @@ module ArcInvestigation =
 
             for study in (List.ofSeq investigation.Studies) do
                 yield  SparseRow.fromValues [studyLabel]
-                yield! Studies.toRows study
+                yield! Studies.toRows study None
         }
         |> insertRemarks (List.ofArray investigation.Remarks)
         |> seq

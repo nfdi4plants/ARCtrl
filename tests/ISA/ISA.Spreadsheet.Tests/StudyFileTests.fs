@@ -37,11 +37,11 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessEmpty" (fun () ->
 
-            let a = ArcStudy.fromMetadataSheet TestObjects.Study.studyMetadataEmpty
+            let study,assays = ArcStudy.fromMetadataSheet TestObjects.Study.studyMetadataEmpty
 
             let writingSuccess = 
                 try 
-                    ArcStudy.toMetadataSheet a |> ignore
+                    ArcStudy.toMetadataSheet study (Some assays) |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the Empty test file failed: %s" err.Message)
@@ -51,11 +51,11 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessEmptyObsoleteSheetName" (fun () ->
 
-            let a = 
+            let study,assays = 
                 ArcStudy.fromMetadataSheet TestObjects.Study.studyMetadataEmptyObsoleteSheetName
             let writingSuccess = 
                 try 
-                    ArcStudy.toMetadataSheet a |> ignore
+                    ArcStudy.toMetadataSheet study (Some assays) |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the Empty test file failed: %s" err.Message)
@@ -68,9 +68,18 @@ let testMetaDataFunctions =
             let o = 
                 TestObjects.Study.studyMetadataEmpty
                 |> ArcStudy.fromMetadataSheet
-                |> ArcStudy.toMetadataSheet
+                |> fun (s,a) -> ArcStudy.toMetadataSheet s (Some a)
 
             Expect.workSheetEqual o TestObjects.Study.studyMetadataEmpty "Written Empty study metadata does not match read study metadata"
+        )
+        testCase "OutputMatchesInput" (fun () ->
+           
+            let o = 
+                TestObjects.Study.studyMetadata
+                |> ArcStudy.fromMetadataSheet
+                |> fun (s,a) -> ArcStudy.toMetadataSheet s (Some a)
+
+            Expect.workSheetEqual o TestObjects.Study.studyMetadata "Written Empty study metadata does not match read study metadata"
         )
 
         testCase "OutputSheetNamesDifferentEmptyObsoleteSheetName" (fun () ->
@@ -78,7 +87,7 @@ let testMetaDataFunctions =
             let o = 
                 TestObjects.Study.studyMetadataEmptyObsoleteSheetName
                 |> ArcStudy.fromMetadataSheet
-                |> ArcStudy.toMetadataSheet
+                |> fun (s,a) -> ArcStudy.toMetadataSheet s (Some a)
 
             Expect.isTrue (o.Name <> TestObjects.Study.studyMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
         )

@@ -62,7 +62,7 @@ module Studies =
                     Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
             StudyInfo.create
-                (matrix.TryGetValueDefault("",(identifierLabel,i)))  
+                (matrix.TryGetValueDefault(Identifier.createMissingIdentifier(),(identifierLabel,i)))  
                 (matrix.TryGetValueDefault("",(titleLabel,i)))  
                 (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
                 (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
@@ -106,6 +106,7 @@ module Studies =
             |> SparseTable.ToRows
     
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) (publications: Publication list) (factors: Factor list) (assays: ArcAssay list) (protocols : Protocol list) (contacts: Person list) =
+        let assayIdentifiers = assays |> List.map (fun assay -> assay.Identifier)
         ArcStudy.make 
             (studyInfo.Identifier)
             (Option.fromValueWithDefault "" studyInfo.Title)
@@ -116,10 +117,12 @@ module Studies =
             (Array.ofList contacts)
             (Array.ofList designDescriptors)  
             (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
-            (ResizeArray(assays))
+            (ResizeArray(assayIdentifiers))
             (Array.ofList factors) 
             (Array.ofList studyInfo.Comments)
-        |> fun arcstudy -> if arcstudy.isEmpty && arcstudy.Identifier = "" then None else Some arcstudy
+        |> fun arcstudy -> 
+            if arcstudy.isEmpty && arcstudy.Identifier = "" 
+            then None else Some (arcstudy,assays)
 
     let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
 
@@ -158,8 +161,9 @@ module Studies =
         loop currentLine item [] [] [] [] [] [] remarks lineNumber
 
     
-    let toRows (study : ArcStudy) =
+    let toRows (study : ArcStudy) (assays : ArcAssay list option) =
         let protocols = study.Tables |> Seq.collect (fun p -> p.GetProtocols()) |> List.ofSeq
+        let assays = assays |> Option.defaultValue (study.GetRegisteredAssaysOrIdentifier() |> List.ofSeq)
         seq {          
             yield! StudyInfo.toRows study
 
@@ -173,7 +177,7 @@ module Studies =
             yield! Factors.toRows (Some factorsLabelPrefix) (List.ofArray study.Factors)
 
             yield  SparseRow.fromValues [assaysLabel]
-            yield! Assays.toRows (Some assaysLabelPrefix) (List.ofSeq study.Assays)
+            yield! Assays.toRows (Some assaysLabelPrefix) assays
 
             yield  SparseRow.fromValues [protocolsLabel]
             yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
