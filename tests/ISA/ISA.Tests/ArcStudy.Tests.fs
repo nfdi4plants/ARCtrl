@@ -168,34 +168,109 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         let s = ArcStudy(_study_identifier)
         s.Description <- _study_description
         s
-    testCase "RegisterAssay, no parent" <| fun _ ->
-        let study = createTestStudy()
-        study.RegisterAssay(_assay_identifier)
-        Expect.equal study.AssayCount 1 "registered assay count"
-    testCase "GetRegisteredAssay, no parent" <| fun _ ->
-        let study = createTestStudy()
-        study.RegisterAssay(_assay_identifier)
-        let eval() = study.GetRegisteredAssay(_assay_identifier) |> ignore
-        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
-    testCase "GetRegisteredAssays, no parent" <| fun _ ->
-        let study = createTestStudy()
-        study.RegisterAssay(_assay_identifier)
-        let eval() = study.GetRegisteredAssays() |> ignore
-        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
-    testCase "DeregisterAssay, no parent" <| fun _ ->
-        let study = createTestStudy()
-        study.RegisterAssay(_assay_identifier)
-        Expect.equal study.AssayCount 1 "registered assay count"
-        study.DeregisterAssay(_assay_identifier)
-        Expect.equal study.AssayCount 0 "registered assay count 2"
-    testCase "InitAssay, no parent" <| fun _ ->
-        let study = createTestStudy()
-        let eval() = study.InitAssay(_assay_identifier) |> ignore
-        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
-    testCase "AddAssay, no parent" <| fun _ ->
-        let study = createTestStudy()
-        let eval() = study.AddAssay(ArcAssay(_assay_identifier)) |> ignore
-        Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+    let createTestAssay() =
+        ArcAssay.init(_assay_identifier)
+    testList "no parent" [
+        testCase "RegisterAssay" <| fun _ ->
+            let study = createTestStudy()
+            study.RegisterAssay(_assay_identifier)
+            Expect.equal study.AssayCount 1 "registered assay count"
+        testCase "GetRegisteredAssay" <| fun _ ->
+            let study = createTestStudy()
+            study.RegisterAssay(_assay_identifier)
+            let eval() = study.GetRegisteredAssay(_assay_identifier) |> ignore
+            Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+        testCase "GetRegisteredAssays" <| fun _ ->
+            let study = createTestStudy()
+            study.RegisterAssay(_assay_identifier)
+            let eval() = study.GetRegisteredAssays() |> ignore
+            Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+        testCase "DeregisterAssay" <| fun _ ->
+            let study = createTestStudy()
+            study.RegisterAssay(_assay_identifier)
+            Expect.equal study.AssayCount 1 "registered assay count"
+            study.DeregisterAssay(_assay_identifier)
+            Expect.equal study.AssayCount 0 "registered assay count 2"
+        testCase "InitAssay" <| fun _ ->
+            let study = createTestStudy()
+            let eval() = study.InitAssay(_assay_identifier) |> ignore
+            Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+        testCase "AddAssay" <| fun _ ->
+            let study = createTestStudy()
+            let eval() = study.AddAssay(ArcAssay(_assay_identifier)) |> ignore
+            Expect.throws eval "throws as single study has no parent, therefore no access to full assays."
+    ]
+    testList "with parent" [
+        testCase "RegisterAssay" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let assay = createTestAssay()
+            let study = createTestStudy()
+            i.AddStudy(study)
+            i.AddAssay(assay)
+            study.RegisterAssay(_assay_identifier)
+            Expect.equal i.AssayCount 1 "AssayCount"
+            Expect.equal i.StudyCount 1 "StudyCount"
+            Expect.equal study.AssayCount 1 "registered assay count"
+        testCase "GetRegisteredAssay" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let assay = createTestAssay()
+            let study = createTestStudy()
+            i.AddStudy(study)
+            i.AddAssay(assay)
+            study.RegisterAssay(_assay_identifier)
+            let actual = study.GetRegisteredAssay(_assay_identifier)
+            Expect.equal actual assay "equal"
+        testCase "GetRegisteredAssays" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let assay = createTestAssay()
+            let study = createTestStudy()
+            i.AddStudy(study)
+            i.AddAssay(assay)
+            study.RegisterAssay(_assay_identifier)
+            let actual = study.GetRegisteredAssays()
+            Expect.equal actual.[0] assay "equal"
+        testCase "DeregisterAssay" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let assay = createTestAssay()
+            let study = createTestStudy()
+            i.AddStudy(study)
+            i.AddAssay(assay)
+            study.RegisterAssay(_assay_identifier)
+            study.DeregisterAssay(_assay_identifier)
+            Expect.equal study.AssayCount 0 "registered assay count 2"
+            Expect.equal i.AssayCount 1 "AssayCount, only deregister from study, not remove"
+            Expect.equal i.StudyCount 1 "StudyCount"
+        testCase "InitAssay" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let study = createTestStudy()
+            i.AddStudy(study)
+            let assay = study.InitAssay(_assay_identifier)
+            Expect.equal i.AssayCount 1 "AssayCount"
+            Expect.equal i.StudyCount 1 "StudyCount"
+            Expect.equal study.AssayCount 1 "registered assay count"
+            Expect.equal i.Assays.[0] assay "equal"
+        testCase "AddAssay" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let study = createTestStudy()
+            i.AddStudy(study)
+            let assay = ArcAssay.init(_assay_identifier)
+            study.AddAssay(assay)
+            Expect.equal i.AssayCount 1 "AssayCount"
+            Expect.equal i.StudyCount 1 "StudyCount"
+            Expect.equal study.AssayCount 1 "registered assay count"
+            Expect.equal i.Assays.[0] assay "equal"
+        testCase "Check mutability" <| fun _ ->
+            let i = ArcInvestigation.init("MyInvestigation")
+            let study = createTestStudy()
+            i.AddStudy(study)
+            let assay = ArcAssay.init(_assay_identifier)
+            study.AddAssay(assay)
+            let assayFromInv = i.Assays.[0]
+            let table = assayFromInv.InitTable("MyNewTable")
+            Expect.equal assayFromInv assay "equal"
+            Expect.equal assayFromInv.TableCount 1 "assayFromInv.TableCount"
+            Expect.equal assay.TableCount 1 "assay.TableCount"
+    ]
 ]
 
 let tests_copy = 
