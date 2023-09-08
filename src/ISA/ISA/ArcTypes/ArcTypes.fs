@@ -53,7 +53,7 @@ module ArcTypesAux =
     let inline removeMissingRegisteredAssays (inv: ArcInvestigation) : unit =
         let existingAssays = inv.AssayIdentifiers
         for study in inv.Studies do
-            let registeredAssays = study.RegisteredAssayIdentifiers |> Seq.map id
+            let registeredAssays = ResizeArray(study.RegisteredAssayIdentifiers)
             for registeredAssay in registeredAssays do
                 if Seq.contains registeredAssay existingAssays |> not then
                     study.DeregisterAssay registeredAssay |> ignore
@@ -573,10 +573,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     static member FileName = ARCtrl.Path.StudyFileName
     //member this.FileName = ArcStudy.FileName
 
-    member this.AssayCount 
+    member this.RegisteredAssayCount 
         with get() = this.RegisteredAssayIdentifiers.Count
 
-    member this.Assays
+    member this.RegisteredAssays
         with get(): ResizeArray<ArcAssay> = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
             let assays = ResizeArray()
@@ -590,28 +590,29 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// Add assay to investigation and register it to study.
     /// </summary>
     /// <param name="assay"></param>
-    member this.AddAssay(assay: ArcAssay) =
+    member this.AddRegisteredAssay(assay: ArcAssay) =
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation 
         inv.AddAssay(assay)
         inv.RegisterAssay(this.Identifier,assay.Identifier)
 
-    static member addAssay(assay: ArcAssay) =
+    static member addRegisteredAssay(assay: ArcAssay) =
         fun (study:ArcStudy) ->
             let newStudy = study.Copy()
-            newStudy.AddAssay(assay)
+            newStudy.AddRegisteredAssay(assay)
             newStudy
 
     // - Assay API - CRUD //
-    member this.InitAssay(assayIdentifier: string) =
+    member this.InitRegisteredAssay(assayIdentifier: string) =
         let assay = ArcAssay(assayIdentifier)
-        this.AddAssay(assay)
+        this.AddRegisteredAssay(assay)
         assay
 
-    static member initAssay(assayIdentifier: string) =
+    static member initRegisteredAssay(assayIdentifier: string) =
         fun (study:ArcStudy) ->
             let copy = study.Copy()
-            copy,copy.InitAssay(assayIdentifier)
+            copy,copy.InitRegisteredAssay(assayIdentifier)
 
+    // - Assay API - CRUD //
     member this.RegisterAssay(assayIdentifier: string) =
         if Seq.contains assayIdentifier this.RegisteredAssayIdentifiers then failwith $"Assay `{assayIdentifier}` is already registered on the study."
         this.RegisteredAssayIdentifiers.Add(assayIdentifier)
@@ -622,6 +623,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             copy.RegisterAssay(assayIdentifier)
             copy
 
+    // - Assay API - CRUD //
     member this.DeregisterAssay(assayIdentifier: string) =
         this.RegisteredAssayIdentifiers.Remove(assayIdentifier) |> ignore
 
@@ -631,21 +633,22 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             copy.DeregisterAssay(assayIdentifier)
             copy
 
-    member this.GetAssay(assayIdentifier: string) =
+    // - Assay API - CRUD //
+    member this.GetRegisteredAssay(assayIdentifier: string) =
         if Seq.contains assayIdentifier this.RegisteredAssayIdentifiers |> not then failwith $"Assay `{assayIdentifier}` is not registered on the study."
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
         inv.GetAssay(assayIdentifier)
 
-    static member getAssay(assayIdentifier: string) =
+    static member getRegisteredAssay(assayIdentifier: string) =
         fun (study: ArcStudy) ->
             let copy = study.Copy()
-            copy.GetAssay(assayIdentifier)
+            copy.GetRegisteredAssay(assayIdentifier)
 
-       
-    static member getAssays() =
+    // - Assay API - CRUD //
+    static member getRegisteredAssays() =
         fun (study: ArcStudy) ->
             let copy = study.Copy()
-            copy.Assays
+            copy.RegisteredAssays
 
     /// <summary>
     /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
@@ -656,7 +659,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         // 2. Get full assays from ArcInvestigation parent.
         match this.Investigation with
         | Some i -> 
-            this.Assays
+            this.RegisteredAssays
         | None ->
             this.RegisteredAssayIdentifiers |> Seq.map (fun identifier -> ArcAssay.init(identifier)) |> ResizeArray       
 
@@ -1130,7 +1133,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         with get() = this.Assays.Count
 
     member this.AssayIdentifiers 
-        with get(): seq<string> = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.Identifier)
+        with get(): string [] = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.Identifier) |> Array.ofSeq
 
     // - Assay API - CRUD //
     member this.AddAssay(assay: ArcAssay) =
