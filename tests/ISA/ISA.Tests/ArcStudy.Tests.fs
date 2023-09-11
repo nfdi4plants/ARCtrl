@@ -314,12 +314,184 @@ let tests_copy =
             ()
     ]
 
+let tests_UpdateBy = testList "UpdateBy" [
+    let createFullStudy() =
+        let identifier = "MyIdentifier"
+        let title = "Study Title"
+        let description = "Study Description"
+        let submissionDate = "2023-07-19"
+        let publicReleaseDate = "2023-12-31"
+        let publications = [|Publication.create("Publication 1")|]
+        let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+        let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+        let tables = ResizeArray([|ArcTable.init("Table 1")|])
+        let assays = createExampleAssays()
+        let assay_identifiers = getAssayIdentifiers assays
+        let factors = [|Factor.create("Factor 1")|]
+        let comments = [|Comment.create("Comment 1")|]
+
+        ArcStudy(
+            identifier = identifier,
+            title = title,
+            description = description,
+            submissionDate = submissionDate,
+            publicReleaseDate = publicReleaseDate,
+            publications = publications,
+            contacts = contacts,
+            studyDesignDescriptors = studyDesignDescriptors,
+            tables = tables,
+            registeredAssayIdentifiers = assay_identifiers,
+            factors = factors,
+            comments = comments
+        )
+    testCase "UpdateBy, full replace" <| fun _ ->
+        let actual = createFullStudy()
+        let next = 
+            ArcStudy(
+                identifier = "Next_identifier",
+                title = "Next_Title",
+                description = "Description",
+                submissionDate = "Next_SubmissionDate",
+                publicReleaseDate = "Next_PublicReleaseDate",
+                publications = [||],
+                contacts = [||],
+                studyDesignDescriptors = [||],
+                tables = ResizeArray(),
+                registeredAssayIdentifiers = ResizeArray(),
+                factors = [||],
+                comments = [||]
+            )
+        actual.UpdateBy(next)
+        Expect.notEqual actual next "not equal"
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.Publications next.Publications "Publications"
+        Expect.equal actual.Contacts next.Contacts "Contacts"
+        Expect.equal actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
+        Expect.equal actual.Tables.Count next.Tables.Count "Tables.Count" // Ok
+        Expect.equal actual.Tables.Count 0 "Tables.Count = 0" // Ok
+        Expect.equal actual.Tables next.Tables "Tables" 
+        Expect.equal actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.equal actual.Factors next.Factors "Factors"
+        Expect.equal actual.Comments next.Comments "Comments"
+    testCase "UpdateBy, replace existing, none replaced" <| fun _ ->
+        let actual = createFullStudy()
+        let next = ArcStudy.init("NextIdentifier")
+        let expected = createFullStudy()
+        actual.UpdateBy(next, true)
+        Expect.notEqual actual next "not equal"
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title expected.Title "Title"
+        Expect.equal actual.Description expected.Description "Description"
+        Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.Publications expected.Publications "Publications"
+        Expect.equal actual.Contacts expected.Contacts "Contacts"
+        Expect.equal actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
+        TestingUtils.mySequenceEqual actual.Tables expected.Tables "Tables" 
+        TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.equal actual.Factors expected.Factors "Factors"
+        Expect.equal actual.Comments expected.Comments "Comments"
+    testCase "UpdateBy, replace existing, all replaced" <| fun _ ->
+        let actual = createFullStudy()
+        let next = 
+            ArcStudy(
+                identifier = "Next_identifier",
+                title = "Next_Title",
+                description = "Description",
+                submissionDate = "Next_SubmissionDate",
+                publicReleaseDate = "Next_PublicReleaseDate",
+                publications = [|Publication.create(Title="My Next Title")|],
+                contacts = [|Person.create(FirstName="NextKevin", LastName="NextFrey")|],
+                studyDesignDescriptors = [|OntologyAnnotation.fromString "Next OA"|],
+                tables = ResizeArray([ArcTable.init("NextTable")]),
+                registeredAssayIdentifiers = ResizeArray(["NextIdentifier"]),
+                factors = [|Factor.create(Name="NextFactor")|],
+                comments = [|Comment.create(Name="NextCommentName", Value="NextCommentValue")|]
+            )
+        actual.UpdateBy(next, true)
+        Expect.notEqual actual next "not equal"
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.Publications next.Publications "Publications"
+        Expect.equal actual.Contacts next.Contacts "Contacts"
+        Expect.equal actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
+        TestingUtils.mySequenceEqual actual.Tables next.Tables "Tables" 
+        TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.equal actual.Factors next.Factors "Factors"
+        Expect.equal actual.Comments next.Comments "Comments"
+    testCase "UpdateBy, replace existing, append" <| fun _ ->
+        let actual = createFullStudy()
+        let next = 
+            ArcStudy(
+                identifier = "Next_identifier",
+                title = "Next_Title",
+                description = "Description",
+                submissionDate = "Next_SubmissionDate",
+                publicReleaseDate = "Next_PublicReleaseDate",
+                publications = [|Publication.create(Title="My Next Title")|],
+                contacts = [|Person.create(FirstName="NextKevin", LastName="NextFrey")|],
+                studyDesignDescriptors = [|OntologyAnnotation.fromString "Next OA"|],
+                tables = ResizeArray([ArcTable.init("NextTable")])
+            )
+        let original = createFullStudy()
+        actual.UpdateBy(next, true, true)
+        Expect.notEqual actual next "not equal"
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.Publications [|Publication.create("Publication 1"); Publication.create(Title="My Next Title")|] "Publications"
+        Expect.equal actual.Contacts [|Person.create(FirstName = "John", LastName = "Doe"); Person.create(FirstName="NextKevin", LastName="NextFrey")|] "Contacts"
+        Expect.equal actual.StudyDesignDescriptors [|OntologyAnnotation.fromString("Design Descriptor"); OntologyAnnotation.fromString "Next OA"|] "StudyDesignDescriptors"
+        TestingUtils.mySequenceEqual actual.Tables (ResizeArray([ArcTable.init("Table 1"); ArcTable.init("NextTable")])) "Tables" 
+        TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers original.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.equal actual.Factors original.Factors "Factors"
+        Expect.equal actual.Comments original.Comments "Comments"
+    testCase "UpdateBy, replace all, append" <| fun _ ->
+        let actual = createFullStudy()
+        let next = 
+            ArcStudy(
+                identifier = "Next_identifier",
+                title = "Next_Title",
+                description = "Description",
+                submissionDate = "Next_SubmissionDate",
+                publicReleaseDate = "Next_PublicReleaseDate",
+                publications = [|Publication.create(Title="My Next Title")|],
+                contacts = [|Person.create(FirstName="NextKevin", LastName="NextFrey")|],
+                studyDesignDescriptors = [|OntologyAnnotation.fromString "Next OA"|],
+                tables = ResizeArray([ArcTable.init("NextTable")])
+            )
+        let original = createFullStudy()
+        actual.UpdateBy(next, false, true)
+        Expect.notEqual actual next "not equal"
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.Publications [|Publication.create("Publication 1"); Publication.create(Title="My Next Title")|] "Publications"
+        Expect.equal actual.Contacts [|Person.create(FirstName = "John", LastName = "Doe"); Person.create(FirstName="NextKevin", LastName="NextFrey")|] "Contacts"
+        Expect.equal actual.StudyDesignDescriptors [|OntologyAnnotation.fromString("Design Descriptor"); OntologyAnnotation.fromString "Next OA"|] "StudyDesignDescriptors"
+        TestingUtils.mySequenceEqual actual.Tables (ResizeArray([ArcTable.init("Table 1"); ArcTable.init("NextTable")])) "Tables" 
+        TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers original.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.equal actual.Factors original.Factors "Factors"
+        Expect.equal actual.Comments original.Comments "Comments"
+]
 
 let main = 
     testList "ArcStudy" [
         tests_copy
         tests_RegisteredAssays
         test_create
+        tests_UpdateBy
     ]
 
 

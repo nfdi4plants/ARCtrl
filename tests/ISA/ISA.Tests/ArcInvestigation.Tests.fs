@@ -545,6 +545,119 @@ let tests_Assay = testList "CRUD Assay" [
     ]
 ]
 
+let tests_UpdateBy = testList "UpdateBy" [
+    let create_testInvestigation(assay) =
+        ArcInvestigation.create(
+            "MyInvestigation",
+            "MyTitle",
+            "MyDescription",
+            "MySubmissionDate",
+            "MyPublicReleaseDate",
+            [|OntologySourceReference.create(Name="MyOntologySourceReference")|],
+            [|Publication.create(Title="MyPublication")|],
+            [|Person.create(FirstName="Kevin", LastName="Frey")|],
+            ResizeArray([assay]),
+            ResizeArray([ArcStudy.init("MyStudy")]),
+            ResizeArray(["MyStudy"]),
+            [|Comment.create(Name="MyComment")|],
+            [|Remark.create(1,"MyRemark")|]
+        )
+    let create_testInvestigationNextEmpty() =
+        ArcInvestigation.init("NextEmptyInvestigation")
+    let create_testInvestigationNext(assay) =
+        ArcInvestigation.create(
+            "NextInvestigation",
+            "NextTitle",
+            "NextDescription",
+            "NextSubmissionDate",
+            "NextPublicReleaseDate",
+            [|OntologySourceReference.create(Name="NextOntologySourceReference")|],
+            [|Publication.create(Title="NextPublication")|],
+            [|Person.create(FirstName="Kevin", LastName="Frey")|],
+            ResizeArray([assay]),
+            ResizeArray([ArcStudy.init("NextStudy")]),
+            ResizeArray(["NextStudy"]),
+            [|Comment.create(Name="NextComment")|],
+            [|Remark.create(12, "NextRemark")|]
+        )
+    testCase "UpdateBy, full replace" <| fun _ ->
+        let myassay = ArcAssay.init("MyAssays")
+        let nextassay = ArcAssay.init("nextassay")
+        let actual = create_testInvestigation(myassay)
+        let next = create_testInvestigationNext(nextassay)
+        actual.UpdateBy(next)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.OntologySourceReferences next.OntologySourceReferences "OntologySourceReferences"
+        Expect.equal actual.Publications next.Publications "Publications"
+        Expect.equal actual.Contacts next.Contacts "Contacts"
+        Expect.equal actual.Assays next.Assays "Assays"
+        Expect.equal actual.Studies next.Studies "Studies"
+        Expect.equal actual.RegisteredStudyIdentifiers next.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
+        Expect.equal actual.Comments next.Comments "Comments"
+        Expect.equal actual.Remarks next.Remarks "Remarks"
+    testCase "UpdateBy, full replace empty" <| fun _ ->
+        let myassay = ArcAssay.init("MyAssays")
+        let actual = create_testInvestigation(myassay)
+        let next = create_testInvestigationNextEmpty()
+        actual.UpdateBy(next)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.OntologySourceReferences next.OntologySourceReferences "OntologySourceReferences"
+        Expect.equal actual.Publications next.Publications "Publications"
+        Expect.equal actual.Contacts next.Contacts "Contacts"
+        Expect.equal actual.Assays next.Assays "Assays"
+        Expect.equal actual.Studies next.Studies "Studies"
+        Expect.equal actual.RegisteredStudyIdentifiers next.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
+        Expect.equal actual.Comments next.Comments "Comments"
+        Expect.equal actual.Remarks next.Remarks "Remarks"
+    testCase "UpdateBy, replace existing" <| fun _ ->
+        let myassay = ArcAssay.init("MyAssays")
+        let nextassay = ArcAssay.init("nextassay")
+        let actual = create_testInvestigation(myassay)
+        let next = create_testInvestigationNext(nextassay)
+        actual.UpdateBy(next, true)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
+        Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.OntologySourceReferences next.OntologySourceReferences "OntologySourceReferences"
+        Expect.equal actual.Publications next.Publications "Publications"
+        Expect.equal actual.Contacts next.Contacts "Contacts"
+        Expect.equal actual.Assays next.Assays "Assays"
+        Expect.equal actual.Studies next.Studies "Studies"
+        Expect.equal actual.RegisteredStudyIdentifiers next.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
+        Expect.equal actual.Comments next.Comments "Comments"
+        Expect.equal actual.Remarks next.Remarks "Remarks"
+    testCase "UpdateBy, replace existing empty" <| fun _ ->
+        let myassay = ArcAssay.init("MyAssays")
+        let actual = create_testInvestigation(myassay)
+        let next = create_testInvestigationNextEmpty()
+        let expected = create_testInvestigation(myassay)
+        actual.UpdateBy(next, true)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title expected.Title "Title"
+        Expect.equal actual.Description expected.Description "Description"
+        Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
+        Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
+        Expect.equal actual.OntologySourceReferences expected.OntologySourceReferences "OntologySourceReferences"
+        Expect.equal actual.Publications expected.Publications "Publications"
+        Expect.equal actual.Contacts expected.Contacts "Contacts"
+        Expect.equal actual.Assays.Count 1 "Count 1"
+        Expect.equal expected.Assays.Count 1 "Count 2"
+        TestingUtils.mySequenceEqual actual.Assays expected.Assays "Assays"
+        TestingUtils.mySequenceEqual actual.Studies expected.Studies "Studies"
+        Expect.equal actual.RegisteredStudyIdentifiers expected.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
+        Expect.equal actual.Comments expected.Comments "Comments"
+        Expect.equal actual.Remarks expected.Remarks "Remarks"
+]
 
 let main = 
     testList "ArcInvestigation" [
@@ -554,4 +667,5 @@ let main =
         tests_Copy
         tests_Study
         tests_Assay
+        tests_UpdateBy
     ]

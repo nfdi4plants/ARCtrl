@@ -4,6 +4,9 @@ open Fable.Core
 open ARCtrl.ISA.Aux
 
 module ArcTypesAux =
+
+    open System.Collections.Generic
+
     module SanityChecks = 
 
         let inline validateRegisteredInvestigation (investigation: ArcInvestigation option) =
@@ -58,6 +61,22 @@ module ArcTypesAux =
                 if Seq.contains registeredAssay existingAssays |> not then
                     study.DeregisterAssay registeredAssay |> ignore
 
+    let inline updateAppendArray (append:bool) (origin: 'A []) (next: 'A []) = 
+        if not append then
+            next
+        else 
+            Array.append origin next
+            |> Array.distinct
+
+    let inline updateAppendResizeArray (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) = 
+        if not append then
+            next
+        else
+            for e in next do
+                if origin.Contains e |> not then
+                    origin.Add(e)
+            origin
+        
 
 [<AttachMembers>]
 type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
@@ -430,6 +449,51 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             comments=nextComments
         )
 
+    /// <summary>
+    /// Updates given assay with another assay, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
+    /// </summary>
+    /// <param name="assay">The assay used for updating this assay.</param>
+    /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
+    /// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
+    member this.UpdateBy(assay:ArcAssay,?onlyReplaceExisting : bool,?appendSequences : bool) =
+        let onlyReplaceExisting = defaultArg onlyReplaceExisting false
+        let appendSequences = defaultArg appendSequences false
+        let updateAlways = onlyReplaceExisting |> not
+        if assay.MeasurementType.IsSome || updateAlways then 
+            this.MeasurementType <- assay.MeasurementType
+        if assay.TechnologyType.IsSome || updateAlways then 
+            this.TechnologyType <- assay.TechnologyType
+        if assay.TechnologyPlatform.IsSome || updateAlways then 
+            this.TechnologyPlatform <- assay.TechnologyPlatform
+        if assay.Tables.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables assay.Tables
+            this.Tables <- s
+        if assay.Performers.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Performers assay.Performers
+            this.Performers <- s
+        if assay.Comments.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Comments assay.Comments
+            this.Comments <- s
+
+    // Use this for better print debugging and better unit test output
+    override this.ToString() =
+        sprintf 
+            """ArcAssay({
+    Identifier = "%s",
+    MeasurementType = %A,
+    TechnologyType = %A,
+    TechnologyPlatform = %A,
+    Tables = %A,
+    Performers = %A,
+    Comments = %A
+})"""
+            this.Identifier
+            this.MeasurementType
+            this.TechnologyType
+            this.TechnologyPlatform
+            this.Tables
+            this.Performers
+            this.Comments
     /// This function creates a string containing the name and the ontology short-string of the given ontology annotation term
     ///
     /// TechnologyPlatforms are plain strings in ISA-JSON.
@@ -1022,21 +1086,45 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             comments = nextComments
         )
 
-    member this.UpdateBy(study:ArcStudy,?onlyByExisting : bool,?appendLists : bool) =
-        let always = onlyByExisting |> Option.defaultValue false |> not
-        let append = appendLists |> Option.defaultValue false
-        if study.Title.IsSome || always then 
+    /// <summary>
+    /// Updates given study with another study, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
+    /// </summary>
+    /// <param name="study">The study used for updating this study.</param>
+    /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
+    /// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
+    member this.UpdateBy(study:ArcStudy,?onlyReplaceExisting : bool,?appendSequences : bool) =
+        let onlyReplaceExisting = defaultArg onlyReplaceExisting false
+        let appendSequences = defaultArg appendSequences false
+        let updateAlways = onlyReplaceExisting |> not
+        if study.Title.IsSome || updateAlways then 
             this.Title <- study.Title
-        if study.Description.IsSome || always then 
+        if study.Description.IsSome || updateAlways then 
             this.Description <- study.Description
-        if study.SubmissionDate.IsSome || always then 
+        if study.SubmissionDate.IsSome || updateAlways then 
             this.SubmissionDate <- study.SubmissionDate
-        if study.PublicReleaseDate.IsSome || always then 
+        if study.PublicReleaseDate.IsSome || updateAlways then 
             this.PublicReleaseDate <- study.PublicReleaseDate
-        if study.Publications.Length <> 0 || always then
-            let n = if append then Array.append this.Publications study.Publications
-            this.Publications <- l
-            
+        if study.Publications.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Publications study.Publications
+            this.Publications <- s
+        if study.Contacts.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Contacts study.Contacts
+            this.Contacts <- s
+        if study.StudyDesignDescriptors.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.StudyDesignDescriptors study.StudyDesignDescriptors
+            this.StudyDesignDescriptors <- s
+        if study.Tables.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables study.Tables
+            this.Tables <- s
+        if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.RegisteredAssayIdentifiers study.RegisteredAssayIdentifiers
+            this.RegisteredAssayIdentifiers <- s
+        if study.Factors.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Factors study.Factors
+            this.Factors <- s
+        if study.Comments.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Comments study.Comments
+            this.Comments <- s
 
     /// <summary>
     /// Creates an ISA-Json compatible Study from ArcStudy.
@@ -1485,6 +1573,48 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         )
         i
 
+    /// <summary>
+    /// Updates given investigation with another investigation, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
+    /// </summary>
+    /// <param name="investigation">The investigation used for updating this investigation.</param>
+    /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
+    /// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
+    member this.UpdateBy(inv:ArcInvestigation,?onlyReplaceExisting : bool,?appendSequences : bool) =
+        let onlyReplaceExisting = defaultArg onlyReplaceExisting false
+        let appendSequences = defaultArg appendSequences false
+        let updateAlways = onlyReplaceExisting |> not
+        if inv.Title.IsSome || updateAlways then 
+            this.Title <- inv.Title
+        if inv.Description.IsSome || updateAlways then 
+            this.Description <- inv.Description
+        if inv.SubmissionDate.IsSome || updateAlways then 
+            this.SubmissionDate <- inv.SubmissionDate
+        if inv.PublicReleaseDate.IsSome || updateAlways then 
+            this.PublicReleaseDate <- inv.PublicReleaseDate
+        if inv.OntologySourceReferences.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.OntologySourceReferences inv.OntologySourceReferences
+            this.OntologySourceReferences <- s
+        if inv.Publications.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Publications inv.Publications
+            this.Publications <- s
+        if inv.Contacts.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Contacts inv.Contacts
+            this.Contacts <- s
+        if inv.Assays.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Assays inv.Assays
+            this.Assays <- s
+        if inv.Studies.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Studies inv.Studies
+            this.Studies <- s
+        if inv.RegisteredStudyIdentifiers.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.RegisteredStudyIdentifiers inv.RegisteredStudyIdentifiers
+            this.RegisteredStudyIdentifiers <- s
+        if inv.Comments.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Comments inv.Comments
+            this.Comments <- s
+        if inv.Remarks.Length <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendArray appendSequences this.Remarks inv.Remarks
+            this.Remarks <- s
 
     /// Transform an ArcInvestigation to an ISA Json Investigation.
     member this.ToInvestigation() : Investigation = 

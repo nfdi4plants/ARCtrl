@@ -502,6 +502,106 @@ let private tests_technologyPlatform =
             Expect.equal pt_new.TermAccessionShort "" "ShortTan should match"
         )
     ]
+
+let private test_UpdateBy = testList "UpdateBy" [
+    let create_testAssay() = 
+        ArcAssay.create(
+            "MyAssay", 
+            OntologyAnnotation.fromString("MyMeasurementType"),
+            OntologyAnnotation.fromString("MyTechnologyType"),
+            OntologyAnnotation.fromString("MyTechnologyPlatform"),
+            ResizeArray([ArcTable.init("MyTable")]),
+            [|Person.create(FirstName="Kevin", LastName="Frey")|],
+            [|Comment.create(Name="CommentName", Value="CommentValue")|]
+        )
+    testCase "UpdateBy, full replace" <| fun _ ->
+        let actual = create_testAssay()
+        let next = 
+            ArcAssay.create(
+                "NextAssay", 
+                OntologyAnnotation.fromString("NextMeasurementType"),
+                OntologyAnnotation.fromString("NextTechnologyType"),
+                tables=ResizeArray([ArcTable.init("NextTable")]),
+                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+            )
+        actual.UpdateBy(next)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
+        Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
+        Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
+        TestingUtils.mySequenceEqual actual.Tables next.Tables "Tables"
+        Expect.equal actual.Performers next.Performers "Performers"
+        Expect.equal actual.Comments next.Comments "Comments"
+    testCase "UpdateBy, replace existing" <| fun _ ->
+        let actual = create_testAssay()
+        let next = 
+            ArcAssay.create(
+                "NextAssay", 
+                OntologyAnnotation.fromString("NextMeasurementType"),
+                OntologyAnnotation.fromString("NextTechnologyType"),
+                tables=ResizeArray([ArcTable.init("NextTable")]),
+                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+            )
+        let expected = create_testAssay()
+        actual.UpdateBy(next, true)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
+        Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
+        Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
+        TestingUtils.mySequenceEqual actual.Tables next.Tables "Tables"
+        Expect.equal actual.Performers next.Performers "Performers"
+        Expect.equal actual.Comments expected.Comments "Comments"
+    testCase "UpdateBy, replace existing, empty tables" <| fun _ ->
+        let actual = create_testAssay()
+        let next = 
+            ArcAssay.create(
+                "NextAssay", 
+                OntologyAnnotation.fromString("NextMeasurementType"),
+                OntologyAnnotation.fromString("NextTechnologyType"),
+                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+            )
+        let expected = create_testAssay()
+        actual.UpdateBy(next, true)
+        TestingUtils.mySequenceEqual actual.Tables expected.Tables "Tables"
+    testCase "UpdateBy, replace existing, append" <| fun _ ->
+        let actual = create_testAssay()
+        let next = 
+            ArcAssay.create(
+                "NextAssay", 
+                OntologyAnnotation.fromString("NextMeasurementType"),
+                OntologyAnnotation.fromString("NextTechnologyType"),
+                tables=ResizeArray([ArcTable.init("NextTable")]),
+                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+            )
+        let expected = create_testAssay()
+        actual.UpdateBy(next, true, true)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
+        Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
+        Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
+        TestingUtils.mySequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
+        Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
+        Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
+    testCase "UpdateBy, replace all, append" <| fun _ ->
+        let actual = create_testAssay()
+        let next = 
+            ArcAssay.create(
+                "NextAssay", 
+                OntologyAnnotation.fromString("NextMeasurementType"),
+                OntologyAnnotation.fromString("NextTechnologyType"),
+                tables=ResizeArray([ArcTable.init("NextTable")]),
+                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+            )
+        let expected = create_testAssay()
+        actual.UpdateBy(next, false, true)
+        Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
+        Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
+        Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
+        TestingUtils.mySequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
+        Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
+        Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
+]
 let main = 
     testList "ArcAssay" [
         test_create
@@ -513,4 +613,5 @@ let main =
         tests_UpdateTable
         tests_updateTable
         tests_technologyPlatform
+        test_UpdateBy
     ]
