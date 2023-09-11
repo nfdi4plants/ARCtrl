@@ -3,6 +3,7 @@
 open ARCtrl.FileSystem
 open ARCtrl.Contract
 open ARCtrl.ISA
+open ARCtrl.ISA.Spreadsheet
 open FsSpreadsheet
 open Fable.Core
 
@@ -18,7 +19,7 @@ module ARCAux =
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
         |> Array.choose Contract.ArcStudy.tryFromContract
-        |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcStudy.fromFsWorkbook)
+        |> Array.map (fun x -> x :?> FsWorkbook |> ArcStudy.fromFsWorkbook)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 

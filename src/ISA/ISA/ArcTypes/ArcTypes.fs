@@ -1022,6 +1022,22 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             comments = nextComments
         )
 
+    member this.UpdateBy(study:ArcStudy,?onlyByExisting : bool,?appendLists : bool) =
+        let always = onlyByExisting |> Option.defaultValue false |> not
+        let append = appendLists |> Option.defaultValue false
+        if study.Title.IsSome || always then 
+            this.Title <- study.Title
+        if study.Description.IsSome || always then 
+            this.Description <- study.Description
+        if study.SubmissionDate.IsSome || always then 
+            this.SubmissionDate <- study.SubmissionDate
+        if study.PublicReleaseDate.IsSome || always then 
+            this.PublicReleaseDate <- study.PublicReleaseDate
+        if study.Publications.Length <> 0 || always then
+            let n = if append then Array.append this.Publications study.Publications
+            this.Publications <- l
+            
+
     /// <summary>
     /// Creates an ISA-Json compatible Study from ArcStudy.
     /// </summary>
