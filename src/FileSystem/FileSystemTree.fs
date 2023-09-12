@@ -128,16 +128,28 @@ type FileSystemTree =
             | File n -> 
                 if predicate n then Some (File n) else None
             | Folder (n, children) ->
-                let filteredChildren = children |> Array.choose loop
-                if Array.isEmpty filteredChildren then 
-                    None 
-                else 
-                    Folder (n, filteredChildren)
-                    |> Some 
+                Folder (n, children |> Array.choose loop)
+                |> Some
+
         loop this
 
     static member filterFiles (predicate: string -> bool) =
-        fun (tree: FileSystemTree) -> tree.Filter predicate
+        fun (tree: FileSystemTree) -> tree.FilterFiles predicate
+
+    member this.FilterFolders (predicate: string -> bool) =
+        let rec loop (parent: FileSystemTree) =
+            match parent with
+            | File n -> Some (File n)
+            | Folder (n, children) ->
+                if predicate n then 
+                    Folder (n, children |> Array.choose loop)
+                    |> Some
+                else
+                    None
+        loop this
+
+    static member filterFolders (predicate: string -> bool) =
+        fun (tree: FileSystemTree) -> tree.FilterFolders predicate
 
     member this.Filter (predicate: string -> bool) = 
         let rec loop (parent: FileSystemTree) = 

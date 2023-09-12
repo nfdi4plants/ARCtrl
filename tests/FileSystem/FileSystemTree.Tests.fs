@@ -33,57 +33,58 @@ let private newArcRelativePaths = [|
     @"studies\TestAssay1\resources\.gitkeep"|]
 
 
-let newArcFST = Folder("root",[|
-    File "isa.investigation.xlsx"; 
-    Folder(".arc", [|File ".gitkeep"|]);
-    Folder(".git",[|
-        File "config"; File "description"; File "HEAD";
-        Folder("hooks",[|
-            File "applypatch-msg.sample"; File "commit-msg.sample";
-            File "fsmonitor-watchman.sample"; File "post-update.sample";
-            File "pre-applypatch.sample"; File "pre-commit.sample";
-            File "pre-merge-commit.sample"; File "pre-push.sample";
-            File "pre-rebase.sample"; File "pre-receive.sample";
-            File "prepare-commit-msg.sample";
-            File "push-to-checkout.sample"; File "update.sample"
+let newArcFST = 
+    Folder("root",[|
+        File "isa.investigation.xlsx"; 
+        Folder(".arc", [|File ".gitkeep"|]);
+        Folder(".git",[|
+            File "config"; File "description"; File "HEAD";
+            Folder("hooks",[|
+                File "applypatch-msg.sample"; File "commit-msg.sample";
+                File "fsmonitor-watchman.sample"; File "post-update.sample";
+                File "pre-applypatch.sample"; File "pre-commit.sample";
+                File "pre-merge-commit.sample"; File "pre-push.sample";
+                File "pre-rebase.sample"; File "pre-receive.sample";
+                File "prepare-commit-msg.sample";
+                File "push-to-checkout.sample"; File "update.sample"
+            |]);
+            Folder ("info", [|File "exclude"|])
         |]);
-        Folder ("info", [|File "exclude"|])
-    |]);
-    Folder("assays",[|
-        File ".gitkeep";
-        Folder("est",[|
-            File "isa.assay.xlsx"; File "README.md";
-            Folder ("dataset", [|File ".gitkeep"|]);
-            Folder ("protocols", [|File ".gitkeep"|])
+        Folder("assays",[|
+            File ".gitkeep";
+            Folder("est",[|
+                File "isa.assay.xlsx"; File "README.md";
+                Folder ("dataset", [|File ".gitkeep"|]);
+                Folder ("protocols", [|File ".gitkeep"|])
+            |]);
+            Folder
+                ("TestAssay1",[|
+                File "isa.assay.xlsx"; File "README.md";
+                Folder ("dataset", [|File ".gitkeep"|]);
+                Folder ("protocols", [|File ".gitkeep"|])
+            |])
         |]);
-        Folder
-            ("TestAssay1",[|
-            File "isa.assay.xlsx"; File "README.md";
-            Folder ("dataset", [|File ".gitkeep"|]);
-            Folder ("protocols", [|File ".gitkeep"|])
-        |])
-    |]);
-    Folder("runs", [|File ".gitkeep"|]);
-    Folder("studies",[|
-        File ".gitkeep";
-        Folder("est",[|
-            File "isa.study.xlsx"; File "README.md";
-            Folder ("protocols", [|File ".gitkeep"|]);
-            Folder ("resources", [|File ".gitkeep"|])
+        Folder("runs", [|File ".gitkeep"|]);
+        Folder("studies",[|
+            File ".gitkeep";
+            Folder("est",[|
+                File "isa.study.xlsx"; File "README.md";
+                Folder ("protocols", [|File ".gitkeep"|]);
+                Folder ("resources", [|File ".gitkeep"|])
+            |]);
+            Folder("MyStudy",[|
+                File "isa.study.xlsx"; File "README.md";
+                Folder ("protocols", [|File ".gitkeep"|]);
+                Folder ("resources", [|File ".gitkeep"|])
+            |]);
+            Folder("TestAssay1",[|
+                File "isa.study.xlsx"; File "README.md";
+                Folder ("protocols", [|File ".gitkeep"|]);
+                Folder ("resources", [|File ".gitkeep"|])
+            |])
         |]);
-        Folder("MyStudy",[|
-            File "isa.study.xlsx"; File "README.md";
-            Folder ("protocols", [|File ".gitkeep"|]);
-            Folder ("resources", [|File ".gitkeep"|])
-        |]);
-        Folder("TestAssay1",[|
-            File "isa.study.xlsx"; File "README.md";
-            Folder ("protocols", [|File ".gitkeep"|]);
-            Folder ("resources", [|File ".gitkeep"|])
-        |])
-    |]);
-    Folder ("workflows", [|File ".gitkeep"|])
-|])
+        Folder ("workflows", [|File ".gitkeep"|])
+    |])
 
 let private tests_fromFilePaths =
     testList "fromFilePaths" [
@@ -118,27 +119,58 @@ let private tests_Filter_Files =
     testList "FilterFiles" [
         test "new arc (2023-07-11), keep .xlsx files" {
             let expected = Some(
-                Folder("root",[|
-                    File "isa.investigation.xlsx";
-                    Folder("assays",[|
-                        Folder ("est", [|File "isa.assay.xlsx"|]);
-                        Folder ("TestAssay1", [|File "isa.assay.xlsx"|])
+               Folder("root",[|
+                    File "isa.investigation.xlsx"; 
+                    Folder(".arc", [||]);
+                    Folder(".git",[|
+                        Folder("hooks",[||]);
+                        Folder ("info", [||])
                     |]);
+                    Folder("assays",[|
+                        Folder("est",[|
+                            File "isa.assay.xlsx"
+                            Folder ("dataset", [||]);
+                            Folder ("protocols", [||])
+                        |]);
+                        Folder
+                            ("TestAssay1",[|
+                            File "isa.assay.xlsx"
+                            Folder ("dataset", [||]);
+                            Folder ("protocols", [||])
+                        |])
+                    |]);
+                    Folder("runs", [||]);
                     Folder("studies",[|
-                        Folder ("est", [|File "isa.study.xlsx"|]);
-                        Folder ("MyStudy", [|File "isa.study.xlsx"|]);
-                        Folder ("TestAssay1", [|File "isa.study.xlsx"|])
-                    |])
+                        Folder("est",[|
+                            File "isa.study.xlsx";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
+                        |]);
+                        Folder("MyStudy",[|
+                            File "isa.study.xlsx";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
+                        |]);
+                        Folder("TestAssay1",[|
+                            File "isa.study.xlsx";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
+                        |])
+                    |]);
+                    Folder ("workflows", [||])
                 |])
             )
             let filest = FileSystemTree.fromFilePaths newArcRelativePaths
-            let actual = filest.FilterFiles (fun n -> n.EndsWith ".xlsx")
-            Expect.equal actual expected ""
+            let actualInstanceMethod = filest.FilterFiles (fun n -> n.EndsWith ".xlsx")
+            let actualStaticMember = filest |> FileSystemTree.filterFiles (fun n -> n.EndsWith ".xlsx")
+            Expect.equal actualInstanceMethod expected "instance member result incorrect."
+            Expect.equal actualStaticMember expected "static member result incorrect."
         }
-        test "new arc (2023-07-11), filter startswith '.'" {
+        test "new arc (2023-07-11), filter not startswith '.'" {
             let expected = Some(
                 Folder("root",[|
                     File "isa.investigation.xlsx"; 
+                    Folder(".arc", [||]);
                     Folder(".git",[|
                         File "config"; File "description"; File "HEAD";
                         Folder("hooks",[|
@@ -155,34 +187,98 @@ let private tests_Filter_Files =
                     Folder("assays",[|
                         Folder("est",[|
                             File "isa.assay.xlsx"; File "README.md";
+                            Folder ("dataset", [||]);
+                            Folder ("protocols", [||])
                         |]);
                         Folder
                             ("TestAssay1",[|
                             File "isa.assay.xlsx"; File "README.md";
+                            Folder ("dataset", [||]);
+                            Folder ("protocols", [||])
                         |])
                     |]);
+                    Folder("runs", [||]);
                     Folder("studies",[|
                         Folder("est",[|
                             File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
                         |]);
                         Folder("MyStudy",[|
                             File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
                         |]);
                         Folder("TestAssay1",[|
                             File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
                         |])
                     |]);
+                    Folder ("workflows", [||])
                 |])
             )
             let filest = FileSystemTree.fromFilePaths newArcRelativePaths
-            let actual = filest.FilterFiles (fun n -> not (n.StartsWith "."))
-            Expect.equal actual expected ""
+            let actualInstanceMethod = filest.FilterFiles (fun n -> not (n.StartsWith "."))
+            let actualStaticMember = filest |> FileSystemTree.filterFiles (fun n -> not (n.StartsWith "."))
+            Expect.equal actualInstanceMethod expected "instance member result incorrect."
+            Expect.equal actualStaticMember expected "static member result incorrect."
+        }
+    ]
+
+let private tests_Filter_Folders = 
+    testList "FilterFolders" [
+        test "new arc (2023-07-11), filter not startswith '.'" {
+            let expected = Some(
+                Folder("root",[|
+                    File "isa.investigation.xlsx"; 
+                    Folder("assays",[|
+                        File ".gitkeep";
+                        Folder("est",[|
+                            File "isa.assay.xlsx"; File "README.md";
+                            Folder ("dataset", [|File ".gitkeep"|]);
+                            Folder ("protocols", [|File ".gitkeep"|])
+                        |]);
+                        Folder
+                            ("TestAssay1",[|
+                            File "isa.assay.xlsx"; File "README.md";
+                            Folder ("dataset", [|File ".gitkeep"|]);
+                            Folder ("protocols", [|File ".gitkeep"|])
+                        |])
+                    |]);
+                    Folder("runs", [|File ".gitkeep"|]);
+                    Folder("studies",[|
+                        File ".gitkeep";
+                        Folder("est",[|
+                            File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [|File ".gitkeep"|]);
+                            Folder ("resources", [|File ".gitkeep"|])
+                        |]);
+                        Folder("MyStudy",[|
+                            File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [|File ".gitkeep"|]);
+                            Folder ("resources", [|File ".gitkeep"|])
+                        |]);
+                        Folder("TestAssay1",[|
+                            File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [|File ".gitkeep"|]);
+                            Folder ("resources", [|File ".gitkeep"|])
+                        |])
+                    |]);
+                    Folder ("workflows", [|File ".gitkeep"|])
+                |])
+            )
+            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            let actualInstanceMethod = filest.FilterFolders (fun n -> not (n.StartsWith "."))
+            let actualStaticMember = filest |> FileSystemTree.filterFolders (fun n -> not (n.StartsWith "."))
+            Expect.equal actualInstanceMethod expected "instance member result incorrect."
+            Expect.equal actualStaticMember expected "static member result incorrect."
         }
     ]
 
 let private tests_Filter = 
     testList "Filter" [
-        test "new arc (2023-07-11), filter startswith '.'" {
+        test "new arc (2023-07-11), filter not startswith '.'" {
             let expected = Some(
                 Folder("root",[|
                     File "isa.investigation.xlsx"; 
@@ -214,8 +310,10 @@ let private tests_Filter =
                 |])
             )
             let filest = FileSystemTree.fromFilePaths newArcRelativePaths
-            let actual = filest.Filter (fun n -> not (n.StartsWith "."))
-            Expect.equal actual expected ""
+            let actualInstanceMethod = filest.Filter (fun n -> not (n.StartsWith "."))
+            let actualStaticMember = filest |> FileSystemTree.filter (fun n -> not (n.StartsWith "."))
+            Expect.equal actualInstanceMethod expected "instance member result incorrect."
+            Expect.equal actualStaticMember expected "static member result incorrect."
         }
     ]
 
@@ -393,6 +491,7 @@ let main = testList "FileSystemTree" [
     tests_fromFilePaths
     tests_ToFilePaths
     tests_Filter_Files
+    tests_Filter_Folders
     tests_Filter
     tests_AddFile
 ]
