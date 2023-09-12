@@ -314,7 +314,7 @@ let tests_copy =
             ()
     ]
 
-let tests_UpdateBy = testList "UpdateBy" [
+let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
     let createFullStudy() =
         let identifier = "MyIdentifier"
         let title = "Study Title"
@@ -329,7 +329,6 @@ let tests_UpdateBy = testList "UpdateBy" [
         let assay_identifiers = getAssayIdentifiers assays
         let factors = [|Factor.create("Factor 1")|]
         let comments = [|Comment.create("Comment 1")|]
-
         ArcStudy(
             identifier = identifier,
             title = title,
@@ -361,7 +360,7 @@ let tests_UpdateBy = testList "UpdateBy" [
                 factors = [||],
                 comments = [||]
             )
-        actual.UpdateBy(next)
+        actual.UpdateReferenceByStudyFile(next)
         Expect.notEqual actual next "not equal"
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
         Expect.equal actual.Title next.Title "Title"
@@ -381,7 +380,7 @@ let tests_UpdateBy = testList "UpdateBy" [
         let actual = createFullStudy()
         let next = ArcStudy.init("NextIdentifier")
         let expected = createFullStudy()
-        actual.UpdateBy(next, true)
+        actual.UpdateReferenceByStudyFile(next, true)
         Expect.notEqual actual next "not equal"
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
         Expect.equal actual.Title expected.Title "Title"
@@ -412,7 +411,7 @@ let tests_UpdateBy = testList "UpdateBy" [
                 factors = [|Factor.create(Name="NextFactor")|],
                 comments = [|Comment.create(Name="NextCommentName", Value="NextCommentValue")|]
             )
-        actual.UpdateBy(next, true)
+        actual.UpdateReferenceByStudyFile(next, true)
         Expect.notEqual actual next "not equal"
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
         Expect.equal actual.Title next.Title "Title"
@@ -441,7 +440,7 @@ let tests_UpdateBy = testList "UpdateBy" [
                 tables = ResizeArray([ArcTable.init("NextTable")])
             )
         let original = createFullStudy()
-        actual.UpdateBy(next, true, true)
+        actual.UpdateReferenceByStudyFile(next, true)
         Expect.notEqual actual next "not equal"
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
         Expect.equal actual.Title next.Title "Title"
@@ -470,7 +469,7 @@ let tests_UpdateBy = testList "UpdateBy" [
                 tables = ResizeArray([ArcTable.init("NextTable")])
             )
         let original = createFullStudy()
-        actual.UpdateBy(next, false, true)
+        actual.UpdateReferenceByStudyFile(next, false)
         Expect.notEqual actual next "not equal"
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
         Expect.equal actual.Title next.Title "Title"

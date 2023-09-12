@@ -535,6 +535,12 @@ type ArcTable =
         |> fun rows -> ProcessParsing.alignByHeaders rows
         |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
 
+    /// This method is meant to update an ArcTable stored as a protocol in a study or investigation file with the information from an ArcTable actually stored as an annotation table
+    member this.UpdateReferenceByAnnotationTable(table:ArcTable) =
+        ArcTableAux.Unchecked.extendToRowCount table.RowCount this.Headers this.Values
+        for c in table.Columns do
+            this.AddColumn(c.Header, cells = c.Cells,forceReplace = true)
+
     /// Pretty printer 
     override this.ToString() =
         [

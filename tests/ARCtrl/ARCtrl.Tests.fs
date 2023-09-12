@@ -168,7 +168,7 @@ let private test_writeContracts = testList "write_contracts" [
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         let assay = ArcAssay("MyAssay")
         inv.InitStudy("Study1").AddRegisteredAssay(assay) |> ignore
-        inv.InitStudy("Study2").AddRegisteredAssay(assay) |> ignore
+        inv.InitStudy("Study2").RegisterAssay(assay.Identifier) |> ignore
         let arc = ARC(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "

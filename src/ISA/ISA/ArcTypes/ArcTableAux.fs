@@ -275,6 +275,16 @@ module Unchecked =
                 for missingColumn,missingRow in missingKeys do
                     setCellAt (missingColumn,missingRow,empty) values
 
+    /// Increases the table size to the given new row count and fills the new rows with the last value of the column
+    let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+        let columnCount = getColumnCount headers
+        let previousRowCount = getRowCount values
+        // iterate over columns
+        for columnIndex = 0 to columnCount - 1 do
+            let lastValue = values[columnIndex,previousRowCount-1]
+            for rowIndex = previousRowCount - 1 to rowCount - 1 do
+                setCellAt (columnIndex,rowIndex,lastValue) values
+
     let addRow (index:int) (newCells:CompositeCell []) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
         /// Store start rowCount here, so it does not get changed midway through
         let rowCount = getRowCount values

@@ -31,12 +31,7 @@ module ARCAux =
         let (studyNames,assayNames) = 
             match isa with
             | Some inv ->         
-                inv.Studies
-                |> Seq.fold (fun (studyNames,assayNames) s ->
-                    Array.append studyNames [|s.Identifier|],
-                    Array.append assayNames (s.Assays |> Seq.map (fun a -> a.Identifier) |> Array.ofSeq)
-            
-                ) ([||],[||])
+                inv.StudyIdentifiers |> Seq.toArray, inv.AssayIdentifiers |> Seq.toArray
             | None -> ([||],[||])
         let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.createAssayFolder)
         let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.createStudyFolder)
@@ -166,32 +161,29 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         /// get investigation from xlsx
         let investigation = ARCAux.getArcInvestigationFromContracts contracts
         /// get studies from xlsx
-        let studies = ARCAux.getArcStudiesFromContracts contracts
+        let studies = ARCAux.getArcStudiesFromContracts contracts |> Array.map fst
         /// get assays from xlsx
         let assays = ARCAux.getArcAssaysFromContracts contracts
 
-        investigation.Studies |> Seq.iter (fun registeredStudy ->
+        studies |> Seq.iter (fun study ->
             /// Try find registered study in parsed READ contracts
-            let studyOpt = studies |> Array.tryFind (fun s -> s.Identifier = registeredStudy.Identifier)
-            match studyOpt with
-            | Some study -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
-                
-                if enableLogging then printfn "Found study: %s" registeredStudy.Identifier
-                registeredStudy.Assays |> Seq.iter (fun registeredAssay ->
-                    /// Try find registered assay in parsed READ contracts
-                    let assayOpt = assays |> Array.tryFind (fun a -> a.Identifier = registeredAssay.Identifier)
-                    match assayOpt with
-                    | Some assay -> 
-                        if enableLogging then printfn "Found assay: %s - %s" registeredStudy.Identifier registeredAssay.Identifier
-                        registeredAssay.AddTables(assay.Tables)
-                    | None -> 
-                        if enableLogging then printfn "Unable to find registered assay '%s' in fullfilled READ contracts!" registeredAssay.Identifier
-                )
-                study.Tables
-                |> Seq.iter (fun table -> registeredStudy.SetTable(table.Name , table))
+            let registeredStudyOpt = investigation.Studies |> Seq.tryFind (fun s -> s.Identifier = study.Identifier)
+            match registeredStudyOpt with
+            | Some registeredStudy -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
+                registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
-                if enableLogging then printfn "Unable to find registered study '%s' in fullfilled READ contracts!" registeredStudy.Identifier
+                investigation.AddRegisteredStudy(study)
         )
+        assays |> Seq.iter (fun assay ->
+            /// Try find registered study in parsed READ contracts
+            let registeredAssayOpt = investigation.Assays |> Seq.tryFind (fun a -> a.Identifier = assay.Identifier)
+            match registeredAssayOpt with
+            | Some registeredAssay -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
+                registeredAssay.UpdateReferenceByAssayFile(assay,true)
+            | None -> 
+                investigation.AddAssay(assay)
+        )
+
         this.ISA <- Some investigation
 
     member this.UpdateFileSystem() =   
@@ -213,18 +205,19 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
             inv.Studies
             |> Seq.iter (fun s ->
+                
                 workbooks.Add (
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
-                    (DTOType.ISA_Study, ISA.Spreadsheet.ArcStudy.toFsWorkbook s))
-                s.Assays
-                |> Seq.iter (fun a ->
-                    let key = Identifier.Assay.fileNameFromIdentifier a.Identifier
-                    if workbooks.ContainsKey key |> not then
-                        workbooks.Add (
-                            key,
-                            (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
+                    (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
                 )
             )
+            inv.Assays
+            |> Seq.iter (fun a ->
+                workbooks.Add (
+                    Identifier.Assay.fileNameFromIdentifier a.Identifier,
+                    (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
+            )
+            
         | None -> 
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
             printfn "ARC contains no ISA part."

@@ -530,6 +530,23 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member internal this.RemoveFromInvestigation () =
         this.Investigation <- None
 
+    /// Updates given assay stored in an study or investigation file with values from an assay file.
+    member this.UpdateReferenceByAssayFile(assay:ArcAssay,?onlyReplaceExisting : bool) =
+        let onlyReplaceExisting = defaultArg onlyReplaceExisting false
+        let updateAlways = onlyReplaceExisting |> not
+        if assay.MeasurementType.IsSome || updateAlways then 
+            this.MeasurementType <- assay.MeasurementType
+        if assay.TechnologyPlatform.IsSome || updateAlways then 
+            this.TechnologyPlatform <- assay.TechnologyPlatform
+        if assay.TechnologyType.IsSome || updateAlways then 
+            this.TechnologyType <- assay.TechnologyType
+        if assay.Tables.Count <> 0 || updateAlways then          
+            this.Tables <- assay.Tables
+        if assay.Comments.Length <> 0 || updateAlways then          
+            this.Comments <- assay.Comments  
+        if assay.Performers.Length <> 0 || updateAlways then          
+            this.Performers <- assay.Performers  
+
     /// Copies ArcAssay object without the pointer to the parent ArcInvestigation
     ///
     /// In order to copy the pointer to the parent ArcInvestigation as well, use the Copy() method of the ArcInvestigation instead.
@@ -1055,7 +1072,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         this.Investigation <- None
 
 
-    /// Copies ArcStudy objec without the pointer to the parent ArcInvestigation
+    /// Copies ArcStudy object without the pointer to the parent ArcInvestigation
     ///
     /// This copy does only contain the identifiers of the registered ArcAssays and not the actual objects.
     ///
@@ -1087,14 +1104,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         )
 
     /// <summary>
-    /// Updates given study with another study, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
+    /// Updates given study from an investigation file against a study from a study file. Identifier will never be updated. 
     /// </summary>
     /// <param name="study">The study used for updating this study.</param>
     /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
-    /// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
-    member this.UpdateBy(study:ArcStudy,?onlyReplaceExisting : bool,?appendSequences : bool) =
+    member this.UpdateReferenceByStudyFile(study:ArcStudy,?onlyReplaceExisting : bool) =
         let onlyReplaceExisting = defaultArg onlyReplaceExisting false
-        let appendSequences = defaultArg appendSequences false
         let updateAlways = onlyReplaceExisting |> not
         if study.Title.IsSome || updateAlways then 
             this.Title <- study.Title
@@ -1105,26 +1120,31 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         if study.PublicReleaseDate.IsSome || updateAlways then 
             this.PublicReleaseDate <- study.PublicReleaseDate
         if study.Publications.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Publications study.Publications
-            this.Publications <- s
+            this.Publications <- study.Publications
         if study.Contacts.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Contacts study.Contacts
-            this.Contacts <- s
+            this.Contacts <- study.Contacts
         if study.StudyDesignDescriptors.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.StudyDesignDescriptors study.StudyDesignDescriptors
-            this.StudyDesignDescriptors <- s
+            this.StudyDesignDescriptors <- study.StudyDesignDescriptors
         if study.Tables.Count <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables study.Tables
+            let s = 
+                study.Tables
+                |> Seq.append this.Tables
+                |> Seq.groupBy (fun t -> t.Name)
+                |> Seq.map (fun (_,ts) -> 
+                    if Seq.length ts = 2 then
+                        (Seq.item 0 ts).UpdateReferenceByAnnotationTable (Seq.item 1 ts)
+                        Seq.head ts 
+                    else 
+                        Seq.head ts 
+                )
+                |> ResizeArray           
             this.Tables <- s
         if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.RegisteredAssayIdentifiers study.RegisteredAssayIdentifiers
-            this.RegisteredAssayIdentifiers <- s
-        if study.Factors.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Factors study.Factors
-            this.Factors <- s
+            this.RegisteredAssayIdentifiers <- study.RegisteredAssayIdentifiers
+        if study.Factors.Length <> 0 || updateAlways then            
+            this.Factors <- study.Factors
         if study.Comments.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Comments study.Comments
-            this.Comments <- s
+            this.Comments <- study.Comments
 
     /// <summary>
     /// Creates an ISA-Json compatible Study from ArcStudy.
@@ -1397,6 +1417,18 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
             copy.RegisterStudy(studyIdentifier)
+            copy
+
+    // - Study API - CRUD //
+    member this.AddRegisteredStudy (study: ArcStudy) = 
+        this.AddStudy study
+        this.RegisterStudy(study.Identifier)
+
+    static member addRegisteredStudy(study: ArcStudy) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            let study = study.Copy()
+            copy.AddRegisteredStudy(study)
             copy
 
     // - Study API - CRUD //
