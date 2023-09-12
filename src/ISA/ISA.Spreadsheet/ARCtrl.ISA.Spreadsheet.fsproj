@@ -35,7 +35,6 @@
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
     <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil</Authors>
     <Description>ARC and ISA xlsx compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-xlsx format.</Description>

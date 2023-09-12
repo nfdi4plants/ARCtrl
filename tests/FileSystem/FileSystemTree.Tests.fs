@@ -114,9 +114,9 @@ let private tests_ToFilePaths =
             Expect.equal actual_sorted expected_sorted "equal"
     ]
 
-let private tests_Filter = 
-    testList "Filter" [
-        testCase "new arc (2023-07-11)" <| fun _ ->
+let private tests_Filter_Files = 
+    testList "FilterFiles" [
+        test "new arc (2023-07-11), keep .xlsx files" {
             let expected = Some(
                 Folder("root",[|
                     File "isa.investigation.xlsx";
@@ -132,8 +132,91 @@ let private tests_Filter =
                 |])
             )
             let filest = FileSystemTree.fromFilePaths newArcRelativePaths
-            let actual = filest.Filter (fun n -> n.EndsWith ".xlsx")
+            let actual = filest.FilterFiles (fun n -> n.EndsWith ".xlsx")
             Expect.equal actual expected ""
+        }
+        test "new arc (2023-07-11), filter startswith '.'" {
+            let expected = Some(
+                Folder("root",[|
+                    File "isa.investigation.xlsx"; 
+                    Folder(".git",[|
+                        File "config"; File "description"; File "HEAD";
+                        Folder("hooks",[|
+                            File "applypatch-msg.sample"; File "commit-msg.sample";
+                            File "fsmonitor-watchman.sample"; File "post-update.sample";
+                            File "pre-applypatch.sample"; File "pre-commit.sample";
+                            File "pre-merge-commit.sample"; File "pre-push.sample";
+                            File "pre-rebase.sample"; File "pre-receive.sample";
+                            File "prepare-commit-msg.sample";
+                            File "push-to-checkout.sample"; File "update.sample"
+                        |]);
+                        Folder ("info", [|File "exclude"|])
+                    |]);
+                    Folder("assays",[|
+                        Folder("est",[|
+                            File "isa.assay.xlsx"; File "README.md";
+                        |]);
+                        Folder
+                            ("TestAssay1",[|
+                            File "isa.assay.xlsx"; File "README.md";
+                        |])
+                    |]);
+                    Folder("studies",[|
+                        Folder("est",[|
+                            File "isa.study.xlsx"; File "README.md";
+                        |]);
+                        Folder("MyStudy",[|
+                            File "isa.study.xlsx"; File "README.md";
+                        |]);
+                        Folder("TestAssay1",[|
+                            File "isa.study.xlsx"; File "README.md";
+                        |])
+                    |]);
+                |])
+            )
+            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            let actual = filest.FilterFiles (fun n -> not (n.StartsWith "."))
+            Expect.equal actual expected ""
+        }
+    ]
+
+let private tests_Filter = 
+    testList "Filter" [
+        test "new arc (2023-07-11), filter startswith '.'" {
+            let expected = Some(
+                Folder("root",[|
+                    File "isa.investigation.xlsx"; 
+                    Folder("assays",[|
+                        Folder("est",[|
+                            File "isa.assay.xlsx"; 
+                            File "README.md";
+                        |]);
+                        Folder
+                            ("TestAssay1",[|
+                            File "isa.assay.xlsx"; 
+                            File "README.md";
+                        |])
+                    |]);
+                    Folder("studies",[|
+                        Folder("est",[|
+                            File "isa.study.xlsx"; 
+                            File "README.md";
+                        |]);
+                        Folder("MyStudy",[|
+                            File "isa.study.xlsx"; 
+                            File "README.md";
+                        |]);
+                        Folder("TestAssay1",[|
+                            File "isa.study.xlsx"; 
+                            File "README.md";
+                        |])
+                    |]);
+                |])
+            )
+            let filest = FileSystemTree.fromFilePaths newArcRelativePaths
+            let actual = filest.Filter (fun n -> not (n.StartsWith "."))
+            Expect.equal actual expected ""
+        }
     ]
 
 let private tests_AddFile = 
@@ -309,6 +392,7 @@ let private tests_AddFile =
 let main = testList "FileSystemTree" [
     tests_fromFilePaths
     tests_ToFilePaths
+    tests_Filter_Files
     tests_Filter
     tests_AddFile
 ]
