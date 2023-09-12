@@ -122,7 +122,7 @@ type FileSystemTree =
     static member toFilePaths (?removeRoot: bool) =
         fun (root: FileSystemTree) -> root.ToFilePaths(?removeRoot=removeRoot)
 
-    member this.Filter (predicate: string -> bool) =
+    member this.FilterFiles (predicate: string -> bool) =
         let rec loop (parent: FileSystemTree) =
             match parent with
             | File n -> 
@@ -135,6 +135,25 @@ type FileSystemTree =
                     Folder (n, filteredChildren)
                     |> Some 
         loop this
+
+    static member filterFiles (predicate: string -> bool) =
+        fun (tree: FileSystemTree) -> tree.Filter predicate
+
+    member this.Filter (predicate: string -> bool) = 
+        let rec loop (parent: FileSystemTree) = 
+            match parent with 
+            | File n ->  
+                if predicate n then Some (FileSystemTree.File n) else None 
+            | Folder (n, children) -> 
+                if predicate n then 
+                    let filteredChildren = children |> Array.choose loop 
+                    if Array.isEmpty filteredChildren then  
+                        None
+                    else
+                        Some (FileSystemTree.Folder (n,filteredChildren))
+                else
+                    None
+        loop this 
 
     static member filter (predicate: string -> bool) =
         fun (tree: FileSystemTree) -> tree.Filter predicate
