@@ -249,9 +249,158 @@ let private test_updateFileSystem = testList "update_Filesystem" [
     )
 ]
 
+open ARCtrl.FileSystem
+
+let private ``payload_file_filters`` = 
+    
+    let orderFST (fs : FileSystemTree) = 
+        fs
+        |> FileSystemTree.toFilePaths()
+        |> Array.sort
+        |> FileSystemTree.fromFilePaths
+
+    testList "payload file filters" [
+        let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+
+        let assay = ArcAssay("registered_assay")
+        let assayTable = assay.InitTable("MyAssayTable")
+        assayTable.AppendColumn(CompositeHeader.Input (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_assay_input.txt"|])
+        assayTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "assay_protocol.rtf"|])
+        assayTable.AppendColumn(CompositeHeader.Output (IOType.DerivedDataFile), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
+
+        let study = ArcStudy("registered_study")
+        let studyTable = study.InitTable("MyStudyTable")
+        studyTable.AppendColumn(CompositeHeader.Input (IOType.Sample), [|CompositeCell.createFreeText "some_study_input_material"|])
+        studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
+        studyTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "study_protocol.pdf"|])
+        studyTable.AppendColumn(CompositeHeader.Output (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_study_output.txt"|])
+        study.AddAssay(assay)
+
+        inv.AddStudy(study)
+
+        let fs = 
+            Folder("root",[|
+                File "isa.investigation.xlsx"; // this should be included
+                File "README.md"; // this should be included
+                Folder("xd", [|File "some_file_that_lies_in_slashxd.txt"|]); // this should be included
+                Folder(".arc", [|File ".gitkeep"|]);
+                Folder(".git",[|
+                    File "config"; File "description"; File "HEAD";
+                    Folder("hooks",[|
+                        File "applypatch-msg.sample"; File "commit-msg.sample";
+                        File "fsmonitor-watchman.sample"; File "post-update.sample";
+                        File "pre-applypatch.sample"; File "pre-commit.sample";
+                        File "pre-merge-commit.sample"; File "pre-push.sample";
+                        File "pre-rebase.sample"; File "pre-receive.sample";
+                        File "prepare-commit-msg.sample";
+                        File "push-to-checkout.sample"; File "update.sample"
+                    |]);
+                    Folder ("info", [|File "exclude"|])
+                |]);
+                Folder("assays",[|
+                    File ".gitkeep";
+                    Folder("registered_assay",[|
+                        File "isa.assay.xlsx"; // this should be included
+                        File "README.md"; // this should be included
+                        Folder ("dataset", [|
+                            File "registered_assay_input.txt" // this should be included
+                            File "registered_assay_output.txt" // this should be included
+                            File "unregistered_file.txt"
+                        |]; ); 
+                        Folder ("protocols", [|File "assay_protocol.rtf"|]) // this should be included
+                    |]);
+                    Folder
+                        ("unregistered_assay",[|
+                        File "isa.assay.xlsx"; File "README.md";
+                        Folder ("dataset", [|File ".gitkeep"|]);
+                        Folder ("protocols", [|File ".gitkeep"|])
+                    |])
+                |]);
+                Folder("runs", [|File ".gitkeep"|]); // this folder should be included (empty)
+                Folder("studies",[|
+                    File ".gitkeep";
+                    Folder("registered_study",[|
+                        File "isa.study.xlsx"; // this should be included
+                        File "README.md"; // this should be included
+                        Folder ("protocols", [|File "study_protocol.pdf"|]); // this should be included
+                        Folder ("resources", [|File "registered_study_output.txt"|]) // this should be included
+                    |]);
+                    Folder("unregistered_study",[|
+                        File "isa.study.xlsx"; File "README.md";
+                        Folder ("protocols", [|File ".gitkeep"|]);
+                        Folder ("resources", [|File ".gitkeep"|])
+                    |]);
+                |]);
+                Folder ("workflows", [|File ".gitkeep"|]) // this folder should be included (empty)
+            |])
+       
+        let arc = ARC(isa = inv, fs = FileSystem.create(fs))
+
+        test "GetRegisteredPayload" {
+            let expected = 
+                Folder("root",[|
+                    File "isa.investigation.xlsx"; // this should be included
+                    File "README.md"; // this should be included
+                    Folder("xd", [|File "some_file_that_lies_in_slashxd.txt"|]); // this should be included
+                    Folder("assays",[|
+                        Folder("registered_assay",[|
+                            File "isa.assay.xlsx"; // this should be included
+                            File "README.md"; // this should be included
+                            Folder ("dataset", [|
+                                File "registered_assay_input.txt" // this should be included
+                                File "registered_assay_output.txt" // this should be included
+                            |]; ); 
+                            Folder ("protocols", [|File "assay_protocol.rtf"|]) // this should be included
+                        |]);
+                    |]);
+                    Folder("runs", [||]); // this folder should be included (empty)
+                    Folder("studies",[|
+                        Folder("registered_study",[|
+                            File "isa.study.xlsx"; // this should be included
+                            File "README.md"; // this should be included
+                            Folder ("protocols", [|File "study_protocol.pdf"|]); // this should be included
+                            Folder ("resources", [|File "registered_study_output.txt"|]) // this should be included
+                        |]);
+                    |]);
+                    Folder ("workflows", [||]) // this folder should be included (empty)
+                |])
+
+            let actual = arc.GetRegisteredPayload()
+            Expect.equal (orderFST actual) (orderFST expected) "incorrect payload."
+        }
+        test "GetAdditionalPayload" {
+            let expected = 
+                Folder("root",[|
+                    Folder("assays",[|
+                        Folder("registered_assay",[|
+                            Folder ("dataset", [|
+                                File "unregistered_file.txt"
+                            |]; ); 
+                        |]);
+                        Folder
+                            ("unregistered_assay",[|
+                            File "isa.assay.xlsx"; File "README.md";
+                            Folder ("dataset", [||]);
+                            Folder ("protocols", [||])
+                        |])
+                    |]);
+                    Folder("studies",[|
+                        Folder("unregistered_study",[|
+                            File "isa.study.xlsx"; File "README.md";
+                            Folder ("protocols", [||]);
+                            Folder ("resources", [||])
+                        |]);
+                    |]);
+                |])
+            let actual = arc.GetAdditionalPayload()
+            Expect.equal (orderFST actual) (orderFST expected) "incorrect payload."
+        }
+    ]
+
 let main = testList "main" [
     test_model
     test_updateFileSystem
     test_isaFromContracts
     test_writeContracts
+    payload_file_filters
 ]
