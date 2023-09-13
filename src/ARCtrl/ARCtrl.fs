@@ -262,26 +262,26 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
 
         let includeRootFiles : Set<string> = 
             set [
-                "isa.investigation.xlsx"
-                "README.md"
+                Path.InvestigationFileName
+                Path.READMEFileName
             ]
 
         let includeStudyFiles = 
             registeredStudies
             |> Array.map (fun s -> 
-                let studyFoldername = $"studies/{s.Identifier}"
+                let studyFoldername = $"{Path.StudiesFolderName}/{s.Identifier}"
 
                 set [
-                    yield $"{studyFoldername}/isa.study.xlsx"
-                    yield $"{studyFoldername}/README.md"
+                    yield $"{studyFoldername}/{Path.StudyFileName}"
+                    yield $"{studyFoldername}/{Path.READMEFileName}"
 
                     //just allow any constructed path from cell values. there may be occasions where this includes wrong files, but its good enough for now.
                     for table in s.Tables do
                         for kv in table.Values do
                             let textValue = kv.Value.ToFreeTextCell().AsFreeText
                             yield textValue // from arc root
-                            yield $"{studyFoldername}/resources/{textValue}" // from study root > resources
-                            yield $"{studyFoldername}/protocols/{textValue}" // from study root > protocols
+                            yield $"{studyFoldername}/{Path.StudiesResourcesFolderName}/{textValue}" // from study root > resources
+                            yield $"{studyFoldername}/{Path.StudiesProtocolsFolderName}/{textValue}" // from study root > protocols
                 ]
             )
             |> Set.unionMany
@@ -289,19 +289,19 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let includeAssayFiles = 
             registeredAssays
             |> Array.map (fun a -> 
-                let assayFoldername = $"assays/{a.Identifier}"
+                let assayFoldername = $"{Path.AssaysFolderName}/{a.Identifier}"
 
                 set [
-                    yield $"{assayFoldername}/isa.assay.xlsx"
-                    yield $"{assayFoldername}/README.md"
+                    yield $"{assayFoldername}/{Path.AssayFileName}"
+                    yield $"{assayFoldername}/{Path.READMEFileName}"
 
                     //just allow any constructed path from cell values. there may be occasions where this includes wrong files, but its good enough for now.
                     for table in a.Tables do
                         for kv in table.Values do
                             let textValue = kv.Value.ToFreeTextCell().AsFreeText
                             yield textValue // from arc root
-                            yield $"{assayFoldername}/dataset/{textValue}" // from assay root > dataset
-                            yield $"{assayFoldername}/protocols/{textValue}" // from assay root > protocols
+                            yield $"{assayFoldername}/{Path.AssayDatasetFolderName}/{textValue}" // from assay root > dataset
+                            yield $"{assayFoldername}/{Path.AssayProtocolsFolderName}/{textValue}" // from assay root > protocols
                 ]
             )
             |> Set.unionMany
@@ -315,8 +315,8 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         fsCopy.Tree
         |> FileSystemTree.toFilePaths()
         |> Array.filter (fun p -> 
-            p.StartsWith("workflows") 
-            || p.StartsWith("runs") 
+            p.StartsWith(Path.WorkflowsFolderName) 
+            || p.StartsWith(Path.RunsFolderName) 
             || includeFiles.Contains(p)
         )
         |> FileSystemTree.fromFilePaths
