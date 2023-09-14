@@ -315,6 +315,10 @@ let tests_copy =
     ]
 
 let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
+
+    let protocolREF = "MyProtocol"
+    let protocolDescription = "MyProtocolDescription"
+    
     let createFullStudy() =
         let identifier = "MyIdentifier"
         let title = "Study Title"
@@ -324,7 +328,11 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         let publications = [|Publication.create("Publication 1")|]
         let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
         let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
-        let tables = ResizeArray([|ArcTable.init("Table 1")|])
+        let tables = 
+            let refTable = ArcTable.init(protocolREF)
+            refTable.AddProtocolNameColumn [|protocolREF|]
+            refTable.AddProtocolDescriptionColumn [|protocolDescription|]        
+            ResizeArray([|refTable|])
         let assays = createExampleAssays()
         let assay_identifiers = getAssayIdentifiers assays
         let factors = [|Factor.create("Factor 1")|]
@@ -343,7 +351,7 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
             factors = factors,
             comments = comments
         )
-    testCase "UpdateBy, full replace" <| fun _ ->
+    testCase "full replace, no tables" <| fun _ ->
         let actual = createFullStudy()
         let next = 
             ArcStudy(
@@ -370,13 +378,11 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.Publications next.Publications "Publications"
         Expect.equal actual.Contacts next.Contacts "Contacts"
         Expect.equal actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
-        Expect.equal actual.Tables.Count next.Tables.Count "Tables.Count" // Ok
-        Expect.equal actual.Tables.Count 0 "Tables.Count = 0" // Ok
-        Expect.equal actual.Tables next.Tables "Tables" 
+        Expect.equal actual.Tables.Count 1 "Tables.Count = 0" // Ok
         Expect.equal actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
         Expect.equal actual.Factors next.Factors "Factors"
         Expect.equal actual.Comments next.Comments "Comments"
-    testCase "UpdateBy, replace existing, none replaced" <| fun _ ->
+    testCase "replace existing, none replaced" <| fun _ ->
         let actual = createFullStudy()
         let next = ArcStudy.init("NextIdentifier")
         let expected = createFullStudy()
@@ -394,7 +400,7 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
         Expect.equal actual.Factors expected.Factors "Factors"
         Expect.equal actual.Comments expected.Comments "Comments"
-    testCase "UpdateBy, replace existing, all replaced" <| fun _ ->
+    testCase "replace existing, all replaced" <| fun _ ->
         let actual = createFullStudy()
         let next = 
             ArcStudy(
@@ -425,7 +431,7 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
         Expect.equal actual.Factors next.Factors "Factors"
         Expect.equal actual.Comments next.Comments "Comments"
-    testCase "UpdateBy, replace existing, append" <| fun _ ->
+    testCase "replace existing, append" <| fun _ ->
         let actual = createFullStudy()
         let next = 
             ArcStudy(
@@ -454,7 +460,7 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         TestingUtils.mySequenceEqual actual.RegisteredAssayIdentifiers original.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
         Expect.equal actual.Factors original.Factors "Factors"
         Expect.equal actual.Comments original.Comments "Comments"
-    testCase "UpdateBy, replace all, append" <| fun _ ->
+    testCase "full replace, append" <| fun _ ->
         let actual = createFullStudy()
         let next = 
             ArcStudy(

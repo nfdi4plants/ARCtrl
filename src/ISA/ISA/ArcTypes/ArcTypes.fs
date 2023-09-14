@@ -1605,48 +1605,48 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         )
         i
 
-    /// <summary>
-    /// Updates given investigation with another investigation, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
-    /// </summary>
-    /// <param name="investigation">The investigation used for updating this investigation.</param>
-    /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
-    /// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
-    member this.UpdateBy(inv:ArcInvestigation,?onlyReplaceExisting : bool,?appendSequences : bool) =
-        let onlyReplaceExisting = defaultArg onlyReplaceExisting false
-        let appendSequences = defaultArg appendSequences false
-        let updateAlways = onlyReplaceExisting |> not
-        if inv.Title.IsSome || updateAlways then 
-            this.Title <- inv.Title
-        if inv.Description.IsSome || updateAlways then 
-            this.Description <- inv.Description
-        if inv.SubmissionDate.IsSome || updateAlways then 
-            this.SubmissionDate <- inv.SubmissionDate
-        if inv.PublicReleaseDate.IsSome || updateAlways then 
-            this.PublicReleaseDate <- inv.PublicReleaseDate
-        if inv.OntologySourceReferences.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.OntologySourceReferences inv.OntologySourceReferences
-            this.OntologySourceReferences <- s
-        if inv.Publications.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Publications inv.Publications
-            this.Publications <- s
-        if inv.Contacts.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Contacts inv.Contacts
-            this.Contacts <- s
-        if inv.Assays.Count <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Assays inv.Assays
-            this.Assays <- s
-        if inv.Studies.Count <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Studies inv.Studies
-            this.Studies <- s
-        if inv.RegisteredStudyIdentifiers.Count <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.RegisteredStudyIdentifiers inv.RegisteredStudyIdentifiers
-            this.RegisteredStudyIdentifiers <- s
-        if inv.Comments.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Comments inv.Comments
-            this.Comments <- s
-        if inv.Remarks.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Remarks inv.Remarks
-            this.Remarks <- s
+    ///// <summary>
+    ///// Updates given investigation with another investigation, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
+    ///// </summary>
+    ///// <param name="investigation">The investigation used for updating this investigation.</param>
+    ///// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
+    ///// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
+    //member this.UpdateBy(inv:ArcInvestigation,?onlyReplaceExisting : bool,?appendSequences : bool) =
+    //    let onlyReplaceExisting = defaultArg onlyReplaceExisting false
+    //    let appendSequences = defaultArg appendSequences false
+    //    let updateAlways = onlyReplaceExisting |> not
+    //    if inv.Title.IsSome || updateAlways then 
+    //        this.Title <- inv.Title
+    //    if inv.Description.IsSome || updateAlways then 
+    //        this.Description <- inv.Description
+    //    if inv.SubmissionDate.IsSome || updateAlways then 
+    //        this.SubmissionDate <- inv.SubmissionDate
+    //    if inv.PublicReleaseDate.IsSome || updateAlways then 
+    //        this.PublicReleaseDate <- inv.PublicReleaseDate
+    //    if inv.OntologySourceReferences.Length <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendArray appendSequences this.OntologySourceReferences inv.OntologySourceReferences
+    //        this.OntologySourceReferences <- s
+    //    if inv.Publications.Length <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendArray appendSequences this.Publications inv.Publications
+    //        this.Publications <- s
+    //    if inv.Contacts.Length <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendArray appendSequences this.Contacts inv.Contacts
+    //        this.Contacts <- s
+    //    if inv.Assays.Count <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Assays inv.Assays
+    //        this.Assays <- s
+    //    if inv.Studies.Count <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Studies inv.Studies
+    //        this.Studies <- s
+    //    if inv.RegisteredStudyIdentifiers.Count <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendResizeArray appendSequences this.RegisteredStudyIdentifiers inv.RegisteredStudyIdentifiers
+    //        this.RegisteredStudyIdentifiers <- s
+    //    if inv.Comments.Length <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendArray appendSequences this.Comments inv.Comments
+    //        this.Comments <- s
+    //    if inv.Remarks.Length <> 0 || updateAlways then
+    //        let s = ArcTypesAux.updateAppendArray appendSequences this.Remarks inv.Remarks
+    //        this.Remarks <- s
 
     /// Transform an ArcInvestigation to an ISA Json Investigation.
     member this.ToInvestigation() : Investigation = 

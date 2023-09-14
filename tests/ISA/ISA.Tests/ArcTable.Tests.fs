@@ -1947,7 +1947,43 @@ let private tests_AddRows =
         )
     ]
 
+let private tests_UpdateRefWithSheet =
+    testList "tests_UpdateRefWithSheet" [
+        testCase "singleREFAndDescription" (fun () ->
+            let protocolREF = "MyProtocol"
+            let protocolDescription = "MyProtocolDescription"
+            let refTable = ArcTable.init("Table")
+            refTable.AddProtocolNameColumn [|protocolREF|]
+            refTable.AddProtocolDescriptionColumn [|protocolDescription|]
+            let valueTable = ArcTable.init("Table")
+            let columns = [|
+                column_input
+                column_output
+                column_component
+            |]            
+            valueTable.AddColumns(columns)
+            let expectedRowCount = valueTable.RowCount
+            let expectedColumnCount = 5
+            refTable.UpdateReferenceByAnnotationTable valueTable
 
+            Expect.equal valueTable.ColumnCount 3 "ColumnCount of value table should not change after update"
+
+            Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
+            Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update"
+            
+            TestingUtils.mySequenceEqual 
+                (refTable.GetProtocolDescriptionColumn().Cells)
+                (Array.create 5 (CompositeCell.createFreeText protocolDescription))
+                "ProtocolDescriptionColumn should be filled with protocol description"
+            TestingUtils.mySequenceEqual
+                (refTable.GetColumnByHeader column_component.Header).Cells
+                column_component.Cells
+                "Component column should have been taken as is"
+        )
+        testCase "doubleREFAndDescription" (fun () ->
+            Expect.isTrue false "implement"       
+        )
+    ]
 
 let main = 
     testList "ArcTable" [
@@ -1967,4 +2003,5 @@ let main =
         tests_AddRow
         tests_AddRows
         tests_validate
+        tests_UpdateRefWithSheet
     ]

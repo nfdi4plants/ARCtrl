@@ -32,6 +32,14 @@ type ArcTable =
         Values = System.Collections.Generic.Dictionary<int*int,CompositeCell>()
     }
 
+    static member initWithHeaders(name,headers : ResizeArray<CompositeHeader>) =
+        ArcTable.create(name,headers,Dictionary())
+
+    static member createFromRows(name,headers : ResizeArray<CompositeHeader>,rows : CompositeCell[][]) : ArcTable =
+        let t = ArcTable.initWithHeaders(name,headers)
+        t.AddRows(rows)
+        t
+
     /// Will return true or false if table is valid. 
     ///
     /// Set `raiseException` = `true` to raise exception.
@@ -156,7 +164,7 @@ type ArcTable =
         column.Cells |> Array.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) this.Values)
         Unchecked.fillMissingCells this.Headers this.Values
 
-    static member updatetColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
+    static member updatedColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.UpdateColumn(columnIndex, header, ?cells=cells)
@@ -540,6 +548,43 @@ type ArcTable =
         ArcTableAux.Unchecked.extendToRowCount table.RowCount this.Headers this.Values
         for c in table.Columns do
             this.AddColumn(c.Header, cells = c.Cells,forceReplace = true)
+
+    static member SplitByColumnValues(columnIndex) =
+        fun (table : ArcTable) -> 
+            let column = table.GetColumn(columnIndex)
+            let indexGroups = column.Cells |> Array.indexed |> Array.groupBy snd |> Array.map (fun (g,vs) -> vs |> Array.map fst)
+            indexGroups
+            |> Array.mapi (fun i indexGroup ->
+                let headers  = table.Headers |> ResizeArray
+                let rows = 
+                    indexGroup
+                    |> Array.map (fun i -> table.GetRow(i))
+                ArcTable.createFromRows(table.Name,headers,rows)
+            )
+            
+    static member SplitByColumnValuesByHeader(header : CompositeHeader) =
+        fun (table : ArcTable) ->             
+            let index = table.Headers |> Seq.findIndex (fun x -> x = header)
+            ArcTable.SplitByColumnValues index table
+
+    static member SplitByProtocolREF =
+        fun (table : ArcTable) ->             
+            let index = table.Headers |> Seq.findIndex (fun x -> x = CompositeHeader.ProtocolREF)
+            ArcTable.SplitByColumnValues index table
+
+    static member append (otherTable) =
+        fun (table : ArcTable) ->
+            let getList (t : ArcTable) =
+                [
+                    for row = 0 to t.RowCount - 1 do
+                        [for col = 0 to t.ColumnCount - 1 do
+                            yield t.Headers[col],t.Values[col,row]
+                        ]
+                ]
+            let thisCells = getList table
+            let otherCells = getList otherTable
+            let alignedheaders,alignedCells = ArcTableAux.ProcessParsing.alignByHeaders (thisCells @ otherCells)
+            ArcTable.create(table.Name,alignedheaders,alignedCells)
 
     /// Pretty printer 
     override this.ToString() =
