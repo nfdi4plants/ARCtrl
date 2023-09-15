@@ -1,5 +1,7 @@
 ﻿namespace ARCtrl.ISA
 
+open System.Collections.Generic
+
 module ArcTablesAux =
 
     ///// 👀 Please do not remove this here until i copied it to Swate ~Kevin F
@@ -286,6 +288,11 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         |> Seq.toList
         |> List.collect (fun t -> t.GetProcesses())
 
+    static member ofSeq (tables : ArcTable seq) : ArcTables = 
+        tables
+        |> ResizeArray
+        |> ArcTables
+
     /// Create a collection of tables from a list of processes.
     ///
     /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
@@ -297,8 +304,41 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         |> List.map (fun (name,ps) ->
             ps
             |> List.collect (fun p -> ProcessParsing.processToRows p)
-            |> fun rows -> ProcessParsing.alignByHeaders rows
+            |> fun rows -> ProcessParsing.alignByHeaders true rows
             |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
         )
         |> ResizeArray
+        |> ArcTables
+
+    static member updateReferenceTablesBySheets (referenceTables : ArcTables) (sheetTables : ArcTables) : ArcTables =
+        let referenceTableMap = 
+            referenceTables.Tables |> Seq.map (fun t -> t.GetProtocolNameColumn().Cells.[0].AsFreeText, t) |> Map.ofSeq
+        sheetTables.Tables
+        |> Seq.collect ArcTable.SplitByProtocolREF
+        |> Seq.map (fun t ->
+            let k = 
+                t.Headers |> Seq.tryFindIndex (fun x -> x = CompositeHeader.ProtocolREF)
+                |> Option.bind (fun i ->
+                    t.TryGetCellAt(i,0)                        
+                )
+                |> Option.bind (fun c -> 
+                    if c.AsFreeText = ""then None
+                    else Some c.AsFreeText )
+                |> Option.defaultValue t.Name
+            match Map.tryFind k referenceTableMap with
+            | Some rt -> 
+                let rt = rt.Copy()
+                rt.UpdateReferenceByAnnotationTable t
+                ArcTable.create(t.Name, rt.Headers, rt.Values)
+            | None -> t
+        )
+        |> Seq.groupBy (fun t -> t.Name)
+        |> Seq.map (fun (_,ts) -> 
+            ts
+            |> Seq.reduce ArcTable.append
+        )
+        |> Seq.map (fun t -> 
+            ArcTableAux.Unchecked.fillMissingCells t.Headers t.Values
+            t)
+        |> ResizeArray        
         |> ArcTables

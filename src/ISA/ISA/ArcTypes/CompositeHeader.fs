@@ -308,6 +308,11 @@ type CompositeHeader =
         | ProtocolVersion -> true
         | anythingElse -> false
 
+    member this.isProtocolColumn =
+        match this with
+        | ProtocolREF | ProtocolDescription | ProtocolUri | ProtocolVersion | ProtocolType -> true
+        | anythingElse -> false
+
     member this.isPerformer =
         match this with
         | Performer -> true

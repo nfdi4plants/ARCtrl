@@ -15,6 +15,7 @@ let all = testSequenced <| testList "All" [
     CompositeHeader.Tests.main
     CompositeCell.Tests.main
     CompositeColumn.Tests.main
+    ArcTables.Tests.main
     ArcTable.Tests.main
     ArcAssay.Tests.main
     ArcStudy.Tests.main

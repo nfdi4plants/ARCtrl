@@ -1126,19 +1126,8 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         if study.StudyDesignDescriptors.Length <> 0 || updateAlways then
             this.StudyDesignDescriptors <- study.StudyDesignDescriptors
         if study.Tables.Count <> 0 || updateAlways then
-            let s = 
-                study.Tables
-                |> Seq.append this.Tables
-                |> Seq.groupBy (fun t -> t.Name)
-                |> Seq.map (fun (_,ts) -> 
-                    if Seq.length ts = 2 then
-                        (Seq.item 0 ts).UpdateReferenceByAnnotationTable (Seq.item 1 ts)
-                        Seq.head ts 
-                    else 
-                        Seq.head ts 
-                )
-                |> ResizeArray           
-            this.Tables <- s
+            let tables = ArcTables.updateReferenceTablesBySheets (ArcTables(this.Tables)) (ArcTables(study.Tables))
+            this.Tables <- tables.Tables
         if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
             this.RegisteredAssayIdentifiers <- study.RegisteredAssayIdentifiers
         if study.Factors.Length <> 0 || updateAlways then            

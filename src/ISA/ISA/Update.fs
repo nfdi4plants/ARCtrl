@@ -1,5 +1,17 @@
 ﻿namespace ARCtrl.ISA.Aux
 
+module List = 
+    
+    let tryPickAndRemove (f : 'T -> 'U option) (lst : 'T list) =
+        let rec loop newList remainingList = 
+            match remainingList with
+            | h::t -> 
+                match f h with
+                | Some v -> Some v, newList @ t
+                | None -> loop (newList @ [h]) t
+            | _ -> None, newList
+        loop [] lst
+
 module Dict = 
 
     open System.Collections.Generic

@@ -540,12 +540,18 @@ type ArcTable =
     static member fromProcesses name (ps : Process list) : ArcTable = 
         ps
         |> List.collect (fun p -> ProcessParsing.processToRows p)
-        |> fun rows -> ProcessParsing.alignByHeaders rows
+        |> fun rows -> ProcessParsing.alignByHeaders true rows
         |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
 
     /// This method is meant to update an ArcTable stored as a protocol in a study or investigation file with the information from an ArcTable actually stored as an annotation table
     member this.UpdateReferenceByAnnotationTable(table:ArcTable) =
-        ArcTableAux.Unchecked.extendToRowCount table.RowCount this.Headers this.Values
+        let nonProtocolColumns = 
+            this.Headers
+            |> Seq.indexed
+            |> Seq.choose (fun (i,h) -> if h.isProtocolColumn then None else Some i)
+            |> Seq.toArray
+        this.RemoveColumns nonProtocolColumns
+        ArcTableAux.Unchecked.extendToRowCount table.RowCount this.Headers this.Values      
         for c in table.Columns do
             this.AddColumn(c.Header, cells = c.Cells,forceReplace = true)
 
@@ -564,27 +570,33 @@ type ArcTable =
             
     static member SplitByColumnValuesByHeader(header : CompositeHeader) =
         fun (table : ArcTable) ->             
-            let index = table.Headers |> Seq.findIndex (fun x -> x = header)
-            ArcTable.SplitByColumnValues index table
+            let index = table.Headers |> Seq.tryFindIndex (fun x -> x = header)
+            match index with 
+            | Some i -> ArcTable.SplitByColumnValues i table
+            | None -> [|table.Copy()|]
 
     static member SplitByProtocolREF =
         fun (table : ArcTable) ->             
-            let index = table.Headers |> Seq.findIndex (fun x -> x = CompositeHeader.ProtocolREF)
-            ArcTable.SplitByColumnValues index table
+            ArcTable.SplitByColumnValuesByHeader CompositeHeader.ProtocolREF table
 
-    static member append (otherTable) =
-        fun (table : ArcTable) ->
-            let getList (t : ArcTable) =
-                [
-                    for row = 0 to t.RowCount - 1 do
-                        [for col = 0 to t.ColumnCount - 1 do
-                            yield t.Headers[col],t.Values[col,row]
-                        ]
-                ]
-            let thisCells = getList table
-            let otherCells = getList otherTable
-            let alignedheaders,alignedCells = ArcTableAux.ProcessParsing.alignByHeaders (thisCells @ otherCells)
-            ArcTable.create(table.Name,alignedheaders,alignedCells)
+
+    /// Append the rows of another table to this one
+    ///
+    /// The headers of the other table will be aligned with the headers of this table
+    ///
+    /// The name of table 2 will be ignored
+    static member append table1 table2 =
+        let getList (t : ArcTable) =
+            [
+                for row = 0 to t.RowCount - 1 do
+                    [for col = 0 to t.ColumnCount - 1 do
+                        yield t.Headers[col],t.Values[col,row]
+                    ]
+            ]
+        let thisCells = getList table1
+        let otherCells = getList table2
+        let alignedheaders,alignedCells = ArcTableAux.ProcessParsing.alignByHeaders false (thisCells @ otherCells)
+        ArcTable.create(table1.Name,alignedheaders,alignedCells)
 
     /// Pretty printer 
     override this.ToString() =
