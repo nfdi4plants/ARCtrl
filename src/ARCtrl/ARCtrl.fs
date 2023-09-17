@@ -165,16 +165,16 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         /// get assays from xlsx
         let assays = ARCAux.getArcAssaysFromContracts contracts
 
-        studies |> Seq.iter (fun study ->
+        studies |> Array.iter (fun study ->
             /// Try find registered study in parsed READ contracts
             let registeredStudyOpt = investigation.Studies |> Seq.tryFind (fun s -> s.Identifier = study.Identifier)
             match registeredStudyOpt with
-            | Some registeredStudy -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
+            | Some registeredStudy -> 
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
-                investigation.AddRegisteredStudy(study)
+                investigation.AddStudy(study)
         )
-        assays |> Seq.iter (fun assay ->
+        assays |> Array.iter (fun assay ->
             /// Try find registered study in parsed READ contracts
             let registeredAssayOpt = investigation.Assays |> Seq.tryFind (fun a -> a.Identifier = assay.Identifier)
             match registeredAssayOpt with
@@ -182,8 +182,14 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                 registeredAssay.UpdateReferenceByAssayFile(assay,true)
             | None -> 
                 investigation.AddAssay(assay)
+            let assay = investigation.Assays |> Seq.find (fun a -> a.Identifier = assay.Identifier)
+            let updatedTables = 
+                assay.StudiesRegisteredIn
+                |> Array.fold (fun tables study -> 
+                    ArcTables.updateReferenceTablesBySheets(ArcTables(study.Tables),tables,false)
+                ) (ArcTables(assay.Tables))
+            assay.Tables <- updatedTables.Tables
         )
-
         this.ISA <- Some investigation
 
     member this.UpdateFileSystem() =   

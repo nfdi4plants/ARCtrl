@@ -8,7 +8,7 @@ open Expecto
 
 open ARCtrl
 open ARCtrl.ISA
-
+open TestObjects.ISAContracts
 let private test_model = testList "model" [
     testCase "create" <| fun _ ->
         let arc = ARC()
@@ -74,11 +74,52 @@ let private test_isaFromContracts = testList "read_contracts" [
         Expect.equal assay1.Identifier TestObjects.Assay.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
         Expect.equal assay2.TableCount 0 "assay 2 should have read no tables"
-        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"
-    
-    
+        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"  
     )
+    // Assay Table protocol get's updated by protocol metadata stored in study
+    testCase "assayTableGetsUpdated" (fun () ->
+        let iContract = UpdateAssayWithStudyProtocol.investigationReadContract
+        let sContract = UpdateAssayWithStudyProtocol.studyReadContract
+        let aContract = UpdateAssayWithStudyProtocol.assayReadContract
+        let arc = ARC()
+        arc.SetISAFromContracts([|iContract; sContract; aContract|])
+        Expect.isSome arc.ISA "isa should be filled out"
+        let inv = arc.ISA.Value
+        Expect.equal inv.Identifier UpdateAssayWithStudyProtocol.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
+        Expect.equal inv.Studies.Count 1 "should have read one study"
+        let study = inv.Studies.[0]
+
+        Expect.equal study.TableCount 1 "study should have read one table"
+        let studyTable = study.Tables.[0]
+        Expect.equal studyTable.ColumnCount 2 "study column number should be unchanged"
+        TestingUtils.mySequenceEqual
+            (studyTable.GetProtocolDescriptionColumn()).Cells
+            [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description]
+            "Description value was not kept correctly"
+        TestingUtils.mySequenceEqual
+            (studyTable.GetProtocolNameColumn()).Cells
+            [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName]
+            "Protocol ref value was not kept correctly"
+
+        Expect.equal study.RegisteredAssayCount 1 "study should have read one assay"
+        let assay = study.RegisteredAssays.[0]
+        Expect.equal assay.TableCount 1 "assay should have read one table"
+        let assayTable = assay.Tables.[0]
+        Expect.equal assayTable.ColumnCount 3 "assay column number should be updated"
+        TestingUtils.mySequenceEqual
+            (assayTable.GetProtocolNameColumn()).Cells
+            (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName))
+            "Protocol ref value was not kept correctly"
+        TestingUtils.mySequenceEqual
+            (assayTable.GetColumnByHeader(UpdateAssayWithStudyProtocol.inputHeader)).Cells
+            (Array.create 2 UpdateAssayWithStudyProtocol.inputCell)
+            "Protocol ref value was not kept correctly"
+        TestingUtils.mySequenceEqual
+            (assayTable.GetProtocolDescriptionColumn()).Cells
+            (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description))
+            "Description value was not taken correctly"
+    )
 ]
 
 let private test_writeContracts = testList "write_contracts" [

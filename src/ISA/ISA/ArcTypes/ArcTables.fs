@@ -310,12 +310,15 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         |> ResizeArray
         |> ArcTables
 
-    static member updateReferenceTablesBySheets (referenceTables : ArcTables) (sheetTables : ArcTables) : ArcTables =
+    static member updateReferenceTablesBySheets (referenceTables : ArcTables,sheetTables : ArcTables,?keepUnusedRefTables : bool) : ArcTables =
+        let keepUnusedRefTables = Option.defaultValue false keepUnusedRefTables
+        let usedTables = HashSet<string>()
         let referenceTableMap = 
             referenceTables.Tables |> Seq.map (fun t -> t.GetProtocolNameColumn().Cells.[0].AsFreeText, t) |> Map.ofSeq
         sheetTables.Tables
-        |> Seq.collect ArcTable.SplitByProtocolREF
-        |> Seq.map (fun t ->
+        |> Seq.toArray
+        |> Array.collect ArcTable.SplitByProtocolREF
+        |> Array.map (fun t ->
             let k = 
                 t.Headers |> Seq.tryFindIndex (fun x -> x = CompositeHeader.ProtocolREF)
                 |> Option.bind (fun i ->
@@ -327,18 +330,26 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
                 |> Option.defaultValue t.Name
             match Map.tryFind k referenceTableMap with
             | Some rt -> 
+                usedTables.Add(k) |> ignore
                 let rt = rt.Copy()
                 rt.UpdateReferenceByAnnotationTable t
                 ArcTable.create(t.Name, rt.Headers, rt.Values)
             | None -> t
         )
-        |> Seq.groupBy (fun t -> t.Name)
-        |> Seq.map (fun (_,ts) -> 
+        |> Array.groupBy (fun t -> t.Name)
+        |> Array.map (fun (_,ts) -> 
             ts
             |> Seq.reduce ArcTable.append
         )
-        |> Seq.map (fun t -> 
+        |> Array.map (fun t -> 
             ArcTableAux.Unchecked.fillMissingCells t.Headers t.Values
             t)
+        |> fun s -> 
+            if keepUnusedRefTables then
+                Seq.append 
+                    (referenceTableMap |> Seq.choose (fun (kv) -> if usedTables.Contains kv.Key then None else Some kv.Value))
+                    s
+            else
+                s
         |> ResizeArray        
         |> ArcTables

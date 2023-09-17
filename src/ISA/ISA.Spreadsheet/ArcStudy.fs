@@ -59,11 +59,15 @@ module Extensions =
             let sheets = 
                 doc.GetWorksheets()
                 |> Seq.choose ArcTable.tryFromFsWorksheet
-            if sheets |> Seq.isEmpty then
-                studyMetadata
-            else
-                studyMetadata.Tables <- ResizeArray(sheets)
-                studyMetadata
+            if sheets |> Seq.isEmpty |> not then
+                let updatedTables = 
+                        ArcTables.updateReferenceTablesBySheets(
+                            (ArcTables studyMetadata.Tables),
+                            (ArcTables (ResizeArray sheets)),
+                            keepUnusedRefTables =  true
+                            )
+                studyMetadata.Tables <- updatedTables.Tables
+            studyMetadata
             ,assays
 
         static member toFsWorkbook (study : ArcStudy,?assays : ArcAssay list) =

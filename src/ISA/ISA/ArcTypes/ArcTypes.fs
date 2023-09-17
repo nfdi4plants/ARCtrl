@@ -125,6 +125,16 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.TableNames 
         with get() = ArcTables(this.Tables).TableNames
 
+    member this.StudiesRegisteredIn
+        with get () = 
+            match this.Investigation with
+            | Some i -> 
+                i.Studies
+                |> Seq.filter (fun s -> s.RegisteredAssayIdentifiers |> Seq.contains this.Identifier)
+                |> Seq.toArray
+            | None -> [||]
+        
+
     // - Table API - //
     // remark should this return ArcTable?
     member this.AddTable(table:ArcTable, ?index: int) : unit = ArcTables(this.Tables).AddTable(table, ?index = index)
@@ -1108,7 +1118,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// </summary>
     /// <param name="study">The study used for updating this study.</param>
     /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
-    member this.UpdateReferenceByStudyFile(study:ArcStudy,?onlyReplaceExisting : bool) =
+    member this.UpdateReferenceByStudyFile(study:ArcStudy,?onlyReplaceExisting : bool,?keepUnusedRefTables) =
         let onlyReplaceExisting = defaultArg onlyReplaceExisting false
         let updateAlways = onlyReplaceExisting |> not
         if study.Title.IsSome || updateAlways then 
@@ -1126,7 +1136,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         if study.StudyDesignDescriptors.Length <> 0 || updateAlways then
             this.StudyDesignDescriptors <- study.StudyDesignDescriptors
         if study.Tables.Count <> 0 || updateAlways then
-            let tables = ArcTables.updateReferenceTablesBySheets (ArcTables(this.Tables)) (ArcTables(study.Tables))
+            let tables = ArcTables.updateReferenceTablesBySheets(ArcTables(this.Tables),ArcTables(study.Tables),?keepUnusedRefTables = keepUnusedRefTables)
             this.Tables <- tables.Tables
         if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
             this.RegisteredAssayIdentifiers <- study.RegisteredAssayIdentifiers
