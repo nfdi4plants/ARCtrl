@@ -24,13 +24,13 @@ module Assays =
 
     
     let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
-        let measurementType = OntologyAnnotation.fromString(measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
-        let technologyType = OntologyAnnotation.fromString(technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
+        let measurementType = OntologyAnnotation.fromString(?termName = measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
+        let technologyType = OntologyAnnotation.fromString(?termName = technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
         ArcAssay.make 
             (fileName)
             (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
             (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
-            (Option.fromValueWithDefault "" technologyPlatform |> Option.map ArcAssay.decomposeTechnologyPlatform)
+            (technologyPlatform |> Option.map ArcAssay.decomposeTechnologyPlatform)
             (ResizeArray())             
             [||] 
             (comments)
@@ -50,13 +50,13 @@ module Assays =
                     |> Array.ofList
 
                 fromString
-                    (matrix.TryGetValueDefault("",(measurementTypeLabel,i)))             
+                    (matrix.TryGetValue(measurementTypeLabel,i))            
                     (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
                     (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
-                    (matrix.TryGetValueDefault("",(technologyTypeLabel,i)))               
+                    (matrix.TryGetValue(technologyTypeLabel,i))             
                     (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
                     (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
-                    (matrix.TryGetValueDefault("",(technologyPlatformLabel,i)))     
+                    (matrix.TryGetValue(technologyPlatformLabel,i))     
                     (matrix.TryGetValueDefault(Identifier.createMissingIdentifier(),(fileNameLabel,i)) |> Identifier.Assay.identifierFromFileName)                    
                     comments
             )

@@ -15,10 +15,10 @@ module Factors =
     let labels = [nameLabel;factorTypeLabel;typeTermAccessionNumberLabel;typeTermSourceREFLabel]
     
     let fromString name designType typeTermSourceREF typeTermAccessionNumber comments =
-        let factorType = OntologyAnnotation.fromString(designType,?tan = typeTermAccessionNumber, ?tsr = typeTermSourceREF)
+        let factorType = OntologyAnnotation.fromString(?termName = designType,?tan = typeTermAccessionNumber, ?tsr = typeTermSourceREF)
         Factor.make 
             None 
-            (Option.fromValueWithDefault "" name) 
+            (name) 
             (Option.fromValueWithDefault OntologyAnnotation.empty factorType) 
             (Option.fromValueWithDefault [||] comments)
 
@@ -37,8 +37,8 @@ module Factors =
                     |> Array.ofList
 
                 fromString
-                    (matrix.TryGetValueDefault("",(nameLabel,i)))
-                    (matrix.TryGetValueDefault("",(factorTypeLabel,i)))
+                    (matrix.TryGetValue(nameLabel,i))
+                    (matrix.TryGetValue(factorTypeLabel,i))
                     (matrix.TryGetValue((typeTermSourceREFLabel,i)))
                     (matrix.TryGetValue((typeTermAccessionNumberLabel,i)))
                     comments

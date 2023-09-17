@@ -17,10 +17,10 @@ module OntologySourceReference =
 
     let fromString description file name version comments =
         OntologySourceReference.make
-            (Option.fromValueWithDefault "" description)
-            (Option.fromValueWithDefault "" file)
-            (Option.fromValueWithDefault "" name)
-            (Option.fromValueWithDefault "" version)
+            (description)
+            (file)
+            (name)
+            (version)
             (Option.fromValueWithDefault [||] comments)
 
     let fromSparseTable (matrix : SparseTable) =
@@ -38,10 +38,10 @@ module OntologySourceReference =
                     |> Array.ofList
 
                 fromString
-                    (matrix.TryGetValueDefault("",(descriptionLabel,i)))
-                    (matrix.TryGetValueDefault("",(fileLabel,i)))
-                    (matrix.TryGetValueDefault("",(nameLabel,i)))
-                    (matrix.TryGetValueDefault("",(versionLabel,i)))
+                    (matrix.TryGetValue(descriptionLabel,i))
+                    (matrix.TryGetValue(fileLabel,i))
+                    (matrix.TryGetValue(nameLabel,i))
+                    (matrix.TryGetValue(versionLabel,i))
                     comments
             )
 
