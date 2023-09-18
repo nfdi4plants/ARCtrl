@@ -8,6 +8,7 @@
     <None Include="paket.references" />
     <Compile Include="Path.fs" />
     <Compile Include="FileSystemTree.fs" />
+    <Compile Include="SemVer.fs" />
     <Compile Include="Contracts\Contracts.ArcAssay.fs" />
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
@@ -26,9 +27,7 @@
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>
     <Description>Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems.</Description>

@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="SemVer.Tests.fs" />
     <Compile Include="TestObjects/ISAContracts.fs" />
     <None Include="paket.references" />
     <Compile Include="ARCtrl.Contracts.Tests.fs" />

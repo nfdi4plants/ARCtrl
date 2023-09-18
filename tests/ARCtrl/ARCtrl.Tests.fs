@@ -310,6 +310,7 @@ let private ``payload_file_filters`` =
         assayTable.AppendColumn(CompositeHeader.Output (IOType.DerivedDataFile), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
 
         let study = ArcStudy("registered_study")
+        inv.AddRegisteredStudy(study)
         let studyTable = study.InitTable("MyStudyTable")
         studyTable.AppendColumn(CompositeHeader.Input (IOType.Sample), [|CompositeCell.createFreeText "some_study_input_material"|])
         studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
@@ -317,7 +318,6 @@ let private ``payload_file_filters`` =
         studyTable.AppendColumn(CompositeHeader.Output (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_study_output.txt"|])
         study.AddRegisteredAssay(assay)
 
-        inv.AddRegisteredStudy(study)
 
         let fs = 
             Folder("root",[|
