@@ -45,9 +45,9 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
     member this.SemVer
         with get() = ARCtrl.SemVer.SemVer.tryOfString this.Version
 
-    member this.structurallyEquivalent (other: Template) =
+    member this.StructurallyEquivalent (other: Template) =
         (this.Id = other.Id)
-        && (this.Table.structurallyEquivalent(other.Table))
+        && (this.Table.StructurallyEquivalent(other.Table))
         && (this.Name = other.Name)
         && (this.Organisation = other.Organisation)
         && (this.Version = other.Version)

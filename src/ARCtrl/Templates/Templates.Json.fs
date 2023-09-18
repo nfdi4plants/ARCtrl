@@ -52,7 +52,7 @@ module ArcTable =
             )
         )
 
-module Json =
+module Template =
 
     open ARCtrl.ISA.Json
 

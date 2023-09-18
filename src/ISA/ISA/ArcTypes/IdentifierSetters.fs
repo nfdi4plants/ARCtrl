@@ -2,6 +2,11 @@
 
 open ARCtrl.ISA.Identifier
 
+let setArcTableName (newName: string) (table: ArcTable) =
+    checkValidCharacters newName
+    table.Name <- newName
+    table
+
 let setAssayIdentifier (newIdentifier: string) (assay: ArcAssay) =
     checkValidCharacters newIdentifier
     assay.Identifier <- newIdentifier

@@ -132,12 +132,12 @@ let tests_Template = testList "Template" [
                 o.Table <- table
                 o.Authors <- [|ARCtrl.ISA.Person.create(FirstName="John", LastName="Doe"); ARCtrl.ISA.Person.create(FirstName="Jane", LastName="Doe");|]
                 o.EndpointRepositories <- [|ARCtrl.ISA.OntologyAnnotation.fromString "Test"; ARCtrl.ISA.OntologyAnnotation.fromString "Testing second"|]
-                let json = Encode.toString 4 (Json.encode o)
-                let actual = Decode.fromString Json.decode json
+                let json = Encode.toString 4 (Template.encode o)
+                let actual = Decode.fromString Template.decode json
                 let expected = o
                 Expect.isOk actual "Ok"
                 let actualValue = actual |> Result.toOption |> Option.get
-                Expect.isTrue (actualValue.structurallyEquivalent(expected)) "structurallyEquivalent"
+                Expect.isTrue (actualValue.StructurallyEquivalent(expected)) "structurallyEquivalent"
         ]
     ]
 

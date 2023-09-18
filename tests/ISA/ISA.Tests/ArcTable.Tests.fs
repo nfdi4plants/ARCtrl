@@ -2037,6 +2037,44 @@ let private tests_UpdateRefWithSheet =
         )
     ]
 
+let private tests_equality = testList "equality" [
+    testList "override equality" [
+        testCase "equal" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            Expect.equal table1 table2 "equal"
+        testCase "not equal" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            table2 |> IdentifierSetters.setArcTableName "A New Name" |> ignore
+            Expect.notEqual table1 table2 "not equal"
+    ]
+    testList "structural equality" [
+        testCase "equal" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            let equals = table1.StructurallyEquivalent(table2)
+            Expect.isTrue equals "equal"
+        testCase "not equal" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            table2 |> IdentifierSetters.setArcTableName "A New Name" |> ignore
+            let equals = table1.StructurallyEquivalent(table2)
+            Expect.isFalse equals "not equal"
+    ]
+    testList "reference equality" [
+        testCase "not same object" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            let equals = table1.ReferenceEquals(table2)
+            Expect.isFalse equals ""
+        testCase "same object" <| fun _ ->
+            let table1 = create_testTable()
+            let equals = table1.ReferenceEquals(table1)
+            Expect.isTrue equals ""
+    ]
+]
+
 let main = 
     testList "ArcTable" [
         tests_SanityChecks
@@ -2056,4 +2094,5 @@ let main =
         tests_AddRows
         tests_validate
         tests_UpdateRefWithSheet
+        tests_equality
     ]
