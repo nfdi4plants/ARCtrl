@@ -257,7 +257,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         
         let registeredAssays =     
             registeredStudies
-            |> Array.map (fun s -> s.Assays.ToArray()) // to-do: s.RegisteredAssays
+            |> Array.map (fun s -> s.RegisteredAssays.ToArray()) // to-do: s.RegisteredAssays
             |> Array.concat
 
         let includeRootFiles : Set<string> = 

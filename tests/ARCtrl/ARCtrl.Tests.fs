@@ -315,9 +315,9 @@ let private ``payload_file_filters`` =
         studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
         studyTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "study_protocol.pdf"|])
         studyTable.AppendColumn(CompositeHeader.Output (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_study_output.txt"|])
-        study.AddAssay(assay)
+        study.AddRegisteredAssay(assay)
 
-        inv.AddStudy(study)
+        inv.AddRegisteredStudy(study)
 
         let fs = 
             Folder("root",[|
