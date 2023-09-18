@@ -13,6 +13,8 @@
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
+    <Compile Include="Templates\Templates.fs" />
+    <Compile Include="Templates\Templates.Json.fs" />
     <None Include="README.md" />
     <Compile Include="ARCtrl.fs" />
   </ItemGroup>
@@ -27,7 +29,6 @@
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>
     <Description>Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems.</Description>

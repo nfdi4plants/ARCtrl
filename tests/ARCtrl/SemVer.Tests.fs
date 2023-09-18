@@ -7,8 +7,6 @@ open Expecto
 #endif
 
 open ARCtrl
-open ARCtrl.Contract
-open FsSpreadsheet
 
 
 let private tests_tryOfString = testList "tryOfString" [

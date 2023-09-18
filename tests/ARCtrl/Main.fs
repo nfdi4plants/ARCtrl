@@ -10,6 +10,7 @@ open Expecto
 let all = testSequenced <| testList "All" [
     ARCtrl.Contracts.Tests.main
     ARCtrl.SemVer.Tests.main
+    ARCtrl.Templates.Tests.main
     ARCtrl.Tests.main
 ]
 

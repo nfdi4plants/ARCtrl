@@ -11,8 +11,7 @@
     <Compile Include="Url.fs" />
     <Compile Include="Regex.fs" />
     <Compile Include="Fable.fs" />
-    <Compile Include="Update.fs" />
-    <Compile Include="OptionExtensions.fs" />
+    <Compile Include="Helper.fs" />
     <Compile Include="Printer.fs" />
     <Compile Include="JsonTypes\URI.fs" />
     <Compile Include="JsonTypes\Comment.fs" />
