@@ -26,12 +26,13 @@ module DesignDescriptors =
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
                     |> Array.ofList
+                    |> Option.fromValueWithDefault [||]
 
                 OntologyAnnotation.fromString(
-                    (matrix.TryGetValueDefault("",(designTypeLabel,i))),
-                    (matrix.TryGetValueDefault("",(designTypeTermSourceREFLabel,i))),
-                    (matrix.TryGetValueDefault("",(designTypeTermAccessionNumberLabel,i))),
-                    comments
+                    ?termName = matrix.TryGetValue(designTypeLabel,i),
+                    ?tsr = matrix.TryGetValue(designTypeTermSourceREFLabel,i),
+                    ?tan = matrix.TryGetValue(designTypeTermAccessionNumberLabel,i),
+                    ?comments = comments
                 )
             )
 

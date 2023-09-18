@@ -466,25 +466,24 @@ let private tests_arcAssay =
 
 let private tests_arcStudy = 
     testList "ARCStudy" [
-
-        
-
         testCase "Identifier Set" (fun () ->
             let identifier = "MyIdentifier"       
             let arcStudy = ArcStudy.create(identifier)
-            let study = arcStudy.ToStudy()
+            let study = arcStudy.ToStudy(ResizeArray())
             Expect.isSome study.Identifier "Study should have identifier" 
             Expect.equal study.Identifier.Value identifier "Study identifier should match"
-            let resultArcStudy = ArcStudy.fromStudy study
+            let resultArcStudy, resultArcAssays = ArcStudy.fromStudy study
             Expect.equal resultArcStudy.Identifier identifier "ArcStudy identifier should match"
+            Expect.isEmpty resultArcAssays "ArcAssays should match"
         )
         testCase "No Identifier Set" (fun () ->
             let identifier = Identifier.createMissingIdentifier()
             let arcStudy = ArcStudy.create(identifier)
-            let study = arcStudy.ToStudy()
+            let study = arcStudy.ToStudy(ResizeArray())
             Expect.isNone study.Identifier "Study should not have identifier" 
-            let resultArcStudy = ArcStudy.fromStudy study
+            let resultArcStudy, resultArcAssays = ArcStudy.fromStudy study
             Expect.isTrue (Identifier.isMissingIdentifier resultArcStudy.Identifier) "ArcStudy identifier should be missing"
+            Expect.isEmpty resultArcAssays "ArcAssays should match"
         )
     ]
 

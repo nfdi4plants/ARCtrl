@@ -30,17 +30,17 @@ module Protocols =
         ]
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
-        let protocolType = OntologyAnnotation.fromString(protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
+        let protocolType = OntologyAnnotation.fromString(?termName = protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
         let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> List.ofArray
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
         Protocol.make 
             None 
-            (Option.fromValueWithDefault "" name |> Option.map URI.fromString) 
+            (name |> Option.map URI.fromString) 
             (Option.fromValueWithDefault OntologyAnnotation.empty protocolType)
-            (Option.fromValueWithDefault "" description)
-            (Option.fromValueWithDefault "" uri |> Option.map URI.fromString) 
-            (Option.fromValueWithDefault "" version)
+            (description)
+            (uri |> Option.map URI.fromString) 
+            (version)
             (Option.fromValueWithDefault [] parameters)
             (Option.fromValueWithDefault [] components) 
             (Option.fromValueWithDefault [] comments)
@@ -60,13 +60,13 @@ module Protocols =
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
                 fromString
-                    (matrix.TryGetValueDefault("",(nameLabel,i)))
-                    (matrix.TryGetValueDefault("",(protocolTypeLabel,i)))
+                    (matrix.TryGetValue(nameLabel,i))
+                    (matrix.TryGetValue(protocolTypeLabel,i))
                     (matrix.TryGetValue(typeTermAccessionNumberLabel,i))
                     (matrix.TryGetValue(typeTermSourceREFLabel,i))
-                    (matrix.TryGetValueDefault("",(descriptionLabel,i)))
-                    (matrix.TryGetValueDefault("",(uriLabel,i)))
-                    (matrix.TryGetValueDefault("",(versionLabel,i)))
+                    (matrix.TryGetValue(descriptionLabel,i))
+                    (matrix.TryGetValue(uriLabel,i))
+                    (matrix.TryGetValue(versionLabel,i))
                     (matrix.TryGetValueDefault("",(parametersNameLabel,i)))
                     (matrix.TryGetValueDefault("",(parametersTermAccessionNumberLabel,i)))
                     (matrix.TryGetValueDefault("",(parametersTermSourceREFLabel,i)))

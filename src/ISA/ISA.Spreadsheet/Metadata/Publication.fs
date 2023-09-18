@@ -18,12 +18,12 @@ module Publications =
     let labels = [pubMedIDLabel;doiLabel;authorListLabel;titleLabel;statusLabel;statusTermAccessionNumberLabel;statusTermSourceREFLabel]
 
     let fromString pubMedID doi author title status statusTermSourceREF statusTermAccessionNumber comments =
-        let status = OntologyAnnotation.fromString(status,?tan = statusTermAccessionNumber,?tsr = statusTermSourceREF)
+        let status = OntologyAnnotation.fromString(?termName = status,?tan = statusTermAccessionNumber,?tsr = statusTermSourceREF)
         Publication.make 
-            (Option.fromValueWithDefault "" pubMedID |> Option.map URI.fromString)
-            (Option.fromValueWithDefault "" doi)
-            (Option.fromValueWithDefault "" author)
-            (Option.fromValueWithDefault "" title) 
+            (pubMedID |> Option.map URI.fromString)
+            (doi)
+            (author)
+            (title) 
             (Option.fromValueWithDefault OntologyAnnotation.empty status) 
             (Option.fromValueWithDefault [||] comments)
 
@@ -42,11 +42,11 @@ module Publications =
                     |> Array.ofList
 
                 fromString
-                    (matrix.TryGetValueDefault("",(pubMedIDLabel,i)))            
-                    (matrix.TryGetValueDefault("",(doiLabel,i)))             
-                    (matrix.TryGetValueDefault("",(authorListLabel,i)))         
-                    (matrix.TryGetValueDefault("",(titleLabel,i)))                 
-                    (matrix.TryGetValueDefault("",(statusLabel,i)))                
+                    (matrix.TryGetValue(pubMedIDLabel,i))            
+                    (matrix.TryGetValue(doiLabel,i))             
+                    (matrix.TryGetValue(authorListLabel,i))         
+                    (matrix.TryGetValue(titleLabel,i))                 
+                    (matrix.TryGetValue(statusLabel,i))                
                     (matrix.TryGetValue((statusTermSourceREFLabel,i)))    
                     (matrix.TryGetValue((statusTermAccessionNumberLabel,i)))
                     comments

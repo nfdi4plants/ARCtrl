@@ -8,7 +8,7 @@ open Expecto
 
 open ARCtrl
 open ARCtrl.ISA
-
+open TestObjects.ISAContracts
 let private test_model = testList "model" [
     testCase "create" <| fun _ ->
         let arc = ARC()
@@ -67,18 +67,59 @@ let private test_isaFromContracts = testList "read_contracts" [
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
         Expect.equal study2.TableCount 4 "study 2 should have exactly as many tables as stated in investigation file"
         
-        Expect.equal study1.AssayCount 3 "study 1 should have read three assays"
-        let assay1 = study1.Assays.[0]
-        let assay2 = study1.Assays.[1]
-        let assay3 = study1.Assays.[2]
+        Expect.equal study1.RegisteredAssayCount 3 "study 1 should have read three assays"
+        let assay1 = study1.RegisteredAssays.[0]
+        let assay2 = study1.RegisteredAssays.[1]
+        let assay3 = study1.RegisteredAssays.[2]
         Expect.equal assay1.Identifier TestObjects.Assay.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
         Expect.equal assay2.TableCount 0 "assay 2 should have read no tables"
-        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"
-    
-    
+        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"  
     )
+    // Assay Table protocol get's updated by protocol metadata stored in study
+    testCase "assayTableGetsUpdated" (fun () ->
+        let iContract = UpdateAssayWithStudyProtocol.investigationReadContract
+        let sContract = UpdateAssayWithStudyProtocol.studyReadContract
+        let aContract = UpdateAssayWithStudyProtocol.assayReadContract
+        let arc = ARC()
+        arc.SetISAFromContracts([|iContract; sContract; aContract|])
+        Expect.isSome arc.ISA "isa should be filled out"
+        let inv = arc.ISA.Value
+        Expect.equal inv.Identifier UpdateAssayWithStudyProtocol.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
+        Expect.equal inv.Studies.Count 1 "should have read one study"
+        let study = inv.Studies.[0]
+
+        Expect.equal study.TableCount 1 "study should have read one table"
+        let studyTable = study.Tables.[0]
+        Expect.equal studyTable.ColumnCount 2 "study column number should be unchanged"
+        TestingUtils.mySequenceEqual
+            (studyTable.GetProtocolDescriptionColumn()).Cells
+            [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description]
+            "Description value was not kept correctly"
+        TestingUtils.mySequenceEqual
+            (studyTable.GetProtocolNameColumn()).Cells
+            [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName]
+            "Protocol ref value was not kept correctly"
+
+        Expect.equal study.RegisteredAssayCount 1 "study should have read one assay"
+        let assay = study.RegisteredAssays.[0]
+        Expect.equal assay.TableCount 1 "assay should have read one table"
+        let assayTable = assay.Tables.[0]
+        Expect.equal assayTable.ColumnCount 3 "assay column number should be updated"
+        TestingUtils.mySequenceEqual
+            (assayTable.GetProtocolNameColumn()).Cells
+            (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName))
+            "Protocol ref value was not kept correctly"
+        TestingUtils.mySequenceEqual
+            (assayTable.GetColumnByHeader(UpdateAssayWithStudyProtocol.inputHeader)).Cells
+            (Array.create 2 UpdateAssayWithStudyProtocol.inputCell)
+            "Protocol ref value was not kept correctly"
+        TestingUtils.mySequenceEqual
+            (assayTable.GetProtocolDescriptionColumn()).Cells
+            (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description))
+            "Description value was not taken correctly"
+    )
 ]
 
 let private test_writeContracts = testList "write_contracts" [
@@ -97,7 +138,7 @@ let private test_writeContracts = testList "write_contracts" [
     )
     testCase "simpleISA" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
-        inv.InitStudy("MyStudy").InitAssay("MyAssay") |> ignore
+        inv.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
         let arc = ARC(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -128,7 +169,7 @@ let private test_writeContracts = testList "write_contracts" [
     )
     testCase "sameAssayAndStudyName" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
-        inv.InitStudy("MyAssay").InitAssay("MyAssay") |> ignore
+        inv.InitStudy("MyAssay").InitRegisteredAssay("MyAssay") |> ignore
         let arc = ARC(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -167,8 +208,8 @@ let private test_writeContracts = testList "write_contracts" [
     testCase "sameAssayInDifferentStudies" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         let assay = ArcAssay("MyAssay")
-        inv.InitStudy("Study1").AddAssay(assay) |> ignore
-        inv.InitStudy("Study2").AddAssay(assay) |> ignore
+        inv.InitStudy("Study1").AddRegisteredAssay(assay) |> ignore
+        inv.InitStudy("Study2").RegisterAssay(assay.Identifier) |> ignore
         let arc = ARC(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -242,7 +283,7 @@ let private test_updateFileSystem = testList "update_Filesystem" [
         let arc = ARC(isa = inv)
         let oldFS = arc.FileSystem.Copy()   
         let assay = ArcAssay("MyAssay")
-        study.AddAssay(assay)
+        study.AddRegisteredAssay(assay)
         arc.UpdateFileSystem()
         let newFS = arc.FileSystem
         Expect.notEqual oldFS.Tree newFS.Tree "Tree should be unequal"
@@ -274,9 +315,9 @@ let private ``payload_file_filters`` =
         studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
         studyTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "study_protocol.pdf"|])
         studyTable.AppendColumn(CompositeHeader.Output (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_study_output.txt"|])
-        study.AddAssay(assay)
+        study.AddRegisteredAssay(assay)
 
-        inv.AddStudy(study)
+        inv.AddRegisteredStudy(study)
 
         let fs = 
             Folder("root",[|

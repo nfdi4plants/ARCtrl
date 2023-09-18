@@ -1947,7 +1947,95 @@ let private tests_AddRows =
         )
     ]
 
+let private tests_UpdateRefWithSheet =
+    testList "tests_UpdateRefWithSheet" [
+        testCase "singleREFAndDescription" (fun () ->
+            let protocolREF = "MyProtocol"
+            let protocolDescription = "MyProtocolDescription"
+            let refTable = ArcTable.init("Table")
+            refTable.AddProtocolNameColumn [|protocolREF|]
+            refTable.AddProtocolDescriptionColumn [|protocolDescription|]
+            let valueTable = ArcTable.init("Table")
+            let columns = [|
+                column_input
+                column_output
+                column_component
+            |]            
+            valueTable.AddColumns(columns)
+            let expectedRowCount = valueTable.RowCount
+            let expectedColumnCount = 5
+            let refTable = ArcTable.updateReferenceByAnnotationTable refTable valueTable
 
+            Expect.equal valueTable.ColumnCount 3 "ColumnCount of value table should not change after update"
+
+            Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
+            Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update"
+            
+            TestingUtils.mySequenceEqual 
+                (refTable.GetProtocolDescriptionColumn().Cells)
+                (Array.create 5 (CompositeCell.createFreeText protocolDescription))
+                "ProtocolDescriptionColumn should be filled with protocol description"
+            TestingUtils.mySequenceEqual
+                (refTable.GetColumnByHeader column_component.Header).Cells
+                column_component.Cells
+                "Component column should have been taken as is"
+        )
+        testCase "OverwriteDescription" (fun () ->
+            let protocolREF = "MyProtocol"
+            let protocolDescription = "MyProtocolDescription"
+            let newProtocolDescription = "Improved ProtocolDescription"
+            let refTable = ArcTable.init("Table")
+            refTable.AddProtocolNameColumn [|protocolREF|]
+            refTable.AddProtocolDescriptionColumn [|protocolDescription|]
+            let valueTable = ArcTable.init("Table")
+            let columns = [|
+                column_input
+                column_output
+                column_component
+            |]            
+            valueTable.AddColumns(columns)
+            valueTable.AddProtocolDescriptionColumn (Array.create 5 newProtocolDescription)
+            let expectedRowCount = valueTable.RowCount
+            let expectedColumnCount = 5
+            let refTable = ArcTable.updateReferenceByAnnotationTable refTable valueTable
+
+            Expect.equal valueTable.ColumnCount 4 "ColumnCount of value table should not change after update"
+
+            Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
+            Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update"
+            
+            TestingUtils.mySequenceEqual 
+                (refTable.GetProtocolDescriptionColumn().Cells)
+                (Array.create 5 (CompositeCell.createFreeText newProtocolDescription))
+                "ProtocolDescriptionColumn should be filled with protocol description"
+            TestingUtils.mySequenceEqual
+                (refTable.GetColumnByHeader column_component.Header).Cells
+                column_component.Cells
+                "Component column should have been taken as is"     
+        )
+        testCase "DropParams" (fun () ->
+            let protocolREF = "MyProtocol"
+            let protocolDescription = "MyProtocolDescription"
+            let refTable = ArcTable.init("Table")
+            refTable.AddProtocolNameColumn [|protocolREF|]
+            refTable.AddProtocolDescriptionColumn [|protocolDescription|]
+            refTable.AddColumn(CompositeHeader.Parameter oa_species, [|CompositeCell.createTerm oa_chlamy|])
+            let valueTable = ArcTable.init("Table")
+            let columns = [|
+                column_input
+                column_output
+                column_component
+            |]            
+            valueTable.AddColumns(columns)
+            let expectedRowCount = valueTable.RowCount
+            let expectedColumnCount = 5
+            let refTable = ArcTable.updateReferenceByAnnotationTable refTable valueTable
+
+            Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
+            Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update minus the param columns"
+            
+        )
+    ]
 
 let main = 
     testList "ArcTable" [
@@ -1967,4 +2055,5 @@ let main =
         tests_AddRow
         tests_AddRows
         tests_validate
+        tests_UpdateRefWithSheet
     ]

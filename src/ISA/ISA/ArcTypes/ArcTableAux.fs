@@ -3,6 +3,9 @@
 open ARCtrl.ISA
 open System.Collections.Generic
 
+
+
+
 // Taken from FSharpAux.Core
 /// .Net Dictionary
 module Dictionary = 
@@ -274,6 +277,16 @@ module Unchecked =
                 let empty = getEmptyCellForHeader relatedHeader tryExistingCell
                 for missingColumn,missingRow in missingKeys do
                     setCellAt (missingColumn,missingRow,empty) values
+
+    /// Increases the table size to the given new row count and fills the new rows with the last value of the column
+    let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+        let columnCount = getColumnCount headers
+        let previousRowCount = getRowCount values
+        // iterate over columns
+        for columnIndex = 0 to columnCount - 1 do
+            let lastValue = values[columnIndex,previousRowCount-1]
+            for rowIndex = previousRowCount - 1 to rowCount - 1 do
+                setCellAt (columnIndex,rowIndex,lastValue) values
 
     let addRow (index:int) (newCells:CompositeCell []) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
         /// Store start rowCount here, so it does not get changed midway through
@@ -739,7 +752,9 @@ module ProcessParsing =
     /// The values cant be directly taken as they are, as there is no guarantee that the headers are aligned
     ///
     /// This function aligns the headers and values by the main header string
-    let alignByHeaders (rows : ((CompositeHeader * CompositeCell) list) list) = 
+    ///
+    /// If keepOrder is true, the order of values per row is kept intact, otherwise the values are allowed to be reordered
+    let alignByHeaders (keepOrder : bool) (rows : ((CompositeHeader * CompositeCell) list) list) = 
         let headers : ResizeArray<CompositeHeader> = ResizeArray()
         let values : Dictionary<int*int,CompositeCell> = Dictionary()
         let getFirstElem (rows : ('T list) list) : 'T =
@@ -748,19 +763,34 @@ module ProcessParsing =
             if List.exists (List.isEmpty >> not) rows |> not then 
                 headers,values
             else 
+                
                 let firstElem = rows |> getFirstElem |> fst
                 headers.Add firstElem
                 let rows = 
                     rows
                     |> List.mapi (fun rowI l ->
-                        match l with
-                        | [] -> []
-                        | (h,c)::t ->
-                            if compositeHeaderEqual h firstElem then
-                                values.Add((colI,rowI),c)
-                                t
-                            else
+                        if keepOrder then                           
+                            match l with
+                            | [] -> []
+                            | (h,c)::t ->
+                                if compositeHeaderEqual h firstElem then
+                                    values.Add((colI,rowI),c)
+                                    t
+                                else
+                                    l
+                                
+                        else
+                            let firstMatch,newL = 
                                 l
+                                |> Aux.List.tryPickAndRemove (fun (h,c) ->
+                                    if compositeHeaderEqual h firstElem then Some c 
+                                    else None
+                                )
+                            match firstMatch with
+                            | Some m -> 
+                                values.Add((colI,rowI),m)
+                                newL
+                            | None -> newL
                     )
                 loop (colI+1) rows
         loop 0 rows

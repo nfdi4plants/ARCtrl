@@ -32,6 +32,14 @@ type ArcTable =
         Values = System.Collections.Generic.Dictionary<int*int,CompositeCell>()
     }
 
+    static member createFromHeaders(name,headers : ResizeArray<CompositeHeader>) =
+        ArcTable.create(name,headers,Dictionary())
+
+    static member createFromRows(name,headers : ResizeArray<CompositeHeader>,rows : CompositeCell[][]) : ArcTable =
+        let t = ArcTable.createFromHeaders(name,headers)
+        t.AddRows(rows)
+        t
+
     /// Will return true or false if table is valid. 
     ///
     /// Set `raiseException` = `true` to raise exception.
@@ -139,6 +147,7 @@ type ArcTable =
             newTable
 
     // - Column API - //
+    /// Replaces the header and cells of a column at given index.
     member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let column = CompositeColumn.create(header, ?cells=cells)
@@ -156,20 +165,21 @@ type ArcTable =
         column.Cells |> Array.iteri (fun rowIndex v -> Unchecked.setCellAt(columnIndex,rowIndex,v) this.Values)
         Unchecked.fillMissingCells this.Headers this.Values
 
-    static member updatetColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
+    /// Replaces the header and cells of a column at given index.
+    static member updateColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell []) = 
         fun (table:ArcTable) ->
             let newTable = table.Copy()
             newTable.UpdateColumn(columnIndex, header, ?cells=cells)
             newTable
 
     // - Column API - //
-    member this.InsertColumn (header:CompositeHeader, index: int, ?cells: CompositeCell []) =
+    member this.InsertColumn (index: int, header:CompositeHeader, ?cells: CompositeCell []) =
         this.AddColumn(header, index = index,?cells = cells, forceReplace = false)
 
-    static member insertColumn (header:CompositeHeader, index: int, ?cells: CompositeCell []) =
+    static member insertColumn (index: int, header:CompositeHeader, ?cells: CompositeCell []) =
         fun (table: ArcTable) ->
             let newTable = table.Copy()
-            newTable.InsertColumn(header, index, ?cells = cells)
+            newTable.InsertColumn(index, header, ?cells = cells)
             newTable
 
     // - Column API - //
@@ -252,6 +262,10 @@ type ArcTable =
     member this.GetColumnByHeader (header:CompositeHeader) =
         let index = this.Headers |> Seq.findIndex (fun x -> x = header)
         this.GetColumn(index)
+
+    static member getColumnByHeader (header:CompositeHeader) =
+        fun (table:ArcTable) ->
+            table.GetColumnByHeader(header)
 
     // - Row API - //
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
@@ -532,8 +546,69 @@ type ArcTable =
     static member fromProcesses name (ps : Process list) : ArcTable = 
         ps
         |> List.collect (fun p -> ProcessParsing.processToRows p)
-        |> fun rows -> ProcessParsing.alignByHeaders rows
+        |> fun rows -> ProcessParsing.alignByHeaders true rows
         |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
+
+    /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column
+    static member SplitByColumnValues(columnIndex) =
+        fun (table : ArcTable) -> 
+            let column = table.GetColumn(columnIndex)
+            let indexGroups = column.Cells |> Array.indexed |> Array.groupBy snd |> Array.map (fun (g,vs) -> vs |> Array.map fst)
+            indexGroups
+            |> Array.mapi (fun i indexGroup ->
+                let headers  = table.Headers |> ResizeArray
+                let rows = 
+                    indexGroup
+                    |> Array.map (fun i -> table.GetRow(i))
+                ArcTable.createFromRows(table.Name,headers,rows)
+            )
+            
+    /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the given column
+    static member SplitByColumnValuesByHeader(header : CompositeHeader) =
+        fun (table : ArcTable) ->             
+            let index = table.Headers |> Seq.tryFindIndex (fun x -> x = header)
+            match index with 
+            | Some i -> ArcTable.SplitByColumnValues i table
+            | None -> [|table.Copy()|]
+
+    /// Splits the table rowWise into a collection of tables, so that each new table has only one value for the ProtocolREF column
+    static member SplitByProtocolREF =
+        fun (table : ArcTable) ->             
+            ArcTable.SplitByColumnValuesByHeader CompositeHeader.ProtocolREF table
+
+
+    /// This method is meant to update an ArcTable stored as a protocol in a study or investigation file with the information from an ArcTable actually stored as an annotation table
+    static member updateReferenceByAnnotationTable (refTable:ArcTable) (annotationTable:ArcTable) =
+        let refTable = refTable.Copy()
+        let annotationTable = annotationTable.Copy()
+        let nonProtocolColumns = 
+            refTable.Headers
+            |> Seq.indexed
+            |> Seq.choose (fun (i,h) -> if h.isProtocolColumn then None else Some i)
+            |> Seq.toArray
+        refTable.RemoveColumns nonProtocolColumns
+        ArcTableAux.Unchecked.extendToRowCount annotationTable.RowCount refTable.Headers refTable.Values      
+        for c in annotationTable.Columns do
+            refTable.AddColumn(c.Header, cells = c.Cells,forceReplace = true)
+        refTable
+
+    /// Append the rows of another table to this one
+    ///
+    /// The headers of the other table will be aligned with the headers of this table
+    ///
+    /// The name of table 2 will be ignored
+    static member append table1 table2 =
+        let getList (t : ArcTable) =
+            [
+                for row = 0 to t.RowCount - 1 do
+                    [for col = 0 to t.ColumnCount - 1 do
+                        yield t.Headers[col],t.Values[col,row]
+                    ]
+            ]
+        let thisCells = getList table1
+        let otherCells = getList table2
+        let alignedheaders,alignedCells = ArcTableAux.ProcessParsing.alignByHeaders false (thisCells @ otherCells)
+        ArcTable.create(table1.Name,alignedheaders,alignedCells)
 
     /// Pretty printer 
     override this.ToString() =

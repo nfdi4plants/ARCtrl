@@ -123,6 +123,15 @@ let testMetaDataFunctions =
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
         )
 
+
+        testCase "ReaderCorrectnessEmpty" (fun () -> 
+            
+            let assay = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty
+            Expect.isNone assay.MeasurementType "MeasurementType should not be set"
+            Expect.isNone assay.TechnologyPlatform "TechnologyPlatform should not be set"
+            Expect.isNone assay.TechnologyType "TechnologyType should not be set"
+        )
+
         testCase "ReaderSuccessEmptyObsoleteSheetName" (fun () -> 
             
             let readingSuccess = 
