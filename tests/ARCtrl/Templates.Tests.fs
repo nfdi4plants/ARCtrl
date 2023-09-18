@@ -11,6 +11,9 @@ open Thoth.Json.Net
 open ARCtrl.Templates.Json
 open ARCtrl.ISA
 
+open System
+open System.Text
+
 let private tests_Organisation = testList "Organisation" [
     testList "encode" [
         testCase "DataPLANT" <| fun _ ->
@@ -21,16 +24,12 @@ let private tests_Organisation = testList "Organisation" [
         testCase "Other" <| fun _ ->
             let o = Organisation.Other "My Custom Org"
             let actual = Organisation.encode o |> Encode.toString 4
-            // if this ever fails with:
-            // --> String does not match at position 1. Expected char: '\013', but got '\010'.
-            // You might have to change your vs community settings:
-            // Edit -> Advanced -> "Set End of Line Sequence" -> LF
-            // That worked for me ~Kevin F, 09.2023
             let expected = "[
     \"Other\",
     \"My Custom Org\"
 ]"
-            Expect.equal actual expected "check comment if this fails with: \"Expected char: '\013', but got '\010'\""
+            // replace line endings to normalize for all editors/environments.
+            Expect.equal (actual.ReplaceLineEndings()) (expected.ReplaceLineEndings()) ""
     ]
     testList "decode" [
         testCase "DataPLANT" <| fun _ ->
