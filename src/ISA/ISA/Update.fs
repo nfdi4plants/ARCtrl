@@ -1,6 +1,6 @@
 ﻿namespace ARCtrl.ISA.Aux
 
-module List = 
+module internal List = 
     
     let tryPickAndRemove (f : 'T -> 'U option) (lst : 'T list) =
         let rec loop newList remainingList = 

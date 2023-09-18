@@ -1964,7 +1964,7 @@ let private tests_UpdateRefWithSheet =
             valueTable.AddColumns(columns)
             let expectedRowCount = valueTable.RowCount
             let expectedColumnCount = 5
-            refTable.UpdateReferenceByAnnotationTable valueTable
+            let refTable = ArcTable.updateReferenceByAnnotationTable refTable valueTable
 
             Expect.equal valueTable.ColumnCount 3 "ColumnCount of value table should not change after update"
 
@@ -1997,7 +1997,7 @@ let private tests_UpdateRefWithSheet =
             valueTable.AddProtocolDescriptionColumn (Array.create 5 newProtocolDescription)
             let expectedRowCount = valueTable.RowCount
             let expectedColumnCount = 5
-            refTable.UpdateReferenceByAnnotationTable valueTable
+            let refTable = ArcTable.updateReferenceByAnnotationTable refTable valueTable
 
             Expect.equal valueTable.ColumnCount 4 "ColumnCount of value table should not change after update"
 
@@ -2029,7 +2029,7 @@ let private tests_UpdateRefWithSheet =
             valueTable.AddColumns(columns)
             let expectedRowCount = valueTable.RowCount
             let expectedColumnCount = 5
-            refTable.UpdateReferenceByAnnotationTable valueTable
+            let refTable = ArcTable.updateReferenceByAnnotationTable refTable valueTable
 
             Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
             Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update minus the param columns"

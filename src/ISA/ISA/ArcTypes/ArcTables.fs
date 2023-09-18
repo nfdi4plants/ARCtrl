@@ -331,9 +331,8 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
             match Map.tryFind k referenceTableMap with
             | Some rt -> 
                 usedTables.Add(k) |> ignore
-                let rt = rt.Copy()
-                rt.UpdateReferenceByAnnotationTable t
-                ArcTable.create(t.Name, rt.Headers, rt.Values)
+                let updatedTable = ArcTable.updateReferenceByAnnotationTable rt t
+                ArcTable.create(t.Name, updatedTable.Headers, updatedTable.Values)
             | None -> t
         )
         |> Array.groupBy (fun t -> t.Name)
