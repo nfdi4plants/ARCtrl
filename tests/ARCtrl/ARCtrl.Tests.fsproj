@@ -6,6 +6,11 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Utils.fs" />
+    <Compile Include="ArcTable.fs" />
+    <Compile Include="Assay.fs" />
+    <Compile Include="Study.fs" />
+    <Compile Include="InvestigationFile.fs" />
     <Compile Include="Templates.Tests.fs" />
     <Compile Include="SemVer.Tests.fs" />
     <Compile Include="TestObjects/ISAContracts.fs" />
@@ -16,7 +21,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Spreadsheet.Tests\ISA.Spreadsheet.Tests.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

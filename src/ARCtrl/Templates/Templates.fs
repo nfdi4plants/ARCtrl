@@ -3,11 +3,21 @@
 open ARCtrl.ISA
 open Fable.Core
 
-// With "Erase" in js these will be "DataPLANT" and `string`
-[<Erase>]
+[<AttachMembers>]
 type Organisation =
 | [<CompiledName "DataPLANT">] DataPLANT
 | Other of string
+    static member ofString (str:string) = 
+        match str.ToLower() with
+        | "dataplant" -> DataPLANT
+        | _ -> Other str
+
+    override this.ToString() =
+        match this with
+        | DataPLANT -> "DataPLANT"
+        | Other anyElse -> anyElse
+
+    member this.IsOfficial() = this = DataPLANT
 
 [<AttachMembers>]
 type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Organisation, ?version: string, ?authors: Person [], 

@@ -6,8 +6,8 @@ module SemVerAux =
             @"^(?<major>\d+)" +
             @"(\.(?<minor>\d+))?" +
             @"(\.(?<patch>\d+))?" +
-            @"(\-(?<pre>[0-9A-Za-z\-\.]+))?" +
-            @"(\+(?<build>[0-9A-Za-z\-\.]+))?$"
+            @"(-(?<pre>[0-9A-Za-z-\.]+))?" +
+            @"(\+(?<build>[0-9A-Za-z-\.]+))?$"
 
     let SemVerRegex = System.Text.RegularExpressions.Regex(Pattern)
 
@@ -56,9 +56,9 @@ type SemVer = {
 
     member this.AsString() : string =
         let sb = System.Text.StringBuilder()
-        sb.AppendFormat("{0}.{1}.{2}", this.Major, this.Minor, this.Patch) |> ignore
+        sb.Append(sprintf "%i.%i.%i" this.Major this.Minor this.Patch) |> ignore
         if this.PreRelease.IsSome then
-            sb.AppendFormat("-{0}", this.PreRelease.Value) |> ignore
+            sb.Append(sprintf "-%s" this.PreRelease.Value) |> ignore
         if this.Metadata.IsSome then
-            sb.AppendFormat("+{0}", this.Metadata.Value) |> ignore
+            sb.Append(sprintf "+%s" this.Metadata.Value) |> ignore
         sb.ToString()

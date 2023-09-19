@@ -9,6 +9,8 @@ open Expecto
 open ARCtrl
 open ARCtrl.ISA
 open TestObjects.ISAContracts
+
+
 let private test_model = testList "model" [
     testCase "create" <| fun _ ->
         let arc = ARC()
