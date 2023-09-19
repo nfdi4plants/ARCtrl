@@ -4,6 +4,7 @@ open Fake.Core
 
 let project = "ARCtrl"
 
+/// Dotnet and JS test paths
 let testProjects = 
     [
         "tests/ISA/ISA.Tests"
@@ -11,6 +12,12 @@ let testProjects =
         "tests/ISA/ISA.Spreadsheet.Tests"
         "tests/FileSystem"
         "tests/ARCtrl"
+    ]
+
+/// Native JS test paths
+let jsTestProjects =
+    [
+        "tests/JavaScript"
     ]
 
 let solutionFile  = $"{project}.sln"
