@@ -156,12 +156,7 @@ let private tests_arcTableProcess =
             let t = singleRowSingleParam.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
-            let expectedTable = 
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t
+            let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -178,12 +173,7 @@ let private tests_arcTableProcess =
             let t = singleRowMixedValues.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
-            let expectedTable = 
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t
+            let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -208,12 +198,7 @@ let private tests_arcTableProcess =
             let t = singleRowDataInputWithCharacteristic.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
-            let expectedTable = 
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t
+            let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -238,12 +223,7 @@ let private tests_arcTableProcess =
             let t = singleRowDataOutputWithFactor.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
-            let expectedTable = 
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t
+            let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -251,12 +231,7 @@ let private tests_arcTableProcess =
             let t = twoRowsSameParamValue.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
-            let expectedTable = 
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1;CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t
+            let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -270,12 +245,7 @@ let private tests_arcTableProcess =
             let t = twoRowsDifferentParamValue.Copy()
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses tableName1 processes
-            let expectedTable = 
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1;CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t
+            let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -323,19 +293,7 @@ let private tests_arcTablesProcessSeq =
             Expect.equal processes.Length 2 "Should have 2 processes"
             let resultTables = ArcTables.fromProcesses processes
                 
-            let expectedTables = 
-                [
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t1
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName2|],
-                    1                             
-                ) t2
-                ]
+            let expectedTables = [ t1;t2 ]
                 
             Expect.equal resultTables.Count 2 "2 Tables should have been created"
             Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
@@ -353,16 +311,8 @@ let private tests_arcTablesProcessSeq =
                 
             let expectedTables = 
                 [
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t1
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName2;CompositeCell.createFreeText tableName2|],
-                    1                             
-                ) t2
+                t1
+                t2
                 ]
                 
             Expect.equal resultTables.Count 2 "2 Tables should have been created"
@@ -445,19 +395,7 @@ let private tests_arcAssay =
             Expect.equal resultingArcAssay.MeasurementType arcAssay.MeasurementType "ArcAssay measurementType should match"
             Expect.equal resultingArcAssay.TechnologyType arcAssay.TechnologyType "ArcAssay technologyType should match"
             Expect.equal resultingArcAssay.TechnologyPlatform arcAssay.TechnologyPlatform "ArcAssay technologyPlatform should match"
-            let expectedTables = 
-                [
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName1|],
-                    1                             
-                ) t1
-                ArcTable.addColumn(
-                    CompositeHeader.ProtocolREF,
-                    [|CompositeCell.createFreeText tableName2|],
-                    1                             
-                ) t2
-                ] 
+            let expectedTables = [t1;t2] 
                 
             mySequenceEqual resultingArcAssay.Tables expectedTables "ArcAssay tables should match"
             mySequenceEqual resultingArcAssay.Comments arcAssay.Comments "ArcAssay comments should match"

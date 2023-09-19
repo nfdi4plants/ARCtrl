@@ -28,11 +28,11 @@ module ArcTablesAux =
 
     /// If a table with the given name exists in the TableList, returns it, else returns None.
     let tryFindIndexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
-        Seq.tryFindIndex (fun t -> t.Name = name) tables
+        tables |> Seq.tryFindIndex (fun t -> t.Name = name)
 
     /// If a table with the given name exists in the TableList, returns it, else fails.
     let findIndexByTableName (name: string) (tables: ResizeArray<ArcTable>) =
-        match Seq.tryFindIndex (fun t -> t.Name = name) tables with
+        match tables |> Seq.tryFindIndex (fun t -> t.Name = name) with
         | Some index -> index
         | None -> failwith $"Unable to find table with name '{name}'!"
 
@@ -188,8 +188,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         SanityChecks.validateSheetIndex index false thisTables
         SanityChecks.validateNewNameUnique newName this.TableNames
         let table = this.GetTableAt index
-        let renamed = {table with Name = newName} 
-        this.UpdateTableAt(index, renamed)
+        table.Name <- newName
 
     // - Table API - //
     member this.RenameTable(name: string, newName: string) : unit =

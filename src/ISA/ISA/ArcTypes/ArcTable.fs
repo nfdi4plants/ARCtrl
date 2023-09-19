@@ -7,30 +7,22 @@ open ColumnIndex
 
 open Fable.Core.JsInterop
 
-[<CustomEquality; NoComparison>]
 [<AttachMembers>]
-type ArcTable = 
-    {
-        Name : string
-        Headers : ResizeArray<CompositeHeader>
-        /// Key: Column * Row
-        Values : System.Collections.Generic.Dictionary<int*int,CompositeCell>  
-    }
+type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
+
+    let mutable _name = name
+    member val Headers = headers with get, set
+    member val Values = values with get, set
+    member this.Name  
+        with get() = _name
+        and internal set (newName) = _name <- newName
 
     static member create(name, headers, values) =
-        {
-            Name = name
-            Headers = headers
-            Values = values
-
-        }
+        ArcTable(name, headers, values)
 
     /// Create ArcTable with empty 'ValueHeader' and 'Values' 
-    static member init(name: string) = {
-        Name = name
-        Headers = ResizeArray<CompositeHeader>()
-        Values = System.Collections.Generic.Dictionary<int*int,CompositeCell>()
-    }
+    static member init(name: string) = 
+        ArcTable(name, ResizeArray<CompositeHeader>(), System.Collections.Generic.Dictionary<int*int,CompositeCell>())
 
     static member createFromHeaders(name,headers : ResizeArray<CompositeHeader>) =
         ArcTable.create(name,headers,Dictionary())
@@ -537,6 +529,8 @@ type ArcTable =
             for i in 0..this.RowCount-1 do
                 yield getter this.Values i        
         ]
+        |> ProcessParsing.mergeIdenticalProcesses
+
 
     /// Create a new table from a list of processes
     ///
@@ -621,25 +615,30 @@ type ArcTable =
         ]
         |> String.concat "\n"
 
+    member this.StructurallyEquals (other: ArcTable) =
+        let n = this.Name = other.Name
+        let headers = Aux.compareSeq this.Headers other.Headers
+        let values = Aux.compareSeq (this.Values |> Seq.sortBy (fun x -> x.Key)) (other.Values |> Seq.sortBy (fun x -> x.Key))
+        n && headers && values
+
+    /// <summary>
+    /// Use this function to check if this ArcTable and the input ArcTable refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other ArcTable to test for reference.</param>
+    member this.ReferenceEquals (other: ArcTable) = System.Object.ReferenceEquals(this,other)
+
     // custom check
     override this.Equals other =
         match other with
         | :? ArcTable as table -> 
-            let sameName = this.Name = table.Name
-            let h1 = this.Headers 
-            let h2 = table.Headers
-            let sameHeaderLength = h1.Count = h2.Count
-            let sameHeaders = Seq.forall2 (fun x y -> x = y) h1 h2 
-            let b1 = this.Values |> Seq.sortBy (fun kv -> kv.Key)
-            let b2 = table.Values |> Seq.sortBy (fun kv -> kv.Key)
-            let sameBodyLength = (Seq.length b1) = (Seq.length b2)
-            let sameBodyCells = Seq.forall2 (fun x y -> x = y) b1 b2
-            sameName && sameHeaderLength && sameHeaders && sameBodyLength && sameBodyCells
+            this.StructurallyEquals(table)
         | _ -> false
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:
     override this.GetHashCode() = 
         let name = this.Name.GetHashCode()
         let headers = this.Headers |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
-        let bodyCells = this.Values |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
+        let bodyCells = this.Values |> Seq.sortBy (fun x -> x.Key) |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
         name + headers + bodyCells

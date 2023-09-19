@@ -241,7 +241,7 @@ let private tests_AddTables =
         )
         testCase "add, duplicate new names, throws" (fun () ->
             let assay = ArcAssay("MyAssay")
-            let tables = create_exampleTables("My") |> Array.map (fun x -> { x with Name = "Duplicate Name"})
+            let tables = create_exampleTables("My") |> Array.map (fun x -> x |> IdentifierSetters.setArcTableName "Duplicate Name")
             let eval() = assay.AddTables(tables)
             Expect.throws eval "throws, duplicate table names"
         )
@@ -402,7 +402,7 @@ let private tests_UpdateTableAt =
         testCase "set duplicate name" (fun () ->
             let assay = create_exampleAssay()
             let index = 2
-            let table = { create_testTable() with Name = "My Table 0" }
+            let table = create_testTable() |> IdentifierSetters.setArcTableName "My Table 0"
             let eval() = assay.UpdateTableAt(index, table)
             Expect.throws eval "throws, duplicate name"
         )

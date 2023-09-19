@@ -12,7 +12,7 @@ open TestingUtils
 open ARCtrl.ISA.Spreadsheet
 
 let private testInvestigationWriterComponents = 
-/// Test the single components of invesigation file writing
+    // Test the single components of invesigation file writing
     testList "InvestigationWriterPartTests" [       
         testCase "CreateEmptyWorkbook" (fun () ->
             let wb = new FsWorkbook()
