@@ -615,7 +615,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         ]
         |> String.concat "\n"
 
-    member this.StructurallyEquivalent (other: ArcTable) =
+    member this.StructurallyEquals (other: ArcTable) =
         let n = this.Name = other.Name
         let headers = Aux.compareSeq this.Headers other.Headers
         let values = Aux.compareSeq (this.Values |> Seq.sortBy (fun x -> x.Key)) (other.Values |> Seq.sortBy (fun x -> x.Key))
@@ -633,7 +633,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     override this.Equals other =
         match other with
         | :? ArcTable as table -> 
-            this.StructurallyEquivalent(table)
+            this.StructurallyEquals(table)
         | _ -> false
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:

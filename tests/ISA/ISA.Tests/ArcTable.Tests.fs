@@ -2053,13 +2053,13 @@ let private tests_equality = testList "equality" [
         testCase "equal" <| fun _ ->
             let table1 = create_testTable()
             let table2 = create_testTable()
-            let equals = table1.StructurallyEquivalent(table2)
+            let equals = table1.StructurallyEquals(table2)
             Expect.isTrue equals "equal"
         testCase "not equal" <| fun _ ->
             let table1 = create_testTable()
             let table2 = create_testTable()
             table2 |> IdentifierSetters.setArcTableName "A New Name" |> ignore
-            let equals = table1.StructurallyEquivalent(table2)
+            let equals = table1.StructurallyEquals(table2)
             Expect.isFalse equals "not equal"
     ]
     testList "reference equality" [

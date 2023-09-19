@@ -150,7 +150,7 @@ let tests_Template = testList "Template" [
                 Expect.equal actualValue.Table.ColumnCount expected.Table.ColumnCount "ColumnCount should be equal"
 
                 Expect.equal actualValue.Table expected.Table "Table"
-                Expect.isTrue (actualValue.StructurallyEquivalent(expected)) "structurallyEquivalent"
+                Expect.equal actualValue expected "template"
         ]
     ]
 
@@ -194,13 +194,13 @@ let private tests_equality = testList "equality" [
         testCase "equal" <| fun _ ->
             let template1 = create_TestTemplate()
             let template2 = create_TestTemplate()
-            let equals = template1.StructurallyEquivalent(template2)
+            let equals = template1.StructurallyEquals(template2)
             Expect.isTrue equals "equal"
         testCase "not equal" <| fun _ ->
             let template1 = create_TestTemplate()
             let template2 = create_TestTemplate()
             template2.Name <- "New Name"
-            let equals = template1.StructurallyEquivalent(template2)
+            let equals = template1.StructurallyEquals(template2)
             Expect.isFalse equals "not equal"
     ]
     testList "reference equality" [

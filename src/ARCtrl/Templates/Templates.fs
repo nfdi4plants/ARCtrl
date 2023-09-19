@@ -63,7 +63,7 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
     /// <param name="other">The other Template to test for reference.</param>
     member this.ReferenceEquals (other: Template) = System.Object.ReferenceEquals(this,other)
 
-    member this.StructurallyEquivalent (other: Template) =
+    member this.StructurallyEquals (other: Template) =
         (this.Id = other.Id)
         && (this.Table = other.Table)
         && (this.Name = other.Name)
@@ -78,7 +78,7 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
     override this.Equals other =
         match other with
         | :? Template as template -> 
-            this.StructurallyEquivalent(template)
+            this.StructurallyEquals(template)
         | _ -> false
 
     override this.GetHashCode() =
