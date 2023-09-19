@@ -621,15 +621,15 @@ module ProcessParsing =
 
         fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
 
-            let pn = processNameRoot |> Aux.Option.fromValueWithDefault ""
+            let pn = processNameRoot |> Aux.Option.fromValueWithDefault "" |> Option.map (fun p -> Process.composeName p i)
 
             let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [] 
             let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
 
-            let protocol : Protocol = 
+            let protocol : Protocol option = 
                 Protocol.make 
                     None
-                    (protocolREFGetter |> Aux.Option.mapOrDefault pn (fun f -> f matrix i))
+                    (protocolREFGetter |> Option.map (fun f -> f matrix i))
                     (protocolTypeGetter |> Option.map (fun f -> f matrix i))
                     (protocolDescriptionGetter |> Option.map (fun f -> f matrix i))
                     (protocolURIGetter |> Option.map (fun f -> f matrix i))
@@ -637,7 +637,17 @@ module ProcessParsing =
                     (parameters)
                     (componentGetters |> List.map (fun f -> f matrix i) |> Aux.Option.fromValueWithDefault [])
                     None
-
+                |> fun p ->     
+                    match p with
+                    | {       
+                            Name            = None
+                            ProtocolType    = None
+                            Description     = None
+                            Uri             = None
+                            Version         = None
+                            Components      = None
+                        } -> None
+                    | _ -> Some p
 
             let inputs,outputs = 
                 let inputs = inputGetter matrix i
@@ -652,7 +662,7 @@ module ProcessParsing =
             Process.make 
                 None 
                 pn 
-                (Some protocol) 
+                (protocol) 
                 (paramvalues)
                 None
                 None
@@ -677,11 +687,34 @@ module ProcessParsing =
             elif x.Name.IsSome && x.Name.Value.Contains "_" then
                 let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
                 x.Name.Value.Remove lastUnderScoreIndex
+            elif x.Name.IsSome then
+                x.Name.Value
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.ID.IsSome then 
                 x.ExecutesProtocol.Value.ID.Value              
             else
                 ARCtrl.ISA.Identifier.createMissingIdentifier()        
         )
+
+    /// Merges processes with the same name, protocol and param values
+    let mergeIdenticalProcesses (processes : list<Process>) =
+        processes
+        |> List.groupBy (fun x -> 
+            if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
+                (x.Name.Value |> Process.decomposeName |> fst), x.ExecutesProtocol, x.ParameterValues
+            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+                x.ExecutesProtocol.Value.Name.Value, x.ExecutesProtocol, x.ParameterValues                     
+            else
+                ARCtrl.ISA.Identifier.createMissingIdentifier(), x.ExecutesProtocol, x.ParameterValues 
+        )
+        |> fun l ->
+        l
+        |> List.mapi (fun i ((n,protocol,pVs),processes) -> 
+            let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Aux.Option.fromValueWithDefault []
+            let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Aux.Option.fromValueWithDefault []
+            let n = if l.Length > 1 then Process.composeName n i else n
+            Process.create(Name = n,?ExecutesProtocol = protocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
+        )
+
 
     // Transform a isa json process into a isa tab row, where each row is a header+value list
     let processToRows (p : Process) =

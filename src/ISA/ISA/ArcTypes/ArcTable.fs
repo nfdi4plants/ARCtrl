@@ -529,6 +529,8 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             for i in 0..this.RowCount-1 do
                 yield getter this.Values i        
         ]
+        |> ProcessParsing.mergeIdenticalProcesses
+
 
     /// Create a new table from a list of processes
     ///
