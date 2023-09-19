@@ -55,9 +55,17 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
     member this.SemVer
         with get() = ARCtrl.SemVer.SemVer.tryOfString this.Version
 
+    /// <summary>
+    /// Use this function to check if this Template and the input Template refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other Template to test for reference.</param>
+    member this.ReferenceEquals (other: Template) = System.Object.ReferenceEquals(this,other)
+
     member this.StructurallyEquivalent (other: Template) =
         (this.Id = other.Id)
-        && (this.Table.StructurallyEquivalent(other.Table))
+        && (this.Table = other.Table)
         && (this.Name = other.Name)
         && (this.Organisation = other.Organisation)
         && (this.Version = other.Version)
@@ -65,3 +73,22 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
         && (this.EndpointRepositories = other.EndpointRepositories)
         && (this.Tags = other.Tags)
         && (this.LastUpdated = other.LastUpdated)
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? Template as template -> 
+            this.StructurallyEquivalent(template)
+        | _ -> false
+
+    override this.GetHashCode() =
+        this.Id.GetHashCode()
+        + this.Table.GetHashCode()
+        + this.Name.GetHashCode()
+        + this.Organisation.GetHashCode()
+        + this.Version.GetHashCode()
+        + this.Authors.GetHashCode()
+        + this.EndpointRepositories.GetHashCode()
+        + this.Tags.GetHashCode()
+        + this.LastUpdated.GetHashCode()
+        

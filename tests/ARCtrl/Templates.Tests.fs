@@ -162,6 +162,61 @@ let private tests_json = testList "Json" [
     tests_Template
 ]
 
+let private tests_equality = testList "equality" [
+    let create_TestTemplate() =
+        let table = ArcTable.init("My Table")
+        table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
+        table.AddColumn(CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
+        let guid = System.Guid(String.init 32 (fun _ -> "d"))
+        Template.make 
+            guid 
+            table 
+            "My Template" 
+            DataPLANT 
+            "1.0.3" 
+            [|Person.create(FirstName="John", LastName="Doe")|] 
+            [|OntologyAnnotation.fromString "My oa rep"|] 
+            [|OntologyAnnotation.fromString "My oa tag"|]
+            (System.DateTime(2023,09,19))
+
+    testList "override equality" [
+        testCase "equal" <| fun _ ->
+            let template1 = create_TestTemplate()
+            let template2 = create_TestTemplate()
+            Expect.equal template1 template2 "equal"
+        testCase "not equal" <| fun _ ->
+            let template1 = create_TestTemplate()
+            let template2 = create_TestTemplate()
+            template2.Name <- "New Name"
+            Expect.notEqual template1 template2 "not equal"
+    ]
+    testList "structural equality" [
+        testCase "equal" <| fun _ ->
+            let template1 = create_TestTemplate()
+            let template2 = create_TestTemplate()
+            let equals = template1.StructurallyEquivalent(template2)
+            Expect.isTrue equals "equal"
+        testCase "not equal" <| fun _ ->
+            let template1 = create_TestTemplate()
+            let template2 = create_TestTemplate()
+            template2.Name <- "New Name"
+            let equals = template1.StructurallyEquivalent(template2)
+            Expect.isFalse equals "not equal"
+    ]
+    testList "reference equality" [
+        testCase "not same object" <| fun _ ->
+            let template1 = create_TestTemplate()
+            let template2 = create_TestTemplate()
+            let equals = template1.ReferenceEquals(template2)
+            Expect.isFalse equals ""
+        testCase "same object" <| fun _ ->
+            let template1 = create_TestTemplate()
+            let equals = template1.ReferenceEquals(template1)
+            Expect.isTrue equals ""
+    ]
+]
+
 let main = testList "Templates" [
     tests_json
+    tests_equality
 ]
