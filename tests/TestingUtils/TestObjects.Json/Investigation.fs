@@ -1,4 +1,4 @@
-﻿module TestObjects.Investigation
+﻿module TestObjects.Json.Investigation
 
 let investigationLD = 
   """

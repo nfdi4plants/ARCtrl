@@ -1,4 +1,4 @@
-﻿module TestObjects.Assay
+﻿module TestObjects.Spreadsheet.Assay
 
 open FsSpreadsheet
 

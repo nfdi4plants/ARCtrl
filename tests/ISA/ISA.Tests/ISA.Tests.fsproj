@@ -7,7 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
-    <Compile Include="Utils.fs" />
     <Compile Include="Regex.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
@@ -28,6 +27,7 @@
   <ItemGroup>
     <!--Also includes ISA-->
     <ProjectReference Include="..\..\..\src\ISA\ISA\ARCtrl.ISA.fsproj" />
+    <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>

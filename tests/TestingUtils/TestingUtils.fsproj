@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="TestObjects.Json\Assay.fs" />
+    <Compile Include="TestObjects.Json\Investigation.fs" />
+    <Compile Include="TestObjects.Json\OntologyAnnotation.fs" />
+    <Compile Include="TestObjects.Json\Person.fs" />
+    <Compile Include="TestObjects.Json\Process.fs" />
+    <Compile Include="TestObjects.Json\ProcessInput.fs" />
+    <Compile Include="TestObjects.Json\Protocol.fs" />
+    <Compile Include="TestObjects.Json\Publication.fs" />
+    <Compile Include="TestObjects.Json\Validation.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.ArcTable.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Assay.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Study.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.InvestigationFile.fs" />
+    <Compile Include="TestObjects.Contract\ISA.fs" />
+    <None Include="paket.references" />
+    <Compile Include="Library.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
+  </ItemGroup>
+  <!--<Import Project="..\..\..\.paket\Paket.Restore.targets" />-->
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

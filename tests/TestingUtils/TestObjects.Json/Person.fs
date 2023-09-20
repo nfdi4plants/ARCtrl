@@ -1,4 +1,4 @@
-﻿module TestObjects.Person
+﻿module TestObjects.Json.Person
 
 let person = 
     """

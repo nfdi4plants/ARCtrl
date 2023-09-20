@@ -1,12 +1,9 @@
 module ARCtrl.FileSystemTree.Tests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 open ARCtrl.FileSystem
+open TestingUtils
 
 let private newArcRelativePaths = [|
     @"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
@@ -97,7 +94,7 @@ let private tests_fromFilePaths =
             let filest = FileSystemTree.fromFilePaths newArcRelativePaths
             // damn... i made this, because i thought equal would somehow not work. But i missed adding "@" in front of paths.
             // i'll leave it for improved error message.
-            TestingUtils.testFileSystemTree filest newArcFST 
+            Expect.testFileSystemTree filest newArcFST 
             Expect.equal filest newArcFST "isEqual"
     ]
 
@@ -373,7 +370,7 @@ let private tests_AddFile =
             |])
             let newPath = @"studies\TestAssay1\resources\MyAwesomeRessource.pdf"
             let actual = newArcFST.AddFile newPath
-            TestingUtils.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
+            Expect.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
         testCase "new arc, add root file" <| fun _ ->
             let expected = Folder("root",[|
                 File "isa.investigation.xlsx"; File "Test.md";
@@ -428,7 +425,7 @@ let private tests_AddFile =
             |])
             let newPath = @"Test.md"
             let actual = newArcFST.AddFile newPath
-            TestingUtils.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
+            Expect.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
         testCase "new arc, add new folder" <| fun _ ->
             let expected = Folder("root",[|
                 File "isa.investigation.xlsx"; 
@@ -484,7 +481,7 @@ let private tests_AddFile =
             |])
             let newPath = @"MyNewFolder/README.md"
             let actual = newArcFST.AddFile newPath
-            TestingUtils.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
+            Expect.testFileSystemTree actual expected // use this instead of equal to ensure order of Folder children does not matter
     ]
 
 let main = testList "FileSystemTree" [

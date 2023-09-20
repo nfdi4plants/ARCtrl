@@ -1,10 +1,6 @@
 ﻿module JsonSchema.Tests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 open ARCtrl.ISA.Json
 
@@ -46,7 +42,7 @@ let tests_Process =
 
         testAsync "ProcessDateCorrect" { 
             
-            let! vr = Validation.validateProcess TestObjects.Validation.processDate
+            let! vr = Validation.validateProcess TestObjects.Json.Validation.processDate
 
             Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -54,7 +50,7 @@ let tests_Process =
 
         testAsync "ProcessDateTimeCorrect" {
             
-            let! vr = Validation.validateProcess TestObjects.Validation.processDateTime
+            let! vr = Validation.validateProcess TestObjects.Json.Validation.processDateTime
 
             Expect.isTrue vr.Success (sprintf "Process schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -62,7 +58,7 @@ let tests_Process =
 
         testAsync "ProcessDateWrong" {
             
-            let! vr = Validation.validateProcess TestObjects.Validation.processDateWrong
+            let! vr = Validation.validateProcess TestObjects.Json.Validation.processDateWrong
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -70,7 +66,7 @@ let tests_Process =
 
         testAsync "ProcessAdditionalField" {
             
-            let! vr = Validation.validateProcess TestObjects.Validation.processAdditionalField
+            let! vr = Validation.validateProcess TestObjects.Json.Validation.processAdditionalField
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -78,7 +74,7 @@ let tests_Process =
 
         testAsync "ProcessBroken" {
             
-            let! vr = Validation.validateProcess TestObjects.Validation.processBroken
+            let! vr = Validation.validateProcess TestObjects.Json.Validation.processBroken
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -91,7 +87,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVUnit" { 
             
-            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvUnit
+            let! vr = Validation.validateProcessParameterValue TestObjects.Json.Validation.ppvUnit
 
             Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -99,7 +95,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVOntology" { 
             
-            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvOntology
+            let! vr = Validation.validateProcessParameterValue TestObjects.Json.Validation.ppvOntology
 
             Expect.isTrue vr.Success (sprintf "Process parameter value schema validation should have succeded but did not: %A" (vr.GetErrors()))
 
@@ -107,7 +103,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVUriWrong" { 
             
-            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvUriWrong
+            let! vr = Validation.validateProcessParameterValue TestObjects.Json.Validation.ppvUriWrong
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
             
@@ -115,7 +111,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVAdditionalField" { 
             
-            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvAdditionalField
+            let! vr = Validation.validateProcessParameterValue TestObjects.Json.Validation.ppvAdditionalField
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
@@ -123,7 +119,7 @@ let tests_ProcessParameterValue =
 
         testAsync "PPVBroken" { 
             
-            let! vr = Validation.validateProcessParameterValue TestObjects.Validation.ppvBroken
+            let! vr = Validation.validateProcessParameterValue TestObjects.Json.Validation.ppvBroken
 
             Expect.isFalse vr.Success "Process schema validation should have failed but did not"
 
