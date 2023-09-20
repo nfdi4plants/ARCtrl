@@ -225,6 +225,93 @@ let assayMetadataEmptyObsoleteSheetName =
     cp.Name <- "Assay"
     cp
 
+let assayMetadataEmptyStrings = 
+    let ws = FsWorksheet("isa_assay")
+    let row1 = ws.Row(1)
+    row1.[1].Value <- "ASSAY"
+    let row2 = ws.Row(2)
+    row2.[1].Value <- "Assay Measurement Type"
+    row2.[2].Value <- ""
+    let row3 = ws.Row(3)
+    row3.[1].Value <- "Assay Measurement Type Term Accession Number"
+    row3.[2].Value <- ""
+    let row4 = ws.Row(4)
+    row4.[1].Value <- "Assay Measurement Type Term Source REF"
+    row4.[2].Value <- ""
+    let row5 = ws.Row(5)
+    row5.[1].Value <- "Assay Technology Type"
+    row5.[2].Value <- ""
+    let row6 = ws.Row(6)
+    row6.[1].Value <- "Assay Technology Type Term Accession Number"
+    row6.[2].Value <- ""
+    let row7 = ws.Row(7)
+    row7.[1].Value <- "Assay Technology Type Term Source REF"
+    row7.[2].Value <- ""
+    let row8 = ws.Row(8)
+    row8.[1].Value <- "Assay Technology Platform"
+    row8.[2].Value <- ""
+    let row9 = ws.Row(9)
+    row9.[1].Value <- "Assay File Name"
+    row9.[2].Value <- $"assays/{assayIdentifier}/isa.assay.xlsx"
+    let row10 = ws.Row(10)
+    row10.[1].Value <- "ASSAY PERFORMERS"    
+    let row11 = ws.Row(11)
+    row11.[1].Value <- "Assay Person Last Name"
+    row11.[2].Value <- ""
+    row11.[3].Value <- ""
+    row11.[4].Value <- ""
+    let row12 = ws.Row(12)
+    row12.[1].Value <- "Assay Person First Name"
+    row12.[2].Value <- ""
+    row12.[3].Value <- ""
+    row12.[4].Value <- ""
+    let row13 = ws.Row(13)
+    row13.[1].Value <- "Assay Person Mid Initials"
+    row13.[2].Value <- ""
+    row13.[3].Value <- ""
+    row13.[4].Value <- ""
+    let row14 = ws.Row(14)
+    row14.[1].Value <- "Assay Person Email"
+    row14.[2].Value <- ""
+    row14.[3].Value <- ""
+    row14.[4].Value <- ""
+    let row15 = ws.Row(15)
+    row15.[1].Value <- "Assay Person Phone"
+    row15.[2].Value <- ""
+    row15.[3].Value <- ""
+    row15.[4].Value <- ""
+    let row16 = ws.Row(16)
+    row16.[1].Value <- "Assay Person Fax"
+    row16.[2].Value <- ""
+    row16.[3].Value <- ""
+    row16.[4].Value <- ""
+    let row17 = ws.Row(17)
+    row17.[1].Value <- "Assay Person Address"
+    row17.[2].Value <- ""
+    row17.[3].Value <- ""
+    row17.[4].Value <- ""
+    let row18 = ws.Row(18)
+    row18.[1].Value <- "Assay Person Affiliation"
+    row18.[2].Value <- ""
+    row18.[3].Value <- ""
+    row18.[4].Value <- ""
+    let row19 = ws.Row(19)
+    row19.[1].Value <- "Assay Person Roles"
+    row19.[2].Value <- ""
+    row19.[3].Value <- ""
+    row19.[4].Value <- ""
+    let row20 = ws.Row(20)
+    row20.[1].Value <- "Assay Person Roles Term Accession Number"
+    row20.[2].Value <- ""
+    row20.[3].Value <- ""
+    row20.[4].Value <- ""
+    let row21 = ws.Row(21)
+    row21.[1].Value <- "Assay Person Roles Term Source REF"
+    row21.[2].Value <- ""
+    row21.[3].Value <- ""
+    row21.[4].Value <- ""
+    ws
+
 let assayMetadataWorkbook = 
     let wb = new FsWorkbook()
     wb.AddWorksheet(assayMetadata)
