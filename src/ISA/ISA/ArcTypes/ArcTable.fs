@@ -259,6 +259,15 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.GetColumnByHeader(header)
 
+    member this.TryGetColumnByHeader (header:CompositeHeader) =
+        let index = this.Headers |> Seq.tryFindIndex (fun x -> x = header)
+        index
+        |> Option.map (fun i -> this.GetColumn(i))
+
+    static member tryGetColumnByHeader (header:CompositeHeader) =
+        fun (table:ArcTable) ->
+            table.TryGetColumnByHeader(header)
+
     // - Row API - //
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
         let index = defaultArg index this.RowCount
@@ -459,6 +468,9 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
 
     member this.GetProtocolNameColumn() =
         this.GetColumnByHeader(CompositeHeader.ProtocolREF)
+
+    member this.TryGetProtocolNameColumn() =
+        this.TryGetColumnByHeader(CompositeHeader.ProtocolREF)
 
     member this.GetComponentColumns() =
         this.Headers

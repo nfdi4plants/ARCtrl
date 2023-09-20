@@ -313,7 +313,12 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
         let keepUnusedRefTables = Option.defaultValue false keepUnusedRefTables
         let usedTables = HashSet<string>()
         let referenceTableMap = 
-            referenceTables.Tables |> Seq.map (fun t -> t.GetProtocolNameColumn().Cells.[0].AsFreeText, t) |> Map.ofSeq
+            referenceTables.Tables 
+            |> Seq.choose (fun t -> 
+                t.TryGetProtocolNameColumn()
+                |> Option.map (fun c -> c.Cells.[0].AsFreeText, t)
+            ) 
+            |> Map.ofSeq
         sheetTables.Tables
         |> Seq.toArray
         |> Array.collect ArcTable.SplitByProtocolREF

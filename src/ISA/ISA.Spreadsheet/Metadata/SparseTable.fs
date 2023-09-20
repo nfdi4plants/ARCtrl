@@ -26,7 +26,10 @@ module SparseRow =
 
     let fromFsRow (r : FsRow) = 
         r.Cells
-        |> Seq.map (fun c -> c.ColumnNumber - 1, c.Value)
+        |> Seq.choose (fun c -> 
+            if c.Value = "" then Option.None 
+            else Option.Some (c.ColumnNumber - 1, c.Value)          
+        )
 
     let tryGetValueAt i (vs : SparseRow) =
         vs 

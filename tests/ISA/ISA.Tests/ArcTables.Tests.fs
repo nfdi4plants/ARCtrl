@@ -203,6 +203,19 @@ let updateReferenceWithSheet =
                 (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
                 "Description value was not taken correctly"
         )
+        testCase "RefTableHasNoProtocolREF" (fun () ->
+            let tableOfInterest = sheetWithREF()
+            let tables = ArcTables.ofSeq [tableOfInterest]
+            let refTables = ArcTables.ofSeq [sheetWithNoREF()]
+            let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
+            
+            Expect.equal result.Count tables.Count "Should be same number of tables"
+            let resultTable = result.[0]
+            Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
+            Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount) "Should have same number of columns as before"
+            Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of columns as before"
+            
+        )
         testCase "TwoTablesWithSameProtocol" (fun () ->
             let tableOfInterest1 = sheetWithREF()
             let tableOfInterest2 = sheetWithREFAndFactor()
