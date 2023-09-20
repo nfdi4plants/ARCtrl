@@ -263,6 +263,26 @@ let private tests_arcTableProcess =
             let table = ArcTable.fromProcesses tableName1 processes
             Expect.arcTableEqual table t "Table should be equal"
         )
+
+        testCase "EmptyTable GetProcesses" (fun () ->            
+            let t = ArcTable.init tableName1
+            let processes = t.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let p = processes.[0]
+            Expect.wantSome p.Name "Process should have name"
+            |> fun n -> Expect.equal n tableName1 "Process name should match table name"
+            Expect.isNone p.Inputs "Process should have no inputs"
+            Expect.isNone p.Outputs "Process should have no outputs"
+            Expect.isNone p.ParameterValues "Process should have no parameter values"
+            Expect.isNone p.ExecutesProtocol "Process should have no protocol"
+        )
+
+        testCase "EmptyTable GetAndFromProcesses" (fun () ->
+            let t = ArcTable.init tableName1
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses tableName1 processes
+            Expect.arcTableEqual table t "Table should be equal"
+        )
     ]
 
 let private tests_arcTablesProcessSeq = 
@@ -277,6 +297,29 @@ let private tests_arcTablesProcessSeq =
             let processes = t.GetProcesses()
             let resultTables = ArcTables.fromProcesses processes
             Expect.equal resultTables.Count 0 "Should have 0 tables"
+        )
+
+        testCase "EmptyTable GetProcesses" (fun () ->            
+            let t = ArcTable.init tableName1
+            let tables = ArcTables(ResizeArray([t]))
+            let processes = tables.GetProcesses()
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let p = processes.[0]
+            Expect.wantSome p.Name "Process should have name"
+            |> fun n -> Expect.equal n tableName1 "Process name should match table name"
+            Expect.isNone p.Inputs "Process should have no inputs"
+            Expect.isNone p.Outputs "Process should have no outputs"
+            Expect.isNone p.ParameterValues "Process should have no parameter values"
+            Expect.isNone p.ExecutesProtocol "Process should have no protocol"
+        )
+
+        testCase "EmptyTable GetAndFromProcesses" (fun () ->
+            let t = ArcTable.init tableName1
+            let tables = ArcTables(ResizeArray([t]))
+            let processes = tables.GetProcesses()
+            let table = ArcTables.fromProcesses processes
+            Expect.equal table.Count 1 "Should have 1 table"
+            Expect.arcTableEqual table.[0] t "Table should be equal"
         )
 
         testCase "SimpleTables GetAndFromProcesses" (fun () ->

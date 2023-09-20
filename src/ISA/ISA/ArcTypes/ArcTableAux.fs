@@ -738,8 +738,8 @@ module ProcessParsing =
                 ]
             | None -> []
         // zip the inputs and outpus so they are aligned as rows
-        p.Outputs.Value
-        |> List.zip p.Inputs.Value
+        p.Outputs |> Option.defaultValue []
+        |> List.zip (p.Inputs |> Option.defaultValue [])
         // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
         |> List.groupBy (fun (i,o) ->
             i.Name,o.Name
