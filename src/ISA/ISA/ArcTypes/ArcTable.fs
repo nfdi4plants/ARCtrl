@@ -106,8 +106,16 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         elif forceConvertCells then
             let convertedCells =
                 match newHeader with
-                | isTerm when newHeader.IsTermColumn -> c.Cells |> Array.map (fun c -> c.ToTermCell())
-                | _ -> c.Cells |> Array.map (fun c -> c.ToFreeTextCell())
+                | isTerm when newHeader.IsTermColumn -> 
+                    c.Cells |> Array.map (fun c -> 
+                        // only update cell if it is freetext to not remove some unit and some term cells
+                        if c.isFreeText then
+                            c.ToTermCell()
+                        else
+                            c
+                    )
+                | _ -> 
+                    c.Cells |> Array.map (fun c -> c.ToFreeTextCell())
             this.UpdateColumn(index, newHeader, convertedCells)
         else
             failwith "Tried setting header for column with invalid type of cells. Set `forceConvertCells` flag to automatically convert cells into valid CompositeCell type."

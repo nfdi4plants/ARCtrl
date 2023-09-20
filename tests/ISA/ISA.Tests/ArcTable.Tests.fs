@@ -355,7 +355,7 @@ let private tests_UpdateHeader =
             Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
         )
         // force convert should never do anything in valid case
-        testCase "set valid, force convert" (fun () ->
+        testCase "set valid, force convert, term cells" (fun () ->
             let table = create_testTable()
             let table2 = table.Copy()
             let newHeader = CompositeHeader.Factor oa_temperature
@@ -375,6 +375,25 @@ let private tests_UpdateHeader =
             TestingUtils.Expect.sequenceEqual table.Headers table2.Headers "equal table headers"
             TestingUtils.Expect.sequenceEqual table.Values table2.Values "equal table values"
         )
+        testCase "set valid, forceConvert, unitized cells" <| fun _ ->
+            let table = create_testTable()
+            let table2 = table.Copy()
+            let newHeader = CompositeHeader.Factor oa_temperature
+            table.UpdateHeader(4, newHeader)
+            table2.UpdateHeader(4, newHeader, true)
+            Expect.equal table.RowCount 5 "RowCount"
+            Expect.equal table.ColumnCount 5 "ColumnCount"
+            Expect.equal table.Headers.[0] column_input.Header "header0"
+            Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
+            Expect.equal table.Headers.[1] column_output.Header "header1"
+            Expect.equal table.Headers.[2] column_param.Header "header2"
+            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 2,4"
+            Expect.equal table.Headers.[3] column_component.Header "header3"
+            Expect.equal table.Values.[3,4] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "cell 3,4"
+            Expect.equal table.Headers.[4] newHeader "header4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            TestingUtils.Expect.sequenceEqual table.Headers table2.Headers "equal table headers"
+            TestingUtils.Expect.sequenceEqual table.Values table2.Values "equal table values"
     ]
 
 let private tests_UpdateCell =
