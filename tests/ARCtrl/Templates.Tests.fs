@@ -1,18 +1,14 @@
 ﻿module ARCtrl.Templates.Tests
 
 #if FABLE_COMPILER
-open Fable.Mocha
 open Thoth.Json
 #else
-open Expecto
 open Thoth.Json.Net
 #endif
 
 open ARCtrl.Templates.Json
 open ARCtrl.ISA
 
-open System
-open System.Text
 open TestingUtils
 
 let private fableReplaceLineEndings(str: string) =
@@ -144,8 +140,8 @@ let tests_Template = testList "Template" [
                 //printfn "EXPECTED: %A" expected.Table
                 
                 Expect.equal actualValue.Table.Name expected.Table.Name "Name should be equal"
-                Expect.mySequenceEqual actualValue.Table.Headers expected.Table.Headers "Headers should be equal"
-                Expect.mySequenceEqual actualValue.Table.Values expected.Table.Values "Headers should be equal"
+                Expect.sequenceEqual actualValue.Table.Headers expected.Table.Headers "Headers should be equal"
+                Expect.sequenceEqual actualValue.Table.Values expected.Table.Values "Headers should be equal"
 
                 Expect.equal actualValue.Table.RowCount expected.Table.RowCount "RowCount should be equal"
                 Expect.equal actualValue.Table.ColumnCount expected.Table.ColumnCount "ColumnCount should be equal"

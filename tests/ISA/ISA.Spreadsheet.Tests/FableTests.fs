@@ -3,12 +3,7 @@
 open ARCtrl.ISA.Spreadsheet
 open FsSpreadsheet
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
-
+open TestingUtils
 
 let tests_typeTranspilation = testList "type transpilation" [
     testCase "FsWorkbook" <| fun _ ->

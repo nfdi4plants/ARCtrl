@@ -1,12 +1,6 @@
 ﻿module ArcAssayTests
 
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
-
 open ARCtrl.ISA
 open TestingUtils
 open ARCtrl.ISA.Spreadsheet
@@ -412,9 +406,9 @@ let testAssayFileReader =
         //    let factors = API.Assay.getFactors assay
         //    let protocols = API.Assay.getProtocols assay
 
-        //    Expect.mySequenceEqual factors expectedFactors        "Factors were read incorrectly"
-        //    Expect.mySequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
-        //    Expect.mySequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
+        //    Expect.sequenceEqual factors expectedFactors        "Factors were read incorrectly"
+        //    Expect.sequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
+        //    Expect.sequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
 
         //    Expect.isSome assay.FileName "FileName was not read"
         //    Expect.equal assay.FileName.Value fileName "FileName was not read correctly"
@@ -428,7 +422,7 @@ let testAssayFileReader =
         //    Expect.isSome assay.ProcessSequence "Processes were not read"
         //    assay.ProcessSequence.Value
         //    |> Seq.map (fun p -> Option.defaultValue "" p.Name)
-        //    |> fun names -> Expect.mySequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
+        //    |> fun names -> Expect.sequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
 
         //)
         //testCase "AroundTheWorldComponents" (fun () ->        
@@ -460,7 +454,7 @@ let testAssayFileReader =
         //        Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
         //        Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
         //    ) 
-        //    Expect.mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+        //    Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
         //testCase "AroundTheWorldProtocolType" (fun () ->        
@@ -493,7 +487,7 @@ let testAssayFileReader =
         //        Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
         //        Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
         //    ) 
-        //    Expect.mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+        //    Expect.sequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
     ]

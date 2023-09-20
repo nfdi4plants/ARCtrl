@@ -8,10 +8,8 @@ open ARCtrl.ISA
 open Fable.Core
 open Fable.Core.JsInterop
 open Thoth.Json
-open Fable.Mocha
 #else
 open Thoth.Json.Net
-open Expecto
 #endif
 
 open TestingUtils
@@ -103,7 +101,7 @@ let testEncode =
 
             let expected = comments
 
-            Expect.mySequenceEqual result' expected "Retrieved value did not match"
+            Expect.sequenceEqual result' expected "Retrieved value did not match"
         )
 
     ]
@@ -131,7 +129,7 @@ let testDecode =
             
             let expected = ["@id";"characteristics";"name";"type"]
 
-            Expect.mySequenceEqual result expected "Field names did not match"
+            Expect.sequenceEqual result expected "Field names did not match"
         )
     ]
 
@@ -162,7 +160,7 @@ let testOntoloyAnnotation =
                     o_out
                     |> Utils.wordFrequency
 
-                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.sequenceEqual actual expected "Written processInput does not match read process input"
             )
     ]
 
@@ -193,7 +191,7 @@ let testOntoloyAnnotationLD =
                     o_out
                     |> Utils.wordFrequency
 
-                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.sequenceEqual actual expected "Written processInput does not match read process input"
             )
             testCase "WriterOutputMatchesInputDefaultIDs" (fun () -> 
             
@@ -208,7 +206,7 @@ let testOntoloyAnnotationLD =
                     o_out
                     |> Utils.wordFrequency
 
-                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.sequenceEqual actual expected "Written processInput does not match read process input"
             )
     ]
 
@@ -241,7 +239,7 @@ let testProcessInput =
                     o_out
                     |> Utils.wordFrequency
 
-                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.sequenceEqual actual expected "Written processInput does not match read process input"
             )
         ]
         testList "Material" [
@@ -735,7 +733,7 @@ let testProcessFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written process file does not match read process file"
+            Expect.sequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
 
@@ -798,7 +796,7 @@ let testProcessFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written process file does not match read process file"
+            Expect.sequenceEqual actual expected "Written process file does not match read process file"
         )
 
         testCase "OutputMatchesInputDefaultLD" (fun () ->
@@ -818,7 +816,7 @@ let testProcessFileLD =
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
-            Expect.mySequenceEqual actual expected "Written process file does not match read process file"
+            Expect.sequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
 
@@ -881,7 +879,7 @@ let testPersonFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.sequenceEqual actual expected "Written person file does not match read person file"
         )
 
         
@@ -923,7 +921,7 @@ let testPersonFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.sequenceEqual actual expected "Written person file does not match read person file"
         )
     ]
 
@@ -986,7 +984,7 @@ let testPersonFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.sequenceEqual actual expected "Written person file does not match read person file"
         )
 
         testCase "OutputMatchesInputDefaultLD" (fun () ->
@@ -1007,7 +1005,7 @@ let testPersonFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.sequenceEqual actual expected "Written person file does not match read person file"
         )
     ]
 
@@ -1070,7 +1068,7 @@ let testPublicationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written Publication file does not match read publication file"
+            Expect.sequenceEqual actual expected "Written Publication file does not match read publication file"
         )
     ]
 
@@ -1133,7 +1131,7 @@ let testPublicationFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written Publication file does not match read publication file"
+            Expect.sequenceEqual actual expected "Written Publication file does not match read publication file"
         )
     ]
 
@@ -1196,7 +1194,7 @@ let testAssayFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written assay file does not match read assay file"
+            Expect.sequenceEqual actual expected "Written assay file does not match read assay file"
         )
     ]
 
@@ -1258,7 +1256,7 @@ let testInvestigationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+            Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
         )
         testCase "HandleEmptyRemarks" (fun () ->
 
@@ -1617,7 +1615,7 @@ let testInvestigationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.mySequenceEqual o i "Written investigation file does not match read investigation file"
+            Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
 
         )
     ]
@@ -1680,7 +1678,7 @@ let testInvestigationFileLD =
         //         |> Array.countBy id
         //         |> Array.sortBy fst
 
-        //     Expect.mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+        //     Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
         // )
         // testCase "HandleEmptyRemarks" (fun () ->
 
@@ -2035,8 +2033,8 @@ let testInvestigationFileLD =
             //     |> Array.countBy id
             //     |> Array.sortBy fst
 
-            // Expect.mySequenceEqual actual expected "Written investigation file does not match read investigation file"
-            Expect.mySequenceEqual [1;2] [1;2] "bla"
+            // Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
+            Expect.sequenceEqual [1;2] [1;2] "bla"
 
         )
     ]

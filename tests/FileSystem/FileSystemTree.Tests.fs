@@ -1,10 +1,6 @@
 module ARCtrl.FileSystemTree.Tests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 open ARCtrl.FileSystem
 open TestingUtils

@@ -2,11 +2,7 @@
 
 open ARCtrl.ISA
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 let createExampleAssays() = ResizeArray([|ArcAssay.init("Assay 1")|])
 
@@ -379,11 +375,11 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         let expectedDescription =              
             Array.create 2 (CompositeCell.createFreeText ArcTables.Tests.TestObjects.descriptionValue2)
             |> Array.append (Array.create 2 (CompositeCell.createFreeText ArcTables.Tests.TestObjects.descriptionValue1))
-        TestingUtils.Expect.mySequenceEqual
+        TestingUtils.Expect.sequenceEqual
             (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
             (expectedDescription)
             "Description value was not taken correctly"
-        TestingUtils.Expect.mySequenceEqual
+        TestingUtils.Expect.sequenceEqual
             (resultTable.GetColumnByHeader (CompositeHeader.Parameter ArcTables.Tests.TestObjects.oa_species)).Cells
             (Array.create 4 (CompositeCell.createTerm ArcTables.Tests.TestObjects.oa_chlamy))
             "Check for previous param correctness"
@@ -402,8 +398,8 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.Publications expected.Publications "Publications"
         Expect.equal actual.Contacts expected.Contacts "Contacts"
         Expect.equal actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
-        TestingUtils.Expect.mySequenceEqual actual.Tables expected.Tables "Tables" 
-        TestingUtils.Expect.mySequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        TestingUtils.Expect.sequenceEqual actual.Tables expected.Tables "Tables" 
+        TestingUtils.Expect.sequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
         Expect.equal actual.Factors expected.Factors "Factors"
         Expect.equal actual.Comments expected.Comments "Comments"
     testCase "replace existing, all replaced" <| fun _ ->
@@ -433,8 +429,8 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.Publications next.Publications "Publications"
         Expect.equal actual.Contacts next.Contacts "Contacts"
         Expect.equal actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
-        TestingUtils.Expect.mySequenceEqual actual.Tables next.Tables "Tables" 
-        TestingUtils.Expect.mySequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        TestingUtils.Expect.sequenceEqual actual.Tables next.Tables "Tables" 
+        TestingUtils.Expect.sequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
         Expect.equal actual.Factors next.Factors "Factors"
         Expect.equal actual.Comments next.Comments "Comments"
     testCase "full replace, empty" <| fun _ ->

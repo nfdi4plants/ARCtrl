@@ -1,10 +1,5 @@
 module ARCtrl.Tests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
 
 open ARCtrl
 open ARCtrl.ISA
@@ -96,11 +91,11 @@ let private test_isaFromContracts = testList "read_contracts" [
         Expect.equal study.TableCount 1 "study should have read one table"
         let studyTable = study.Tables.[0]
         Expect.equal studyTable.ColumnCount 2 "study column number should be unchanged"
-        Expect.mySequenceEqual
+        Expect.sequenceEqual
             (studyTable.GetProtocolDescriptionColumn()).Cells
             [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description]
             "Description value was not kept correctly"
-        Expect.mySequenceEqual
+        Expect.sequenceEqual
             (studyTable.GetProtocolNameColumn()).Cells
             [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName]
             "Protocol ref value was not kept correctly"
@@ -110,15 +105,15 @@ let private test_isaFromContracts = testList "read_contracts" [
         Expect.equal assay.TableCount 1 "assay should have read one table"
         let assayTable = assay.Tables.[0]
         Expect.equal assayTable.ColumnCount 3 "assay column number should be updated"
-        Expect.mySequenceEqual
+        Expect.sequenceEqual
             (assayTable.GetProtocolNameColumn()).Cells
             (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName))
             "Protocol ref value was not kept correctly"
-        Expect.mySequenceEqual
+        Expect.sequenceEqual
             (assayTable.GetColumnByHeader(UpdateAssayWithStudyProtocol.inputHeader)).Cells
             (Array.create 2 UpdateAssayWithStudyProtocol.inputCell)
             "Protocol ref value was not kept correctly"
-        Expect.mySequenceEqual
+        Expect.sequenceEqual
             (assayTable.GetProtocolDescriptionColumn()).Cells
             (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description))
             "Description value was not taken correctly"

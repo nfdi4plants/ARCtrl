@@ -2,11 +2,7 @@
 
 open ARCtrl.ISA
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 let private assay_Identifier = "MyAssay"
 let private assay_MeasurementType = OntologyAnnotation.fromString("My Measurement Type", "MST", "MST:42424242")
@@ -365,7 +361,7 @@ let tests_Study = testList "CRUD Study" [
         testCase "add multiple" <| fun _ ->
             let i = createExampleInvestigation()
             Expect.equal i.StudyCount 2 "StudyCount"
-            TestingUtils.Expect.mySequenceEqual i.StudyIdentifiers (seq {"Study 1"; "Study 2"}) "StudyIdentifiers"
+            TestingUtils.Expect.sequenceEqual i.StudyIdentifiers (seq {"Study 1"; "Study 2"}) "StudyIdentifiers"
             let s2 = i.Studies.Item 1 
             Expect.equal s2.Title (Some "Study 2 Title") "Study 2 Title"
         testCase "add with same name, throws" <| fun _ ->
@@ -445,8 +441,8 @@ let tests_Assay = testList "CRUD Assay" [
         let i = createExampleInvestigation()
         Expect.equal i.StudyCount 2 "StudyCount"
         Expect.equal i.AssayCount 2 "AssayCount"
-        TestingUtils.Expect.mySequenceEqual i.StudyIdentifiers (seq {"Study 1"; "Study 2"}) "StudyIdentifiers"
-        TestingUtils.Expect.mySequenceEqual i.AssayIdentifiers (seq {"Assay 1"; "Assay 2"}) "AssayIdentifiers"
+        TestingUtils.Expect.sequenceEqual i.StudyIdentifiers (seq {"Study 1"; "Study 2"}) "StudyIdentifiers"
+        TestingUtils.Expect.sequenceEqual i.AssayIdentifiers (seq {"Assay 1"; "Assay 2"}) "AssayIdentifiers"
         let s = i.Studies.Item 0 
         Expect.equal s.RegisteredAssayCount 2 "Registered AssayCount"
         let s2 = i.Studies.Item 1 
@@ -652,8 +648,8 @@ let tests_Assay = testList "CRUD Assay" [
 //        Expect.equal actual.Contacts expected.Contacts "Contacts"
 //        Expect.equal actual.Assays.Count 1 "Count 1"
 //        Expect.equal expected.Assays.Count 1 "Count 2"
-//        TestingUtils.Expect.mySequenceEqual actual.Assays expected.Assays "Assays"
-//        TestingUtils.Expect.mySequenceEqual actual.Studies expected.Studies "Studies"
+//        TestingUtils.Expect.sequenceEqual actual.Assays expected.Assays "Assays"
+//        TestingUtils.Expect.sequenceEqual actual.Studies expected.Studies "Studies"
 //        Expect.equal actual.RegisteredStudyIdentifiers expected.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
 //        Expect.equal actual.Comments expected.Comments "Comments"
 //        Expect.equal actual.Remarks expected.Remarks "Remarks"

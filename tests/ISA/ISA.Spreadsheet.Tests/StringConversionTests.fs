@@ -2,11 +2,7 @@
 
 open ARCtrl.ISA
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 let singleItems =
 
@@ -80,7 +76,7 @@ let aggregated =
             //        ]
             //    let ontologies = OntologyAnnotation.fromAggregatedStrings ';' terms accessions sources
 
-            //    Expect.mySequenceEqual ontologies testOntologies "Ontology Annotations were not created correctly from aggregated strings"
+            //    Expect.sequenceEqual ontologies testOntologies "Ontology Annotations were not created correctly from aggregated strings"
             //    Expect.equal (OntologyAnnotation.toAggregatedStrings ';' ontologies) (terms,accessions,sources) "Ontology Annotations were not parsed correctly to aggregated strings"
 
             //    let testComponents = 
@@ -90,7 +86,7 @@ let aggregated =
             //        ]
             //    let components = Component.fromAggregatedStrings ';' names terms accessions sources
 
-            //    Expect.mySequenceEqual components testComponents "Components were not created correctly from aggregated strings"
+            //    Expect.sequenceEqual components testComponents "Components were not created correctly from aggregated strings"
             //    Expect.equal (Component.toAggregatedStrings ';' components) (names,terms,accessions,sources) "Components were not parsed correctly to aggregated strings"
 
             //    let testPParams = 
@@ -100,7 +96,7 @@ let aggregated =
             //        ]
             //    let pParams = ProtocolParameter.fromAggregatedStrings ';' terms accessions sources
 
-            //    Expect.mySequenceEqual pParams testPParams "Protocol Parameters were not created correctly from aggregated strings"
+            //    Expect.sequenceEqual pParams testPParams "Protocol Parameters were not created correctly from aggregated strings"
             //    Expect.equal (ProtocolParameter.toAggregatedStrings ';' pParams) (terms,accessions,sources) "Protocol Parameters were not parsed correctly to aggregated strings"
             //)
 
@@ -113,19 +109,19 @@ let aggregated =
             //    let testOntologies = [ ]
             //    let ontologies = OntologyAnnotation.fromAggregatedStrings ';' terms accessions sources
 
-            //    Expect.mySequenceEqual ontologies testOntologies "Ontology Annotations were not created correctly from empty aggregated strings. Empty strings should results in an empty list"
+            //    Expect.sequenceEqual ontologies testOntologies "Ontology Annotations were not created correctly from empty aggregated strings. Empty strings should results in an empty list"
             //    Expect.equal (OntologyAnnotation.toAggregatedStrings ';' ontologies) (terms,accessions,sources) "Ontology Annotations were not parsed correctly to empty aggregated strings"
 
             //    let testComponents = []
             //    let components = Component.fromAggregatedStrings ';' names terms accessions sources
 
-            //    Expect.mySequenceEqual components testComponents "Components were not created correctly from empty aggregated strings. Empty strings should results in an empty list"
+            //    Expect.sequenceEqual components testComponents "Components were not created correctly from empty aggregated strings. Empty strings should results in an empty list"
             //    Expect.equal (Component.toAggregatedStrings ';' components) (names,terms,accessions,sources) "Components were not parsed correctly to empty aggregated strings"
 
             //    let testPParams = []
             //    let pParams = ProtocolParameter.fromAggregatedStrings ';' terms accessions sources
 
-            //    Expect.mySequenceEqual pParams testPParams "Protocol Parameters were not created correctly from aggregated strings. Empty strings should results in an empty list"
+            //    Expect.sequenceEqual pParams testPParams "Protocol Parameters were not created correctly from aggregated strings. Empty strings should results in an empty list"
             //    Expect.equal (ProtocolParameter.toAggregatedStrings ';' pParams) (terms,accessions,sources) "Protocol Parameters were not parsed correctly to aggregated strings"
             //)
             //testCase "PartlyEmptyStrings" (fun () -> 
@@ -141,7 +137,7 @@ let aggregated =
             //        ]
             //    let ontologies = OntologyAnnotation.fromAggregatedStrings ';' terms accessions sources
 
-            //    Expect.mySequenceEqual ontologies testOntologies "Ontology Annotations were not created correctly from partly empty aggregated strings"
+            //    Expect.sequenceEqual ontologies testOntologies "Ontology Annotations were not created correctly from partly empty aggregated strings"
             //    Expect.equal (OntologyAnnotation.toAggregatedStrings ';' ontologies) (terms,accessions,";") "Ontology Annotations were not parsed correctly to partly empty aggregated strings"
 
             //    let testComponents = 
@@ -151,7 +147,7 @@ let aggregated =
             //        ]
             //    let components = Component.fromAggregatedStrings ';' names terms accessions sources
 
-            //    Expect.mySequenceEqual components testComponents "Components were not created correctly from partly empty aggregated strings"
+            //    Expect.sequenceEqual components testComponents "Components were not created correctly from partly empty aggregated strings"
             //    Expect.equal (Component.toAggregatedStrings ';' components) (";",terms,accessions,";") "Components were not parsed correctly to partly empty aggregated strings"
 
             //    let testPParams = 
@@ -161,7 +157,7 @@ let aggregated =
             //        ]
             //    let pParams = ProtocolParameter.fromAggregatedStrings ';' terms accessions sources
 
-            //    Expect.mySequenceEqual pParams testPParams "Protocol Parameters were not created correctly from partly empty aggregated strings"
+            //    Expect.sequenceEqual pParams testPParams "Protocol Parameters were not created correctly from partly empty aggregated strings"
             //    Expect.equal (ProtocolParameter.toAggregatedStrings ';' pParams) (terms,accessions,";") "Protocol Parameters were not parsed correctly to partly empty aggregated strings"
             //)
 

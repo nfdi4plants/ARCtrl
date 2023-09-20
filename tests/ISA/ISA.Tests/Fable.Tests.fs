@@ -2,11 +2,7 @@
 
 open ARCtrl.ISA
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 let private tests_EmptyObjectCreation = 
     testList "EmptyObjectCreationTests" [

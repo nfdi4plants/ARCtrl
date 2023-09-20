@@ -1,10 +1,5 @@
 ﻿module ArcInvestigationTests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
 
 open ARCtrl.ISA
 open FsSpreadsheet
@@ -170,7 +165,7 @@ let private testInvestigationFile =
         //        |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
 
 
-        //    Expect.mySequenceEqual o i "Written empty investigation file does not match read empty investigation file"
+        //    Expect.sequenceEqual o i "Written empty investigation file does not match read empty investigation file"
         //)
         ]
         |> testSequenced
@@ -225,7 +220,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedInvestigation "Could not retrieve investigation"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedInvestigation.Value |> getKeyValues)
 //                (testInvestigation |> getKeyValues)
 //                "Could not retrieve the correct investigation from investigation file"
@@ -251,7 +246,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedItem "Could not retrieve item from investigation file"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedItem.Value |> getKeyValues)
 //                (testItem |> getKeyValues)
 //                "Could not retrieve the correct item from investigation file"
@@ -279,7 +274,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedItem "Could not retrieve item from investigation file"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedItem.Value |> getKeyValues)
 //                (testItem |> getKeyValues)
 //                "Could not retrieve the correct item from investigation file"
@@ -294,7 +289,7 @@ let private testInvestigationFile =
         
 //            let retrievedStudies = ISA_Investigation.getStudies doc |> Seq.map getIdentificationKeyValues
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                retrievedStudies
 //                testStudies
 //                "Could not retrieve the correct studies from the investigation file"
@@ -330,7 +325,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedInvestigation "Investigation file was not filled out"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedInvestigation.Value |> getKeyValues)
 //                (investigation |> getKeyValues)
 //                "Investigation file was not filled out correctly"
@@ -355,7 +350,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedStudy "Study could not be found"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedStudy.Value |> getKeyValues)
 //                (study |> getKeyValues)
 //                "Study was not inserted correctly correctly"
@@ -398,7 +393,7 @@ let private testInvestigationFile =
 //                (ISA_Investigation.tryAddStudy study2 doc)
 //                "Could not add study"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (ISA_Investigation.getStudies doc |> Seq.map getKeyValues)
 //                ([study1;study2] |> Seq.map getKeyValues)
 //                "The Sequences do not match the expected seqs"
@@ -426,7 +421,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedAssay "Assay could not be found"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedAssay.Value |> getKeyValues)
 //                (assay |> getKeyValues)
 //                "Study was not inserted correctly correctly"
@@ -454,7 +449,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedAssay "Assay could not be found"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedAssay.Value |> getKeyValues)
 //                (assay |> getKeyValues)
 //                "Assay was not inserted correctly correctly"
@@ -483,7 +478,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedAssay "Assay could not be found"
 
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (retrievedAssay.Value |> getKeyValues)
 //                (updatedAssay |> getKeyValues)
 //                "Assay was not updated correctly"
@@ -511,7 +506,7 @@ let private testInvestigationFile =
 //                (ISA_Investigation.tryRemoveItemFromStudy assayToRemove study doc)
 //                "Could not remove assay"
             
-//            Expect.mySequenceEqual
+//            Expect.sequenceEqual
 //                (ISA_Investigation.getItemsInStudy (Assay()) study doc |> Seq.map getKeyValues)
 //                ([remainingAssay] |> Seq.map getKeyValues)
 //                "The Sequences do not match the expected seqs"

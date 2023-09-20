@@ -2,12 +2,6 @@
 
 open ARCtrl.ISA.Spreadsheet
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
-
 open TestingUtils
 
 let main =
@@ -130,7 +124,7 @@ let main =
             |> SparseTable.ToRows
             |> Seq.iteri (fun i r ->               
                 let testSeq = Seq.item i testRows
-                Expect.mySequenceEqual (SparseRow.getValues r) testSeq ""
+                Expect.sequenceEqual (SparseRow.getValues r) testSeq ""
             
             )
 

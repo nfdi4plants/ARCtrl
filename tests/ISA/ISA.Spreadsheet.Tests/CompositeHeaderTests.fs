@@ -1,10 +1,6 @@
 ﻿module CompositeHeaderTests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
+open TestingUtils
 
 let main = 
     testList "CompositeHeader" [

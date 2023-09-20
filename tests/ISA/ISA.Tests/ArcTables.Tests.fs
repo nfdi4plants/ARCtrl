@@ -182,7 +182,7 @@ let updateReferenceWithSheet =
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 1) "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
                 (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
                 "Description value was not taken correctly"
@@ -198,7 +198,7 @@ let updateReferenceWithSheet =
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 2) "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
                 (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
                 "Description value was not taken correctly"
@@ -229,11 +229,11 @@ let updateReferenceWithSheet =
             Expect.equal resultTable1.Name tableOfInterest1.Name "Should be same table name"
             Expect.equal resultTable1.ColumnCount (tableOfInterest1.ColumnCount + 1) "Should be same number of columns"
             Expect.equal tableOfInterest1.RowCount tableOfInterest1.RowCount "Should be same number of rows"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable1.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
                 (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
                 "Description value was not taken correctly"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable1.GetColumnByHeader (CompositeHeader.Parameter oa_species)).Cells
                 (Array.create 2 (CompositeCell.createTerm oa_chlamy))
                 "Check for previous param correctness"
@@ -242,11 +242,11 @@ let updateReferenceWithSheet =
             Expect.equal resultTable2.Name tableOfInterest2.Name "Should be same table name"
             Expect.equal resultTable2.ColumnCount (tableOfInterest2.ColumnCount + 1) "Should be same number of columns"
             Expect.equal tableOfInterest2.RowCount tableOfInterest2.RowCount "Should be same number of rows"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable2.GetProtocolDescriptionColumn()).Cells
                 (Array.create 3 (CompositeCell.createFreeText descriptionValue1))
                 "Description value was not taken correctly"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable2.GetColumnByHeader (CompositeHeader.Factor oa_instrumentModel)).Cells
                 (Array.create 3 (CompositeCell.createTerm oa_SCIEXInstrumentModel))
                 "Check for previous param correctness" 
@@ -267,11 +267,11 @@ let updateReferenceWithSheet =
             let expectedDescription =              
                 Array.create 2 (CompositeCell.emptyFreeText)
                 |> Array.append (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
                 (expectedDescription)
                 "Description value was not taken correctly"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable.GetColumnByHeader (CompositeHeader.Parameter oa_species)).Cells
                 (Array.create 4 (CompositeCell.createTerm oa_chlamy))
                 "Check for previous param correctness"
@@ -292,11 +292,11 @@ let updateReferenceWithSheet =
             let expectedDescription =              
                 Array.create 2 (CompositeCell.createFreeText descriptionValue2)
                 |> Array.append (Array.create 2 (CompositeCell.createFreeText descriptionValue1))
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable.GetColumnByHeader CompositeHeader.ProtocolDescription).Cells
                 (expectedDescription)
                 "Description value was not taken correctly"
-            Expect.mySequenceEqual
+            Expect.sequenceEqual
                 (resultTable.GetColumnByHeader (CompositeHeader.Parameter oa_species)).Cells
                 (Array.create 4 (CompositeCell.createTerm oa_chlamy))
                 "Check for previous param correctness"

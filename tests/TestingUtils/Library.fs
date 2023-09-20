@@ -45,10 +45,41 @@ module Result =
         | Ok m -> m
         | Error m -> m
 
+
+
+/// Fable compatible Expecto/Mocha unification
 module Expect = 
     open Utils
+
+    let inline equal actual expected message = Expect.equal actual expected message
+    let inline notEqual actual expected message = Expect.notEqual actual expected message
+
+    let inline isNull actual message = Expect.isNull actual message 
+    let inline isNotNull actual message = Expect.isNotNull actual message 
+
+    let inline isSome actual message = Expect.isSome actual message 
+    let inline isNone actual message = Expect.isNone actual message 
+    let inline wantSome actual message = Expect.wantSome actual message 
+
+    let inline isEmpty actual message = Expect.isEmpty actual message 
+    let inline hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
+
+    let inline isTrue actual message = Expect.isTrue actual message 
+    let inline isFalse actual message = Expect.isFalse actual message 
+
+    let inline wantError actual message = Expect.wantError actual message 
+    let inline wantOk actual message = Expect.wantOk actual message 
+    let inline isOk actual message = Expect.isOk actual message 
+    let inline isError actual message = Expect.isError actual message 
+
+    let inline throws actual message = Expect.throws actual message
+    let inline throwsC actual message = Expect.throwsC actual message 
+
+    let inline exists actual asserter message = Expect.exists actual asserter message 
+    let inline containsAll actual expected message = Expect.containsAll actual expected message
+
     /// Expects the `actual` sequence to equal the `expected` one.
-    let inline mySequenceEqual actual expected message =
+    let inline sequenceEqual actual expected message =
       match firstDiff actual expected with
       | _,None,None -> ()
       | i,Some a, Some e ->
@@ -69,20 +100,20 @@ module Expect =
             |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
         if actual.Name <> expected.Name then
             failwithf $"{message}. Worksheet names do not match. Expected {expected.Name} but got {actual.Name}"
-        mySequenceEqual (f actual) (f expected) $"{message}. Worksheet does not match"
+        sequenceEqual (f actual) (f expected) $"{message}. Worksheet does not match"
 
     let columnsEqual (actual : FsCell seq seq) (expected : FsCell seq seq) message =     
         let f (cols : FsCell seq seq) = 
             cols
             |> Seq.map (fun r -> r |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
-        mySequenceEqual (f actual) (f expected) $"{message}. Columns do not match"
+        sequenceEqual (f actual) (f expected) $"{message}. Columns do not match"
 
     let arcTableEqual (t1 : ArcTable) (t2 : ArcTable) (message : string) = 
         let sortVals (dict : System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
             dict |> Seq.sortBy (fun kv -> kv.Key)
         Expect.equal t1.Name t2.Name (sprintf "%s: Name" message)
-        mySequenceEqual t1.Headers t2.Headers (sprintf "%s: Headers" message)
-        mySequenceEqual (t1.Values |> sortVals) (t2.Values |> sortVals) (sprintf "%s: Values" message)
+        sequenceEqual t1.Headers t2.Headers (sprintf "%s: Headers" message)
+        sequenceEqual (t1.Values |> sortVals) (t2.Values |> sortVals) (sprintf "%s: Values" message)
 
     let rec testFileSystemTree (actual:FileSystemTree) (expected:FileSystemTree) = 
         match actual, expected with
@@ -98,3 +129,21 @@ module Expect =
 
     Expected:
     {anyExpected}"
+
+/// Fable compatible Expecto/Mocha unification
+[<AutoOpen>]
+module Test =
+
+    let test = test
+    let testAsync = testAsync
+    let testSequenced = testSequenced
+
+    let testCase = testCase
+    let ptestCase = ptestCase
+    let ftestCase = ftestCase
+    let testCaseAsync = testCaseAsync
+    let ptestCaseAsync = ptestCaseAsync
+    let ftestCaseAsync = ftestCaseAsync
+
+
+    let testList = testList
