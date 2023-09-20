@@ -536,12 +536,16 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
 
     /// Returns the list of processes specidified in this ArcTable
     member this.GetProcesses() : Process list = 
-        let getter = ProcessParsing.getProcessGetter this.Name this.Headers
-        [
-            for i in 0..this.RowCount-1 do
-                yield getter this.Values i        
-        ]
-        |> ProcessParsing.mergeIdenticalProcesses
+        if this.RowCount = 0 then 
+            Process.create(Name = this.Name)
+            |> List.singleton
+        else
+            let getter = ProcessParsing.getProcessGetter this.Name this.Headers
+            [
+                for i in 0..this.RowCount-1 do
+                    yield getter this.Values i        
+            ]
+            |> ProcessParsing.mergeIdenticalProcesses
 
 
     /// Create a new table from a list of processes
