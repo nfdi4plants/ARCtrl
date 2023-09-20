@@ -1,4 +1,4 @@
-﻿module TestObjects.Protocol
+﻿module TestObjects.Json.Protocol
 
 let protocol =
 

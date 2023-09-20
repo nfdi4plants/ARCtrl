@@ -1,4 +1,4 @@
-﻿module TestObjects.Process
+﻿module TestObjects.Json.Process
 
 let process' = 
 

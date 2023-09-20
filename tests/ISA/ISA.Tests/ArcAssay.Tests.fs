@@ -529,7 +529,7 @@ let private test_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
-        TestingUtils.mySequenceEqual actual.Tables next.Tables "Tables"
+        TestingUtils.Expect.mySequenceEqual actual.Tables next.Tables "Tables"
         Expect.equal actual.Performers next.Performers "Performers"
         Expect.equal actual.Comments next.Comments "Comments"
     testCase "UpdateBy, replace existing" <| fun _ ->
@@ -548,7 +548,7 @@ let private test_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
-        TestingUtils.mySequenceEqual actual.Tables next.Tables "Tables"
+        TestingUtils.Expect.mySequenceEqual actual.Tables next.Tables "Tables"
         Expect.equal actual.Performers next.Performers "Performers"
         Expect.equal actual.Comments expected.Comments "Comments"
     testCase "UpdateBy, replace existing, empty tables" <| fun _ ->
@@ -562,7 +562,7 @@ let private test_UpdateBy = testList "UpdateBy" [
             )
         let expected = create_testAssay()
         actual.UpdateBy(next, true)
-        TestingUtils.mySequenceEqual actual.Tables expected.Tables "Tables"
+        TestingUtils.Expect.mySequenceEqual actual.Tables expected.Tables "Tables"
     testCase "UpdateBy, replace existing, append" <| fun _ ->
         let actual = create_testAssay()
         let next = 
@@ -579,7 +579,7 @@ let private test_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
-        TestingUtils.mySequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
+        TestingUtils.Expect.mySequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
         Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
         Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
     testCase "UpdateBy, replace all, append" <| fun _ ->
@@ -598,7 +598,7 @@ let private test_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
-        TestingUtils.mySequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
+        TestingUtils.Expect.mySequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
         Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
         Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
 ]

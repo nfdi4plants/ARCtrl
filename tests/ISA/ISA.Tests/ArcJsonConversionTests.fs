@@ -397,8 +397,8 @@ let private tests_arcAssay =
             Expect.equal resultingArcAssay.TechnologyPlatform arcAssay.TechnologyPlatform "ArcAssay technologyPlatform should match"
             let expectedTables = [t1;t2] 
                 
-            mySequenceEqual resultingArcAssay.Tables expectedTables "ArcAssay tables should match"
-            mySequenceEqual resultingArcAssay.Comments arcAssay.Comments "ArcAssay comments should match"
+            Expect.mySequenceEqual resultingArcAssay.Tables expectedTables "ArcAssay tables should match"
+            Expect.mySequenceEqual resultingArcAssay.Comments arcAssay.Comments "ArcAssay comments should match"
         )
     ]
 
@@ -522,7 +522,7 @@ let private tests_protocolTransformation =
             let t = ArcTable.init "TestTable"
             let expected = [Protocol.create(Name = "TestTable")]
 
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocol Name should be ArcTable name."
+            TestingUtils.Expect.mySequenceEqual (t.GetProtocols()) expected "Protocol Name should be ArcTable name."
         )
         testCase "GetProtocols SingleName" (fun () ->           
             let t = ArcTable.init "TestTable"
@@ -530,7 +530,7 @@ let private tests_protocolTransformation =
             t.AddProtocolNameColumn([|name|])
             let expected = [Protocol.create(Name = name)]
 
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+            TestingUtils.Expect.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
         )
         testCase "GetProtocols SameNames" (fun () ->           
             let t = ArcTable.init "TestTable"
@@ -538,7 +538,7 @@ let private tests_protocolTransformation =
             t.AddProtocolNameColumn([|name;name|])
             let expected = [Protocol.create(Name = name)]
 
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+            TestingUtils.Expect.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
         )
         testCase "GetProtocols DifferentNames" (fun () ->           
             let t = ArcTable.init "TestTable"
@@ -547,7 +547,7 @@ let private tests_protocolTransformation =
             t.AddProtocolNameColumn([|name1;name2|])
             let expected = [Protocol.create(Name = name1);Protocol.create(Name = name2)]
 
-            TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+            TestingUtils.Expect.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
         )
         //testCase "GetProtocols Parameters" (fun () ->
         //    let t = ArcTable.init "TestTable"
@@ -556,7 +556,7 @@ let private tests_protocolTransformation =
         //    t.AddProtocolNameColumn([|name1;name2|])
         //    t.addpara([|pParam1;pParam1|])
         //    let expected = [Protocol.create(Name = name1;Parameters = [pParam1]);Protocol.create(Name = name2;Parameters = [pParam1])]
-        //    TestingUtils.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
+        //    TestingUtils.Expect.mySequenceEqual (t.GetProtocols()) expected "Protocols do not match"
         
         //)
 

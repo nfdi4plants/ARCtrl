@@ -10,7 +10,7 @@ open ARCtrl.ISA
 open TestingUtils
 open ARCtrl.ISA.Spreadsheet
 
-open TestObjects.ArcTable
+open TestObjects.Spreadsheet.ArcTable
 
 let private parameterTests = 
     testList "Parameter" [

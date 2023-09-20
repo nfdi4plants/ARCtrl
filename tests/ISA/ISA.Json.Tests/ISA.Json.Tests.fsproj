@@ -7,22 +7,13 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="paket.references" />
-    <Compile Include="TestObjects\OntologyAnnotation.fs" />
-    <Compile Include="TestObjects\ProcessInput.fs" />
-    <Compile Include="TestObjects\Validation.fs" />
-    <Compile Include="TestObjects\Protocol.fs" />
-    <Compile Include="TestObjects\Investigation.fs" />
-    <Compile Include="TestObjects\Assay.fs" />
-    <Compile Include="TestObjects\Person.fs" />
-    <Compile Include="TestObjects\Process.fs" />
-    <Compile Include="TestObjects\Publication.fs" />
-    <Compile Include="Utils.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Json.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
+    <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>

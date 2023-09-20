@@ -1,4 +1,4 @@
-﻿module TestObjects.Investigation
+﻿module TestObjects.Spreadsheet.Investigation
 
 open FsSpreadsheet.DSL
 open FsSpreadsheet 

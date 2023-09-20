@@ -16,6 +16,8 @@ open Expecto
 
 open TestingUtils
 
+open TestObjects.Json
+
 module JsonExtensions =
 
     let private f2 i = 
@@ -101,7 +103,7 @@ let testEncode =
 
             let expected = comments
 
-            mySequenceEqual result' expected "Retrieved value did not match"
+            Expect.mySequenceEqual result' expected "Retrieved value did not match"
         )
 
     ]
@@ -129,7 +131,7 @@ let testDecode =
             
             let expected = ["@id";"characteristics";"name";"type"]
 
-            mySequenceEqual result expected "Field names did not match"
+            Expect.mySequenceEqual result expected "Field names did not match"
         )
     ]
 
@@ -138,7 +140,7 @@ let testOntoloyAnnotation =
         
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidase
+                let result = OntologyAnnotation.fromString OntologyAnnotation.peptidase
 
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
@@ -149,18 +151,18 @@ let testOntoloyAnnotation =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidase
+                let o_read_in = OntologyAnnotation.fromString OntologyAnnotation.peptidase
                 let o_out = OntologyAnnotation.toString o_read_in
 
                 let expected = 
-                    TestObjects.OntologyAnnotation.peptidase
+                    OntologyAnnotation.peptidase
                     |> Utils.wordFrequency
 
                 let actual = 
                     o_out
                     |> Utils.wordFrequency
 
-                mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
             )
     ]
 
@@ -169,7 +171,7 @@ let testOntoloyAnnotationLD =
         
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidaseLD
+                let result = OntologyAnnotation.fromString OntologyAnnotation.peptidaseLD
 
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
@@ -180,33 +182,33 @@ let testOntoloyAnnotationLD =
             )
             testCase "WriterOutputMatchesInputGivenIDs" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidase
+                let o_read_in = OntologyAnnotation.fromString OntologyAnnotation.peptidase
                 let o_out = OntologyAnnotation.toStringLD o_read_in
 
                 let expected = 
-                    TestObjects.OntologyAnnotation.peptidaseLD
+                    OntologyAnnotation.peptidaseLD
                     |> Utils.wordFrequency
 
                 let actual = 
                     o_out
                     |> Utils.wordFrequency
 
-                mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
             )
             testCase "WriterOutputMatchesInputDefaultIDs" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString TestObjects.OntologyAnnotation.peptidaseWithoutIds
+                let o_read_in = OntologyAnnotation.fromString OntologyAnnotation.peptidaseWithoutIds
                 let o_out = OntologyAnnotation.toStringLD o_read_in
 
                 let expected = 
-                    TestObjects.OntologyAnnotation.peptidaseWithDefaultLD
+                    OntologyAnnotation.peptidaseWithDefaultLD
                     |> Utils.wordFrequency
 
                 let actual = 
                     o_out
                     |> Utils.wordFrequency
 
-                mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
             )
     ]
 
@@ -217,7 +219,7 @@ let testProcessInput =
         testList "Source" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.source
+                let result = ProcessInput.fromString ProcessInput.source
 
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
@@ -228,24 +230,24 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.source
+                let o_read_in = ProcessInput.fromString ProcessInput.source
                 let o_out = ProcessInput.toString o_read_in
 
                 let expected = 
-                    TestObjects.ProcessInput.source
+                    ProcessInput.source
                     |> Utils.wordFrequency
 
                 let actual = 
                     o_out
                     |> Utils.wordFrequency
 
-                mySequenceEqual actual expected "Written processInput does not match read process input"
+                Expect.mySequenceEqual actual expected "Written processInput does not match read process input"
             )
         ]
         testList "Material" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.material
+                let result = ProcessInput.fromString ProcessInput.material
 
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
@@ -257,11 +259,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.material
+                let o_read_in = ProcessInput.fromString ProcessInput.material
                 let o_out = ProcessInput.toString o_read_in
 
                 let expected = 
-                    TestObjects.ProcessInput.material
+                    ProcessInput.material
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -274,7 +276,7 @@ let testProcessInput =
         testList "Data" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.data
+                let result = ProcessInput.fromString ProcessInput.data
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
                 Expect.isTrue (ProcessInput.isData result) "Result is not a data"
@@ -282,11 +284,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.data
+                    let o_read_in = ProcessInput.fromString ProcessInput.data
                     let o_out = ProcessInput.toString o_read_in
 
                     let expected = 
-                        TestObjects.ProcessInput.data
+                        ProcessInput.data
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -299,7 +301,7 @@ let testProcessInput =
         testList "Sample" [
             testCase "ReaderSuccessSimple" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.sampleSimple
+                let result = ProcessInput.fromString ProcessInput.sampleSimple
 
                 let expectedDerivesFrom = [Source.create("#source/source-culture8")]
 
@@ -312,11 +314,11 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInputSimple" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.sampleSimple
+                    let o_read_in = ProcessInput.fromString ProcessInput.sampleSimple
                     let o_out = ProcessInput.toString o_read_in
 
                     let expected = 
-                        TestObjects.ProcessInput.sampleSimple
+                        ProcessInput.sampleSimple
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -334,7 +336,7 @@ let testProcessInputLD =
         testList "Source" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.sourceLD
+                let result = ProcessInput.fromString ProcessInput.sourceLD
 
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
@@ -345,11 +347,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.source
+                let o_read_in = ProcessInput.fromString ProcessInput.source
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
-                    TestObjects.ProcessInput.sourceLD
+                    ProcessInput.sourceLD
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -360,11 +362,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.sourceWithoutID
+                let o_read_in = ProcessInput.fromString ProcessInput.sourceWithoutID
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
-                    TestObjects.ProcessInput.sourceWithDefaultLD
+                    ProcessInput.sourceWithDefaultLD
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -377,7 +379,7 @@ let testProcessInputLD =
         testList "Material" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.materialLD
+                let result = ProcessInput.fromString ProcessInput.materialLD
 
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
@@ -389,11 +391,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.material
+                let o_read_in = ProcessInput.fromString ProcessInput.material
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
-                    TestObjects.ProcessInput.materialLD
+                    ProcessInput.materialLD
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -404,11 +406,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.materialWithoutID
+                let o_read_in = ProcessInput.fromString ProcessInput.materialWithoutID
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
-                    TestObjects.ProcessInput.materialWithDefaultLD
+                    ProcessInput.materialWithDefaultLD
                     |> Utils.wordFrequency
 
                 let actual = 
@@ -421,7 +423,7 @@ let testProcessInputLD =
         testList "Data" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.dataLD
+                let result = ProcessInput.fromString ProcessInput.dataLD
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
                 Expect.isTrue (ProcessInput.isData result) "Result is not a data"
@@ -429,11 +431,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.data
+                    let o_read_in = ProcessInput.fromString ProcessInput.data
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
-                        TestObjects.ProcessInput.dataLD
+                        ProcessInput.dataLD
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -444,11 +446,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.dataWithoutID
+                    let o_read_in = ProcessInput.fromString ProcessInput.dataWithoutID
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
-                        TestObjects.ProcessInput.dataWithDefaultLD
+                        ProcessInput.dataWithDefaultLD
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -461,7 +463,7 @@ let testProcessInputLD =
         testList "Sample" [
             testCase "ReaderSuccessSimple" (fun () -> 
            
-                let result = ProcessInput.fromString TestObjects.ProcessInput.sampleSimpleLD
+                let result = ProcessInput.fromString ProcessInput.sampleSimpleLD
 
                 let expectedDerivesFrom = [Source.create("#source/source-culture8")]
 
@@ -474,11 +476,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputSimpleGivenID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.sampleSimple
+                    let o_read_in = ProcessInput.fromString ProcessInput.sampleSimple
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
-                        TestObjects.ProcessInput.sampleSimpleLD
+                        ProcessInput.sampleSimpleLD
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -489,11 +491,11 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputSimpleDefaultID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString TestObjects.ProcessInput.sampleSimpleWithoutID
+                    let o_read_in = ProcessInput.fromString ProcessInput.sampleSimpleWithoutID
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
-                        TestObjects.ProcessInput.sampleSimpleWithDefaultLD
+                        ProcessInput.sampleSimpleWithDefaultLD
                         |> Utils.wordFrequency
 
                     let actual = 
@@ -519,7 +521,7 @@ let testProtocolFile =
         )
         testCase "ReaderSuccess" (fun () -> 
             
-            let protocol = Protocol.fromString TestObjects.Protocol.protocol
+            let protocol = Protocol.fromString Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual = protocol.Name 
             Expect.isSome actual "Should be some"
@@ -528,7 +530,7 @@ let testProtocolFile =
 
         testCase "WriterRunning" (fun () ->
 
-            let p = Protocol.fromString TestObjects.Protocol.protocol
+            let p = Protocol.fromString Protocol.protocol
 
             let writingSuccess = 
                 try 
@@ -542,7 +544,7 @@ let testProtocolFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let p = Protocol.fromString TestObjects.Protocol.protocol
+            let p = Protocol.fromString Protocol.protocol
 
             let s = Protocol.toString p
 
@@ -553,7 +555,7 @@ let testProtocolFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let o_read_in = Protocol.fromString TestObjects.Protocol.protocol
+            let o_read_in = Protocol.fromString Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
@@ -562,7 +564,7 @@ let testProtocolFile =
             let o = o_read_in |> Protocol.toString
 
             let expected = 
-                TestObjects.Protocol.protocol
+                Protocol.protocol
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -591,7 +593,7 @@ let testProtocolFileLD =
         )
         testCase "ReaderSuccess" (fun () -> 
             
-            let protocol = Protocol.fromString TestObjects.Protocol.protocolLD
+            let protocol = Protocol.fromString Protocol.protocolLD
             let exptected_name = "peptide_digestion"
             let actual = protocol.Name 
             Expect.isSome actual "Should be some"
@@ -600,7 +602,7 @@ let testProtocolFileLD =
 
         testCase "WriterRunning" (fun () ->
 
-            let p = Protocol.fromString TestObjects.Protocol.protocol
+            let p = Protocol.fromString Protocol.protocol
 
             let writingSuccess = 
                 try 
@@ -614,7 +616,7 @@ let testProtocolFileLD =
 
         // testAsync "WriterSchemaCorrectness" {
 
-        //     let p = Protocol.fromString TestObjects.Protocol.protocol
+        //     let p = Protocol.fromString Protocol.protocol
 
         //     let s = Protocol.toString p
 
@@ -625,7 +627,7 @@ let testProtocolFileLD =
 
         testCase "OutputMatchesInputGivenIDs" (fun () ->
 
-            let o_read_in = Protocol.fromString TestObjects.Protocol.protocol
+            let o_read_in = Protocol.fromString Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
@@ -634,7 +636,7 @@ let testProtocolFileLD =
             let o = o_read_in |> Protocol.toStringLD
 
             let expected = 
-                TestObjects.Protocol.protocolLD
+                Protocol.protocolLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -650,7 +652,7 @@ let testProtocolFileLD =
 
         testCase "OutputMatchesInputDefaultIDs" (fun () ->
 
-            let o_read_in = Protocol.fromString TestObjects.Protocol.protocolWithoutIds
+            let o_read_in = Protocol.fromString Protocol.protocolWithoutIds
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
@@ -659,7 +661,7 @@ let testProtocolFileLD =
             let o = o_read_in |> Protocol.toStringLD
 
             let expected = 
-                TestObjects.Protocol.protocolWithDefaultLD
+                Protocol.protocolWithDefaultLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -681,7 +683,7 @@ let testProcessFile =
             
             let readingSuccess = 
                 try 
-                    Process.fromString TestObjects.Process.process' |> ignore
+                    Process.fromString Process.process' |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -692,7 +694,7 @@ let testProcessFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromString TestObjects.Process.process'
+            let p = Process.fromString Process.process'
 
             let writingSuccess = 
                 try 
@@ -706,7 +708,7 @@ let testProcessFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let p = Process.fromString TestObjects.Process.process'
+            let p = Process.fromString Process.process'
 
             let s = Process.toString p
 
@@ -718,11 +720,11 @@ let testProcessFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o =
-                Process.fromString TestObjects.Process.process'
+                Process.fromString Process.process'
                 |> Process.toString
 
             let expected = 
-                TestObjects.Process.process'
+                Process.process'
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -733,7 +735,7 @@ let testProcessFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written process file does not match read process file"
+            Expect.mySequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
 
@@ -744,7 +746,7 @@ let testProcessFileLD =
             
             let readingSuccess = 
                 try 
-                    Process.fromString TestObjects.Process.processLD |> ignore
+                    Process.fromString Process.processLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -755,7 +757,7 @@ let testProcessFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromString TestObjects.Process.processLD
+            let p = Process.fromString Process.processLD
 
             let writingSuccess = 
                 try 
@@ -769,7 +771,7 @@ let testProcessFileLD =
 
         // testAsync "WriterSchemaCorrectness" {
 
-        //     let p = Process.fromString TestObjects.Process.process'
+        //     let p = Process.fromString Process.process'
 
         //     let s = Process.toString p
 
@@ -781,11 +783,11 @@ let testProcessFileLD =
         testCase "OutputMatchesInputGivenIDs" (fun () ->
 
             let o =
-                Process.fromString TestObjects.Process.process'
+                Process.fromString Process.process'
                 |> Process.toStringLD
 
             let expected = 
-                TestObjects.Process.processLD
+                Process.processLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -796,17 +798,17 @@ let testProcessFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written process file does not match read process file"
+            Expect.mySequenceEqual actual expected "Written process file does not match read process file"
         )
 
         testCase "OutputMatchesInputDefaultLD" (fun () ->
 
             let o =
-                Process.fromString TestObjects.Process.processWithoutIDs
+                Process.fromString Process.processWithoutIDs
                 |> Process.toStringLD
 
             let expected = 
-                TestObjects.Process.processWithDefaultLD
+                Process.processWithDefaultLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -816,7 +818,7 @@ let testProcessFileLD =
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
-            mySequenceEqual actual expected "Written process file does not match read process file"
+            Expect.mySequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
 
@@ -827,7 +829,7 @@ let testPersonFile =
             
             let readingSuccess = 
                 try 
-                    Person.fromString TestObjects.Person.person |> ignore
+                    Person.fromString Person.person |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -838,7 +840,7 @@ let testPersonFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Person.fromString TestObjects.Person.person
+            let a = Person.fromString Person.person
 
             let writingSuccess = 
                 try 
@@ -852,7 +854,7 @@ let testPersonFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Person.fromString TestObjects.Person.person
+            let a = Person.fromString Person.person
 
             let s = Person.toString a
 
@@ -864,11 +866,11 @@ let testPersonFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Person.fromString TestObjects.Person.person
+                Person.fromString Person.person
                 |> Person.toString
 
             let expected = 
-                TestObjects.Person.person
+                Person.person
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -879,13 +881,13 @@ let testPersonFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
         )
 
         
         testCase "WithORCID ReaderCorrectness" (fun () -> 
             
-            let p = Person.fromString TestObjects.Person.personWithORCID
+            let p = Person.fromString Person.personWithORCID
             Expect.isNone p.Comments "Comments should be None"
             Expect.isSome p.ORCID "ORCID should be Some"
             Expect.equal p.ORCID.Value "0000-0002-1825-0097" "ORCID not as expected"
@@ -894,7 +896,7 @@ let testPersonFile =
 
         testAsync "WithORCID WriterSchemaCorrectness" {
 
-            let a = Person.fromString TestObjects.Person.personWithORCID
+            let a = Person.fromString Person.personWithORCID
 
             let s = Person.toString a
 
@@ -906,11 +908,11 @@ let testPersonFile =
         testCase "WithORCID OutputMatchesInput" (fun () ->
 
             let o = 
-                Person.fromString TestObjects.Person.personWithORCID
+                Person.fromString Person.personWithORCID
                 |> Person.toString
 
             let expected = 
-                TestObjects.Person.personWithORCID
+                Person.personWithORCID
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -921,7 +923,7 @@ let testPersonFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
         )
     ]
 
@@ -932,7 +934,7 @@ let testPersonFileLD =
             
             let readingSuccess = 
                 try 
-                    Person.fromString TestObjects.Person.personLD |> ignore
+                    Person.fromString Person.personLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -943,7 +945,7 @@ let testPersonFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Person.fromString TestObjects.Person.person
+            let a = Person.fromString Person.person
 
             let writingSuccess = 
                 try 
@@ -957,7 +959,7 @@ let testPersonFileLD =
 
         // testAsync "WriterSchemaCorrectness" {
 
-        //     let a = Person.fromString TestObjects.Person.person
+        //     let a = Person.fromString Person.person
 
         //     let s = Person.toString a
 
@@ -969,11 +971,11 @@ let testPersonFileLD =
         testCase "OutputMatchesInputGivenID" (fun () ->
 
             let o = 
-                Person.fromString TestObjects.Person.person
+                Person.fromString Person.person
                 |> Person.toStringLD
 
             let expected = 
-                TestObjects.Person.personLD
+                Person.personLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -984,17 +986,17 @@ let testPersonFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
         )
 
         testCase "OutputMatchesInputDefaultLD" (fun () ->
 
             let o = 
-                Person.fromString TestObjects.Person.personWithoutID
+                Person.fromString Person.personWithoutID
                 |> Person.toStringLD
 
             let expected = 
-                TestObjects.Person.personWithDefaultLD
+                Person.personWithDefaultLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1005,7 +1007,7 @@ let testPersonFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written person file does not match read person file"
+            Expect.mySequenceEqual actual expected "Written person file does not match read person file"
         )
     ]
 
@@ -1016,7 +1018,7 @@ let testPublicationFile =
             
             let readingSuccess = 
                 try 
-                    Publication.fromString TestObjects.Publication.publication |> ignore
+                    Publication.fromString Publication.publication |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1027,7 +1029,7 @@ let testPublicationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Publication.fromString TestObjects.Publication.publication
+            let a = Publication.fromString Publication.publication
 
             let writingSuccess = 
                 try 
@@ -1041,7 +1043,7 @@ let testPublicationFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Publication.fromString TestObjects.Publication.publication
+            let a = Publication.fromString Publication.publication
 
             let s = Publication.toString a
 
@@ -1053,11 +1055,11 @@ let testPublicationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Publication.fromString TestObjects.Publication.publication
+                Publication.fromString Publication.publication
                 |> Publication.toString
 
             let expected = 
-                TestObjects.Publication.publication
+                Publication.publication
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1068,7 +1070,7 @@ let testPublicationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written Publication file does not match read publication file"
+            Expect.mySequenceEqual actual expected "Written Publication file does not match read publication file"
         )
     ]
 
@@ -1079,7 +1081,7 @@ let testPublicationFileLD =
             
             let readingSuccess = 
                 try 
-                    Publication.fromString TestObjects.Publication.publicationLD |> ignore
+                    Publication.fromString Publication.publicationLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1090,7 +1092,7 @@ let testPublicationFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Publication.fromString TestObjects.Publication.publication
+            let a = Publication.fromString Publication.publication
 
             let writingSuccess = 
                 try 
@@ -1104,7 +1106,7 @@ let testPublicationFileLD =
 
         // testAsync "WriterSchemaCorrectness" {
 
-        //     let a = Publication.fromString TestObjects.Publication.publication
+        //     let a = Publication.fromString Publication.publication
 
         //     let s = Publication.toString a
 
@@ -1116,11 +1118,11 @@ let testPublicationFileLD =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Publication.fromString TestObjects.Publication.publication
+                Publication.fromString Publication.publication
                 |> Publication.toStringLD
 
             let expected = 
-                TestObjects.Publication.publicationLD
+                Publication.publicationLD
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1131,7 +1133,7 @@ let testPublicationFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written Publication file does not match read publication file"
+            Expect.mySequenceEqual actual expected "Written Publication file does not match read publication file"
         )
     ]
 
@@ -1142,7 +1144,7 @@ let testAssayFile =
             
             let readingSuccess = 
                 try 
-                    Assay.fromString TestObjects.Assay.assay |> ignore
+                    Assay.fromString Assay.assay |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1153,7 +1155,7 @@ let testAssayFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Assay.fromString TestObjects.Assay.assay
+            let a = Assay.fromString Assay.assay
 
             let writingSuccess = 
                 try 
@@ -1167,7 +1169,7 @@ let testAssayFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Assay.fromString TestObjects.Assay.assay
+            let a = Assay.fromString Assay.assay
 
             let s = Assay.toString a
 
@@ -1179,11 +1181,11 @@ let testAssayFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Assay.fromString TestObjects.Assay.assay
+                Assay.fromString Assay.assay
                 |> Assay.toString
 
             let expected = 
-                TestObjects.Assay.assay
+                Assay.assay
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1194,7 +1196,7 @@ let testAssayFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written assay file does not match read assay file"
+            Expect.mySequenceEqual actual expected "Written assay file does not match read assay file"
         )
     ]
 
@@ -1205,7 +1207,7 @@ let testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    Investigation.fromString TestObjects.Investigation.investigation |> ignore
+                    Investigation.fromString Investigation.investigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1215,7 +1217,7 @@ let testInvestigationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let i = Investigation.fromString TestObjects.Investigation.investigation
+            let i = Investigation.fromString Investigation.investigation
 
             let writingSuccess = 
                 try 
@@ -1229,7 +1231,7 @@ let testInvestigationFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let i = Investigation.fromString TestObjects.Investigation.investigation
+            let i = Investigation.fromString Investigation.investigation
 
             let s = Investigation.toString i
 
@@ -1241,11 +1243,11 @@ let testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Investigation.fromString TestObjects.Investigation.investigation
+                Investigation.fromString Investigation.investigation
                 |> Investigation.toString
 
             let expected = 
-                TestObjects.Investigation.investigation
+                Investigation.investigation
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
@@ -1256,7 +1258,7 @@ let testInvestigationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+            Expect.mySequenceEqual actual expected "Written investigation file does not match read investigation file"
         )
         testCase "HandleEmptyRemarks" (fun () ->
 
@@ -1615,7 +1617,7 @@ let testInvestigationFile =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            mySequenceEqual o i "Written investigation file does not match read investigation file"
+            Expect.mySequenceEqual o i "Written investigation file does not match read investigation file"
 
         )
     ]
@@ -1627,7 +1629,7 @@ let testInvestigationFileLD =
             
             let readingSuccess = 
                 try 
-                    Investigation.fromString TestObjects.Investigation.investigationLD |> ignore
+                    Investigation.fromString Investigation.investigationLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1637,7 +1639,7 @@ let testInvestigationFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let i = Investigation.fromString TestObjects.Investigation.investigation
+            let i = Investigation.fromString Investigation.investigation
 
             let writingSuccess = 
                 try 
@@ -1678,7 +1680,7 @@ let testInvestigationFileLD =
         //         |> Array.countBy id
         //         |> Array.sortBy fst
 
-        //     mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+        //     Expect.mySequenceEqual actual expected "Written investigation file does not match read investigation file"
         // )
         // testCase "HandleEmptyRemarks" (fun () ->
 
@@ -2033,8 +2035,8 @@ let testInvestigationFileLD =
             //     |> Array.countBy id
             //     |> Array.sortBy fst
 
-            // mySequenceEqual actual expected "Written investigation file does not match read investigation file"
-            mySequenceEqual [1;2] [1;2] "bla"
+            // Expect.mySequenceEqual actual expected "Written investigation file does not match read investigation file"
+            Expect.mySequenceEqual [1;2] [1;2] "bla"
 
         )
     ]

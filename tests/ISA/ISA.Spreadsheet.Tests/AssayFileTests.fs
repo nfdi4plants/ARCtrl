@@ -11,6 +11,7 @@ open ARCtrl.ISA
 open TestingUtils
 open ARCtrl.ISA.Spreadsheet
 
+open TestObjects.Spreadsheet
 
 let testMetaDataFunctions = 
 
@@ -20,7 +21,7 @@ let testMetaDataFunctions =
             
             let readingSuccess = 
                 try 
-                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata |> ignore
+                    ArcAssay.fromMetadataSheet Assay.assayMetadata |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -31,7 +32,7 @@ let testMetaDataFunctions =
 
         testCase "ReaderReadsORCID" (fun () -> 
             
-            let assay = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata 
+            let assay = ArcAssay.fromMetadataSheet Assay.assayMetadata 
             Expect.equal assay.Performers.Length 3 "Assay should have 3 performers"
             Expect.isSome assay.Performers.[0].ORCID "ORCID should be set"
             Expect.equal assay.Performers.[0].ORCID.Value "0000-0002-1825-0097" "ORCID not read correctly"
@@ -45,7 +46,7 @@ let testMetaDataFunctions =
             
             let readingSuccess = 
                 try 
-                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataObsoleteSheetName |> ignore
+                    ArcAssay.fromMetadataSheet Assay.assayMetadataObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -56,7 +57,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata
+            let a = ArcAssay.fromMetadataSheet Assay.assayMetadata
 
             let writingSuccess = 
                 try 
@@ -71,7 +72,7 @@ let testMetaDataFunctions =
         testCase "WriterCreatesNoEmptyCells" (fun () ->
 
             let o = 
-                ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadata
+                ArcAssay.fromMetadataSheet Assay.assayMetadata
                 |> ArcAssay.toMetadataSheet
                 
             o.CellCollection.GetCells()
@@ -80,7 +81,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessObsoleteSheetName" (fun () ->
 
-            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataObsoleteSheetName
+            let a = ArcAssay.fromMetadataSheet Assay.assayMetadataObsoleteSheetName
 
             let writingSuccess = 
                 try 
@@ -95,28 +96,28 @@ let testMetaDataFunctions =
         testCase "OutputMatchesInput" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadata
+                Assay.assayMetadata
                 |> ArcAssay.fromMetadataSheet
                 |> ArcAssay.toMetadataSheet
                 
-            Expect.workSheetEqual o TestObjects.Assay.assayMetadata "Written assay metadata does not match read assay metadata"
+            Expect.workSheetEqual o Assay.assayMetadata "Written assay metadata does not match read assay metadata"
         )
 
         testCase "OutputSheetNamesDifferentObsoleteSheetName" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataObsoleteSheetName
+                Assay.assayMetadataObsoleteSheetName
                 |> ArcAssay.fromMetadataSheet
                 |> ArcAssay.toMetadataSheet
                 
-            Expect.isTrue (o.Name <> TestObjects.Assay.assayMetadataObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
+            Expect.isTrue (o.Name <> Assay.assayMetadataObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
         )
 
         testCase "ReaderSuccessEmpty" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty |> ignore
+                    ArcAssay.fromMetadataSheet Assay.assayMetadataEmpty |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
@@ -126,7 +127,7 @@ let testMetaDataFunctions =
 
         testCase "ReaderCorrectnessEmpty" (fun () -> 
             
-            let assay = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty
+            let assay = ArcAssay.fromMetadataSheet Assay.assayMetadataEmpty
             Expect.isNone assay.MeasurementType "MeasurementType should not be set"
             Expect.isNone assay.TechnologyPlatform "TechnologyPlatform should not be set"
             Expect.isNone assay.TechnologyType "TechnologyType should not be set"
@@ -134,7 +135,7 @@ let testMetaDataFunctions =
 
         testCase "ReaderCorrectnessEmptyStrings" (fun () -> 
             
-            let assay = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmptyStrings
+            let assay = ArcAssay.fromMetadataSheet Assay.assayMetadataEmptyStrings
             Expect.isNone assay.MeasurementType "MeasurementType should not be set"
             Expect.isNone assay.TechnologyPlatform "TechnologyPlatform should not be set"
             Expect.isNone assay.TechnologyType "TechnologyType should not be set"
@@ -145,7 +146,7 @@ let testMetaDataFunctions =
             
             let readingSuccess = 
                 try 
-                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmptyObsoleteSheetName |> ignore
+                    ArcAssay.fromMetadataSheet Assay.assayMetadataEmptyObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
@@ -154,7 +155,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessEmpty" (fun () ->
 
-            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmpty
+            let a = ArcAssay.fromMetadataSheet Assay.assayMetadataEmpty
 
             let writingSuccess = 
                 try 
@@ -168,7 +169,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessEmptyObsoleteSheetName" (fun () ->
 
-            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataEmptyObsoleteSheetName
+            let a = ArcAssay.fromMetadataSheet Assay.assayMetadataEmptyObsoleteSheetName
 
             let writingSuccess = 
                 try 
@@ -183,27 +184,27 @@ let testMetaDataFunctions =
         testCase "OutputMatchesInputEmpty" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataEmpty
+                Assay.assayMetadataEmpty
                 |> ArcAssay.fromMetadataSheet
                 |> ArcAssay.toMetadataSheet
 
-            Expect.workSheetEqual o TestObjects.Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
+            Expect.workSheetEqual o Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
         )
 
         testCase "OutputSheetNamesDifferentEmptyObsoleteSheetName" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataEmptyObsoleteSheetName
+                Assay.assayMetadataEmptyObsoleteSheetName
                 |> ArcAssay.fromMetadataSheet
                 |> ArcAssay.toMetadataSheet
 
-            Expect.isTrue (o.Name <> TestObjects.Assay.assayMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
+            Expect.isTrue (o.Name <> Assay.assayMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
         )
 
         testCase "ReaderSuccessFromWorkbook" (fun () ->
             let readingSuccess = 
                 try 
-                    ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbook |> ignore
+                    ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbook |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -214,7 +215,7 @@ let testMetaDataFunctions =
         testCase "ReaderSuccessFromWorkbookObsoleteSheetName" (fun () ->
             let readingSuccess = 
                 try 
-                    ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbookObsoleteSheetName |> ignore
+                    ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbookObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -225,7 +226,7 @@ let testMetaDataFunctions =
         testCase "ReaderSuccessFromWorkbookEmpty" (fun () ->
             let readingSuccess = 
                 try 
-                    ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbookEmpty |> ignore
+                    ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbookEmpty |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -236,7 +237,7 @@ let testMetaDataFunctions =
         testCase "ReaderSuccessFromWorkbookEmptyObsoleteSheetName" (fun () ->
             let readingSuccess = 
                 try 
-                    ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbookEmptyObsoleteSheetName |> ignore
+                    ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbookEmptyObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -246,7 +247,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessFromWorkbook" (fun () ->
 
-            let a = ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbook
+            let a = ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbook
 
             let writingSuccess = 
                 try 
@@ -260,7 +261,7 @@ let testMetaDataFunctions =
         
         testCase "WriterSuccessFromWorkbookObsoleteSheetName" (fun () ->
 
-            let a = ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbookObsoleteSheetName
+            let a = ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbookObsoleteSheetName
 
             let writingSuccess = 
                 try 
@@ -274,7 +275,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessFromWorkbookEmpty" (fun () ->
 
-            let a = ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbookEmpty
+            let a = ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbookEmpty
 
             let writingSuccess = 
                 try 
@@ -288,7 +289,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessFromWorkbookEmptyObsoleteSheetName" (fun () ->
 
-            let a = ArcAssay.fromFsWorkbook TestObjects.Assay.assayMetadataWorkbookEmptyObsoleteSheetName
+            let a = ArcAssay.fromFsWorkbook Assay.assayMetadataWorkbookEmptyObsoleteSheetName
 
             let writingSuccess = 
                 try 
@@ -303,48 +304,48 @@ let testMetaDataFunctions =
         testCase "OutputMatchesInputFromWorkbook" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataWorkbook
+                Assay.assayMetadataWorkbook
                 |> ArcAssay.fromFsWorkbook
                 |> ArcAssay.toMetadataSheet
 
-            Expect.workSheetEqual o TestObjects.Assay.assayMetadata "Written Empty assay metadata does not match read assay metadata"
+            Expect.workSheetEqual o Assay.assayMetadata "Written Empty assay metadata does not match read assay metadata"
         )
 
         testCase "OutputSheetNamesDifferentFromWorkbookObsoleteSheetName" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataWorkbookEmptyObsoleteSheetName
+                Assay.assayMetadataWorkbookEmptyObsoleteSheetName
                 |> ArcAssay.fromFsWorkbook
                 |> ArcAssay.toMetadataSheet
 
-            Expect.isTrue (o.Name <> TestObjects.Assay.assayMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
+            Expect.isTrue (o.Name <> Assay.assayMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
         )
 
         testCase "OutputMatchesInputFromWorkbookEmpty" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataWorkbookEmpty
+                Assay.assayMetadataWorkbookEmpty
                 |> ArcAssay.fromFsWorkbook
                 |> ArcAssay.toMetadataSheet
 
-            Expect.workSheetEqual o TestObjects.Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
+            Expect.workSheetEqual o Assay.assayMetadataEmpty "Written Empty assay metadata does not match read assay metadata"
         )
 
         testCase "OutputSheetNamesDifferentFromWorkbookEmptyObsoleteSheetName" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataWorkbookEmptyObsoleteSheetName
+                Assay.assayMetadataWorkbookEmptyObsoleteSheetName
                 |> ArcAssay.fromFsWorkbook
                 |> ArcAssay.toMetadataSheet
 
-            Expect.isTrue (o.Name <> TestObjects.Assay.assayMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
+            Expect.isTrue (o.Name <> Assay.assayMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
         )
 
         testCase "ReaderSuccessDeprecatedKeys" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataDeprecatedKeys |> ignore
+                    ArcAssay.fromMetadataSheet Assay.assayMetadataDeprecatedKeys |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -355,7 +356,7 @@ let testMetaDataFunctions =
 
         testCase "WriterSuccessDeprecatedKeys" (fun () ->
 
-            let a = ArcAssay.fromMetadataSheet TestObjects.Assay.assayMetadataDeprecatedKeys
+            let a = ArcAssay.fromMetadataSheet Assay.assayMetadataDeprecatedKeys
 
             let writingSuccess = 
                 try 
@@ -370,11 +371,11 @@ let testMetaDataFunctions =
         testCase "OutputMatchesInputDeprecatedKeys" (fun () ->
            
             let o = 
-                TestObjects.Assay.assayMetadataDeprecatedKeys
+                Assay.assayMetadataDeprecatedKeys
                 |> ArcAssay.fromMetadataSheet
                 |> ArcAssay.toMetadataSheet
                 
-            Expect.workSheetEqual o TestObjects.Assay.assayMetadata "Written assay metadata does not match read assay metadata"
+            Expect.workSheetEqual o Assay.assayMetadata "Written assay metadata does not match read assay metadata"
         )
 
 
@@ -411,9 +412,9 @@ let testAssayFileReader =
         //    let factors = API.Assay.getFactors assay
         //    let protocols = API.Assay.getProtocols assay
 
-        //    mySequenceEqual factors expectedFactors        "Factors were read incorrectly"
-        //    mySequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
-        //    mySequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
+        //    Expect.mySequenceEqual factors expectedFactors        "Factors were read incorrectly"
+        //    Expect.mySequenceEqual protocols expectedProtocols    "Protocols were read incorrectly"
+        //    Expect.mySequenceEqual persons expectedPersons        "Persons were read incorrectly from metadata sheet"
 
         //    Expect.isSome assay.FileName "FileName was not read"
         //    Expect.equal assay.FileName.Value fileName "FileName was not read correctly"
@@ -427,7 +428,7 @@ let testAssayFileReader =
         //    Expect.isSome assay.ProcessSequence "Processes were not read"
         //    assay.ProcessSequence.Value
         //    |> Seq.map (fun p -> Option.defaultValue "" p.Name)
-        //    |> fun names -> mySequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
+        //    |> fun names -> Expect.mySequenceEqual names ["GreatAssay_0";"GreatAssay_1";"SecondAssay_0"] "Process names do not match"
 
         //)
         //testCase "AroundTheWorldComponents" (fun () ->        
@@ -459,7 +460,7 @@ let testAssayFileReader =
         //        Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
         //        Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
         //    ) 
-        //    mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+        //    Expect.mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
         //testCase "AroundTheWorldProtocolType" (fun () ->        
@@ -492,7 +493,7 @@ let testAssayFileReader =
         //        Expect.equal p.ExecutesProtocol.Value refP.ExecutesProtocol.Value "Assay written to xlsx and read in again does no longer match json. Protocol does not match"
         //        Expect.equal p refP "Assay written to xlsx and read in again does no longer match json. Process does not match"
         //    ) 
-        //    mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
+        //    Expect.mySequenceEqual a'.ProcessSequence.Value ref.ProcessSequence.Value ""
 
         //)
     ]

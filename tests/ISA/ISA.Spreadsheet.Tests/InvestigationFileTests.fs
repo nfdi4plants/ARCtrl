@@ -11,6 +11,8 @@ open FsSpreadsheet
 open TestingUtils
 open ARCtrl.ISA.Spreadsheet
 
+open TestObjects.Spreadsheet
+
 let private testInvestigationWriterComponents = 
     // Test the single components of invesigation file writing
     testList "InvestigationWriterPartTests" [       
@@ -62,7 +64,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigation |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -74,7 +76,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try  
-                    ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigationObsoleteSheetName |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigationObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -86,7 +88,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigationWrongSheetName |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigationWrongSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -95,7 +97,7 @@ let private testInvestigationFile =
         )
         testCase "WriterSuccess" (fun () ->
 
-            let i = ArcInvestigation.fromFsWorkbook TestObjects.Investigation.fullInvestigation
+            let i = ArcInvestigation.fromFsWorkbook Investigation.fullInvestigation
 
             let writingSuccess = 
                 try 
@@ -110,10 +112,10 @@ let private testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
            
             let i = 
-                TestObjects.Investigation.fullInvestigation.GetWorksheetByName "isa_investigation"
+                Investigation.fullInvestigation.GetWorksheetByName "isa_investigation"
                 
             let o = 
-                TestObjects.Investigation.fullInvestigation
+                Investigation.fullInvestigation
                 |> ArcInvestigation.fromFsWorkbook
                 |> ArcInvestigation.toFsWorkbook
                 |> fun wb -> wb.GetWorksheetByName "isa_investigation"               
@@ -132,7 +134,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook TestObjects.Investigation.emptyInvestigation |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
@@ -141,7 +143,7 @@ let private testInvestigationFile =
 
         testCase "WriterSuccessEmpty" (fun () ->
 
-            let i = ArcInvestigation.fromFsWorkbook TestObjects.Investigation.emptyInvestigation
+            let i = ArcInvestigation.fromFsWorkbook Investigation.emptyInvestigation
 
             let writingSuccess = 
                 try 
@@ -156,11 +158,11 @@ let private testInvestigationFile =
         //testCase "OutputMatchesInputEmpty" (fun () ->
 
         //    let i = 
-        //        TestObjects.Investigation.emptyInvestigation.GetWorksheetByName "isa_investigation"
+        //        Investigation.emptyInvestigation.GetWorksheetByName "isa_investigation"
         //        |> fun ws -> ws.Rows
         //        |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
         //    let o = 
-        //        TestObjects.Investigation.emptyInvestigation
+        //        Investigation.emptyInvestigation
         //        |> ArcInvestigation.fromFsWorkbook
         //        |> ArcInvestigation.toFsWorkbook
         //        |> fun wb -> wb.GetWorksheetByName "isa_investigation"               
@@ -168,7 +170,7 @@ let private testInvestigationFile =
         //        |> Seq.map (fun r -> r.Cells |> Seq.map (fun c -> c.Value) |> Seq.reduce (fun a b -> a + b)) 
 
 
-        //    mySequenceEqual o i "Written empty investigation file does not match read empty investigation file"
+        //    Expect.mySequenceEqual o i "Written empty investigation file does not match read empty investigation file"
         //)
         ]
         |> testSequenced
@@ -223,7 +225,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedInvestigation "Could not retrieve investigation"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedInvestigation.Value |> getKeyValues)
 //                (testInvestigation |> getKeyValues)
 //                "Could not retrieve the correct investigation from investigation file"
@@ -249,7 +251,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedItem "Could not retrieve item from investigation file"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedItem.Value |> getKeyValues)
 //                (testItem |> getKeyValues)
 //                "Could not retrieve the correct item from investigation file"
@@ -277,7 +279,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedItem "Could not retrieve item from investigation file"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedItem.Value |> getKeyValues)
 //                (testItem |> getKeyValues)
 //                "Could not retrieve the correct item from investigation file"
@@ -292,7 +294,7 @@ let private testInvestigationFile =
         
 //            let retrievedStudies = ISA_Investigation.getStudies doc |> Seq.map getIdentificationKeyValues
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                retrievedStudies
 //                testStudies
 //                "Could not retrieve the correct studies from the investigation file"
@@ -328,7 +330,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedInvestigation "Investigation file was not filled out"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedInvestigation.Value |> getKeyValues)
 //                (investigation |> getKeyValues)
 //                "Investigation file was not filled out correctly"
@@ -353,7 +355,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedStudy "Study could not be found"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedStudy.Value |> getKeyValues)
 //                (study |> getKeyValues)
 //                "Study was not inserted correctly correctly"
@@ -396,7 +398,7 @@ let private testInvestigationFile =
 //                (ISA_Investigation.tryAddStudy study2 doc)
 //                "Could not add study"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (ISA_Investigation.getStudies doc |> Seq.map getKeyValues)
 //                ([study1;study2] |> Seq.map getKeyValues)
 //                "The Sequences do not match the expected seqs"
@@ -424,7 +426,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedAssay "Assay could not be found"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedAssay.Value |> getKeyValues)
 //                (assay |> getKeyValues)
 //                "Study was not inserted correctly correctly"
@@ -452,7 +454,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedAssay "Assay could not be found"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedAssay.Value |> getKeyValues)
 //                (assay |> getKeyValues)
 //                "Assay was not inserted correctly correctly"
@@ -481,7 +483,7 @@ let private testInvestigationFile =
 
 //            Expect.isSome retrievedAssay "Assay could not be found"
 
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (retrievedAssay.Value |> getKeyValues)
 //                (updatedAssay |> getKeyValues)
 //                "Assay was not updated correctly"
@@ -509,7 +511,7 @@ let private testInvestigationFile =
 //                (ISA_Investigation.tryRemoveItemFromStudy assayToRemove study doc)
 //                "Could not remove assay"
             
-//            mySequenceEqual
+//            Expect.mySequenceEqual
 //                (ISA_Investigation.getItemsInStudy (Assay()) study doc |> Seq.map getKeyValues)
 //                ([remainingAssay] |> Seq.map getKeyValues)
 //                "The Sequences do not match the expected seqs"

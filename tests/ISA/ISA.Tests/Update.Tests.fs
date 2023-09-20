@@ -351,8 +351,8 @@ let updateTests =
     
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
             // new IntList is empty and should not update
-            TestingUtils.mySequenceEqual update.IntList (List.append eOld.IntList eNew.IntList) "ListType UpdateAllAppendLists; failed by not correctly appending IntList"
-            TestingUtils.mySequenceEqual update.StringList (List.append eOld.StringList eNew.StringList) "ListType UpdateAllAppendLists; failed by not correctly appending StringList"
+            TestingUtils.Expect.mySequenceEqual update.IntList (List.append eOld.IntList eNew.IntList) "ListType UpdateAllAppendLists; failed by not correctly appending IntList"
+            TestingUtils.Expect.mySequenceEqual update.StringList (List.append eOld.StringList eNew.StringList) "ListType UpdateAllAppendLists; failed by not correctly appending StringList"
         )
     
         testCase "ArrayType UpdateByExisting" (fun () ->
@@ -385,8 +385,8 @@ let updateTests =
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
     
             // new IntList is empty and should not update
-            TestingUtils.mySequenceEqual update.FloatArray (Array.append eOld.FloatArray eNew.FloatArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending IntList"
-            TestingUtils.mySequenceEqual update.StringArray (Array.append eOld.StringArray eNew.StringArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending StringList"
+            TestingUtils.Expect.mySequenceEqual update.FloatArray (Array.append eOld.FloatArray eNew.FloatArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending IntList"
+            TestingUtils.Expect.mySequenceEqual update.StringArray (Array.append eOld.StringArray eNew.StringArray) "ArrayType UpdateAllAppendLists; failed by not correctly appending StringList"
         )
     
         testCase "SeqType UpdateByExisting" (fun () ->
@@ -419,8 +419,8 @@ let updateTests =
             let update = UpdateAllAppendLists.updateRecordType eOld eNew
     
             // Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
-            TestingUtils.mySequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
-            TestingUtils.mySequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
+            TestingUtils.Expect.mySequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
+            TestingUtils.Expect.mySequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
         )
     
         testCase "SeqType UpdateByExistingAppendLists" (fun () ->
@@ -436,8 +436,8 @@ let updateTests =
             let update = UpdateByExistingAppendLists.updateRecordType eOld eNew
     
             // Here the values are passed hard coded as Expect seems to interact strangely when comparing seqs.
-            TestingUtils.mySequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
-            TestingUtils.mySequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
+            TestingUtils.Expect.mySequenceEqual update.StringSeq       (Seq.append eOld.StringSeq eNew.StringSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list1"
+            TestingUtils.Expect.mySequenceEqual update.StringOptSeq    (Seq.append eOld.StringOptSeq eNew.StringOptSeq) "ArrayType UpdateAllAppendLists; failed by not correctly appending list2"
         )
 
         testCase "RecordTypeType UpdateByExisting" (fun () ->
@@ -584,7 +584,7 @@ let updateTests =
             let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
 
             // map types will never be checked if they are empty or not, so they will always be replaced
-            TestingUtils.mySequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
+            TestingUtils.Expect.mySequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
         )
 
         testCase "OptionalListType UpdateAllAppendListsEmpty" (fun () ->
@@ -615,7 +615,7 @@ let updateTests =
             let appendedList = List.append eOld.OptionalList.Value eNew.OptionalList.Value
 
             // map types will never be checked if they are empty or not, so they will always be replaced
-            TestingUtils.mySequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
+            TestingUtils.Expect.mySequenceEqual update.OptionalList.Value appendedList "Optional Lists were not appended correctly"
         )
 
         testCase "OptionalListType UpdateByExistingAppendListsEmpty" (fun () ->

@@ -67,6 +67,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Contract", "src\Cont
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FileSystem.Tests", "tests\FileSystem\FileSystem.Tests.fsproj", "{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestingUtils", "tests\TestingUtils\TestingUtils.fsproj", "{AA011593-6603-4E16-A7B0-0ED3862511DE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,6 +127,10 @@ Global
 		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AA011593-6603-4E16-A7B0-0ED3862511DE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AA011593-6603-4E16-A7B0-0ED3862511DE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AA011593-6603-4E16-A7B0-0ED3862511DE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AA011593-6603-4E16-A7B0-0ED3862511DE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -145,6 +151,7 @@ Global
 		{801247D5-7EE5-49C8-AB26-F822A415BA49} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{1945EE8A-F105-43A9-91C9-8C4422B9873E} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 		{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{AA011593-6603-4E16-A7B0-0ED3862511DE} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}

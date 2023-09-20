@@ -1,4 +1,4 @@
-﻿module TestObjects.ProcessInput 
+﻿module TestObjects.Json.ProcessInput 
 
 let sampleSimple = 
     """

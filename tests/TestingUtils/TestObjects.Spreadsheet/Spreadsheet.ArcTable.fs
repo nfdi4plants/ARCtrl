@@ -1,4 +1,4 @@
-﻿module TestObjects.ArcTable
+﻿module TestObjects.Spreadsheet.ArcTable
 
 open FsSpreadsheet
 open ARCtrl.ISA

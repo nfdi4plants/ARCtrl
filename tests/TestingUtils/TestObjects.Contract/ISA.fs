@@ -1,4 +1,4 @@
-﻿module TestObjects.ISAContracts
+﻿module TestObjects.Contract.ISA
     
 open FsSpreadsheet
 open ARCtrl.Contract
@@ -6,8 +6,10 @@ open ARCtrl
 open ARCtrl.ISA
 open ARCtrl.ISA.Spreadsheet
 
+open TestObjects.Spreadsheet
+
 module SimpleISA = 
-    let assayMetadataWorksheet = TestObjects.Assay.assayMetadata
+    let assayMetadataWorksheet = Assay.assayMetadata
     let assayWsName = "Measurement"
     let assayTable =
         ArcTable.initWorksheet assayWsName
@@ -32,7 +34,7 @@ module SimpleISA =
             dto = DTO.Spreadsheet assayWB)
 
 
-    let studyMetadataWorksheet = TestObjects.Study.studyMetadata
+    let studyMetadataWorksheet = Study.studyMetadata
     let studyNewWsName = "preparation"
     let studyNewTable =
         ArcTable.initWorksheet studyNewWsName

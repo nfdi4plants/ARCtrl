@@ -11,7 +11,7 @@ open ARCtrl.ISA
 open ARCtrl.ISA.Spreadsheet
 
 open TestingUtils
-open TestObjects.ArcTable
+open TestObjects.Spreadsheet.ArcTable
 
 let private ensureCorrectTestHeaders = 
     testList "ensureCorrectTestHeaders" [
@@ -34,7 +34,7 @@ let private ensureCorrectTestHeaders =
                     Parameter.instrumentHeaderV3 + " "
                 
                 ]
-            mySequenceEqual (ws.Row(1).Cells |> Seq.map (fun c -> c.Value)) expectedHeaders "Headers did not match"
+            Expect.mySequenceEqual (ws.Row(1).Cells |> Seq.map (fun c -> c.Value)) expectedHeaders "Headers did not match"
 
             let expectedValues = 
                 [
@@ -46,7 +46,7 @@ let private ensureCorrectTestHeaders =
                     Parameter.instrumentValueV3
                 ]
 
-            mySequenceEqual (ws.Row(2).Cells |> Seq.map (fun c -> c.Value)) expectedValues "Values did not match"
+            Expect.mySequenceEqual (ws.Row(2).Cells |> Seq.map (fun c -> c.Value)) expectedValues "Values did not match"
         )
     ]
 
@@ -77,7 +77,7 @@ let private groupCols =
             let actualHeaderGroups =
                 grouped
                 |> List.map (fun cols -> cols |> List.map (fun c -> c.[1].Value) |> List.reduce (fun a b -> a + ";" + b))
-            mySequenceEqual actualHeaderGroups expectedHeaderGroups "Header groups did not match"
+            Expect.mySequenceEqual actualHeaderGroups expectedHeaderGroups "Header groups did not match"
         )
     ]
 
@@ -116,7 +116,7 @@ let private simpleTable =
                         Characteristic.organismHeader
                         Factor.timeHeader
                 ]
-            mySequenceEqual table.Headers expectedHeaders "Headers did not match"
+            Expect.mySequenceEqual table.Headers expectedHeaders "Headers did not match"
 
             let expectedCells = 
                 [
@@ -128,7 +128,7 @@ let private simpleTable =
                         Characteristic.organismValue
                         Factor.timeValue
                 ]
-            mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+            Expect.mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
         testCase "Write" (fun () -> 
             
@@ -173,7 +173,7 @@ let private emptyTable =
                         Characteristic.organismHeader
                         Factor.timeHeader
                 ]
-            mySequenceEqual table.Headers expectedHeaders "Headers did not match"
+            Expect.mySequenceEqual table.Headers expectedHeaders "Headers did not match"
         )
         // TODO: What should we do with units of empty columns?
         //testCase "Write" (fun () -> 
@@ -219,7 +219,7 @@ let private mixedTable =
                         Characteristic.organismHeader
                         Factor.timeHeader
                 ]
-            mySequenceEqual table.Headers expectedHeaders "Headers did not match"
+            Expect.mySequenceEqual table.Headers expectedHeaders "Headers did not match"
             
         )
         testCase "Write" (fun () -> 
@@ -265,7 +265,7 @@ let private ioTable =
                     Factor.timeHeader 
                     Output.rawDataHeader 
                 ]
-            mySequenceEqual table.Headers expectedHeaders "Headers did not match"
+            Expect.mySequenceEqual table.Headers expectedHeaders "Headers did not match"
             let expectedCells = 
                 [
                     Input.sampleValue 
@@ -275,7 +275,7 @@ let private ioTable =
                     Factor.timeValue 
                     Output.rawDataValue 
                 ]
-            mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+            Expect.mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
         testCase "Write" (fun () -> 
             
@@ -320,7 +320,7 @@ let private deprecatedColumnTable =
                         Parameter.temperatureHeader
                         Output.deprecatedSampleHeader
                 ]
-            mySequenceEqual table.Headers expectedHeaders "Headers did not match"
+            Expect.mySequenceEqual table.Headers expectedHeaders "Headers did not match"
 
             let expectedCells = 
                 [
@@ -330,7 +330,7 @@ let private deprecatedColumnTable =
                         Parameter.temperatureValue
                         Output.rawDataValue
                 ]
-            mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+            Expect.mySequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
     ]
 

@@ -376,8 +376,8 @@ let private tests_UpdateHeader =
             Expect.equal table.Values.[3,4] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "cell 3,4"
             Expect.equal table.Headers.[4] column_param.Header "header4"
             Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
-            TestingUtils.mySequenceEqual table.Headers table2.Headers "equal table headers"
-            TestingUtils.mySequenceEqual table.Values table2.Values "equal table values"
+            TestingUtils.Expect.mySequenceEqual table.Headers table2.Headers "equal table headers"
+            TestingUtils.Expect.mySequenceEqual table.Values table2.Values "equal table values"
         )
     ]
 
@@ -566,7 +566,7 @@ let private tests_AddColumn =
                 let expected = 
                     let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
                     System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
-                TestingUtils.mySequenceEqual table.Values expected "values"
+                TestingUtils.Expect.mySequenceEqual table.Values expected "values"
             )
             testCase "term column, with cells" (fun () ->
                 let table = create_table()
@@ -579,7 +579,7 @@ let private tests_AddColumn =
                 let expected = 
                     let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
                     System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
-                TestingUtils.mySequenceEqual table.Values expected "values"
+                TestingUtils.Expect.mySequenceEqual table.Values expected "values"
             )
             testCase "IO column, with wrong cells" (fun () ->
                 let table = create_table()
@@ -803,7 +803,7 @@ let private tests_addColumn =
                 let expected = 
                     let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
                     System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
-                TestingUtils.mySequenceEqual updatedTable.Values expected "values"
+                TestingUtils.Expect.mySequenceEqual updatedTable.Values expected "values"
             )
             testCase "term column, with cells" (fun () ->
                 let table = create_table()
@@ -819,7 +819,7 @@ let private tests_addColumn =
                 let expected = 
                     let m = [ for rowIndex, cell in Array.indexed cells do yield (0, rowIndex), cell] |> Map.ofList
                     System.Collections.Generic.Dictionary<int*int,CompositeCell>(m)
-                TestingUtils.mySequenceEqual updatedTable.Values expected "values"
+                TestingUtils.Expect.mySequenceEqual updatedTable.Values expected "values"
             )
             testCase "IO column, with cells at index" (fun () ->
                 let table = create_table()
@@ -1971,11 +1971,11 @@ let private tests_UpdateRefWithSheet =
             Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
             Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update"
             
-            TestingUtils.mySequenceEqual 
+            TestingUtils.Expect.mySequenceEqual 
                 (refTable.GetProtocolDescriptionColumn().Cells)
                 (Array.create 5 (CompositeCell.createFreeText protocolDescription))
                 "ProtocolDescriptionColumn should be filled with protocol description"
-            TestingUtils.mySequenceEqual
+            TestingUtils.Expect.mySequenceEqual
                 (refTable.GetColumnByHeader column_component.Header).Cells
                 column_component.Cells
                 "Component column should have been taken as is"
@@ -2004,11 +2004,11 @@ let private tests_UpdateRefWithSheet =
             Expect.equal refTable.RowCount expectedRowCount "RowCount of reference table should be the same as value table after update"
             Expect.equal refTable.ColumnCount expectedColumnCount "ColumnCount of reference table should be the sum of value table and protocol table after update"
             
-            TestingUtils.mySequenceEqual 
+            TestingUtils.Expect.mySequenceEqual 
                 (refTable.GetProtocolDescriptionColumn().Cells)
                 (Array.create 5 (CompositeCell.createFreeText newProtocolDescription))
                 "ProtocolDescriptionColumn should be filled with protocol description"
-            TestingUtils.mySequenceEqual
+            TestingUtils.Expect.mySequenceEqual
                 (refTable.GetColumnByHeader column_component.Header).Cells
                 column_component.Cells
                 "Component column should have been taken as is"     

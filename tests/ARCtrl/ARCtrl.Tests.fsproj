@@ -6,14 +6,8 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Utils.fs" />
-    <Compile Include="ArcTable.fs" />
-    <Compile Include="Assay.fs" />
-    <Compile Include="Study.fs" />
-    <Compile Include="InvestigationFile.fs" />
     <Compile Include="Templates.Tests.fs" />
     <Compile Include="SemVer.Tests.fs" />
-    <Compile Include="TestObjects/ISAContracts.fs" />
     <None Include="paket.references" />
     <Compile Include="ARCtrl.Contracts.Tests.fs" />
     <Compile Include="ARCtrl.Tests.fs" />
@@ -21,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
+    <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

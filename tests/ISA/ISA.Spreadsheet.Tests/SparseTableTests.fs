@@ -130,7 +130,7 @@ let main =
             |> SparseTable.ToRows
             |> Seq.iteri (fun i r ->               
                 let testSeq = Seq.item i testRows
-                mySequenceEqual (SparseRow.getValues r) testSeq ""
+                Expect.mySequenceEqual (SparseRow.getValues r) testSeq ""
             
             )
 
