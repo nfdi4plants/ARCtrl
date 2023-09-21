@@ -2,7 +2,6 @@
 
 open TestingUtils
 
-open TestingUtils
 open ARCtrl
 open ARCtrl.Contract
 open FsSpreadsheet
@@ -37,7 +36,7 @@ let tests_gitContracts = testList "gitContracts" [
         let cli = dto.AsCLITool()
         Expect.equal cli.Name "git" "Should be git"
         Expect.equal cli.Arguments.Length 3 "Should have two arguments"
-        mySequenceEqual cli.Arguments [|"init";"-b";"main"|] "Should be init"
+        Expect.sequenceEqual cli.Arguments [|"init";"-b";"main"|] "Should be init"
 
     testCase "init_Branch" <| fun _ ->
         let arc = ARC()
@@ -46,7 +45,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.equal contracts.Length 1 "Should be one contract"
         let dto = contracts.[0].DTO.Value
         let cli = dto.AsCLITool()
-        mySequenceEqual cli.Arguments [|"init";"-b";branchName|] "Should have new branchname"
+        Expect.sequenceEqual cli.Arguments [|"init";"-b";branchName|] "Should have new branchname"
 
     testCase "init_remoteRepository" <| fun _ ->
         let arc = ARC()
@@ -55,7 +54,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.equal contracts.Length 2 "Should be two contracts"
         let dto = contracts.[1].DTO.Value
         let cli = dto.AsCLITool()
-        mySequenceEqual cli.Arguments [|"remote";"add";"origin";remote|] "Should correctly set new remote"
+        Expect.sequenceEqual cli.Arguments [|"remote";"add";"origin";remote|] "Should correctly set new remote"
 
     testCase "init_GitIgnore" <| fun _ ->
         let arc = ARC()
@@ -75,7 +74,7 @@ let tests_gitContracts = testList "gitContracts" [
         let contract = ARC.getCloneContract(remoteURL,merge = true,branch = branch,token = (user,token),nolfs = true)
         let dto = contract.DTO.Value
         let cli = dto.AsCLITool()
-        mySequenceEqual cli.Arguments [|"clone";noLFSConfig;"-b";branch;tokenFormattedURL;"."|] "some option was wrong"
+        Expect.sequenceEqual cli.Arguments [|"clone";noLFSConfig;"-b";branch;tokenFormattedURL;"."|] "some option was wrong"
     ]
 
 
