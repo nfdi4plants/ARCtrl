@@ -32,6 +32,24 @@ type DTO =
     | Text of string
     | CLITool of CLITool
 
+    member this.isSpreadsheet =
+        match this with | Spreadsheet _ -> true | _ -> false
+
+    member this.isText =
+        match this with | Text _ -> true | _ -> false
+
+    member this.isCLITool =
+        match this with | CLITool _ -> true | _ -> false
+
+    member this.AsSpreadsheet() =
+        match this with | Spreadsheet s -> s | _ -> failwith "Not a spreadsheet"
+
+    member this.AsText() =
+        match this with | Text t -> t | _ -> failwith "Not text"
+
+    member this.AsCLITool() =
+        match this with | CLITool c -> c | _ -> failwith "Not a CLI tool"
+
 [<StringEnum>]
 type Operation =
     | [<CompiledName("CREATE")>] CREATE

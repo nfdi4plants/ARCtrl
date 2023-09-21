@@ -5,18 +5,18 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="paket.references" />
     <Compile Include="Path.fs" />
     <Compile Include="Commit.fs" />
+    <Compile Include="DefaultGitignore.fs" />
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="FileSystem.fs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil </Authors>
     <Description>ARC helper functions for filesystem management.</Description>
