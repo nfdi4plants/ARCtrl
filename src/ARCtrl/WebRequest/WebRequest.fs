@@ -7,7 +7,7 @@ open Fable.Core.JsInterop
 open Fable.SimpleHttp 
 
 [<RequireQualifiedAccess>]
-module MyNodeJs =
+module NodeJs =
     open Fable.Core
     open Fable.Core.JsInterop
     open Fetch
@@ -48,9 +48,9 @@ let downloadFile url (callback: string -> unit)=
     if not isFable then
         browserAndDotnet()
     else
-        if MyNodeJs.isNode() then
+        if NodeJs.isNode() then
             // From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
             importSideEffects "isomorphic-fetch"
-            MyNodeJs.downloadFile url callback
+            NodeJs.downloadFile url callback
         else
             browserAndDotnet()

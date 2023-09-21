@@ -116,5 +116,5 @@ module Extension =
             fun (template: Template) ->
                 template.ToJson(?spaces=spaces)
 
-        static member ofJson(jsonString: string) =
+        static member fromJson(jsonString: string) =
             Decode.fromString Template.decode jsonString
