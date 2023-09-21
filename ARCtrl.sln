@@ -55,6 +55,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "playground", "playground", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JavaScript", "JavaScript", "{913222CA-261F-49CB-A823-CC7C335F964A}"
 	ProjectSection(SolutionItems) = preProject
+		tests\JavaScript\ISA.CompositeHeader.js = tests\JavaScript\ISA.CompositeHeader.js
 		tests\JavaScript\ISA.Person.js = tests\JavaScript\ISA.Person.js
 		tests\JavaScript\Main.js = tests\JavaScript\Main.js
 	EndProjectSection
@@ -67,7 +68,7 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Contract", "src\Cont
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FileSystem.Tests", "tests\FileSystem\FileSystem.Tests.fsproj", "{D9FE196B-AC21-4C3E-B9AE-DDDEC2158BC3}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestingUtils", "tests\TestingUtils\TestingUtils.fsproj", "{AA011593-6603-4E16-A7B0-0ED3862511DE}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TestingUtils", "tests\TestingUtils\TestingUtils.fsproj", "{AA011593-6603-4E16-A7B0-0ED3862511DE}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

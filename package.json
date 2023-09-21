@@ -19,6 +19,7 @@
     "testFiles": "mocha tests/FileSystem/js",
     "pretestArctrl": "dotnet fable tests/ARCtrl -o tests/ARCtrl/js",
     "testArctrl": "mocha tests/ARCtrl/js",
+    "pretestjs": "dotnet fable src/ARCtrl -o tests/JavaScript/ARCtrl ",
     "testjs": "mocha tests/JavaScript",
     "pretestpy": "dotnet fable src/ARCtrl -o tests/Python/ARCtrl --lang py ",
     "testpy": "",

@@ -4,7 +4,8 @@ open ARCtrl.ISA
 
 open TestingUtils
 
-let tests_iotype = 
+
+let private tests_iotype = 
     testList "IOType" [
         testCase "asInput" (fun () ->
             Expect.equal IOType.Source.asInput "Input [Source Name]" "Source"
@@ -26,13 +27,27 @@ let tests_iotype =
         )
         // This test ensures that new IOTypes are also added to `All` static member.
         testCase "All" (fun () -> 
-            let count = Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) |> Array.length
+            let caseInfos = Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) 
+            let count = caseInfos |> Array.length
             Expect.hasLength IOType.All (count-1) "Expect one less than all because we do not want to track `FreeText` case."
         )
     ]
 
-let tests_compositeHeader =
+let private tests_jsHelper = testList "jsHelper" [
+    testCase "jsGetColumnMetaType" <| fun _ ->
+        let cases = CompositeHeader.Cases
+        for case in cases do
+            let tag = fst case
+            let code = CompositeHeader.jsGetColumnMetaType tag
+            let validCode = [|0;1;2;3|] |> Array.contains code
+            Expect.isTrue validCode $"Code ({code}) for tag ({tag}) is invalid"
+]
+
+let private tests_compositeHeader =
     testList "CompositeHeader" [
+        testCase "Cases" <| fun _ ->
+            let count = CompositeHeader.Cases.Length
+            Expect.equal count 14 "count"
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 
                 let header = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species", "MS", "MS:0000042")
@@ -256,5 +271,6 @@ let tests_compositeHeader =
 let main = 
     testList "CompositeHeader" [
         tests_iotype
+        tests_jsHelper
         tests_compositeHeader
     ]

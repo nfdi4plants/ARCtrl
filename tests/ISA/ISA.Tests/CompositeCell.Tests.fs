@@ -127,9 +127,37 @@ let private tests_ToString = testList "ToString" [
         Expect.equal actual expected ""
 ]
 
+let private tests_GetContent = testList "GetContent" [
+    testCase "FreeText" <| fun _ ->
+        let cell = CompositeCell.createFreeText "Any Text"
+        let actual = cell.GetContent()
+        Expect.equal actual [|"Any Text"|] ""
+    testCase "Term" <| fun _ ->
+        let cell = CompositeCell.createTerm (OntologyAnnotation.fromString "My OA Name")
+        let actual = cell.GetContent()
+        Expect.equal actual [|"My OA Name"; ""; ""|] ""
+    testCase "Unitized" <| fun _ ->
+        let cell = CompositeCell.createUnitized ("12", OntologyAnnotation.fromString "My Unit Name")
+        let actual = cell.GetContent()
+        Expect.equal actual [|"12"; "My Unit Name"; ""; ""|] ""
+    testCase "Matching" <| fun _ ->
+        let matchContent (content: string []) =
+            match content with
+            | [|ft|] -> "FreeText"
+            | [|name; tsr; tan|] -> "Term"
+            | [|v; name; tsr; tan|] -> "Unitized"
+            | _ -> failwith "Not allowed"
+        Expect.equal (matchContent [|"Some ft"|]) "FreeText" "FreeText"
+        Expect.equal (matchContent [|""; ""; ""|]) "Term" "Term"
+        Expect.equal (matchContent [|""; ""; ""; ""|]) "Unitized" "Unitized"
+        Expect.throws (fun _ -> matchContent [|""; ""|] |> ignore) "Should throw"
+
+]
+
 let main = 
     testList "CompositeCell" [
         tests_cellConverter
         tests_create
         tests_ToString
+        tests_GetContent
     ]

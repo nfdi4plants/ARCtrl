@@ -16,7 +16,11 @@ type CompositeCell =
     /// https://isa-specs.readthedocs.io/en/latest/isatab.html#unit
     | Unitized of string*OntologyAnnotation
 
-
+    /// <summary>
+    /// This function is used to improve interoperability with ISA-JSON types. It is not recommended for default ARCtrl usage.
+    /// </summary>
+    /// <param name="value"></param>
+    /// <param name="unit"></param>
     static member fromValue(value : Value, ?unit : OntologyAnnotation) =
         match value,unit with
         | Value.Ontology t, None -> CompositeCell.Term t
@@ -30,6 +34,22 @@ type CompositeCell =
     member this.isUnitized = match this with | Unitized _ -> true | _ -> false
     member this.isTerm = match this with | Term _ -> true | _ -> false
     member this.isFreeText = match this with | FreeText _ -> true | _ -> false
+
+    /// <summary>
+    /// This function returns an array of all values as string
+    ///
+    /// ```fsharp
+    /// match this with
+    /// | FreeText s -> [|s|]
+    /// | Term oa -> [| oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
+    /// | Unitized (v,oa) -> [| v; oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
+    /// ```
+    /// </summary>
+    member this.GetContent() = 
+        match this with
+        | FreeText s -> [|s|]
+        | Term oa -> [| oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
+        | Unitized (v,oa) -> [| v; oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
 
     /// FreeText string will be converted to unit term name.
     ///

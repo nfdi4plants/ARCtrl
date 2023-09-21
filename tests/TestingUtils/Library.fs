@@ -45,41 +45,39 @@ module Result =
         | Ok m -> m
         | Error m -> m
 
-
-
 /// Fable compatible Expecto/Mocha unification
 module Expect = 
     open Utils
 
     let inline equal actual expected message = Expect.equal actual expected message
-    let inline notEqual actual expected message = Expect.notEqual actual expected message
+    let notEqual actual expected message = Expect.notEqual actual expected message
 
-    let inline isNull actual message = Expect.isNull actual message 
-    let inline isNotNull actual message = Expect.isNotNull actual message 
+    let isNull actual message = Expect.isNull actual message 
+    let isNotNull actual message = Expect.isNotNull actual message 
 
-    let inline isSome actual message = Expect.isSome actual message 
-    let inline isNone actual message = Expect.isNone actual message 
-    let inline wantSome actual message = Expect.wantSome actual message 
+    let isSome actual message = Expect.isSome actual message 
+    let isNone actual message = Expect.isNone actual message 
+    let wantSome actual message = Expect.wantSome actual message 
 
-    let inline isEmpty actual message = Expect.isEmpty actual message 
-    let inline hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
+    let isEmpty actual message = Expect.isEmpty actual message 
+    let hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
 
-    let inline isTrue actual message = Expect.isTrue actual message 
-    let inline isFalse actual message = Expect.isFalse actual message 
+    let isTrue actual message = Expect.isTrue actual message 
+    let isFalse actual message = Expect.isFalse actual message 
 
-    let inline wantError actual message = Expect.wantError actual message 
-    let inline wantOk actual message = Expect.wantOk actual message 
-    let inline isOk actual message = Expect.isOk actual message 
-    let inline isError actual message = Expect.isError actual message 
+    let wantError actual message = Expect.wantError actual message 
+    let wantOk actual message = Expect.wantOk actual message 
+    let isOk actual message = Expect.isOk actual message 
+    let isError actual message = Expect.isError actual message 
 
-    let inline throws actual message = Expect.throws actual message
-    let inline throwsC actual message = Expect.throwsC actual message 
+    let throws actual message = Expect.throws actual message
+    let throwsC actual message = Expect.throwsC actual message 
 
-    let inline exists actual asserter message = Expect.exists actual asserter message 
-    let inline containsAll actual expected message = Expect.containsAll actual expected message
+    let exists actual asserter message = Expect.exists actual asserter message 
+    let containsAll actual expected message = Expect.containsAll actual expected message
 
     /// Expects the `actual` sequence to equal the `expected` one.
-    let inline sequenceEqual actual expected message =
+    let sequenceEqual actual expected message =
       match firstDiff actual expected with
       | _,None,None -> ()
       | i,Some a, Some e ->
