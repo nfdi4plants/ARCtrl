@@ -20,10 +20,11 @@ type Organisation =
     member this.IsOfficial() = this = DataPLANT
 
 [<AttachMembers>]
-type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Organisation, ?version: string, ?authors: Person [], 
+type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?organisation: Organisation, ?version: string, ?authors: Person [], 
     ?repos: OntologyAnnotation [], ?tags: OntologyAnnotation [], ?lastUpdated: System.DateTime) =
 
     let name = defaultArg name ""
+    let description = defaultArg description ""
     let organisation = defaultArg organisation (Other "Custom Organisation")
     let version = defaultArg version "0.0.0"
     let authors = defaultArg authors [||]
@@ -34,6 +35,7 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
     member val Id : System.Guid = id with get, set
     member val Table : ArcTable = table with get, set
     member val Name : string = name with get, set
+    member val Description : string = description with get, set
     member val Organisation : Organisation = organisation with get, set
     member val Version : string = version with get, set
     member val Authors : Person [] = authors with get, set
@@ -41,11 +43,11 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?organisation: Or
     member val Tags : OntologyAnnotation [] = tags with get, set
     member val LastUpdated : System.DateTime = lastUpdated with get, set
 
-    static member make id table name organisation version authors repos tags lastUpdated =
-        Template(id, table, name, organisation, version, authors, repos, tags, lastUpdated)
+    static member make id table name description organisation version authors repos tags lastUpdated =
+        Template(id, table, name, description, organisation, version, authors, repos, tags, lastUpdated)
 
-    static member create(id, table, ?name, ?organisation, ?version, ?authors, ?repos, ?tags, ?lastUpdated) =
-        Template(id, table, ?name=name, ?organisation=organisation, ?version=version, ?authors=authors, ?repos=repos, ?tags=tags, ?lastUpdated=lastUpdated)
+    static member create(id, table, ?name, ?description, ?organisation, ?version, ?authors, ?repos, ?tags, ?lastUpdated) =
+        Template(id, table, ?name=name, ?description = description, ?organisation=organisation, ?version=version, ?authors=authors, ?repos=repos, ?tags=tags, ?lastUpdated=lastUpdated)
 
     static member init(templateName: string) =
         let guid = System.Guid.NewGuid()

@@ -15,6 +15,7 @@
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
     <Compile Include="Templates\Templates.fs" />
     <Compile Include="Templates\Templates.Json.fs" />
+    <Compile Include="Templates\Templates.Spreadsheet.fs" />
     <None Include="README.md" />
     <Compile Include="ARCtrl.fs" />
   </ItemGroup>

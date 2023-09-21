@@ -15,6 +15,7 @@
     <Compile Include="Metadata\Comment.fs" />
     <Compile Include="Metadata\SparseTable.fs" />
     <Compile Include="Metadata\Contacts.fs" />
+    <Compile Include="Metadata\OntologyAnnotation.fs" />
     <Compile Include="Metadata\DesignDescriptors.fs" />
     <Compile Include="Metadata\Factors.fs" />
     <Compile Include="Metadata\Protocols.fs" />

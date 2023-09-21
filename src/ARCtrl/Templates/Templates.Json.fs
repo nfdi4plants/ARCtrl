@@ -71,6 +71,7 @@ module Template =
             "id", Encode.guid template.Id
             "table", template.Table.GetProcesses() |> List.map (Process.encoder (ConverterOptions())) |> Encode.list 
             "name", Encode.string template.Name
+            "description", Encode.string template.Description
             "organisation", Organisation.encode template.Organisation
             "version", Encode.string template.Version
             "authors", Encode.list [
@@ -93,6 +94,7 @@ module Template =
                 get.Required.Field "id" Decode.guid,
                 get.Required.Field "table" (Decode.list (Process.decoder (ConverterOptions()) ) |> Decode.map (fun ps -> ArcTables.fromProcesses ps |> fun arctbls -> arctbls.[0])),
                 get.Required.Field "name" Decode.string,
+                get.Required.Field "description" Decode.string,
                 get.Required.Field "organisation" Organisation.decode,
                 get.Required.Field "version" Decode.string,
                 get.Required.Field "authors" (Decode.array personDecoder),
