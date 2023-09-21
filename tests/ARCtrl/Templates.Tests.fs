@@ -153,7 +153,7 @@ let tests_Template = testList "Template" [
 
 let tests_Spreadsheet =  testList "Template_Spreadsheet" [
         testList "metadata" [
-            testCase "complete" <| fun _ ->
+            testCase "simple" <| fun _ ->
                 let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata
 
                 Expect.equal templateInfo.Id "f12e98ee-a4e7-4ada-ba56-1e13cce1a44b" "Id"
@@ -161,7 +161,7 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
                 Expect.equal templateInfo.Version "1.2.0" "Version"
                 Expect.equal templateInfo.Description "Template to describe a plant growth study as well as sample collection and handling." "Description"
                 Expect.equal templateInfo.Organisation "DataPLANT" "Organisation"
-                Expect.equal templateInfo.Table "My Table" "Table"
+                Expect.equal templateInfo.Table TestObjects.Spreadsheet.Template.templateTableName "Table"
 
                 Expect.equal ers.Length 5 "Should be 5 endpoint repositories"
                 let expectedThird = OntologyAnnotation.fromString(termName = "PRIDE",tsr = "NFDI4PSO", tan = "NFDI4PSO:1000098")
@@ -181,7 +181,7 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
             testCase "complete roundabout" <| fun _ ->
                 let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata
 
-                let table = ArcTable.init("My Table")
+                let table = ArcTable.init(TestObjects.Spreadsheet.Template.templateTableName)
                 let template = Spreadsheet.Template.fromParts templateInfo ers tags authors table System.DateTime.Now
                 let sheet = Spreadsheet.Template.toMetadataSheet template
 
@@ -190,11 +190,72 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
             testCase "deprecated roundabout" <| fun _ ->
                 let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata_deprecatedKeys
 
-                let table = ArcTable.init("My Table")
+                let table = ArcTable.init(TestObjects.Spreadsheet.Template.templateTableName)
                 let template = Spreadsheet.Template.fromParts templateInfo ers tags authors table System.DateTime.Now
                 let sheet = Spreadsheet.Template.toMetadataSheet template
 
                 Expect.workSheetEqual sheet TestObjects.Spreadsheet.Template.templateMetadata "Metadata sheet should be equal"
+        ]
+        testList "fullFile" [
+            testCase "simple" <| fun _ ->
+                let template = Spreadsheet.Template.fromFsWorkbook TestObjects.Spreadsheet.Template.template
+    
+                Expect.equal template.Id (System.Guid "f12e98ee-a4e7-4ada-ba56-1e13cce1a44b") "Id"
+                Expect.equal template.Name "Plant growth" "Name"
+                Expect.equal template.Version "1.2.0" "Version"
+                Expect.equal template.Description "Template to describe a plant growth study as well as sample collection and handling." "Description"
+                Expect.equal template.Organisation (DataPLANT) "Organisation"
+
+                let expectedTable = Spreadsheet.ArcTable.tryFromFsWorksheet TestObjects.Spreadsheet.Template.templateTable |> Option.get
+
+                Expect.arcTableEqual template.Table expectedTable "Table"
+            testCase "tableByTableName" <| fun _ ->
+                let template = Spreadsheet.Template.fromFsWorkbook TestObjects.Spreadsheet.Template.template_matchingXLSXTableName
+    
+                Expect.equal template.Id (System.Guid "f12e98ee-a4e7-4ada-ba56-1e13cce1a44b") "Id"
+                Expect.equal template.Name "Plant growth" "Name"
+                Expect.equal template.Version "1.2.0" "Version"
+                Expect.equal template.Description "Template to describe a plant growth study as well as sample collection and handling." "Description"
+                Expect.equal template.Organisation (DataPLANT) "Organisation"
+
+                let expectedTable = Spreadsheet.ArcTable.tryFromFsWorksheet TestObjects.Spreadsheet.Template.templateTableMatchingByTableName |> Option.get
+
+                Expect.arcTableEqual template.Table expectedTable "Table"
+            testCase "deprecatedSheetName" <| fun _ ->
+                let template = Spreadsheet.Template.fromFsWorkbook TestObjects.Spreadsheet.Template.template_deprecatedMetadataSheetName
+    
+                Expect.equal template.Id (System.Guid "f12e98ee-a4e7-4ada-ba56-1e13cce1a44b") "Id"
+                Expect.equal template.Name "Plant growth" "Name"
+                Expect.equal template.Version "1.2.0" "Version"
+                Expect.equal template.Description "Template to describe a plant growth study as well as sample collection and handling." "Description"
+                Expect.equal template.Organisation (DataPLANT) "Organisation"
+
+                let expectedTable = Spreadsheet.ArcTable.tryFromFsWorksheet TestObjects.Spreadsheet.Template.templateTable |> Option.get
+
+                Expect.arcTableEqual template.Table expectedTable "Table"
+            testCase "template_wrongTemplateTableName" <| fun _ ->
+                let tryReadNonExistingTable = 
+                    fun () ->
+                        let template = Spreadsheet.Template.fromFsWorkbook TestObjects.Spreadsheet.Template.template_wrongTemplateTableName
+                        ()
+                Expect.throws tryReadNonExistingTable "Should fail, as neither xlsx table name nor sheet name match"
+            
+            testCase "roundabout" <| fun _ ->
+                let template = 
+                    Spreadsheet.Template.fromFsWorkbook TestObjects.Spreadsheet.Template.template
+                    |> Spreadsheet.Template.toFsWorkbook
+                    |> Spreadsheet.Template.fromFsWorkbook
+
+                Expect.equal template.Id (System.Guid "f12e98ee-a4e7-4ada-ba56-1e13cce1a44b") "Id"
+                Expect.equal template.Name "Plant growth" "Name"
+                Expect.equal template.Version "1.2.0" "Version"
+                Expect.equal template.Description "Template to describe a plant growth study as well as sample collection and handling." "Description"
+                Expect.equal template.Organisation (DataPLANT) "Organisation"
+
+                let expectedTable = Spreadsheet.ArcTable.tryFromFsWorksheet TestObjects.Spreadsheet.Template.templateTable |> Option.get
+
+                Expect.arcTableEqual template.Table expectedTable "Table"
+
         ]
     ]
 

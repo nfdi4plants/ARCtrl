@@ -2,6 +2,7 @@
 
 open FsSpreadsheet
 
+let templateTableName = "plant_growth"
 
 let templateMetadata = 
     let ws = FsWorksheet("isa_template")
@@ -24,7 +25,7 @@ let templateMetadata =
     row6.[2].Value <- "DataPLANT"
     let row7 = ws.Row(7)
     row7.[1].Value <- "Table"
-    row7.[2].Value <- "My Table"
+    row7.[2].Value <- templateTableName
     let row8 = ws.Row(8)
     row8.[1].Value <- "ERS"
     row8.[2].Value <- ""
@@ -318,3 +319,46 @@ let templateMetadata_deprecatedKeys =
     row27.[5].Value <- ""
     row27.[6].Value <- ""
     ws
+
+
+let private templateTableCols = 
+    [
+            TestObjects.Spreadsheet.ArcTable.Input.appendSampleColumn 4
+            TestObjects.Spreadsheet.ArcTable.Parameter.appendInstrumentColumn 4
+            TestObjects.Spreadsheet.ArcTable.Output.appendRawDataColumn 4           
+    ]
+
+let templateTable = 
+    TestObjects.Spreadsheet.ArcTable.initWorksheet templateTableName templateTableCols
+   
+let templateTableMatchingByTableName = TestObjects.Spreadsheet.ArcTable.initWorksheetWithTableName "Other Random Name" "annotationTableUnluckyVampirebat89" templateTableCols
+
+let template = 
+    
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(templateMetadata)
+    wb.AddWorksheet(templateTable)
+    wb
+
+let template_deprecatedMetadataSheetName = 
+    let ws = templateMetadata.Copy()
+    ws.Name <- ARCtrl.Templates.Spreadsheet.Template.obsoletemetaDataSheetName
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(ws)
+    wb.AddWorksheet(templateTable)
+    wb
+
+let template_wrongTemplateTableName = 
+    let t = templateTable.Copy()
+    t.Name <- "Other Random Name"
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(templateMetadata)
+    wb.AddWorksheet(t)
+    wb
+
+let template_matchingXLSXTableName = 
+
+    let wb = new FsWorkbook()
+    wb.AddWorksheet(templateMetadata_deprecatedKeys)
+    wb.AddWorksheet(templateTableMatchingByTableName)
+    wb

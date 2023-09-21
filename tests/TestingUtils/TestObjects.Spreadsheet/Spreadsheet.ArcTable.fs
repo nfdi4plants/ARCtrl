@@ -318,3 +318,13 @@ let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTa
     addSpacesToEnd w.CellCollection t
     t.RescanFieldNames(w.CellCollection)
     w
+
+
+let initWorksheetWithTableName (worksheetName : string) (tableName : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
+    let w = FsWorksheet(worksheetName)
+    let t  = w.Table(tableName, FsRangeAddress("A1:A1"))
+    appendOperations 
+    |> List.iter (fun o -> o w.CellCollection t)
+    addSpacesToEnd w.CellCollection t
+    t.RescanFieldNames(w.CellCollection)
+    w

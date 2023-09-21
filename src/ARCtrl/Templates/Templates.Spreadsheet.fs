@@ -259,7 +259,11 @@ module Template =
             | Option.Some sheet ->
                 fromMetadataSheet sheet
             | None ->  
-                Metadata.Template.TemplateInfo.empty,[],[],[]
+                match doc.TryGetWorksheetByName obsoletemetaDataSheetName with 
+                | Option.Some sheet ->
+                    fromMetadataSheet sheet
+                | None ->  
+                    Metadata.Template.TemplateInfo.empty,[],[],[]
             
         let tryTableNameMatches (ws : FsWorksheet) = 
             if ws.Tables |> Seq.exists (fun t -> t.Name = templateInfo.Table) then Some ws else None
