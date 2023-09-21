@@ -4,6 +4,8 @@ storage: none
 framework: net6.0, netstandard2.0
 
 nuget Fable.Core ~> 4.0.0
+nuget Fable.Fetch 2.6.0
+nuget Fable.SimpleHttp 3.5.0
 nuget FSharp.Core
 nuget FsSpreadsheet 4.1.0
 

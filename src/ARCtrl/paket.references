@@ -1,2 +1,4 @@
 FSharp.Core
 Fable.Core
+Fable.Fetch
+Fable.SimpleHttp

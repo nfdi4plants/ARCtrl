@@ -9,6 +9,7 @@
     <Compile Include="Path.fs" />
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="SemVer.fs" />
+    <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Contracts\Contracts.ArcAssay.fs" />
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
