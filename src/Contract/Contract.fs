@@ -103,7 +103,6 @@ type Contract =
     /// <param name="dto">The cli tool information.</param>
     /// <param name="path">The path relative from ARC root, at which the cli tool should be executed. **Default:** ARC root</param>
     /// <returns>Returns a EXECUTE contract.</returns>
-    [<NamedParams(fromIndex=1)>]
     static member createExecute(dto: CLITool, ?path: string) = 
         let path = Option.defaultValue "" path
         {Operation= Operation.EXECUTE; Path = path; DTOType = Some DTOType.CLI; DTO = Some <| DTO.CLITool dto}
