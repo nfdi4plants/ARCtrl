@@ -7,6 +7,8 @@ open System
 open Thoth.Json
 #else
 open Thoth.Json.Net
+open ARCtrl
+
 #endif
 
 //https://thoth-org.github.io/Thoth.Json/documentation/auto/extra-coders.html#ready-to-use-extra-coders
@@ -104,6 +106,19 @@ module Template =
             )
         )
 
+module Templates =
+
+    let encode (templateList: (string*Template) []) =
+        templateList
+        |> Array.toList
+        |> List.map (fun (p: string, t: Template) -> p , Template.encode t)
+        |> Encode.object
+
+    let decode =
+        let d = Decode.dict Template.decode
+        Decode.fromString d
+        
+
 [<AutoOpen>]
 module Extension =
 
@@ -118,3 +133,13 @@ module Extension =
 
         static member fromJson(jsonString: string) =
             Decode.fromString Template.decode jsonString
+
+        static member GetTemplates(callback: Map<string,Template> -> unit,?url: string) =
+            let defaultURL = @"https://github.com/nfdi4plants/Swate-templates/releases/download/latest/templates.json"
+            let url = defaultArg url defaultURL
+            WebRequest.downloadFile url (fun json ->
+                let mapResult = Templates.decode json
+                match mapResult with
+                | Ok map -> callback map
+                | Error exn -> failwithf "Unable to parse downloaded json to Templates: %A" exn
+            )
