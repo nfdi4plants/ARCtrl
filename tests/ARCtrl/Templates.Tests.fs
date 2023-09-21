@@ -323,7 +323,16 @@ let private tests_equality = testList "equality" [
     ]
 ]
 
+let private tests_GetTemplates = testList "GetTemplates" [
+    testCaseAsync "GetTemplates" <| async {
+        do! Template.GetTemplates(fun templatesMap ->
+            Expect.isTrue (templatesMap.Count > 0) "Count > 0"
+        )
+    }
+]
+
 let main = testList "Templates" [
     tests_json
     tests_equality
+    tests_GetTemplates
 ]
