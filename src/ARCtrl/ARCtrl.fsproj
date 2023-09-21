@@ -12,6 +12,7 @@
     <Compile Include="Contracts\Contracts.ArcAssay.fs" />
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
+    <Compile Include="Contracts\Contracts.Git.fs" />
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
     <Compile Include="Templates\Templates.fs" />
     <Compile Include="Templates\Templates.Json.fs" />
