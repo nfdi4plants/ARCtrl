@@ -8,7 +8,7 @@ open System.Collections.Generic
 
 module OntologyAnnotationSection = 
 
-    let fromSparseTable label labelTAN labelTSR (matrix : SparseTable) =
+    let fromSparseTable label labelTSR labelTAN (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
             let comments = SparseTable.GetEmptyComments matrix
             OntologyAnnotation.create(Comments = comments)
@@ -25,13 +25,13 @@ module OntologyAnnotationSection =
 
                 OntologyAnnotation.fromString(
                     ?termName = matrix.TryGetValue(label,i),
-                    ?tsr = matrix.TryGetValue(labelTAN,i),
-                    ?tan = matrix.TryGetValue(labelTSR,i),
+                    ?tsr = matrix.TryGetValue(labelTSR,i),
+                    ?tan = matrix.TryGetValue(labelTAN,i),
                     ?comments = comments
                 )
             )
 
-    let toSparseTable label labelTAN labelTSR (designs: OntologyAnnotation list) =
+    let toSparseTable label labelTSR labelTAN (designs: OntologyAnnotation list) =
         let matrix = SparseTable.Create (keys = [label;labelTAN;labelTSR],length=designs.Length + 1)
         let mutable commentKeys = []
         designs
@@ -55,16 +55,16 @@ module OntologyAnnotationSection =
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 
 
-    let fromRows (prefix : string option) label labelTAN labelTSR lineNumber (rows : IEnumerator<SparseRow>) =
+    let fromRows (prefix : string option) label labelTSR labelTAN lineNumber (rows : IEnumerator<SparseRow>) =
         let labels = [label;labelTAN;labelTSR]
         match prefix with
         | Some p -> SparseTable.FromRows(rows,labels,lineNumber,p)
         | None -> SparseTable.FromRows(rows,labels,lineNumber)
-        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable label labelTAN labelTSR  sm)  
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable label labelTSR labelTAN  sm)  
     
-    let toRows (prefix : string option) label labelTAN labelTSR (designs : OntologyAnnotation list) =
+    let toRows (prefix : string option) label labelTSR labelTAN (designs : OntologyAnnotation list) =
         designs
-        |> toSparseTable label labelTAN labelTSR
+        |> toSparseTable label labelTSR labelTAN
         |> fun m -> 
             match prefix with 
             | Some prefix -> SparseTable.ToRows(m,prefix)

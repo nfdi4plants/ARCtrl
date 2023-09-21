@@ -151,12 +151,60 @@ let tests_Template = testList "Template" [
         ]
     ]
 
+let tests_Spreadsheet =  testList "Template_Spreadsheet" [
+        testList "metadata" [
+            testCase "complete" <| fun _ ->
+                let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata
+
+                Expect.equal templateInfo.Id "f12e98ee-a4e7-4ada-ba56-1e13cce1a44b" "Id"
+                Expect.equal templateInfo.Name "Plant growth" "Name"
+                Expect.equal templateInfo.Version "1.2.0" "Version"
+                Expect.equal templateInfo.Description "Template to describe a plant growth study as well as sample collection and handling." "Description"
+                Expect.equal templateInfo.Organisation "DataPLANT" "Organisation"
+                Expect.equal templateInfo.Table "My Table" "Table"
+
+                Expect.equal ers.Length 5 "Should be 5 endpoint repositories"
+                let expectedThird = OntologyAnnotation.fromString(termName = "PRIDE",tsr = "NFDI4PSO", tan = "NFDI4PSO:1000098")
+                Expect.equal ers.[2] expectedThird "Third ER should be equal"
+
+                Expect.equal tags.Length 5 "Should be 5 tags"
+                let expectedFirst = OntologyAnnotation.fromString(termName = "Plants",tsr = "", tan = "")
+                Expect.equal tags.[0] expectedFirst "First TAG should be equal"
+                let expectedLast = OntologyAnnotation.fromString(termName = "Plant Sample Checklist",tsr = "", tan = "")
+                Expect.equal tags.[4] expectedLast "Last TAG should be equal"
+
+                Expect.equal authors.Length 5 "Should be 5 authors"
+                let expectedFirst = Person.create(FirstName = "Heinrich", LastName = "Weil", MidInitials = "L",ORCID = "0000-0003-1945-6342",Email = "weil@rptu.de")
+                Expect.equal authors.[0] expectedFirst "First AUTHOR should be equal"
+                let expectedFourth = Person.create(FirstName = "Martin", LastName = "Kuhl")
+                Expect.equal authors.[3] expectedFourth "Fourth AUTHOR should be equal"
+            testCase "complete roundabout" <| fun _ ->
+                let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata
+
+                let table = ArcTable.init("My Table")
+                let template = Spreadsheet.Template.fromParts templateInfo ers tags authors table System.DateTime.Now
+                let sheet = Spreadsheet.Template.toMetadataSheet template
+
+                Expect.workSheetEqual sheet TestObjects.Spreadsheet.Template.templateMetadata "Metadata sheet should be equal"
+
+            testCase "deprecated roundabout" <| fun _ ->
+                let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata_deprecatedKeys
+
+                let table = ArcTable.init("My Table")
+                let template = Spreadsheet.Template.fromParts templateInfo ers tags authors table System.DateTime.Now
+                let sheet = Spreadsheet.Template.toMetadataSheet template
+
+                Expect.workSheetEqual sheet TestObjects.Spreadsheet.Template.templateMetadata "Metadata sheet should be equal"
+        ]
+    ]
+
 let private tests_json = testList "Json" [
     tests_Organisation
     //tests_CompositeCell
     //tests_CompositeHeader
     //tests_ArcTable
     tests_Template
+    tests_Spreadsheet
 ]
 
 let private tests_equality = testList "equality" [
@@ -169,6 +217,7 @@ let private tests_equality = testList "equality" [
             guid 
             table 
             "My Template" 
+            "My Template is great"
             DataPLANT 
             "1.0.3" 
             [|Person.create(FirstName="John", LastName="Doe")|] 

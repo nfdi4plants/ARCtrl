@@ -11,8 +11,6 @@ module Metadata =
     
     module ER = 
 
-        let [<Literal>] erHeaderLabel = "#ER list"
-
         let [<Literal>] erLabel = "ER"
         let [<Literal>] erTermAccessionNumberLabel = "ER Term Accession Number"
         let [<Literal>] erTermSourceREFLabel = "ER Term Source REF"
@@ -20,21 +18,19 @@ module Metadata =
         let labels = [erLabel;erTermAccessionNumberLabel;erTermSourceREFLabel]
 
         let fromSparseTable (matrix : SparseTable) =
-            OntologyAnnotationSection.fromSparseTable erLabel erTermAccessionNumberLabel erTermSourceREFLabel matrix
+            OntologyAnnotationSection.fromSparseTable erLabel erTermSourceREFLabel erTermAccessionNumberLabel matrix
 
         let toSparseTable (designs: OntologyAnnotation list) =
-            OntologyAnnotationSection.toSparseTable erLabel erTermAccessionNumberLabel erTermSourceREFLabel designs
+            OntologyAnnotationSection.toSparseTable erLabel erTermSourceREFLabel erTermAccessionNumberLabel designs
 
         let fromRows (prefix : string option) (rows : IEnumerator<SparseRow>) =
-            let nextHeader, _, _, ers = OntologyAnnotationSection.fromRows prefix erLabel erTermAccessionNumberLabel erTermSourceREFLabel 0 rows
+            let nextHeader, _, _, ers = OntologyAnnotationSection.fromRows prefix erLabel erTermSourceREFLabel erTermAccessionNumberLabel 0 rows
             nextHeader,ers
     
         let toRows (prefix : string option) (designs : OntologyAnnotation list) =
-            OntologyAnnotationSection.toRows prefix erLabel erTermAccessionNumberLabel erTermSourceREFLabel designs
+            OntologyAnnotationSection.toRows prefix erLabel erTermSourceREFLabel erTermAccessionNumberLabel designs
 
     module Tags = 
-
-        let [<Literal>] tagsHeaderLabel = "#TAGS list"
 
         let [<Literal>] tagsLabel = "Tags"
         let [<Literal>] tagsTermAccessionNumberLabel = "Tags Term Accession Number"
@@ -43,124 +39,21 @@ module Metadata =
         let labels = [tagsLabel;tagsTermAccessionNumberLabel;tagsTermSourceREFLabel]
 
         let fromSparseTable (matrix : SparseTable) =
-            OntologyAnnotationSection.fromSparseTable tagsLabel tagsTermAccessionNumberLabel tagsTermSourceREFLabel matrix
+            OntologyAnnotationSection.fromSparseTable tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel matrix
 
         let toSparseTable (designs: OntologyAnnotation list) =
-            OntologyAnnotationSection.toSparseTable tagsLabel tagsTermAccessionNumberLabel tagsTermSourceREFLabel designs
+            OntologyAnnotationSection.toSparseTable tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel designs
 
         let fromRows (prefix : string option) (rows : IEnumerator<SparseRow>) =
-            let nextHeader, _, _, tags = OntologyAnnotationSection.fromRows prefix tagsLabel tagsTermAccessionNumberLabel tagsTermSourceREFLabel 0 rows
+            let nextHeader, _, _, tags = OntologyAnnotationSection.fromRows prefix tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel 0 rows
             nextHeader, tags
 
         let toRows (prefix : string option) (designs : OntologyAnnotation list) =
-            OntologyAnnotationSection.toRows prefix tagsLabel tagsTermAccessionNumberLabel tagsTermSourceREFLabel designs
+            OntologyAnnotationSection.toRows prefix tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel designs
 
-    module Authors =       
+    module Authors = 
 
-        let [<Literal>] lastNameLabel = "Last Name"
-        let [<Literal>] firstNameLabel = "First Name"
-        let [<Literal>] midInitialsLabel = "Mid Initials"
-        let [<Literal>] emailLabel = "Email"
-        let [<Literal>] phoneLabel = "Phone"
-        let [<Literal>] faxLabel = "Fax"
-        let [<Literal>] addressLabel = "Address"
-        let [<Literal>] affiliationLabel = "Affiliation"
-        let [<Literal>] orcidLabel = "ORCID"
-        let [<Literal>] rolesLabel = "Roles"
-        let [<Literal>] rolesTermAccessionNumberLabel = "Roles Term Accession Number"
-        let [<Literal>] rolesTermSourceREFLabel = "Roles Term Source REF"
-
-        let labels = [lastNameLabel;firstNameLabel;midInitialsLabel;emailLabel;phoneLabel;faxLabel;addressLabel;affiliationLabel;rolesLabel;rolesTermAccessionNumberLabel;rolesTermSourceREFLabel]
-
-        let fromString lastName firstName midInitials email phone fax address affiliation orcid role rolesTermAccessionNumber rolesTermSourceREF comments =
-            let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermSourceREF rolesTermAccessionNumber
-            Person.make 
-                None 
-                orcid
-                (lastName   ) 
-                (firstName  )
-                (midInitials) 
-                (email      )
-                (phone      )
-                (fax        )
-                (address    )
-                (affiliation) 
-                (Option.fromValueWithDefault [||] roles    )
-                (Option.fromValueWithDefault [||] comments )
-            |> Person.setOrcidFromComments
-
-        let fromSparseTable (matrix : SparseTable) =
-            if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
-                let comments = SparseTable.GetEmptyComments matrix
-                Person.create(Comments = comments)
-                |> List.singleton
-            else
-                List.init matrix.ColumnCount (fun i -> 
-                    let comments = 
-                        matrix.CommentKeys 
-                        |> List.map (fun k -> 
-                            Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                        |> Array.ofList
-                    fromString
-                        (matrix.TryGetValue(lastNameLabel,i))
-                        (matrix.TryGetValue(firstNameLabel,i))
-                        (matrix.TryGetValue(midInitialsLabel,i))
-                        (matrix.TryGetValue(emailLabel,i))
-                        (matrix.TryGetValue(phoneLabel,i))
-                        (matrix.TryGetValue(faxLabel,i))
-                        (matrix.TryGetValue(addressLabel,i))
-                        (matrix.TryGetValue(affiliationLabel,i))
-                        (matrix.TryGetValue(orcidLabel,i))
-                        (matrix.TryGetValueDefault("",(rolesLabel,i)))
-                        (matrix.TryGetValueDefault("",(rolesTermAccessionNumberLabel,i)))
-                        (matrix.TryGetValueDefault("",(rolesTermSourceREFLabel,i)))
-                        comments
-                )
-
-        let toSparseTable (persons:Person list) =
-            let matrix = SparseTable.Create (keys = labels,length=persons.Length + 1)
-            let mutable commentKeys = []
-            persons
-            |> List.map Person.setCommentFromORCID
-            |> List.iteri (fun i p ->
-                let i = i + 1
-                let rAgg = Option.defaultValue [||] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
-                do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
-                do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))
-                do matrix.Matrix.Add ((midInitialsLabel,i),                 (Option.defaultValue ""  p.MidInitials  ))
-                do matrix.Matrix.Add ((emailLabel,i),                       (Option.defaultValue ""  p.EMail        ))
-                do matrix.Matrix.Add ((phoneLabel,i),                       (Option.defaultValue ""  p.Phone        ))
-                do matrix.Matrix.Add ((faxLabel,i),                         (Option.defaultValue ""  p.Fax          ))
-                do matrix.Matrix.Add ((addressLabel,i),                     (Option.defaultValue ""  p.Address      ))
-                do matrix.Matrix.Add ((affiliationLabel,i),                 (Option.defaultValue ""  p.Affiliation  ))
-                do matrix.Matrix.Add ((rolesLabel,i),                       rAgg.TermNameAgg)  
-                do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rAgg.TermAccessionNumberAgg)
-                do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rAgg.TermSourceREFAgg)
-
-                match p.Comments with 
-                | None -> ()
-                | Some c ->
-                    c
-                    |> Array.iter (fun comment -> 
-                        let n,v = comment |> Comment.toString
-                        commentKeys <- n :: commentKeys
-                        matrix.Matrix.Add((n,i),v)
-                    )
-            )
-            {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
-
-
-        let fromRows (prefix : string option) (rows : IEnumerator<SparseRow>) =
-            SparseTable.FromRows(rows,labels,0,?prefix = prefix)
-            |> fun (s,_,_,sm) -> (s, fromSparseTable sm)
-
-        let toRows (prefix : string option) (persons : Person list) =
-            persons
-            |> toSparseTable
-            |> fun m -> 
-                match prefix with 
-                | Some prefix -> SparseTable.ToRows(m,prefix)
-                | None -> SparseTable.ToRows(m)
+        let [<Literal>] obsoleteORCIDLabel = "Authors ORCID"
 
     module Template = 
   
@@ -171,13 +64,18 @@ module Metadata =
         let [<Literal>] organisationLabel = "Organisation"
         let [<Literal>] tableLabel = "Table"
 
-        let [<Literal>] authorsLabelPrefix = "Authors"
+        let [<Literal>] authorsLabelPrefix = "Author"
 
-        let [<Literal>] authorsLabel = "#AUTHORS list"
-        let [<Literal>] erLabel = "#ER list"
-        let [<Literal>] tagsLabel = "#TAGS list"
+        let [<Literal>] templateLabel = "TEMPLATE"
 
+        let [<Literal>] authorsLabel = "AUTHORS"
+        let [<Literal>] erLabel = "ERS"
+        let [<Literal>] tagsLabel = "TAGS"
 
+        let [<Literal>] obsoleteAuthorsLabel = "#AUTHORS list"
+        let [<Literal>] obsoleteErLabel = "#ER list"
+        let [<Literal>] obsoleteTagsLabel = "#TAGS list"
+       
         type TemplateInfo =
             {
             Id : string
@@ -228,17 +126,9 @@ module Metadata =
                 do matrix.Matrix.Add ((identifierLabel,i),          processedIdentifier)
                 do matrix.Matrix.Add ((nameLabel,i),               (template.Name))
                 do matrix.Matrix.Add ((versionLabel,i),      (template.Version))
-                //do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" template.Description))
+                do matrix.Matrix.Add ((descriptionLabel,i),         (template.Description))
                 do matrix.Matrix.Add ((organisationLabel,i),   (template.Organisation.ToString()))
                 do matrix.Matrix.Add ((tableLabel,i),            template.Table.Name)
-
-                //if Array.isEmpty template.Comments |> not then
-                //    template.Comments
-                //    |> Array.iter (fun comment -> 
-                //        let n,v = comment |> Comment.toString
-                //        commentKeys <- n :: commentKeys
-                //        matrix.Matrix.Add((n,i),v)
-                //    )    
 
                 {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
@@ -252,12 +142,42 @@ module Metadata =
                 |> SparseTable.ToRows
     
         
+        let mapDeprecatedKeys (rows : seq<SparseRow>)  = 
+            rows
+            |> Seq.map (fun r -> 
+                r
+                |> Seq.map (fun (k,v) ->
+                    if k = 0 then 
+                        match v with
+                        | v when v = obsoleteAuthorsLabel -> k,authorsLabel
+                        | v when v = obsoleteErLabel -> k,erLabel
+                        | v when v = obsoleteTagsLabel -> k,tagsLabel
 
+                        | v when v = Authors.obsoleteORCIDLabel -> k,$"Comment[{Person.orcidKey}]"
+
+                        | v when v = "Authors Last Name"                    -> k,"Author Last Name"
+                        | v when v = "Authors First Name"                   -> k,"Author First Name"
+                        | v when v = "Authors Mid Initials"                 -> k,"Author Mid Initials"
+                        | v when v = "Authors Email"                        -> k,"Author Email"
+                        | v when v = "Authors Phone"                        -> k,"Author Phone"
+                        | v when v = "Authors Fax"                          -> k,"Author Fax"
+                        | v when v = "Authors Address"                      -> k,"Author Address"
+                        | v when v = "Authors Affiliation"                  -> k,"Author Affiliation"
+                        | v when v = "Authors Role"                         -> k,"Author Roles"
+                        | v when v = "Authors Role Term Accession Number"   -> k,"Author Roles Term Accession Number"
+                        | v when v = "Authors Role Term Source REF"         -> k,"Author Roles Term Source REF"
+                        | v -> (k,v)
+                    else (k,v)
+                )
+            )
+            |> fun s -> 
+                if Seq.head s |> SparseRow.tryGetValueAt 0 |> Option.exists (fun v -> v = templateLabel) then s else
+                    Seq.append (SparseRow.fromValues [templateLabel] |> Seq.singleton) s
 
         let fromRows (rows : seq<SparseRow>) = 
 
             let rec loop en lastLine (templateInfo : TemplateInfo) ers tags authors  =
-           
+            
                 match lastLine with
 
                 | Some k when k = erLabel -> 
@@ -269,18 +189,20 @@ module Metadata =
                     loop en currentLine templateInfo ers (List.append tags newTags) authors 
 
                 | Some k when k = authorsLabel -> 
-                    let currentLine,newAuthors = Authors.fromRows (Some authorsLabelPrefix) en
+                    let currentLine,_,_,newAuthors = Contacts.fromRows (Some authorsLabelPrefix) 0 en
                     loop en currentLine templateInfo ers tags (List.append authors newAuthors)
-
                 | k -> 
                     templateInfo,ers,tags,authors
+            let rows = mapDeprecatedKeys rows
             let en = rows.GetEnumerator()
+            en.MoveNext() |> ignore
             let currentLine,item = TemplateInfo.fromRows en  
             loop en currentLine item [] [] []
 
     
         let toRows (template : Template) =
             seq {          
+                yield  SparseRow.fromValues [templateLabel]
                 yield! TemplateInfo.toRows template
 
                 yield  SparseRow.fromValues [erLabel]
@@ -290,7 +212,7 @@ module Metadata =
                 yield! Tags.toRows (None) (template.Tags |> Array.toList)
 
                 yield  SparseRow.fromValues [authorsLabel]
-                yield! Authors.toRows (Some authorsLabelPrefix) (List.ofArray template.Authors)
+                yield! Contacts.toRows (Some authorsLabelPrefix) (List.ofArray template.Authors)
             }
 
     
@@ -299,13 +221,16 @@ module Template =
     open Metadata
     open Template
 
-    let [<Literal>] metaDataSheetName = "SwateTemplateMetadata"
+    let [<Literal>] metaDataSheetName = "isa_template"
+    let [<Literal>] obsoletemetaDataSheetName = "SwateTemplateMetadata"
+
 
     let fromParts (templateInfo:TemplateInfo) (ers:OntologyAnnotation list) (tags: OntologyAnnotation list) (authors : Person list) (table : ArcTable) (lastUpdated : System.DateTime)=
             Template.make 
                 (System.Guid templateInfo.Id)
                 table
                 (templateInfo.Name)
+                (templateInfo.Description)
                 (Organisation.ofString templateInfo.Organisation) 
                 (templateInfo.Version)
                 (Array.ofList authors)
@@ -325,55 +250,50 @@ module Template =
         |> Seq.map SparseRow.fromFsRow
         |> Template.fromRows
 
-[<AutoOpen>]
-module Extensions =
-
-    type Template with
-    
-        /// Reads an assay from a spreadsheet
-        static member fromFsWorkbook (doc:FsWorkbook) = 
-            // Reading the "Assay" metadata sheet. Here metadata 
-            let templateInfo,ers,tags,authors = 
+    /// Reads an assay from a spreadsheet
+    let fromFsWorkbook (doc:FsWorkbook) = 
+        // Reading the "Assay" metadata sheet. Here metadata 
+        let templateInfo,ers,tags,authors = 
         
-                match doc.TryGetWorksheetByName Template.metaDataSheetName with 
-                | Option.Some sheet ->
-                    Template.fromMetadataSheet sheet
-                | None ->  
-                    Metadata.Template.TemplateInfo.empty,[],[],[]
+            match doc.TryGetWorksheetByName metaDataSheetName with 
+            | Option.Some sheet ->
+                fromMetadataSheet sheet
+            | None ->  
+                Metadata.Template.TemplateInfo.empty,[],[],[]
             
-            let tryTableNameMatches (ws : FsWorksheet) = 
-                if ws.Tables |> Seq.exists (fun t -> t.Name = templateInfo.Table) then Some ws else None
+        let tryTableNameMatches (ws : FsWorksheet) = 
+            if ws.Tables |> Seq.exists (fun t -> t.Name = templateInfo.Table) then Some ws else None
 
-            let tryWSNameMatches (ws : FsWorksheet) = 
-                if ws.Name = templateInfo.Table then Some ws else None
+        let tryWSNameMatches (ws : FsWorksheet) = 
+            if ws.Name = templateInfo.Table then Some ws else None
 
-            let sheets = doc.GetWorksheets()
+        let sheets = doc.GetWorksheets()
                 
-            let table = 
-                match sheets |> Seq.tryPick tryTableNameMatches with
-                | Some ws -> 
-                    match ArcTable.tryFromFsWorksheet ws with
-                    | Some t -> t
-                    | None -> failwithf "Ws with name %s could not be converted to a table" ws.Name
-                | None ->
-                    match sheets |> Seq.tryPick tryWSNameMatches with
-                      | Some ws -> 
-                            match ArcTable.tryFromFsWorksheet ws with
-                            | Some t -> t
-                            | None -> failwithf "Ws with name %s could not be converted to a table" ws.Name
-                      | None -> failwithf "No worksheet with name %s found" templateInfo.Table
+        let table = 
+            match sheets |> Seq.tryPick tryTableNameMatches with
+            | Some ws -> 
+                match ArcTable.tryFromFsWorksheet ws with
+                | Some t -> t
+                | None -> failwithf "Ws with name %s could not be converted to a table" ws.Name
+            | None ->
+                match sheets |> Seq.tryPick tryWSNameMatches with
+                    | Some ws -> 
+                        match ArcTable.tryFromFsWorksheet ws with
+                        | Some t -> t
+                        | None -> failwithf "Ws with name %s could not be converted to a table" ws.Name
+                    | None -> failwithf "No worksheet with name %s found" templateInfo.Table
             
-            Template.fromParts templateInfo ers tags authors table (System.DateTime.Now)
+        fromParts templateInfo ers tags authors table (System.DateTime.Now)
 
-        static member toFsWorkbook (template : Template) =
-            let doc = new FsWorkbook()
-            let metaDataSheet = Template.toMetadataSheet template
-            doc.AddWorksheet metaDataSheet
+    let toFsWorkbook (template : Template) =
+        let doc = new FsWorkbook()
+        let metaDataSheet = toMetadataSheet template
+        doc.AddWorksheet metaDataSheet
 
-            template.Table
-            |> ArcTable.toFsWorksheet 
-            |> doc.AddWorksheet
+        template.Table
+        |> ArcTable.toFsWorksheet 
+        |> doc.AddWorksheet
 
-            doc
+        doc
 
 

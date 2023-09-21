@@ -18,6 +18,7 @@
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Assay.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Study.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.InvestigationFile.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Template.fs" />
     <Compile Include="TestObjects.Contract\ISA.fs" />
     <None Include="paket.references" />
     <Compile Include="Library.fs" />
