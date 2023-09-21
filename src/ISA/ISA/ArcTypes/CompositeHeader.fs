@@ -25,6 +25,10 @@ type IOType =
         Material
     |]
 
+    static member Cases = 
+        Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) 
+        |> Array.map (fun x -> x.Tag, x.Name)
+
     member this.asInput = 
         let stringCreate x = $"Input [{x.ToString()}]"
         match this with
@@ -96,6 +100,10 @@ type CompositeHeader =
     | FreeText of string
 
     with 
+
+    static member Cases = 
+        Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<CompositeHeader>) 
+        |> Array.map (fun x -> x.Tag, x.Name)
 
     override this.ToString() =
         match this with

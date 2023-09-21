@@ -26,13 +26,17 @@ let tests_iotype =
         )
         // This test ensures that new IOTypes are also added to `All` static member.
         testCase "All" (fun () -> 
-            let count = Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) |> Array.length
+            let caseInfos = Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) 
+            let count = caseInfos |> Array.length
             Expect.hasLength IOType.All (count-1) "Expect one less than all because we do not want to track `FreeText` case."
         )
     ]
 
 let tests_compositeHeader =
     testList "CompositeHeader" [
+        testCase "Cases" <| fun _ ->
+            let count = CompositeHeader.Cases.Length
+            Expect.equal count 14 "count"
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 
                 let header = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species", "MS", "MS:0000042")
