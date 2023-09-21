@@ -103,3 +103,18 @@ module Template =
                 get.Required.Field "last_updated" Decode.datetimeUtc
             )
         )
+
+[<AutoOpen>]
+module Extension =
+
+    type Template with
+        member this.ToJson(?spaces: int) =
+            let spaces = defaultArg spaces 0
+            Encode.toString spaces (Template.encode this)
+
+        static member toJson(?spaces: int) =
+            fun (template: Template) ->
+                template.ToJson(?spaces=spaces)
+
+        static member ofJson(jsonString: string) =
+            Decode.fromString Template.decode jsonString

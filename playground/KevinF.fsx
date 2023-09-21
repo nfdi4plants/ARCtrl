@@ -1,72 +1,42 @@
 #r "nuget: Fable.Core, 4.0.0"
 #r "nuget: FsSpreadsheet, 2.0.2"
 #r "nuget: FsSpreadsheet.ExcelIO, 2.0.2"
+#r "nuget: Thoth.Json.Net, 11.0.0"
 #I @"../src\ARCtrl/bin\Debug\netstandard2.0"
-#r "ISA.dll"
-#r "Contract.dll"
-#r "FileSystem.dll"
-#r "ISA.Spreadsheet.dll"
-#r "CWL.dll"
+#r "ARCtrl.ISA.dll"
+#r "ARCtrl.Contract.dll"
+#r "ARCtrl.FileSystem.dll"
+#r "ARCtrl.ISA.Spreadsheet.dll"
+#r "ARCtrl.CWL.dll"
 #r "ARCtrl.dll"
 
-//#i @"nuget: C:/Users/Kevin/source/repos/ISADotNet/pkg/"
-//#r "nuget: ARC"
-
-let [<Literal>] rootPath = @"C:\Users\Kevin\Desktop\TestARC"
-open Contract
 open ARCtrl
-open ARCtrl.FileSystem
-
-module ARC_IO =
-    open FsSpreadsheet
-    open FsSpreadsheet.ExcelIO
-    let readFilePaths (arcPath: string) = 
-        System.IO.Directory.EnumerateFiles(arcPath,"*",System.IO.SearchOption.AllDirectories)
-        |> Array.ofSeq 
-        |> Array.map (fun p -> System.IO.Path.GetRelativePath(rootPath, p))
-
-    let fullfillREADContract (arcRoot: string) (c: Contract) =
-        let p = System.IO.Path.Combine [|arcRoot; c.Path|]
-        match c with
-        | {Operation = READ} ->
-            let dto = DTO.Spreadsheet <| FsWorkbook.fromXlsxFile(p)
-            {c with DTO = Some dto}
-        | _ -> failwith "Tried reading from non-READ contract."
-
-    let fullfillREADContracts (arcRoot: string) (cArr: Contract []) =
-        cArr |> Array.map (fullfillREADContract arcRoot)
-
-    let initExistingARC (arcRootPath: string) =
-        let arc = readFilePaths arcRootPath |> ARC.fromFilePaths
-        let contracts = arc.getReadContracts() |> fullfillREADContracts arcRootPath
-        arc.addISAFromContracts(contracts)
-
-let myarc = ARC_IO.initExistingARC(rootPath)
-
-let newArcPath = System.IO.Path.Combine(__SOURCE_DIRECTORY__, "TestArc") 
-
 open ARCtrl.ISA
-open FsSpreadsheet
-open FsSpreadsheet.ExcelIO
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Templates
+open ARCtrl.Templates.Json
 
-module WriteContracts =
+let path = @"C:\Users\Kevin\source\repos\ARCtrl\playground"
 
-    let getInvestigationPath() = Path.combineMany [|ARCtrl.Path.InvestigationFileName|]
+let template: Template = 
+    let table = ArcTable.init("My Table")
+    table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
+    table.AddColumn(CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
+    let o = Template.init("MyTemplate")
+    o.Table <- table
+    o.Authors <- [|ARCtrl.ISA.Person.create(FirstName="John", LastName="Doe"); ARCtrl.ISA.Person.create(FirstName="Jane", LastName="Doe");|]
+    o.EndpointRepositories <- [|ARCtrl.ISA.OntologyAnnotation.fromString "Test"; ARCtrl.ISA.OntologyAnnotation.fromString "Testing second"|]
+    o
 
-    let createInvestigation (investigation: ArcInvestigation) =
-        let investigationFile = ArcInvestigation.toFsWorkbook (investigation)
-        let investigationFilePath = getInvestigationPath ()
-        let investigationContract = Contract.createCreate(investigationFilePath,DTOType.ISA_Investigation, DTO.Spreadsheet investigationFile)
-        investigationContract
+let json = template.ToJson()
 
+let templateReResult = Template.ofJson(json)
 
-let writeNewContracts (investigation: ArcInvestigation) =
-    let contracts = ResizeArray()
-    // root items
-    let investigationContract = WriteContracts.createInvestigation investigation
-    contracts.Add(investigationContract)
-    contracts
+match templateReResult with
+| Ok templateRe -> 
+    printfn "Can read in!"
+    template = templateRe
+| Error exn -> failwithf "Cannot read in: %s" exn
 
+let writeFile() = System.IO.File.WriteAllText(path + @"/UNITTEST_Template.json", json)
 
-writeNewContracts arc
+writeFile()
