@@ -105,6 +105,30 @@ type CompositeHeader =
         Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<CompositeHeader>) 
         |> Array.map (fun x -> x.Tag, x.Name)
 
+    /// <summary>
+    /// This function is used to programmatically create `CompositeHeaders` in JavaScript. Returns integer code representative of input type.
+    ///
+    /// 0: Expects no input
+    ///
+    /// 1: Expects OntologyAnnotation as input
+    ///
+    /// 2: Expects IOType as input
+    ///
+    /// 3: Expects string as input
+    /// </summary>
+    /// <param name="inp">Can be accessed from `CompositeHeader.Cases`</param>
+    static member jsGetColumnMetaType(inp:int) =
+        match inp with
+        // no input
+        | 4 | 5 | 6 | 7 | 8 | 9 | 10 -> 0
+        // OntologyAnnotation as input
+        | 0 | 1 | 2 | 3 -> 1
+        // iotype as input
+        | 11 | 12 -> 2
+        // string as input
+        | 13 -> 3
+        | anyElse -> failwithf "Cannot assign input `Tag` (%i) to `CompositeHeader`" anyElse
+
     override this.ToString() =
         match this with
         | Parameter oa          -> $"Parameter [{oa.NameText}]"

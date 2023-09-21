@@ -4,7 +4,8 @@ open ARCtrl.ISA
 
 open TestingUtils
 
-let tests_iotype = 
+
+let private tests_iotype = 
     testList "IOType" [
         testCase "asInput" (fun () ->
             Expect.equal IOType.Source.asInput "Input [Source Name]" "Source"
@@ -32,7 +33,17 @@ let tests_iotype =
         )
     ]
 
-let tests_compositeHeader =
+let private tests_jsHelper = testList "jsHelper" [
+    testCase "jsGetColumnMetaType" <| fun _ ->
+        let cases = CompositeHeader.Cases
+        for case in cases do
+            let tag = fst case
+            let code = CompositeHeader.jsGetColumnMetaType tag
+            let validCode = [|0;1;2;3|] |> Array.contains code
+            Expect.isTrue validCode $"Code ({code}) for tag ({tag}) is invalid"
+]
+
+let private tests_compositeHeader =
     testList "CompositeHeader" [
         testCase "Cases" <| fun _ ->
             let count = CompositeHeader.Cases.Length
@@ -260,5 +271,6 @@ let tests_compositeHeader =
 let main = 
     testList "CompositeHeader" [
         tests_iotype
+        tests_jsHelper
         tests_compositeHeader
     ]

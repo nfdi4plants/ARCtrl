@@ -1,9 +1,11 @@
 import { equal, deepEqual, notEqual } from 'assert';
 import { CompositeHeader, IOType } from "./ARCtrl/ISA/ISA/ArcTypes/CompositeHeader.js"
+import { OntologyAnnotation } from './ARCtrl/ISA/ISA/JsonTypes/OntologyAnnotation.js';
 
 let tests_IOType = describe('IOType', function () {
     it('cases', function () {
         let cases = IOType.Cases
+        //console.log(cases)
         equal(cases.length, 7);
     });
     it('Create non Freetext', function() {
@@ -44,4 +46,22 @@ let tests_IOType = describe('IOType', function () {
 
 describe('CompositeHeader', function () {
     tests_IOType;
+    it("Input", function () {
+        let iotype = new IOType(6, ["My FreeTextValue"])
+        let header = new CompositeHeader(11, [iotype])
+        let actual = header.toString()
+        equal(actual,"Input [My FreeTextValue]")
+    })
+    it("FreeText", function () {
+        let header = new CompositeHeader(13, ["My FreeTextValue"])
+        let actual = header.toString()
+        equal(actual, "My FreeTextValue")
+    })
+    it("Term", function () {
+        let oa = OntologyAnnotation.fromString("My OA Name")
+        let header = new CompositeHeader(0, [oa])
+        let actual = header.toString()
+        //console.log(CompositeHeader.Cases)
+        equal(actual, "Component [My OA Name]")
+    })
 });
