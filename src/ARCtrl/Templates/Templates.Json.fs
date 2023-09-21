@@ -8,7 +8,6 @@ open Thoth.Json
 #else
 open Thoth.Json.Net
 open ARCtrl
-
 #endif
 
 //https://thoth-org.github.io/Thoth.Json/documentation/auto/extra-coders.html#ready-to-use-extra-coders
@@ -137,7 +136,7 @@ module Extension =
         static member GetTemplates(callback: Map<string,Template> -> unit,?url: string) =
             let defaultURL = @"https://github.com/nfdi4plants/Swate-templates/releases/download/latest/templates.json"
             let url = defaultArg url defaultURL
-            WebRequest.downloadFile url (fun json ->
+            ARCtrl.WebRequest.downloadFile url (fun json ->
                 let mapResult = Templates.decode json
                 match mapResult with
                 | Ok map -> callback map
