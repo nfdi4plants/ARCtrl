@@ -64,4 +64,32 @@ describe('CompositeHeader', function () {
         //console.log(CompositeHeader.Cases)
         equal(actual, "Component [My OA Name]")
     })
+    it('jsGetColumnMetaType', function () {
+        let cases = CompositeHeader.Cases
+        let oa = OntologyAnnotation.fromString("My OA Name")
+        let iotype = new IOType(0, [])
+        let stringExample = "My Example"
+        for (let mycase of cases) {
+            let tag = mycase[0]
+            let code = CompositeHeader.jsGetColumnMetaType(tag)
+            switch (code) {
+                case 0:
+                    let header1 = new CompositeHeader(tag, [])
+                    equal((header1.IsSingleColumn || header1.IsFeaturedColumn), true);
+                    break;
+                case 1:
+                    let header2 = new CompositeHeader(tag, [oa])
+                    equal(header2.IsTermColumn, true);
+                    break;
+                case 2:
+                    let header3 = new CompositeHeader(tag, [iotype])
+                    equal(header3.IsIOType, true);
+                    break;
+                case 3:
+                    let header4 = new CompositeHeader(tag, [stringExample])
+                    equal(header4.isFreeText, true);
+                    break;
+            }
+        }
+    })
 });
