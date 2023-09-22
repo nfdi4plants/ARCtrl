@@ -325,9 +325,8 @@ let private tests_equality = testList "equality" [
 
 let private tests_GetTemplates = testList "GetTemplates" [
     testCaseAsync "GetTemplates" <| async {
-        do! Template.GetTemplates(fun templatesMap ->
-            Expect.isTrue (templatesMap.Count > 0) "Count > 0"
-        )
+        let! templatesMap = Template.GetTemplates()
+        Expect.isTrue (templatesMap.Count > 0) "Count > 0"
     }
 ]
 

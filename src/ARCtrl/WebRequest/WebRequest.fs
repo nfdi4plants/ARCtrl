@@ -24,15 +24,15 @@ module NodeJs =
 process.versions != null &&
 process.versions.node != null;"""
 
-    let downloadFile url callback =
+    let downloadFile url =
         fetch url []
         |> Promise.bind (fun res -> res.text()) // get the result
         |> Promise.map (fun txt -> // bind the result to make further operation
-            callback txt
+            txt
         )
         |> Async.AwaitPromise
 
-let downloadFile url (callback: string -> unit)=
+let downloadFile url =
     let mutable isFable = false
     #if FABLE_COMPILER
     isFable <- true
@@ -41,9 +41,10 @@ let downloadFile url (callback: string -> unit)=
         async {
             let! (statusCode, responseText) = Http.get url
 
-            match statusCode with
-            | 200 -> callback responseText
-            | _ -> printfn "Status %d => %s" statusCode responseText
+            return 
+                match statusCode with
+                | 200 -> responseText
+                | _ -> failwithf "Status %d => %s" statusCode responseText
         }
     if not isFable then
         browserAndDotnet()
@@ -51,6 +52,6 @@ let downloadFile url (callback: string -> unit)=
         if NodeJs.isNode() then
             // From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
             importSideEffects "isomorphic-fetch"
-            NodeJs.downloadFile url callback
+            NodeJs.downloadFile url
         else
             browserAndDotnet()

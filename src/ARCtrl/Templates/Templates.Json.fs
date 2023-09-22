@@ -133,12 +133,14 @@ module Extension =
         static member fromJson(jsonString: string) =
             Decode.fromString Template.decode jsonString
 
-        static member GetTemplates(callback: Map<string,Template> -> unit,?url: string) =
+        static member GetTemplates(?url: string) =
             let defaultURL = @"https://github.com/nfdi4plants/Swate-templates/releases/download/latest/templates.json"
             let url = defaultArg url defaultURL
-            ARCtrl.WebRequest.downloadFile url (fun json ->
-                let mapResult = Templates.decode json
-                match mapResult with
-                | Ok map -> callback map
-                | Error exn -> failwithf "Unable to parse downloaded json to Templates: %A" exn
-            )
+            async {
+                let! jsonString = ARCtrl.WebRequest.downloadFile url
+                let mapResult = Templates.decode jsonString
+                return 
+                    match mapResult with
+                    | Ok map -> map
+                    | Error exn -> failwithf "Unable to parse downloaded json to Templates: %A" exn
+            }
