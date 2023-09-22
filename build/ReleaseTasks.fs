@@ -56,3 +56,35 @@ let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; b
             if not result.OK then failwith "failed to push packages"
     else failwith "aborted"
 }
+
+let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] {
+    let target = 
+        (!! (sprintf "%s/*.tgz" npmPkgDir ))
+        |> Seq.head
+    printfn "%A" target
+    let msg = sprintf "release package with version %s?" stableVersionTag
+    if promptYesNo msg then
+        let apikey = Environment.environVarOrNone "NPM_KEY" 
+        let otp = if apikey.IsSome then $" --otp + {apikey.Value}" else ""
+        Fake.JavaScript.Npm.exec $"publish {target} --access public{otp}" (fun o ->
+            { o with
+                WorkingDirectory = "./dist/js/"
+            })        
+    else failwith "aborted"
+}
+
+let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build; runTests; packJSPrerelease] {
+    let target = 
+        (!! (sprintf "%s/*.tgz" npmPkgDir ))
+        |> Seq.head
+    printfn "%A" target
+    let msg = sprintf "release package with version %s?" prereleaseTag 
+    if promptYesNo msg then
+        let apikey =  Environment.environVarOrNone "NPM_KEY"    
+        let otp = if apikey.IsSome then $" --otp + {apikey.Value}" else ""
+        Fake.JavaScript.Npm.exec $"publish {target} --access public --tag next{otp}" (fun o ->
+            { o with
+                WorkingDirectory = "./dist/js/"
+            })      
+    else failwith "aborted"
+}

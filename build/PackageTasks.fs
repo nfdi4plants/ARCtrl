@@ -17,7 +17,7 @@ let private replaceCommitLink input =
     let commitLinkPattern = @"\[\[#[a-z0-9]*\]\(.*\)\] "
     Regex.Replace(input,commitLinkPattern,"")
 
-let pack = BuildTask.create "Pack" [clean; build; runTests] {
+let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
     if promptYesNo (sprintf "creating stable package with version %s OK?" stableVersionTag ) 
         then
             !! "src/**/*.*proj"
@@ -39,7 +39,7 @@ let pack = BuildTask.create "Pack" [clean; build; runTests] {
     else failwith "aborted"
 }
 
-let packPrerelease = BuildTask.create "PackPrerelease" [setPrereleaseTag; clean; build; (*runTests*)] {
+let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleaseTag; clean; build; (*runTests*)] {
     if promptYesNo (sprintf "package tag will be %s OK?" prereleaseTag )
         then 
             !! "src/**/*.*proj"
@@ -62,3 +62,50 @@ let packPrerelease = BuildTask.create "PackPrerelease" [setPrereleaseTag; clean;
     else
         failwith "aborted"
 }
+
+let packJS = BuildTask.create "PackJS" [clean; build; runTests] {
+    if promptYesNo (sprintf "creating stable package with version %s OK?" stableVersionTag ) 
+        then
+            Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)
+            Fake.IO.File.readAsString "build/release_package.json"
+            |> Fake.IO.File.writeString false "dist/js/package.json"
+
+            Fake.IO.File.readAsString "README.md"
+            |> Fake.IO.File.writeString false "dist/js/README.md"
+
+            "" // "fable-library.**/**"
+            |> Fake.IO.File.writeString false "dist/js/fable_modules/.npmignore"
+
+            Fake.JavaScript.Npm.exec "pack" (fun o ->
+                { o with
+                    WorkingDirectory = "./dist/js/"
+                })
+    else failwith "aborted"
+}
+
+
+let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; runTests] {
+    if promptYesNo (sprintf "package tag will be %s OK?" prereleaseTag ) then
+        Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)
+
+        Fake.IO.File.readAsString "build/release_package.json"
+        |> fun t ->
+            let t = t.Replace(stableVersionTag, prereleaseTag)
+            Fake.IO.File.writeString false "dist/js/package.json" t
+
+        Fake.IO.File.readAsString "README.md"
+        |> Fake.IO.File.writeString false "dist/js/README.md"
+
+        "" // "fable-library.**/**"
+        |> Fake.IO.File.writeString false "dist/js/fable_modules/.npmignore"
+
+        Fake.JavaScript.Npm.exec "pack" (fun o ->
+            { o with
+                WorkingDirectory = "./dist/js/"
+            })
+    else failwith "aborted"
+    }
+
+let pack = BuildTask.createEmpty "Pack" [packDotNet; packJS]
+
+let packPrerelease = BuildTask.createEmpty "PackPrerelease" [packDotNetPrerelease;packJSPrerelease]
