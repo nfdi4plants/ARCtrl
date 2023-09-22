@@ -8,7 +8,7 @@
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="SemVer.Tests.fs" />
-    <Compile Include="Templates.Tests.fs" />
+    <Compile Include="Template.Tests.fs" />
     <Compile Include="WebRequest.Tests.fs" />
     <Compile Include="ARCtrl.Contracts.Tests.fs" />
     <Compile Include="ARCtrl.Tests.fs" />

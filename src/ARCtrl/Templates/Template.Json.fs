@@ -1,6 +1,6 @@
-﻿module ARCtrl.Templates.Json
+﻿module ARCtrl.Template.Json
 
-open ARCtrl.Templates
+open ARCtrl.Template
 open ARCtrl.ISA
 open System
 #if FABLE_COMPILER
@@ -105,6 +105,14 @@ module Template =
             )
         )
 
+    let decodeFromString (jsonString: string) =
+        match Decode.fromString decode jsonString with
+        | Ok template   -> template
+        | Error exn     -> failwithf "Error. Given json string cannot be parsed to Template: %A" exn
+
+    let encodeToString (spaces: int) (template:Template) =
+        Encode.toString spaces (encode template)
+
 module Templates =
 
     let encode (templateList: (string*Template) []) =
@@ -116,7 +124,15 @@ module Templates =
     let decode =
         let d = Decode.dict Template.decode
         Decode.fromString d
-        
+
+    let decodeFromString (jsonString: string) =
+        match decode jsonString with
+        | Ok templateMap    -> templateMap
+        | Error exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
+
+    let encodeToString (spaces: int) (templateList: (string*Template) []) =
+        Encode.toString spaces (encode templateList)
+
 
 [<AutoOpen>]
 module Extension =
@@ -124,23 +140,4 @@ module Extension =
     type Template with
         member this.ToJson(?spaces: int) =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (Template.encode this)
-
-        static member toJson(?spaces: int) =
-            fun (template: Template) ->
-                template.ToJson(?spaces=spaces)
-
-        static member fromJson(jsonString: string) =
-            Decode.fromString Template.decode jsonString
-
-        static member GetTemplates(?url: string) =
-            let defaultURL = @"https://github.com/nfdi4plants/Swate-templates/releases/download/latest/templates.json"
-            let url = defaultArg url defaultURL
-            async {
-                let! jsonString = ARCtrl.WebRequest.downloadFile url
-                let mapResult = Templates.decode jsonString
-                return 
-                    match mapResult with
-                    | Ok map -> map
-                    | Error exn -> failwithf "Unable to parse downloaded json to Templates: %A" exn
-            }
+            Template.encodeToString(spaces)

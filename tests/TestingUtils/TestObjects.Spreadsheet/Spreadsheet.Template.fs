@@ -342,7 +342,7 @@ let template =
 
 let template_deprecatedMetadataSheetName = 
     let ws = templateMetadata.Copy()
-    ws.Name <- ARCtrl.Templates.Spreadsheet.Template.obsoletemetaDataSheetName
+    ws.Name <- ARCtrl.Template.Spreadsheet.Template.obsoletemetaDataSheetName
     let wb = new FsWorkbook()
     wb.AddWorksheet(ws)
     wb.AddWorksheet(templateTable)

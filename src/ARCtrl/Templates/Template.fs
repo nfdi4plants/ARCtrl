@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Templates
+﻿namespace ARCtrl.Template
 
 open ARCtrl.ISA
 open Fable.Core

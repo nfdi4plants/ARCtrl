@@ -14,9 +14,10 @@
     <Compile Include="Contracts\Contracts.ArcStudy.fs" />
     <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
-    <Compile Include="Templates\Templates.fs" />
-    <Compile Include="Templates\Templates.Json.fs" />
-    <Compile Include="Templates\Templates.Spreadsheet.fs" />
+    <Compile Include="Templates\Template.fs" />
+    <Compile Include="Templates\Template.Json.fs" />
+    <Compile Include="Templates\Template.Spreadsheet.fs" />
+    <Compile Include="Templates\Template.Web.fs" />
     <None Include="README.md" />
     <Compile Include="ARCtrl.fs" />
   </ItemGroup>

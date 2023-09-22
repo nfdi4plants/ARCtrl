@@ -11,7 +11,7 @@ let all = testSequenced <| testList "All" [
     ARCtrl.Contracts.Tests.main
     ARCtrl.WebRequest.Tests.main
     ARCtrl.SemVer.Tests.main
-    ARCtrl.Templates.Tests.main
+    ARCtrl.Template.Tests.main
     ARCtrl.Tests.main
 ]
 
