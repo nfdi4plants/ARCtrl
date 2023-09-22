@@ -372,7 +372,7 @@ module JsonTypes =
         match value,unit with
         | Value.Ontology oa, None -> CompositeCell.Term oa
         | Value.Name text, None -> CompositeCell.FreeText text
-        | Value.Name "", Some u -> CompositeCell.Unitized ("",u)
+        | Value.Name name, Some u -> CompositeCell.Unitized (name,u)
         | Value.Float f, Some u -> CompositeCell.Unitized (f.ToString(),u)
         | Value.Float f, None -> CompositeCell.FreeText (f.ToString())
         | Value.Int i, Some u -> CompositeCell.Unitized (i.ToString(),u)

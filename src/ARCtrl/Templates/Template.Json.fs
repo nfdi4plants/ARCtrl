@@ -1,12 +1,13 @@
-﻿module ARCtrl.Templates.Json
+﻿module ARCtrl.Template.Json
 
-open ARCtrl.Templates
+open ARCtrl.Template
 open ARCtrl.ISA
 open System
 #if FABLE_COMPILER
 open Thoth.Json
 #else
 open Thoth.Json.Net
+open ARCtrl
 #endif
 
 //https://thoth-org.github.io/Thoth.Json/documentation/auto/extra-coders.html#ready-to-use-extra-coders
@@ -103,3 +104,40 @@ module Template =
                 get.Required.Field "last_updated" Decode.datetimeUtc
             )
         )
+
+    let decodeFromString (jsonString: string) =
+        match Decode.fromString decode jsonString with
+        | Ok template   -> template
+        | Error exn     -> failwithf "Error. Given json string cannot be parsed to Template: %A" exn
+
+    let encodeToString (spaces: int) (template:Template) =
+        Encode.toString spaces (encode template)
+
+module Templates =
+
+    let encode (templateList: (string*Template) []) =
+        templateList
+        |> Array.toList
+        |> List.map (fun (p: string, t: Template) -> p , Template.encode t)
+        |> Encode.object
+
+    let decode =
+        let d = Decode.dict Template.decode
+        Decode.fromString d
+
+    let decodeFromString (jsonString: string) =
+        match decode jsonString with
+        | Ok templateMap    -> templateMap
+        | Error exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
+
+    let encodeToString (spaces: int) (templateList: (string*Template) []) =
+        Encode.toString spaces (encode templateList)
+
+
+[<AutoOpen>]
+module Extension =
+
+    type Template with
+        member this.ToJson(?spaces: int) =
+            let spaces = defaultArg spaces 0
+            Template.encodeToString(spaces)

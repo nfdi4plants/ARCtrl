@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="TestObjects.Json\MinimalJson.json" />
     <Compile Include="TestObjects.Json\Assay.fs" />
     <Compile Include="TestObjects.Json\Investigation.fs" />
     <Compile Include="TestObjects.Json\OntologyAnnotation.fs" />

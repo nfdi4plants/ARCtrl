@@ -1,4 +1,4 @@
-﻿module ARCtrl.Templates.Spreadsheet
+﻿module ARCtrl.Template.Spreadsheet
 
 open FsSpreadsheet
 open ARCtrl.ISA.Aux

@@ -1,4 +1,4 @@
-﻿module ARCtrl.Templates.Tests
+﻿module ARCtrl.Template.Tests
 
 #if FABLE_COMPILER
 open Thoth.Json
@@ -6,7 +6,7 @@ open Thoth.Json
 open Thoth.Json.Net
 #endif
 
-open ARCtrl.Templates.Json
+open ARCtrl.Template.Json
 open ARCtrl.ISA
 
 open TestingUtils
@@ -323,7 +323,15 @@ let private tests_equality = testList "equality" [
     ]
 ]
 
+let private tests_Web = testList "Web" [
+    testCaseAsync "getTemplates" <| async {
+        let! templatesMap = ARCtrl.Template.Web.getTemplates(None)
+        Expect.isTrue (templatesMap.Count > 0) "Count > 0"
+    }
+]
+
 let main = testList "Templates" [
     tests_json
     tests_equality
+    tests_Web
 ]
