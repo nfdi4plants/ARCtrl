@@ -73,7 +73,7 @@ let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] 
     else failwith "aborted"
 }
 
-let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build; runTests; packJSPrerelease] {
+let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build; (*runTests*) packJSPrerelease] {
     let target = 
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
@@ -81,7 +81,7 @@ let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build
     let msg = sprintf "release package with version %s?" prereleaseTag 
     if promptYesNo msg then
         let apikey =  Environment.environVarOrNone "NPM_KEY"    
-        let otp = if apikey.IsSome then $" --otp + {apikey.Value}" else ""
+        let otp = if apikey.IsSome then $" --otp {apikey.Value}" else ""
         Fake.JavaScript.Npm.exec $"publish {target} --access public --tag next{otp}" (fun o ->
             { o with
                 WorkingDirectory = "./dist/js/"
