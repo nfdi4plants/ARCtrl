@@ -14,7 +14,7 @@ open Fake.Tools
 open Fake.IO
 open Fake.IO.Globbing.Operators
 
-let createTag = BuildTask.create "CreateTag" [clean; build; runTests; pack] {
+let createTag = BuildTask.create "CreateTag" [clean; build; runTests; packDotNet] {
     if promptYesNo (sprintf "tagging branch with %s OK?" stableVersionTag ) then
         Git.Branches.tag "" stableVersionTag
         Git.Branches.pushTag "" projectRepo stableVersionTag
@@ -22,7 +22,7 @@ let createTag = BuildTask.create "CreateTag" [clean; build; runTests; pack] {
         failwith "aborted"
 }
 
-let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseTag; clean; build; runTests; packPrerelease] {
+let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseTag; clean; build; runTests; packDotNetPrerelease] {
     if promptYesNo (sprintf "tagging branch with %s OK?" prereleaseTag ) then 
         Git.Branches.tag "" prereleaseTag
         Git.Branches.pushTag "" projectRepo prereleaseTag
@@ -31,7 +31,7 @@ let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseT
 }
 
 
-let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack] {
+let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; packDotNet] {
     let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
     for target in targets do printfn "%A" target
     let msg = sprintf "release package with version %s?" stableVersionTag
@@ -44,7 +44,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
     else failwith "aborted"
 }
 
-let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; runTests; packPrerelease] {
+let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; runTests; packDotNetPrerelease] {
     let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
     for target in targets do printfn "%A" target
     let msg = sprintf "release package with version %s?" prereleaseTag 
@@ -54,5 +54,37 @@ let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; b
         for artifact in targets do
             let result = DotNet.exec id "nuget" (sprintf "push -s %s -k %s %s --skip-duplicate" source apikey artifact)
             if not result.OK then failwith "failed to push packages"
+    else failwith "aborted"
+}
+
+let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] {
+    let target = 
+        (!! (sprintf "%s/*.tgz" npmPkgDir ))
+        |> Seq.head
+    printfn "%A" target
+    let msg = sprintf "release package with version %s?" stableVersionTag
+    if promptYesNo msg then
+        let apikey = Environment.environVarOrNone "NPM_KEY" 
+        let otp = if apikey.IsSome then $" --otp + {apikey.Value}" else ""
+        Fake.JavaScript.Npm.exec $"publish {target} --access public{otp}" (fun o ->
+            { o with
+                WorkingDirectory = "./dist/js/"
+            })        
+    else failwith "aborted"
+}
+
+let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build; runTests; packJSPrerelease] {
+    let target = 
+        (!! (sprintf "%s/*.tgz" npmPkgDir ))
+        |> Seq.head
+    printfn "%A" target
+    let msg = sprintf "release package with version %s?" prereleaseTag 
+    if promptYesNo msg then
+        let apikey =  Environment.environVarOrNone "NPM_KEY"    
+        let otp = if apikey.IsSome then $" --otp {apikey.Value}" else ""
+        Fake.JavaScript.Npm.exec $"publish {target} --access public --tag next{otp}" (fun o ->
+            { o with
+                WorkingDirectory = "./dist/js/"
+            })      
     else failwith "aborted"
 }

@@ -21,13 +21,13 @@ open ReleaseTasks
 let _release = 
     BuildTask.createEmpty 
         "Release" 
-        [clean; build; runTests; pack; createTag; publishNuget;]
+        [clean; build; runTests; pack; createTag; publishNuget; publishNPM]
 
 /// Full release of nuget package for the prerelease version.
 let _preRelease = 
     BuildTask.createEmpty 
         "PreRelease" 
-        [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease]
+        [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease]
 
 ReleaseNotesTasks.updateReleaseNotes |> ignore
 
