@@ -4,6 +4,19 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <PropertyGroup>
+    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>
+    <Description>Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="Path.fs" />
@@ -21,6 +34,7 @@
     <Compile Include="Templates\Template.Web.fs" />
     <None Include="README.md" />
     <Compile Include="ARCtrl.fs" />
+    <Compile Include="Index.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
@@ -30,18 +44,13 @@
     <ProjectReference Include="..\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
   <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>
-    <Description>Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
+  	<NpmDependencies>
+  		<NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
+  	</NpmDependencies>
   </PropertyGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
