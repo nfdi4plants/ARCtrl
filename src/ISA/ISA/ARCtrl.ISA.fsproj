@@ -65,7 +65,7 @@
     <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Remove="C:\Users\Kevin\.nuget\packages\fable.core\4.0.0\contentFiles\any\netstandard2.0\RELEASE_NOTES.md" />
+  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Muas</Authors>

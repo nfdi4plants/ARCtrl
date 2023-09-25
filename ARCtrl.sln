@@ -58,6 +58,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JavaScript", "JavaScript", 
 		tests\JavaScript\ISA.CompositeHeader.js = tests\JavaScript\ISA.CompositeHeader.js
 		tests\JavaScript\ISA.Person.js = tests\JavaScript\ISA.Person.js
 		tests\JavaScript\Main.js = tests\JavaScript\Main.js
+		tests\JavaScript\Template.Web.js = tests\JavaScript\Template.Web.js
 	EndProjectSection
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl", "src\ARCtrl\ARCtrl.fsproj", "{9BE5D83D-EA90-4382-A132-174FD158227F}"
