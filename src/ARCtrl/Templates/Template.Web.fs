@@ -14,8 +14,6 @@ let getTemplates(url: string option) =
         return mapResult
     }
 
-open Fable.Core.JsInterop
-
 /// <summary>
 /// This class is used to make async functions more accessible from JavaScript.
 /// </summary>

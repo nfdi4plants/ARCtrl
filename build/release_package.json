@@ -3,6 +3,7 @@
   "version": "1.0.0+1c6c4fa",
   "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
+  "main": "Index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/nfdi4plants/arcAPI.git"
@@ -17,6 +18,7 @@
   },
   "homepage": "https://github.com/nfdi4plants/arcAPI#readme",
   "dependencies": {
-    "fable-library": "^1.1.1"
+    "fable-library": "^1.1.1",
+    "isomorphic-fetch": "^3.0.0"
   }
 }
