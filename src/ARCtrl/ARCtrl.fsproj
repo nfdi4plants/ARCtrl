@@ -34,7 +34,6 @@
     <Compile Include="Templates\Template.Web.fs" />
     <None Include="README.md" />
     <Compile Include="ARCtrl.fs" />
-    <Compile Include="Index.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
