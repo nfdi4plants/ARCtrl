@@ -127,8 +127,6 @@ let private tests_AnnotationTableColums =
             Expect.isNone r "Should not match other String"
         )
     ]
-    
-
 
 let main = 
     testList "Regex" [
