@@ -64,6 +64,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         with get() = _isa
         and set(newISA : ArcInvestigation option) =
             _isa <- newISA
+            this.UpdateFileSystem()
 
     member this.CWL 
         with get() = cwl
@@ -225,8 +226,8 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             )
             
         | None -> 
+            //printfn "ARC contains no ISA part."
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
-            printfn "ARC contains no ISA part."
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)
