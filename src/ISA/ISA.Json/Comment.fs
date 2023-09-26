@@ -22,11 +22,11 @@ module Comment =
 
     let encoder (options : ConverterOptions) (comment : obj) = 
         [
-            if options.SetID then "@id", GEncode.string (comment :?> Comment |> genID)
-                else GEncode.tryInclude "@id" GEncode.string (comment |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.string "Comment"
-            GEncode.tryInclude "name" GEncode.string (comment |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "value" GEncode.string (comment |> GEncode.tryGetPropertyValue "Value")
+            if options.SetID then "@id", GEncode.encodeToString (comment :?> Comment |> genID)
+                else GEncode.tryInclude "@id" GEncode.encodeToString (comment |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.encodeToString "Comment"
+            GEncode.tryInclude "name" GEncode.encodeToString (comment |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "value" GEncode.encodeToString (comment |> GEncode.tryGetPropertyValue "Value")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -40,10 +40,10 @@ module Comment =
             }
         )
 
-    let fromString (s:string)  = 
-        GDecode.fromString (decoder (ConverterOptions())) s
+    let decodeFromString (s:string)  = 
+        GDecode.decodeFromString (decoder (ConverterOptions())) s
 
-    let toString (c:Comment) = 
+    let encodeToString (c:Comment) = 
         encoder (ConverterOptions()) c
         |> Encode.toString 2
 

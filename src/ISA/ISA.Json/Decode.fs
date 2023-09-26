@@ -22,7 +22,7 @@ module GDecode =
         | Ok s -> Error (DecoderError(s,ErrorReason.FailMessage (sprintf "Expected URI, got %s" s)))
         | Error e -> Error e
 
-    let fromString (decoder : Decoder<'a>) (s : string) : 'a = 
+    let decodeFromString (decoder : Decoder<'a>) (s : string) : 'a = 
         match Decode.fromString decoder s with
         | Ok a -> a
         | Error e -> failwith (sprintf "Error decoding string: %s" e)

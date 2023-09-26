@@ -21,12 +21,12 @@ module Publication =
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.string (oa :?> Publication |> genID)
-            if options.IncludeType then "@type", GEncode.string "Publication"
-            GEncode.tryInclude "pubMedID" GEncode.string (oa |> GEncode.tryGetPropertyValue "PubMedID")
-            GEncode.tryInclude "doi" GEncode.string (oa |> GEncode.tryGetPropertyValue "DOI")
-            GEncode.tryInclude "authorList" GEncode.string (oa |> GEncode.tryGetPropertyValue "Authors")
-            GEncode.tryInclude "title" GEncode.string (oa |> GEncode.tryGetPropertyValue "Title")
+            if options.SetID then "@id", GEncode.encodeToString (oa :?> Publication |> genID)
+            if options.IncludeType then "@type", GEncode.encodeToString "Publication"
+            GEncode.tryInclude "pubMedID" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "PubMedID")
+            GEncode.tryInclude "doi" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "DOI")
+            GEncode.tryInclude "authorList" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Authors")
+            GEncode.tryInclude "title" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Title")
             GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Status")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
@@ -46,10 +46,10 @@ module Publication =
             
         )
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s
+    let decodeFromString (s:string) = 
+        GDecode.decodeFromString (decoder (ConverterOptions())) s
 
-    let toString (p:Publication) = 
+    let encodeToString (p:Publication) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 

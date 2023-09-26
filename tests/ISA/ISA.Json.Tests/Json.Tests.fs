@@ -138,7 +138,7 @@ let testOntoloyAnnotation =
         
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromString OntologyAnnotation.peptidase
+                let result = OntologyAnnotation.decodeFromString OntologyAnnotation.peptidase
 
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
@@ -149,8 +149,8 @@ let testOntoloyAnnotation =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString OntologyAnnotation.peptidase
-                let o_out = OntologyAnnotation.toString o_read_in
+                let o_read_in = OntologyAnnotation.decodeFromString OntologyAnnotation.peptidase
+                let o_out = OntologyAnnotation.encodeToString o_read_in
 
                 let expected = 
                     OntologyAnnotation.peptidase
@@ -169,7 +169,7 @@ let testOntoloyAnnotationLD =
         
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromString OntologyAnnotation.peptidaseLD
+                let result = OntologyAnnotation.decodeFromString OntologyAnnotation.peptidaseLD
 
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
@@ -180,7 +180,7 @@ let testOntoloyAnnotationLD =
             )
             testCase "WriterOutputMatchesInputGivenIDs" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString OntologyAnnotation.peptidase
+                let o_read_in = OntologyAnnotation.decodeFromString OntologyAnnotation.peptidase
                 let o_out = OntologyAnnotation.toStringLD o_read_in
 
                 let expected = 
@@ -195,7 +195,7 @@ let testOntoloyAnnotationLD =
             )
             testCase "WriterOutputMatchesInputDefaultIDs" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromString OntologyAnnotation.peptidaseWithoutIds
+                let o_read_in = OntologyAnnotation.decodeFromString OntologyAnnotation.peptidaseWithoutIds
                 let o_out = OntologyAnnotation.toStringLD o_read_in
 
                 let expected = 
@@ -217,7 +217,7 @@ let testProcessInput =
         testList "Source" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.source
+                let result = ProcessInput.decodeFromString ProcessInput.source
 
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
@@ -228,8 +228,8 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString ProcessInput.source
-                let o_out = ProcessInput.toString o_read_in
+                let o_read_in = ProcessInput.decodeFromString ProcessInput.source
+                let o_out = ProcessInput.encodeToString o_read_in
 
                 let expected = 
                     ProcessInput.source
@@ -245,7 +245,7 @@ let testProcessInput =
         testList "Material" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.material
+                let result = ProcessInput.decodeFromString ProcessInput.material
 
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
@@ -257,8 +257,8 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString ProcessInput.material
-                let o_out = ProcessInput.toString o_read_in
+                let o_read_in = ProcessInput.decodeFromString ProcessInput.material
+                let o_out = ProcessInput.encodeToString o_read_in
 
                 let expected = 
                     ProcessInput.material
@@ -274,7 +274,7 @@ let testProcessInput =
         testList "Data" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.data
+                let result = ProcessInput.decodeFromString ProcessInput.data
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
                 Expect.isTrue (ProcessInput.isData result) "Result is not a data"
@@ -282,8 +282,8 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInput" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString ProcessInput.data
-                    let o_out = ProcessInput.toString o_read_in
+                    let o_read_in = ProcessInput.decodeFromString ProcessInput.data
+                    let o_out = ProcessInput.encodeToString o_read_in
 
                     let expected = 
                         ProcessInput.data
@@ -299,7 +299,7 @@ let testProcessInput =
         testList "Sample" [
             testCase "ReaderSuccessSimple" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.sampleSimple
+                let result = ProcessInput.decodeFromString ProcessInput.sampleSimple
 
                 let expectedDerivesFrom = [Source.create("#source/source-culture8")]
 
@@ -312,8 +312,8 @@ let testProcessInput =
             )
             testCase "WriterOutputMatchesInputSimple" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString ProcessInput.sampleSimple
-                    let o_out = ProcessInput.toString o_read_in
+                    let o_read_in = ProcessInput.decodeFromString ProcessInput.sampleSimple
+                    let o_out = ProcessInput.encodeToString o_read_in
 
                     let expected = 
                         ProcessInput.sampleSimple
@@ -334,7 +334,7 @@ let testProcessInputLD =
         testList "Source" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.sourceLD
+                let result = ProcessInput.decodeFromString ProcessInput.sourceLD
 
                 let expected = 
                     Source.create("#source/source-culture8","source-culture8")
@@ -345,7 +345,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString ProcessInput.source
+                let o_read_in = ProcessInput.decodeFromString ProcessInput.source
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
@@ -360,7 +360,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString ProcessInput.sourceWithoutID
+                let o_read_in = ProcessInput.decodeFromString ProcessInput.sourceWithoutID
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
@@ -377,7 +377,7 @@ let testProcessInputLD =
         testList "Material" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.materialLD
+                let result = ProcessInput.decodeFromString ProcessInput.materialLD
 
                 let expected = 
                     Material.create("#material/extract-G-0.1-aliquot1","extract-G-0.1-aliquot1",MaterialType.ExtractName,Characteristics = [])
@@ -389,7 +389,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString ProcessInput.material
+                let o_read_in = ProcessInput.decodeFromString ProcessInput.material
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
@@ -404,7 +404,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
-                let o_read_in = ProcessInput.fromString ProcessInput.materialWithoutID
+                let o_read_in = ProcessInput.decodeFromString ProcessInput.materialWithoutID
                 let o_out = ProcessInput.toStringLD o_read_in
 
                 let expected = 
@@ -421,7 +421,7 @@ let testProcessInputLD =
         testList "Data" [
             testCase "ReaderSuccess" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.dataLD
+                let result = ProcessInput.decodeFromString ProcessInput.dataLD
                 let expected = 
                     Data.create("#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt","JIC64_Nitrogen_0.07_External_1_3.txt",DataFile.RawDataFile,Comments = [])
                 Expect.isTrue (ProcessInput.isData result) "Result is not a data"
@@ -429,7 +429,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString ProcessInput.data
+                    let o_read_in = ProcessInput.decodeFromString ProcessInput.data
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
@@ -444,7 +444,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString ProcessInput.dataWithoutID
+                    let o_read_in = ProcessInput.decodeFromString ProcessInput.dataWithoutID
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
@@ -461,7 +461,7 @@ let testProcessInputLD =
         testList "Sample" [
             testCase "ReaderSuccessSimple" (fun () -> 
            
-                let result = ProcessInput.fromString ProcessInput.sampleSimpleLD
+                let result = ProcessInput.decodeFromString ProcessInput.sampleSimpleLD
 
                 let expectedDerivesFrom = [Source.create("#source/source-culture8")]
 
@@ -474,7 +474,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputSimpleGivenID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString ProcessInput.sampleSimple
+                    let o_read_in = ProcessInput.decodeFromString ProcessInput.sampleSimple
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
@@ -489,7 +489,7 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputSimpleDefaultID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromString ProcessInput.sampleSimpleWithoutID
+                    let o_read_in = ProcessInput.decodeFromString ProcessInput.sampleSimpleWithoutID
                     let o_out = ProcessInput.toStringLD o_read_in
 
                     let expected = 
@@ -519,7 +519,7 @@ let testProtocolFile =
         )
         testCase "ReaderSuccess" (fun () -> 
             
-            let protocol = Protocol.fromString Protocol.protocol
+            let protocol = Protocol.decodeFromString Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual = protocol.Name 
             Expect.isSome actual "Should be some"
@@ -528,11 +528,11 @@ let testProtocolFile =
 
         testCase "WriterRunning" (fun () ->
 
-            let p = Protocol.fromString Protocol.protocol
+            let p = Protocol.decodeFromString Protocol.protocol
 
             let writingSuccess = 
                 try 
-                    Protocol.toString p |> ignore
+                    Protocol.encodeToString p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -542,9 +542,9 @@ let testProtocolFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let p = Protocol.fromString Protocol.protocol
+            let p = Protocol.decodeFromString Protocol.protocol
 
-            let s = Protocol.toString p
+            let s = Protocol.encodeToString p
 
             let! validation = Validation.validateProtocol s
 
@@ -553,13 +553,13 @@ let testProtocolFile =
 
         testCase "OutputMatchesInput" (fun () ->
 
-            let o_read_in = Protocol.fromString Protocol.protocol
+            let o_read_in = Protocol.decodeFromString Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
             Expect.equal actual_name (Some exptected_name) "Name exists"
 
-            let o = o_read_in |> Protocol.toString
+            let o = o_read_in |> Protocol.encodeToString
 
             let expected = 
                 Protocol.protocol
@@ -591,7 +591,7 @@ let testProtocolFileLD =
         )
         testCase "ReaderSuccess" (fun () -> 
             
-            let protocol = Protocol.fromString Protocol.protocolLD
+            let protocol = Protocol.decodeFromString Protocol.protocolLD
             let exptected_name = "peptide_digestion"
             let actual = protocol.Name 
             Expect.isSome actual "Should be some"
@@ -600,7 +600,7 @@ let testProtocolFileLD =
 
         testCase "WriterRunning" (fun () ->
 
-            let p = Protocol.fromString Protocol.protocol
+            let p = Protocol.decodeFromString Protocol.protocol
 
             let writingSuccess = 
                 try 
@@ -625,7 +625,7 @@ let testProtocolFileLD =
 
         testCase "OutputMatchesInputGivenIDs" (fun () ->
 
-            let o_read_in = Protocol.fromString Protocol.protocol
+            let o_read_in = Protocol.decodeFromString Protocol.protocol
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
@@ -650,7 +650,7 @@ let testProtocolFileLD =
 
         testCase "OutputMatchesInputDefaultIDs" (fun () ->
 
-            let o_read_in = Protocol.fromString Protocol.protocolWithoutIds
+            let o_read_in = Protocol.decodeFromString Protocol.protocolWithoutIds
             let exptected_name = "peptide_digestion"
             let actual_name = o_read_in.Name
             Expect.isSome actual_name "Should be some"
@@ -681,7 +681,7 @@ let testProcessFile =
             
             let readingSuccess = 
                 try 
-                    Process.fromString Process.process' |> ignore
+                    Process.decodeFromString Process.process' |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -692,11 +692,11 @@ let testProcessFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromString Process.process'
+            let p = Process.decodeFromString Process.process'
 
             let writingSuccess = 
                 try 
-                    Process.toString p |> ignore
+                    Process.encodeToString p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -706,9 +706,9 @@ let testProcessFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let p = Process.fromString Process.process'
+            let p = Process.decodeFromString Process.process'
 
-            let s = Process.toString p
+            let s = Process.encodeToString p
 
             let! validation = Validation.validateProcess s
 
@@ -718,8 +718,8 @@ let testProcessFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o =
-                Process.fromString Process.process'
-                |> Process.toString
+                Process.decodeFromString Process.process'
+                |> Process.encodeToString
 
             let expected = 
                 Process.process'
@@ -744,7 +744,7 @@ let testProcessFileLD =
             
             let readingSuccess = 
                 try 
-                    Process.fromString Process.processLD |> ignore
+                    Process.decodeFromString Process.processLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -755,7 +755,7 @@ let testProcessFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromString Process.processLD
+            let p = Process.decodeFromString Process.processLD
 
             let writingSuccess = 
                 try 
@@ -781,7 +781,7 @@ let testProcessFileLD =
         testCase "OutputMatchesInputGivenIDs" (fun () ->
 
             let o =
-                Process.fromString Process.process'
+                Process.decodeFromString Process.process'
                 |> Process.toStringLD
 
             let expected = 
@@ -802,7 +802,7 @@ let testProcessFileLD =
         testCase "OutputMatchesInputDefaultLD" (fun () ->
 
             let o =
-                Process.fromString Process.processWithoutIDs
+                Process.decodeFromString Process.processWithoutIDs
                 |> Process.toStringLD
 
             let expected = 
@@ -827,7 +827,7 @@ let testPersonFile =
             
             let readingSuccess = 
                 try 
-                    Person.fromString Person.person |> ignore
+                    Person.decodeFromString Person.person |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -838,11 +838,11 @@ let testPersonFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Person.fromString Person.person
+            let a = Person.decodeFromString Person.person
 
             let writingSuccess = 
                 try 
-                    Person.toString a |> ignore
+                    Person.encodeToString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -852,9 +852,9 @@ let testPersonFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Person.fromString Person.person
+            let a = Person.decodeFromString Person.person
 
-            let s = Person.toString a
+            let s = Person.encodeToString a
 
             let! validation = Validation.validatePerson s
 
@@ -864,8 +864,8 @@ let testPersonFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Person.fromString Person.person
-                |> Person.toString
+                Person.decodeFromString Person.person
+                |> Person.encodeToString
 
             let expected = 
                 Person.person
@@ -885,7 +885,7 @@ let testPersonFile =
         
         testCase "WithORCID ReaderCorrectness" (fun () -> 
             
-            let p = Person.fromString Person.personWithORCID
+            let p = Person.decodeFromString Person.personWithORCID
             Expect.isNone p.Comments "Comments should be None"
             Expect.isSome p.ORCID "ORCID should be Some"
             Expect.equal p.ORCID.Value "0000-0002-1825-0097" "ORCID not as expected"
@@ -894,9 +894,9 @@ let testPersonFile =
 
         testAsync "WithORCID WriterSchemaCorrectness" {
 
-            let a = Person.fromString Person.personWithORCID
+            let a = Person.decodeFromString Person.personWithORCID
 
-            let s = Person.toString a
+            let s = Person.encodeToString a
 
             let! validation = Validation.validatePerson s
 
@@ -906,8 +906,8 @@ let testPersonFile =
         testCase "WithORCID OutputMatchesInput" (fun () ->
 
             let o = 
-                Person.fromString Person.personWithORCID
-                |> Person.toString
+                Person.decodeFromString Person.personWithORCID
+                |> Person.encodeToString
 
             let expected = 
                 Person.personWithORCID
@@ -932,7 +932,7 @@ let testPersonFileLD =
             
             let readingSuccess = 
                 try 
-                    Person.fromString Person.personLD |> ignore
+                    Person.decodeFromString Person.personLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -943,7 +943,7 @@ let testPersonFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Person.fromString Person.person
+            let a = Person.decodeFromString Person.person
 
             let writingSuccess = 
                 try 
@@ -969,7 +969,7 @@ let testPersonFileLD =
         testCase "OutputMatchesInputGivenID" (fun () ->
 
             let o = 
-                Person.fromString Person.person
+                Person.decodeFromString Person.person
                 |> Person.toStringLD
 
             let expected = 
@@ -990,7 +990,7 @@ let testPersonFileLD =
         testCase "OutputMatchesInputDefaultLD" (fun () ->
 
             let o = 
-                Person.fromString Person.personWithoutID
+                Person.decodeFromString Person.personWithoutID
                 |> Person.toStringLD
 
             let expected = 
@@ -1016,7 +1016,7 @@ let testPublicationFile =
             
             let readingSuccess = 
                 try 
-                    Publication.fromString Publication.publication |> ignore
+                    Publication.decodeFromString Publication.publication |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1027,11 +1027,11 @@ let testPublicationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Publication.fromString Publication.publication
+            let a = Publication.decodeFromString Publication.publication
 
             let writingSuccess = 
                 try 
-                    Publication.toString a |> ignore
+                    Publication.encodeToString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1041,9 +1041,9 @@ let testPublicationFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Publication.fromString Publication.publication
+            let a = Publication.decodeFromString Publication.publication
 
-            let s = Publication.toString a
+            let s = Publication.encodeToString a
 
             let! validation = Validation.validatePublication s
 
@@ -1053,8 +1053,8 @@ let testPublicationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Publication.fromString Publication.publication
-                |> Publication.toString
+                Publication.decodeFromString Publication.publication
+                |> Publication.encodeToString
 
             let expected = 
                 Publication.publication
@@ -1079,7 +1079,7 @@ let testPublicationFileLD =
             
             let readingSuccess = 
                 try 
-                    Publication.fromString Publication.publicationLD |> ignore
+                    Publication.decodeFromString Publication.publicationLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1090,7 +1090,7 @@ let testPublicationFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Publication.fromString Publication.publication
+            let a = Publication.decodeFromString Publication.publication
 
             let writingSuccess = 
                 try 
@@ -1116,7 +1116,7 @@ let testPublicationFileLD =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Publication.fromString Publication.publication
+                Publication.decodeFromString Publication.publication
                 |> Publication.toStringLD
 
             let expected = 
@@ -1142,7 +1142,7 @@ let testAssayFile =
             
             let readingSuccess = 
                 try 
-                    Assay.fromString Assay.assay |> ignore
+                    Assay.decodeFromString Assay.assay |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1153,11 +1153,11 @@ let testAssayFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let a = Assay.fromString Assay.assay
+            let a = Assay.decodeFromString Assay.assay
 
             let writingSuccess = 
                 try 
-                    Assay.toString a |> ignore
+                    Assay.encodeToString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1167,9 +1167,9 @@ let testAssayFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let a = Assay.fromString Assay.assay
+            let a = Assay.decodeFromString Assay.assay
 
-            let s = Assay.toString a
+            let s = Assay.encodeToString a
 
             let! validation = Validation.validateAssay s
 
@@ -1179,8 +1179,8 @@ let testAssayFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Assay.fromString Assay.assay
-                |> Assay.toString
+                Assay.decodeFromString Assay.assay
+                |> Assay.encodeToString
 
             let expected = 
                 Assay.assay
@@ -1205,7 +1205,7 @@ let testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    Investigation.fromString Investigation.investigation |> ignore
+                    Investigation.decodeFromString Investigation.investigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1215,11 +1215,11 @@ let testInvestigationFile =
 
         testCase "WriterSuccess" (fun () ->
 
-            let i = Investigation.fromString Investigation.investigation
+            let i = Investigation.decodeFromString Investigation.investigation
 
             let writingSuccess = 
                 try 
-                    Investigation.toString i |> ignore
+                    Investigation.encodeToString i |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1229,9 +1229,9 @@ let testInvestigationFile =
 
         testAsync "WriterSchemaCorrectness" {
 
-            let i = Investigation.fromString Investigation.investigation
+            let i = Investigation.decodeFromString Investigation.investigation
 
-            let s = Investigation.toString i
+            let s = Investigation.encodeToString i
 
             let! validation = Validation.validateInvestigation s
 
@@ -1241,8 +1241,8 @@ let testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
 
             let o = 
-                Investigation.fromString Investigation.investigation
-                |> Investigation.toString
+                Investigation.decodeFromString Investigation.investigation
+                |> Investigation.encodeToString
 
             let expected = 
                 Investigation.investigation
@@ -1262,7 +1262,7 @@ let testInvestigationFile =
 
             let json = "{}"
             
-            let i = Investigation.fromString json
+            let i = Investigation.decodeFromString json
 
             Expect.equal i.Remarks List.empty "Remark list should be an empty list."
         )
@@ -1596,12 +1596,12 @@ let testInvestigationFile =
                     (Some [comment])
                     ([Remark.make 0 "hallo"])
 
-            let s = Investigation.toString investigation
+            let s = Investigation.encodeToString investigation
 
             //MyExpect.matchingInvestigation s
 
-            let reReadInvestigation = Investigation.fromString s
-            let reWrittenInvestigation = Investigation.toString reReadInvestigation
+            let reReadInvestigation = Investigation.decodeFromString s
+            let reWrittenInvestigation = Investigation.encodeToString reReadInvestigation
 
             let i = 
                 s 
@@ -1627,7 +1627,7 @@ let testInvestigationFileLD =
             
             let readingSuccess = 
                 try 
-                    Investigation.fromString Investigation.investigationLD |> ignore
+                    Investigation.decodeFromString Investigation.investigationLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -1637,7 +1637,7 @@ let testInvestigationFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let i = Investigation.fromString Investigation.investigation
+            let i = Investigation.decodeFromString Investigation.investigation
 
             let writingSuccess = 
                 try 

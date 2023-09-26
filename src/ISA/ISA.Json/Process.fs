@@ -22,8 +22,8 @@ module ProcessParameterValue =
     let encoder (options : ConverterOptions) (oa : obj) = 
 
         [
-            if options.SetID then "@id", GEncode.string (oa :?> ProcessParameterValue |> genID)
-            if options.IncludeType then "@type", GEncode.string "ProcessParameterValue"
+            if options.SetID then "@id", GEncode.encodeToString (oa :?> ProcessParameterValue |> genID)
+            if options.IncludeType then "@type", GEncode.encodeToString "ProcessParameterValue"
             GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
             GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
@@ -40,10 +40,10 @@ module ProcessParameterValue =
             }
         )
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s
+    let decodeFromString (s:string) = 
+        GDecode.decodeFromString (decoder (ConverterOptions())) s
 
-    let toString (p:ProcessParameterValue) = 
+    let encodeToString (p:ProcessParameterValue) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
     
@@ -89,10 +89,10 @@ module ProcessInput =
                         | Ok s -> Ok (ProcessInput.Material s)
                         | Error e -> Error e
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s
+    let decodeFromString (s:string) = 
+        GDecode.decodeFromString (decoder (ConverterOptions())) s
 
-    let toString (m:ProcessInput) = 
+    let encodeToString (m:ProcessInput) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
@@ -132,10 +132,10 @@ module ProcessOutput =
                     | Ok s -> Ok (ProcessOutput.Material s)
                     | Error e -> Error e
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s
+    let decodeFromString (s:string) = 
+        GDecode.decodeFromString (decoder (ConverterOptions())) s
 
-    let toString (m:ProcessInput) = 
+    let encodeToString (m:ProcessInput) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
@@ -158,14 +158,14 @@ module Process =
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.string (oa :?> Process |> genID)
-                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.string "Process"
-            GEncode.tryInclude "name" GEncode.string (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then "@id", GEncode.encodeToString (oa :?> Process |> genID)
+                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.encodeToString "Process"
+            GEncode.tryInclude "name" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "executesProtocol" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
             GEncode.tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterValues")
-            GEncode.tryInclude "performer" GEncode.string (oa |> GEncode.tryGetPropertyValue "Performer")
-            GEncode.tryInclude "date" GEncode.string (oa |> GEncode.tryGetPropertyValue "Date")
+            GEncode.tryInclude "performer" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Performer")
+            GEncode.tryInclude "date" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Date")
             GEncode.tryInclude "previousProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "PreviousProcess")
             GEncode.tryInclude "nextProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "NextProcess")
             GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
@@ -192,10 +192,10 @@ module Process =
             }
         )
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s
+    let decodeFromString (s:string) = 
+        GDecode.decodeFromString (decoder (ConverterOptions())) s
 
-    let toString (p:Process) = 
+    let encodeToString (p:Process) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
     
@@ -213,10 +213,10 @@ module Process =
 
 module ProcessSequence = 
 
-    let fromString (s:string) = 
-        GDecode.fromString (Decode.list (Process.decoder (ConverterOptions()))) s
+    let decodeFromString (s:string) = 
+        GDecode.decodeFromString (Decode.list (Process.decoder (ConverterOptions()))) s
 
-    let toString (p:Process list) = 
+    let encodeToString (p:Process list) = 
         p
         |> List.map (Process.encoder (ConverterOptions()))
         |> Encode.list

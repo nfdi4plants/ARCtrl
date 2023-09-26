@@ -35,7 +35,7 @@ module GEncode =
         )
         #endif
 
-    let inline string (value : obj) = 
+    let inline encodeToString (value : obj) = 
         match value with
         | :? string as s -> Encode.string s
         | _ -> Encode.nil
