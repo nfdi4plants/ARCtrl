@@ -80,8 +80,9 @@ let private generateIndexfile (rootPath: string, fileName: string, whiteList: st
 let ARCtrl_generate(rootPath: string) = 
     let whiteList = [|
         "Comment$"
-        "Person"
         "OntologyAnnotation"; 
+        "Person";
+        "Publication";
         "IOType"
         "CompositeHeader"; 
         "CompositeCell"
