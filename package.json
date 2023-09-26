@@ -1,6 +1,4 @@
 {
-  "name": "@nfdi4plants/arctrl",
-  "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
   "scripts": {
     "mocha": "mocha",
@@ -24,19 +22,10 @@
     "testpy": "",
     "postinstall": "cd src/ISA & npm install"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/nfdi4plants/arcAPI.git"
-  },
   "author": "Heinrich Lukas Weil <weil@rptu.de> (https://github.com/HLWeil)",
   "contributors": [
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
   ],
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/nfdi4plants/arcAPI/issues"
-  },
-  "homepage": "https://github.com/nfdi4plants/arcAPI#readme",
   "dependencies": {
     "fable-library": "^1.1.1",
     "isomorphic-fetch": "^3.0.0"
@@ -44,9 +33,5 @@
   "devDependencies": {
     "mocha": "^10.2.0",
     "mkdirp": "3.0.1"
-  },
-  "files": [
-    "dist/js/**",
-    "dist/js/fable-modules**"
-  ]
+  }
 }
