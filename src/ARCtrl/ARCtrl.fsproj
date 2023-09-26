@@ -17,6 +17,7 @@
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="Path.fs" />
@@ -43,13 +44,12 @@
     <ProjectReference Include="..\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-  	<NpmDependencies>
-  		<NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
-  	</NpmDependencies>
-  </PropertyGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-  </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+    <PropertyGroup>
+	    <NpmDependencies>
+		    <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
+	    </NpmDependencies>
+    </PropertyGroup>
+    <ItemGroup>
+	    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+    </ItemGroup>
 </Project>

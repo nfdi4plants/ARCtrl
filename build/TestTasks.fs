@@ -114,8 +114,17 @@ module private Helper =
         processes
         |> Proc.Parallel.run
         |> ignore
-   
+
 module RunTests = 
+
+    let runTestsJsNative = BuildTask.create "runTestsJSNative" [clean; build] {
+        Trace.traceImportant "Start native JavaScript tests"
+        for path in ProjectInfo.jsTestProjects do
+            // transpile library for native access
+            run dotnet $"fable src/ARCtrl -o {path}/ARCtrl" ""
+            GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
+            run npx $"mocha {path} --timeout 20000" "" 
+    }
 
     let runTestsJs = BuildTask.create "runTestsJS" [clean; build] {
         for path in ProjectInfo.testProjects do
@@ -124,11 +133,6 @@ module RunTests =
             // run mocha in target path to execute tests
             // "--timeout 20000" is used, because json schema validation takes a bit of time.
             run npx $"mocha {path}/js --timeout 20000" ""
-        Trace.traceImportant "Start native JavaScript tests"
-        for path in ProjectInfo.jsTestProjects do
-            // transpile library for native access
-            run dotnet $"fable src/ARCtrl -o {path}/ARCtrl" ""
-            run npx $"mocha {path} --timeout 20000" "" 
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {
@@ -145,6 +149,6 @@ module RunTests =
         )
     }
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsDotnet] { 
+let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsDotnet] { 
     ()
 }
