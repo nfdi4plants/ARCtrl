@@ -1,7 +1,5 @@
 ﻿module PackageTasks
 
-open ProjectInfo
-
 open MessagePrompts
 open BasicTasks
 open TestTasks
@@ -18,7 +16,7 @@ let private replaceCommitLink input =
     Regex.Replace(input,commitLinkPattern,"")
 
 let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
-    if promptYesNo (sprintf "creating stable package with version %s OK?" stableVersionTag ) 
+    if promptYesNo (sprintf "[NUGET] creating stable package with version %s OK?" ProjectInfo.stableVersionTag ) 
         then
             !! "src/**/*.*proj"
             -- "src/bin/*"
@@ -26,21 +24,21 @@ let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
                 let msBuildParams =
                     {p.MSBuildParams with 
                         Properties = ([
-                            "Version",stableVersionTag
-                            "PackageReleaseNotes",  (release.Notes |> List.map replaceCommitLink |> String.concat "\r\n" )
+                            "Version", ProjectInfo.stableVersionTag
+                            "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.concat "\r\n" )
                         ] @ p.MSBuildParams.Properties)
                     }
                 {
                     p with 
                         MSBuildParams = msBuildParams
-                        OutputPath = Some pkgDir
+                        OutputPath = Some ProjectInfo.pkgDir
                 }
             ))
     else failwith "aborted"
 }
 
 let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleaseTag; clean; build; (*runTests*)] {
-    if promptYesNo (sprintf "package tag will be %s OK?" prereleaseTag )
+    if promptYesNo (sprintf "[NUGET] package tag will be %s OK?" ProjectInfo.prereleaseTag )
         then 
             !! "src/**/*.*proj"
             -- "src/bin/*"
@@ -48,14 +46,14 @@ let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleas
                         let msBuildParams =
                             {p.MSBuildParams with 
                                 Properties = ([
-                                    "Version", prereleaseTag
-                                    "PackageReleaseNotes",  (release.Notes |> List.map replaceCommitLink  |> String.toLines )
+                                    "Version", ProjectInfo.prereleaseTag
+                                    "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink  |> String.toLines )
                                 ] @ p.MSBuildParams.Properties)
                             }
                         {
                             p with 
-                                VersionSuffix = Some prereleaseSuffix
-                                OutputPath = Some pkgDir
+                                VersionSuffix = Some ProjectInfo.prereleaseSuffix
+                                OutputPath = Some ProjectInfo.pkgDir
                                 MSBuildParams = msBuildParams
                         }
             ))
@@ -63,46 +61,36 @@ let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleas
         failwith "aborted"
 }
 
-let packJS = BuildTask.create "PackJS" [clean; build; runTests] {
-    if promptYesNo (sprintf "creating stable package with version %s OK?" stableVersionTag ) 
-        then
-            Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)
-            Fake.IO.File.readAsString "build/release_package.json"
-            |> Fake.IO.File.writeString false "dist/js/package.json"
-
-            Fake.IO.File.readAsString "README.md"
-            |> Fake.IO.File.writeString false "dist/js/README.md"
-
-            "" // "fable-library.**/**"
-            |> Fake.IO.File.writeString false "dist/js/fable_modules/.npmignore"
-
-            Fake.JavaScript.Npm.exec "pack" (fun o ->
-                { o with
-                    WorkingDirectory = "./dist/js/"
-                })
-    else failwith "aborted"
-}
-
-
-let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; runTests] {
-    if promptYesNo (sprintf "package tag will be %s OK?" prereleaseTag ) then
+module BundleJs =
+    let bundle (versionTag: string) =
         Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)
-
+        GenerateIndexJs.ARCtrl_generate ProjectInfo.npmPkgDir
         Fake.IO.File.readAsString "build/release_package.json"
         |> fun t ->
-            let t = t.Replace(stableVersionTag, prereleaseTag)
-            Fake.IO.File.writeString false "dist/js/package.json" t
+            let t = t.Replace(ProjectInfo.stableVersionTag, versionTag)
+            Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/package.json" t
 
         Fake.IO.File.readAsString "README.md"
-        |> Fake.IO.File.writeString false "dist/js/README.md"
+        |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/README.md"
 
         "" // "fable-library.**/**"
-        |> Fake.IO.File.writeString false "dist/js/fable_modules/.npmignore"
+        |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
 
         Fake.JavaScript.Npm.exec "pack" (fun o ->
             { o with
-                WorkingDirectory = "./dist/js/"
+                WorkingDirectory = ProjectInfo.npmPkgDir
             })
+
+let packJS = BuildTask.create "PackJS" [clean; build; runTests] {
+    if promptYesNo (sprintf "[NPM] creating stable package with version %s OK?" ProjectInfo.stableVersionTag ) 
+        then
+            BundleJs.bundle ProjectInfo.stableVersionTag
+    else failwith "aborted"
+}
+
+let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; runTests] {
+    if promptYesNo (sprintf "[NPM] package tag will be %s OK?" ProjectInfo.prereleaseTag ) then
+        BundleJs.bundle ProjectInfo.prereleaseTag
     else failwith "aborted"
     }
 
