@@ -356,6 +356,9 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         |> Option.bind (fun tree -> if ignoreHidden then tree |> FileSystemTree.filterFolders (fun n -> not (n.StartsWith("."))) else Some tree)
         |> Option.defaultValue (FileSystemTree.fromFilePaths [||])
         
+    static member DefaultContracts = Map<string,Contract> [|
+        ARCtrl.Contract.Git.gitignoreFileName, ARCtrl.Contract.Git.gitignoreContract
+    |]
 
 //-Pseudo code-//
 //// Option 1
