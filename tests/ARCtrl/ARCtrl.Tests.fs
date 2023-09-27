@@ -46,7 +46,6 @@ let private test_model = testList "model" [
         Expect.equal actualFilePaths input "isSome fs"
 ]
 
-
 let private test_isaFromContracts = testList "read_contracts" [
     testCase "simpleISA" (fun () ->
         let iContract = SimpleISA.investigationReadContract
@@ -132,7 +131,6 @@ let private test_writeContracts = testList "write_contracts" [
         Expect.exists contracts (fun c -> c.Path = "studies/.gitkeep") "Contract for studies folder missing"
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
-
     )
     testCase "simpleISA" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
@@ -286,6 +284,23 @@ let private test_updateFileSystem = testList "update_Filesystem" [
         let newFS = arc.FileSystem
         Expect.notEqual oldFS.Tree newFS.Tree "Tree should be unequal"
     )
+    testCase "set ISA" <| fun () ->
+        let arc = new ARC()
+        let paths = arc.FileSystem.Tree.ToFilePaths()
+        let expected_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|]
+        Expect.sequenceEqual paths expected_paths "paths"
+        let i = ARCtrl.ISA.ArcInvestigation.init("My Investigation") 
+        let a = i.InitAssay("My Assay")
+        ()
+        arc.ISA <- Some i
+        let paths2 = arc.FileSystem.Tree.ToFilePaths()
+        let expected_paths2 = [|
+            "isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep";
+            "assays/.gitkeep"; "assays/My Assay/isa.assay.xlsx";
+            "assays/My Assay/README.md"; "assays/My Assay/dataset/.gitkeep";
+            "assays/My Assay/protocols/.gitkeep"; "studies/.gitkeep"
+        |]
+        Expect.equal paths2 expected_paths2 "paths2"
 ]
 
 open ARCtrl.FileSystem

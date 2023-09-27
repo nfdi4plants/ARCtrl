@@ -105,12 +105,12 @@ module Template =
             )
         )
 
-    let decodeFromString (jsonString: string) =
+    let fromJsonString (jsonString: string) =
         match Decode.fromString decode jsonString with
         | Ok template   -> template
         | Error exn     -> failwithf "Error. Given json string cannot be parsed to Template: %A" exn
 
-    let encodeToString (spaces: int) (template:Template) =
+    let toJsonString (spaces: int) (template:Template) =
         Encode.toString spaces (encode template)
 
 module Templates =
@@ -125,12 +125,12 @@ module Templates =
         let d = Decode.dict Template.decode
         Decode.fromString d
 
-    let decodeFromString (jsonString: string) =
+    let fromJsonString (jsonString: string) =
         match decode jsonString with
         | Ok templateMap    -> templateMap
         | Error exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
 
-    let encodeToString (spaces: int) (templateList: (string*Template) []) =
+    let toJsonString (spaces: int) (templateList: (string*Template) []) =
         Encode.toString spaces (encode templateList)
 
 
@@ -140,4 +140,4 @@ module Extension =
     type Template with
         member this.ToJson(?spaces: int) =
             let spaces = defaultArg spaces 0
-            Template.encodeToString(spaces)
+            Template.toJsonString(spaces)

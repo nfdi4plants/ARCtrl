@@ -96,7 +96,7 @@ module Pattern =
     ///
     /// Exmp. 2: Characteristic [species] --> termcolumntype: Characteristic; termname: species
     [<LiteralAttribute>]
-    let TermColumnPattern = @"(?<termcolumntype>.+)\s\[(?<termname>.+)\]"
+    let TermColumnPattern = @"(?<termcolumntype>.+?)\s\[(?<termname>.+)\]"
 
     /// This pattern is used to match auto-generated table names. Mainly used in ArcAssay.addTable(). Default tables will get such a name.
     ///

@@ -142,6 +142,11 @@ let private tests_compositeHeader =
                     let expected = CompositeHeader.Component <| OntologyAnnotation.fromString("temperature")
                     Expect.equal actual expected ""
                 )
+                testCase "Parameter [Concentration of [nutrient] before start of the experiment]" <| fun _ ->
+                    let headerString = "Parameter [Concentration of [nutrient] before start of the experiment]"
+                    let actual = CompositeHeader.OfHeaderString headerString
+                    let expected = CompositeHeader.Parameter <| OntologyAnnotation.fromString("Concentration of [nutrient] before start of the experiment")
+                    Expect.equal actual expected ""
             ]
             testList "IoColumns" [
                 testCase "Input [Source]" (fun () ->

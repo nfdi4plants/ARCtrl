@@ -64,6 +64,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         with get() = _isa
         and set(newISA : ArcInvestigation option) =
             _isa <- newISA
+            this.UpdateFileSystem()
 
     member this.CWL 
         with get() = cwl
@@ -225,8 +226,8 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             )
             
         | None -> 
+            //printfn "ARC contains no ISA part."
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
-            printfn "ARC contains no ISA part."
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)
@@ -355,6 +356,9 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         |> Option.bind (fun tree -> if ignoreHidden then tree |> FileSystemTree.filterFolders (fun n -> not (n.StartsWith("."))) else Some tree)
         |> Option.defaultValue (FileSystemTree.fromFilePaths [||])
         
+    static member DefaultContracts = Map<string,Contract> [|
+        ARCtrl.Contract.Git.gitignoreFileName, ARCtrl.Contract.Git.gitignoreContract
+    |]
 
 //-Pseudo code-//
 //// Option 1

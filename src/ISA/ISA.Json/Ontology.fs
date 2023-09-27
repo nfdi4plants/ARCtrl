@@ -44,12 +44,12 @@ module OntologySourceReference =
 
     let encoder (options : ConverterOptions) (osr : obj) = 
         [
-            if options.SetID then "@id", GEncode.string (osr :?> OntologySourceReference |> genID)
-            if options.IncludeType then "@type", GEncode.string "OntologySourceReference"
-            GEncode.tryInclude "description" GEncode.string (osr |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "file" GEncode.string (osr |> GEncode.tryGetPropertyValue "File")
-            GEncode.tryInclude "name" GEncode.string (osr |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "version" GEncode.string (osr |> GEncode.tryGetPropertyValue "Version")
+            if options.SetID then "@id", GEncode.toJsonString (osr :?> OntologySourceReference |> genID)
+            if options.IncludeType then "@type", GEncode.toJsonString "OntologySourceReference"
+            GEncode.tryInclude "description" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "file" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "File")
+            GEncode.tryInclude "name" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "version" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Version")
             GEncode.tryInclude "comments" (Comment.encoder options) (osr |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
@@ -66,10 +66,10 @@ module OntologySourceReference =
             }
         )
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s        
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s        
 
-    let toString (oa:OntologySourceReference) = 
+    let toJsonString (oa:OntologySourceReference) = 
         encoder (ConverterOptions()) oa
         |> Encode.toString 2
 
@@ -98,12 +98,12 @@ module OntologyAnnotation =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.string (oa :?> OntologyAnnotation |> genID)
-                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.string "OntologyAnnotation"
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> OntologyAnnotation |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "OntologyAnnotation"
             GEncode.tryInclude "annotationValue" (AnnotationValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "termSource" GEncode.string (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
-            GEncode.tryInclude "termAccession" GEncode.string (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
+            GEncode.tryInclude "termSource" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
+            GEncode.tryInclude "termAccession" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
@@ -121,10 +121,10 @@ module OntologyAnnotation =
             )
         )
 
-    let fromString (s:string) = 
-        GDecode.fromString (decoder (ConverterOptions())) s        
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s        
 
-    let toString (oa:OntologyAnnotation) = 
+    let toJsonString (oa:OntologyAnnotation) = 
         encoder (ConverterOptions()) oa
         |> Encode.toString 2
     
