@@ -34,7 +34,6 @@
     <Compile Include="Templates\Template.Spreadsheet.fs" />
     <Compile Include="Templates\Template.Web.fs" />
     <None Include="README.md" />
-    <Compile Include="ARC.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />

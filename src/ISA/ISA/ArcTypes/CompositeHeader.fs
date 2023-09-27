@@ -73,6 +73,17 @@ type IOType =
         | Some s -> IOType.ofString s |> Some
         | None -> None
 
+    member this.GetExplanation() =
+        match this with
+        | Source            -> "The source value must be a unique identifier for an organism or a sample." 
+        | Sample            -> "The Sample Name column describes specifc laboratory samples with a unique identifier." 
+        | RawDataFile       -> "The Raw Data File column defines untransformed and unprocessed data files."
+        | DerivedDataFile   -> "The Derived Data File column defines transformed and/or processed data files."
+        | ImageFile         -> "Placeholder"
+        | Material          -> "Placeholder" 
+        | FreeText s        -> "Placeholder"
+
+
 /// <summary>
 /// Model of the different types of Building Blocks in an ARC Annotation Table.
 /// </summary>
@@ -380,3 +391,19 @@ type CompositeHeader =
         | Component oa -> Some (Component.create(ComponentType = oa))
         | _ -> None
 
+    member this.GetExplanation() =
+        match this with
+        | Parameter oa          -> "Parameter columns describe steps in your experimental workflow, e.g. the centrifugation time or the temperature used for your assay."
+        | Factor oa             -> "Use Factor columns to describe independent variables that result in a specific output of your experiment, e.g. the light intensity under which an organism was grown."
+        | Characteristic oa     -> "Characteristic columns are used for study descriptions and describe inherent properties of the source material, e.g. a certain strain or organism part."
+        | Component oa          -> "Component columns are used to describe physical components of a experiment, e.g. instrument names, software names, and reagents names."
+        | ProtocolType          -> "Defines the protocol type according to your preferred endpoint repository." 
+        | ProtocolREF           -> "Defines the protocol name."
+        | ProtocolDescription   -> "Describe the protocol in free text."
+        | ProtocolUri           -> "Web or local address where the in-depth protocol is stored."
+        | ProtocolVersion       -> "Defines the protocol version."
+        | Performer             -> "Defines the protocol performer."
+        | Date                  -> "Defines the date the protocol was performed."
+        | Input io              -> sprintf "Only one input column per table. E.g. experimental samples or files. %s" <| io.GetExplanation()
+        | Output io             -> sprintf "Only one output column per table. E.g. experimental samples or files. %s" <| io.GetExplanation()
+        | FreeText str          -> "Placeholder"
