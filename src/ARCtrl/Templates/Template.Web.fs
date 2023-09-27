@@ -10,7 +10,7 @@ let getTemplates(url: string option) =
     let url = defaultArg url defaultURL
     async {
         let! jsonString = ARCtrl.WebRequest.downloadFile url
-        let mapResult = Json.Templates.decodeFromString jsonString
+        let mapResult = Json.Templates.fromJsonString jsonString
         return mapResult
     }
 

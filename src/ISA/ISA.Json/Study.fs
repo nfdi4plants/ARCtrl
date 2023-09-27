@@ -44,15 +44,15 @@ module Study =
     
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> Study |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "Study"
-            GEncode.tryInclude "filename" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "FileName")
-            GEncode.tryInclude "identifier" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Identifier")
-            GEncode.tryInclude "title" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Title")
-            GEncode.tryInclude "description" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "submissionDate" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
-            GEncode.tryInclude "publicReleaseDate" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> Study |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "Study"
+            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
+            GEncode.tryInclude "identifier" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
+            GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
+            GEncode.tryInclude "description" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "submissionDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
+            GEncode.tryInclude "publicReleaseDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
             GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
@@ -92,10 +92,10 @@ module Study =
             }
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (p:Study) = 
+    let toJsonString (p:Study) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
@@ -109,11 +109,11 @@ module ArcStudy =
 
     open Study
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
         |> ArcStudy.fromStudy
 
-    let encodeToString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+    let toJsonString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
         encoder (ConverterOptions()) (a.ToStudy(assays))
         |> Encode.toString 2
 

@@ -38,10 +38,10 @@ module Value =
                         | Error e -> Error e
 
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s        
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s        
 
-    let encodeToString (v:Value) = 
+    let toJsonString (v:Value) = 
         encoder (ConverterOptions()) v
         |> Encode.toString 2
 
@@ -63,10 +63,10 @@ module Factor =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> Factor |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "Factor"
-            GEncode.tryInclude "factorName" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> Factor |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "Factor"
+            GEncode.tryInclude "factorName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorType")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
@@ -83,10 +83,10 @@ module Factor =
             }
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (f:Factor) = 
+    let toJsonString (f:Factor) = 
         encoder (ConverterOptions()) f
         |> Encode.toString 2
     
@@ -112,9 +112,9 @@ module FactorValue =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> FactorValue |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "FactorValue"
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> FactorValue |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "FactorValue"
             GEncode.tryInclude "category" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
             GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
@@ -132,10 +132,10 @@ module FactorValue =
             }
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (f:FactorValue) = 
+    let toJsonString (f:FactorValue) = 
         encoder (ConverterOptions()) f
         |> Encode.toString 2
     

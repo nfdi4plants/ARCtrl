@@ -18,9 +18,9 @@ module ProtocolParameter =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> ProtocolParameter |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "ProtocolParameter"
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> ProtocolParameter |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "ProtocolParameter"
             GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterName")
         ]
         |> GEncode.choose
@@ -34,8 +34,8 @@ module ProtocolParameter =
             }
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toString (p:ProtocolParameter) = 
         encoder (ConverterOptions()) p
@@ -62,9 +62,9 @@ module Component =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> Component |> genID)
-            if options.IncludeType then "@type", GEncode.encodeToString "Component"
-            GEncode.tryInclude "componentName" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ComponentName")
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> Component |> genID)
+            if options.IncludeType then "@type", GEncode.toJsonString "Component"
+            GEncode.tryInclude "componentName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ComponentName")
             GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ComponentType")
         ]
         |> GEncode.choose
@@ -89,10 +89,10 @@ module Component =
             )
 
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (p:Component) = 
+    let toJsonString (p:Component) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
     
@@ -121,14 +121,14 @@ module Protocol =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> Protocol |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "Protocol"
-            GEncode.tryInclude "name" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> Protocol |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "Protocol"
+            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ProtocolType")
-            GEncode.tryInclude "description" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "uri" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Uri")
-            GEncode.tryInclude "version" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Version")
+            GEncode.tryInclude "description" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "uri" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Uri")
+            GEncode.tryInclude "version" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Version")
             GEncode.tryInclude "parameters" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Parameters")
             GEncode.tryInclude "components" (Component.encoder options) (oa |> GEncode.tryGetPropertyValue "Components")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
@@ -151,10 +151,10 @@ module Protocol =
             }
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (p:Protocol) = 
+    let toJsonString (p:Protocol) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
     

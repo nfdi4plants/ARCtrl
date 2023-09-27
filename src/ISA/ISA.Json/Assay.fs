@@ -37,13 +37,13 @@ module Assay =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa :?> Assay |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "Assay"
-            GEncode.tryInclude "filename" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "FileName")
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> Assay |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "Assay"
+            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "MeasurementType")
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "TechnologyType")
-            GEncode.tryInclude "technologyPlatform" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
+            GEncode.tryInclude "technologyPlatform" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
             GEncode.tryInclude "dataFiles" (Data.encoder options) (oa |> GEncode.tryGetPropertyValue "DataFiles")
             GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
@@ -71,10 +71,10 @@ module Assay =
             }
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (p:Assay) = 
+    let toJsonString (p:Assay) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
@@ -95,11 +95,11 @@ module ArcAssay =
 
     open Assay
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
         |> ArcAssay.fromAssay
 
-    let encodeToString (a:ArcAssay) = 
+    let toJsonString (a:ArcAssay) = 
         encoder (ConverterOptions()) (a.ToAssay())
         |> Encode.toString 2
 

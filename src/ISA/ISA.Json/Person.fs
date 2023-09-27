@@ -34,17 +34,17 @@ module Person =
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         let oa = oa :?> Person |> Person.setCommentFromORCID
         [
-            if options.SetID then "@id", GEncode.encodeToString (oa |> genID)
-                else GEncode.tryInclude "@id" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.encodeToString "Person"
-            GEncode.tryInclude "firstName" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "FirstName")
-            GEncode.tryInclude "lastName" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "LastName")
-            GEncode.tryInclude "midInitials" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "MidInitials")
-            GEncode.tryInclude "email" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "EMail")
-            GEncode.tryInclude "phone" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Phone")
-            GEncode.tryInclude "fax" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Fax")
-            GEncode.tryInclude "address" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Address")
-            GEncode.tryInclude "affiliation" GEncode.encodeToString (oa |> GEncode.tryGetPropertyValue "Affiliation")
+            if options.SetID then "@id", GEncode.toJsonString (oa |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "Person"
+            GEncode.tryInclude "firstName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FirstName")
+            GEncode.tryInclude "lastName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "LastName")
+            GEncode.tryInclude "midInitials" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "MidInitials")
+            GEncode.tryInclude "email" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "EMail")
+            GEncode.tryInclude "phone" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Phone")
+            GEncode.tryInclude "fax" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Fax")
+            GEncode.tryInclude "address" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Address")
+            GEncode.tryInclude "affiliation" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Affiliation")
             GEncode.tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Roles")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
@@ -71,10 +71,10 @@ module Person =
             
         )
 
-    let decodeFromString (s:string) = 
-        GDecode.decodeFromString (decoder (ConverterOptions())) s
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let encodeToString (p:Person) = 
+    let toJsonString (p:Person) = 
         encoder (ConverterOptions()) p
         |> Encode.toString 2
 
