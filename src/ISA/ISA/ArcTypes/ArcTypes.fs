@@ -602,6 +602,32 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             ?comments = (a.Comments |> Option.map Array.ofList)
             )
 
+    member this.StructurallyEquals (other: ArcAssay) : bool =
+        let i = this.Identifier = other.Identifier
+        let mst = this.MeasurementType = other.MeasurementType
+        let tt = this.TechnologyType = other.TechnologyType
+        let tp = this.TechnologyPlatform = other.TechnologyPlatform
+        let tables = Aux.compareSeq this.Tables other.Tables
+        let perf = Aux.compareSeq this.Performers other.Performers
+        let comments = Aux.compareSeq this.Comments other.Comments
+        // Todo maybe add reflection check to prove that all members are compared?
+        [|i; mst; tt; tp; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
+
+    /// <summary>
+    /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other ArcAssay to test for reference.</param>
+    member this.ReferenceEquals (other: ArcAssay) = System.Object.ReferenceEquals(this,other)
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? ArcAssay as assay -> 
+            this.StructurallyEquals(assay)
+        | _ -> false
+
 [<AttachMembers>]
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
     let publications = defaultArg publications [||]
@@ -1212,6 +1238,37 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             ),
         assays
 
+    member this.StructurallyEquals (other: ArcStudy) : bool =
+        let i = this.Identifier = other.Identifier
+        let t = this.Title = other.Title
+        let d = this.Description = other.Description
+        let sd = this.SubmissionDate = other.SubmissionDate
+        let prd = this.PublicReleaseDate = other.PublicReleaseDate 
+        let pub = Aux.compareSeq this.Publications other.Publications
+        let con = Aux.compareSeq this.Contacts other.Contacts
+        let sdd = Aux.compareSeq this.StudyDesignDescriptors other.StudyDesignDescriptors
+        let tables = Aux.compareSeq this.Tables other.Tables
+        let reg_tables = Aux.compareSeq this.RegisteredAssayIdentifiers other.RegisteredAssayIdentifiers
+        let factors = Aux.compareSeq this.Factors other.Factors
+        let comments = Aux.compareSeq this.Comments other.Comments
+        // Todo maybe add reflection check to prove that all members are compared?
+        [|i; t; d; sd; prd; pub; con; sdd; tables; reg_tables; factors; comments|] |> Seq.forall (fun x -> x = true)
+
+    /// <summary>
+    /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other ArcAssay to test for reference.</param>
+    member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? ArcStudy as s -> 
+            this.StructurallyEquals(s)
+        | _ -> false
+
 [<AttachMembers>]
 type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
 
@@ -1694,3 +1751,35 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?comments = (i.Comments |> Option.map Array.ofList)
             )      
         i
+
+    member this.StructurallyEquals (other: ArcInvestigation) : bool =
+        let i = this.Identifier = other.Identifier
+        let t = this.Title = other.Title
+        let d = this.Description = other.Description
+        let sd = this.SubmissionDate = other.SubmissionDate
+        let prd = this.PublicReleaseDate = other.PublicReleaseDate 
+        let pub = Aux.compareSeq this.Publications other.Publications
+        let con = Aux.compareSeq this.Contacts other.Contacts
+        let osr = Aux.compareSeq this.OntologySourceReferences other.OntologySourceReferences
+        let assays = Aux.compareSeq this.Assays other.Assays
+        let studies = Aux.compareSeq this.Studies other.Studies
+        let reg_studies = Aux.compareSeq this.RegisteredStudyIdentifiers other.RegisteredStudyIdentifiers
+        let comments = Aux.compareSeq this.Comments other.Comments
+        let remarks = Aux.compareSeq this.Remarks other.Remarks
+        // Todo maybe add reflection check to prove that all members are compared?
+        [|i; t; d; sd; prd; pub; con; osr; assays; studies; reg_studies; comments; remarks|] |> Seq.forall (fun x -> x = true)
+
+    /// <summary>
+    /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other ArcAssay to test for reference.</param>
+    member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? ArcInvestigation as i -> 
+            this.StructurallyEquals(i)
+        | _ -> false
