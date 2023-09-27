@@ -1255,11 +1255,11 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         [|i; t; d; sd; prd; pub; con; sdd; tables; reg_tables; factors; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
-    /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
+    /// Use this function to check if this ArcStudy and the input ArcStudy refer to the same object.
     ///
     /// If true, updating one will update the other due to mutability.
     /// </summary>
-    /// <param name="other">The other ArcAssay to test for reference.</param>
+    /// <param name="other">The other ArcStudy to test for reference.</param>
     member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
 
     // custom check
@@ -1770,11 +1770,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         [|i; t; d; sd; prd; pub; con; osr; assays; studies; reg_studies; comments; remarks|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
-    /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
+    /// Use this function to check if this ArcInvestigation and the input ArcInvestigation refer to the same object.
     ///
     /// If true, updating one will update the other due to mutability.
     /// </summary>
-    /// <param name="other">The other ArcAssay to test for reference.</param>
+    /// <param name="other">The other ArcInvestigation to test for reference.</param>
     member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
 
     // custom check
