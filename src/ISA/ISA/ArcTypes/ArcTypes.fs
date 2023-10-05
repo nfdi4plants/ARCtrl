@@ -628,6 +628,19 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             this.StructurallyEquals(assay)
         | _ -> false
 
+    override this.GetHashCode() =
+        [|
+            box this.Identifier
+            this.MeasurementType
+            this.TechnologyType
+            this.TechnologyPlatform
+            this.Tables
+            this.Performers
+            this.Comments
+        |]
+        |> Array.map (fun o -> o.GetHashCode())
+        |> Array.sum
+
 [<AttachMembers>]
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
     let publications = defaultArg publications [||]
@@ -1269,6 +1282,24 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             this.StructurallyEquals(s)
         | _ -> false
 
+    override this.GetHashCode() =
+        [|
+            box this.Identifier
+            this.Title
+            this.Description
+            this.SubmissionDate
+            this.PublicReleaseDate
+            this.Publications
+            this.Contacts
+            this.StudyDesignDescriptors
+            this.Tables
+            this.RegisteredAssayIdentifiers
+            this.Factors
+            this.Comments
+        |]
+        |> Array.map (fun o -> o.GetHashCode())
+        |> Array.sum
+
 [<AttachMembers>]
 type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
 
@@ -1783,3 +1814,22 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         | :? ArcInvestigation as i -> 
             this.StructurallyEquals(i)
         | _ -> false
+
+    override this.GetHashCode() =
+        [|
+            box this.Identifier
+            this.Title
+            this.Description
+            this.SubmissionDate
+            this.PublicReleaseDate
+            this.Publications
+            this.Contacts
+            this.OntologySourceReferences
+            this.Assays
+            this.Studies
+            this.RegisteredStudyIdentifiers
+            this.Comments
+            this.Remarks
+        |]
+        |> Array.map (fun o -> o.GetHashCode())
+        |> Array.sum

@@ -33,6 +33,7 @@
     <Compile Include="Templates\Template.Json.fs" />
     <Compile Include="Templates\Template.Spreadsheet.fs" />
     <Compile Include="Templates\Template.Web.fs" />
+	<Compile Include="ARC.fs" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
