@@ -1,6 +1,7 @@
 ﻿namespace ARCtrl.ISA
 
 open Fable.Core
+open Fable.Core.JsInterop
 
 [<AttachMembers>]
 [<RequireQualifiedAccess>]
@@ -73,15 +74,25 @@ type IOType =
         | Some s -> IOType.ofString s |> Some
         | None -> None
 
-    member this.GetExplanation() =
-        match this with
-        | Source            -> "The source value must be a unique identifier for an organism or a sample." 
-        | Sample            -> "The Sample Name column describes specifc laboratory samples with a unique identifier." 
-        | RawDataFile       -> "The Raw Data File column defines untransformed and unprocessed data files."
-        | DerivedDataFile   -> "The Derived Data File column defines transformed and/or processed data files."
-        | ImageFile         -> "Placeholder"
-        | Material          -> "Placeholder" 
-        | FreeText s        -> "Placeholder"
+    member this.GetExplanation() = IOType.getExplanation(!^this)
+
+    static member getExplanation(iotype: U2<IOType,string>) =
+        match iotype with
+        | U2.Case1 Source | U2.Case2 "Source" -> 
+            "The source value must be a unique identifier for an organism or a sample." 
+        | U2.Case1 Sample | U2.Case2 "Sample" -> 
+            "The Sample Name column describes specifc laboratory samples with a unique identifier." 
+        | U2.Case1 RawDataFile | U2.Case2 "RawDataFile" -> 
+            "The Raw Data File column defines untransformed and unprocessed data files."
+        | U2.Case1 DerivedDataFile | U2.Case2 "DerivedDataFile" -> 
+            "The Derived Data File column defines transformed and/or processed data files."
+        | U2.Case1 ImageFile | U2.Case2 "ImageFile" -> 
+            "Placeholder"
+        | U2.Case1 Material | U2.Case2 "Material" -> 
+            "Placeholder" 
+        | U2.Case1 (FreeText _) | U2.Case2 "FreeText" -> 
+            "Placeholder"
+        | _ -> failwith $"Unable to parse combination to existing IOType: `{iotype}`"
 
 
 /// <summary>
@@ -392,18 +403,43 @@ type CompositeHeader =
         | _ -> None
 
     member this.GetExplanation() =
-        match this with
-        | Parameter oa          -> "Parameter columns describe steps in your experimental workflow, e.g. the centrifugation time or the temperature used for your assay."
-        | Factor oa             -> "Use Factor columns to describe independent variables that result in a specific output of your experiment, e.g. the light intensity under which an organism was grown."
-        | Characteristic oa     -> "Characteristic columns are used for study descriptions and describe inherent properties of the source material, e.g. a certain strain or organism part."
-        | Component oa          -> "Component columns are used to describe physical components of a experiment, e.g. instrument names, software names, and reagents names."
-        | ProtocolType          -> "Defines the protocol type according to your preferred endpoint repository." 
-        | ProtocolREF           -> "Defines the protocol name."
-        | ProtocolDescription   -> "Describe the protocol in free text."
-        | ProtocolUri           -> "Web or local address where the in-depth protocol is stored."
-        | ProtocolVersion       -> "Defines the protocol version."
-        | Performer             -> "Defines the protocol performer."
-        | Date                  -> "Defines the date the protocol was performed."
-        | Input io              -> sprintf "Only one input column per table. E.g. experimental samples or files. %s" <| io.GetExplanation()
-        | Output io             -> sprintf "Only one output column per table. E.g. experimental samples or files. %s" <| io.GetExplanation()
-        | FreeText str          -> "Placeholder"
+        // https://fable.io/docs/javascript/features.html#u2-u3--u9
+        CompositeHeader.getExplanation (!^this)
+
+    // https://fable.io/docs/javascript/features.html#u2-u3--u9
+    // U2 is an erased union type, allowing seemless integration into js syntax
+    /// <summary>
+    /// Can pass header as `U2.Case1 compositeHeader` or `U2.Case2 string` or (requires `open Fable.Core.JsInterop`) `!^compositeHeader` or `!^string`
+    /// </summary>
+    /// <param name="header"></param>
+    static member getExplanation(header:U2<CompositeHeader,string>) =
+        match header with
+        | U2.Case1 (Component _) | U2.Case2 "Component" -> 
+            "Component columns are used to describe physical components of a experiment, e.g. instrument names, software names, and reagents names."
+        | U2.Case1 (Characteristic _) | U2.Case2 "Characteristic" ->
+            "Characteristic columns are used for study descriptions and describe inherent properties of the source material, e.g. a certain strain or organism part."
+        | U2.Case1 (Factor _)| U2.Case2 "Factor" ->
+            "Use Factor columns to describe independent variables that result in a specific output of your experiment, e.g. the light intensity under which an organism was grown."
+        | U2.Case1 (Parameter _) | U2.Case2 "Parameter" ->
+            "Parameter columns describe steps in your experimental workflow, e.g. the centrifugation time or the temperature used for your assay."
+        | U2.Case1 (ProtocolType) | U2.Case2 "ProtocolType" ->
+            "Defines the protocol type according to your preferred endpoint repository." 
+        | U2.Case1 (ProtocolDescription) | U2.Case2 "ProtocolDescription" ->
+            "Describe the protocol in free text."
+        | U2.Case1 (ProtocolUri) | U2.Case2 "ProtocolUri" ->
+            "Web or local address where the in-depth protocol is stored."
+        | U2.Case1 (ProtocolVersion) | U2.Case2 "ProtocolVersion" ->
+            "Defines the protocol version."
+        | U2.Case1 (ProtocolREF) | U2.Case2 "ProtocolREF" ->
+            "Defines the protocol name."
+        | U2.Case1 (Performer) | U2.Case2 "Performer" ->
+            "Defines the protocol performer."
+        | U2.Case1 (Date) | U2.Case2 "Date" ->
+            "Defines the date the protocol was performed."
+        | U2.Case1 (Input _) | U2.Case2 "Input" ->
+            "Only one input column per table. E.g. experimental samples or files."
+        | U2.Case1 (Output _) |U2.Case2 "Output" ->
+            "Only one output column per table. E.g. experimental samples or files."
+        | U2.Case1 (FreeText _) | U2.Case2 "FreeText" ->
+            "Placeholder"
+        | _ -> failwith $"Unable to parse combination to existing CompositeHeader: `{header}`"

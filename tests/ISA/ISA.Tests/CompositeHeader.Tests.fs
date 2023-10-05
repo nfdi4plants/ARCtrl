@@ -3,7 +3,7 @@
 open ARCtrl.ISA
 
 open TestingUtils
-
+open Fable.Core
 
 let private tests_iotype = 
     testList "IOType" [
@@ -26,11 +26,19 @@ let private tests_iotype =
             Expect.equal (IOType.FreeText "Test").asOutput "Output [Test]" "FreeText Test"
         )
         // This test ensures that new IOTypes are also added to `All` static member.
-        testCase "All" (fun () -> 
-            let caseInfos = Microsoft.FSharp.Reflection.FSharpType.GetUnionCases(typeof<IOType>) 
-            let count = caseInfos |> Array.length
-            Expect.hasLength IOType.All (count-1) "Expect one less than all because we do not want to track `FreeText` case."
+        testCase "Cases" (fun () -> 
+            let caseInfos = IOType.Cases
+            Expect.hasLength IOType.All (caseInfos.Length-1) "Expect one less than all because we do not want to track `FreeText` case."
         )
+        testCase "getExplanation" <| fun _ ->
+            let cases = IOType.Cases |> Array.map snd
+            for case in cases do
+                let actual = IOType.getExplanation(U2.Case2 case)
+                Expect.isTrue (actual.Length > 0) $"{case}"
+        testCase "GetExplanation" <| fun _ ->
+            let iotype = IOType.Material
+            let actual = iotype.GetExplanation()
+            Expect.isTrue (actual.Length > 0) ""
     ]
 
 let private tests_jsHelper = testList "jsHelper" [
@@ -48,6 +56,15 @@ let private tests_compositeHeader =
         testCase "Cases" <| fun _ ->
             let count = CompositeHeader.Cases.Length
             Expect.equal count 14 "count"
+        testCase "getExplanation" <| fun _ ->
+            let cases = CompositeHeader.Cases |> Array.map snd
+            for case in cases do
+                let actual = CompositeHeader.getExplanation(U2.Case2 case)
+                Expect.isTrue (actual.Length > 0) $"{case}"
+        testCase "GetExplanation" <| fun _ ->
+            let header = CompositeHeader.Component OntologyAnnotation.empty
+            let actual = header.GetExplanation()
+            Expect.isTrue (actual.Length > 0) ""
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 
                 let header = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species", "MS", "MS:0000042")
