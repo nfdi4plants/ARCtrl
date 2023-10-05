@@ -29,14 +29,14 @@ module TemplatesAux =
 type Templates =
 
     static member getDistinctTags (templates: Template []) =
-        templates |> Array.collect (fun t -> t.Tags)
+        templates |> Array.collect (fun t -> t.Tags) |> Array.distinct
 
     /// <summary>
     /// Returns all **distinct** `template.Tags` and `template.EndpointRepositories`
     /// </summary>
     /// <param name="templates"></param>
     static member getDistinctEndpointRepositories (templates: Template []) =
-        templates |> Array.collect (fun t -> t.EndpointRepositories)
+        templates |> Array.collect (fun t -> t.EndpointRepositories) |> Array.distinct
 
     /// <summary>
     /// Returns all **distinct** `template.Tags` and `template.EndpointRepositories`
