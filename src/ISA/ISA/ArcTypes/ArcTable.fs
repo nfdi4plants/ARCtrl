@@ -452,7 +452,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             // this is the most problematic case. How do we decide which unit we want to propagate? All?
             | WithUnit -> 
                 pre |> Array.map (fun c -> 
-                    let unitsOpt = c.GetColumnUnits()
+                    let unitsOpt = c.TryGetColumnUnits()
                     match unitsOpt with
                     | Some units ->
                         let toCompositeCell = fun unitOA -> CompositeCell.createUnitized ("", unitOA)

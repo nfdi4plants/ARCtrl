@@ -41,7 +41,7 @@ type CompositeColumn = {
     /// <summary>
     /// Returns an array of all units found in the cells of this column. Returns None if no units are found.
     /// </summary>
-    member this.GetColumnUnits() =
+    member this.TryGetColumnUnits() =
         let arr = [|
             for cell in this.Cells do
                 if cell.isUnitized then

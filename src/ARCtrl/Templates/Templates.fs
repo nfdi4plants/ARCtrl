@@ -7,7 +7,7 @@ open Fable.Core
 [<RequireQualifiedAccess>]
 module TemplatesAux =
 
-    let getDefault_comparer (isAnd: bool option) =
+    let getComparer (isAnd: bool option) =
         let isAnd = defaultArg isAnd false
         let comparer = if isAnd then (&&) else (||)
         comparer
@@ -58,7 +58,7 @@ type Templates =
     /// <param name="isAnd">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
     static member filterByTags(queryTags: OntologyAnnotation [], ?isAnd: bool) = 
         fun (templates: Template []) ->
-            let comparer = TemplatesAux.getDefault_comparer isAnd
+            let comparer = TemplatesAux.getComparer isAnd
             TemplatesAux.filterOnTags (fun t -> t.Tags) queryTags comparer templates
 
     /// <summary>
@@ -68,7 +68,7 @@ type Templates =
     /// <param name="isAnd">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
     static member filterByEndpointRepositories(queryTags: OntologyAnnotation [], ?isAnd: bool) = 
         fun (templates: Template []) ->
-            let comparer = TemplatesAux.getDefault_comparer isAnd
+            let comparer = TemplatesAux.getComparer isAnd
             TemplatesAux.filterOnTags (fun t -> t.EndpointRepositories) queryTags comparer templates
 
     /// <summary>
@@ -78,7 +78,7 @@ type Templates =
     /// <param name="isAnd">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
     static member filterByOntologyAnnotation(queryTags: OntologyAnnotation [], ?isAnd: bool) = 
         fun (templates: Template []) ->
-            let comparer = TemplatesAux.getDefault_comparer isAnd
+            let comparer = TemplatesAux.getComparer isAnd
             TemplatesAux.filterOnTags (fun t -> Array.append t.Tags t.EndpointRepositories) queryTags comparer templates
 
     /// <summary>
