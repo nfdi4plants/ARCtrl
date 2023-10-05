@@ -30,6 +30,7 @@
     <Compile Include="Contracts\Contracts.Git.fs" />
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
     <Compile Include="Templates\Template.fs" />
+    <Compile Include="Templates\Templates.fs" />
     <Compile Include="Templates\Template.Json.fs" />
     <Compile Include="Templates\Template.Spreadsheet.fs" />
     <Compile Include="Templates\Template.Web.fs" />
@@ -49,7 +50,5 @@
 		    <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
 	    </NpmDependencies>
     </PropertyGroup>
-    <ItemGroup>
-	    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-    </ItemGroup>
+    <ItemGroup />
 </Project>

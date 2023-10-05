@@ -1649,6 +1649,18 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy.DeregisterAssay(studyIdentifier, assayIdentifier)
             copy
 
+    /// <summary>
+    /// Returns all Contacts/Performers from assays/studies/investigation unfiltered. 
+    /// </summary>
+    member this.GetAllPersons() =
+        let persons = ResizeArray()
+        for a in this.Assays do
+            persons.AddRange(a.Performers)
+        for s in this.Studies do
+            persons.AddRange(s.Contacts)
+        persons.AddRange(this.Contacts)
+        persons
+
     // - Study API - CRUD //
     /// <summary>
     /// Deregisters assays not found in ArcInvestigation.Assays from all studies.
