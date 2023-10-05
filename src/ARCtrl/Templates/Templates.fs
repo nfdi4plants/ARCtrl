@@ -28,6 +28,29 @@ module TemplatesAux =
 [<AttachMembers>]
 type Templates =
 
+    static member getDistinctTags (templates: Template []) =
+        templates |> Array.collect (fun t -> t.Tags)
+
+    /// <summary>
+    /// Returns all **distinct** `template.Tags` and `template.EndpointRepositories`
+    /// </summary>
+    /// <param name="templates"></param>
+    static member getDistinctEndpointRepositories (templates: Template []) =
+        templates |> Array.collect (fun t -> t.EndpointRepositories)
+
+    /// <summary>
+    /// Returns all **distinct** `template.Tags` and `template.EndpointRepositories`
+    /// </summary>
+    /// <param name="templates"></param>
+    static member getDistinctOntologyAnnotations (templates: Template []) =
+        let oas = ResizeArray()
+        for t in templates do
+            oas.AddRange(t.Tags)
+            oas.AddRange(t.EndpointRepositories)
+        oas
+        |> Array.ofSeq
+        |> Array.distinct
+
     /// <summary>
     /// Filter templates by `template.Tags`.
     /// </summary>
@@ -62,7 +85,7 @@ type Templates =
     /// Filters templates by template.Organisation = `Organisation.DataPLANT`/`"DataPLANT"`.
     /// </summary>
     /// <param name="templates"></param>
-    static member filterByDataPLANT (templates: Template [])=
+    static member filterByDataPLANT (templates: Template []) =
         templates
         |> Array.filter (fun t -> t.Organisation.IsOfficial())
         

@@ -56,65 +56,6 @@ let private tests_Organisation = testList "Organisation" [
     ]
 ]
 
-//let private tests_CompositeCell = testList "CompositeCell" [
-//        testList "roundabout" [
-//            testCase "Freetext" <| fun _ ->
-//                let o = CompositeCell.createFreeText "My Freetext"
-//                let json = CompositeCell.encode o |> Encode.toString 4
-//                let actual = Decode.fromString CompositeCell.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//            testCase "Term" <| fun _ ->
-//                let o = CompositeCell.createTermFromString "My Term"
-//                let json = CompositeCell.encode o |> Encode.toString 4
-//                let actual = Decode.fromString CompositeCell.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//            testCase "Unitized" <| fun _ ->
-//                let o = CompositeCell.createUnitizedFromString ("12","My Term")
-//                let json = CompositeCell.encode o |> Encode.toString 4
-//                let actual = Decode.fromString CompositeCell.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//        ]
-//    ]
-
-//let private tests_CompositeHeader = testList "CompositeHeader" [
-//        testList "roundabout" [
-//            testCase "Input/Output" <| fun _ ->
-//                let o = CompositeHeader.Input IOType.Source
-//                let json = CompositeHeader.encode o |> Encode.toString 4
-//                let actual = Decode.fromString CompositeHeader.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//            testCase "Single" <| fun _ ->
-//                let o = CompositeHeader.ProtocolREF
-//                let json = CompositeHeader.encode o |> Encode.toString 4
-//                let actual = Decode.fromString CompositeHeader.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//            testCase "Term" <| fun _ ->
-//                let o = CompositeHeader.Characteristic (OntologyAnnotation.fromString "My Chara")
-//                let json = CompositeHeader.encode o |> Encode.toString 4
-//                let actual = Decode.fromString CompositeHeader.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//        ]
-//    ]
-
-//let tests_ArcTable = testList "ArcTable" [  
-//        testList "roundabout" [
-//            testCase "complete" <| fun _ ->
-//                let o = ArcTable.init("My Table")
-//                o.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
-//                o.AddColumn(CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
-//                let json = Encode.toString 4 (ArcTable.encode o)
-//                let actual = Decode.fromString ArcTable.decode json
-//                let expected = Ok o
-//                Expect.equal actual expected ""
-//        ]
-//    ]
-
 let tests_Template = testList "Template" [
     testList "roundabout" [
         testCase "complete" <| fun _ ->
@@ -261,9 +202,6 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
 
 let private tests_json = testList "Json" [
     tests_Organisation
-    //tests_CompositeCell
-    //tests_CompositeHeader
-    //tests_ArcTable
     tests_Template
     tests_Spreadsheet
 ]
@@ -330,8 +268,108 @@ let private tests_Web = testList "Web" [
     }
 ]
 
+let private tests_filters = testList "filters" [
+    let create_TestTemplate() =
+        let guid = System.Guid(String.init 32 (fun _ -> "d"))
+        Template.make 
+            guid 
+            (ArcTable.init("TestTable")) 
+            "My Template" 
+            "My Template is great"
+            DataPLANT 
+            "1.0.3" 
+            [|Person.create(FirstName="John", LastName="Doe")|] 
+            [|OntologyAnnotation.fromString "PRIDE";|]
+            [|OntologyAnnotation.fromString "Protein"; OntologyAnnotation.fromString "DNA";|] 
+            (System.DateTime(2023,09,19))
+    // this testList is representative to filterByEndpointRepositories
+    testList "filterByTags" [
+        testCase "OR, contains all" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"|]
+            let actual = Templates.filterByTags(queryTags) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "OR, contains different" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"; OntologyAnnotation.fromString "RNA"|]
+            let actual = Templates.filterByTags(queryTags) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains some" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"|]
+            let actual = Templates.filterByTags(queryTags, true) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains all" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"; OntologyAnnotation.fromString "Protein";|]
+            let actual = Templates.filterByTags(queryTags, true) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains different" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"; OntologyAnnotation.fromString "RNA"|]
+            let actual = Templates.filterByTags(queryTags, true) templates
+            let expected = 0
+            Expect.equal actual.Length expected ""
+    ]
+    testList "filterByOntologyAnnotations" [
+        testCase "OR, contains tag" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "OR, contains er" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "PRIDE"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "OR, contains combined" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "PRIDE"; OntologyAnnotation.fromString "DNA"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "OR, contains different" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"; OntologyAnnotation.fromString "RNA"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains tag" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags, true) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains er" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "PRIDE"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags, true) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains combined" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "PRIDE"; OntologyAnnotation.fromString "DNA"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags, true) templates
+            let expected = 1
+            Expect.equal actual.Length expected ""
+        testCase "AND, contains different" <| fun _ -> 
+            let templates = [|create_TestTemplate()|]
+            let queryTags = [|OntologyAnnotation.fromString "DNA"; OntologyAnnotation.fromString "RNA"|]
+            let actual = Templates.filterByOntologyAnnotation(queryTags, true) templates
+            let expected = 0
+            Expect.equal actual.Length expected ""
+    ]
+]
+
 let main = testList "Templates" [
     tests_json
     tests_equality
     tests_Web
+    tests_filters
 ]
