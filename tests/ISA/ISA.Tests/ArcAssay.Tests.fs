@@ -499,7 +499,7 @@ let private tests_technologyPlatform =
         )
     ]
 
-let private test_UpdateBy = testList "UpdateBy" [
+let private tests_UpdateBy = testList "UpdateBy" [
     let create_testAssay() = 
         ArcAssay.create(
             "MyAssay", 
@@ -598,6 +598,31 @@ let private test_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
         Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
 ]
+
+let private tests_GetHashCode = testList "GetHashCode" [
+    testCase "passing" <| fun _ ->
+        let assay = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
+        Expect.isSome (assay.GetHashCode() |> Some) ""
+    testCase "equal minimal" <| fun _ -> 
+        let assay = ArcAssay.create("MyAssay")
+        let copy = assay.Copy()
+        Expect.equal assay copy "equal"
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "hash equal"
+    testCase "equal" <| fun _ -> // This test does not run successfully
+        // Arithmetic operation resulted in an overflow
+        let assay = 
+            ArcAssay.make 
+                "MyAssay"
+                (OntologyAnnotation.fromString "mt" |> Some)
+                (OntologyAnnotation.fromString "tt" |> Some)
+                (OntologyAnnotation.fromString "tp" |> Some)
+                (ResizeArray([ArcTable.init("My Table")]))
+                ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+                ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+        let copy = assay.Copy()
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) ""
+]
+
 let main = 
     testList "ArcAssay" [
         test_create
@@ -609,5 +634,5 @@ let main =
         tests_UpdateTable
         tests_updateTable
         tests_technologyPlatform
-        test_UpdateBy
+        tests_UpdateBy
     ]
