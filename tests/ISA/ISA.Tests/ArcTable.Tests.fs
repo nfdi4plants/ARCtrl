@@ -5,10 +5,15 @@ open ARCtrl.ISA
 open TestingUtils
 
 let private TableName = "Test"
+/// "species", "GO", "GO:0123456"
 let private oa_species = OntologyAnnotation.fromString("species", "GO", "GO:0123456")
+/// "Chlamy", "NCBI", "NCBI:0123456"
 let private oa_chlamy = OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456")
+/// "instrument model", "MS", "MS:0123456"
 let private oa_instrumentModel = OntologyAnnotation.fromString("instrument model", "MS", "MS:0123456")
+/// "SCIEX instrument model", "MS", "MS:654321"
 let private oa_SCIEXInstrumentModel = OntologyAnnotation.fromString("SCIEX instrument model", "MS", "MS:654321")
+/// "temperature","NCIT","NCIT:0123210"
 let private oa_temperature = OntologyAnnotation.fromString("temperature","NCIT","NCIT:0123210")
 
 /// This function can be used to put ArcTable.Values into a nice format for printing/writing to IO
@@ -25,7 +30,7 @@ let private column_input = CompositeColumn.create(CompositeHeader.Input IOType.S
 let private column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
 let private column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
 let private column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
-/// Valid TestTable with 5 columns, 7 rows: 
+/// Valid TestTable with 5 columns, 5 rows: 
 ///
 /// Input [Source] -> 5 cells: [Source_1; Source_2..]
 ///
@@ -2052,6 +2057,112 @@ let private tests_UpdateRefWithSheet =
         )
     ]
 
+let private tests_Join = testList "Join" [
+    testList "TableJoinOption.Headers" [
+        testCase "Add to empty" <| fun _ ->
+            let table = ArcTable.init("MyTable")
+            let joinTable = create_testTable()
+            table.Join(joinTable,TableJoinOptions.Headers)
+            Expect.equal table.ColumnCount 5 "columnCount"
+            // test headers
+            Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
+            Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty]"
+            Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 2"
+            // test rows
+            Expect.equal table.RowCount 0 "rowcount"
+        testCase "Add to duplicate" <| fun _ ->
+            let table = create_testTable()
+            let joinTable = create_testTable()
+            let func = fun () -> table.Join(joinTable,TableJoinOptions.Headers)
+            Expect.throws func "This should fail as we try to add multiple inputs/outputs to one table"
+        testCase "Add to duplicate, forceReplace" <| fun _ ->
+            let table = create_testTable()
+            let joinTable = create_testTable()
+            table.Join(joinTable,TableJoinOptions.Headers, true)
+            Expect.equal table.ColumnCount 8 "We expect 8 columns as there are 5 per table with 2 unique 5 + (5-2) = 8"
+            // headers
+            Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
+            Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty]"
+            Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 3"
+            Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model] 2"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 4"
+            // rows should be untouched
+            Expect.equal table.RowCount 5 "rows should be untouched"
+        testCase "Join replace input" <| fun _ ->
+            let table = create_testTable()
+            let joinTable = ArcTable.create(
+                "jointable",
+                ResizeArray([CompositeHeader.Input IOType.ImageFile]),
+                System.Collections.Generic.Dictionary()
+            )
+            table.Join(joinTable,TableJoinOptions.Headers, true)
+            Expect.equal table.ColumnCount 5 "columnCount"
+            // test headers
+            Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.ImageFile) "Here should be new image input"
+            Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty]"
+            Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 2"
+            Expect.equal (table.TryGetCellAt(0,4).Value) (CompositeCell.createFreeText "Source_4") "Input cell should be unchanged, only header should be changed"
+    ]
+    testList "TableJoinOption.WithUnits" [ 
+        testCase "Add to empty, no unit" <| fun _ ->
+            let table = ArcTable.init "MyTable"
+            let joinTable = ArcTable.init("jointable")
+            let columns = [|
+                //only term no unit
+                column_component 
+            |]
+            joinTable.AddColumns(columns)
+            table.Join(joinTable,TableJoinOptions.WithUnit)
+            Expect.equal table.ColumnCount 1 "column count"
+            Expect.equal table.RowCount 0 "row count"
+        testCase "Add to empty, with unit" <| fun _ ->
+            let table = ArcTable.init "MyTable"
+            let joinTable = ArcTable.init("jointable")
+            let columns = [|
+                //only term no unit
+                column_component 
+                // with unit
+                CompositeColumn.create( 
+                    CompositeHeader.Parameter oa_temperature,
+                    [|for i in 0 .. 4 do yield CompositeCell.createUnitized($"{i}",oa_temperature)|]
+                )
+            |]
+            joinTable.AddColumns(columns)
+            table.Join(joinTable,TableJoinOptions.WithUnit)
+            Expect.equal table.ColumnCount 2 "column count"
+            Expect.equal table.RowCount 5 "row count"
+            Expect.equal table.Values.[0,0] (CompositeCell.createTerm OntologyAnnotation.empty) "empty term cell"
+            Expect.equal table.Values.[1,0] (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
+    ]
+    testList "TableJoinOption.WithValues" [
+        testCase "Add to empty" <| fun _ ->
+            let table = ArcTable.init "MyTable"
+            let joinTable = ArcTable.init("jointable")
+            let columns = [|
+                //only term no unit
+                column_component 
+                // with unit
+                CompositeColumn.create( 
+                    CompositeHeader.Parameter oa_temperature,
+                    [|for i in 0 .. 4 do yield CompositeCell.createUnitized($"{i}",oa_temperature)|]
+                )
+            |]
+            joinTable.AddColumns(columns)
+            table.Join(joinTable,TableJoinOptions.WithValues)
+            Expect.equal table.ColumnCount 2 "column count"
+            Expect.equal table.RowCount 5 "row count"
+            Expect.equal table.Values.[0,0] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "sciex instrument model"
+            Expect.equal table.Values.[1,0] (CompositeCell.createUnitized("0",oa_temperature)) "temperature unit cell"
+    ]
+]
+
 let private tests_equality = testList "equality" [
     testList "override equality" [
         testCase "equal" <| fun _ ->
@@ -2109,5 +2220,6 @@ let main =
         tests_AddRows
         tests_validate
         tests_UpdateRefWithSheet
+        tests_Join
         tests_equality
     ]

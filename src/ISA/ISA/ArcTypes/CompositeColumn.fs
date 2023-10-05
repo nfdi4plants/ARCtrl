@@ -18,7 +18,7 @@ type CompositeColumn = {
     ///
     /// ?raiseExeption: Default false. Set true if this function should raise an exception instead of return false.
     // TODO! Do not only check cells.Head
-    member this.validate(?raiseException: bool) =
+    member this.Validate(?raiseException: bool) =
         let raiseExeption = Option.defaultValue false raiseException
         let header = this.Header
         let cells = this.Cells
@@ -38,3 +38,14 @@ type CompositeColumn = {
             // Maybe still return `msg` somehow if `raiseExeption` is false?
             false
 
+    /// <summary>
+    /// Returns an array of all units found in the cells of this column. Returns None if no units are found.
+    /// </summary>
+    member this.GetColumnUnits() =
+        let arr = [|
+            for cell in this.Cells do
+                if cell.isUnitized then
+                    let _, unit = cell.AsUnitized
+                    unit
+        |]
+        if Array.isEmpty arr then None else Some arr

@@ -7,6 +7,15 @@ open ColumnIndex
 
 open Fable.Core.JsInterop
 
+[<StringEnum>]
+type TableJoinOptions =
+/// Add only headers, no values
+| Headers
+/// Add headers and unit information without main value
+| WithUnit
+/// Add full columns
+| WithValues
+
 [<AttachMembers>]
 type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
 
@@ -39,7 +48,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         let mutable isValid: bool = true
         for columnIndex in 0 .. (this.ColumnCount - 1) do
             let column : CompositeColumn = this.GetColumn(columnIndex)
-            isValid <- column.validate(?raiseException=raiseException)
+            isValid <- column.Validate(?raiseException=raiseException)
         isValid
 
     /// Will return true or false if table is valid. 
@@ -57,7 +66,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         with get() = ArcTableAux.getRowCount this.Values
 
     member this.Columns 
-        with get() = [for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)] 
+        with get() = [|for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)|] 
 
     member this.Copy() : ArcTable = 
         ArcTable.create(
@@ -99,7 +108,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         ArcTableAux.SanityChecks.validateNoDuplicateUnique newHeader otherHeaders
         let c = { this.GetColumn(index) with Header = newHeader }
         // Test if column is still valid with new header, if so insert header at index
-        if c.validate() then
+        if c.Validate() then
             let setHeader = this.Headers.[index] <- newHeader
             ()
         // if we force convert cells, we want to convert the existing cells to a valid cell type for the new header
@@ -137,7 +146,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         SanityChecks.validateColumnIndex index this.ColumnCount true
         SanityChecks.validateColumn(CompositeColumn.create(header, cells))
         // 
-        Unchecked.addColumn header cells index forceReplace this.Headers this.Values
+        Unchecked.addColumn header cells index forceReplace false this.Headers this.Values
         Unchecked.fillMissingCells this.Headers this.Values
 
     static member addColumn (header: CompositeHeader, ?cells: CompositeCell [],?index: int ,?forceReplace : bool) : (ArcTable -> ArcTable) =
@@ -202,7 +211,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         columns
         |> Array.iter (fun col -> 
             let prevHeadersCount = this.Headers.Count
-            Unchecked.addColumn col.Header col.Cells index forceReplace this.Headers this.Values
+            Unchecked.addColumn col.Header col.Cells index forceReplace false this.Headers this.Values
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
@@ -426,8 +435,49 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.GetRow(index)
 
-    //member this.InsertParameterValue () =
-    //    this.in
+    /// <summary>
+    /// This function can be used to join two arc tables.
+    /// </summary>
+    /// <param name="table">The table to join to this table.</param>
+    /// <param name="joinOptions">Can add only headers, header with unitized cell information, headers with values.</param>
+    /// <param name="forceReplace">if set to true will replace unique columns.</param>
+    member this.Join(table:ArcTable, ?joinOptions: TableJoinOptions, ?forceReplace: bool) : unit =
+        let joinOptions = defaultArg joinOptions TableJoinOptions.Headers
+        let forceReplace = defaultArg forceReplace false
+        let onlyHeaders = joinOptions = TableJoinOptions.Headers
+        let columns = 
+            let pre = table.Columns
+            match joinOptions with
+            | Headers -> pre |> Array.map (fun c -> {c with Cells = [||]})
+            // this is the most problematic case. How do we decide which unit we want to propagate? All?
+            | WithUnit -> 
+                pre |> Array.map (fun c -> 
+                    let unitsOpt = c.GetColumnUnits()
+                    match unitsOpt with
+                    | Some units ->
+                        let toCompositeCell = fun unitOA -> CompositeCell.createUnitized ("", unitOA)
+                        let unitCells = units |> Array.map (fun u -> toCompositeCell u)
+                        {c with Cells = unitCells}
+                    | None -> {c with Cells = [||]}
+                )
+            | WithValues -> pre
+        SanityChecks.validateNoDuplicateUniqueColumns columns
+        columns |> Array.iter (fun x -> SanityChecks.validateColumn x)
+        let mutable index = this.ColumnCount
+        columns
+        |> Array.iter (fun col -> 
+            let prevHeadersCount = this.Headers.Count
+            Unchecked.addColumn col.Header col.Cells index forceReplace onlyHeaders this.Headers this.Values
+            // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
+            if this.Headers.Count > prevHeadersCount then index <- index + 1
+        )
+        Unchecked.fillMissingCells this.Headers this.Values
+
+    static member join(table:ArcTable, ?joinOptions: TableJoinOptions, ?forceReplace: bool) =
+        fun (this: ArcTable) ->
+            let copy = this.Copy()
+            copy.Join(table,?joinOptions=joinOptions,?forceReplace=forceReplace)
+            copy
 
     static member insertParameterValue (t : ArcTable) (p : ProcessParameterValue) : ArcTable = 
         raise (System.NotImplementedException())

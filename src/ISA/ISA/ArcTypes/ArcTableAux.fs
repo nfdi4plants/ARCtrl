@@ -2,9 +2,7 @@
 
 open ARCtrl.ISA
 open System.Collections.Generic
-
-
-
+open Fable.Core
 
 // Taken from FSharpAux.Core
 /// .Net Dictionary
@@ -92,7 +90,7 @@ module SanityChecks =
         if index < 0 then failwith "Cannot insert CompositeColumn at index < 0."
         if eval index rowCount then failwith $"Specified index is out of table range! Table contains only {rowCount} rows."
 
-    let validateColumn (column:CompositeColumn) = column.validate(true) |> ignore
+    let validateColumn (column:CompositeColumn) = column.Validate(true) |> ignore
 
     let inline validateNoDuplicateUniqueColumns (columns:seq<CompositeColumn>) =
         let duplicates = columns |> Seq.map (fun x -> x.Header) |> tryFindDuplicateUniqueInArray
@@ -201,7 +199,17 @@ module Unchecked =
             | Some (CompositeCell.Unitized _)   -> CompositeCell.emptyUnitized
             | _                                 -> failwith "[extendBodyCells] This should never happen, IsTermColumn header must be paired with either term or unitized cell."
 
-    let addColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="newHeader"></param>
+    /// <param name="newCells"></param>
+    /// <param name="index"></param>
+    /// <param name="forceReplace"></param>
+    /// <param name="onlyHeaders">If set to true, no values will be added</param>
+    /// <param name="headers"></param>
+    /// <param name="values"></param>
+    let addColumn (newHeader: CompositeHeader) (newCells: CompositeCell []) (index: int) (forceReplace: bool) (onlyHeaders: bool) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
         let mutable numberOfNewColumns = 1
         let mutable index = index
         /// If this isSome and the function does not raise exception we are executing a forceReplace.
@@ -216,7 +224,7 @@ module Unchecked =
         /// This ensures nothing gets messed up during mutable insert, for example inser header first and change ColumCount in the process
         let startColCount, startRowCount = getColumnCount headers, getRowCount values
         // headers are easily added. Just insert at position of index. This will insert without replace.
-        let setNewHeader = 
+        let setNewHeader() = 
             // if duplication found and we want to forceReplace we remove related header
             if hasDuplicateUnique.IsSome then
                 removeHeader(index) headers
@@ -224,17 +232,15 @@ module Unchecked =
         /// For all columns with index >= we need to increase column index by `numberOfNewColumns`.
         /// We do this by moving all these columns one to the right with mutable dictionary set logic (cells.[key] <- newValue), 
         /// Therefore we need to start with the last column to not overwrite any values we still need to shift
-        let increaseColumnIndices =
-            // Only do this if column is inserted and not appended AND we do not execute forceReplace!
-            if index < startColCount && hasDuplicateUnique.IsNone then
-                /// Get last column index
-                let lastColumnIndex = System.Math.Max(startColCount - 1, 0) // If there are no columns. We get negative last column index. In this case just return 0.
-                // start with last column index and go down to `index`
-                for columnIndex = lastColumnIndex downto index do
-                    for rowIndex in 0 .. startRowCount do
-                        moveCellTo(columnIndex,rowIndex,columnIndex+numberOfNewColumns,rowIndex) values
+        let increaseColumnIndices() =
+            /// Get last column index
+            let lastColumnIndex = System.Math.Max(startColCount - 1, 0) // If there are no columns. We get negative last column index. In this case just return 0.
+            // start with last column index and go down to `index`
+            for columnIndex = lastColumnIndex downto index do
+                for rowIndex in 0 .. startRowCount do
+                    moveCellTo(columnIndex,rowIndex,columnIndex+numberOfNewColumns,rowIndex) values
         /// Then we can set the new column at `index`
-        let setNewCells =
+        let setNewCells() =
             // Not sure if this is intended? If we for example `forceReplace` a single column table with `Input`and 5 rows with a new column of `Input` ..
             // ..and only 2 rows, then table RowCount will decrease from 5 to 2.
             // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
@@ -244,6 +250,13 @@ module Unchecked =
                 let columnIndex = index
                 setCellAt (columnIndex,rowIndex,cell) values
             )
+        setNewHeader()
+        // Only do this if column is inserted and not appended AND we do not execute forceReplace!
+        if index < startColCount && hasDuplicateUnique.IsNone then
+            increaseColumnIndices()
+        // 
+        if not onlyHeaders then 
+            setNewCells()
         ()
 
     // We need to calculate the max number of rows between the new columns and the existing columns in the table.

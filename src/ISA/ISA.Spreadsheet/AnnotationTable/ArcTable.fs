@@ -102,6 +102,7 @@ let toFsWorksheet (table : ArcTable) =
     let ws = FsWorksheet(table.Name)
     let columns = 
         table.Columns
+        |> List.ofArray
         |> List.sortBy classifyColumnOrder
         |> List.collect CompositeColumn.toFsColumns
     let maxRow = columns.Head.Length
