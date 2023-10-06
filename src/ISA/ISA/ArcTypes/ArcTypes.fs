@@ -1646,9 +1646,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy
 
     /// <summary>
-    /// Returns all Contacts/Performers from assays/studies/investigation unfiltered. 
+    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation. 
     /// </summary>
-    member this.GetAllPersons() =
+    member this.GetAllPersons() : Person [] =
         let persons = ResizeArray()
         for a in this.Assays do
             persons.AddRange(a.Performers)
@@ -1656,6 +1656,20 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             persons.AddRange(s.Contacts)
         persons.AddRange(this.Contacts)
         persons
+        |> Array.ofSeq
+        |> Array.distinct
+
+    /// <summary>
+    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation unfiltered. 
+    /// </summary>
+    member this.GetAllPublications() : Publication [] =
+        let pubs = ResizeArray()
+        for s in this.Studies do
+            pubs.AddRange(s.Publications)
+        pubs.AddRange(this.Publications)
+        pubs
+        |> Array.ofSeq
+        |> Array.distinct
 
     // - Study API - CRUD //
     /// <summary>
