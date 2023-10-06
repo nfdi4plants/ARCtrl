@@ -457,28 +457,39 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
 ]
 
 let private tests_GetHashCode = testList "GetHashCode" [
+    let createFullStudy(name) =
+        ArcStudy.make 
+            name
+            (Some "My Study Title")
+            (Some "My Study Description")
+            (Some "My Study SubmissionDate")
+            (Some "My Study PRD")
+            [|Publication.empty; Publication.create(Title="Some nice title")|]
+            ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+            [|OntologyAnnotation.empty; OntologyAnnotation.empty; OntologyAnnotation.fromString("Name", "tsr", "Tan")|]
+            (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+            (ResizeArray(["Registered Assay1"; "Registered Assay2"]))
+            [|Factor.empty; Factor.create(Name="Factorios")|]
+            ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
     testCase "passing" <| fun _ ->
-        let actual = ArcStudy.init("MyStudy")
+        let actual = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
         Expect.isSome (actual.GetHashCode() |> Some) ""
     testCase "equal minimal" <| fun _ -> 
-        let assay = ArcStudy.init("MyStudy")
-        let copy = assay.Copy()
-        let assay2 = ArcStudy.init("MyStudy")
-        Expect.equal assay copy "equal"
-        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
-        Expect.equal (assay.GetHashCode()) (assay2.GetHashCode()) "assay2 hash equal"
-    testCase "equal" <| fun _ -> 
-        let assay = 
-            ArcAssay.make 
-                "MyAssay"
-                (OntologyAnnotation.fromString "mt" |> Some)
-                (OntologyAnnotation.fromString "tt" |> Some)
-                (OntologyAnnotation.fromString "tp" |> Some)
-                (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
-                ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
-                ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
-        let copy = assay.Copy()
-        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) ""
+        let actual = ArcAssay.init("MyAssay")
+        let copy = actual.Copy()
+        let actual2 = ArcAssay.init("MyAssay")
+        Expect.equal actual copy "equal"
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (actual.GetHashCode()) (actual2.GetHashCode()) "assay2 hash equal"
+    testCase "equal" <| fun _ ->
+        let actual = createFullStudy "MyStudy"
+        let copy = actual.Copy()
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) ""
+    testCase "not equal" <| fun _ ->
+        let x1 = ArcStudy.init "Test"
+        let x2 = ArcStudy.init "Other Test"
+        Expect.notEqual x1 x2 "not equal"
+        Expect.notEqual (x1.GetHashCode()) (x2.GetHashCode()) "not equal hash"
 ]
 
 let main = 

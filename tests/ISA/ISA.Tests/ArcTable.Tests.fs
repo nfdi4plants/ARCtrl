@@ -75,16 +75,42 @@ let private tests_member =
             let table2 = create_testTable()
             Expect.equal table1 table2 "equal"
         )
-        // i have no idea why this does not work
-        testCase "GetHashCode" (fun () ->
+    ]
+
+let private tests_GetHashCode = testList "GetHashCode" [
+    testCase "GetHashCode" <| fun _ ->
             let table1 = create_testTable()
             let table2 = create_testTable()
             let hash1 = table1.GetHashCode()
             let hash2 = table2.GetHashCode()
             Expect.equal table1 table2 "Table"
             Expect.equal hash1 hash2 "HashCode"
-        )
-    ]
+    testCase "equal, table-order does not matter" <| fun _ ->
+        let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, [|for i in 1 .. 6 do yield sprintf "Source_%i" i |> CompositeCell.createFreeText|])
+        let column_output = CompositeColumn.create(CompositeHeader.Output IOType.RawDataFile, [|for i in 1 .. 6 do yield sprintf "File_%i" i |> CompositeCell.createFreeText|])
+        let table1 =
+            let t = ArcTable.init("MyTable")
+            t.AddColumn (column_input.Header, column_input.Cells)
+            // Add later but at index 0
+            t.AddColumn (column_output.Header, column_output.Cells, 0)
+            t
+        let table2 =
+            let t = ArcTable.init("MyTable")
+            t.AddColumn (column_output.Header, column_output.Cells)
+            // add without index appends
+            t.AddColumn (column_input.Header, column_input.Cells)
+            t
+        let v1 = table1.Values |> Array.ofSeq
+        let v2 = table2.Values |> Array.ofSeq
+        Expect.notEqual v1 v2 "seq not equal, proofs that in fact the table was built in different order. But because we use dictionary with index keys, order is irrelevant."
+        Expect.equal table1 table2 "table equal"
+        Expect.equal (table1.GetHashCode()) (table2.GetHashCode()) "Hash"
+    testCase "notEqual table-order" <| fun _ ->
+        let actual = ArcTable.init("My Assay")
+        let notActual = create_testTable()
+        Expect.notEqual actual notActual "equal"
+        Expect.notEqual (actual.GetHashCode()) (notActual.GetHashCode()) "Hash"
+]
 
 let private tests_validate = 
     testList "Validate" [
@@ -2220,5 +2246,6 @@ let main =
         tests_validate
         tests_UpdateRefWithSheet
         tests_Join
+        tests_GetHashCode
         tests_equality
     ]

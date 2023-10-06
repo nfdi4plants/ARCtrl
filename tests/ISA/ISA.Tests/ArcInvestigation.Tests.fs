@@ -570,6 +570,11 @@ let private tests_GetHashCode = testList "GetHashCode" [
                 [|Remark.create(12,"Test"); Remark.create(42, "The answer")|]
         let copy = actual.Copy()
         Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) ""
+    testCase "not equal" <| fun _ ->
+        let x1 = ArcInvestigation.init "Test"
+        let x2 = ArcInvestigation.init "Other Test"
+        Expect.notEqual x1 x2 "not equal"
+        Expect.notEqual (x1.GetHashCode()) (x2.GetHashCode()) "not equal hash"
 ]
 
 //let tests_UpdateBy = testList "UpdateBy" [
