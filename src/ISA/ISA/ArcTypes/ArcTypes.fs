@@ -1683,6 +1683,30 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let copy = inv.Copy()
             copy.DeregisterMissingAssays()
             copy
+    
+    /// Updates the IOtypes of the IO columns (Input, Output) across all tables in the investigation if possible.
+    ///
+    /// If an entity (Row Value of IO Column) with the same name as an entity with a higher IOType specifity is found, the IOType of the entity with the lower IOType specificity is updated.
+    ///
+    /// E.g. In Table1, there is a column "Output [Sample Name]" with an entity "Sample1". In Table2, there is a column "Input [Source Name]" with the same entity "Sample1". By equality of the entities, the IOType of the Input column in Table2 is inferred to be Sample, resulting in "Input [Sample Name]".
+    ///
+    /// E.g. RawDataFile is more specific than Source, but less specific than DerivedDataFile.
+    ///
+    /// E.g. Sample is equally specific to RawDataFile.
+    member this.UpdateIOTypeByEntityID() =
+        let ioMap = 
+            [
+                for study in this.Studies do
+                    yield! study.Tables
+                for assay in this.Assays do
+                    yield! assay.Tables
+            ]
+            |> ResizeArray
+            |> ArcTablesAux.getIOMap
+        for study in this.Studies do
+            ArcTablesAux.applyIOMap ioMap study.Tables
+        for assay in this.Assays do
+            ArcTablesAux.applyIOMap ioMap assay.Tables          
 
     member this.Copy() : ArcInvestigation =
         let nextAssays = ResizeArray()

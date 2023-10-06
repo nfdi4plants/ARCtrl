@@ -41,6 +41,41 @@ type IOType =
         | FreeText s -> stringCreate s
         | anyelse -> stringCreate anyelse
 
+    /// Given two IOTypes, tries to return the one with a higher specificity. If both are equally specific, fail.
+    ///
+    /// E.g. RawDataFile is more specific than Source, but less specific than DerivedDataFile.
+    ///
+    /// E.g. Sample is equally specific to RawDataFile.
+    member this.Merge(other) = 
+        match this, other with
+        | FreeText s1, FreeText s2 when s1 = s2 -> FreeText (s1)
+        | FreeText s1, FreeText s2 -> failwith $"FreeText IO column names {s1} and {s2} do differ"
+        | FreeText s, _ -> failwith $"FreeText IO column and {other} can not be merged"
+        | ImageFile, Source -> ImageFile
+        | ImageFile, RawDataFile -> ImageFile
+        | ImageFile, DerivedDataFile -> ImageFile
+        | ImageFile, ImageFile -> ImageFile
+        | ImageFile, _ -> failwith $"ImageFile IO column and {other} can not be merged"
+        | DerivedDataFile, Source -> DerivedDataFile
+        | DerivedDataFile, RawDataFile -> DerivedDataFile
+        | DerivedDataFile, DerivedDataFile -> DerivedDataFile
+        | DerivedDataFile, ImageFile -> ImageFile
+        | DerivedDataFile, _ -> failwith $"DerivedDataFile IO column and {other} can not be merged"
+        | RawDataFile, Source -> RawDataFile
+        | RawDataFile, RawDataFile -> RawDataFile
+        | RawDataFile, DerivedDataFile -> DerivedDataFile
+        | RawDataFile, ImageFile -> ImageFile
+        | RawDataFile, _ -> failwith $"RawDataFile IO column and {other} can not be merged"
+        | Sample, Source -> Sample
+        | Sample, Sample -> Sample
+        | Sample, _ -> failwith $"Sample IO column and {other} can not be merged"
+        | Source, Source -> Source
+        | Source, _ -> other
+        | Material, Source -> Material
+        | Material, Material -> Material
+        | Material, _ -> failwith $"Material IO column and {other} can not be merged"
+        
+
     override this.ToString() =
         match this with
         | Source            -> "Source Name" 
@@ -314,7 +349,7 @@ type CompositeHeader =
 
     member this.isOutput =
         match this with 
-        | Input io -> true 
+        | Output io -> true 
         | anythingElse -> false
 
     member this.isParameter =
@@ -381,6 +416,16 @@ type CompositeHeader =
         match this with
         | FreeText _ -> true
         | anythingElse -> false
+
+    member this.tryInput() =
+        match this with
+        | Input io -> Some io
+        | _ -> None
+
+    member this.tryOutput() =
+        match this with
+        | Output io -> Some io
+        | _ -> None
 
     member this.TryParameter() = 
         match this with 

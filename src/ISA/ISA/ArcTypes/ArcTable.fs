@@ -268,14 +268,6 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.GetColumn(index)
 
-    member this.GetColumnByHeader (header:CompositeHeader) =
-        let index = this.Headers |> Seq.findIndex (fun x -> x = header)
-        this.GetColumn(index)
-
-    static member getColumnByHeader (header:CompositeHeader) =
-        fun (table:ArcTable) ->
-            table.GetColumnByHeader(header)
-
     member this.TryGetColumnByHeader (header:CompositeHeader) =
         let index = this.Headers |> Seq.tryFindIndex (fun x -> x = header)
         index
@@ -284,6 +276,51 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     static member tryGetColumnByHeader (header:CompositeHeader) =
         fun (table:ArcTable) ->
             table.TryGetColumnByHeader(header)
+
+    member this.GetColumnByHeader (header:CompositeHeader) =
+        match this.TryGetColumnByHeader(header) with
+        | Some c -> c
+        | None -> failwithf "Unable to find column with header in table %s: %O" this.Name header
+
+    static member getColumnByHeader (header:CompositeHeader) =
+        fun (table:ArcTable) ->
+            table.GetColumnByHeader(header)
+
+    member this.TryGetInputColumn() =
+        let index = this.Headers |> Seq.tryFindIndex (fun x -> x.isInput)
+        index
+        |> Option.map (fun i -> this.GetColumn(i))
+
+    static member tryGetInputColumn () =
+        fun (table:ArcTable) ->
+            table.TryGetInputColumn()
+
+    member this.GetInputColumn() =
+        match this.TryGetInputColumn() with
+        | Some c -> c
+        | None -> failwithf "Unable to find input column in table %s" this.Name
+
+    static member getInputColumn () =
+        fun (table:ArcTable) ->
+            table.GetInputColumn()
+
+    member this.TryGetOutputColumn() =
+        let index = this.Headers |> Seq.tryFindIndex (fun x -> x.isOutput)
+        index
+        |> Option.map (fun i -> this.GetColumn(i))
+
+    static member tryGetOutputColumn () =
+        fun (table:ArcTable) ->
+            table.TryGetOutputColumn()
+
+    member this.GetOutputColumn() =
+        match this.TryGetOutputColumn() with
+        | Some c -> c
+        | None -> failwithf "Unable to find output column in table %s" this.Name
+
+    static member getOutputColumn () =
+        fun (table:ArcTable) ->
+            table.GetOutputColumn()
 
     // - Row API - //
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
