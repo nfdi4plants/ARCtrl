@@ -604,19 +604,20 @@ let private tests_GetHashCode = testList "GetHashCode" [
         let assay = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
         Expect.isSome (assay.GetHashCode() |> Some) ""
     testCase "equal minimal" <| fun _ -> 
-        let assay = ArcAssay.create("MyAssay")
+        let assay = ArcAssay.init("MyAssay")
         let copy = assay.Copy()
+        let assay2 = ArcAssay.init("MyAssay")
         Expect.equal assay copy "equal"
-        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "hash equal"
-    testCase "equal" <| fun _ -> // This test does not run successfully
-        // Arithmetic operation resulted in an overflow
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (assay.GetHashCode()) (assay2.GetHashCode()) "assay2 hash equal"
+    testCase "equal" <| fun _ ->
         let assay = 
             ArcAssay.make 
                 "MyAssay"
                 (OntologyAnnotation.fromString "mt" |> Some)
                 (OntologyAnnotation.fromString "tt" |> Some)
                 (OntologyAnnotation.fromString "tp" |> Some)
-                (ResizeArray([ArcTable.init("My Table")]))
+                (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
                 ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
                 ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
         let copy = assay.Copy()

@@ -456,12 +456,38 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.isEmpty actual.Comments "Comments"
 ]
 
+let private tests_GetHashCode = testList "GetHashCode" [
+    testCase "passing" <| fun _ ->
+        let actual = ArcStudy.init("MyStudy")
+        Expect.isSome (actual.GetHashCode() |> Some) ""
+    testCase "equal minimal" <| fun _ -> 
+        let assay = ArcStudy.init("MyStudy")
+        let copy = assay.Copy()
+        let assay2 = ArcStudy.init("MyStudy")
+        Expect.equal assay copy "equal"
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (assay.GetHashCode()) (assay2.GetHashCode()) "assay2 hash equal"
+    testCase "equal" <| fun _ -> 
+        let assay = 
+            ArcAssay.make 
+                "MyAssay"
+                (OntologyAnnotation.fromString "mt" |> Some)
+                (OntologyAnnotation.fromString "tt" |> Some)
+                (OntologyAnnotation.fromString "tp" |> Some)
+                (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+                ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+                ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+        let copy = assay.Copy()
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) ""
+]
+
 let main = 
     testList "ArcStudy" [
         tests_copy
         tests_RegisteredAssays
         test_create
         tests_UpdateBy
+        tests_GetHashCode
     ]
 
 
