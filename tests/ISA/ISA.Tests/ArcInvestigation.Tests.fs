@@ -541,7 +541,7 @@ let tests_Assay = testList "CRUD Assay" [
     ]
 ]
 
-let tests_UpdateIOTypes = testList "UpdateIOType" [
+let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
     testList "SameAssay" [ 
         testCase "nothingToUpdate" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
@@ -557,7 +557,7 @@ let tests_UpdateIOTypes = testList "UpdateIOType" [
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             let a_Copy = a.Copy()
-            i.UpdateIO()
+            i.UpdateIOTypeByEntityID()
             Expect.sequenceEqual a.Tables a_Copy.Tables "Tables should be unchanged"
         testCase "updateOutputByNextInput" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
@@ -572,7 +572,7 @@ let tests_UpdateIOTypes = testList "UpdateIOType" [
                 CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
-            i.UpdateIO()
+            i.UpdateIOTypeByEntityID()
             Expect.sequenceEqual t1.Headers [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample] "Headers should be updated"
             Expect.sequenceEqual t2.Headers [CompositeHeader.Input IOType.Sample; CompositeHeader.Output IOType.Sample] "Headers should be updated"
         testCase "failBecauseClashing" <| fun _ ->
@@ -588,7 +588,7 @@ let tests_UpdateIOTypes = testList "UpdateIOType" [
                 CompositeColumn.create (CompositeHeader.Input IOType.DerivedDataFile, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
-            Expect.throws (fun () -> i.UpdateIO()) "Update should fail as sample and data can not be updated against each other."
+            Expect.throws (fun () -> i.UpdateIOTypeByEntityID()) "Update should fail as sample and data can not be updated against each other."
     ]
     testList "AssayAndStudy" [ 
         testCase "nothingToUpdate" <| fun _ ->
@@ -607,7 +607,7 @@ let tests_UpdateIOTypes = testList "UpdateIOType" [
             |]
             let a_Copy = a.Copy()
             let s_Copy = s.Copy()
-            i.UpdateIO()
+            i.UpdateIOTypeByEntityID()
             Expect.sequenceEqual a.Tables a_Copy.Tables "Tables should be unchanged"
             Expect.sequenceEqual s.Tables s_Copy.Tables "Tables should be unchanged"
         testCase "updateOutputByNextInput" <| fun _ ->
@@ -624,7 +624,7 @@ let tests_UpdateIOTypes = testList "UpdateIOType" [
                 CompositeColumn.create (CompositeHeader.Input IOType.Source, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
-            i.UpdateIO()
+            i.UpdateIOTypeByEntityID()
             Expect.sequenceEqual t1.Headers [CompositeHeader.Input IOType.Source; CompositeHeader.Output IOType.Sample] "Headers should be updated"
             Expect.sequenceEqual t2.Headers [CompositeHeader.Input IOType.Sample; CompositeHeader.Output IOType.Sample] "Headers should be updated"
         testCase "failBecauseClashing" <| fun _ ->
@@ -641,7 +641,7 @@ let tests_UpdateIOTypes = testList "UpdateIOType" [
                 CompositeColumn.create (CompositeHeader.Input IOType.DerivedDataFile, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
-            Expect.throws (fun () -> i.UpdateIO()) "Update should fail as sample and data can not be updated against each other."
+            Expect.throws (fun () -> i.UpdateIOTypeByEntityID()) "Update should fail as sample and data can not be updated against each other."
     ]
 ]
 
@@ -805,6 +805,6 @@ let main =
         tests_Study
         tests_Assay
         tests_GetHashCode
-        tests_UpdateIOTypes
+        tests_UpdateIOTypeByEntityIDTypes
         // tests_UpdateBy
     ]
