@@ -86,22 +86,20 @@ let private tests_GetHashCode = testList "GetHashCode" [
             Expect.equal table1 table2 "Table"
             Expect.equal hash1 hash2 "HashCode"
     testCase "equal, table-order does not matter" <| fun _ ->
-        let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, [|for i in 1 .. 6 do yield sprintf "Source_%i" i |> CompositeCell.createFreeText|])
-        let column_output = CompositeColumn.create(CompositeHeader.Output IOType.RawDataFile, [|for i in 1 .. 6 do yield sprintf "File_%i" i |> CompositeCell.createFreeText|])
-        let table1 =
+        let column_inputHeader, column_inputValues = CompositeHeader.Input IOType.Source, [|for i in 0 .. 20 do yield (0,i), sprintf "Source_%i" i |> CompositeCell.createFreeText|]
+        let column_outputHeader, column_outputValues = CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 20 do yield (1,i), sprintf "File_%i" i |> CompositeCell.createFreeText|]
+        let createTable(reverse:bool) =
             let t = ArcTable.init("MyTable")
-            t.AddColumn (column_input.Header, column_input.Cells)
-            // Add later but at index 0
-            t.AddColumn (column_output.Header, column_output.Cells, 0)
+            let shuffled = if reverse then [|yield! column_outputValues; yield! column_inputValues|] else [|yield! column_inputValues; yield! column_outputValues|]
+            t.Headers.AddRange([|column_inputHeader; column_outputHeader|])
+            for ele in shuffled do
+                t.Values.Add(ele)
+            Expect.isTrue (t.Validate()) "is valid!"
             t
-        let table2 =
-            let t = ArcTable.init("MyTable")
-            t.AddColumn (column_output.Header, column_output.Cells)
-            // add without index appends
-            t.AddColumn (column_input.Header, column_input.Cells)
-            t
-        let v1 = table1.Values |> Array.ofSeq
-        let v2 = table2.Values |> Array.ofSeq
+        let table1 = createTable(false)
+        let table2 = createTable(true)
+        let v1 = table1.Values |> Array.ofSeq |> Array.map (function | KeyValue (k,v) -> [box k;box v])
+        let v2 = table2.Values |> Array.ofSeq |> Array.map (function | KeyValue (k,v) -> [box k;box v])
         Expect.notEqual v1 v2 "seq not equal, proofs that in fact the table was built in different order. But because we use dictionary with index keys, order is irrelevant."
         Expect.equal table1 table2 "table equal"
         Expect.equal (table1.GetHashCode()) (table2.GetHashCode()) "Hash"

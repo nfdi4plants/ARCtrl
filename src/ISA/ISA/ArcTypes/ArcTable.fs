@@ -5,8 +5,6 @@ open System.Collections.Generic
 open ArcTableAux
 open ColumnIndex
 
-open Fable.Core.JsInterop
-
 [<StringEnum>]
 type TableJoinOptions =
 /// Add only headers, no values
@@ -260,7 +258,9 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         let h = this.Headers.[columnIndex]
         let cells = [|
             for i = 0 to this.RowCount - 1 do 
-                this.TryGetCellAt(columnIndex, i).Value
+                match this.TryGetCellAt(columnIndex, i) with
+                | None -> failwithf "Unable to find cell for index: (%i, %i)" columnIndex i
+                | Some c -> c
         |]
         CompositeColumn.create(h, cells)
 

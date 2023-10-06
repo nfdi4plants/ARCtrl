@@ -127,7 +127,6 @@ module Unchecked =
     let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
         match Dictionary.tryFind (fromCol, fromRow) cells with
         | Some c ->
-            // Dictionary.addOrUpdateInPlace (column+amount,row) c this.Values |> ignore // This is the same as `SetCellAt`
             // Remove value. This is necessary in the following scenario:
             //
             // "AddColumn.Existing Table.add less rows, insert at".
