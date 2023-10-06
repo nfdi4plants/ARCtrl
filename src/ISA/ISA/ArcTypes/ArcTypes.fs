@@ -1683,7 +1683,14 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let copy = inv.Copy()
             copy.DeregisterMissingAssays()
             copy
-
+    
+    /// Updates the IOtypes of the IO columns across all tables in the investigation if possible.
+    ///
+    /// If an entity with the same name as an entity with a higher IOType specifity is found, the IOType of the entity with the lower IOType specificity is updated.
+    ///
+    /// E.g. RawDataFile is more specific than Source, but less specific than DerivedDataFile.
+    ///
+    /// E.g. Sample is equally specific to RawDataFile.
     member this.UpdateIO() =
         let ioMap = 
             [
