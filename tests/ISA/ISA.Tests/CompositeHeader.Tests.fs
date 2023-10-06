@@ -30,14 +30,14 @@ let private tests_iotype =
             let caseInfos = IOType.Cases
             Expect.hasLength IOType.All (caseInfos.Length-1) "Expect one less than all because we do not want to track `FreeText` case."
         )
-        testCase "getExplanation" <| fun _ ->
+        testCase "getUIToolTip" <| fun _ ->
             let cases = IOType.Cases |> Array.map snd
             for case in cases do
-                let actual = IOType.getExplanation(U2.Case2 case)
+                let actual = IOType.getUITooltip(U2.Case2 case)
                 Expect.isTrue (actual.Length > 0) $"{case}"
-        testCase "GetExplanation" <| fun _ ->
+        testCase "GetUIToolTip" <| fun _ ->
             let iotype = IOType.Material
-            let actual = iotype.GetExplanation()
+            let actual = iotype.GetUITooltip()
             Expect.isTrue (actual.Length > 0) ""
     ]
 
@@ -59,11 +59,11 @@ let private tests_compositeHeader =
         testCase "getExplanation" <| fun _ ->
             let cases = CompositeHeader.Cases |> Array.map snd
             for case in cases do
-                let actual = CompositeHeader.getExplanation(U2.Case2 case)
+                let actual = CompositeHeader.getUITooltip(U2.Case2 case)
                 Expect.isTrue (actual.Length > 0) $"{case}"
         testCase "GetExplanation" <| fun _ ->
             let header = CompositeHeader.Component OntologyAnnotation.empty
-            let actual = header.GetExplanation()
+            let actual = header.GetUITooltip()
             Expect.isTrue (actual.Length > 0) ""
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 

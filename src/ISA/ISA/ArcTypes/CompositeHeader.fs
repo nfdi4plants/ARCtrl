@@ -74,9 +74,9 @@ type IOType =
         | Some s -> IOType.ofString s |> Some
         | None -> None
 
-    member this.GetExplanation() = IOType.getExplanation(!^this)
+    member this.GetUITooltip() = IOType.getUITooltip(!^this)
 
-    static member getExplanation(iotype: U2<IOType,string>) =
+    static member getUITooltip(iotype: U2<IOType,string>) =
         match iotype with
         | U2.Case1 Source | U2.Case2 "Source" -> 
             "The source value must be a unique identifier for an organism or a sample." 
@@ -402,9 +402,9 @@ type CompositeHeader =
         | Component oa -> Some (Component.create(ComponentType = oa))
         | _ -> None
 
-    member this.GetExplanation() =
+    member this.GetUITooltip() =
         // https://fable.io/docs/javascript/features.html#u2-u3--u9
-        CompositeHeader.getExplanation (!^this)
+        CompositeHeader.getUITooltip (!^this)
 
     // https://fable.io/docs/javascript/features.html#u2-u3--u9
     // U2 is an erased union type, allowing seemless integration into js syntax
@@ -412,7 +412,7 @@ type CompositeHeader =
     /// Can pass header as `U2.Case1 compositeHeader` or `U2.Case2 string` or (requires `open Fable.Core.JsInterop`) `!^compositeHeader` or `!^string`
     /// </summary>
     /// <param name="header"></param>
-    static member getExplanation(header:U2<CompositeHeader,string>) =
+    static member getUITooltip(header:U2<CompositeHeader,string>) =
         match header with
         | U2.Case1 (Component _) | U2.Case2 "Component" -> 
             "Component columns are used to describe physical components of a experiment, e.g. instrument names, software names, and reagents names."
