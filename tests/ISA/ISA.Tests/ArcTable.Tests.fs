@@ -75,16 +75,15 @@ let private tests_member =
             let table2 = create_testTable()
             Expect.equal table1 table2 "equal"
         )
-        #if !FABLE_COMPILER
         // i have no idea why this does not work
         testCase "GetHashCode" (fun () ->
             let table1 = create_testTable()
             let table2 = create_testTable()
             let hash1 = table1.GetHashCode()
             let hash2 = table2.GetHashCode()
+            Expect.equal table1 table2 "Table"
             Expect.equal hash1 hash2 "HashCode"
         )
-        #endif
     ]
 
 let private tests_validate = 
