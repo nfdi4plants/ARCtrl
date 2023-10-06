@@ -285,6 +285,40 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.TryGetColumnByHeader(header)
 
+    member this.GetInputColumn() =
+        let index = this.Headers |> Seq.findIndex (fun x -> x.isInput)
+        this.GetColumn(index)
+
+    static member getInputColumn () =
+        fun (table:ArcTable) ->
+            table.GetInputColumn()
+
+    member this.TryGetInputColumn() =
+        let index = this.Headers |> Seq.tryFindIndex (fun x -> x.isInput)
+        index
+        |> Option.map (fun i -> this.GetColumn(i))
+
+    static member tryGetInputColumn () =
+        fun (table:ArcTable) ->
+            table.TryGetInputColumn()
+
+    member this.GetOutputColumn() =
+        let index = this.Headers |> Seq.findIndex (fun x -> x.isOutput)
+        this.GetColumn(index)
+
+    static member getOutputColumn () =
+        fun (table:ArcTable) ->
+            table.GetOutputColumn()
+
+    member this.TryGetOutputColumn() =
+        let index = this.Headers |> Seq.tryFindIndex (fun x -> x.isOutput)
+        index
+        |> Option.map (fun i -> this.GetColumn(i))
+
+    static member tryGetOutputColumn () =
+        fun (table:ArcTable) ->
+            table.TryGetOutputColumn()
+
     // - Row API - //
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
         let index = defaultArg index this.RowCount

@@ -36,6 +36,66 @@ module ArcTablesAux =
         | Some index -> index
         | None -> failwith $"Unable to find table with name '{name}'!"
 
+    /// Collects the IOType of each distinct entity in the tables. Then merges the IOType of each entity according to the IOType.Merge function.
+    let getIOMap (tables: ResizeArray<ArcTable>) =
+        let mappings : Dictionary<string,IOType> = Dictionary()
+        let includeInMap (name : string) (ioType:IOType) = 
+            if name <> "" then 
+                match Aux.Dict.tryFind name mappings with
+                | Some oldIOType -> 
+                    let newIOType = oldIOType.Merge ioType
+                    mappings.[name] <- newIOType
+                | None ->
+                    mappings.Add(name, ioType)
+        for table in tables do
+            
+            match table.TryGetInputColumn() with
+            | Some ic -> 
+                let ioType = ic.Header.tryInput().Value
+                ic.Cells
+                |> Array.iter (fun c -> 
+                    includeInMap (c.ToFreeTextCell().AsFreeText) ioType
+                )
+            | None -> ()
+            match table.TryGetOutputColumn() with
+            | Some oc -> 
+                let ioType = oc.Header.tryOutput().Value
+                oc.Cells
+                |> Array.iter (fun c -> 
+                    includeInMap (c.ToFreeTextCell().AsFreeText) ioType
+                )
+            | None -> ()
+        mappings
+
+    let applyIOMap (map : Dictionary<string,IOType>) (tables : ResizeArray<ArcTable>) = 
+        for table in tables do
+            match table.TryGetInputColumn() with
+            | Some ic -> 
+                let index = table.Headers |> Seq.findIndex (fun x -> x.isInput)
+                let oldIoType = ic.Header.tryInput().Value
+                let newIOType = 
+                    ic.Cells
+                    |> Array.fold (fun (io : IOType) c ->
+                        match Aux.Dict.tryFind (c.ToFreeTextCell().AsFreeText) map with
+                        | Some newIO -> io.Merge newIO
+                        | None -> io
+                    ) oldIoType
+                table.UpdateHeader(index, CompositeHeader.Input(newIOType))
+            | None -> ()
+            match table.TryGetOutputColumn() with
+            | Some oc -> 
+                let index = table.Headers |> Seq.findIndex (fun x -> x.isOutput)
+                let oldIoType = oc.Header.tryOutput().Value
+                let newIOType = 
+                    oc.Cells
+                    |> Array.fold (fun (io : IOType) c ->
+                        match Aux.Dict.tryFind (c.ToFreeTextCell().AsFreeText) map with
+                        | Some newIO -> io.Merge newIO
+                        | None -> io
+                    ) oldIoType
+                table.UpdateHeader(index, CompositeHeader.Output(newIOType))
+            | None -> ()
+
     module SanityChecks =
         
         /// Fails, if the index is out of range of the Tables collection. When allowAppend is set to true, it may be out of range by at most 1. 

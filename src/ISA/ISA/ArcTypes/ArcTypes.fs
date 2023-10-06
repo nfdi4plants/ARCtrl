@@ -1684,6 +1684,21 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy.DeregisterMissingAssays()
             copy
 
+    member this.UpdateIO() =
+        let ioMap = 
+            [
+                for study in this.Studies do
+                    yield! study.Tables
+                for assay in this.Assays do
+                    yield! assay.Tables
+            ]
+            |> ResizeArray
+            |> ArcTablesAux.getIOMap
+        for study in this.Studies do
+            ArcTablesAux.applyIOMap ioMap study.Tables
+        for assay in this.Assays do
+            ArcTablesAux.applyIOMap ioMap assay.Tables          
+
     member this.Copy() : ArcInvestigation =
         let nextAssays = ResizeArray()
         let nextStudies = ResizeArray()
