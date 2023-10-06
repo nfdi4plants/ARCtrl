@@ -21,7 +21,7 @@ let getTemplates(url: string option) =
 type JsWeb =
     static member getTemplates(url: string option) =
         async {
-            let! map = getTemplates(url)
-            return System.Collections.Generic.Dictionary(map)
+            let! templates = getTemplates(url)
+            return templates
         }
         |> Async.StartAsPromise

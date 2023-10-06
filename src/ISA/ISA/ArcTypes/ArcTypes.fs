@@ -449,15 +449,14 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             nextTables.Add(copy)
         let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
         let nextPerformers = this.Performers |> Array.map (fun c -> c.Copy())
-        ArcAssay(
-            this.Identifier,
-            ?measurementType = this.MeasurementType,
-            ?technologyType = this.TechnologyType, 
-            ?technologyPlatform = this.TechnologyPlatform, 
-            tables=nextTables, 
-            performers=nextPerformers, 
-            comments=nextComments
-        )
+        ArcAssay.make
+            this.Identifier
+            this.MeasurementType
+            this.TechnologyType
+            this.TechnologyPlatform
+            nextTables
+            nextPerformers
+            nextComments
 
     /// <summary>
     /// Updates given assay with another assay, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
@@ -627,6 +626,19 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         | :? ArcAssay as assay -> 
             this.StructurallyEquals(assay)
         | _ -> false
+
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.MeasurementType
+            Aux.HashCodes.boxHashOption this.TechnologyType
+            Aux.HashCodes.boxHashOption this.TechnologyPlatform
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Tables
+            Aux.HashCodes.boxHashArray this.Performers
+            Aux.HashCodes.boxHashArray this.Comments
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int
 
 [<AttachMembers>]
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
@@ -1124,20 +1136,19 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let nextContacts = this.Contacts |> Array.map (fun c -> c.Copy())
         let nextPublications = this.Publications |> Array.map (fun c -> c.Copy())
         let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> Array.map (fun c -> c.Copy())
-        ArcStudy(
-            this.Identifier, 
-            ?title = this.Title, 
-            ?description = this.Description, 
-            ?submissionDate = this.SubmissionDate, 
-            ?publicReleaseDate = this.PublicReleaseDate, 
-            publications = nextPublications, 
-            contacts = nextContacts,
-            studyDesignDescriptors = nextStudyDesignDescriptors,
-            tables = nextTables,
-            registeredAssayIdentifiers = nextAssayIdentifiers,
-            factors = nextFactors,
-            comments = nextComments
-        )
+        ArcStudy.make
+            this.Identifier
+            this.Title
+            this.Description
+            this.SubmissionDate
+            this.PublicReleaseDate
+            nextPublications
+            nextContacts
+            nextStudyDesignDescriptors
+            nextTables
+            nextAssayIdentifiers
+            nextFactors
+            nextComments
 
     /// <summary>
     /// Updates given study from an investigation file against a study from a study file. Identifier will never be updated. 
@@ -1268,6 +1279,24 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         | :? ArcStudy as s -> 
             this.StructurallyEquals(s)
         | _ -> false
+
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.Title
+            Aux.HashCodes.boxHashOption this.Description
+            Aux.HashCodes.boxHashOption this.SubmissionDate
+            Aux.HashCodes.boxHashOption this.PublicReleaseDate
+            Aux.HashCodes.boxHashArray this.Publications
+            Aux.HashCodes.boxHashArray this.Contacts
+            Aux.HashCodes.boxHashArray this.StudyDesignDescriptors
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Tables
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.RegisteredAssayIdentifiers
+            Aux.HashCodes.boxHashArray this.Factors
+            Aux.HashCodes.boxHashArray this.Comments
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int
 
 [<AttachMembers>]
 type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
@@ -1616,6 +1645,32 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy.DeregisterAssay(studyIdentifier, assayIdentifier)
             copy
 
+    /// <summary>
+    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation. 
+    /// </summary>
+    member this.GetAllPersons() : Person [] =
+        let persons = ResizeArray()
+        for a in this.Assays do
+            persons.AddRange(a.Performers)
+        for s in this.Studies do
+            persons.AddRange(s.Contacts)
+        persons.AddRange(this.Contacts)
+        persons
+        |> Array.ofSeq
+        |> Array.distinct
+
+    /// <summary>
+    /// Returns all fully distinct Contacts/Performers from assays/studies/investigation unfiltered. 
+    /// </summary>
+    member this.GetAllPublications() : Publication [] =
+        let pubs = ResizeArray()
+        for s in this.Studies do
+            pubs.AddRange(s.Publications)
+        pubs.AddRange(this.Publications)
+        pubs
+        |> Array.ofSeq
+        |> Array.distinct
+
     // - Study API - CRUD //
     /// <summary>
     /// Deregisters assays not found in ArcInvestigation.Assays from all studies.
@@ -1783,3 +1838,22 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         | :? ArcInvestigation as i -> 
             this.StructurallyEquals(i)
         | _ -> false
+
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.Title
+            Aux.HashCodes.boxHashOption this.Description
+            Aux.HashCodes.boxHashOption this.SubmissionDate
+            Aux.HashCodes.boxHashOption this.PublicReleaseDate
+            Aux.HashCodes.boxHashArray this.Publications
+            Aux.HashCodes.boxHashArray this.Contacts
+            Aux.HashCodes.boxHashArray this.OntologySourceReferences
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Assays
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Studies
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.RegisteredStudyIdentifiers
+            Aux.HashCodes.boxHashArray this.Comments
+            Aux.HashCodes.boxHashArray this.Remarks
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int

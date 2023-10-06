@@ -499,7 +499,7 @@ let private tests_technologyPlatform =
         )
     ]
 
-let private test_UpdateBy = testList "UpdateBy" [
+let private tests_UpdateBy = testList "UpdateBy" [
     let create_testAssay() = 
         ArcAssay.create(
             "MyAssay", 
@@ -598,6 +598,38 @@ let private test_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
         Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
 ]
+
+let private tests_GetHashCode = testList "GetHashCode" [
+    let createFullAssay(name) =
+        ArcAssay.make 
+            name
+            (OntologyAnnotation.fromString "mt" |> Some)
+            (OntologyAnnotation.fromString "tt" |> Some)
+            (OntologyAnnotation.fromString "tp" |> Some)
+            (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+            ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+            ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+    testCase "passing" <| fun _ ->
+        let actual = ArcStudy.init("MyStudy")
+        Expect.isSome (actual.GetHashCode() |> Some) ""
+    testCase "equal minimal" <| fun _ -> 
+        let assay = ArcStudy.init("MyStudy")
+        let copy = assay.Copy()
+        let assay2 = ArcStudy.init("MyStudy")
+        Expect.equal assay copy "equal"
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (assay.GetHashCode()) (assay2.GetHashCode()) "assay2 hash equal"
+    testCase "equal" <| fun _ -> 
+        let assay = createFullAssay "MyAssay"
+        let copy = assay.Copy()
+        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) ""
+    testCase "notEqual" <| fun _ ->
+        let x1 = ArcAssay.init("My assay")
+        let x2 = ArcAssay.init("My other assay")
+        Expect.notEqual x1 x2 "not equal"
+        Expect.notEqual (x1.GetHashCode()) (x2.GetHashCode()) "not equal hash"
+]
+
 let main = 
     testList "ArcAssay" [
         test_create
@@ -609,5 +641,6 @@ let main =
         tests_UpdateTable
         tests_updateTable
         tests_technologyPlatform
-        test_UpdateBy
+        tests_UpdateBy
+        tests_GetHashCode
     ]

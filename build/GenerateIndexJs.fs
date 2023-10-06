@@ -92,6 +92,7 @@ let ARCtrl_generate(rootPath: string) =
         "ArcStudy"; 
         "ArcInvestigation"; 
         "Template"
+        "Templates"
         "Organisation"
         "JsWeb"
         "ARC"

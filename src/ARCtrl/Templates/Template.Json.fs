@@ -127,7 +127,7 @@ module Templates =
 
     let fromJsonString (jsonString: string) =
         match decode jsonString with
-        | Ok templateMap    -> templateMap
+        | Ok templateMap    -> templateMap.Values |> Array.ofSeq
         | Error exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
 
     let toJsonString (spaces: int) (templateList: (string*Template) []) =

@@ -456,12 +456,49 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.isEmpty actual.Comments "Comments"
 ]
 
+let private tests_GetHashCode = testList "GetHashCode" [
+    let createFullStudy(name) =
+        ArcStudy.make 
+            name
+            (Some "My Study Title")
+            (Some "My Study Description")
+            (Some "My Study SubmissionDate")
+            (Some "My Study PRD")
+            [|Publication.empty; Publication.create(Title="Some nice title")|]
+            ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+            [|OntologyAnnotation.empty; OntologyAnnotation.empty; OntologyAnnotation.fromString("Name", "tsr", "Tan")|]
+            (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+            (ResizeArray(["Registered Assay1"; "Registered Assay2"]))
+            [|Factor.empty; Factor.create(Name="Factorios")|]
+            ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+    testCase "passing" <| fun _ ->
+        let actual = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
+        Expect.isSome (actual.GetHashCode() |> Some) ""
+    testCase "equal minimal" <| fun _ -> 
+        let actual = ArcAssay.init("MyAssay")
+        let copy = actual.Copy()
+        let actual2 = ArcAssay.init("MyAssay")
+        Expect.equal actual copy "equal"
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (actual.GetHashCode()) (actual2.GetHashCode()) "assay2 hash equal"
+    testCase "equal" <| fun _ ->
+        let actual = createFullStudy "MyStudy"
+        let copy = actual.Copy()
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) ""
+    testCase "not equal" <| fun _ ->
+        let x1 = ArcStudy.init "Test"
+        let x2 = ArcStudy.init "Other Test"
+        Expect.notEqual x1 x2 "not equal"
+        Expect.notEqual (x1.GetHashCode()) (x2.GetHashCode()) "not equal hash"
+]
+
 let main = 
     testList "ArcStudy" [
         tests_copy
         tests_RegisteredAssays
         test_create
         tests_UpdateBy
+        tests_GetHashCode
     ]
 
 
