@@ -601,27 +601,32 @@ let private tests_UpdateBy = testList "UpdateBy" [
 
 let private tests_GetHashCode = testList "GetHashCode" [
     testCase "passing" <| fun _ ->
-        let assay = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
-        Expect.isSome (assay.GetHashCode() |> Some) ""
+        let actual = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
+        Expect.isSome (actual.GetHashCode() |> Some) ""
     testCase "equal minimal" <| fun _ -> 
-        let assay = ArcAssay.init("MyAssay")
-        let copy = assay.Copy()
-        let assay2 = ArcAssay.init("MyAssay")
-        Expect.equal assay copy "equal"
-        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
-        Expect.equal (assay.GetHashCode()) (assay2.GetHashCode()) "assay2 hash equal"
+        let actual = ArcAssay.init("MyAssay")
+        let copy = actual.Copy()
+        let actual2 = ArcAssay.init("MyAssay")
+        Expect.equal actual copy "equal"
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (actual.GetHashCode()) (actual2.GetHashCode()) "assay2 hash equal"
     testCase "equal" <| fun _ ->
-        let assay = 
-            ArcAssay.make 
-                "MyAssay"
-                (OntologyAnnotation.fromString "mt" |> Some)
-                (OntologyAnnotation.fromString "tt" |> Some)
-                (OntologyAnnotation.fromString "tp" |> Some)
-                (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+        let actual = 
+            ArcStudy.make 
+                "MyStudy"
+                (Some "My Study Title")
+                (Some "My Study Description")
+                (Some "My Study SubmissionDate")
+                (Some "My Study PRD")
+                [|Publication.empty; Publication.create(Title="Some nice title")|]
                 ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+                [|OntologyAnnotation.empty; OntologyAnnotation.empty; OntologyAnnotation.fromString("Name", "tsr", "Tan")|]
+                (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+                (ResizeArray(["Registered Assay1"; "Registered Assay2"]))
+                [|Factor.empty; Factor.create(Name="Factorios")|]
                 ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
-        let copy = assay.Copy()
-        Expect.equal (assay.GetHashCode()) (copy.GetHashCode()) ""
+        let copy = actual.Copy()
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) ""
 ]
 
 let main = 

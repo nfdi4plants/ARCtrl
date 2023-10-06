@@ -541,6 +541,37 @@ let tests_Assay = testList "CRUD Assay" [
     ]
 ]
 
+let private tests_GetHashCode = testList "GetHashCode" [
+    testCase "passing" <| fun _ ->
+        let actual = ArcInvestigation.init("Test")
+        Expect.isSome (actual.GetHashCode() |> Some) ""
+    testCase "equal minimal" <| fun _ -> 
+        let actual = ArcInvestigation.init("Test")
+        let copy = actual.Copy()
+        let actual2 = ArcInvestigation.init("Test")
+        Expect.equal actual copy "equal"
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) "copy hash equal"
+        Expect.equal (actual.GetHashCode()) (actual2.GetHashCode()) "assay2 hash equal"
+    testCase "equal" <| fun _ ->
+        let actual = 
+            ArcInvestigation.make 
+                "Inv"
+                (Some "My Inv Title")
+                (Some "My Inv Description")
+                (Some "My Inv SubmissionDate")
+                (Some "My Inv PRD")
+                [|OntologySourceReference.create("Some Lorem ipsum description", Name="Descriptore"); OntologySourceReference.empty|]
+                [|Publication.empty; Publication.create(Title="Some nice title")|]
+                ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
+                (ResizeArray([ArcAssay.init("Registered Assay1"); ArcAssay.init("Registered Assay2")]))
+                (ResizeArray([ArcStudy.init("Registered Study1"); ArcStudy.init("Registered Study2")]))
+                (ResizeArray(["Registered Study1"; "Registered Study2"]))
+                ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+                [|Remark.create(12,"Test"); Remark.create(42, "The answer")|]
+        let copy = actual.Copy()
+        Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) ""
+]
+
 //let tests_UpdateBy = testList "UpdateBy" [
 //    let create_testInvestigation(assay) =
 //        ArcInvestigation.create(
@@ -663,5 +694,6 @@ let main =
         tests_Copy
         tests_Study
         tests_Assay
+        tests_GetHashCode
         // tests_UpdateBy
     ]
