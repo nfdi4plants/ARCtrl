@@ -690,9 +690,10 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         |> String.concat "\n"
 
     member this.StructurallyEquals (other: ArcTable) =
+        let sort = Array.ofSeq >> Array.sortBy (function |KeyValue (key,_) -> key)
         let n = this.Name = other.Name
         let headers = Aux.compareSeq this.Headers other.Headers
-        let values = Aux.compareSeq (this.Values |> Seq.sortBy (fun x -> x.Key)) (other.Values |> Seq.sortBy (fun x -> x.Key))
+        let values = Aux.compareSeq (sort this.Values) (sort other.Values)
         n && headers && values
 
     /// <summary>
@@ -712,7 +713,10 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
 
     // it's good practice to ensure that this behaves using the same fields as Equals does:
     override this.GetHashCode() = 
-        let name = this.Name.GetHashCode()
-        let headers = this.Headers |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
-        let bodyCells = this.Values |> Seq.sortBy (fun x -> x.Key) |> Seq.fold (fun state ele -> state + ele.GetHashCode()) 0
-        name + headers + bodyCells
+        [|
+            box this.Name
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Headers
+            this.Values |> Array.ofSeq |> Array.sortBy (function | KeyValue (key,_) -> key) |> Aux.HashCodes.boxHashArray
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int

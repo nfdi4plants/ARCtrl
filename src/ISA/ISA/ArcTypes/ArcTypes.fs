@@ -49,10 +49,6 @@ module ArcTypesAux =
             | None ->
                 ()
 
-    let boxHashOption (a: 'a option) : obj =
-        if a.IsSome then a.Value.GetHashCode() else (0).GetHashCode()
-        |> box
-
     /// <summary>
     /// Some functions can change ArcInvestigation.Assays elements. After these functions we must remove all registered assays which might have gone lost.
     /// </summary>
@@ -631,18 +627,18 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             this.StructurallyEquals(assay)
         | _ -> false
 
-    override this.GetHashCode() = failwith "Still need to implement correct GetHashCode function for ArcAssay type."
-        //[|
-        //    box this.Identifier
-        //    ArcTypesAux.boxHashOption this.MeasurementType
-        //    ArcTypesAux.boxHashOption this.TechnologyType
-        //    ArcTypesAux.boxHashOption this.TechnologyPlatform
-        //    box <| Array.ofSeq this.Tables
-        //    box this.Performers
-        //    box this.Comments
-        //|]
-        //|> Array.map (fun o -> o.GetHashCode())
-        //|> Array.sum
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.MeasurementType
+            Aux.HashCodes.boxHashOption this.TechnologyType
+            Aux.HashCodes.boxHashOption this.TechnologyPlatform
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Tables
+            Aux.HashCodes.boxHashArray this.Performers
+            Aux.HashCodes.boxHashArray this.Comments
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int
 
 [<AttachMembers>]
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
@@ -1284,23 +1280,23 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             this.StructurallyEquals(s)
         | _ -> false
 
-    override this.GetHashCode() = failwith "Still need to implement correct GetHashCode function for ArcStudy type."
-        //[|
-        //    box this.Identifier
-        //    ArcTypesAux.boxHashOption this.Title
-        //    ArcTypesAux.boxHashOption this.Description
-        //    ArcTypesAux.boxHashOption this.SubmissionDate
-        //    ArcTypesAux.boxHashOption this.PublicReleaseDate
-        //    this.Publications
-        //    this.Contacts
-        //    this.StudyDesignDescriptors
-        //    this.Tables
-        //    this.RegisteredAssayIdentifiers
-        //    this.Factors
-        //    this.Comments
-        //|]
-        //|> Array.map (fun o -> o.GetHashCode())
-        //|> Array.sum
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.Title
+            Aux.HashCodes.boxHashOption this.Description
+            Aux.HashCodes.boxHashOption this.SubmissionDate
+            Aux.HashCodes.boxHashOption this.PublicReleaseDate
+            Aux.HashCodes.boxHashArray this.Publications
+            Aux.HashCodes.boxHashArray this.Contacts
+            Aux.HashCodes.boxHashArray this.StudyDesignDescriptors
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Tables
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.RegisteredAssayIdentifiers
+            Aux.HashCodes.boxHashArray this.Factors
+            Aux.HashCodes.boxHashArray this.Comments
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int
 
 [<AttachMembers>]
 type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
@@ -1829,21 +1825,21 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             this.StructurallyEquals(i)
         | _ -> false
 
-    override this.GetHashCode() = failwith "Still need to implement correct GetHashCode function for ArcInvestigation type."
-        //[|
-        //    box this.Identifier
-        //    ArcTypesAux.boxHashOption this.Title
-        //    ArcTypesAux.boxHashOption this.Description
-        //    ArcTypesAux.boxHashOption this.SubmissionDate
-        //    ArcTypesAux.boxHashOption this.PublicReleaseDate
-        //    this.Publications
-        //    this.Contacts
-        //    this.OntologySourceReferences
-        //    this.Assays
-        //    this.Studies
-        //    this.RegisteredStudyIdentifiers
-        //    this.Comments
-        //    this.Remarks
-        //|]
-        //|> Array.map (fun o -> o.GetHashCode())
-        //|> Array.sum
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.Title
+            Aux.HashCodes.boxHashOption this.Description
+            Aux.HashCodes.boxHashOption this.SubmissionDate
+            Aux.HashCodes.boxHashOption this.PublicReleaseDate
+            Aux.HashCodes.boxHashArray this.Publications
+            Aux.HashCodes.boxHashArray this.Contacts
+            Aux.HashCodes.boxHashArray this.OntologySourceReferences
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Assays
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Studies
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.RegisteredStudyIdentifiers
+            Aux.HashCodes.boxHashArray this.Comments
+            Aux.HashCodes.boxHashArray this.Remarks
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int

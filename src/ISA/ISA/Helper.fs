@@ -7,6 +7,19 @@ let inline compareSeq (a: seq<'a>) (b: seq<'a>) =
     else 
         false
 
+
+module HashCodes =
+
+    let boxHashOption (a: 'a option) : obj =
+        if a.IsSome then a.Value.GetHashCode() else (0).GetHashCode()
+        |> box
+
+    let boxHashArray (a: 'a []) : obj =
+        a 
+        // from https://stackoverflow.com/a/53507559
+        |> Array.fold (fun acc o -> 0x9e3779b9 + o.GetHashCode() + (acc <<< 6) + (acc >>> 2) ) 0
+        |> box
+
 [<RequireQualifiedAccess>]
 module Option =
  

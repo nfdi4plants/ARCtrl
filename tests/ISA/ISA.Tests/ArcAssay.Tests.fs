@@ -635,4 +635,5 @@ let main =
         tests_updateTable
         tests_technologyPlatform
         tests_UpdateBy
+        tests_GetHashCode
     ]

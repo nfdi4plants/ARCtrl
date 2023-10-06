@@ -7,9 +7,9 @@ open Fable.Core
 [<RequireQualifiedAccess>]
 module TemplatesAux =
 
-    let getComparer (isAnd: bool option) =
-        let isAnd = defaultArg isAnd false
-        let comparer = if isAnd then (&&) else (||)
+    let getComparer (matchAll: bool option) =
+        let matchAll = defaultArg matchAll false
+        let comparer = if matchAll then (&&) else (||)
         comparer
 
     let filterOnTags (tagGetter: Template -> OntologyAnnotation []) (queryTags: OntologyAnnotation []) (comparer: bool -> bool -> bool) (templates: Template []) =
@@ -55,30 +55,30 @@ type Templates =
     /// Filter templates by `template.Tags`.
     /// </summary>
     /// <param name="queryTags">The ontology annotation to filter by.</param>
-    /// <param name="isAnd">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
-    static member filterByTags(queryTags: OntologyAnnotation [], ?isAnd: bool) = 
+    /// <param name="matchAll">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
+    static member filterByTags(queryTags: OntologyAnnotation [], ?matchAll: bool) = 
         fun (templates: Template []) ->
-            let comparer = TemplatesAux.getComparer isAnd
+            let comparer = TemplatesAux.getComparer matchAll
             TemplatesAux.filterOnTags (fun t -> t.Tags) queryTags comparer templates
 
     /// <summary>
     /// Filter templates by `template.EndpointRepositories`.
     /// </summary>
     /// <param name="queryTags">The ontology annotation to filter by.</param>
-    /// <param name="isAnd">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
-    static member filterByEndpointRepositories(queryTags: OntologyAnnotation [], ?isAnd: bool) = 
+    /// <param name="matchAll">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
+    static member filterByEndpointRepositories(queryTags: OntologyAnnotation [], ?matchAll: bool) = 
         fun (templates: Template []) ->
-            let comparer = TemplatesAux.getComparer isAnd
+            let comparer = TemplatesAux.getComparer matchAll
             TemplatesAux.filterOnTags (fun t -> t.EndpointRepositories) queryTags comparer templates
 
     /// <summary>
     /// Filters templates by template.Tags and template.EndpointRepositories
     /// </summary>
     /// <param name="queryTags">The ontology annotation to filter by.</param>
-    /// <param name="isAnd">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
-    static member filterByOntologyAnnotation(queryTags: OntologyAnnotation [], ?isAnd: bool) = 
+    /// <param name="matchAll">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
+    static member filterByOntologyAnnotation(queryTags: OntologyAnnotation [], ?matchAll: bool) = 
         fun (templates: Template []) ->
-            let comparer = TemplatesAux.getComparer isAnd
+            let comparer = TemplatesAux.getComparer matchAll
             TemplatesAux.filterOnTags (fun t -> Array.append t.Tags t.EndpointRepositories) queryTags comparer templates
 
     /// <summary>
