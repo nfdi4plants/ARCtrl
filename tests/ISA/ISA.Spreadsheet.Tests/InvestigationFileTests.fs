@@ -47,6 +47,20 @@ let private testInvestigationWriterComponents =
             wb.AddWorksheet(sheet)
             Expect.isSome (wb.TryGetWorksheetByName "Investigation") "Worksheet should be added to workbook"
         )
+        testCase "OnlyConsiderRegisteredStudies" (fun () ->
+            let isa = ArcInvestigation("MyInvestigation")
+            let registeredStudyIdentifier = "RegisteredStudy"
+            let registeredStudy = ArcStudy(registeredStudyIdentifier)
+            let unregisteredStudyIdentifier = "UnregisteredStudy"
+            let unregisteredStudy = ArcStudy(unregisteredStudyIdentifier)
+
+            isa.AddStudy(unregisteredStudy)
+            isa.AddRegisteredStudy(registeredStudy)
+
+            let result = ArcInvestigation.toFsWorkbook isa |> ArcInvestigation.fromFsWorkbook
+
+            Expect.sequenceEqual result.RegisteredStudyIdentifiers [registeredStudyIdentifier] "Only the registered study should be written and read"
+        )
 
                     
                    
