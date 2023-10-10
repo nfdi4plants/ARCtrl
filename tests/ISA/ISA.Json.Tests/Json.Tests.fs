@@ -1266,6 +1266,20 @@ let testInvestigationFile =
 
             Expect.equal i.Remarks List.empty "Remark list should be an empty list."
         )
+        testCase "OnlyConsiderRegisteredStudies" (fun () ->
+            let isa = ArcInvestigation("MyInvestigation")
+            let registeredStudyIdentifier = "RegisteredStudy"
+            let registeredStudy = ArcStudy(registeredStudyIdentifier)
+            let unregisteredStudyIdentifier = "UnregisteredStudy"
+            let unregisteredStudy = ArcStudy(unregisteredStudyIdentifier)
+
+            isa.AddStudy(unregisteredStudy)
+            isa.AddRegisteredStudy(registeredStudy)
+
+            let result = ArcInvestigation.toJsonString isa |> ArcInvestigation.fromJsonString
+
+            Expect.sequenceEqual result.RegisteredStudyIdentifiers [registeredStudyIdentifier] "Only the registered study should be written and read"
+        )
         testCase "FullInvestigation" (fun () ->
                   
             let comment = 
