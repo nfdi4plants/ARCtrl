@@ -36,20 +36,34 @@ module Assay =
                   | None -> "#EmptyAssay"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
+        let a = ["Assay";"ArcAssay"]
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Assay |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Assay"
-            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
+            if options.SetID then "@id", GEncode.string (oa :?> Assay |> genID)
+                else GEncode.tryInclude "@id" GEncode.string (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", ([GEncode.string "Assay"; GEncode.string "ArcAssay"] |> Encode.list)
+            GEncode.tryInclude "filename" GEncode.string (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "MeasurementType")
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "TechnologyType")
-            GEncode.tryInclude "technologyPlatform" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
+            GEncode.tryInclude "technologyPlatform" GEncode.string (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
             GEncode.tryInclude "dataFiles" (Data.encoder options) (oa |> GEncode.tryGetPropertyValue "DataFiles")
-            GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
+            if options.IsRoCrate then
+                let ass = oa:?> Assay
+                let mat = ass.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "samples" (Sample.encoder options) (m |> GEncode.tryGetPropertyValue "Samples")
+                | None -> ()
+            if options.IsRoCrate then
+                let ass = oa:?> Assay
+                let mat = ass.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "materials" (Material.encoder options) (m |> GEncode.tryGetPropertyValue "OtherMaterials")
+                | None -> ()
+            if not options.IsRoCrate then (tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
             GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ISADotNet.Json.ROCrateContext.Assay.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -79,8 +93,11 @@ module Assay =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (a:Assay) = 
+    let toJsonldString (a:Assay) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) a
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Assay) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -105,5 +122,8 @@ module ArcAssay =
 
     /// exports in json-ld format
     let toStringLD (a:ArcAssay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToAssay())
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) a
+        |> Encode.toString 2
+    let toStringLDWithContext (a:ArcAssay) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
