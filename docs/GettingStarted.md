@@ -8,7 +8,7 @@
 1. Install [.NET SDK](https://dotnet.microsoft.com/en-us/download).
 2. Get the [ARCtrl nuget package](www.nuget.org/packages/ARCtrl).
 3. (*OPTIONAL*) Use [FsSpreadsheet.ExcelIO](https://www.nuget.org/packages/FsSpreadsheet.ExcelIO) to get any xlsx files into the correct format with our supported readers.
-4. (*OPTIONAL*) You can use contract handling from [ARCtrl.NET](https://www.nuget.org/packages/ARCtrl.NET).
+4. (*OPTIONAL*) You can use contract handling from [ARCtrl.NET](https://www.nuget.org/packages/ARCtrl.NET). This documentation will avoid using ARCtrl.NET and extract the relevant functions.
 
 Thats it! 🎉 
 

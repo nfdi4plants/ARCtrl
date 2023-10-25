@@ -7,6 +7,7 @@
 Table of Content
 - [Create ARC](#create)
 - [Write ARC](#write)
+- [Read ARC](#read)
 
 ## Create
 
@@ -87,7 +88,6 @@ import {Xlsx} from "fsspreadsheet";
 import fs from "fs";
 import path from "path";
 
-// Write
 const arcRootPath = "C:/Users/Kevin/Desktop/NewTestARCJS"
 
 async function fulfillWriteContract (basePath, contract) {
@@ -102,7 +102,7 @@ async function fulfillWriteContract (basePath, contract) {
         if (contract.DTO == undefined) {
             ensureDirectory(p)
             fs.writeFileSync(p, "")
-        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Assay" || "ISA_Investigation") {
+        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Investigation") {
             ensureDirectory(p)
             await Xlsx.toFile(p, contract.DTO)
             console.log("ISA", p)
@@ -123,6 +123,70 @@ async function write(arcPath, arc)  {
 }
 
 await write(arcRootPath,arc)
+```
+
+## Read
+
+Read may look intimidating at first, until you notice that most of this is just setup which can be reused for any read you do. 
+
+Setup will be placed on top, with the actual read below.
+
+```fsharp
+// F#
+open System.IO
+
+// Setup
+
+let normalizePathSeparators (str:string) = str.Replace("\\","/")
+
+let getAllFilePaths (basePath: string) =
+    let options = EnumerationOptions()
+    options.RecurseSubdirectories <- true
+    Directory.EnumerateFiles(basePath, "*", options)
+    |> Seq.map (fun fp ->
+        Path.GetRelativePath(basePath, fp)
+        |> normalizePathSeparators
+    )
+    |> Array.ofSeq
+
+// from ARCtrl.NET
+// https://github.com/nfdi4plants/ARCtrl.NET/blob/ba3d2fabe007d9ca2c8e07b62d02ddc5264306d0/src/ARCtrl.NET/Contract.fs#L7
+let fulfillReadContract basePath (c : Contract) =
+    match c.DTOType with
+    | Some DTOType.ISA_Assay 
+    | Some DTOType.ISA_Investigation 
+    | Some DTOType.ISA_Study ->
+        let path = System.IO.Path.Combine(basePath, c.Path)
+        let wb = FsWorkbook.fromXlsxFile path |> box |> DTO.Spreadsheet
+        {c with DTO = Some wb}
+    | Some DTOType.PlainText ->
+        let path = System.IO.Path.Combine(basePath, c.Path)
+        let text = System.IO.File.ReadAllText(path) |> DTO.Text
+        {c with DTO = Some text}
+    | _ -> 
+        printfn "Contract %s is not an ISA contract" c.Path 
+        c
+
+// put it all together
+let readARC(basePath: string) =
+    let allFilePaths = getAllFilePaths basePath
+    // Initiates an ARC from FileSystem but no ISA info.
+    let arcRead = ARC.fromFilePaths allFilePaths
+    // Read contracts will tell us what we need to read from disc.
+    let readContracts = arcRead.GetReadContracts()
+    let fulfilledContracts = 
+        readContracts 
+        |> Array.map (fulfillReadContract basePath)
+    arcRead.SetISAFromContracts(fulfilledContracts)
+    arcRead 
+
+// execution
+
+readARC arcRootPath
+```
+
+```js
+
 ```
 
 [1]: <https://www.nuget.org/packages/ARCtrl.NET> "ARCtrl.NET Nuget"
