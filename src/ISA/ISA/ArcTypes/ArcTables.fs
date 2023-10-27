@@ -139,120 +139,128 @@ module ArcTablesAux =
 
 open ArcTablesAux
 open ArcTableAux
-/// This type only includes mutable options and only static members, the MUST be referenced and used in all record types implementing `ResizeArray<ArcTable>`
-type ArcTables(thisTables:ResizeArray<ArcTable>) = 
+open Fable.Core
 
-    member this.Count 
-        with get() = thisTables.Count
+/// This type only includes mutable options and only static members, the MUST be referenced and used in all record types implementing `ResizeArray<ArcTable>`
+[<AttachMembers>]
+type ArcTables(initTables:ResizeArray<ArcTable>) = 
+
+    interface IEnumerable<ArcTable> with
+        member this.GetEnumerator() : IEnumerator<ArcTable> =
+            this.Tables.GetEnumerator()
+        member this.GetEnumerator(): System.Collections.IEnumerator = 
+            this.Tables.GetEnumerator()
+
+    member val Tables = initTables with get, set
+
+    //member this.Item 
+    //    with get(index) = 
+    //        this.Tables.[index] 
 
     member this.TableNames 
         with get() = 
-            [for s in thisTables do yield s.Name]
+            [for s in this.Tables do yield s.Name]
 
-    member this.Tables = 
-        thisTables
-
-    member this.Item 
-        with get(index) = 
-            thisTables.[index] 
+    member this.TableCount 
+        with get() = this.Tables.Count
 
     // - Table API - //
     member this.AddTable(table:ArcTable, ?index: int) = 
-        let index = defaultArg index this.Count
-        SanityChecks.validateSheetIndex index true thisTables
+        let index = defaultArg index this.TableCount
+        SanityChecks.validateSheetIndex index true this.Tables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
-        thisTables.Insert(index, table)
+        this.Tables.Insert(index, table)
 
     // - Table API - //
     member this.AddTables(tables:seq<ArcTable>, ?index: int) = 
-        let index = defaultArg index this.Count
-        SanityChecks.validateSheetIndex index true thisTables
+        let index = defaultArg index this.TableCount
+        SanityChecks.validateSheetIndex index true this.Tables
         SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
-        thisTables.InsertRange(index, tables)
+        this.Tables.InsertRange(index, tables)
 
     // - Table API - //
     member this.InitTable(tableName:string, ?index: int) = 
-        let index = defaultArg index this.Count
+        let index = defaultArg index this.TableCount
         let table = ArcTable.init(tableName)
-        SanityChecks.validateSheetIndex index true thisTables
+        SanityChecks.validateSheetIndex index true this.Tables
         SanityChecks.validateNewNameUnique table.Name this.TableNames
-        thisTables.Insert(index, table)
+        this.Tables.Insert(index, table)
         table
 
     // - Table API - //
     member this.InitTables(tableNames:seq<string>, ?index: int) = 
-        let index = defaultArg index this.Count
+        let index = defaultArg index this.TableCount
         let tables = tableNames |> Seq.map (fun x -> ArcTable.init(x))
-        SanityChecks.validateSheetIndex index true thisTables
+        SanityChecks.validateSheetIndex index true this.Tables
         SanityChecks.validateNewNamesUnique (tables |> Seq.map (fun x -> x.Name)) this.TableNames
-        thisTables.InsertRange(index, tables)
+        this.Tables.InsertRange(index, tables)
 
     // - Table API - //
     member this.GetTableAt(index:int) : ArcTable =
-        SanityChecks.validateSheetIndex index false thisTables
-        thisTables.[index]
+        SanityChecks.validateSheetIndex index false this.Tables
+        this.Tables.[index]
 
     // - Table API - //
     member this.GetTable(name: string) : ArcTable =
-        findIndexByTableName name thisTables
+        findIndexByTableName name this.Tables
         |> this.GetTableAt
 
     // - Table API - //
     member this.UpdateTableAt(index:int, table:ArcTable) =
-        SanityChecks.validateSheetIndex index false thisTables
+        SanityChecks.validateSheetIndex index false this.Tables
         SanityChecks.validateNewNameAtUnique index table.Name this.TableNames
-        thisTables.[index] <- table
+        this.Tables.[index] <- table
 
     // - Table API - //
     member this.UpdateTable(name: string, table:ArcTable) : unit =
-        (findIndexByTableName name thisTables, table)
+        (findIndexByTableName name this.Tables, table)
         |> this.UpdateTableAt
 
     // - Table API - //
     member this.SetTableAt(index:int, table:ArcTable) =
-        SanityChecks.validateSheetIndex index true thisTables
+        SanityChecks.validateSheetIndex index true this.Tables
         SanityChecks.validateNewNameAtUnique index table.Name this.TableNames
-        thisTables.[index] <- table
+        this.Tables.[index] <- table
 
     // - Table API - //
     member this.SetTable(name: string, table:ArcTable) : unit =
-        match tryFindIndexByTableName name thisTables with
+        match tryFindIndexByTableName name this.Tables with
         | Some index -> this.SetTableAt(index, table)
         | None -> this.AddTable(table)
 
     // - Table API - //
     member this.RemoveTableAt(index:int) : unit =
-        SanityChecks.validateSheetIndex index false thisTables
-        thisTables.RemoveAt(index)
+        SanityChecks.validateSheetIndex index false this.Tables
+        this.Tables.RemoveAt(index)
 
     // - Table API - //
     member this.RemoveTable(name: string) : unit =
-        findIndexByTableName name thisTables
+        findIndexByTableName name this.Tables
         |> this.RemoveTableAt
 
 
     // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
     member this.MapTableAt(index: int, updateFun: ArcTable -> unit) =
-        SanityChecks.validateSheetIndex index false thisTables
-        let table = thisTables.[index]
+        SanityChecks.validateSheetIndex index false this.Tables
+        let table = this.Tables.[index]
         updateFun table
 
     // - Table API - //
     member this.MapTable(name: string, updateFun: ArcTable -> unit) : unit =
-        (findIndexByTableName name thisTables, updateFun)
+        (findIndexByTableName name this.Tables, updateFun)
         |> this.MapTableAt
 
     // - Table API - //
     member this.RenameTableAt(index: int, newName: string) : unit =
-        SanityChecks.validateSheetIndex index false thisTables
+        SanityChecks.validateSheetIndex index false this.Tables
         SanityChecks.validateNewNameUnique newName this.TableNames
         let table = this.GetTableAt index
         table.Name <- newName
 
     // - Table API - //
     member this.RenameTable(name: string, newName: string) : unit =
-        (findIndexByTableName name thisTables, newName)
+        (findIndexByTableName name this.Tables, newName)
         |> this.RenameTableAt
 
     // - Column CRUD API - //
@@ -263,7 +271,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
-        findIndexByTableName tableName thisTables
+        findIndexByTableName tableName this.Tables
         |> fun i -> this.AddColumnAt(i, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
 
     // - Column CRUD API - //
@@ -274,7 +282,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.RemoveColumn(tableName: string, columnIndex: int) : unit =
-        (findIndexByTableName tableName thisTables, columnIndex)
+        (findIndexByTableName tableName this.Tables, columnIndex)
         |> this.RemoveColumnAt
 
     // - Column CRUD API - //
@@ -285,7 +293,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        findIndexByTableName tableName thisTables
+        findIndexByTableName tableName this.Tables
         |> fun tableIndex -> this.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
 
     // - Column CRUD API - //
@@ -295,7 +303,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Column CRUD API - //
     member this.GetColumn(tableName: string, columnIndex: int) =
-        (findIndexByTableName tableName thisTables, columnIndex)
+        (findIndexByTableName tableName this.Tables, columnIndex)
         |> this.GetColumnAt
 
     // - Row CRUD API - //
@@ -306,7 +314,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
-        findIndexByTableName tableName thisTables
+        findIndexByTableName tableName this.Tables
         |> fun i -> this.AddRowAt(i, ?cells=cells, ?rowIndex=rowIndex)
 
     // - Row CRUD API - //
@@ -317,7 +325,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.RemoveRow(tableName: string, rowIndex: int) : unit =
-        (findIndexByTableName tableName thisTables, rowIndex)
+        (findIndexByTableName tableName this.Tables, rowIndex)
         |> this.RemoveRowAt
 
     // - Row CRUD API - //
@@ -328,7 +336,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.UpdateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
-        (findIndexByTableName tableName thisTables, rowIndex, cells)
+        (findIndexByTableName tableName this.Tables, rowIndex, cells)
         |> this.UpdateRowAt
 
     // - Row CRUD API - //
@@ -338,7 +346,7 @@ type ArcTables(thisTables:ResizeArray<ArcTable>) =
 
     // - Row CRUD API - //
     member this.GetRow(tableName: string, rowIndex: int) =
-        (findIndexByTableName tableName thisTables, rowIndex)
+        (findIndexByTableName tableName this.Tables, rowIndex)
         |> this.GetRowAt
 
     /// Return a list of all the processes in all the tables.

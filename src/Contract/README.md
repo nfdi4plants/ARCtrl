@@ -3,8 +3,7 @@
 The ARC stack exclusively works with the in-memory representations of the ARC. 
 In order to keep the in-memory ARC datamodel and the filesystem synchronized, the ARC.Core stack uses the concept of `Contracts`.
 
-Each contract is a single IO operation representing one change to the ARC. 
-The operation contained in a contract does not use the datamodel objects, but rather uses `data transfer objects`,  which include for example the `json` representation as string and the `FsSpreadsheet` representation of the ISA.xlsx files. 
+Each contract is a single IO operation. The operation contained in a contract does not use the datamodel objects, but rather uses `data transfer objects`,  which include for example the `json` representation as string and the `FsSpreadsheet` representation of the ISA.xlsx files. 
 
 This intermediate conversion from the datamodel object to the data transfer object is important, as this step is the most complex and variable.
 

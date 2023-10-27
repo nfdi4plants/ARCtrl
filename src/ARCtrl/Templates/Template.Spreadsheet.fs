@@ -6,6 +6,8 @@ open ARCtrl.ISA.Spreadsheet
 open ARCtrl.ISA
 open System.Collections.Generic
 
+exception TemplateReadError of string
+
 module Metadata = 
     
     
@@ -274,18 +276,21 @@ module Template =
         let sheets = doc.GetWorksheets()
                 
         let table = 
+            // find worksheet by table = template.table.name
             match sheets |> Seq.tryPick tryTableNameMatches with
             | Some ws -> 
+                // convert worksheet to ArcTable
                 match ArcTable.tryFromFsWorksheet ws with
                 | Some t -> t
-                | None -> failwithf "Ws with name %s could not be converted to a table" ws.Name
+                | None -> raise (TemplateReadError $"Ws with name `{ws.Name}` could not be converted to a table")
             | None ->
+                // Fallback find worksheet by worksheet.name = template.table.name
                 match sheets |> Seq.tryPick tryWSNameMatches with
-                    | Some ws -> 
-                        match ArcTable.tryFromFsWorksheet ws with
-                        | Some t -> t
-                        | None -> failwithf "Ws with name %s could not be converted to a table" ws.Name
-                    | None -> failwithf "No worksheet with name %s found" templateInfo.Table
+                | Some ws -> 
+                    match ArcTable.tryFromFsWorksheet ws with
+                    | Some t -> t
+                    | None -> raise (TemplateReadError <| $"Ws with name `{ws.Name}` could not be converted to a table")
+                | None -> raise (TemplateReadError $"No worksheet or table with name `{templateInfo.Table}` found")
             
         fromParts templateInfo ers tags authors table (System.DateTime.Now)
 

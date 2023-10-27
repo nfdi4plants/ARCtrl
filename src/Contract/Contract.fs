@@ -61,9 +61,13 @@ type Operation =
 [<AttachMembers>]
 type Contract = 
     {
+        /// Determines what io operation should be done: CREATE, READ, DELETE, ...
         Operation : Operation
+        /// The path where the io operation should be executed. The path is relative to ARC root.
         Path: string
+        /// The type of DTO that is expected: json, plaintext, isa_study, isa_assay, isa_investigation
         DTOType : DTOType option
+        /// The actual DTO, as discriminate union.
         DTO: DTO option
     }
     [<NamedParams(fromIndex=2)>]

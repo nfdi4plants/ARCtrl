@@ -1,0 +1,15 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": "This subproject is only used to create test script used for documentation",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin Frey",
+  "license": "MIT",
+  "dependencies": {
+    "@nfdi4plants/arctrl": "^1.0.0-alpha6",
+    "fsspreadsheet": "^4.0.0-alpha2"
+  }
+}

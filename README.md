@@ -1,6 +1,9 @@
 ﻿# ARCtrl
 Top level ARC DataModel and API function descriptions.
 
+![Nuget](https://img.shields.io/nuget/dt/ARCtrl?label=nuget&link=https%3A%2F%2Fwww.nuget.org%2Fpackages%2FARCtrl)
+![npm](https://img.shields.io/npm/dt/%40nfdi4plants%2Farctrl?label=npm&link=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40nfdi4plants%2Farctrl)
+
 - [ARCtrl](#arctrl)
   - [Jargon/Nomenclature](#jargonnomenclature)
   - [API Design](#api-design)
