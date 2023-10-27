@@ -157,8 +157,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
     /// </summary>
     /// <param name="cArr">The fullfilled READ contracts.</param>
     /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
-    member this.SetISAFromContracts (contracts: Contract [], ?enableLogging: bool) =
-        let enableLogging = defaultArg enableLogging false
+    member this.SetISAFromContracts (contracts: Contract []) =
         /// get investigation from xlsx
         let investigation = ARCAux.getArcInvestigationFromContracts contracts
         /// get studies from xlsx
