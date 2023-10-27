@@ -20,13 +20,13 @@ module ProcessParameterValue =
         | _ -> "#EmptyParameterValue"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
-
         [
             if options.SetID then "@id", GEncode.toJsonString (oa :?> ProcessParameterValue |> genID)
             if options.IncludeType then "@type", GEncode.toJsonString "ProcessParameterValue"
             GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
             GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.ProcessParameterValue.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -48,8 +48,11 @@ module ProcessParameterValue =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (p:ProcessParameterValue) = 
+    let toJsonldString (p:ProcessParameterValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:ProcessParameterValue) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -96,8 +99,11 @@ module ProcessInput =
         encoder (ConverterOptions()) m
         |> Encode.toString 2
 
-    let toStringLD (m:ProcessInput) = 
+    let toJsonldString (m:ProcessInput) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) m
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:ProcessInput) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -138,6 +144,9 @@ module ProcessOutput =
     let toJsonString (m:ProcessInput) = 
         encoder (ConverterOptions()) m
         |> Encode.toString 2
+    let toJsonldStringWithContext (a:ProcessInput) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        |> Encode.toString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -160,7 +169,7 @@ module Process =
         [
             if options.SetID then "@id", GEncode.toJsonString (oa :?> Process |> genID)
                 else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Process"
+            if options.IncludeType then "@type", ([GEncode.toJsonString "Process"; GEncode.toJsonString "ArcProcess"] |> Encode.list)
             GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "executesProtocol" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
             GEncode.tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterValues")
@@ -171,6 +180,7 @@ module Process =
             GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
             GEncode.tryInclude "outputs" (ProcessOutput.encoder options) (oa |> GEncode.tryGetPropertyValue "Outputs")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Process.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -200,8 +210,11 @@ module Process =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (p:Process) = 
+    let toJsonldString (p:Process) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Process) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -223,9 +236,14 @@ module ProcessSequence =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (p:Process list) = 
+    let toJsonldString (p:Process list) = 
         p
         |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true)))
+        |> Encode.list
+        |> Encode.toString 2
+    let toJsonldStringWithContext (p:Process list) = 
+        p
+        |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)))
         |> Encode.list
         |> Encode.toString 2
 

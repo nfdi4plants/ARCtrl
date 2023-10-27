@@ -46,7 +46,7 @@ module Study =
         [
             if options.SetID then "@id", GEncode.toJsonString (oa :?> Study |> genID)
                 else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Study"
+            if options.IncludeType then "@type", ([GEncode.toJsonString "Study"; GEncode.toJsonString "ArcStudy"] |> Encode.list)
             GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "identifier" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
             GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
@@ -57,13 +57,32 @@ module Study =
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
             GEncode.tryInclude "protocols" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "Protocols")
-            GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
+            if options.IsRoCrate then
+                let study = oa:?> Study
+                let mat = study.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "samples" (Sample.encoder options) (m |> GEncode.tryGetPropertyValue "Samples")
+                | None -> ()
+            if options.IsRoCrate then
+                let study = oa:?> Study
+                let mat = study.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "sources" (Source.encoder options) (m |> GEncode.tryGetPropertyValue "Sources")
+                | None -> ()
+            if options.IsRoCrate then
+                let study = oa:?> Study
+                let mat = study.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "materials" (Material.encoder options) (m |> GEncode.tryGetPropertyValue "OtherMaterials")
+                | None -> ()
+            if not options.IsRoCrate then (GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
             GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
             GEncode.tryInclude "assays" (Assay.encoder options) (oa |> GEncode.tryGetPropertyValue "Assays")            
             GEncode.tryInclude "factors" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Factors")
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")            
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Study.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -100,8 +119,11 @@ module Study =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (s:Study) = 
+    let toJsonldString (s:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Study) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
 
@@ -118,6 +140,6 @@ module ArcStudy =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+    let toJsonldString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy(assays))
         |> Encode.toString 2

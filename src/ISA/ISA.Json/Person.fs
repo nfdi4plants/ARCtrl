@@ -31,10 +31,21 @@ module Person =
                                 | (Some fn,None,None) -> "#" + fn.Replace(" ","_")
                                 | _ -> "#EmptyPerson"
 
+    let affiliationEncoder (options : ConverterOptions) (affiliation : obj) =
+        if options.IsRoCrate then
+            [
+                ("@type",GEncode.toJsonString "Organization")
+                ("@id",GEncode.toJsonString $"Organization/{affiliation}")
+                ("name",GEncode.toJsonString affiliation)
+                if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Organization.context).GetValue("@context"))
+            ]
+            |> Encode.object
+        else
+            GEncode.toJsonString affiliation
+
     let rec encoder (options : ConverterOptions) (oa : obj) = 
-        let oa = oa :?> Person |> Person.setCommentFromORCID
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa |> genID)
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> Person |> genID)
                 else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.toJsonString "Person"
             GEncode.tryInclude "firstName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FirstName")
@@ -44,9 +55,10 @@ module Person =
             GEncode.tryInclude "phone" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Phone")
             GEncode.tryInclude "fax" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Fax")
             GEncode.tryInclude "address" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Address")
-            GEncode.tryInclude "affiliation" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Affiliation")
+            GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa |> GEncode.tryGetPropertyValue "Affiliation")
             GEncode.tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Roles")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Person.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -79,8 +91,11 @@ module Person =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (p:Person) = 
+    let toJsonldString (p:Person) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Person) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

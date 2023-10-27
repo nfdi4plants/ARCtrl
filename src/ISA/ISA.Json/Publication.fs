@@ -29,6 +29,7 @@ module Publication =
             GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
             GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Status")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Publication.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -54,8 +55,11 @@ module Publication =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (p:Publication) = 
+    let toJsonldString (p:Publication) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Publication) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 

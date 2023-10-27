@@ -44,13 +44,14 @@ module OntologySourceReference =
 
     let encoder (options : ConverterOptions) (osr : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (osr :?> OntologySourceReference |> genID)
-            if options.IncludeType then "@type", GEncode.toJsonString "OntologySourceReference"
-            GEncode.tryInclude "description" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "file" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "File")
-            GEncode.tryInclude "name" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "version" GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Version")
+            if options.SetID then "@id",  GEncode.toJsonString (osr :?> OntologySourceReference |> genID)
+            if options.IncludeType then "@type",  GEncode.toJsonString "OntologySourceReference"
+            GEncode.tryInclude "description"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "file"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "File")
+            GEncode.tryInclude "name"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "version"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Version")
             GEncode.tryInclude "comments" (Comment.encoder options) (osr |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.OntologySourceReference.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -74,8 +75,11 @@ module OntologySourceReference =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (oa:OntologySourceReference) = 
+    let toJsonldString (oa:OntologySourceReference) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) oa
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:OntologySourceReference) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     // let fromFile (path : string) = 
@@ -89,12 +93,14 @@ module OntologyAnnotation =
     
     let genID (o:OntologyAnnotation) : string = 
         match o.ID with
-        | Some id -> URI.toString id 
+        | Some id -> URI.toString id
         | None -> match o.TermAccessionNumber with
-                  | Some ta -> ta
+                  | Some ta -> URI.toString ta
                   | None -> match o.TermSourceREF with
                             | Some r -> "#" + r.Replace(" ","_")
-                            | None -> "#DummyOntologyAnnotation"
+                            | None -> match o.TryNameText with
+                                        | Some n -> "#UserTerm_" + n .Replace(" ","_")
+                                        | None -> "#DummyOntologyAnnotation"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
@@ -105,6 +111,7 @@ module OntologyAnnotation =
             GEncode.tryInclude "termSource" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
             GEncode.tryInclude "termAccession" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.OntologyAnnotation.context).GetValue("@context"))
         ]
         |> GEncode.choose
         |> Encode.object
@@ -129,8 +136,11 @@ module OntologyAnnotation =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (oa:OntologyAnnotation) = 
+    let toJsonldString (oa:OntologyAnnotation) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) oa
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:OntologyAnnotation) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
