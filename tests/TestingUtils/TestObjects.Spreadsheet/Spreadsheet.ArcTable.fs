@@ -287,14 +287,15 @@ module Protocol =
 
 let addSpacesToEnd (cc : FsCellsCollection) (t : FsTable) =
     let count = System.Collections.Generic.Dictionary<string,string>()
-    t.HeadersRow().Cells(cc) |> Seq.iter  (fun c -> 
-        match Dictionary.tryGet c.Value count with
+    t.HeadersRow().Cells(cc) |> Seq.iter  (fun c ->
+        let k = c.ValueAsString()
+        match Dictionary.tryGet k count with
         | Some v -> 
             let newV = v + " "
-            c.SetValueAs (c.Value + newV)
-            count.[c.Value] <- newV
+            c.SetValueAs (k + newV)
+            count.[k] <- newV
         | None ->
-            count.[c.Value] <- ""
+            count.[k] <- ""
     
     )
 

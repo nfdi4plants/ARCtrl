@@ -4,7 +4,7 @@ open ARCtrl.ISA
 open FsSpreadsheet
 
 let fromFsCells (cells : list<FsCell>) : CompositeCell =
-    let cellValues = cells |> List.map (fun c -> c.Value)
+    let cellValues = cells |> List.map (fun c -> c.ValueAsString())
     match cellValues with
     | [v] -> CompositeCell.createFreeText v
     | [v1;v2;v3] -> CompositeCell.createTermFromString(v1,v2,v3)

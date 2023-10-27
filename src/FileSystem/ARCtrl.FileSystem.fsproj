@@ -16,7 +16,6 @@
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil </Authors>
     <Description>ARC helper functions for filesystem management.</Description>

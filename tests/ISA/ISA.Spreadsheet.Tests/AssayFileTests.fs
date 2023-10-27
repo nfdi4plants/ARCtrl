@@ -70,7 +70,7 @@ let testMetaDataFunctions =
                 |> ArcAssay.toMetadataSheet
                 
             o.CellCollection.GetCells()
-            |> Seq.iter (fun c -> Expect.notEqual (c.Value.Trim()) "" $"Cell {c.Address.ToString()} should not contain empty string")  
+            |> Seq.iter (fun c -> Expect.notEqual (c.ValueAsString().Trim()) "" $"Cell {c.Address.ToString()} should not contain empty string")  
         )
 
         testCase "WriterSuccessObsoleteSheetName" (fun () ->

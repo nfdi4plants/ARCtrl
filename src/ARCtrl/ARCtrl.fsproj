@@ -17,7 +17,6 @@
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="Path.fs" />
@@ -34,7 +33,7 @@
     <Compile Include="Templates\Template.Json.fs" />
     <Compile Include="Templates\Template.Spreadsheet.fs" />
     <Compile Include="Templates\Template.Web.fs" />
-	<Compile Include="ARC.fs" />
+    <Compile Include="ARC.fs" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
@@ -45,10 +44,10 @@
     <ProjectReference Include="..\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
   </ItemGroup>
-    <PropertyGroup>
-	    <NpmDependencies>
-		    <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
-	    </NpmDependencies>
-    </PropertyGroup>
-    <ItemGroup />
+  <PropertyGroup>
+    <NpmDependencies>
+      <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+  </PropertyGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

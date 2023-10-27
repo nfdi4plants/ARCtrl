@@ -27,7 +27,7 @@ let private ensureCorrectTestHeaders =
                     Parameter.instrumentHeaderV3 + " "
                 
                 ]
-            Expect.sequenceEqual (ws.Row(1).Cells |> Seq.map (fun c -> c.Value)) expectedHeaders "Headers did not match"
+            Expect.sequenceEqual (ws.Row(1).Cells |> Seq.map (fun c -> c.ValueAsString())) expectedHeaders "Headers did not match"
 
             let expectedValues = 
                 [
@@ -39,7 +39,7 @@ let private ensureCorrectTestHeaders =
                     Parameter.instrumentValueV3
                 ]
 
-            Expect.sequenceEqual (ws.Row(2).Cells |> Seq.map (fun c -> c.Value)) expectedValues "Values did not match"
+            Expect.sequenceEqual (ws.Row(2).Cells |> Seq.map (fun c -> c.ValueAsString())) expectedValues "Values did not match"
         )
     ]
 
@@ -69,7 +69,7 @@ let private groupCols =
                 ]
             let actualHeaderGroups =
                 grouped
-                |> List.map (fun cols -> cols |> List.map (fun c -> c.[1].Value) |> List.reduce (fun a b -> a + ";" + b))
+                |> List.map (fun cols -> cols |> List.map (fun c -> c.[1].ValueAsString()) |> List.reduce (fun a b -> a + ";" + b))
             Expect.sequenceEqual actualHeaderGroups expectedHeaderGroups "Header groups did not match"
         )
     ]

@@ -63,10 +63,11 @@ let annotationTablePrefix = "annotationTable"
 let groupColumnsByHeader (columns : list<FsColumn>) = 
     columns
     |> Aux.List.groupWhen (fun c -> 
-        Regex.tryParseReferenceColumnHeader c.[1].Value 
+        let v = c.[1].ValueAsString()
+        Regex.tryParseReferenceColumnHeader v
         |> Option.isNone
         &&
-        (c.[1].Value.StartsWith "Unit" |> not)
+        (v.StartsWith "Unit" |> not)
     )
 
 /// Returns the annotation table of the worksheet if it exists, else returns None
@@ -113,15 +114,17 @@ let toFsWorksheet (table : ArcTable) =
         col
         |> List.iteri (fun rowI cell -> 
             let value = 
+                let v = cell.ValueAsString()
                 if rowI = 0 then
-                    match Dictionary.tryGet cell.Value stringCount with
+                    
+                    match Dictionary.tryGet v stringCount with
                     | Some spaces ->
-                        stringCount.[cell.Value] <- spaces + " "
-                        cell.Value + " " + spaces
+                        stringCount.[v] <- spaces + " "
+                        v + " " + spaces
                     | None ->
-                        stringCount.Add(cell.Value,"")
-                        cell.Value
-                else cell.Value
+                        stringCount.Add(cell.ValueAsString(),"")
+                        v
+                else v
             let address = FsAddress(rowI+1,colI+1)
             fsTable.Cell(address, ws.CellCollection).SetValueAs value
         )  
