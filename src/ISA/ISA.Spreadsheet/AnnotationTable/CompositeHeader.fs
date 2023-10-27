@@ -15,7 +15,7 @@ module ActivePattern =
     let (|Term|_|) (categoryParser : string -> string option) (f : OntologyAnnotation -> CompositeHeader) (cells : FsCell list) =
         let (|AC|_|) s =
             categoryParser s
-        let cellValues = cells |> List.map (fun c -> c.Value)
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | [AC name] -> 
             let ont = OntologyAnnotation.fromString(name)
@@ -56,7 +56,7 @@ module ActivePattern =
         | _ -> None
 
     let (|Input|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.Value)
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | [InputColumnHeader ioType] -> 
             IOType.ofString ioType
@@ -65,7 +65,7 @@ module ActivePattern =
         | _ -> None
 
     let (|Output|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.Value)
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | [OutputColumnHeader ioType] -> 
             IOType.ofString ioType
@@ -74,7 +74,7 @@ module ActivePattern =
         | _ -> None
 
     let (|ProtocolHeader|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.Value)
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | "Protocol Type" :: _  -> 
             Some CompositeHeader.ProtocolType
@@ -87,7 +87,7 @@ module ActivePattern =
         | _ -> None
 
     let (|FreeText|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.Value)
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | [text] -> 
             CompositeHeader.FreeText text

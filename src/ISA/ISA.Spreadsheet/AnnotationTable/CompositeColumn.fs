@@ -9,7 +9,7 @@ open FsSpreadsheet
 ///
 /// A "Source Name" column will now be mapped to the propper "Input [Source Name]", and all other IO types will be mapped to "Output [<IO Type>]".
 let fixDeprecatedIOHeader (col : FsColumn) = 
-    match IOType.ofString col.[1].Value with
+    match IOType.ofString (col.[1].ValueAsString()) with
     | IOType.FreeText _ -> col
     | IOType.Source -> 
         let comp = CompositeHeader.Input (IOType.Source)       

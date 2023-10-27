@@ -28,7 +28,7 @@ module SparseRow =
         r.Cells
         |> Seq.choose (fun c -> 
             if c.Value = "" then Option.None 
-            else Option.Some (c.ColumnNumber - 1, c.Value)          
+            else Option.Some (c.ColumnNumber - 1, c.ValueAsString())          
         )
 
     let tryGetValueAt i (vs : SparseRow) =
