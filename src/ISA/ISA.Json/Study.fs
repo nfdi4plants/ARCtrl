@@ -35,7 +35,7 @@ module Study =
         match s.ID with
         | Some id -> URI.toString id
         | None -> match s.FileName with
-                  | Some n -> "#Study" + n.Replace(" ","_")
+                  | Some n -> n.Replace(" ","_").Remove(1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
                   | None -> match s.Identifier with
                             | Some id -> "#Study_" + id.Replace(" ","_")
                             | None -> match s.Title with

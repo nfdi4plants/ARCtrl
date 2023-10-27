@@ -32,7 +32,7 @@ module Assay =
         match a.ID with
         | Some id -> URI.toString id
         | None -> match a.FileName with
-                  | Some n -> n
+                  | Some n -> n.Replace(" ","_").Remove(1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
                   | None -> "#EmptyAssay"
 
     let encoder (options : ConverterOptions) (oa : obj) = 
