@@ -122,6 +122,55 @@ module TestObjects =
 
 open TestObjects
 
+let tests_Item = testList "Item" [
+    // update test as soon as https://github.com/fable-compiler/Fable/issues/3571 is fixed
+    ptestCase "simple" <| fun _ ->
+        let table1 = ArcTable.init("Table 1")
+        let table2 = ArcTable.init("Table 2")
+        let tableSeq = [table1; table2]
+        let arctables = ArcTables(ResizeArray tableSeq)
+        //Expect.equal arctables.[0] table1 "table1"
+        //Expect.equal arctables.[1] table2 "table2"
+        Expect.isTrue true ""
+]
+
+let tests_IEnumberable = testList "IEnumerable" [
+    let createTestTables() = 
+        let table1 = ArcTable.init("Table 1")
+        let table2 = ArcTable.init("Table 2")
+        ArcTables(ResizeArray [table1; table2])
+    testCase "Seq.length" <| fun _ ->
+        let tables = createTestTables()
+        let actual = Seq.length tables
+        Expect.equal actual 2 ""
+    testCase "Seq.map" <| fun _ ->
+        let tables = createTestTables()
+        let actual = tables |> Seq.map (fun t -> t.Name)
+        let expected = ["Table 1"; "Table 2"]
+        Expect.sequenceEqual actual expected ""
+]
+
+let tests_member = testList "member" [
+    testCase "TableCount init" <| fun _ ->
+        let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+        let arctables = ArcTables(ResizeArray tableSeq)
+        Expect.equal arctables.TableCount 2 "TableCount"
+    testCase "TableCount addedTable" <| fun _ ->
+        let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+        let arctables = ArcTables(ResizeArray tableSeq)
+        let _ = arctables.InitTable("New Table!")
+        Expect.equal arctables.TableCount 3 "TableCount should increase to 3"
+    testCase "TableNames init" <| fun _ ->
+        let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+        let arctables = ArcTables(ResizeArray tableSeq)
+        Expect.sequenceEqual arctables.TableNames ["Table 1"; "Table 2"] "TableNames"
+    testCase "TableNames addedTable" <| fun _ ->
+        let tableSeq = [ArcTable.init("Table 1"); ArcTable.init("Table 2")]
+        let arctables = ArcTables(ResizeArray tableSeq)
+        let _ = arctables.InitTable("New Table!")
+        Expect.sequenceEqual arctables.TableNames ["Table 1"; "Table 2"; "New Table!"] "TableNames"
+]
+
 let updateReferenceWithSheet = 
 
     testList "UpdateReferenceWithSheet" [
@@ -132,8 +181,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq []
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount tableOfInterest.ColumnCount "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -145,8 +194,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [descriptionRefTable2()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount tableOfInterest.ColumnCount "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -159,13 +208,13 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [refTable]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables,true)
             
-            Expect.equal result.Count (tables.Count + 1) "Should be same number of tables"
-            let resultRefTable = result.[0]
+            Expect.equal result.TableCount (tables.TableCount + 1) "Should be same number of tables"
+            let resultRefTable = result.Tables.[0]
             Expect.equal resultRefTable.Name refTable.Name "Should be same table name"
             Expect.equal resultRefTable.ColumnCount refTable.ColumnCount "Should be same number of columns"
             Expect.equal resultRefTable.RowCount refTable.RowCount "Should be same number of rows"
 
-            let resultTable = result.[1]
+            let resultTable = result.Tables.[1]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount tableOfInterest.ColumnCount "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -177,8 +226,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [descriptionRefTable()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 1) "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -193,8 +242,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [descriptionRefTable()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 2) "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -209,8 +258,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [sheetWithNoREF()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount) "Should have same number of columns as before"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of columns as before"
@@ -223,9 +272,9 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [descriptionRefTable()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
 
-            let resultTable1 = result.[0]
+            let resultTable1 = result.Tables.[0]
             Expect.equal resultTable1.Name tableOfInterest1.Name "Should be same table name"
             Expect.equal resultTable1.ColumnCount (tableOfInterest1.ColumnCount + 1) "Should be same number of columns"
             Expect.equal tableOfInterest1.RowCount tableOfInterest1.RowCount "Should be same number of rows"
@@ -238,7 +287,7 @@ let updateReferenceWithSheet =
                 (Array.create 2 (CompositeCell.createTerm oa_chlamy))
                 "Check for previous param correctness"
                 
-            let resultTable2 = result.[1]
+            let resultTable2 = result.Tables.[1]
             Expect.equal resultTable2.Name tableOfInterest2.Name "Should be same table name"
             Expect.equal resultTable2.ColumnCount (tableOfInterest2.ColumnCount + 1) "Should be same number of columns"
             Expect.equal tableOfInterest2.RowCount tableOfInterest2.RowCount "Should be same number of rows"
@@ -258,8 +307,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [descriptionRefTable();descriptionRefTable2()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 1) "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -283,8 +332,8 @@ let updateReferenceWithSheet =
             let refTables = ArcTables.ofSeq [descriptionRefTable();descriptionRefTable2()]
             let result = ArcTables.updateReferenceTablesBySheets(refTables,tables)
             
-            Expect.equal result.Count tables.Count "Should be same number of tables"
-            let resultTable = result.[0]
+            Expect.equal result.TableCount tables.TableCount "Should be same number of tables"
+            let resultTable = result.Tables.[0]
             Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
             Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 1) "Should be same number of columns"
             Expect.equal resultTable.RowCount tableOfInterest.RowCount "Should be same number of rows"
@@ -305,5 +354,8 @@ let updateReferenceWithSheet =
 
 let main = 
     testList "ArcTablesTests" [
+        tests_Item
+        tests_IEnumberable
+        tests_member
         updateReferenceWithSheet        
     ]

@@ -80,7 +80,8 @@ module ArcTypesAux =
 
 [<AttachMembers>]
 type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
-    let tables = defaultArg tables <| ResizeArray()
+    inherit ArcTables(defaultArg tables <| ResizeArray())
+    
     let performers = defaultArg performers [||]
     let comments = defaultArg comments [||]
     let mutable identifier : string = identifier
@@ -101,7 +102,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member val MeasurementType : OntologyAnnotation option = measurementType with get, set
     member val TechnologyType : OntologyAnnotation option = technologyType with get, set
     member val TechnologyPlatform : OntologyAnnotation option = technologyPlatform with get, set
-    member val Tables : ResizeArray<ArcTable> = tables with get, set
     member val Performers : Person [] = performers with get, set
     member val Comments : Comment [] = comments with get, set
 
@@ -119,12 +119,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (comments : Comment []) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
 
-    member this.TableCount 
-        with get() = ArcTables(this.Tables).Count
-
-    member this.TableNames 
-        with get() = ArcTables(this.Tables).TableNames
-
     member this.StudiesRegisteredIn
         with get () = 
             match this.Investigation with
@@ -134,11 +128,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
                 |> Seq.toArray
             | None -> [||]
         
-
     // - Table API - //
-    // remark should this return ArcTable?
-    member this.AddTable(table:ArcTable, ?index: int) : unit = ArcTables(this.Tables).AddTable(table, ?index = index)
-
     static member addTable(table:ArcTable, ?index: int) =
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
@@ -146,8 +136,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             c
 
     // - Table API - //
-    member this.AddTables(tables:seq<ArcTable>, ?index: int) = ArcTables(this.Tables).AddTables(tables, ?index = index)
-
     static member addTables(tables:seq<ArcTable>, ?index: int) =
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
@@ -155,17 +143,12 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             c
 
     // - Table API - //
-    member this.InitTable(tableName:string, ?index: int) = ArcTables(this.Tables).InitTable(tableName, ?index = index)
-
     static member initTable(tableName: string, ?index: int) =
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
             c,c.InitTable(tableName, ?index=index)
             
-
     // - Table API - //
-    member this.InitTables(tableNames:seq<string>, ?index: int) =  ArcTables(this.Tables).InitTables(tableNames, ?index = index)
-
     static member initTables(tableNames:seq<string>, ?index: int) =
         fun (assay:ArcAssay) ->
             let c = assay.Copy()
@@ -173,8 +156,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             c
 
     // - Table API - //
-    member this.GetTableAt(index:int) : ArcTable = ArcTables(this.Tables).GetTableAt(index)
-
     /// Receive **copy** of table at `index`
     static member getTableAt(index:int) : ArcAssay -> ArcTable =
         fun (assay:ArcAssay) ->
@@ -182,8 +163,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay.GetTableAt(index)
 
     // - Table API - //
-    member this.GetTable(name: string) : ArcTable = ArcTables(this.Tables).GetTable(name)
-
     /// Receive **copy** of table with `name` = `ArcTable.Name`
     static member getTable(name: string) : ArcAssay -> ArcTable =
         fun (assay:ArcAssay) ->
@@ -191,8 +170,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay.GetTable(name)
 
     // - Table API - //
-    member this.UpdateTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).UpdateTableAt(index, table)
-
     static member updateTableAt(index:int, table:ArcTable) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -200,8 +177,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.UpdateTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).UpdateTable(name, table)
-
     static member updateTable(name: string, table:ArcTable) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -209,8 +184,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.SetTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).SetTableAt(index, table)
-
     static member setTableAt(index:int, table:ArcTable) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -218,8 +191,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.SetTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).SetTable(name, table)
-
     static member setTable(name: string, table:ArcTable) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -227,8 +198,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.RemoveTableAt(index:int) : unit = ArcTables(this.Tables).RemoveTableAt(index)
-
     static member removeTableAt(index:int) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -236,8 +205,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.RemoveTable(name: string) : unit = ArcTables(this.Tables).RemoveTable(name)
-
     static member removeTable(name: string) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -245,9 +212,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
-    member this.MapTableAt(index: int, updateFun: ArcTable -> unit) = ArcTables(this.Tables).MapTableAt(index, updateFun)
-
     static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()    
@@ -255,8 +219,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.MapTable(name: string, updateFun: ArcTable -> unit) : unit = ArcTables(this.Tables).MapTable(name, updateFun)
-
     static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -264,8 +226,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.RenameTableAt(index: int, newName: string) : unit = ArcTables(this.Tables).RenameTableAt(index, newName)
-
     static member renameTableAt(index: int, newName: string) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()    
@@ -273,8 +233,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Table API - //
-    member this.RenameTable(name: string, newName: string) : unit = ArcTables(this.Tables).RenameTable(name, newName)
-
     static member renameTable(name: string, newName: string) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -282,9 +240,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
-        ArcTables(this.Tables).AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex = columnIndex, ?forceReplace = forceReplace)
-
     static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay = 
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
@@ -292,9 +247,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
-            ArcTables(this.Tables).AddColumn(tableName, header, ?cells=cells, ?columnIndex = columnIndex, ?forceReplace = forceReplace)
-
     static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -302,9 +254,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.RemoveColumnAt(tableIndex: int, columnIndex: int) =
-        ArcTables(this.Tables).RemoveColumnAt(tableIndex, columnIndex)
-
     static member removeColumnAt(tableIndex: int, columnIndex: int) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -312,9 +261,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.RemoveColumn(tableName: string, columnIndex: int) : unit =
-        ArcTables(this.Tables).RemoveColumn(tableName, columnIndex)
-
     static member removeColumn(tableName: string, columnIndex: int) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -322,9 +268,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.UpdateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateColumnAt(tableIndex, columnIndex, header, ?cells = cells)
-
     static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -332,9 +275,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateColumn(tableName, columnIndex, header, ?cells=cells)
-
     static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -342,27 +282,18 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Column CRUD API - //
-    member this.GetColumnAt(tableIndex: int, columnIndex: int) =
-        ArcTables(this.Tables).GetColumnAt(tableIndex, columnIndex)
-
     static member getColumnAt(tableIndex: int, columnIndex: int) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.GetColumnAt(tableIndex, columnIndex)
 
     // - Column CRUD API - //
-    member this.GetColumn(tableName: string, columnIndex: int) =
-        ArcTables(this.Tables).GetColumn(tableName, columnIndex)
-
     static member getColumn(tableName: string, columnIndex: int) =
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    member this.AddRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) = 
-        ArcTables(this.Tables).AddRowAt(tableIndex, ?cells=cells, ?rowIndex = rowIndex)
-
     static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcAssay -> ArcAssay = 
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
@@ -370,9 +301,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Row CRUD API - //
-    member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
-        ArcTables(this.Tables).AddRow(tableName, ?cells=cells, ?rowIndex = rowIndex)
-
     static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -380,9 +308,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Row CRUD API - //
-    member this.RemoveRowAt(tableIndex: int, rowIndex: int) =
-        ArcTables(this.Tables).RemoveRowAt(tableIndex, rowIndex)
-
     static member removeRowAt(tableIndex: int, rowIndex: int) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -390,9 +315,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Row CRUD API - //
-    member this.RemoveRow(tableName: string, rowIndex: int) : unit =
-        ArcTables(this.Tables).RemoveRow(tableName, rowIndex)
-
     static member removeRow(tableName: string, rowIndex: int) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -400,9 +322,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Row CRUD API - //
-    member this.UpdateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateRowAt(tableIndex, rowIndex, cells)
-
     static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -410,9 +329,6 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Row CRUD API - //
-    member this.UpdateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateRow(tableName, rowIndex, cells)
-
     static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
@@ -420,18 +336,12 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             newAssay
 
     // - Row CRUD API - //
-    member this.GetRowAt(tableIndex: int, rowIndex: int) =
-        ArcTables(this.Tables).GetRowAt(tableIndex, rowIndex)
-
     static member getRowAt(tableIndex: int, rowIndex: int) =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.GetRowAt(tableIndex, rowIndex)
 
     // - Row CRUD API - //
-    member this.GetRow(tableName: string, rowIndex: int) =
-        ArcTables(this.Tables).GetRow(tableName, rowIndex)
-
     static member getRow(tableName: string, rowIndex: int) =
         fun (assay: ArcAssay) ->
             let newAssay = assay.Copy()
@@ -642,10 +552,11 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
 
 [<AttachMembers>]
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
+    inherit ArcTables(defaultArg tables <| ResizeArray())
+
     let publications = defaultArg publications [||]
     let contacts = defaultArg contacts [||]
     let studyDesignDescriptors = defaultArg studyDesignDescriptors [||]
-    let tables = defaultArg tables <| ResizeArray()
     let registeredAssayIdentifiers = defaultArg registeredAssayIdentifiers <| ResizeArray()
     let factors = defaultArg factors [||]
     let comments = defaultArg comments [||]
@@ -668,7 +579,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member val Publications : Publication [] = publications with get, set
     member val Contacts : Person [] = contacts with get, set
     member val StudyDesignDescriptors : OntologyAnnotation [] = studyDesignDescriptors with get, set
-    member val Tables : ResizeArray<ArcTable> = tables with get, set
     member val RegisteredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers with get, set
     member val Factors : Factor [] = factors with get, set
     member val Comments : Comment []= comments with get, set
@@ -803,17 +713,9 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     ////////////////////////////////////
     // - Copy & Paste from ArcAssay - //
     ////////////////////////////////////
-    
-    member this.TableCount 
-        with get() = ArcTables(this.Tables).Count
 
-    member this.TableNames 
-        with get() = ArcTables(this.Tables).TableNames
-
-        // - Table API - //
+    // - Table API - //
     // remark should this return ArcTable?
-    member this.AddTable(table:ArcTable, ?index: int) = ArcTables(this.Tables).AddTable(table, ?index = index)
-
     static member addTable(table:ArcTable, ?index: int) =
         fun (study:ArcStudy) ->
             let c = study.Copy()
@@ -821,8 +723,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             c
 
     // - Table API - //
-    member this.AddTables(tables:seq<ArcTable>, ?index: int) = ArcTables(this.Tables).AddTables(tables, ?index = index)
-
     static member addTables(tables:seq<ArcTable>, ?index: int) =
         fun (study:ArcStudy) ->
             let c = study.Copy()
@@ -830,8 +730,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             c
 
     // - Table API - //
-    member this.InitTable(tableName:string, ?index: int) = ArcTables(this.Tables).InitTable(tableName, ?index = index)
-
     static member initTable(tableName: string, ?index: int) =
         fun (study:ArcStudy) ->
             let c = study.Copy()
@@ -839,8 +737,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             
 
     // - Table API - //
-    member this.InitTables(tableNames:seq<string>, ?index: int) =  ArcTables(this.Tables).InitTables(tableNames, ?index = index)
-
     static member initTables(tableNames:seq<string>, ?index: int) =
         fun (study:ArcStudy) ->
             let c = study.Copy()
@@ -848,8 +744,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             c
 
     // - Table API - //
-    member this.GetTableAt(index:int) : ArcTable = ArcTables(this.Tables).GetTableAt(index)
-
     /// Receive **copy** of table at `index`
     static member getTableAt(index:int) : ArcStudy -> ArcTable =
         fun (study:ArcStudy) ->
@@ -857,8 +751,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay.GetTableAt(index)
 
     // - Table API - //
-    member this.GetTable(name: string) : ArcTable = ArcTables(this.Tables).GetTable(name)
-
     /// Receive **copy** of table with `name` = `ArcTable.Name`
     static member getTable(name: string) : ArcStudy -> ArcTable =
         fun (study:ArcStudy) ->
@@ -866,8 +758,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay.GetTable(name)
 
     // - Table API - //
-    member this.UpdateTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).UpdateTableAt(index, table)
-
     static member updateTableAt(index:int, table:ArcTable) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -875,8 +765,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.UpdateTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).UpdateTable(name, table)
-
     static member updateTable(name: string, table:ArcTable) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -885,8 +773,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
 
     // - Table API - //
-    member this.SetTableAt(index:int, table:ArcTable) = ArcTables(this.Tables).SetTableAt(index, table)
-
     static member setTableAt(index:int, table:ArcTable) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -894,8 +780,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.SetTable(name: string, table:ArcTable) : unit = ArcTables(this.Tables).SetTable(name, table)
-
     static member setTable(name: string, table:ArcTable) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -903,8 +787,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.RemoveTableAt(index:int) : unit = ArcTables(this.Tables).RemoveTableAt(index)
-
     static member removeTableAt(index:int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -912,8 +794,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.RemoveTable(name: string) : unit = ArcTables(this.Tables).RemoveTable(name)
-
     static member removeTable(name: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -922,8 +802,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
     // - Table API - //
     // Remark: This must stay `ArcTable -> unit` so name cannot be changed here.
-    member this.MapTableAt(index: int, updateFun: ArcTable -> unit) = ArcTables(this.Tables).MapTableAt(index, updateFun)
-
     static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()    
@@ -931,8 +809,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.MapTable(name: string, updateFun: ArcTable -> unit) : unit = ArcTables(this.Tables).MapTable(name, updateFun)
-
     static member mapTable(name: string, updateFun: ArcTable -> unit) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -940,8 +816,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.RenameTableAt(index: int, newName: string) : unit = ArcTables(this.Tables).RenameTableAt(index, newName)
-
     static member renameTableAt(index: int, newName: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()    
@@ -949,8 +823,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Table API - //
-    member this.RenameTable(name: string, newName: string) : unit = ArcTables(this.Tables).RenameTable(name, newName)
-
     static member renameTable(name: string, newName: string) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -958,9 +830,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.AddColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) = 
-        ArcTables(this.Tables).AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex = columnIndex, ?forceReplace = forceReplace)
-
     static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy = 
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
@@ -968,9 +837,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.AddColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) =
-            ArcTables(this.Tables).AddColumn(tableName, header, ?cells=cells, ?columnIndex = columnIndex, ?forceReplace = forceReplace)
-
     static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -978,9 +844,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.RemoveColumnAt(tableIndex: int, columnIndex: int) =
-        ArcTables(this.Tables).RemoveColumnAt(tableIndex, columnIndex)
-
     static member removeColumnAt(tableIndex: int, columnIndex: int) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -988,9 +851,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.RemoveColumn(tableName: string, columnIndex: int) : unit =
-        ArcTables(this.Tables).RemoveColumn(tableName, columnIndex)
-
     static member removeColumn(tableName: string, columnIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -998,9 +858,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.UpdateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateColumnAt(tableIndex, columnIndex, header, ?cells = cells)
-
     static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1008,9 +865,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.UpdateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateColumn(tableName, columnIndex, header, ?cells=cells)
-
     static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1018,27 +872,18 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Column CRUD API - //
-    member this.GetColumnAt(tableIndex: int, columnIndex: int) =
-        ArcTables(this.Tables).GetColumnAt(tableIndex, columnIndex)
-
     static member getColumnAt(tableIndex: int, columnIndex: int) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.GetColumnAt(tableIndex, columnIndex)
 
     // - Column CRUD API - //
-    member this.GetColumn(tableName: string, columnIndex: int) =
-        ArcTables(this.Tables).GetColumn(tableName, columnIndex)
-
     static member getColumn(tableName: string, columnIndex: int) =
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.GetColumn(tableName, columnIndex)
 
     // - Row CRUD API - //
-    member this.AddRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) = 
-        ArcTables(this.Tables).AddRowAt(tableIndex, ?cells=cells, ?rowIndex = rowIndex)
-
     static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcStudy -> ArcStudy = 
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
@@ -1046,9 +891,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    member this.AddRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) =
-        ArcTables(this.Tables).AddRow(tableName, ?cells=cells, ?rowIndex = rowIndex)
-
     static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1056,9 +898,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    member this.RemoveRowAt(tableIndex: int, rowIndex: int) =
-        ArcTables(this.Tables).RemoveRowAt(tableIndex, rowIndex)
-
     static member removeRowAt(tableIndex: int, rowIndex: int) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1066,9 +905,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    member this.RemoveRow(tableName: string, rowIndex: int) : unit =
-        ArcTables(this.Tables).RemoveRow(tableName, rowIndex)
-
     static member removeRow(tableName: string, rowIndex: int) : ArcStudy -> ArcStudy =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1076,9 +912,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    member this.UpdateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateRowAt(tableIndex, rowIndex, cells)
-
     static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1086,9 +919,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    member this.UpdateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
-        ArcTables(this.Tables).UpdateRow(tableName, rowIndex, cells)
-
     static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
@@ -1096,18 +926,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             newAssay
 
     // - Row CRUD API - //
-    member this.GetRowAt(tableIndex: int, rowIndex: int) =
-        ArcTables(this.Tables).GetRowAt(tableIndex, rowIndex)
-
     static member getRowAt(tableIndex: int, rowIndex: int) =
         fun (study:ArcStudy) ->
             let newAssay = study.Copy()
             newAssay.GetRowAt(tableIndex, rowIndex)
 
     // - Row CRUD API - //
-    member this.GetRow(tableName: string, rowIndex: int) =
-        ArcTables(this.Tables).GetRow(tableName, rowIndex)
-
     static member getRow(tableName: string, rowIndex: int) =
         fun (study: ArcStudy) ->
             let newAssay = study.Copy()
@@ -1118,7 +942,6 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
     member internal this.RemoveFromInvestigation () =
         this.Investigation <- None
-
 
     /// Copies ArcStudy object without the pointer to the parent ArcInvestigation
     ///

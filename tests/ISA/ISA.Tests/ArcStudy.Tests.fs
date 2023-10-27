@@ -366,7 +366,7 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
         
         let result = actual.Tables
-        Expect.equal result.Count tables.Count "Should be same number of tables"
+        Expect.equal result.Count tables.TableCount "Should be same number of tables"
         let resultTable = result.[0]
         Expect.equal resultTable.Name tableOfInterest.Name "Should be same table name"
         Expect.equal resultTable.ColumnCount (tableOfInterest.ColumnCount + 1) "Should be same number of columns"

@@ -93,7 +93,7 @@ module Template =
         Decode.object(fun get ->
             Template.create(
                 get.Required.Field "id" Decode.guid,
-                get.Required.Field "table" (Decode.list (Process.decoder (ConverterOptions()) ) |> Decode.map (fun ps -> ArcTables.fromProcesses ps |> fun arctbls -> arctbls.[0])),
+                get.Required.Field "table" (Decode.list (Process.decoder (ConverterOptions()) ) |> Decode.map (fun ps -> ArcTables.fromProcesses ps |> fun arctbls -> arctbls.Tables.[0])),
                 get.Required.Field "name" Decode.string,
                 get.Required.Field "description" Decode.string,
                 get.Required.Field "organisation" Organisation.decode,

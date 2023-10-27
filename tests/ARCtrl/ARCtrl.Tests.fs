@@ -451,7 +451,7 @@ let private ``payload_file_filters`` =
         }
     ]
 
-let main = testList "main" [
+let main = testList "ARCtrl" [
     test_model
     test_updateFileSystem
     test_isaFromContracts

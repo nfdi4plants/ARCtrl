@@ -492,8 +492,50 @@ let testAssayFileReader =
         //)
     ]
 
+let tests_ArcTable = testList "ArcTable" [
+    testList "Read/Write" [
+        let assayIdentifier = "MyAssay"
+        let tableName = "AssayProtocol"
+        let protocolName = "MyProtocol"
+        let inputHeader = CompositeHeader.Input IOType.Sample
+        let inputCell = (CompositeCell.createFreeText "inputValueName")
+        let createTestAssay() = 
+            let assay = ArcAssay(assayIdentifier)
+            let t = ArcTable.init(tableName)
+            t.AddProtocolNameColumn(Array.create 2 protocolName)
+            t.AddColumn(inputHeader, Array.create 2 inputCell)
+            assay.AddTable t
+            assay
+        let ensureTestAssay (assay: ArcAssay) =
+            Expect.equal assay.Identifier assayIdentifier "identifier"
+            Expect.equal assay.TableCount 1 "tablecount"
+            Expect.equal assay.Tables.[0].Name tableName "table.name"
+            Expect.equal assay.Tables.[0].ColumnCount 2 "table.columncount"
+        testCase "ensure test assay" <| fun _ ->
+            let assay = createTestAssay()
+            ensureTestAssay assay
+        testCase "ArcAssay.toFsWorkbook" <| fun _ ->
+            let assay = createTestAssay()
+            let wb = ArcAssay.toFsWorkbook assay
+            let wss = wb.GetWorksheets()
+            Expect.hasLength wss 2 "worksheets count"
+            let metadata = wss.[0]
+            let tableWorksheet = wss.[1]
+            Expect.hasLength metadata.Tables 0 "no tables in metadata sheet"
+            Expect.hasLength tableWorksheet.Tables 1 "1 table in protocol sheet"
+            Expect.equal tableWorksheet.Name tableName "worksheet.name"
+            let table = tableWorksheet.Tables.[0]
+            Expect.equal (table.ColumnCount()) 2 "table.columncount"
+        testCase "roundabout" <| fun _ ->
+            let assay = createTestAssay()
+            let wb = ArcAssay.toFsWorkbook assay
+            let actual = ArcAssay.fromFsWorkbook wb
+            ensureTestAssay actual
+    ]
+]
 
 let main = 
     testList "AssayFile" [
         testMetaDataFunctions
+        tests_ArcTable
     ]

@@ -296,7 +296,7 @@ let private tests_arcTablesProcessSeq =
             let t = ArcTables(ResizeArray())
             let processes = t.GetProcesses()
             let resultTables = ArcTables.fromProcesses processes
-            Expect.equal resultTables.Count 0 "Should have 0 tables"
+            Expect.equal resultTables.TableCount 0 "Should have 0 tables"
         )
 
         testCase "EmptyTable GetProcesses" (fun () ->            
@@ -318,8 +318,8 @@ let private tests_arcTablesProcessSeq =
             let tables = ArcTables(ResizeArray([t]))
             let processes = tables.GetProcesses()
             let table = ArcTables.fromProcesses processes
-            Expect.equal table.Count 1 "Should have 1 table"
-            Expect.arcTableEqual table.[0] t "Table should be equal"
+            Expect.equal table.TableCount 1 "Should have 1 table"
+            Expect.arcTableEqual table.Tables.[0] t "Table should be equal"
         )
 
         testCase "SimpleTables GetAndFromProcesses" (fun () ->
@@ -333,9 +333,9 @@ let private tests_arcTablesProcessSeq =
                 
             let expectedTables = [ t1;t2 ]
                 
-            Expect.equal resultTables.Count 2 "2 Tables should have been created"
-            Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
-            Expect.arcTableEqual resultTables.[1] expectedTables.[1] "Table 2 should be equal"
+            Expect.equal resultTables.TableCount 2 "2 Tables should have been created"
+            Expect.arcTableEqual resultTables.Tables.[0] expectedTables.[0] "Table 1 should be equal"
+            Expect.arcTableEqual resultTables.Tables.[1] expectedTables.[1] "Table 2 should be equal"
 
         )
         testCase "OneWithDifferentParamVals GetAndFromProcesses" (fun () ->
@@ -353,9 +353,9 @@ let private tests_arcTablesProcessSeq =
                 t2
                 ]
                 
-            Expect.equal resultTables.Count 2 "2 Tables should have been created"
-            Expect.arcTableEqual resultTables.[0] expectedTables.[0] "Table 1 should be equal"
-            Expect.arcTableEqual resultTables.[1] expectedTables.[1] "Table 2 should be equal"
+            Expect.equal resultTables.TableCount 2 "2 Tables should have been created"
+            Expect.arcTableEqual resultTables.Tables.[0] expectedTables.[0] "Table 1 should be equal"
+            Expect.arcTableEqual resultTables.Tables.[1] expectedTables.[1] "Table 2 should be equal"
         )
     ]
 
