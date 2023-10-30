@@ -6,7 +6,6 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <Compile Include="Regex.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
@@ -29,5 +28,7 @@
     <ProjectReference Include="..\..\..\src\ISA\ISA\ARCtrl.ISA.fsproj" />
     <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
-  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
+  </ItemGroup>
 </Project>

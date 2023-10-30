@@ -8,7 +8,6 @@
     <EmbeddedResource Remove="StudyFile\**" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CollectionAux.fs" />
     <Compile Include="Metadata\Conversions.fs" />
@@ -33,6 +32,9 @@
     <None Include="../../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FsSpreadsheet" Version="5.0.1" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
     <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
@@ -46,5 +48,4 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>

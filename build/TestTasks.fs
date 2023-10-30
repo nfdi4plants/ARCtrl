@@ -136,17 +136,9 @@ module RunTests =
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {
+        let dotnetRun = run dotnet "run"
         testProjects
-        |> Seq.iter (fun testProject ->
-            Fake.DotNet.DotNet.test(fun testParams ->
-                {
-                    testParams with
-                        Logger = Some "console;verbosity=detailed"
-                        Configuration = DotNet.BuildConfiguration.fromString configuration
-                        NoBuild = true
-                }
-            ) testProject
-        )
+        |> Seq.iter dotnetRun
     }
 
 let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsDotnet] { 

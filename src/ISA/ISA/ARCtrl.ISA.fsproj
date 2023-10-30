@@ -5,7 +5,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <Compile Include="Path.fs" />
     <Compile Include="Identifier.fs" />
     <Compile Include="Url.fs" />
@@ -77,5 +76,4 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>

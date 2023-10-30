@@ -7,7 +7,7 @@ open Expecto
 
 [<Tests>]
 #endif
-let all = testSequenced <| testList "All" [
+let all = testSequenced <| testList "ARCtrl" [
     ARCtrl.Contracts.Tests.main
     ARCtrl.WebRequest.Tests.main
     ARCtrl.SemVer.Tests.main
