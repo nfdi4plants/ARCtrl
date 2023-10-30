@@ -124,7 +124,7 @@ open TestObjects
 
 let tests_Item = testList "Item" [
     // update test as soon as https://github.com/fable-compiler/Fable/issues/3571 is fixed
-    ptestCase "simple" <| fun _ ->
+    testCase "simple" <| fun _ ->
         let table1 = ArcTable.init("Table 1")
         let table2 = ArcTable.init("Table 2")
         let tableSeq = [table1; table2]
