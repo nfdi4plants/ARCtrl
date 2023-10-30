@@ -19,7 +19,7 @@ and __JavaScript__! ❤️
 ``` 
 
 ```bash
-<PackageReference Include="ARCtrl" Version="1.0.0-alpha9" />
+<PackageReference Include="ARCtrl" Version="1.0.0-beta.1" />
 ```
 
 ### JavaScript
@@ -30,7 +30,7 @@ npm i @nfdi4plants/arctrl
 
 ## Docs
 
-Currently we provide some documentation in form of markdown fiels in the `/docs` folder of this repository!
+Currently we provide some documentation in form of markdown files in the `/docs` folder of this repository!
 
 [Check it out!](/docs)
 
