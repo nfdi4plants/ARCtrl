@@ -437,8 +437,8 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     // - Row API - //
     member this.RemoveRow (index:int) =
         ArcTableAux.SanityChecks.validateRowIndex index this.RowCount false
-        let removeCells = Unchecked.removeRowCells_withIndexChange index this.ColumnCount this.RowCount this.Values
-        ()
+        // removeCells
+        Unchecked.removeRowCells_withIndexChange index this.ColumnCount this.RowCount this.Values
 
     static member removeRow (index:int) =
         fun (table:ArcTable) ->
