@@ -30,7 +30,6 @@ let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseT
         failwith "aborted"
 }
 
-
 let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; packDotNet] {
     let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
     for target in targets do printfn "%A" target

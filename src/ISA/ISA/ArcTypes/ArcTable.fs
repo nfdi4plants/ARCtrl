@@ -19,7 +19,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
 
     let mutable _name = name
     member val Headers = headers with get, set
-    member val Values = values with get, set
+    member val Values : ResizeArray<ResizeArray<CompositeCell>> = values with get, set
     member this.Name  
         with get() = _name
         and internal set (newName) = _name <- newName
