@@ -7,7 +7,7 @@ open Expecto
 
 [<Tests>]
 #endif
-let all = testSequenced <| testList "All" [
+let all = testSequenced <| testList "FileSystem" [
     ARCtrl.FileSystemTree.Tests.main
 ]
 

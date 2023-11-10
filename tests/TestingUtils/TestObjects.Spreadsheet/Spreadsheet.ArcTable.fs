@@ -287,7 +287,7 @@ module Protocol =
 
 let addSpacesToEnd (cc : FsCellsCollection) (t : FsTable) =
     let count = System.Collections.Generic.Dictionary<string,string>()
-    t.HeadersRow().Cells(cc) |> Seq.iter  (fun c ->
+    t.GetHeaderRow(cc) |> Seq.iter  (fun c ->
         let k = c.ValueAsString()
         match Dictionary.tryGet k count with
         | Some v -> 

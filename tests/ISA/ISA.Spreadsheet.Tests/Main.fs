@@ -7,7 +7,7 @@ open Expecto
 
 [<Tests>]
 #endif
-let all = testSequenced <| testList "All" [
+let all = testSequenced <| testList "ISA.Spreadsheet" [
     FableTests.main
     ArcInvestigationTests.main
     CompositeColumnTests.main

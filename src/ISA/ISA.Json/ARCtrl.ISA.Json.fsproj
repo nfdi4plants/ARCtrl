@@ -5,7 +5,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <EmbeddedResource Include="Validation\JsonValidation.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -40,17 +39,11 @@
   <PropertyGroup>
     <NpmDependencies>
       <NpmPackage Name="jsonschema" Version="gte 1.1.0 lt 2.0.0" ResolutionStrategy="Max" />
-      <NpmPackage Name="fable-library" Version="gte 1.4.1 lt 2.0.0" ResolutionStrategy="Max" />
     </NpmDependencies>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
-  <PropertyGroup>
-    <NpmDependencies>
-      <NpmPackage Name="jsonschema" Version="gte 1.4.1 lt 1.5.0" ResolutionStrategy="Max" />
-    </NpmDependencies>
-  </PropertyGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
     <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
@@ -61,5 +54,4 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-  <Import Project="..\..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -15,10 +15,12 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
+  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  </ItemGroup>
+  <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <Compile Include="Path.fs" />
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="SemVer.fs" />
@@ -36,6 +38,10 @@
     <Compile Include="ARC.fs" />
     <None Include="README.md" />
   </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Fable.Fetch" Version="2.6.0" />
+		<PackageReference Include="Fable.SimpleHttp" Version="3.5.0" />
+	</ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
@@ -49,5 +55,4 @@
       <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
     </NpmDependencies>
   </PropertyGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

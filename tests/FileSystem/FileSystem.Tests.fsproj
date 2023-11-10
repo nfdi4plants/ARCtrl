@@ -6,7 +6,6 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="paket.references" />
     <Compile Include="FileSystemTree.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
@@ -14,5 +13,7 @@
     <ProjectReference Include="..\..\src\FileSystem\ARCtrl.FileSystem.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
+  </ItemGroup>
 </Project>

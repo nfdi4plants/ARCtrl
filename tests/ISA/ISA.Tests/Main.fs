@@ -7,7 +7,7 @@ open Expecto
 
 [<Tests>]
 #endif
-let all = testSequenced <| testList "All" [
+let all = testSequenced <| testList "ISA" [
     Update.Tests.main
     DataModel.Tests.main
     Regex.Tests.main
