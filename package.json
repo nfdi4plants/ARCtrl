@@ -19,8 +19,11 @@
     "pretestjs": "dotnet fable src/ARCtrl -o tests/JavaScript/ARCtrl ",
     "testjs": "mocha tests/JavaScript",
     "pretestpy": "dotnet fable src/ARCtrl -o tests/Python/ARCtrl --lang py ",
+    "pretestui": "dotnet fable src/ARCtrl -o tests/UI/ARCtrl ",
+    "testui": "cd tests/UI & npx cypress run --component ",
     "testpy": "",
-    "postinstall": "cd src/ISA & npm install"
+    "postinstall": "cd src/ISA & npm install",
+    "devui": "cd tests/UI & npx vite"
   },
   "author": "Heinrich Lukas Weil <weil@rptu.de> (https://github.com/HLWeil)",
   "contributors": [
@@ -33,7 +36,11 @@
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^4.4.1",
+    "cypress": "^13.5.0",
     "mkdirp": "3.0.1",
-    "mocha": "^10.2.0"
+    "mocha": "^10.2.0",
+    "vite": "^4.5.0",
+    "vue": "^3.3.8"
   }
 }

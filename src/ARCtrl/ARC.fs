@@ -39,7 +39,7 @@ module ARCAux =
         let tree = 
             FileSystemTree.createRootFolder [|investigation;assays;studies|]
             |> FileSystem.create
-        fs.Union(tree)    
+        fs.Union(tree)
 
     let updateFSByCWL (cwl : CWL.CWL option) (fs : FileSystem) =       
         let workflows = FileSystemTree.createWorkflowsFolder [||]
@@ -197,7 +197,6 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             ARCAux.updateFSByISA _isa _fs
             |> ARCAux.updateFSByCWL _cwl
         _fs <- newFS        
-
 
     /// <summary>
     /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.

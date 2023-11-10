@@ -1,0 +1,11 @@
+{
+  "name": "minimal",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "npx cypress run --component"
+  }
+}
