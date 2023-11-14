@@ -153,9 +153,9 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
 
     member val Tables = initTables with get, set
 
-    //member this.Item 
-    //    with get(index) = 
-    //        this.Tables.[index] 
+    member this.Item 
+        with get(index) = 
+            this.Tables.[index] 
 
     member this.TableNames 
         with get() = 
@@ -359,6 +359,12 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         tables
         |> ResizeArray
         |> ArcTables
+
+    member this.MoveTable(oldIndex, newIndex) =
+        let table = this.GetTableAt(oldIndex)
+        this.Tables.RemoveAt(oldIndex)
+        this.Tables.Insert(newIndex, table)
+        //let updatedOldIndex = if newIndex <= oldIndex then oldIndex + 1 else oldIndex
 
     /// Create a collection of tables from a list of processes.
     ///

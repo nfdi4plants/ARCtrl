@@ -210,7 +210,6 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
             inv.Studies
             |> Seq.iter (fun s ->
-                
                 workbooks.Add (
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
@@ -233,7 +232,6 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             match Dictionary.tryGet fp workbooks with
             | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
             | None -> Contract.createCreate(fp, DTOType.PlainText)
-           
         )
 
     member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitignore : bool) = 
@@ -265,7 +263,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             |> Option.map (fun isa -> isa.Studies.ToArray()) // to-do: isa.RegisteredStudies
             |> Option.defaultValue [||]
         
-        let registeredAssays =     
+        let registeredAssays =
             registeredStudies
             |> Array.map (fun s -> s.RegisteredAssays.ToArray()) // to-do: s.RegisteredAssays
             |> Array.concat

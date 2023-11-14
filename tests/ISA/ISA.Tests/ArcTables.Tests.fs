@@ -129,9 +129,8 @@ let tests_Item = testList "Item" [
         let table2 = ArcTable.init("Table 2")
         let tableSeq = [table1; table2]
         let arctables = ArcTables(ResizeArray tableSeq)
-        //Expect.equal arctables.[0] table1 "table1"
-        //Expect.equal arctables.[1] table2 "table2"
-        Expect.isTrue true ""
+        Expect.equal arctables.[0] table1 "table1"
+        Expect.equal arctables.[1] table2 "table2"
 ]
 
 let tests_IEnumberable = testList "IEnumerable" [
@@ -169,6 +168,18 @@ let tests_member = testList "member" [
         let arctables = ArcTables(ResizeArray tableSeq)
         let _ = arctables.InitTable("New Table!")
         Expect.sequenceEqual arctables.TableNames ["Table 1"; "Table 2"; "New Table!"] "TableNames"
+    testList "MoveTable" [
+        testCase "Move to end" <| fun _ ->
+            let actual = ResizeArray [for i in 0 .. 5 do ArcTable.init(sprintf "Table %i" i)] |> ArcTables
+            actual.MoveTable(1,5)
+            let expected = List.map ArcTable.init ["Table 0"; "Table 2"; "Table 3"; "Table 4"; "Table 5"; "Table 1"] |> ResizeArray |> ArcTables
+            Seq.iteri2 (fun i t1 t2 -> Expect.equal t1 t2 (sprintf "Test compare table at index %i" i)) actual expected
+        testCase "Move to start" <| fun _ ->
+            let actual = ResizeArray [for i in 0 .. 5 do ArcTable.init(sprintf "Table %i" i)] |> ArcTables
+            actual.MoveTable(5,0)
+            let expected = List.map ArcTable.init ["Table 5"; "Table 0"; "Table 1"; "Table 2"; "Table 3"; "Table 4";] |> ResizeArray |> ArcTables
+            Seq.iteri2 (fun i t1 t2 -> Expect.equal t1 t2 (sprintf "Test compare table at index %i" i)) actual expected
+    ]
 ]
 
 let updateReferenceWithSheet = 

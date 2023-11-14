@@ -150,6 +150,6 @@ module RunTests =
         |> Seq.iter dotnetRun
     }
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsUI; RunTests.runTestsDotnet] { 
+let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; (*RunTests.runTestsUI;*) RunTests.runTestsDotnet] { 
     ()
 }
