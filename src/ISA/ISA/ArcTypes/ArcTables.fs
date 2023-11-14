@@ -51,7 +51,7 @@ module ArcTablesAux =
             
             match table.TryGetInputColumn() with
             | Some ic -> 
-                let ioType = ic.Header.tryInput().Value
+                let ioType = ic.Header.TryInput().Value
                 ic.Cells
                 |> Array.iter (fun c -> 
                     includeInMap (c.ToFreeTextCell().AsFreeText) ioType
@@ -59,7 +59,7 @@ module ArcTablesAux =
             | None -> ()
             match table.TryGetOutputColumn() with
             | Some oc -> 
-                let ioType = oc.Header.tryOutput().Value
+                let ioType = oc.Header.TryOutput().Value
                 oc.Cells
                 |> Array.iter (fun c -> 
                     includeInMap (c.ToFreeTextCell().AsFreeText) ioType
@@ -72,7 +72,7 @@ module ArcTablesAux =
             match table.TryGetInputColumn() with
             | Some ic -> 
                 let index = table.Headers |> Seq.findIndex (fun x -> x.isInput)
-                let oldIoType = ic.Header.tryInput().Value
+                let oldIoType = ic.Header.TryInput().Value
                 let newIOType = 
                     ic.Cells
                     |> Array.fold (fun (io : IOType) c ->
@@ -85,7 +85,7 @@ module ArcTablesAux =
             match table.TryGetOutputColumn() with
             | Some oc -> 
                 let index = table.Headers |> Seq.findIndex (fun x -> x.isOutput)
-                let oldIoType = oc.Header.tryOutput().Value
+                let oldIoType = oc.Header.TryOutput().Value
                 let newIOType = 
                     oc.Cells
                     |> Array.fold (fun (io : IOType) c ->
