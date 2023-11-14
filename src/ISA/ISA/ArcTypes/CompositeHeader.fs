@@ -417,14 +417,19 @@ type CompositeHeader =
         | FreeText _ -> true
         | anythingElse -> false
 
-    member this.tryInput() =
+    member this.TryInput() =
         match this with
         | Input io -> Some io
         | _ -> None
 
-    member this.tryOutput() =
+    member this.TryOutput() =
         match this with
         | Output io -> Some io
+        | _ -> None
+
+    member this.TryIOType() =
+        match this with
+        | Output io | Input io -> Some io
         | _ -> None
 
     member this.TryParameter() = 
