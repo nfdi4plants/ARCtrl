@@ -210,16 +210,17 @@ type CompositeHeader =
         | Factor oa             -> oa
         | Characteristic oa     -> oa
         | Component oa          -> oa
-        | ProtocolType          -> OntologyAnnotation.fromString "Protocol Type" 
-        | ProtocolREF           -> OntologyAnnotation.fromString "Protocol REF"
-        | ProtocolDescription   -> OntologyAnnotation.fromString "Protocol Description"
-        | ProtocolUri           -> OntologyAnnotation.fromString "Protocol Uri"
-        | ProtocolVersion       -> OntologyAnnotation.fromString "Protocol Version"
-        | Performer             -> OntologyAnnotation.fromString "Performer"
-        | Date                  -> OntologyAnnotation.fromString "Date"
-        | Input io              -> OntologyAnnotation.fromString io.asInput
-        | Output io             -> OntologyAnnotation.fromString io.asOutput
-        | FreeText str          -> OntologyAnnotation.fromString str
+        | ProtocolType          -> OntologyAnnotation.fromString(this.ToString(), tan=this.GetFeaturedColumnAccession) 
+        | ProtocolREF           
+        | ProtocolDescription   
+        | ProtocolUri           
+        | ProtocolVersion       
+        | Performer           
+        | Date                  
+        | Input _              
+        | Output _             
+        | FreeText _          -> 
+            OntologyAnnotation.fromString (this.ToString())
 
     /// <summary>
     /// Tries to create a `CompositeHeader` from a given string.

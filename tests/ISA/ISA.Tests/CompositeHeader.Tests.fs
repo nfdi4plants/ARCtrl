@@ -290,9 +290,49 @@ let private tests_compositeHeader =
         ]
     ]
 
+open ARCtrl.ISA
+
+let tests_ToTerm = testList "ToTerm" [
+    let testToTerm (ch: CompositeHeader) =
+        testCase (sprintf "%s" <| ch.ToString()) <| fun _ ->
+            if ch.IsTermColumn then
+                match ch with
+                | CompositeHeader.Component oa | CompositeHeader.Factor oa | CompositeHeader.Parameter oa | CompositeHeader.Characteristic oa ->
+                    Expect.equal (ch.ToTerm()) oa (sprintf "[TERM] ToTerm does not return correct oa: %A" ch)
+                | featuredColumn when ch.IsFeaturedColumn -> 
+                    let expected = OntologyAnnotation.fromString(featuredColumn.ToString(), tan=featuredColumn.GetFeaturedColumnAccession)
+                    Expect.equal (ch.ToTerm()) expected (sprintf "[FEATURED COLUM] ToTerm does not return correct oa: %A" ch)
+                | _ -> failwith "Test"
+            else
+                let expected = OntologyAnnotation.fromString (ch.ToString())
+                Expect.equal (ch.ToTerm()) expected (sprintf "[Others] ToTerm does not return correct oa: %A" ch)
+    let allHeaders = 
+        [
+            CompositeHeader.Component OntologyAnnotation.empty
+            CompositeHeader.Characteristic OntologyAnnotation.empty
+            CompositeHeader.Factor OntologyAnnotation.empty
+            CompositeHeader.Parameter OntologyAnnotation.empty
+            CompositeHeader.ProtocolType
+            CompositeHeader.ProtocolDescription
+            CompositeHeader.ProtocolUri
+            CompositeHeader.ProtocolVersion
+            CompositeHeader.ProtocolREF
+            CompositeHeader.Performer
+            CompositeHeader.Date
+            CompositeHeader.Input IOType.Source
+            CompositeHeader.Output IOType.Sample
+            CompositeHeader.FreeText "Hello World"
+        ]
+        |> List.distinct
+    testCase "Ensure all headers listed" <| fun _ ->
+        Expect.hasLength allHeaders CompositeHeader.Cases.Length ""
+    yield! allHeaders |> List.map testToTerm
+]
+
 let main = 
     testList "CompositeHeader" [
         tests_iotype
         tests_jsHelper
         tests_compositeHeader
+        tests_ToTerm
     ]
