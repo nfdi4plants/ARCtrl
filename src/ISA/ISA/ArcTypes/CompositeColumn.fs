@@ -49,3 +49,20 @@ type CompositeColumn = {
                     unit
         |]
         if Array.isEmpty arr then None else Some arr
+
+    /// <summary>
+    /// Simple predictor for empty default cells.
+    /// </summary>
+    member this.PredictNewColumnCell() =
+            if not this.Header.IsTermColumn then
+                CompositeCell.emptyFreeText
+            else
+                let unitCellCount, termCellCount =
+                    this.Cells
+                    |> Seq.fold (fun (units,terms) cell ->
+                        if cell.isUnitized then (units+1,terms) else (units,terms+1)
+                    ) (0,0)
+                if termCellCount >= unitCellCount then
+                    CompositeCell.emptyTerm
+                else
+                    CompositeCell.emptyUnitized
