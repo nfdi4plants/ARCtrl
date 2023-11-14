@@ -49,6 +49,15 @@ type CompositeCell =
         | CompositeCell.FreeText _ -> CompositeCell.createFreeText oa.NameText
 
     /// <summary>
+    /// This returns the default empty cell from an existing CompositeCell.
+    /// </summary>
+    member this.GetEmptyCell() =
+        match this with
+        | CompositeCell.Term _ -> CompositeCell.emptyTerm
+        | CompositeCell.Unitized _ -> CompositeCell.emptyUnitized
+        | CompositeCell.FreeText _ -> CompositeCell.emptyFreeText
+
+    /// <summary>
     /// This function returns an array of all values as string
     ///
     /// ```fsharp
