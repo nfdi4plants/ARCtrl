@@ -36,19 +36,6 @@ type CompositeCell =
     member this.isFreeText = match this with | FreeText _ -> true | _ -> false
 
     /// <summary>
-    /// Updates current CompositeCell with information from OntologyAnnotation.
-    ///
-    /// For `Term`, OntologyAnnotation (oa) is fully set. For `Unitized`, oa is set as unit while value is untouched.
-    /// For `FreeText` oa.NameText is set.
-    /// </summary>
-    /// <param name="oa"></param>
-    member this.UpdateWithOA(oa:OntologyAnnotation) =
-        match this with
-        | CompositeCell.Term _ -> CompositeCell.createTerm oa
-        | CompositeCell.Unitized (v,_) -> CompositeCell.createUnitized (v,oa)
-        | CompositeCell.FreeText _ -> CompositeCell.createFreeText oa.NameText
-
-    /// <summary>
     /// This returns the default empty cell from an existing CompositeCell.
     /// </summary>
     member this.GetEmptyCell() =

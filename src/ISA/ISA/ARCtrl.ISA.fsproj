@@ -54,6 +54,7 @@
     <Compile Include="ArcTypes\ArcTables.fs" />
     <Compile Include="ArcTypes\ArcTypes.fs" />
     <Compile Include="ArcTypes\IdentifierSetters.fs" />
+    <Compile Include="UIHelper.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />
@@ -63,9 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-  </ItemGroup>
+  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Muas</Authors>
     <Description>ARC and ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in the dotnet environment.</Description>

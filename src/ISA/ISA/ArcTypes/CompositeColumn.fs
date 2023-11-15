@@ -52,8 +52,10 @@ type CompositeColumn = {
 
     /// <summary>
     /// Simple predictor for empty default cells.
+    ///
+    /// Currently uses majority vote for the column to decide cell type.
     /// </summary>
-    member this.PredictNewColumnCell() =
+    member this.GetDefaultEmptyCell() =
             if not this.Header.IsTermColumn then
                 CompositeCell.emptyFreeText
             else

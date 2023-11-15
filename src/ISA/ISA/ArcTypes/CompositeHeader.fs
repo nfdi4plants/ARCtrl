@@ -211,16 +211,16 @@ type CompositeHeader =
         | Characteristic oa     -> oa
         | Component oa          -> oa
         | ProtocolType          -> OntologyAnnotation.fromString(this.ToString(), tan=this.GetFeaturedColumnAccession) 
-        | ProtocolREF           
-        | ProtocolDescription   
-        | ProtocolUri           
-        | ProtocolVersion       
-        | Performer           
-        | Date                  
-        | Input _              
-        | Output _             
-        | FreeText _          -> 
-            OntologyAnnotation.fromString (this.ToString())
+        | ProtocolREF           -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | ProtocolDescription   -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | ProtocolUri           -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | ProtocolVersion       -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Performer             -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Date                  -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Input _               -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Output _              -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | FreeText _            -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        // owl ontology: https://github.com/nfdi4plants/ARC_ontology/blob/main/ARC_v2.0.owl
 
     /// <summary>
     /// Tries to create a `CompositeHeader` from a given string.
