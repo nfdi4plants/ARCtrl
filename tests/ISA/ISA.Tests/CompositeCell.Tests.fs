@@ -154,10 +154,32 @@ let private tests_GetContent = testList "GetContent" [
 
 ]
 
+let private tests_UIHelper = testList "UIHelper" [
+    testList "UpdateWithOA" [
+        let testOntologyAnnotation = OntologyAnnotation.fromString("New OA", "NEW", "NEW:00001") 
+        testCase "Term" <| fun _ ->
+            let cc = CompositeCell.createTermFromString("TestTerm", "TEST", "TEST:00001")
+            let actual = cc |> UIHelper.CompositeCell.updateWithOA testOntologyAnnotation
+            let expected = CompositeCell.createTermFromString(testOntologyAnnotation.NameText, testOntologyAnnotation.TermSourceREFString, testOntologyAnnotation.TermAccessionShort)
+            Expect.equal actual expected ""
+        testCase "Unitized" <| fun _ ->
+            let cc = CompositeCell.createUnitizedFromString("12", "TestTerm", "TEST", "TEST:00001")
+            let actual = cc |> UIHelper.CompositeCell.updateWithOA testOntologyAnnotation
+            let expected = CompositeCell.createUnitizedFromString("12", testOntologyAnnotation.NameText, testOntologyAnnotation.TermSourceREFString, testOntologyAnnotation.TermAccessionShort)
+            Expect.equal actual expected ""
+        testCase "FreeText" <| fun _ ->
+            let cc = CompositeCell.createFreeText("TestTerm")
+            let actual = cc |> UIHelper.CompositeCell.updateWithOA testOntologyAnnotation
+            let expected = CompositeCell.createFreeText(testOntologyAnnotation.NameText)
+            Expect.equal actual expected ""
+    ]
+]
+
 let main = 
     testList "CompositeCell" [
         tests_cellConverter
         tests_create
         tests_ToString
         tests_GetContent
+        tests_UIHelper
     ]

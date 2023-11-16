@@ -81,6 +81,27 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.TryGetCellAt(column, row)
 
+    member this.IterColumns(action: CompositeColumn -> unit) =
+        for columnIndex in 0 .. (this.ColumnCount-1) do
+            let column = this.GetColumn columnIndex
+            action column
+
+    static member iterColumns(action: CompositeColumn -> unit) =
+        fun (table:ArcTable) ->
+            let copy = table.Copy()
+            copy.IterColumns(action)
+            copy
+
+    member this.IteriColumns(action: int -> CompositeColumn -> unit) =
+        for columnIndex in 0 .. (this.ColumnCount-1) do
+            let column = this.GetColumn columnIndex
+            action columnIndex column
+
+    static member iteriColumns(action: int -> CompositeColumn -> unit) =
+        fun (table:ArcTable) ->
+            let copy = table.Copy()
+            copy.IteriColumns(action)
+            copy
 
     // - Cell API - //
     // TODO: And then directly a design question. Is a column with rows containing both CompositeCell.Term and CompositeCell.Unitized allowed?

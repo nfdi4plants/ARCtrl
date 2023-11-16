@@ -364,3 +364,5 @@ tmp/
 /tests/ARCtrl/js
 /tests/FileSystem/js
 
+/tests/UI/cypress/screenshots/Tests/Dictionary.cy.js
+/tests/UI/ARCtrl

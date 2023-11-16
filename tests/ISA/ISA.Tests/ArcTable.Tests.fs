@@ -2186,6 +2186,17 @@ let private tests_Join = testList "Join" [
     ]
 ]
 
+let private tests_IterColumns = testList "IterColumns" [
+    testCase "Replace input column header" <| fun _ ->
+        let table = create_testTable()
+        let expected = CompositeHeader.Input IOType.RawDataFile
+        table.IteriColumns (fun i c ->
+            if c.Header.isInput then
+                table.UpdateHeader(i,expected)
+        )
+        Expect.equal table.Columns.[0].Header expected ""
+]
+
 let private tests_equality = testList "equality" [
     testList "override equality" [
         testCase "equal" <| fun _ ->
@@ -2244,6 +2255,7 @@ let main =
         tests_validate
         tests_UpdateRefWithSheet
         tests_Join
+        tests_IterColumns
         tests_GetHashCode
         tests_equality
     ]

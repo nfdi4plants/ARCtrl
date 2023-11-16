@@ -39,7 +39,7 @@ module ARCAux =
         let tree = 
             FileSystemTree.createRootFolder [|investigation;assays;studies|]
             |> FileSystem.create
-        fs.Union(tree)    
+        fs.Union(tree)
 
     let updateFSByCWL (cwl : CWL.CWL option) (fs : FileSystem) =       
         let workflows = FileSystemTree.createWorkflowsFolder [||]
@@ -198,7 +198,6 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             |> ARCAux.updateFSByCWL _cwl
         _fs <- newFS        
 
-
     /// <summary>
     /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
@@ -211,7 +210,6 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
             inv.Studies
             |> Seq.iter (fun s ->
-                
                 workbooks.Add (
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
@@ -234,7 +232,6 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             match Dictionary.tryGet fp workbooks with
             | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
             | None -> Contract.createCreate(fp, DTOType.PlainText)
-           
         )
 
     member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitignore : bool) = 
@@ -266,7 +263,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             |> Option.map (fun isa -> isa.Studies.ToArray()) // to-do: isa.RegisteredStudies
             |> Option.defaultValue [||]
         
-        let registeredAssays =     
+        let registeredAssays =
             registeredStudies
             |> Array.map (fun s -> s.RegisteredAssays.ToArray()) // to-do: s.RegisteredAssays
             |> Array.concat

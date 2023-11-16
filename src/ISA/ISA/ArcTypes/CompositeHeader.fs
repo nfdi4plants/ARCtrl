@@ -210,16 +210,17 @@ type CompositeHeader =
         | Factor oa             -> oa
         | Characteristic oa     -> oa
         | Component oa          -> oa
-        | ProtocolType          -> OntologyAnnotation.fromString "Protocol Type" 
-        | ProtocolREF           -> OntologyAnnotation.fromString "Protocol REF"
-        | ProtocolDescription   -> OntologyAnnotation.fromString "Protocol Description"
-        | ProtocolUri           -> OntologyAnnotation.fromString "Protocol Uri"
-        | ProtocolVersion       -> OntologyAnnotation.fromString "Protocol Version"
-        | Performer             -> OntologyAnnotation.fromString "Performer"
-        | Date                  -> OntologyAnnotation.fromString "Date"
-        | Input io              -> OntologyAnnotation.fromString io.asInput
-        | Output io             -> OntologyAnnotation.fromString io.asOutput
-        | FreeText str          -> OntologyAnnotation.fromString str
+        | ProtocolType          -> OntologyAnnotation.fromString(this.ToString(), tan=this.GetFeaturedColumnAccession) 
+        | ProtocolREF           -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | ProtocolDescription   -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | ProtocolUri           -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | ProtocolVersion       -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Performer             -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Date                  -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Input _               -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | Output _              -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        | FreeText _            -> OntologyAnnotation.fromString (this.ToString())  // use owl ontology in the future
+        // owl ontology: https://github.com/nfdi4plants/ARC_ontology/blob/main/ARC_v2.0.owl
 
     /// <summary>
     /// Tries to create a `CompositeHeader` from a given string.
@@ -417,14 +418,19 @@ type CompositeHeader =
         | FreeText _ -> true
         | anythingElse -> false
 
-    member this.tryInput() =
+    member this.TryInput() =
         match this with
         | Input io -> Some io
         | _ -> None
 
-    member this.tryOutput() =
+    member this.TryOutput() =
         match this with
         | Output io -> Some io
+        | _ -> None
+
+    member this.TryIOType() =
+        match this with
+        | Output io | Input io -> Some io
         | _ -> None
 
     member this.TryParameter() = 

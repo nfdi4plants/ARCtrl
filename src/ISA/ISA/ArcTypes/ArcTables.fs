@@ -51,7 +51,7 @@ module ArcTablesAux =
             
             match table.TryGetInputColumn() with
             | Some ic -> 
-                let ioType = ic.Header.tryInput().Value
+                let ioType = ic.Header.TryInput().Value
                 ic.Cells
                 |> Array.iter (fun c -> 
                     includeInMap (c.ToFreeTextCell().AsFreeText) ioType
@@ -59,7 +59,7 @@ module ArcTablesAux =
             | None -> ()
             match table.TryGetOutputColumn() with
             | Some oc -> 
-                let ioType = oc.Header.tryOutput().Value
+                let ioType = oc.Header.TryOutput().Value
                 oc.Cells
                 |> Array.iter (fun c -> 
                     includeInMap (c.ToFreeTextCell().AsFreeText) ioType
@@ -72,7 +72,7 @@ module ArcTablesAux =
             match table.TryGetInputColumn() with
             | Some ic -> 
                 let index = table.Headers |> Seq.findIndex (fun x -> x.isInput)
-                let oldIoType = ic.Header.tryInput().Value
+                let oldIoType = ic.Header.TryInput().Value
                 let newIOType = 
                     ic.Cells
                     |> Array.fold (fun (io : IOType) c ->
@@ -85,7 +85,7 @@ module ArcTablesAux =
             match table.TryGetOutputColumn() with
             | Some oc -> 
                 let index = table.Headers |> Seq.findIndex (fun x -> x.isOutput)
-                let oldIoType = oc.Header.tryOutput().Value
+                let oldIoType = oc.Header.TryOutput().Value
                 let newIOType = 
                     oc.Cells
                     |> Array.fold (fun (io : IOType) c ->
@@ -153,9 +153,9 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
 
     member val Tables = initTables with get, set
 
-    //member this.Item 
-    //    with get(index) = 
-    //        this.Tables.[index] 
+    member this.Item 
+        with get(index) = 
+            this.Tables.[index] 
 
     member this.TableNames 
         with get() = 
@@ -359,6 +359,12 @@ type ArcTables(initTables:ResizeArray<ArcTable>) =
         tables
         |> ResizeArray
         |> ArcTables
+
+    member this.MoveTable(oldIndex, newIndex) =
+        let table = this.GetTableAt(oldIndex)
+        this.Tables.RemoveAt(oldIndex)
+        this.Tables.Insert(newIndex, table)
+        //let updatedOldIndex = if newIndex <= oldIndex then oldIndex + 1 else oldIndex
 
     /// Create a collection of tables from a list of processes.
     ///
