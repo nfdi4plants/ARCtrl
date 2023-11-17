@@ -165,6 +165,20 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         /// get assays from xlsx
         let assays = ARCAux.getArcAssaysFromContracts contracts
 
+        // Remove Assay metadata objects read from investigation file from investigation object, if no assosiated assay file exists
+        investigation.AssayIdentifiers
+        |> Array.iter (fun ai -> 
+            if assays |> Array.exists (fun a -> a.Identifier = ai) |> not then
+                investigation.DeleteAssay(ai)      
+        )
+
+        // Remove Study metadata objects read from investigation file from investigation object, if no assosiated study file exists
+        investigation.StudyIdentifiers
+        |> Array.iter (fun si -> 
+            if studies |> Array.exists (fun s -> s.Identifier = si) |> not then
+                investigation.RemoveStudy(si)
+        )
+
         studies |> Array.iter (fun study ->
             /// Try find registered study in parsed READ contracts
             let registeredStudyOpt = investigation.Studies |> Seq.tryFind (fun s -> s.Identifier = study.Identifier)

@@ -1200,6 +1200,46 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Assay API - CRUD //
     /// <summary>
+    /// Removes assay at specified index from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    member this.DeleteAssayAt(index: int) =
+        this.Assays.RemoveAt(index)
+
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay at specified index from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    static member deleteAssayAt(index: int) =
+        fun (inv: ArcInvestigation) ->
+            let newInvestigation = inv.Copy()
+            newInvestigation.DeleteAssayAt(index)
+            newInvestigation
+
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay with given identifier from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    member this.DeleteAssay(assayIdentifier: string) =
+        let index = this.GetAssayIndex(assayIdentifier)
+        this.DeleteAssayAt(index)
+
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay with given identifier from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    static member deleteAssay(assayIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.DeleteAssay(assayIdentifier)
+            newInv
+
+
+    // - Assay API - CRUD //
+    /// <summary>
     /// Removes assay at specified index from ArcInvestigation and deregisteres it from all studies.
     /// </summary>
     /// <param name="index"></param>
@@ -1290,7 +1330,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         with get() = this.Studies.Count
 
     member this.StudyIdentifiers
-        with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier)
+        with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier) |> Seq.toArray
 
     // - Study API - CRUD //
     member this.AddStudy(study: ArcStudy) =

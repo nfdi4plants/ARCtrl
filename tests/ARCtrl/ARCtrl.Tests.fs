@@ -48,30 +48,51 @@ let private test_model = testList "model" [
 
 let private test_isaFromContracts = testList "read_contracts" [
     testCase "simpleISA" (fun () ->
-        let iContract = SimpleISA.investigationReadContract
-        let sContract = SimpleISA.studyReadContract
-        let aContract = SimpleISA.assayReadContract
         let arc = ARC()
-        arc.SetISAFromContracts([|iContract; sContract; aContract|])
+        arc.SetISAFromContracts([|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Study.bII_S_2ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Assay.metabolomeReadContract
+            SimpleISA.Assay.transcriptomeReadContract
+        |])
         Expect.isSome arc.ISA "isa should be filled out"
         let inv = arc.ISA.Value
-        Expect.equal inv.Identifier Investigation.investigationIdentifier "investigation identifier should have been read from investigation contract"
+        Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
         Expect.equal inv.Studies.Count 2 "should have read two studies"
         let study1 = inv.Studies.[0]
-        let study2 = inv.Studies.[1]
-        Expect.equal study1.Identifier Study.studyIdentifier "study 1 identifier should have been read from study contract"
+        Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
-        Expect.equal study2.TableCount 4 "study 2 should have exactly as many tables as stated in investigation file"
         
         Expect.equal study1.RegisteredAssayCount 3 "study 1 should have read three assays"
         let assay1 = study1.RegisteredAssays.[0]
-        let assay2 = study1.RegisteredAssays.[1]
-        let assay3 = study1.RegisteredAssays.[2]
-        Expect.equal assay1.Identifier Assay.assayIdentifier "assay 1 identifier should have been read from assay contract"
+        Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
-        Expect.equal assay2.TableCount 0 "assay 2 should have read no tables"
-        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"  
+    
+    )
+    testCase "StudyAssayOnlyRegistered" (fun () ->
+        let arc = ARC()
+        arc.SetISAFromContracts([|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+        |])
+        Expect.isSome arc.ISA "isa should be filled out"
+        let inv = arc.ISA.Value
+        Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+
+        Expect.equal inv.Studies.Count 1 "should have read one study"
+        let study1 = inv.Studies.[0]
+        Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
+        Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
+        
+        Expect.equal study1.RegisteredAssayCount 1 "study 1 should have read one assay"
+        let assay1 = study1.RegisteredAssays.[0]
+        Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
+        Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
+    
     )
     // Assay Table protocol get's updated by protocol metadata stored in study
     testCase "assayTableGetsUpdated" (fun () ->

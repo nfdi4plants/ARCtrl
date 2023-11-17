@@ -19,7 +19,7 @@ let [<Literal>] ValidStudyFileNamePattern = @"^(studies(\/|\\))?(?<identifier>" 
 let checkValidCharacters (identifier: string) =
     let regex = new Regex(ValidIdentifierPattern)
     let isValid = regex.IsMatch(identifier)
-    if not isValid then failwith "New identifier contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
+    if not isValid then failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
 
 
 let [<Literal>] MISSING_IDENTIFIER = "MISSING_IDENTIFIER_"
