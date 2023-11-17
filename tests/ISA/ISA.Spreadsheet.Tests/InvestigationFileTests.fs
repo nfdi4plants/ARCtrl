@@ -73,7 +73,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigation |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -85,7 +85,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try  
-                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigationObsoleteSheetName |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigationObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -97,7 +97,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigationWrongSheetName |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigationWrongSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -106,7 +106,7 @@ let private testInvestigationFile =
         )
         testCase "WriterSuccess" (fun () ->
 
-            let i = ArcInvestigation.fromFsWorkbook Investigation.fullInvestigation
+            let i = ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation
 
             let writingSuccess = 
                 try 
@@ -121,10 +121,10 @@ let private testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
            
             let i = 
-                Investigation.fullInvestigation.GetWorksheetByName "isa_investigation"
+                Investigation.BII_I_1.fullInvestigation.GetWorksheetByName "isa_investigation"
                 
             let o = 
-                Investigation.fullInvestigation
+                Investigation.BII_I_1.fullInvestigation
                 |> ArcInvestigation.fromFsWorkbook
                 |> ArcInvestigation.toFsWorkbook
                 |> fun wb -> wb.GetWorksheetByName "isa_investigation"               

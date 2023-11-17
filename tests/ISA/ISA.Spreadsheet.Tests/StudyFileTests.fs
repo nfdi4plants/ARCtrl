@@ -24,7 +24,7 @@ let testMetaDataFunctions =
             
             let readingSuccess = 
                 try 
-                    ArcStudy.fromMetadataSheet Study.studyMetadataEmptyObsoleteSheetName |> ignore
+                    ArcStudy.fromMetadataSheet Study.BII_S_1.studyMetadataEmptyObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the empty test file failed: %s" err.Message)
@@ -48,7 +48,7 @@ let testMetaDataFunctions =
         testCase "WriterSuccessEmptyObsoleteSheetName" (fun () ->
 
             let study,assays = 
-                ArcStudy.fromMetadataSheet Study.studyMetadataEmptyObsoleteSheetName
+                ArcStudy.fromMetadataSheet Study.BII_S_1.studyMetadataEmptyObsoleteSheetName
             let writingSuccess = 
                 try 
                     ArcStudy.toMetadataSheet study (Some assays) |> ignore
@@ -71,21 +71,21 @@ let testMetaDataFunctions =
         testCase "OutputMatchesInput" (fun () ->
            
             let o = 
-                Study.studyMetadata
+                Study.BII_S_1.studyMetadata
                 |> ArcStudy.fromMetadataSheet
                 |> fun (s,a) -> ArcStudy.toMetadataSheet s (Some a)
 
-            Expect.workSheetEqual o Study.studyMetadata "Written Empty study metadata does not match read study metadata"
+            Expect.workSheetEqual o Study.BII_S_1.studyMetadata "Written Empty study metadata does not match read study metadata"
         )
 
         testCase "OutputSheetNamesDifferentEmptyObsoleteSheetName" (fun () ->
            
             let o = 
-                Study.studyMetadataEmptyObsoleteSheetName
+                Study.BII_S_1.studyMetadataEmptyObsoleteSheetName
                 |> ArcStudy.fromMetadataSheet
                 |> fun (s,a) -> ArcStudy.toMetadataSheet s (Some a)
 
-            Expect.isTrue (o.Name <> Study.studyMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
+            Expect.isTrue (o.Name <> Study.BII_S_1.studyMetadataEmptyObsoleteSheetName.Name) "sheet names were expected to be different (obsolete replaced by new)"
         )
     ]
 
