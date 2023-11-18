@@ -66,7 +66,7 @@ let private test_isaFromContracts = testList "read_contracts" [
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
         
-        Expect.equal study1.RegisteredAssayCount 3 "study 1 should have read three assays"
+        Expect.equal study1.RegisteredAssays.Count 3 "study 1 should have read three assays"
         let assay1 = study1.RegisteredAssays.[0]
         Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
@@ -88,7 +88,7 @@ let private test_isaFromContracts = testList "read_contracts" [
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
         
-        Expect.equal study1.RegisteredAssayCount 1 "study 1 should have read one assay"
+        Expect.equal study1.RegisteredAssays.Count 1 "study 1 should have read one assay"
         let assay1 = study1.RegisteredAssays.[0]
         Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
@@ -120,7 +120,7 @@ let private test_isaFromContracts = testList "read_contracts" [
             [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName]
             "Protocol ref value was not kept correctly"
 
-        Expect.equal study.RegisteredAssayCount 1 "study should have read one assay"
+        Expect.equal study.RegisteredAssays.Count 1 "study should have read one assay"
         let assay = study.RegisteredAssays.[0]
         Expect.equal assay.TableCount 1 "assay should have read one table"
         let assayTable = assay.Tables.[0]

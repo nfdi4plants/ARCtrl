@@ -619,9 +619,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         with get(): ResizeArray<ArcAssay> = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
             let assays = ResizeArray()
-            for assay in inv.Assays do
-                if Seq.contains assay.Identifier this.RegisteredAssayIdentifiers then
-                    assays.Add assay
+            for assayIdentifier in this.RegisteredAssayIdentifiers do
+                match inv.Assays |> Seq.tryFind (fun a -> a.Identifier = assayIdentifier) with
+                | Some a -> assays.Add a
+                | None -> ()
             assays
 
     // - Assay API - CRUD //
