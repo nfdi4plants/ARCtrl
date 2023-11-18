@@ -322,6 +322,15 @@ let private test_updateFileSystem = testList "update_Filesystem" [
             "assays/My Assay/protocols/.gitkeep"; "studies/.gitkeep"
         |]
         Expect.equal paths2 expected_paths2 "paths2"
+    testCase "setFileSystem" <| fun () ->
+        let initial_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|]
+        let updated_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"; "studies/testFile.txt"|]
+        let arc = ARC.fromFilePaths(initial_paths)
+        let paths = arc.FileSystem.Tree.ToFilePaths()
+        Expect.sequenceEqual paths initial_paths "paths"
+        arc.SetFilePaths(updated_paths)
+        let paths2 = arc.FileSystem.Tree.ToFilePaths()
+        Expect.sequenceEqual paths2 updated_paths "paths2"        
 ]
 
 open ARCtrl.FileSystem

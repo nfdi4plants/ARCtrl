@@ -143,6 +143,10 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let fs : FileSystem = FileSystem.fromFilePaths filePaths
         ARC(fs=fs)
 
+    member this.SetFilePaths (filePaths : string array) =
+        let tree = FileSystemTree.fromFilePaths filePaths
+        _fs <- {_fs with Tree = tree}
+
     //// Maybe add forceReplace flag?
     //member this.SetFSFromFilePaths (filePaths : string array) = 
     //    let newFS : FileSystem = FileSystem.fromFilePaths filePaths
