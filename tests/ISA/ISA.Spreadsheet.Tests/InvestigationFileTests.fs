@@ -163,7 +163,15 @@ let private testInvestigationFile =
 
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
+        testCase "WriteWithStudyOnlyRegistered" (fun () ->
 
+            let studyIdentifiers = ResizeArray ["MyStudy"]
+            let i = 
+                ArcInvestigation.create("Identifier",registeredStudyIdentifiers = studyIdentifiers)   
+                |> ArcInvestigation.toFsWorkbook 
+                |> ArcInvestigation.fromFsWorkbook
+            Expect.sequenceEqual i.RegisteredStudyIdentifiers studyIdentifiers "Registered study Identifier were not written and read correctly"
+        )
         //testCase "OutputMatchesInputEmpty" (fun () ->
 
         //    let i = 

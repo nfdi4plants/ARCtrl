@@ -1453,6 +1453,16 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInv = inv.Copy()
             newInv.GetStudy(studyIdentifier)
 
+    member this.TryGetStudy(studyIdentifier: string) : ArcStudy option =
+        this.Studies
+        |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
+        
+    static member tryGetStudy(studyIdentifier : string) : ArcInvestigation -> ArcStudy option = 
+        fun (inv: ArcInvestigation) -> 
+            let newInv = inv.Copy()
+            newInv.TryGetStudy(studyIdentifier)
+
+
     // - Study API - CRUD //
     /// <summary>
     /// Register an existing assay from ArcInvestigation.Assays to a existing study.
