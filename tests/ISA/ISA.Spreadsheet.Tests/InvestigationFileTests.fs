@@ -73,7 +73,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigation |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -85,7 +85,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try  
-                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigationObsoleteSheetName |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigationObsoleteSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -97,7 +97,7 @@ let private testInvestigationFile =
             
             let readingSuccess = 
                 try 
-                    ArcInvestigation.fromFsWorkbook Investigation.fullInvestigationWrongSheetName |> ignore
+                    ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigationWrongSheetName |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -106,7 +106,7 @@ let private testInvestigationFile =
         )
         testCase "WriterSuccess" (fun () ->
 
-            let i = ArcInvestigation.fromFsWorkbook Investigation.fullInvestigation
+            let i = ArcInvestigation.fromFsWorkbook Investigation.BII_I_1.fullInvestigation
 
             let writingSuccess = 
                 try 
@@ -121,10 +121,10 @@ let private testInvestigationFile =
         testCase "OutputMatchesInput" (fun () ->
            
             let i = 
-                Investigation.fullInvestigation.GetWorksheetByName "isa_investigation"
+                Investigation.BII_I_1.fullInvestigation.GetWorksheetByName "isa_investigation"
                 
             let o = 
-                Investigation.fullInvestigation
+                Investigation.BII_I_1.fullInvestigation
                 |> ArcInvestigation.fromFsWorkbook
                 |> ArcInvestigation.toFsWorkbook
                 |> fun wb -> wb.GetWorksheetByName "isa_investigation"               
@@ -163,7 +163,26 @@ let private testInvestigationFile =
 
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
         )
+        testCase "WriteWithStudyOnlyRegistered" (fun () ->
 
+            let studyIdentifiers = ResizeArray ["MyStudy"]
+            let i = 
+                ArcInvestigation.create("Identifier",registeredStudyIdentifiers = studyIdentifiers)   
+                |> ArcInvestigation.toFsWorkbook 
+                |> ArcInvestigation.fromFsWorkbook
+            Expect.sequenceEqual i.RegisteredStudyIdentifiers studyIdentifiers "Registered study Identifier were not written and read correctly"
+        )
+        testCase "WriteWithAssayOnlyRegistered" (fun () ->
+            let studyIdentifier = "MyStudy"           
+            let assayIdentifiers = ResizeArray ["MyAssay"]
+            let study = ArcStudy.create("MyStudy",registeredAssayIdentifiers = assayIdentifiers)
+            let i =
+                ArcInvestigation.create("Identifier")
+                |> ArcInvestigation.addRegisteredStudy study
+                |> ArcInvestigation.toFsWorkbook 
+                |> ArcInvestigation.fromFsWorkbook
+            Expect.sequenceEqual (i.GetStudy(studyIdentifier).RegisteredAssayIdentifiers) assayIdentifiers "Registered assay Identifier weres not written and read correctly"
+        )
         //testCase "OutputMatchesInputEmpty" (fun () ->
 
         //    let i = 

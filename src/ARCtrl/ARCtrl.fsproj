@@ -23,9 +23,7 @@
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="SemVer.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
-    <Compile Include="Contracts\Contracts.ArcAssay.fs" />
-    <Compile Include="Contracts\Contracts.ArcStudy.fs" />
-    <Compile Include="Contracts\Contracts.ArcInvestigation.fs" />
+    <Compile Include="Contracts\Contracts.ArcTypes.fs" />
     <Compile Include="Contracts\Contracts.Git.fs" />
     <Compile Include="Contracts\Contracts.ARCtrl.fs" />
     <Compile Include="Templates\Template.fs" />

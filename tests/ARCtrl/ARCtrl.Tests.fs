@@ -6,8 +6,11 @@ open ARCtrl.ISA
 open TestObjects.Contract.ISA
 open TestObjects.Spreadsheet
 open TestingUtils
+open ARCtrl.Contract
+open ARCtrl.ISA.Spreadsheet
+open FsSpreadsheet
 
-let private test_model = testList "model" [
+let private tests_model = testList "model" [
     testCase "create" <| fun _ ->
         let arc = ARC()
         Expect.isNone arc.CWL "cwl"
@@ -46,32 +49,53 @@ let private test_model = testList "model" [
         Expect.equal actualFilePaths input "isSome fs"
 ]
 
-let private test_isaFromContracts = testList "read_contracts" [
+let private tests_isaFromContracts = testList "read_contracts" [
     testCase "simpleISA" (fun () ->
-        let iContract = SimpleISA.investigationReadContract
-        let sContract = SimpleISA.studyReadContract
-        let aContract = SimpleISA.assayReadContract
         let arc = ARC()
-        arc.SetISAFromContracts([|iContract; sContract; aContract|])
+        arc.SetISAFromContracts([|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Study.bII_S_2ReadContract
+            SimpleISA.Assay.proteomeReadContract
+            SimpleISA.Assay.metabolomeReadContract
+            SimpleISA.Assay.transcriptomeReadContract
+        |])
         Expect.isSome arc.ISA "isa should be filled out"
         let inv = arc.ISA.Value
-        Expect.equal inv.Identifier Investigation.investigationIdentifier "investigation identifier should have been read from investigation contract"
+        Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
         Expect.equal inv.Studies.Count 2 "should have read two studies"
         let study1 = inv.Studies.[0]
-        let study2 = inv.Studies.[1]
-        Expect.equal study1.Identifier Study.studyIdentifier "study 1 identifier should have been read from study contract"
+        Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
-        Expect.equal study2.TableCount 4 "study 2 should have exactly as many tables as stated in investigation file"
         
-        Expect.equal study1.RegisteredAssayCount 3 "study 1 should have read three assays"
+        Expect.equal study1.RegisteredAssays.Count 3 "study 1 should have read three assays"
         let assay1 = study1.RegisteredAssays.[0]
-        let assay2 = study1.RegisteredAssays.[1]
-        let assay3 = study1.RegisteredAssays.[2]
-        Expect.equal assay1.Identifier Assay.assayIdentifier "assay 1 identifier should have been read from assay contract"
+        Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
-        Expect.equal assay2.TableCount 0 "assay 2 should have read no tables"
-        Expect.equal assay3.TableCount 0 "assay 3 should have read no tables"  
+    
+    )
+    testCase "StudyAssayOnlyRegistered" (fun () ->
+        let arc = ARC()
+        arc.SetISAFromContracts([|
+            SimpleISA.Investigation.investigationReadContract
+            SimpleISA.Study.bII_S_1ReadContract
+            SimpleISA.Assay.proteomeReadContract
+        |])
+        Expect.isSome arc.ISA "isa should be filled out"
+        let inv = arc.ISA.Value
+        Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+
+        Expect.equal inv.Studies.Count 1 "should have read one study"
+        let study1 = inv.Studies.[0]
+        Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
+        Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
+        
+        Expect.equal study1.RegisteredAssays.Count 1 "study 1 should have read one assay"
+        let assay1 = study1.RegisteredAssays.[0]
+        Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
+        Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
+    
     )
     // Assay Table protocol get's updated by protocol metadata stored in study
     testCase "assayTableGetsUpdated" (fun () ->
@@ -99,7 +123,7 @@ let private test_isaFromContracts = testList "read_contracts" [
             [CompositeCell.createFreeText UpdateAssayWithStudyProtocol.protocolName]
             "Protocol ref value was not kept correctly"
 
-        Expect.equal study.RegisteredAssayCount 1 "study should have read one assay"
+        Expect.equal study.RegisteredAssays.Count 1 "study should have read one assay"
         let assay = study.RegisteredAssays.[0]
         Expect.equal assay.TableCount 1 "assay should have read one table"
         let assayTable = assay.Tables.[0]
@@ -119,7 +143,7 @@ let private test_isaFromContracts = testList "read_contracts" [
     )
 ]
 
-let private test_writeContracts = testList "write_contracts" [
+let private tests_writeContracts = testList "write_contracts" [
     testCase "empty" (fun _ ->
         let arc = ARC()
         let contracts = arc.GetWriteContracts()
@@ -243,7 +267,7 @@ let private test_writeContracts = testList "write_contracts" [
 
 ]
 
-let private test_updateFileSystem = testList "update_Filesystem" [
+let private tests_updateFileSystem = testList "update_Filesystem" [
     testCase "empty noChanges" (fun () ->
         let arc = ARC()
         let oldFS = arc.FileSystem.Copy()
@@ -301,6 +325,15 @@ let private test_updateFileSystem = testList "update_Filesystem" [
             "assays/My Assay/protocols/.gitkeep"; "studies/.gitkeep"
         |]
         Expect.equal paths2 expected_paths2 "paths2"
+    testCase "setFileSystem" <| fun () ->
+        let initial_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|]
+        let updated_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"; "studies/testFile.txt"|]
+        let arc = ARC.fromFilePaths(initial_paths)
+        let paths = arc.FileSystem.Tree.ToFilePaths()
+        Expect.sequenceEqual paths initial_paths "paths"
+        arc.SetFilePaths(updated_paths)
+        let paths2 = arc.FileSystem.Tree.ToFilePaths()
+        Expect.sequenceEqual paths2 updated_paths "paths2"        
 ]
 
 open ARCtrl.FileSystem
@@ -451,10 +484,66 @@ let private ``payload_file_filters`` =
         }
     ]
 
+let private tests_RemoveAssay = testList "RemoveAssay" [
+    ptestCase "not registered, fsworkbook equal" <| fun _ ->
+        let arc = ARC()
+        let i = ArcInvestigation.init("My Investigation")
+        arc.ISA <- Some i
+        let assayIdentifier = "My Assay"
+        i.InitAssay(assayIdentifier) |> ignore
+        Expect.equal i.AssayCount 1 "ensure assay count"
+        let actual = arc.RemoveAssay(assayIdentifier)
+        let expected = [
+            Contract.createDelete (Path.getAssayFolderPath assayIdentifier)
+            i.ToUpdateContract()
+        ]
+        Expect.sequenceEqual actual expected "we do not have correct FsWorkbook equality helper functions"
+    testCase "not registered" <| fun _ ->
+        let arc = ARC()
+        let i = ArcInvestigation.init("My Investigation")
+        arc.ISA <- Some i
+        let assayIdentifier = "My Assay"
+        i.InitAssay(assayIdentifier) |> ignore
+        Expect.equal i.AssayCount 1 "ensure assay count"
+        let actual = arc.RemoveAssay(assayIdentifier)
+        Expect.hasLength actual 2 "contract count"
+        Expect.equal actual.[0].Path (Path.getAssayFolderPath assayIdentifier) "assay contract path"
+        Expect.equal actual.[0].Operation DELETE "assay contract cmd"
+        Expect.equal actual.[1].Path (Path.InvestigationFileName) "inv contract path"
+        Expect.equal actual.[1].Operation UPDATE "inve contract cmd"
+        Expect.isSome actual.[1].DTO "has DTO"
+        let dtoType = Expect.wantSome actual.[1].DTOType "has DTOType"
+        Expect.equal dtoType DTOType.ISA_Investigation "dto type"
+    testCase "registered in multiple studies" <| fun _ ->
+        let arc = ARC()
+        let i = ArcInvestigation.init("My Investigation")
+        arc.ISA <- Some i
+        let assayIdentifier = "My Assay"
+        let s1 = i.InitStudy("Study 1")
+        let s2 = i.InitStudy("Study 2")
+        let a = i.InitAssay(assayIdentifier)
+        s1.RegisterAssay(assayIdentifier)
+        s2.RegisterAssay(assayIdentifier)
+        Expect.equal i.AssayCount 1 "ensure assay count"
+        Expect.equal i.StudyCount 2 "ensure study count"
+        Expect.hasLength a.StudiesRegisteredIn 2 "ensure studies registered in - count"
+        let actual = arc.RemoveAssay(assayIdentifier)
+        Expect.hasLength actual 4 "contract count"
+        Expect.equal actual.[0].Path (Path.getAssayFolderPath assayIdentifier) "assay contract path"
+        Expect.equal actual.[0].Operation DELETE "assay contract cmd"
+        Expect.equal actual.[1].Path (Path.InvestigationFileName) "inv contract path"
+        Expect.equal actual.[1].Operation UPDATE "inv contract cmd"
+        Expect.equal actual.[2].Path (Identifier.Study.fileNameFromIdentifier "Study 1") "study 1 contract path"
+        Expect.equal actual.[2].Operation UPDATE "study 1 contract cmd"
+        Expect.equal actual.[3].Path (Identifier.Study.fileNameFromIdentifier "Study 2") "study 2 contract path"
+        Expect.equal actual.[3].Operation UPDATE "study 2 contract cmd"
+]
+
 let main = testList "ARCtrl" [
-    test_model
-    test_updateFileSystem
-    test_isaFromContracts
-    test_writeContracts
+    tests_model
+    tests_updateFileSystem
+    tests_isaFromContracts
+    tests_writeContracts
+    tests_RemoveAssay
     payload_file_filters
 ]

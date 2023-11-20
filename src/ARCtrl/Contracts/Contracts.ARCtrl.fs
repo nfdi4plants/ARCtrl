@@ -2,9 +2,7 @@
 
 open ARCtrl.Path
 
-open ARCtrl.Contract.ArcInvestigation
-open ARCtrl.Contract.ArcAssay
-open ARCtrl.Contract.ArcStudy
+open ARCtrl.Contract
 
 // Assumptions: 
 // 1. All ISA .xlsx files MUST have the same names, either "isa.investigation.xlsx", "isa.assay.xlsx" or "isa.study.xlsx"

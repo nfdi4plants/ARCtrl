@@ -618,11 +618,9 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member this.RegisteredAssays
         with get(): ResizeArray<ArcAssay> = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            let assays = ResizeArray()
-            for assay in inv.Assays do
-                if Seq.contains assay.Identifier this.RegisteredAssayIdentifiers then
-                    assays.Add assay
-            assays
+            this.RegisteredAssayIdentifiers 
+            |> Seq.choose inv.TryGetAssay
+            |> ResizeArray
 
     // - Assay API - CRUD //
     /// <summary>
@@ -698,9 +696,15 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         // 2. Get full assays from ArcInvestigation parent.
         match this.Investigation with
         | Some i -> 
-            this.RegisteredAssays
+            this.RegisteredAssayIdentifiers
+            |> ResizeArray.map (fun identifier -> 
+                match i.TryGetAssay(identifier) with
+                | Some assay -> assay
+                | None -> ArcAssay.init(identifier)
+            )
         | None ->
-            this.RegisteredAssayIdentifiers |> Seq.map (fun identifier -> ArcAssay.init(identifier)) |> ResizeArray       
+            this.RegisteredAssayIdentifiers 
+            |> ResizeArray.map (fun identifier -> ArcAssay.init(identifier))   
 
     /// <summary>
     /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
@@ -1200,13 +1204,59 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Assay API - CRUD //
     /// <summary>
+    /// Removes assay at specified index from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    member this.DeleteAssayAt(index: int) =
+        this.Assays.RemoveAt(index)
+
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay at specified index from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    static member deleteAssayAt(index: int) =
+        fun (inv: ArcInvestigation) ->
+            let newInvestigation = inv.Copy()
+            newInvestigation.DeleteAssayAt(index)
+            newInvestigation
+
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay with given identifier from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    member this.DeleteAssay(assayIdentifier: string) =
+        let index = this.GetAssayIndex(assayIdentifier)
+        this.DeleteAssayAt(index)
+
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay with given identifier from ArcInvestigation without deregistering it from studies.
+    /// </summary>
+    /// <param name="index"></param>
+    static member deleteAssay(assayIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.DeleteAssay(assayIdentifier)
+            newInv
+
+
+    // - Assay API - CRUD //
+    /// <summary>
     /// Removes assay at specified index from ArcInvestigation and deregisteres it from all studies.
     /// </summary>
     /// <param name="index"></param>
     member this.RemoveAssayAt(index: int) =
+        let ident = this.GetAssayAt(index).Identifier
         this.Assays.RemoveAt(index)
-        this.DeregisterMissingAssays()
+        for study in this.Studies do
+            study.DeregisterAssay(ident)
 
+    /// <summary>
+    /// Removes assay at specified index from ArcInvestigation and deregisteres it from all studies.
+    /// </summary>
+    /// <param name="index"></param>
     static member removeAssayAt(index: int) =
         fun (inv: ArcInvestigation) ->
             let newInvestigation = inv.Copy()
@@ -1222,6 +1272,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         let index = this.GetAssayIndex(assayIdentifier)
         this.RemoveAssayAt(index)
 
+    // - Assay API - CRUD //
+    /// <summary>
+    /// Removes assay with specified identifier from ArcInvestigation and deregisteres it from all studies.
+    /// </summary>
+    /// <param name="index"></param>
     static member removeAssay(assayIdentifier: string) =
         fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
@@ -1280,17 +1335,27 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInvestigation = inv.Copy()
             newInvestigation.GetAssay(assayIdentifier)
 
+    // - Assay API - CRUD //
+    member this.TryGetAssay(assayIdentifier: string) : ArcAssay option =
+        Seq.tryFind (fun a -> a.Identifier = assayIdentifier) this.Assays
+
+    static member tryGetAssay(assayIdentifier: string) : ArcInvestigation -> ArcAssay option =
+        fun (inv: ArcInvestigation) ->
+            let newInvestigation = inv.Copy()
+            newInvestigation.TryGetAssay(assayIdentifier)
+    
+
     member this.RegisteredStudies 
         with get() = 
             this.RegisteredStudyIdentifiers 
-            |> Seq.map (fun identifier -> this.GetStudy identifier)
+            |> Seq.choose (fun identifier -> this.TryGetStudy identifier)
             |> ResizeArray
 
     member this.StudyCount 
         with get() = this.Studies.Count
 
     member this.StudyIdentifiers
-        with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier)
+        with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier) |> Seq.toArray
 
     // - Study API - CRUD //
     member this.AddStudy(study: ArcStudy) =
@@ -1339,10 +1404,56 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy.AddRegisteredStudy(study)
             copy
 
-    // - Study API - CRUD //
-    member this.RemoveStudyAt(index: int) =
+    /// <summary>
+    /// Removes study at specified index from ArcInvestigation without deregistering it.
+    /// </summary>
+    /// <param name="index"></param>
+    member this.DeleteStudyAt(index: int) =
         this.Studies.RemoveAt(index)
 
+    /// <summary>
+    /// Removes study at specified index from ArcInvestigation without deregistering it.
+    /// </summary>
+    /// <param name="index"></param>
+    static member deleteStudyAt(index: int) =
+        fun (i: ArcInvestigation) ->
+            let copy = i.Copy()
+            copy.DeleteStudyAt(index)
+            copy
+
+    /// <summary>
+    /// Removes study with specified identifier from ArcInvestigation without deregistering it.
+    /// </summary>
+    /// <param name="studyIdentifier"></param>
+    member this.DeleteStudy(studyIdentifier: string) =
+        let index = this.Studies.FindIndex(fun s -> s.Identifier = studyIdentifier)
+        this.DeleteStudyAt(index)
+
+    /// <summary>
+    /// Removes study with specified identifier from ArcInvestigation without deregistering it.
+    /// </summary>
+    /// <param name="studyIdentifier"></param>
+    static member deleteStudy(studyIdentifier: string) =
+        fun (i: ArcInvestigation) ->
+            let copy = i.Copy()
+            copy.DeleteStudy studyIdentifier
+            copy
+
+    // - Study API - CRUD //
+    /// <summary>
+    /// Removes study at specified index from ArcInvestigation and deregisteres it.
+    /// </summary>
+    /// <param name="index"></param>
+    member this.RemoveStudyAt(index: int) =
+        let ident = this.GetStudyAt(index).Identifier
+        this.Studies.RemoveAt(index)
+        this.DeregisterStudy(ident)
+
+    // - Study API - CRUD //
+    /// <summary>
+    /// Removes study at specified index from ArcInvestigation and deregisteres it.
+    /// </summary>
+    /// <param name="index"></param>
     static member removeStudyAt(index: int) =
         fun (inv: ArcInvestigation) ->
             let newInv = inv.Copy()
@@ -1350,11 +1461,18 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             newInv
 
     // - Study API - CRUD //
+    /// <summary>
+    /// Removes study with specified identifier from ArcInvestigation and deregisteres it.
+    /// </summary>
+    /// <param name="studyIdentifier"></param>
     member this.RemoveStudy(studyIdentifier: string) =
-        this.GetStudy(studyIdentifier)
-        |> this.Studies.Remove
-        |> ignore
+        let index = this.GetStudyIndex(studyIdentifier)
+        this.RemoveStudyAt(index)
 
+    /// <summary>
+    /// Removes study with specified identifier from ArcInvestigation and deregisteres it.
+    /// </summary>
+    /// <param name="studyIdentifier"></param>
     static member removeStudy(studyIdentifier: string) =
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
@@ -1412,6 +1530,16 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInv = inv.Copy()
             newInv.GetStudy(studyIdentifier)
 
+    member this.TryGetStudy(studyIdentifier: string) : ArcStudy option =
+        this.Studies
+        |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
+        
+    static member tryGetStudy(studyIdentifier : string) : ArcInvestigation -> ArcStudy option = 
+        fun (inv: ArcInvestigation) -> 
+            let newInv = inv.Copy()
+            newInv.TryGetStudy(studyIdentifier)
+
+
     // - Study API - CRUD //
     /// <summary>
     /// Register an existing assay from ArcInvestigation.Assays to a existing study.
@@ -1466,6 +1594,15 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         fun (inv: ArcInvestigation) ->
             let copy = inv.Copy()
             copy.DeregisterAssay(studyIdentifier, assayIdentifier)
+            copy
+
+    member this.DeregisterStudy(studyIdentifier: string) =
+        this.RegisteredStudyIdentifiers.Remove(studyIdentifier) |> ignore
+
+    static member deregisterStudy(studyIdentifier: string) =
+        fun (i: ArcInvestigation) ->
+            let copy = i.Copy()
+            copy.DeregisterStudy(studyIdentifier)
             copy
 
     /// <summary>

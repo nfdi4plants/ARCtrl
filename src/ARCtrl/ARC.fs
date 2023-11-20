@@ -12,20 +12,18 @@ module ARCAux =
     // No idea where to move this
     let getArcAssaysFromContracts (contracts: Contract []) = 
         contracts 
-        |> Array.choose ARCtrl.Contract.ArcAssay.tryFromContract
-        |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcAssay.fromFsWorkbook)
+        |> Array.choose ArcAssay.tryFromReadContract
+        
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
-        |> Array.choose Contract.ArcStudy.tryFromContract
-        |> Array.map (fun x -> x :?> FsWorkbook |> ArcStudy.fromFsWorkbook)
+        |> Array.choose ArcStudy.tryFromReadContract
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 
-        |> Array.choose Contract.ArcInvestigation.tryFromContract
+        |> Array.choose ArcInvestigation.tryFromReadContract
         |> Array.exactlyOne 
-        |> fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 
     let updateFSByISA (isa : ArcInvestigation option) (fs : FileSystem) = 
         let (studyNames,assayNames) = 
@@ -71,6 +69,43 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
 
     member this.FileSystem 
         with get() = _fs
+        and set(fs) = _fs <- fs
+
+    member this.RemoveAssay(assayIdentifier: string) =
+        let isa = 
+            match this.ISA with
+            | Some i -> i
+            | None -> failwith "Cannot remove assay from null ISA value."
+        let assay = isa.GetAssay(assayIdentifier)
+        let studies = assay.StudiesRegisteredIn
+        isa.RemoveAssay(assayIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let assayFolderPath = Path.getAssayFolderPath(assayIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)      
+        [
+            assay.ToDeleteContract()
+            isa.ToUpdateContract()
+            for s in studies do
+                s.ToUpdateContract()
+        ]
+        |> ResizeArray
+
+    member this.RemoveStudy(studyIdentifier: string) =
+        let isa = 
+            match this.ISA with
+            | Some i -> i
+            | None -> failwith "Cannot remove study from null ISA value."
+        isa.RemoveStudy(studyIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let studyFolderPath = Path.getStudyFolderPath(studyIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)
+        [
+            Contract.createDelete(studyFolderPath) // isa.GetStudy(studyIdentifier).ToDeleteContract()
+            isa.ToUpdateContract()
+        ]
+        |> ResizeArray
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -143,6 +178,10 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let fs : FileSystem = FileSystem.fromFilePaths filePaths
         ARC(fs=fs)
 
+    member this.SetFilePaths (filePaths : string array) =
+        let tree = FileSystemTree.fromFilePaths filePaths
+        _fs <- {_fs with Tree = tree}
+
     //// Maybe add forceReplace flag?
     //member this.SetFSFromFilePaths (filePaths : string array) = 
     //    let newFS : FileSystem = FileSystem.fromFilePaths filePaths
@@ -164,6 +203,20 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let studies = ARCAux.getArcStudiesFromContracts contracts |> Array.map fst
         /// get assays from xlsx
         let assays = ARCAux.getArcAssaysFromContracts contracts
+
+        // Remove Assay metadata objects read from investigation file from investigation object, if no assosiated assay file exists
+        investigation.AssayIdentifiers
+        |> Array.iter (fun ai -> 
+            if assays |> Array.exists (fun a -> a.Identifier = ai) |> not then
+                investigation.DeleteAssay(ai)      
+        )
+
+        // Remove Study metadata objects read from investigation file from investigation object, if no assosiated study file exists
+        investigation.StudyIdentifiers
+        |> Array.iter (fun si -> 
+            if studies |> Array.exists (fun s -> s.Identifier = si) |> not then
+                investigation.RemoveStudy(si)
+        )
 
         studies |> Array.iter (fun study ->
             /// Try find registered study in parsed READ contracts
