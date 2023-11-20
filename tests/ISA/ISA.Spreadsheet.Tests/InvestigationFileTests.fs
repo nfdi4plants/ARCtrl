@@ -172,6 +172,17 @@ let private testInvestigationFile =
                 |> ArcInvestigation.fromFsWorkbook
             Expect.sequenceEqual i.RegisteredStudyIdentifiers studyIdentifiers "Registered study Identifier were not written and read correctly"
         )
+        testCase "WriteWithAssayOnlyRegistered" (fun () ->
+            let studyIdentifier = "MyStudy"           
+            let assayIdentifiers = ResizeArray ["MyAssay"]
+            let study = ArcStudy.create("MyStudy",registeredAssayIdentifiers = assayIdentifiers)
+            let i =
+                ArcInvestigation.create("Identifier")
+                |> ArcInvestigation.addRegisteredStudy study
+                |> ArcInvestigation.toFsWorkbook 
+                |> ArcInvestigation.fromFsWorkbook
+            Expect.sequenceEqual (i.GetStudy(studyIdentifier).RegisteredAssayIdentifiers) assayIdentifiers "Registered assay Identifier weres not written and read correctly"
+        )
         //testCase "OutputMatchesInputEmpty" (fun () ->
 
         //    let i = 

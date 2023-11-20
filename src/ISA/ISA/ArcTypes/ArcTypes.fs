@@ -618,12 +618,9 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member this.RegisteredAssays
         with get(): ResizeArray<ArcAssay> = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            let assays = ResizeArray()
-            for assayIdentifier in this.RegisteredAssayIdentifiers do
-                match inv.Assays |> Seq.tryFind (fun a -> a.Identifier = assayIdentifier) with
-                | Some a -> assays.Add a
-                | None -> ()
-            assays
+            this.RegisteredAssayIdentifiers 
+            |> Seq.choose inv.TryGetAssay
+            |> ResizeArray
 
     // - Assay API - CRUD //
     /// <summary>
@@ -699,9 +696,15 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         // 2. Get full assays from ArcInvestigation parent.
         match this.Investigation with
         | Some i -> 
-            this.RegisteredAssays
+            this.RegisteredAssayIdentifiers
+            |> ResizeArray.map (fun identifier -> 
+                match i.TryGetAssay(identifier) with
+                | Some assay -> assay
+                | None -> ArcAssay.init(identifier)
+            )
         | None ->
-            this.RegisteredAssayIdentifiers |> Seq.map (fun identifier -> ArcAssay.init(identifier)) |> ResizeArray       
+            this.RegisteredAssayIdentifiers 
+            |> ResizeArray.map (fun identifier -> ArcAssay.init(identifier))   
 
     /// <summary>
     /// Returns ArcAssays registered in study, or if no parent exists, initializies new ArcAssay from identifier.
@@ -1332,10 +1335,20 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInvestigation = inv.Copy()
             newInvestigation.GetAssay(assayIdentifier)
 
+    // - Assay API - CRUD //
+    member this.TryGetAssay(assayIdentifier: string) : ArcAssay option =
+        Seq.tryFind (fun a -> a.Identifier = assayIdentifier) this.Assays
+
+    static member tryGetAssay(assayIdentifier: string) : ArcInvestigation -> ArcAssay option =
+        fun (inv: ArcInvestigation) ->
+            let newInvestigation = inv.Copy()
+            newInvestigation.TryGetAssay(assayIdentifier)
+    
+
     member this.RegisteredStudies 
         with get() = 
             this.RegisteredStudyIdentifiers 
-            |> Seq.map (fun identifier -> this.GetStudy identifier)
+            |> Seq.choose (fun identifier -> this.TryGetStudy identifier)
             |> ResizeArray
 
     member this.StudyCount 

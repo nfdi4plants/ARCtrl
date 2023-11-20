@@ -288,7 +288,8 @@ let tests_RegisteredStudies = testList "RegisteredStudies" [
         Expect.hasLength i.RegisteredStudies 1 "Registered Studies count"
         Expect.equal i.StudyCount 1 "Studies count"
         i.DeleteStudy(s.Identifier)
-        Expect.hasLength i.RegisteredStudies 1 "Registered Studies count 2"
+        Expect.hasLength i.RegisteredStudyIdentifiers 1 "Registered Study identifiers count 2"
+        Expect.hasLength i.RegisteredStudies 0 "Registered Studies count 2"
         Expect.equal i.StudyCount 0 "Studies count 2"
 ]
 
