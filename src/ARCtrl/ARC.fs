@@ -71,6 +71,25 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
 
     member this.FileSystem 
         with get() = _fs
+        and set(fs) = _fs <- fs
+
+    member this.RemoveAssay(assayIdentifier: string) =
+        if this.ISA.IsNone then failwith "Cannot remove assay from null ISA value."
+        this.ISA.Value.RemoveAssay(assayIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let assayFolderPath = Path.getAssayFolderPath(assayIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)
+        Contract.createDelete(assayFolderPath)
+
+    member this.RemoveStudy(studyIdentifier: string) =
+        if this.ISA.IsNone then failwith "Cannot remove study from null ISA value."
+        this.ISA.Value.RemoveStudy(studyIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let studyFolderPath = Path.getStudyFolderPath(studyIdentifier)
+        let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
+        this.SetFilePaths(filteredPaths)
+        Contract.createDelete(studyFolderPath)
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())

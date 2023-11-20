@@ -1,6 +1,7 @@
 ﻿module ARCtrl.Path
 
 open ARCtrl.ISA
+open ARCtrl.Path
 open ARCtrl.FileSystem
 
 // Files
@@ -15,6 +16,12 @@ let [<Literal>] StudiesProtocolsFolderName = "protocols"
 let [<Literal>] StudiesResourcesFolderName = "resources"
 
 //let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]
+
+let getAssayFolderPath (assayIdentifier: string) =
+    Path.combine AssaysFolderName assayIdentifier
+
+let getStudyFolderPath (studyIdentifier: string) =
+    Path.combine StudiesFolderName studyIdentifier 
 
 //let combineAssayFolderPath (assay : ISA.ArcAssay) = 
 //    //Assay.getIdentifier assay

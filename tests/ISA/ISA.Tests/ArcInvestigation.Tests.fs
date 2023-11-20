@@ -9,7 +9,7 @@ let private assay_MeasurementType = OntologyAnnotation.fromString("My Measuremen
 let private create_ExampleAssay() = ArcAssay.create(assay_Identifier,assay_MeasurementType)
 let private create_ExampleAssays() = ResizeArray([create_ExampleAssay()])
 
-let private test_create =
+let private tests_create =
     testList "create" [
         testCase "constructor" <| fun _ ->
             let identifier = "MyIdentifier"
@@ -190,7 +190,7 @@ let private test_create =
             Expect.equal myAssay.TableCount 2 "Table count should also be 2"
     ]
 
-let test_RegisteredAssays = testList "RegisteredAssays" [
+let tests_RegisteredAssays = testList "RegisteredAssays" [
     testCase "Investigation.RegisterAssay" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -243,6 +243,18 @@ let test_RegisteredAssays = testList "RegisteredAssays" [
         i.RemoveAssayAt 0 
         Expect.equal i.AssayCount 0 "assay count 2"
         Expect.equal s.RegisteredAssayCount 0 "registered assay count 2"
+    testCase "Remove registered assay from investigation, without removing other missing assays" <| fun _ ->
+        let i = ArcInvestigation.init("MyInvestigation")
+        let a = i.InitAssay("MyAssay")
+        let s = i.InitStudy("MyStudy")
+        s.RegisterAssay(a.Identifier)
+        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
+        s.RegisteredAssayIdentifiers.Add("Any Assay That is missing")
+        Expect.equal s.RegisteredAssayCount 2 "registered assay count 2"
+        i.RemoveAssayAt 0
+        Expect.equal i.AssayCount 0 "assay count"
+        Expect.equal s.RegisteredAssayCount 1 "registered assay count 3"
     testCase "Investigation.DeregisterMissingAssays" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -257,6 +269,27 @@ let test_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal s.RegisteredAssayCount 1 "registered assay count 2"
         i.DeregisterMissingAssays()
         Expect.equal s.RegisteredAssayCount 0 "registered assay count 3"
+]
+
+let tests_RegisteredStudies = testList "RegisteredStudies" [
+    testCase "Remove Study" <| fun _ ->
+        let i = ArcInvestigation.init("My Investigation")
+        let s = ArcStudy.init("My Study")
+        i.AddRegisteredStudy(s)
+        Expect.hasLength i.RegisteredStudies 1 "Registered Studies count"
+        Expect.equal i.StudyCount 1 "Studies count"
+        i.RemoveStudy(s.Identifier)
+        Expect.hasLength i.RegisteredStudies 0 "Registered Studies count 2"
+        Expect.equal i.StudyCount 0 "Studies count 2"
+    testCase "Delete Study" <| fun _ ->
+        let i = ArcInvestigation.init("My Investigation")
+        let s = ArcStudy.init("My Study")
+        i.AddRegisteredStudy(s)
+        Expect.hasLength i.RegisteredStudies 1 "Registered Studies count"
+        Expect.equal i.StudyCount 1 "Studies count"
+        i.DeleteStudy(s.Identifier)
+        Expect.hasLength i.RegisteredStudies 1 "Registered Studies count 2"
+        Expect.equal i.StudyCount 0 "Studies count 2"
 ]
 
 let tests_MutableFields = testList "MutableFields" [
@@ -645,7 +678,6 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
     ]
 ]
 
-
 let private tests_GetHashCode = testList "GetHashCode" [
     testCase "passing" <| fun _ ->
         let actual = ArcInvestigation.init("Test")
@@ -798,8 +830,9 @@ let private tests_GetHashCode = testList "GetHashCode" [
 
 let main = 
     testList "ArcInvestigation" [
-        test_create
-        test_RegisteredAssays
+        tests_create
+        tests_RegisteredAssays
+        tests_RegisteredStudies
         tests_MutableFields
         tests_Copy
         tests_Study
