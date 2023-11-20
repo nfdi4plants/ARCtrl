@@ -9,7 +9,7 @@ open FsSpreadsheet
 
 let tests_tryFromContract = testList "tryFromContract" [
     testCase "Exists" <| fun _ ->
-        let fswb = new FsWorkbook()
+        let fswb = TestObjects.Spreadsheet.Investigation.BII_I_1.fullInvestigation
         let contracts = [|
             Contract.create(
                 READ, 
