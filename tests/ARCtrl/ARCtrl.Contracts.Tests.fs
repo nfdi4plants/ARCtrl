@@ -3,6 +3,7 @@
 open TestingUtils
 
 open ARCtrl
+open ARCtrl.ISA
 open ARCtrl.Contract
 open FsSpreadsheet
 
@@ -17,7 +18,7 @@ let tests_tryFromContract = testList "tryFromContract" [
                 DTO.Spreadsheet fswb
             )
         |]
-        let investigation = contracts |> Array.choose ArcInvestigation.tryFromContract
+        let investigation = contracts |> Array.choose ArcInvestigation.tryFromReadContract
         Expect.hasLength investigation 1 ""
 ]
 

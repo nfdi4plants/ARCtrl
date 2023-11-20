@@ -12,20 +12,18 @@ module ARCAux =
     // No idea where to move this
     let getArcAssaysFromContracts (contracts: Contract []) = 
         contracts 
-        |> Array.choose ARCtrl.Contract.ArcAssay.tryFromContract
-        |> Array.map (fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcAssay.fromFsWorkbook)
+        |> Array.choose ArcAssay.tryFromReadContract
+        
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
-        |> Array.choose Contract.ArcStudy.tryFromContract
-        |> Array.map (fun x -> x :?> FsWorkbook |> ArcStudy.fromFsWorkbook)
+        |> Array.choose ArcStudy.tryFromReadContract
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 
-        |> Array.choose Contract.ArcInvestigation.tryFromContract
+        |> Array.choose ArcInvestigation.tryFromReadContract
         |> Array.exactlyOne 
-        |> fun x -> x :?> FsWorkbook |> ISA.Spreadsheet.ArcInvestigation.fromFsWorkbook
 
     let updateFSByISA (isa : ArcInvestigation option) (fs : FileSystem) = 
         let (studyNames,assayNames) = 
