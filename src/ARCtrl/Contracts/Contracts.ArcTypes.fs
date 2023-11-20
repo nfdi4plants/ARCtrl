@@ -1,5 +1,6 @@
 ﻿namespace ARCtrl.Contract
 
+open ARCtrl
 open ARCtrl.Path
 open ARCtrl.ISA.Spreadsheet
 open ARCtrl.ISA
@@ -42,15 +43,15 @@ module ArcTypeExtensions =
             let c = Contract.createUpdate(path, DTOType.ISA_Investigation, DTO.Spreadsheet (this |> ArcInvestigation.toFsWorkbook))
             c
 
-        member this.ToDeleteContract () =
-            let path = InvestigationFileName
-            let c = Contract.createDelete(path)
-            c
+        //member this.ToDeleteContract () =
+        //    let path = InvestigationFileName
+        //    let c = Contract.createDelete(path)
+        //    c
         
-        static member toDeleteContract () : Contract =
-            let path = InvestigationFileName
-            let c = Contract.createDelete(path)
-            c
+        //static member toDeleteContract () : Contract =
+        //    let path = InvestigationFileName
+        //    let c = Contract.createDelete(path)
+        //    c
 
         static member toCreateContract (inv: ArcInvestigation) : Contract =
             inv.ToCreateContract()
@@ -80,7 +81,7 @@ module ArcTypeExtensions =
             c
 
         member this.ToDeleteContract () =
-            let path = Identifier.Study.fileNameFromIdentifier this.Identifier
+            let path = Path.getStudyFolderPath(this.Identifier)
             let c = Contract.createDelete(path)
             c
 
@@ -114,7 +115,7 @@ module ArcTypeExtensions =
             c
 
         member this.ToDeleteContract () =
-            let path = Identifier.Assay.fileNameFromIdentifier this.Identifier
+            let path = Path.getAssayFolderPath(this.Identifier)
             let c = Contract.createDelete(path)
             c
 
