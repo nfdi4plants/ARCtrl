@@ -96,13 +96,13 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             match this.ISA with
             | Some i -> i
             | None -> failwith "Cannot remove study from null ISA value."
-        this.ISA.Value.RemoveStudy(studyIdentifier)
+        isa.RemoveStudy(studyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let studyFolderPath = Path.getStudyFolderPath(studyIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
         this.SetFilePaths(filteredPaths)
         [
-            Contract.createDelete(studyFolderPath)
+            Contract.createDelete(studyFolderPath) // isa.GetStudy(studyIdentifier).ToDeleteContract()
             isa.ToUpdateContract()
         ]
         |> ResizeArray

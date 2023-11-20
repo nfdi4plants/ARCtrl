@@ -6,8 +6,11 @@ open ARCtrl.ISA
 open TestObjects.Contract.ISA
 open TestObjects.Spreadsheet
 open TestingUtils
+open ARCtrl.Contract
+open ARCtrl.ISA.Spreadsheet
+open FsSpreadsheet
 
-let private test_model = testList "model" [
+let private tests_model = testList "model" [
     testCase "create" <| fun _ ->
         let arc = ARC()
         Expect.isNone arc.CWL "cwl"
@@ -46,7 +49,7 @@ let private test_model = testList "model" [
         Expect.equal actualFilePaths input "isSome fs"
 ]
 
-let private test_isaFromContracts = testList "read_contracts" [
+let private tests_isaFromContracts = testList "read_contracts" [
     testCase "simpleISA" (fun () ->
         let arc = ARC()
         arc.SetISAFromContracts([|
@@ -140,7 +143,7 @@ let private test_isaFromContracts = testList "read_contracts" [
     )
 ]
 
-let private test_writeContracts = testList "write_contracts" [
+let private tests_writeContracts = testList "write_contracts" [
     testCase "empty" (fun _ ->
         let arc = ARC()
         let contracts = arc.GetWriteContracts()
@@ -264,7 +267,7 @@ let private test_writeContracts = testList "write_contracts" [
 
 ]
 
-let private test_updateFileSystem = testList "update_Filesystem" [
+let private tests_updateFileSystem = testList "update_Filesystem" [
     testCase "empty noChanges" (fun () ->
         let arc = ARC()
         let oldFS = arc.FileSystem.Copy()
@@ -481,10 +484,66 @@ let private ``payload_file_filters`` =
         }
     ]
 
+let private tests_RemoveAssay = testList "RemoveAssay" [
+    ptestCase "not registered, fsworkbook equal" <| fun _ ->
+        let arc = ARC()
+        let i = ArcInvestigation.init("My Investigation")
+        arc.ISA <- Some i
+        let assayIdentifier = "My Assay"
+        i.InitAssay(assayIdentifier) |> ignore
+        Expect.equal i.AssayCount 1 "ensure assay count"
+        let actual = arc.RemoveAssay(assayIdentifier)
+        let expected = [
+            Contract.createDelete (Path.getAssayFolderPath assayIdentifier)
+            i.ToUpdateContract()
+        ]
+        Expect.sequenceEqual actual expected "we do not have correct FsWorkbook equality helper functions"
+    testCase "not registered" <| fun _ ->
+        let arc = ARC()
+        let i = ArcInvestigation.init("My Investigation")
+        arc.ISA <- Some i
+        let assayIdentifier = "My Assay"
+        i.InitAssay(assayIdentifier) |> ignore
+        Expect.equal i.AssayCount 1 "ensure assay count"
+        let actual = arc.RemoveAssay(assayIdentifier)
+        Expect.hasLength actual 2 "contract count"
+        Expect.equal actual.[0].Path (Path.getAssayFolderPath assayIdentifier) "assay contract path"
+        Expect.equal actual.[0].Operation DELETE "assay contract cmd"
+        Expect.equal actual.[1].Path (Path.InvestigationFileName) "inv contract path"
+        Expect.equal actual.[1].Operation UPDATE "inve contract cmd"
+        Expect.isSome actual.[1].DTO "has DTO"
+        let dtoType = Expect.wantSome actual.[1].DTOType "has DTOType"
+        Expect.equal dtoType DTOType.ISA_Investigation "dto type"
+    testCase "registered in multiple studies" <| fun _ ->
+        let arc = ARC()
+        let i = ArcInvestigation.init("My Investigation")
+        arc.ISA <- Some i
+        let assayIdentifier = "My Assay"
+        let s1 = i.InitStudy("Study 1")
+        let s2 = i.InitStudy("Study 2")
+        let a = i.InitAssay(assayIdentifier)
+        s1.RegisterAssay(assayIdentifier)
+        s2.RegisterAssay(assayIdentifier)
+        Expect.equal i.AssayCount 1 "ensure assay count"
+        Expect.equal i.StudyCount 2 "ensure study count"
+        Expect.hasLength a.StudiesRegisteredIn 2 "ensure studies registered in - count"
+        let actual = arc.RemoveAssay(assayIdentifier)
+        Expect.hasLength actual 4 "contract count"
+        Expect.equal actual.[0].Path (Path.getAssayFolderPath assayIdentifier) "assay contract path"
+        Expect.equal actual.[0].Operation DELETE "assay contract cmd"
+        Expect.equal actual.[1].Path (Path.InvestigationFileName) "inv contract path"
+        Expect.equal actual.[1].Operation UPDATE "inv contract cmd"
+        Expect.equal actual.[2].Path (Identifier.Study.fileNameFromIdentifier "Study 1") "study 1 contract path"
+        Expect.equal actual.[2].Operation UPDATE "study 1 contract cmd"
+        Expect.equal actual.[3].Path (Identifier.Study.fileNameFromIdentifier "Study 2") "study 2 contract path"
+        Expect.equal actual.[3].Operation UPDATE "study 2 contract cmd"
+]
+
 let main = testList "ARCtrl" [
-    test_model
-    test_updateFileSystem
-    test_isaFromContracts
-    test_writeContracts
+    tests_model
+    tests_updateFileSystem
+    tests_isaFromContracts
+    tests_writeContracts
+    tests_RemoveAssay
     payload_file_filters
 ]
