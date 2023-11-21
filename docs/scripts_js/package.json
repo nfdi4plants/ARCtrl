@@ -9,7 +9,7 @@
   "author": "Kevin Frey",
   "license": "MIT",
   "dependencies": {
-    "@nfdi4plants/arctrl": "^1.0.0-alpha6",
-    "fsspreadsheet": "^4.0.0-alpha2"
+    "@nfdi4plants/arctrl": "^1.0.0-beta.7",
+    "@fslab/fsspreadsheet": "^5.0.0"
   }
 }
