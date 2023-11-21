@@ -4,7 +4,7 @@ open ARCtrl
 open ARCtrl.Path
 open ARCtrl.ISA.Spreadsheet
 open ARCtrl.ISA
-
+open FsSpreadsheet
 
 
 [<AutoOpen>]
@@ -62,7 +62,7 @@ module ArcTypeExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Investigation; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook
+                fsworkbook :?> FsWorkbook
                 |> ArcInvestigation.fromFsWorkbook
                 |> Some 
             | _ -> None
@@ -97,7 +97,7 @@ module ArcTypeExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Study; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook
+                fsworkbook :?> FsWorkbook
                 |> ArcStudy.fromFsWorkbook
                 |> Some 
             | _ -> None
@@ -131,7 +131,7 @@ module ArcTypeExtensions =
         static member tryFromReadContract (c:Contract) =
             match c with
             | {Operation = READ; DTOType = Some DTOType.ISA_Assay; DTO = Some (DTO.Spreadsheet fsworkbook)} ->
-                fsworkbook
+                fsworkbook :?> FsWorkbook
                 |> ArcAssay.fromFsWorkbook
                 |> Some 
             | _ -> None
