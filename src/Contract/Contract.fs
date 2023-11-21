@@ -2,7 +2,6 @@
 
 open Fable.Core
 open Fable.Core.JsInterop
-open FsSpreadsheet
 
 [<StringEnum>]
 [<RequireQualifiedAccess>]
@@ -29,7 +28,7 @@ type CLITool =
 [<Erase>]
 [<RequireQualifiedAccess>]
 type DTO =
-    | Spreadsheet of FsWorkbook
+    | Spreadsheet of obj
     | Text of string
     | CLITool of CLITool
 
