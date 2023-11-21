@@ -33,7 +33,7 @@ let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseT
 let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; packDotNet] {
     let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
     for target in targets do printfn "%A" target
-    let msg = sprintf "release package with version %s?" stableVersionTag
+    let msg = sprintf "[NUGET] release package with version %s?" stableVersionTag
     if promptYesNo msg then
         let source = "https://api.nuget.org/v3/index.json"
         let apikey =  Environment.environVar "NUGET_KEY"
@@ -46,7 +46,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
 let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; runTests; packDotNetPrerelease] {
     let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
     for target in targets do printfn "%A" target
-    let msg = sprintf "release package with version %s?" prereleaseTag 
+    let msg = sprintf "[NUGET] release package with version %s?" prereleaseTag 
     if promptYesNo msg then
         let source = "https://api.nuget.org/v3/index.json"
         let apikey =  Environment.environVar "NUGET_KEY"
@@ -61,7 +61,7 @@ let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] 
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
     printfn "%A" target
-    let msg = sprintf "release package with version %s?" stableVersionTag
+    let msg = sprintf "[NPM] release package with version %s?" stableVersionTag
     if promptYesNo msg then
         let apikey = Environment.environVarOrNone "NPM_KEY" 
         let otp = if apikey.IsSome then $" --otp + {apikey.Value}" else ""
@@ -77,7 +77,7 @@ let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
     printfn "%A" target
-    let msg = sprintf "release package with version %s?" prereleaseTag 
+    let msg = sprintf "[NPM] release package with version %s?" prereleaseTag 
     if promptYesNo msg then
         let apikey =  Environment.environVarOrNone "NPM_KEY"    
         let otp = if apikey.IsSome then $" --otp {apikey.Value}" else ""
