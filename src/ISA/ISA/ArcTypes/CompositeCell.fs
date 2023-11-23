@@ -119,3 +119,16 @@ type CompositeCell =
         | Term oa -> $"{oa.NameText}"
         | FreeText s -> s
         | Unitized (v,oa) -> $"{v} {oa.NameText}"
+
+#if FABLE_COMPILER
+    //[<CompiledName("Term")>]
+    static member term (oa:OntologyAnnotation) = CompositeCell.Term(oa)
+
+    //[<CompiledName("FreeText")>]
+    static member freeText (s:string) = CompositeCell.FreeText(s)
+
+    //[<CompiledName("Unitized")>]
+    static member unitized (v:string, oa:OntologyAnnotation) = CompositeCell.Unitized(v, oa)
+
+#else
+#endif
