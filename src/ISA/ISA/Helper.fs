@@ -30,6 +30,13 @@ module ResizeArray =
             if f i then b.Add(i)
         b
 
+    let exists f (a : ResizeArray<_>) =
+        let mutable state = false
+        for i in a do
+            if f i then
+                state <- true
+        state
+
     let fold f s (a : ResizeArray<_>) =
         let mutable state = s
         for i in a do
