@@ -1198,8 +1198,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             this.Assays 
             |> ResizeArray.filter (fun a ->
                 this.RegisteredStudies
-                |> ResizeArray.exists (fun s -> 
-                    ResizeArray.exists (fun i -> i = a.Identifier) s.RegisteredAssayIdentifiers
+                |> Seq.exists (fun s -> 
+                    Seq.exists (fun i -> i = a.Identifier) s.RegisteredAssayIdentifiers
                 )
                 |> not
             )
@@ -1408,7 +1408,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             this.Studies 
             |> ResizeArray.filter (fun s -> 
                 this.RegisteredStudyIdentifiers
-                |> ResizeArray.exists ((=) s.Identifier)
+                |> Seq.exists ((=) s.Identifier)
                 |> not
             )
 
