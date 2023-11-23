@@ -2,7 +2,73 @@
 
 open TestingUtils
 open ARCtrl.ISA
+open ARCtrl.ISA.Aux
 
+/// Tests to test whether the accessors, that handel different cases of registration work properly
+let registrationAccessTests = 
+    testList "RegistrationAccessTests" [
+        let studyOnlyRegistered = "StudyOnlyRegistered"
+        let studyOnlyExisting = "StudyOnlyExisting"
+        let studyRegisteredAndExisting = "StudyRegisteredAndExisting"
+
+        let assayOnlyRegistered = "AssayOnlyRegistered"
+        let assayOnlyExisting = "AssayOnlyExisting"
+        let assayRegisteredAndExisting = "AssayRegisteredAndExisting"
+
+        
+        let i = ArcInvestigation("MyInvestigation", registeredStudyIdentifiers = ResizeArray [studyOnlyRegistered])
+
+        let s = ArcStudy(studyRegisteredAndExisting, registeredAssayIdentifiers = ResizeArray [assayOnlyRegistered])
+
+        i.AddRegisteredStudy(s)
+        i.AddStudy(ArcStudy(studyOnlyExisting))
+
+        s.AddRegisteredAssay(ArcAssay(assayRegisteredAndExisting))
+        i.AddAssay(ArcAssay(assayOnlyExisting))
+
+        testCase "RegisteredStudyIdentifiers" (fun () ->
+            let actual = i.RegisteredStudyIdentifiers
+            let expected = ResizeArray [studyOnlyRegistered; studyRegisteredAndExisting]
+            Expect.sequenceEqual actual expected "Study identifiers were not correctly retrieved"
+        )
+        testCase "RegisteredStudies" (fun () -> 
+            let actual = i.RegisteredStudies |> ResizeArray.map (fun s -> s.Identifier)
+            let expected = ResizeArray [studyRegisteredAndExisting]
+            Expect.sequenceEqual actual expected "Registered studies were not correctly retrieved"
+        )
+        testCase "VacantStudyIdentifers" (fun () -> 
+            let actual = i.VacantStudyIdentifiers
+            let expected = ResizeArray [studyOnlyRegistered]
+            Expect.sequenceEqual actual expected "Vacant study identifiers were not correctly retrieved"
+        )
+        testCase "UnregisteredStudies" (fun () -> 
+            let actual = i.UnregisteredStudies |> ResizeArray.map (fun s -> s.Identifier)
+            let expected = ResizeArray [studyOnlyExisting]
+            Expect.sequenceEqual actual expected "Unregistered studies were not correctly retrieved"
+        )
+        testCase "RegisteredAssayIdentifiers" (fun  () ->
+            let actual = s.RegisteredAssayIdentifiers
+            let expected = ResizeArray [assayOnlyRegistered; assayRegisteredAndExisting]
+            Expect.sequenceEqual actual expected "Assay identifiers were not correctly retrieved"
+        )   
+        testCase "RegisteredAssays" (fun () -> 
+            let actual = s.RegisteredAssays |> ResizeArray.map (fun s -> s.Identifier)
+            let expected = ResizeArray [assayRegisteredAndExisting]
+            Expect.sequenceEqual actual expected "Registered assays were not correctly retrieved"
+        )
+        testCase "VacantAssayIdentifers" (fun () -> 
+            let actual = s.VacantAssayIdentifiers
+            let expected = ResizeArray [assayOnlyRegistered]
+            Expect.sequenceEqual actual expected "Vacant assay identifiers were not correctly retrieved"
+        )
+        testCase "UnregisteredAssays" (fun () -> 
+            let actual = i.UnregisteredAssays |> ResizeArray.map (fun s -> s.Identifier)
+            let expected = ResizeArray [assayOnlyExisting]
+            Expect.sequenceEqual actual expected "Unregistered assays were not correctly retrieved"
+        )
+
+
+    ]
 
 let componentCastingTests =
 

@@ -170,7 +170,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         testCase "RegisterAssay" <| fun _ ->
             let study = createTestStudy()
             study.RegisterAssay(_assay_identifier)
-            Expect.equal study.RegisteredAssayCount 1 "registered assay count"
+            Expect.equal study.RegisteredAssayIdentifierCount 1 "registered assay count"
         testCase "GetRegisteredAssay" <| fun _ ->
             let study = createTestStudy()
             study.RegisterAssay(_assay_identifier)
@@ -184,9 +184,9 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         testCase "DeregisterAssay" <| fun _ ->
             let study = createTestStudy()
             study.RegisterAssay(_assay_identifier)
-            Expect.equal study.RegisteredAssayCount 1 "registered assay count"
+            Expect.equal study.RegisteredAssayIdentifierCount 1 "registered assay count"
             study.DeregisterAssay(_assay_identifier)
-            Expect.equal study.RegisteredAssayCount 0 "registered assay count 2"
+            Expect.equal study.RegisteredAssayIdentifierCount 0 "registered assay count 2"
         testCase "InitAssay" <| fun _ ->
             let study = createTestStudy()
             let eval() = study.InitRegisteredAssay(_assay_identifier) |> ignore
@@ -206,7 +206,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
             study.RegisterAssay(_assay_identifier)
             Expect.equal i.AssayCount 1 "AssayCount"
             Expect.equal i.StudyCount 1 "StudyCount"
-            Expect.equal study.RegisteredAssayCount 1 "registered assay count"
+            Expect.equal study.RegisteredAssayIdentifierCount 1 "registered assay count"
         testCase "GetRegisteredAssay" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
             let assay = createTestAssay()
@@ -233,7 +233,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
             i.AddAssay(assay)
             study.RegisterAssay(_assay_identifier)
             study.DeregisterAssay(_assay_identifier)
-            Expect.equal study.RegisteredAssayCount 0 "registered assay count 2"
+            Expect.equal study.RegisteredAssayIdentifierCount 0 "registered assay count 2"
             Expect.equal i.AssayCount 1 "AssayCount, only deregister from study, not remove"
             Expect.equal i.StudyCount 1 "StudyCount"
         testCase "InitAssay" <| fun _ ->
@@ -243,7 +243,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
             let assay = study.InitRegisteredAssay(_assay_identifier)
             Expect.equal i.AssayCount 1 "AssayCount"
             Expect.equal i.StudyCount 1 "StudyCount"
-            Expect.equal study.RegisteredAssayCount 1 "registered assay count"
+            Expect.equal study.RegisteredAssayIdentifierCount 1 "registered assay count"
             Expect.equal i.Assays.[0] assay "equal"
         testCase "AddAssay" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
@@ -253,7 +253,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
             study.AddRegisteredAssay(assay)
             Expect.equal i.AssayCount 1 "AssayCount"
             Expect.equal i.StudyCount 1 "StudyCount"
-            Expect.equal study.RegisteredAssayCount 1 "registered assay count"
+            Expect.equal study.RegisteredAssayIdentifierCount 1 "registered assay count"
             Expect.equal i.Assays.[0] assay "equal"
         testCase "Check mutability" <| fun _ ->
             let i = ArcInvestigation.init("MyInvestigation")
@@ -283,7 +283,7 @@ let tests_copy =
             let study = createTestStudy()
             Expect.equal study.Identifier _study_identifier "_study_identifier"
             Expect.equal study.Description _study_description "_study_description"
-            Expect.equal study.RegisteredAssayCount 1 "AssayCount"
+            Expect.equal study.RegisteredAssayIdentifierCount 1 "AssayCount"
             let assayIdentifier = study.RegisteredAssayIdentifiers.[0]
             Expect.equal assayIdentifier _assay_identifier "_assay_identifier"
         testCase "test mutable fields" <| fun _ -> 
@@ -297,14 +297,14 @@ let tests_copy =
                 Expect.equal study.Identifier _study_identifier "_study_identifier"
                 Expect.equal study.Description _study_description "_study_description"
                 Expect.equal study.PublicReleaseDate None "PublicReleaseDate"
-                Expect.equal study.RegisteredAssayCount 1 "AssayCount"
+                Expect.equal study.RegisteredAssayIdentifierCount 1 "AssayCount"
                 let assayIdentifier = study.RegisteredAssayIdentifiers.[0]
                 Expect.equal assayIdentifier _assay_identifier "_assay_identifier"
             let checkCopy =
                 Expect.equal copy.Identifier _study_identifier "copy _study_identifier"
                 Expect.equal copy.Description newDesciption "copy _study_description"
                 Expect.equal copy.PublicReleaseDate newPublicReleaseDate "copy PublicReleaseDate"
-                Expect.equal copy.RegisteredAssayCount 1 "copy AssayCount"
+                Expect.equal copy.RegisteredAssayIdentifierCount 1 "copy AssayCount"
                 let assayIdentifier = study.RegisteredAssayIdentifiers.[0]
                 Expect.equal assayIdentifier _assay_identifier "copy _assay_identifier"
             ()
