@@ -130,6 +130,33 @@ type IOType =
         | _ -> failwith $"Unable to parse combination to existing IOType: `{iotype}`"
 
 
+
+#if FABLE_COMPILER
+
+    //[<CompiledName("Source")>]
+    static member source() = IOType.Source
+
+    //[<CompiledName("Sample")>]
+    static member sample() = IOType.Sample
+
+    //[<CompiledName("RawDataFile")>]
+    static member rawDataFile() = IOType.RawDataFile
+
+    //[<CompiledName("DerivedDataFile")>]
+    static member derivedDataFile() = IOType.DerivedDataFile
+
+    //[<CompiledName("ImageFile")>]
+    static member imageFile() = IOType.ImageFile
+
+    //[<CompiledName("Material")>]
+    static member material() = IOType.Material
+
+    //[<CompiledName("FreeText")>]
+    static member freeText(s:string) = IOType.FreeText s
+
+#else
+#endif
+
 /// <summary>
 /// Model of the different types of Building Blocks in an ARC Annotation Table.
 /// </summary>
@@ -494,3 +521,50 @@ type CompositeHeader =
         | U2.Case1 (FreeText _) | U2.Case2 "FreeText" ->
             "Placeholder"
         | _ -> failwith $"Unable to parse combination to existing CompositeHeader: `{header}`"
+
+#if FABLE_COMPILER
+    
+    //[<CompiledName("Component")>]
+    static member component(oa:OntologyAnnotation) = Component oa
+
+    //[<CompiledName("Characteristic")>]
+    static member characteristic(oa:OntologyAnnotation) = Characteristic oa
+
+    //[<CompiledName("Factor")>]
+    static member factor(oa:OntologyAnnotation) = Factor oa
+
+    //[<CompiledName("Parameter")>]
+    static member parameter(oa:OntologyAnnotation) = Parameter oa
+
+    //[<CompiledName("ProtocolType")>]
+    static member protocolType() = ProtocolType
+
+    //[<CompiledName("ProtocolDescription")>]
+    static member protocolDescription() = ProtocolDescription
+
+    //[<CompiledName("ProtocolUri")>]
+    static member protocolUri() = ProtocolUri
+
+    //[<CompiledName("ProtocolVersion")>]
+    static member protocolVersion() = ProtocolVersion
+
+    //[<CompiledName("ProtocolREF")>]
+    static member protocolREF() = ProtocolREF
+
+    //[<CompiledName("Performer")>]
+    static member performer() = Performer
+
+    //[<CompiledName("Date")>]
+    static member date() = Date
+
+    //[<CompiledName("Input")>]
+    static member input(io:IOType) = Input io
+
+    //[<CompiledName("Output")>]
+    static member output(io:IOType) = Output io
+
+    //[<CompiledName("FreeText")>]
+    static member freeText(s:string) = FreeText s
+
+#else
+#endif
