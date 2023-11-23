@@ -215,7 +215,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         investigation.StudyIdentifiers
         |> Array.iter (fun si -> 
             if studies |> Array.exists (fun s -> s.Identifier = si) |> not then
-                investigation.RemoveStudy(si)
+                investigation.DeleteStudy(si)
         )
 
         studies |> Array.iter (fun study ->

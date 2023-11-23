@@ -87,6 +87,8 @@ let private tests_isaFromContracts = testList "read_contracts" [
         Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
         Expect.equal inv.Studies.Count 1 "should have read one study"
+        Expect.equal inv.RegisteredStudyIdentifierCount 2 "should have read two registered study identifiers"
+        Expect.equal inv.VacantStudyIdentifiers.Count 1 "should have one vacant study identifier"
         let study1 = inv.Studies.[0]
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
