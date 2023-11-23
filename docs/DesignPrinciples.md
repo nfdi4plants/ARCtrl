@@ -5,8 +5,9 @@
 - [Top level overview](#top-level-overview)
 - [Stack](#stack)
 - [Libraries](#libraries)
-  - [Design choices](#design-choices)
-    - [Fable compatibility as top priority](#fable-compatibility-as-top-priority)
+- [Design choices](#design-choices)
+  - [Parsing priorities in unitized cvParam columns from table files](#parsing-priorities-in-unitized-cvparam-columns-from-table-files)
+  - [Fable compatibility as top priority](#fable-compatibility-as-top-priority)
 
 # Sub-Libraries
 
@@ -586,6 +587,26 @@ static member addColumn (header: CompositeHeader,cells: CompositeCell [],?Index:
         newTable
 ```
 - All CRUD functions between assay and study are implemented on Investigation level. Propagated functions on assay/study must use investigation functions to avoid code duplication.
+
+### Parsing priorities in unitized cvParam columns from table files
+
+The handling of unitized columns might be complex, as discussed in
+https://github.com/nfdi4plants/user-stories/issues/9
+
+Proposed parsing:
+
+| Parameter [MyCategory] | Unit   | Term Source REF (ABC:00000) | Term Accession Number (ABC:00000) | > | Results In   |
+|-----------------|--------|-----------------------------|-----------------------------------|----|--------------|
+| 5               | MyUnit | DEF                         | DEF:12345                         | > | UnitizedCell |
+| 5               |        | DEF                         | DEF:12345                         | > | UnitizedCell |
+| 5               |        |                             |                                   | > | UnitizedCell |
+|                 | MyUnit | DEF                         | DEF:12345                         | > | UnitizedCell |
+|                 |        |                             |                                   | > | UnitizedCell |
+| MyValue         | MyUnit | DEF                         | DEF:12345                         | > | UnitizedCell |
+| MyValue         |        | DEF                         | DEF:12345                         | > | TermCell     |
+| MyValue         |        |                             |                                   | > | TermCell     |
+
+Additionally, to keep the `hasUnit` information of valueless columns. We might add the hasUnit to the Header.
 
 ### Fable compatibility as top priority
 
