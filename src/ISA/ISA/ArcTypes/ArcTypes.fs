@@ -612,14 +612,28 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     static member FileName = ARCtrl.Path.StudyFileName
     //member this.FileName = ArcStudy.FileName
 
-    member this.RegisteredAssayCount 
+    /// Returns the count of registered assay *identifiers*. This is not necessarily the same as the count of registered assays, as not all identifiers correspond to an existing assay.
+    member this.RegisteredAssayIdentifierCount 
         with get() = this.RegisteredAssayIdentifiers.Count
 
+    /// Returns the count of registered assays. This is not necessarily the same as the count of registered assay *identifiers*, as not all identifiers correspond to an existing assay.
+    member this.RegisteredAssayCount 
+        with get() = this.RegisteredAssays.Count
+
+    /// Returns all assays registered in this study, that correspond to an existing assay object in the associated investigation.
     member this.RegisteredAssays
         with get(): ResizeArray<ArcAssay> = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
             this.RegisteredAssayIdentifiers 
             |> Seq.choose inv.TryGetAssay
+            |> ResizeArray
+
+    /// Returns all registered assay identifiers that do not correspond to an existing assay object in the associated investigation.
+    member this.VacantAssayIdentifiers
+        with get() = 
+            let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+            this.RegisteredAssayIdentifiers 
+            |> Seq.filter (inv.ContainsAssay >> not)
             |> ResizeArray
 
     // - Assay API - CRUD //
@@ -1179,6 +1193,17 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.AssayIdentifiers 
         with get(): string [] = this.Assays |> Seq.map (fun (x:ArcAssay) -> x.Identifier) |> Array.ofSeq
 
+    member this.UnregisteredAssays 
+        with get(): ResizeArray<ArcAssay> = 
+            this.Assays 
+            |> ResizeArray.filter (fun a ->
+                this.RegisteredStudies
+                |> Seq.exists (fun s -> 
+                    Seq.exists (fun i -> i = a.Identifier) s.RegisteredAssayIdentifiers
+                )
+                |> not
+            )
+
     // - Assay API - CRUD //
     member this.AddAssay(assay: ArcAssay) =
         ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assay.Identifier (this.Assays |> Seq.map (fun x -> x.Identifier))
@@ -1344,18 +1369,48 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInvestigation = inv.Copy()
             newInvestigation.TryGetAssay(assayIdentifier)
     
+    member this.ContainsAssay(assayIdentifier: string) =
+        this.Assays
+        |> Seq.exists (fun a -> a.Identifier = assayIdentifier)
 
+    static member containsAssay (assayIdentifier: string) : ArcInvestigation -> bool =
+        fun (inv: ArcInvestigation) ->            
+            inv.ContainsAssay(assayIdentifier)
+
+    /// Returns the count of registered study *identifiers*. This is not necessarily the same as the count of registered studies, as not all identifiers correspond to an existing study object.
+    member this.RegisteredStudyIdentifierCount 
+        with get() = this.RegisteredStudyIdentifiers.Count
+
+    /// Returns all studies registered in this investigation, that correspond to an existing study object investigation.
     member this.RegisteredStudies 
+        with get() : ResizeArray<ArcStudy> = 
+            this.RegisteredStudyIdentifiers 
+            |> ResizeArray.choose (fun identifier -> this.TryGetStudy identifier)
+
+    /// Returns the count of registered studies. This is not necessarily the same as the count of registered study *identifiers*, as not all identifiers correspond to an existing study object.
+    member this.RegisteredStudyCount 
+        with get() = this.RegisteredStudies.Count
+
+    /// Returns all registered study identifiers that do not correspond to an existing study object in the investigation.
+    member this.VacantStudyIdentifiers
         with get() = 
             this.RegisteredStudyIdentifiers 
-            |> Seq.choose (fun identifier -> this.TryGetStudy identifier)
-            |> ResizeArray
+            |> ResizeArray.filter (this.ContainsStudy >> not)
 
     member this.StudyCount 
         with get() = this.Studies.Count
 
     member this.StudyIdentifiers
         with get() = this.Studies |> Seq.map (fun (x:ArcStudy) -> x.Identifier) |> Seq.toArray
+
+    member this.UnregisteredStudies 
+        with get() = 
+            this.Studies 
+            |> ResizeArray.filter (fun s -> 
+                this.RegisteredStudyIdentifiers
+                |> Seq.exists ((=) s.Identifier)
+                |> not
+            )
 
     // - Study API - CRUD //
     member this.AddStudy(study: ArcStudy) =
@@ -1539,6 +1594,13 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let newInv = inv.Copy()
             newInv.TryGetStudy(studyIdentifier)
 
+    member this.ContainsStudy(studyIdentifier: string) =
+        this.Studies
+        |> Seq.exists (fun s -> s.Identifier = studyIdentifier)
+
+    static member containsStudy (studyIdentifier: string) : ArcInvestigation -> bool =
+        fun (inv: ArcInvestigation) ->            
+            inv.ContainsStudy(studyIdentifier)
 
     // - Study API - CRUD //
     /// <summary>

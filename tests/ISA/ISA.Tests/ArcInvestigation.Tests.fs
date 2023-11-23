@@ -198,7 +198,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal i.AssayCount 1 "assay count"
         Expect.equal i.StudyCount 1 "study count"
         i.RegisterAssay(s.Identifier, a.Identifier)
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count"
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
     testCase "Study.RegisterAssay" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
@@ -207,7 +207,7 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal i.AssayCount 1 "assay count"
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count"
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
     testCase "Investigation.DeregisterAssay" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
@@ -216,10 +216,10 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal i.AssayCount 1 "assay count"
         Expect.equal i.StudyCount 1 "study count"
         i.RegisterAssay(s.Identifier, a.Identifier)
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count"
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         i.DeregisterAssay(s.Identifier,a.Identifier)
-        Expect.equal s.RegisteredAssayCount 0 "registered assay count 2"
+        Expect.equal s.RegisteredAssayIdentifierCount 0 "registered assay count 2"
     testCase "Study.DeregisterAssay" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -227,10 +227,10 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal i.AssayCount 1 "assay count"
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count"
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         s.DeregisterAssay(a.Identifier)
-        Expect.equal s.RegisteredAssayCount 0 "registered assay count 2"
+        Expect.equal s.RegisteredAssayIdentifierCount 0 "registered assay count 2"
     testCase "Remove registered assay from investigation" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -238,23 +238,23 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal i.AssayCount 1 "assay count"
         Expect.equal i.StudyCount 1 "study count"
         s.RegisterAssay(a.Identifier)
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count"
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         i.RemoveAssayAt 0 
         Expect.equal i.AssayCount 0 "assay count 2"
-        Expect.equal s.RegisteredAssayCount 0 "registered assay count 2"
+        Expect.equal s.RegisteredAssayIdentifierCount 0 "registered assay count 2"
     testCase "Remove registered assay from investigation, without removing other missing assays" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
         let s = i.InitStudy("MyStudy")
         s.RegisterAssay(a.Identifier)
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count"
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         s.RegisteredAssayIdentifiers.Add("Any Assay That is missing")
-        Expect.equal s.RegisteredAssayCount 2 "registered assay count 2"
+        Expect.equal s.RegisteredAssayIdentifierCount 2 "registered assay count 2"
         i.RemoveAssayAt 0
         Expect.equal i.AssayCount 0 "assay count"
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count 3"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count 3"
     testCase "Investigation.DeregisterMissingAssays" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
         let a = i.InitAssay("MyAssay")
@@ -266,9 +266,9 @@ let tests_RegisteredAssays = testList "RegisteredAssays" [
         Expect.equal s.RegisteredAssayIdentifiers.[0] a.Identifier "identifier"
         i.Assays <- (ResizeArray())
         Expect.equal i.AssayCount 0 "assay count 2"
-        Expect.equal s.RegisteredAssayCount 1 "registered assay count 2"
+        Expect.equal s.RegisteredAssayIdentifierCount 1 "registered assay count 2"
         i.DeregisterMissingAssays()
-        Expect.equal s.RegisteredAssayCount 0 "registered assay count 3"
+        Expect.equal s.RegisteredAssayIdentifierCount 0 "registered assay count 3"
 ]
 
 let tests_RegisteredStudies = testList "RegisteredStudies" [
