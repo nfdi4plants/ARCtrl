@@ -1,15 +1,16 @@
 ﻿module ARCtrl.SemVer
 
+open ARCtrl.ISA.Regex.ActivePatterns
+
 module SemVerAux =
 
-    let private Pattern =
+    let Pattern =
             @"^(?<major>\d+)" +
             @"(\.(?<minor>\d+))?" +
             @"(\.(?<patch>\d+))?" +
             @"(-(?<pre>[0-9A-Za-z-\.]+))?" +
             @"(\+(?<build>[0-9A-Za-z-\.]+))?$"
 
-    let SemVerRegex = System.Text.RegularExpressions.Regex(Pattern)
 
 type SemVer = {
     Major: int
@@ -36,10 +37,8 @@ type SemVer = {
         }
 
     static member tryOfString (str: string) =
-        let m = SemVerAux.SemVerRegex.Match(str)
-        match m.Success with
-        | false -> None
-        | true ->
+        match str with
+        | Regex (SemVerAux.Pattern) m ->
             let g = m.Groups
             let major = int g.["major"].Value
             let minor = int g.["minor"].Value
@@ -53,6 +52,7 @@ type SemVer = {
                 | true -> Some g.["build"].Value
                 | false -> None
             Some <| SemVer.create(major, minor, patch, ?pre=pre, ?meta=meta)
+        | _ -> None
 
     member this.AsString() : string =
         let sb = System.Text.StringBuilder()

@@ -7,6 +7,15 @@ open System
 
 module Pattern =
 
+    let handleGroupPatterns (pattern : string) =
+        let pyify (pattern : string) =
+            pattern.Replace(@"(?<", @"(?P<")
+        #if FABLE_COMPILER_PYTHON
+        pyify pattern
+        #else
+        pattern
+        #endif
+
     module MatchGroups =
         
         [<Literal>]
@@ -110,6 +119,7 @@ module ActivePatterns =
     
     /// Matches, if the input string matches the given regex pattern.
     let (|Regex|_|) pattern (input : string) =
+        let pattern = Pattern.handleGroupPatterns pattern
         let m = Regex.Match(input.Trim(), pattern)
         if m.Success then Some(m)
         else None

@@ -432,15 +432,14 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     /// This function allows us, to parse them as an ontology term.
     static member decomposeTechnologyPlatform (name : string) = 
         let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
-
-        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
         
 
-        if r.Success then
+        match name with 
+        | Regex.ActivePatterns.Regex pattern r -> 
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
             {oa with Name = (Some (AnnotationValue.Text v.Text))}
-        else 
+        | _ ->
             OntologyAnnotation.fromString(termName = name)
 
     member internal this.AddToInvestigation (investigation: ArcInvestigation) =

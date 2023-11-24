@@ -1,7 +1,7 @@
 namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
-open Update
+open Regex.ActivePatterns
 
 type Process = 
     {
@@ -56,13 +56,12 @@ type Process =
 
     static member decomposeName (name : string) =
         let pattern = """(?<name>.+)_(?<num>\d+)"""
-        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
 
-        if r.Success then
+        match name with 
+        | Regex pattern r ->
             (r.Groups.Item "name").Value, Some ((r.Groups.Item "num").Value |> int)
-        else 
+        | _ ->
             name, None
-
     
     /// Returns the name of the protocol the given process executes
     static member tryGetProtocolName (p: Process) =

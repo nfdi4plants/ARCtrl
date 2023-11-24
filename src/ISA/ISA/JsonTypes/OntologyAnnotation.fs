@@ -35,7 +35,6 @@ type OntologyAnnotation =
     member this.TANInfo = 
         match this.TermAccessionNumber with
         | Some v -> 
-            printfn "HIT INNER TANInfo"
             Regex.tryParseTermAnnotation v
         | None -> None
 
