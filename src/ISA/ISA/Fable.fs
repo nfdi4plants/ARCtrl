@@ -2,7 +2,12 @@
 module ARCtrl.ISA.Fable
 
 open Fable.Core
+
+#if FABLE_COMPILER_PYTHON
+open Fable.Core.PyInterop
+#else
 open Fable.Core.JsInterop
+#endif
 
 [<Emit("console.log($0)")>]
 let print (msg:obj) : unit = 

@@ -109,7 +109,7 @@ type IOType =
         | Some s -> IOType.ofString s |> Some
         | None -> None
 
-    member this.GetUITooltip() = IOType.getUITooltip(!^this)
+    member this.GetUITooltip() = IOType.getUITooltip(U2.Case1 this)
 
     static member getUITooltip(iotype: U2<IOType,string>) =
         match iotype with
@@ -482,7 +482,8 @@ type CompositeHeader =
 
     member this.GetUITooltip() =
         // https://fable.io/docs/javascript/features.html#u2-u3--u9
-        CompositeHeader.getUITooltip (!^this)
+        CompositeHeader.getUITooltip (U2.Case1
+        this)
 
     // https://fable.io/docs/javascript/features.html#u2-u3--u9
     // U2 is an erased union type, allowing seemless integration into js syntax
