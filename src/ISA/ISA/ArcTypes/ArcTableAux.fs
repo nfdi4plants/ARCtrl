@@ -709,23 +709,26 @@ module ProcessParsing =
 
     /// Merges processes with the same name, protocol and param values
     let mergeIdenticalProcesses (processes : list<Process>) =
+        printfn "Merging identical processes aaaaaa"
         processes
         |> List.groupBy (fun x -> 
             if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
-                (x.Name.Value |> Process.decomposeName |> fst), x.ExecutesProtocol, x.ParameterValues
+                (x.Name.Value |> Process.decomposeName |> fst), x.ExecutesProtocol, x.ParameterValues |> Option.map Aux.HashCodes.boxHashSeq
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value, x.ExecutesProtocol, x.ParameterValues                     
+                x.ExecutesProtocol.Value.Name.Value, x.ExecutesProtocol, x.ParameterValues |> Option.map Aux.HashCodes.boxHashSeq
             else
-                ARCtrl.ISA.Identifier.createMissingIdentifier(), x.ExecutesProtocol, x.ParameterValues 
+                ARCtrl.ISA.Identifier.createMissingIdentifier(), x.ExecutesProtocol, x.ParameterValues |> Option.map Aux.HashCodes.boxHashSeq
         )
         |> fun l ->
-        l
-        |> List.mapi (fun i ((n,protocol,pVs),processes) -> 
-            let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Aux.Option.fromValueWithDefault []
-            let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Aux.Option.fromValueWithDefault []
-            let n = if l.Length > 1 then Process.composeName n i else n
-            Process.create(Name = n,?ExecutesProtocol = protocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
-        )
+            printfn "Merging identical processes adwwdadawwda"
+            l
+            |> List.mapi (fun i ((n,protocol,_),processes) -> 
+                let pVs = processes.[0].ParameterValues
+                let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Aux.Option.fromValueWithDefault []
+                let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Aux.Option.fromValueWithDefault []
+                let n = if l.Length > 1 then Process.composeName n i else n
+                Process.create(Name = n,?ExecutesProtocol = protocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
+            )
 
 
     // Transform a isa json process into a isa tab row, where each row is a header+value list

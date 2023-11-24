@@ -37,3 +37,8 @@ let distinct_generic l1 =
         !!List.distinct l1
     else
         !!Array.distinct l1
+
+let hashSeq (s:seq<'a>) = 
+    s
+    |> Seq.map (fun x -> x.GetHashCode())
+    |> Seq.reduce (fun a b -> a + b)

@@ -83,6 +83,12 @@ module HashCodes =
         |> Array.fold (fun acc o -> 0x9e3779b9 + o.GetHashCode() + (acc <<< 6) + (acc >>> 2) ) 0
         |> box
 
+    let boxHashSeq (a: seq<'a>) : obj =
+        a 
+        // from https://stackoverflow.com/a/53507559
+        |> Seq.fold (fun acc o -> 0x9e3779b9 + o.GetHashCode() + (acc <<< 6) + (acc >>> 2) ) 0
+        |> box
+
 [<RequireQualifiedAccess>]
 module Option =
  
