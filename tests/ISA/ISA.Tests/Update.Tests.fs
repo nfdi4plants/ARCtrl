@@ -669,7 +669,5 @@ let updateTests =
 let main = 
     testList "APITests" [
         genericFableTests
-        updateTests
-
-        
+        updateTests 
     ]

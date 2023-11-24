@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <Compile Include="Path.fs" />
     <Compile Include="Identifier.fs" />
     <Compile Include="Url.fs" />
@@ -75,7 +76,5 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-	<ItemGroup>
-		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-	</ItemGroup>
+	<ItemGroup />
 </Project>

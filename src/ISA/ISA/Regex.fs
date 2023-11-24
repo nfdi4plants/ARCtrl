@@ -133,8 +133,8 @@ module ActivePatterns =
     /// Matches a "Unit" column header.
     let (|UnitColumnHeader|_|) input = 
         match input with
-        | Regex Pattern.UnitPattern _ -> Some()
-         | _ -> None
+        | Regex Pattern.UnitPattern o -> Some (o.Value)
+        | _ -> None
 
     /// Matches a "Parameter [Term]" or "Parameter Value [Term]" column header and returns the Term string.
     let (|ParameterColumnHeader|_|) input = 

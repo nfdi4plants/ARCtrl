@@ -105,6 +105,16 @@ module private Helper =
 
         createProcess npmPath
 
+    let python =
+        let path =
+            match ProcessUtils.tryFindFileOnPath "python" with
+            | Some path -> path
+            | None ->
+                "py was not found in path. Please install it and make sure it's available from your path."
+                |> failwith
+
+        createProcess path
+
     let run proc arg dir =
         proc arg dir
         |> Proc.run
@@ -142,6 +152,22 @@ module RunTests =
             // run mocha in target path to execute tests
             // "--timeout 20000" is used, because json schema validation takes a bit of time.
             run npx $"mocha {path}/js --timeout 20000" ""
+    }
+
+    /// <summary>
+    /// Until we reach full Py compatibility we use these paths to check only compatible projects
+    /// </summary>
+    let testProjectsPy = 
+        [
+            "tests/ISA/ISA.Tests"
+        ]
+
+    let runTestsPy = BuildTask.create "runTestsPy" [clean; build] {
+        for path in testProjectsPy do
+            //transpile py files from fsharp code
+            run dotnet $"fable {path} -o {path}/py --lang python" ""
+            // run pyxpecto in target path to execute tests in python
+            run python $"{path}/py/main.py" ""
     }
 
     let runTestsDotnet = BuildTask.create "runTestsDotnet" [clean; build] {

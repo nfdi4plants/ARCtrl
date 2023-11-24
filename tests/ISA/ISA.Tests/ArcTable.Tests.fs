@@ -574,7 +574,7 @@ let private tests_UpdateColumn =
         )
     ]
 
-let private tests_AddColumn =
+let private tests_AddColumn_Mutable =
     let header_input = CompositeHeader.Input IOType.Source
     let header_chara = CompositeHeader.Characteristic oa_species
     let createCells_chara (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
@@ -801,7 +801,7 @@ let private tests_AddColumn =
     ]
 
 /// Exemplary tests to check non mutable implementation of mutability bases member function.
-let private tests_addColumn =
+let private tests_addColumn_Copy =
     let header_input = CompositeHeader.Input IOType.Source
     let header_chara = CompositeHeader.Characteristic oa_species
     let createCells_chara (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
@@ -2243,8 +2243,8 @@ let main =
         tests_UpdateHeader
         tests_UpdateCell
         tests_UpdateColumn
-        tests_AddColumn
-        tests_addColumn
+        tests_AddColumn_Mutable
+        tests_addColumn_Copy
         tests_AddColumns
         tests_RemoveColumn
         tests_RemoveColumns

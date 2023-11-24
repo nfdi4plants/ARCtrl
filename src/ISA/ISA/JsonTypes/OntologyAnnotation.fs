@@ -33,8 +33,11 @@ type OntologyAnnotation =
 
 
     member this.TANInfo = 
-        this.TermAccessionNumber
-        |> Option.bind Regex.tryParseTermAnnotation 
+        match this.TermAccessionNumber with
+        | Some v -> 
+            printfn "HIT INNER TANInfo"
+            Regex.tryParseTermAnnotation v
+        | None -> None
 
     /// Returns the name of the ontology as string
     // TODO: Why is this called Text, while everything else is called string?

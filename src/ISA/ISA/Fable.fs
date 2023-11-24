@@ -17,6 +17,7 @@ let isMap_generic l1 = l1.ToString().StartsWith("map [")
 
 let isList_generic l1 = 
     let s = l1.ToString()
+    printfn "%A" (s)
     s.StartsWith("[") && (s.StartsWith "seq [" |> not)
 
 let append_generic l1 l2 =
