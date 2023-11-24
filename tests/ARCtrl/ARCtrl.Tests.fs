@@ -87,11 +87,15 @@ let private tests_isaFromContracts = testList "read_contracts" [
         Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
         Expect.equal inv.Studies.Count 1 "should have read one study"
+        Expect.equal inv.RegisteredStudyIdentifierCount 2 "should have read two registered study identifiers"
+        Expect.equal inv.VacantStudyIdentifiers.Count 1 "should have one vacant study identifier"
         let study1 = inv.Studies.[0]
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
         
         Expect.equal study1.RegisteredAssays.Count 1 "study 1 should have read one assay"
+        Expect.equal study1.RegisteredAssayIdentifierCount 3 "study 1 should have read three registered assay identifiers"
+        Expect.equal study1.VacantAssayIdentifiers.Count 2 "study 1 should have two vacant assay identifiers"
         let assay1 = study1.RegisteredAssays.[0]
         Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
