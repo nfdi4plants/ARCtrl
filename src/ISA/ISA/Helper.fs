@@ -308,7 +308,7 @@ module Update =
         // try to cast values to types to check for isEmpty according to type.
         match oldVal with 
         // Check if newValue isNull = isEmpty
-        | _ when newVal = null ->
+        | _ when Fable.isNone_generic newVal ->
             oldVal
         // Handle OptionTypes
         // https://stackoverflow.com/questions/6289761/how-to-downcast-from-obj-to-optionobj
@@ -342,7 +342,7 @@ module Update =
         // try to cast values to types to check for isEmpty according to type.
         match oldVal with 
         // Check if newValue isNull = isEmpty
-        | _ when newVal = null ->
+        | _ when Fable.isNone_generic newVal ->
             oldVal
         // Handle OptionTypes
         // https://stackoverflow.com/questions/6289761/how-to-downcast-from-obj-to-optionobj
