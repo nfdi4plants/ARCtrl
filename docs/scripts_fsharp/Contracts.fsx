@@ -1,5 +1,5 @@
-#r "nuget: FsSpreadsheet.ExcelIO, 4.1.0"
-#r "nuget: ARCtrl, 1.0.0-alpha9"
+#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
+#r "nuget: ARCtrl, 1.0.0-beta.8"
 
 open ARCtrl
 open ARCtrl.Contract
@@ -33,18 +33,6 @@ let fulfillWriteContract basePath (c : Contract) =
 // # Read
 
 open System.IO
-
-let normalizePathSeparators (str:string) = str.Replace("\\","/")
-
-let getAllFilePaths (basePath: string) =
-    let options = EnumerationOptions()
-    options.RecurseSubdirectories <- true
-    Directory.EnumerateFiles(basePath, "*", options)
-    |> Seq.map (fun fp ->
-        Path.GetRelativePath(basePath, fp)
-        |> normalizePathSeparators
-    )
-    |> Array.ofSeq
 
 // from ARCtrl.NET
 // https://github.com/nfdi4plants/ARCtrl.NET/blob/ba3d2fabe007d9ca2c8e07b62d02ddc5264306d0/src/ARCtrl.NET/Contract.fs#L7

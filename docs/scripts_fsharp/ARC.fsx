@@ -1,5 +1,5 @@
-#r "nuget: FsSpreadsheet.ExcelIO, 4.1.0"
-#r "nuget: ARCtrl, 1.0.0-alpha9"
+#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
+#r "nuget: ARCtrl, 1.0.0-beta.8"
 #load "Contracts.fsx"
 
 // # Create
@@ -29,10 +29,24 @@ write arcRootPath arc
 // # Read
 open System.IO
 
+// Setup
+
+let normalizePathSeparators (str:string) = str.Replace("\\","/")
+
+let getAllFilePaths (basePath: string) =
+    let options = EnumerationOptions()
+    options.RecurseSubdirectories <- true
+    Directory.EnumerateFiles(basePath, "*", options)
+    |> Seq.map (fun fp ->
+        Path.GetRelativePath(basePath, fp)
+        |> normalizePathSeparators
+    )
+    |> Array.ofSeq
+
 // put it all together
 let readARC(basePath: string) =
-    // `Contracts.getAllFilePaths` from Contracts.fsx docs
-    let allFilePaths = Contracts.getAllFilePaths basePath
+    // Get all file paths for a given ARC folder
+    let allFilePaths = getAllFilePaths basePath
     // Initiates an ARC from FileSystem but no ISA info.
     let arcRead = ARC.fromFilePaths allFilePaths
     // Read contracts will tell us what we need to read from disc.
@@ -44,6 +58,6 @@ let readARC(basePath: string) =
     arcRead.SetISAFromContracts(fulfilledContracts)
     arcRead 
 
-// execution
+// Execution
 
 readARC arcRootPath
