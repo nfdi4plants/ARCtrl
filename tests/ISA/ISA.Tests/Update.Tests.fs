@@ -104,12 +104,12 @@ let genericFableTests =
             Expect.equal l3 expected "AppendArray failed"
         )
         testCase "AppendSeq" (fun () -> 
-            let l1 = seq [1;2;3]
-            let l2 = seq [4;5;6]
+            let l1 = seq {1;2;3}
+            let l2 = seq {4;5;6}
             let t = typeof<int>
-            let l3 = Update.appendGenericListsByType l1 l2 t
-            let expected = seq [1;2;3;4;5;6]
-            Expect.equal l3 expected "AppendSeq failed"
+            let l3 = Update.appendGenericListsByType l1 l2 t :?> int seq
+            let expected = seq {1;2;3;4;5;6}
+            Expect.sequenceEqual l3 expected "AppendSeq failed"
         )
         testCase "AppendListEmpty" (fun () -> 
             let l1 : int list = []
@@ -131,9 +131,9 @@ let genericFableTests =
             let l1 : int seq = seq []
             let l2 : int seq = seq []
             let t = typeof<int>
-            let l3 = Update.appendGenericListsByType l1 l2 t
-            let expected : int seq = seq []
-            Expect.equal l3 expected "AppendSeqEmpty failed"
+            let l3 = Update.appendGenericListsByType l1 l2 t :?> int seq
+            let expected : int seq = Seq.empty
+            Expect.sequenceEqual l3 expected "AppendSeqEmpty failed"
         )
         testCase "DistinctList" (fun () -> 
             let l1 = [1;2;3;1;2;3]
@@ -150,11 +150,11 @@ let genericFableTests =
             Expect.equal l2 expected "DistinctArray failed"
         )
         testCase "DistinctSeq" (fun () -> 
-            let l1 = seq [1;2;3;1;2;3]
+            let l1 = seq {1;2;3;1;2;3}
             let t = typeof<int>
-            let l2 = Update.distinctGenericList l1 t
-            let expected = seq [1;2;3]
-            Expect.equal l2 expected "DistinctSeq failed"
+            let l2 = Update.distinctGenericList l1 t :?> int seq
+            let expected = seq {1;2;3}
+            Expect.sequenceEqual l2 expected "DistinctSeq failed"
         )
         testCase "DistinctListEmpty" (fun () -> 
             let l1 : int list = []
@@ -171,11 +171,11 @@ let genericFableTests =
             Expect.equal l2 expected "DistinctArrayEmpty failed"
         )
         testCase "DistinctSeqEmpty" (fun () -> 
-            let l1 : int seq = seq []
+            let l1 : int seq = seq {()}
             let t = typeof<int>
-            let l2 = Update.distinctGenericList l1 t
-            let expected : int seq = seq []
-            Expect.equal l2 expected "DistinctSeqEmpty failed"
+            let l2 = Update.distinctGenericList l1 t :?> int seq
+            let expected : int seq = Seq.empty
+            Expect.sequenceEqual l2 expected "DistinctSeqEmpty failed"
         )
         // Test whether the Update.isMapType correctly detects a that a list is not a map
         testCase "IsMapList" (fun () -> 
@@ -253,10 +253,10 @@ let updateTests =
         testCase "appendGenericSeq" (fun () ->
             let l1 = seq [1;2;3] |> box
             let l2 = seq [4;5;6] |> box
-            let l3 = appendGenericListsByType l1 l2 typeof<int>
-            let expected = seq [1;2;3;4;5;6] |> box
+            let l3 = appendGenericListsByType l1 l2 typeof<int> :?> int seq
+            let expected = seq [1;2;3;4;5;6] |> box :?> int seq
             let m = $"{l1}"
-            Expect.equal l3 expected m //"appendGenericList failed"          
+            Expect.sequenceEqual l3 expected m //"appendGenericList failed"          
         )
 
 

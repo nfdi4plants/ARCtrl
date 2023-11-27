@@ -240,7 +240,7 @@ module Update =
         #endif
 
     /// This function accesses the distinct method of the list/array module and applies it accordingly to the element type.
-    let inline distinctGenericList l1 (t:Type) =
+    let inline distinctGenericList l1 (t:Type) : obj =
         #if FABLE_COMPILER
             ARCtrl.ISA.Fable.distinct_generic l1
         #else

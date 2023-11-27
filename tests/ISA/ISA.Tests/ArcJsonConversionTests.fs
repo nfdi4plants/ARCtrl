@@ -130,34 +130,20 @@ open Helper
 
 let private tests_arcTableProcess = 
     testList "ARCTableProcess" [
-        ftestCase "SingleRowSingleParam GetProcesses" (fun () ->
+        testCase "SingleRowSingleParam GetProcesses" (fun () ->
             let t = singleRowSingleParam.Copy()
-            printfn "aaa"
             let processes = t.GetProcesses()
-            printfn "bbb"
             let expectedParam = ProtocolParameter.create(ParameterName = oa_species)
-            printfn "ccc"
             let expectedValue = Value.Ontology oa_chlamy
-            printfn "ddd"
             let expectedPPV = ProcessParameterValue.create(Category = expectedParam, Value = expectedValue)
-            printfn "eee"
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            printfn "ppv: %O" expectedPPV
-            printfn "fff"
             Expect.isSome p.ParameterValues "Process should have parameter values"
-            printfn "fff.25"
             Expect.equal p.ParameterValues.Value.Length 1 "Process should have 1 parameter values"
-            printfn "fff.33"
             Expect.isTrue(p.ParameterValues.Value.[0] = expectedPPV) "Param value does not match"
-            printfn "fff.4"
             Expect.equal p.ParameterValues.Value.[0] expectedPPV "Param value does not match"
-            printfn "fff.55"
             Expect.isSome p.Inputs "Process should have inputs"
-            printfn "fff.75"
-
             Expect.equal p.Inputs.Value.Length 1 "Process should have 1 input"
-            printfn "ggg"
             Expect.isSome p.Outputs "Process should have outputs"
             Expect.equal p.Outputs.Value.Length 1 "Process should have 1 output"
             Expect.isSome p.Name "Process should have name"
