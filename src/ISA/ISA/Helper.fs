@@ -233,7 +233,11 @@ module Update =
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
             .GetAssembly(typeof<_ list>)
-            .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
+            .GetType(
+                if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" 
+                elif fieldT.Name.Contains "FSharpList" then "Microsoft.FSharp.Collections.ListModule"
+                else "Microsoft.FSharp.Collections.SeqModule"
+                )
             .GetMethod("Append")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1;l2|])
@@ -248,7 +252,11 @@ module Update =
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
             .GetAssembly(typeof<_ list>)
-            .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
+            .GetType(
+                if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" 
+                elif fieldT.Name.Contains "FSharpList" then "Microsoft.FSharp.Collections.ListModule"
+                else "Microsoft.FSharp.Collections.SeqModule"
+                )
             .GetMethod("Distinct")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1|])
