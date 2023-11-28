@@ -262,10 +262,8 @@ let ontologyAnnotationTests =
         let other = "Unparseable"
         testList "fromString" [
             
-
-            testCase "FromShort" (fun () ->             
+            testCase "FromShort" (fun () ->
                 let oa = OntologyAnnotation.fromString(tan = short)
-
                 Expect.equal oa.TermAccessionString short "TAN incorrect"
                 Expect.equal oa.TermAccessionShort short "short TAN incorrect"
                 Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"

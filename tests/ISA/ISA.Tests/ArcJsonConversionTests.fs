@@ -127,6 +127,7 @@ module Helper =
 
 open Helper
 
+
 let private tests_arcTableProcess = 
     testList "ARCTableProcess" [
         testCase "SingleRowSingleParam GetProcesses" (fun () ->
@@ -139,6 +140,7 @@ let private tests_arcTableProcess =
             let p = processes.[0]
             Expect.isSome p.ParameterValues "Process should have parameter values"
             Expect.equal p.ParameterValues.Value.Length 1 "Process should have 1 parameter values"
+            Expect.isTrue(p.ParameterValues.Value.[0] = expectedPPV) "Param value does not match"
             Expect.equal p.ParameterValues.Value.[0] expectedPPV "Param value does not match"
             Expect.isSome p.Inputs "Process should have inputs"
             Expect.equal p.Inputs.Value.Length 1 "Process should have 1 input"
@@ -155,9 +157,9 @@ let private tests_arcTableProcess =
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
-        testCase "SingleRowMixedValues GetProcesses" (fun () ->
-            let t = singleRowMixedValues.Copy()
-            let processes = t.GetProcesses()
+        testCase "SingleRowMixedValues GetProcesses" (fun () ->          
+            let t = singleRowMixedValues.Copy()          
+            let processes = t.GetProcesses()           
             Expect.equal processes.Length 1 "Should have 1 process"
             Expect.equal processes.[0].ParameterValues.Value.Length 1 "Process should have 1 parameter values"
             Expect.equal processes.[0].Inputs.Value.Length 1 "Process should have 1 input"

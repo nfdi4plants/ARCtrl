@@ -2,12 +2,6 @@
 
 open ARCtrl.ISA
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
-#endif
-
 open TestingUtils
 module TestObjects = 
     let TableName = "Test"

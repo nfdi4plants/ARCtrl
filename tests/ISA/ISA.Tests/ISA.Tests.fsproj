@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Library.fs" />
     <Compile Include="Regex.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
@@ -23,12 +24,18 @@
     <Compile Include="Fable.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <!--Also includes ISA-->
     <ProjectReference Include="..\..\..\src\ISA\ISA\ARCtrl.ISA.fsproj" />
-    <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.401" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Expecto" Version="10.1.0" />
+		<PackageReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="Fable.Pyxpecto" Version="0.3.0" />
+		<PackageReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="Fable.Mocha" Version="2.17.0" />
+		<PackageReference Include="Fable.Core" Version="4.2.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Update="FSharp.Core" Version="7.0.402" />
+	</ItemGroup>
 </Project>

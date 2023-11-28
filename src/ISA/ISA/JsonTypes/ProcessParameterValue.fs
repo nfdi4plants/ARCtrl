@@ -1,6 +1,8 @@
 ﻿namespace ARCtrl.ISA
 
+open Fable.Core
 
+[<AttachMembers>]
 type ProcessParameterValue =
     {
         Category    : ProtocolParameter option

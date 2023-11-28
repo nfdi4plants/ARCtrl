@@ -17,12 +17,18 @@ type TableJoinOptions =
 [<AttachMembers>]
 type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
 
-    let mutable _name = name
-    member val Headers = headers with get, set
-    member val Values = values with get, set
+    let mutable name = name
+    let mutable headers = headers
+    let mutable values = values
+    member this.Headers
+        with get() = headers
+        and set(newHeaders) = headers <- newHeaders
+    member this.Values
+        with get() = values
+        and set(newValues) = values <- newValues
     member this.Name  
-        with get() = _name
-        and internal set (newName) = _name <- newName
+        with get() = name
+        and internal set (newName) = name <- newName
 
     static member create(name, headers, values) =
         ArcTable(name, headers, values)
@@ -656,7 +662,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             Process.create(Name = this.Name)
             |> List.singleton
         else
-            let getter = ProcessParsing.getProcessGetter this.Name this.Headers
+            let getter = ProcessParsing.getProcessGetter this.Name this.Headers          
             [
                 for i in 0..this.RowCount-1 do
                     yield getter this.Values i        

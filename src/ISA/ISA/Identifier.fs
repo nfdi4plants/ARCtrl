@@ -1,7 +1,7 @@
 ﻿/// This module contains helper functions to handle study/assay/investigation identifiers in an unsafe, forced way.
 module ARCtrl.ISA.Identifier
 
-open System.Text.RegularExpressions
+open Regex.ActivePatterns
 
 /// This pattern should never be used as standalone pattern!
 let [<Literal>] internal InnerValidCharactersPattern = @"[a-zA-Z0-9_\- ]+"
@@ -17,9 +17,9 @@ let [<Literal>] ValidStudyFileNamePattern = @"^(studies(\/|\\))?(?<identifier>" 
 
 // Function to check if a string contains only valid characters
 let checkValidCharacters (identifier: string) =
-    let regex = new Regex(ValidIdentifierPattern)
-    let isValid = regex.IsMatch(identifier)
-    if not isValid then failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
+    match identifier with
+    | Regex ValidIdentifierPattern _ -> ()
+    | _ ->  failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
 
 
 let [<Literal>] MISSING_IDENTIFIER = "MISSING_IDENTIFIER_"
@@ -37,7 +37,6 @@ let removeMissingIdentifier (str: string) =
 [<RequireQualifiedAccess>]
 module Assay =
     
-    open System.Text.RegularExpressions
 
     /// <summary>
     /// On read-in the FileName can be any combination of "assays" (assay folder name), assayIdentifier and "isa.assay.xlsx" (the actual file name).
@@ -46,13 +45,11 @@ module Assay =
     /// </summary>
     /// <param name="fileName">FileName as written in isa.assay.xlsx metadata sheet</param>
     let identifierFromFileName (fileName: string) : string =
-        let regex = Regex(ValidAssayFileNamePattern)
-        let m = regex.Match(fileName)
-        match m.Success with
-        | false -> failwith $"Cannot parse identifier from FileName `{fileName}`"
-        | true ->
+        match fileName with
+        | Regex ValidAssayFileNamePattern m -> 
             let identifier = m.Groups.["identifier"].Value
             identifier
+        | _ -> failwith $"Cannot parse identifier from FileName `{fileName}`"
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `assays/assayIdentifier/isa.assay.xlsx`.
@@ -67,8 +64,6 @@ module Assay =
 [<RequireQualifiedAccess>]
 module Study =
     
-    open System.Text.RegularExpressions
-
     /// <summary>
     /// On read-in the FileName can be any combination of "studies" (study folder name), studyIdentifier and "isa.study.xlsx" (the actual file name).
     ///
@@ -76,13 +71,11 @@ module Study =
     /// </summary>
     /// <param name="fileName">FileName as written in isa.study.xlsx metadata sheet</param>
     let identifierFromFileName (fileName: string) : string =
-        let regex = Regex(ValidStudyFileNamePattern)
-        let m = regex.Match(fileName)
-        match m.Success with
-        | false -> failwith $"Cannot parse identifier from FileName `{fileName}`"
-        | true ->
+        match fileName with
+        | Regex ValidStudyFileNamePattern m -> 
             let identifier = m.Groups.["identifier"].Value
             identifier
+        | _ -> failwith $"Cannot parse identifier from FileName `{fileName}`"
 
     /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `studies/studyIdentifier/isa.study.xlsx`.

@@ -7,6 +7,14 @@ module ArcTypesAux =
 
     open System.Collections.Generic
 
+    module ErrorMsgs =
+
+        let unableToFindAssayIdentifier assayIdentifier investigationIdentifier = 
+            $"Error. Unable to find assay with identifier '{assayIdentifier}' in investigation {investigationIdentifier}."
+
+        let unableToFindStudyIdentifier studyIdentifer investigationIdentifier =
+            $"Error. Unable to find study with identifier '{studyIdentifer}' in investigation {investigationIdentifier}."
+
     module SanityChecks = 
 
         let inline validateRegisteredInvestigation (investigation: ArcInvestigation option) =
@@ -56,7 +64,8 @@ module ArcTypesAux =
     let inline removeMissingRegisteredAssays (inv: ArcInvestigation) : unit =
         let existingAssays = inv.AssayIdentifiers
         for study in inv.Studies do
-            let registeredAssays = ResizeArray(study.RegisteredAssayIdentifiers)
+            let rai : ResizeArray<string> = study.RegisteredAssayIdentifiers
+            let registeredAssays = ResizeArray(rai)
             for registeredAssay in registeredAssays do
                 if Seq.contains registeredAssay existingAssays |> not then
                     study.DeregisterAssay registeredAssay |> ignore
@@ -86,24 +95,21 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     let comments = defaultArg comments [||]
     let mutable identifier : string = identifier
     let mutable investigation : ArcInvestigation option = None
+    let mutable measurementType : OntologyAnnotation option = measurementType
+    let mutable technologyType : OntologyAnnotation option = technologyType
+    let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
+    let mutable performers : Person [] = performers
+    let mutable comments : Comment [] = comments
 
     /// Must be unique in one study
-    member this.Identifier 
-        with get() = identifier
-        and internal set(i) = identifier <- i
-
+    member this.Identifier with get() = identifier and internal set(i) = identifier <- i
     // read-online
-    member this.Investigation 
-        with get() = investigation
-        and internal set(i) = investigation <- i
-
-    static member FileName = ARCtrl.Path.AssayFileName
-
-    member val MeasurementType : OntologyAnnotation option = measurementType with get, set
-    member val TechnologyType : OntologyAnnotation option = technologyType with get, set
-    member val TechnologyPlatform : OntologyAnnotation option = technologyPlatform with get, set
-    member val Performers : Person [] = performers with get, set
-    member val Comments : Comment [] = comments with get, set
+    member this.Investigation with get() = investigation and internal set(i) = investigation <- i
+    member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
+    member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
+    member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
+    member this.Performers with get() = performers and set(n) = performers <- n
+    member this.Comments with get() = comments and set(n) = comments <- n
 
     static member init (identifier : string) = ArcAssay(identifier)
     static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
@@ -119,6 +125,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (comments : Comment []) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
 
+    static member FileName = ARCtrl.Path.AssayFileName
     member this.StudiesRegisteredIn
         with get () = 
             match this.Investigation with
@@ -432,15 +439,14 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     /// This function allows us, to parse them as an ontology term.
     static member decomposeTechnologyPlatform (name : string) = 
         let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
-
-        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
         
 
-        if r.Success then
+        match name with 
+        | Regex.ActivePatterns.Regex pattern r -> 
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
             {oa with Name = (Some (AnnotationValue.Text v.Text))}
-        else 
+        | _ ->
             OntologyAnnotation.fromString(termName = name)
 
     member internal this.AddToInvestigation (investigation: ArcInvestigation) =
@@ -563,25 +569,30 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
     let mutable identifier = identifier
     let mutable investigation : ArcInvestigation option = None
+    let mutable title : string option = title
+    let mutable description : string option = description 
+    let mutable submissionDate : string option = submissionDate
+    let mutable publicReleaseDate : string option = publicReleaseDate
+    let mutable publications : Publication [] = publications
+    let mutable contacts : Person [] = contacts
+    let mutable studyDesignDescriptors : OntologyAnnotation [] = studyDesignDescriptors
+    let mutable registeredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers
+    let mutable factors : Factor [] = factors
+    let mutable comments : Comment [] = comments
     /// Must be unique in one investigation
-    member this.Identifier 
-        with get() = identifier
-        and internal set(i) = identifier <- i
+    member this.Identifier with get() = identifier and internal set(i) = identifier <- i
     // read-online
-    member this.Investigation 
-        with get() = investigation
-        and internal set(i) = investigation <- i
-
-    member val Title : string option = title with get, set
-    member val Description : string option = description with get, set
-    member val SubmissionDate : string option = submissionDate with get, set
-    member val PublicReleaseDate : string option = publicReleaseDate with get, set
-    member val Publications : Publication [] = publications with get, set
-    member val Contacts : Person [] = contacts with get, set
-    member val StudyDesignDescriptors : OntologyAnnotation [] = studyDesignDescriptors with get, set
-    member val RegisteredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers with get, set
-    member val Factors : Factor [] = factors with get, set
-    member val Comments : Comment []= comments with get, set
+    member this.Investigation with get() = investigation and internal set(i) = investigation <- i
+    member this.Title with get() = title and set(n) = title <- n
+    member this.Description with get() = description and set(n) = description <- n
+    member this.SubmissionDate with get() = submissionDate and set(n) = submissionDate <- n
+    member this.PublicReleaseDate with get() = publicReleaseDate and set(n) = publicReleaseDate <- n
+    member this.Publications with get() = publications and set(n) = publications <- n
+    member this.Contacts with get() = contacts and set(n) = contacts <- n
+    member this.StudyDesignDescriptors with get() = studyDesignDescriptors and set(n) = studyDesignDescriptors <- n
+    member this.RegisteredAssayIdentifiers with get() = registeredAssayIdentifiers and set(n) = registeredAssayIdentifiers <- n
+    member this.Factors with get() = factors and set(n) = factors <- n
+    member this.Comments with get() = comments and set(n) = comments <- n
 
     static member init(identifier : string) = ArcStudy identifier
 
@@ -1160,23 +1171,32 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     let remarks = defaultArg remarks [||]
 
     let mutable identifier = identifier
+    let mutable title : string option = title
+    let mutable description : string option = description
+    let mutable submissionDate : string option = submissionDate
+    let mutable publicReleaseDate : string option = publicReleaseDate
+    let mutable ontologySourceReferences : OntologySourceReference [] = ontologySourceReferences
+    let mutable publications : Publication [] = publications
+    let mutable contacts : Person [] = contacts
+    let mutable assays : ResizeArray<ArcAssay> = assays
+    let mutable studies : ResizeArray<ArcStudy> = studies
+    let mutable registeredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers
+    let mutable comments : Comment [] = comments
+    let mutable remarks : Remark [] = remarks
     /// Must be unique in one investigation
-    member this.Identifier 
-        with get() = identifier
-        and internal set(i) = identifier <- i
-
-    member val Title : string option = title with get, set
-    member val Description : string option = description with get, set
-    member val SubmissionDate : string option = submissionDate with get, set
-    member val PublicReleaseDate : string option = publicReleaseDate with get, set
-    member val OntologySourceReferences : OntologySourceReference [] = ontologySourceReferences with get, set
-    member val Publications : Publication [] = publications with get, set
-    member val Contacts : Person [] = contacts with get, set
-    member val Assays : ResizeArray<ArcAssay> = assays with get, set
-    member val Studies : ResizeArray<ArcStudy> = studies with get, set
-    member val RegisteredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers with get, set
-    member val Comments : Comment [] = comments with get, set
-    member val Remarks : Remark [] = remarks with get, set
+    member this.Identifier with get() = identifier and internal set(i) = identifier <- i
+    member this.Title with get() = title and set(n) = title <- n
+    member this.Description with get() = description and set(n) = description <- n
+    member this.SubmissionDate with get() = submissionDate and set(n) = submissionDate <- n
+    member this.PublicReleaseDate with get() = publicReleaseDate and set(n) = publicReleaseDate <- n
+    member this.OntologySourceReferences with get() = ontologySourceReferences and set(n) = ontologySourceReferences <- n
+    member this.Publications with get() = publications and set(n) = publications <- n
+    member this.Contacts with get() = contacts and set(n) = contacts <- n
+    member this.Assays with get() : ResizeArray<ArcAssay> = assays and set(n) = assays <- n
+    member this.Studies with get() : ResizeArray<ArcStudy> = studies and set(n) = studies <- n
+    member this.RegisteredStudyIdentifiers with get() = registeredStudyIdentifiers and set(n) = registeredStudyIdentifiers <- n
+    member this.Comments with get() = comments and set(n) = comments <- n
+    member this.Remarks with get() = remarks and set(n) = remarks <- n
 
     static member FileName = ARCtrl.Path.InvestigationFileName
 
@@ -1352,8 +1372,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Assay API - CRUD //
     member this.GetAssay(assayIdentifier: string) : ArcAssay =
-        let index = this.GetAssayIndex(assayIdentifier)
-        this.GetAssayAt index
+        match this.TryGetAssay(assayIdentifier) with
+        | Some a -> a
+        | None -> failwith (ArcTypesAux.ErrorMsgs.unableToFindAssayIdentifier assayIdentifier this.Identifier)
 
     static member getAssay(assayIdentifier: string) : ArcInvestigation -> ArcAssay =
         fun (inv: ArcInvestigation) ->
@@ -1578,7 +1599,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Study API - CRUD //
     member this.GetStudy(studyIdentifier: string) : ArcStudy =
-        this.Studies.Find (fun s -> s.Identifier = studyIdentifier)
+        match this.TryGetStudy studyIdentifier with
+        | Some s -> s
+        | None -> failwith (ArcTypesAux.ErrorMsgs.unableToFindStudyIdentifier studyIdentifier this.Identifier)
 
     static member getStudy(studyIdentifier: string) : ArcInvestigation -> ArcStudy =
         fun (inv: ArcInvestigation) ->
@@ -1586,8 +1609,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             newInv.GetStudy(studyIdentifier)
 
     member this.TryGetStudy(studyIdentifier: string) : ArcStudy option =
-        this.Studies
-        |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
+        this.Studies |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
         
     static member tryGetStudy(studyIdentifier : string) : ArcInvestigation -> ArcStudy option = 
         fun (inv: ArcInvestigation) -> 

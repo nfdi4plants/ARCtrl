@@ -156,8 +156,6 @@ module UpdateAssayWithStudyProtocol =
 
     let retAssay = ArcAssay.fromFsWorkbook assayWB
 
-    printfn "%A" ("retAssay.TableCount)", retAssay.TableCount)
-
     let assayReadContract = 
         Contract.create(
             Operation.READ, 

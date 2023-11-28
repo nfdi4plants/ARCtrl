@@ -49,9 +49,16 @@ Handling contracts can be generalized in a few functions.
 
 ## WRITE contracts
 
+Here we will showcase minimal contract handling functions. These will not handle all edge cases but are sufficient to get started with!
+
+Beginning with the WRITE contracts we may check the contract objects for the `Operation` field (This step is omitted in the .NET implementation). 
+Next we need to know how to handle our DTO. In .NET this is implemented as Discriminate Union type, on which we can match. This is not possible in JS. Instead we just have any of the allowed DTO objects as value for the DTO field. Therefore, we must match on `DTOType` in js. 
+
+In both languages we must specify how spreadsheet objects and plain text objects are correctly handled.
+
 ```fsharp
-#r "nuget: FsSpreadsheet.ExcelIO, 4.1.0"
-#r "nuget: ARCtrl, 1.0.0-alpha9"
+#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
+#r "nuget: ARCtrl, 1.0.0-beta.8"
 
 open ARCtrl
 open ARCtrl.Contract
@@ -113,3 +120,52 @@ export async function fulfillWriteContract (basePath, contract) {
 
 
 ## READ contracts
+
+READ contracts follow the same logic, with one difference. ARCtrl will give you READ contracts with None/Null values for the `DTO` field. But with the given `Path` and `DTOType` we can correctly read in the required DTO and set it on the contract. Afterwards, we return it to the correct follow-up api call in ARCtrl (this step is shown in [ARC docs](./ARC.md)).
+
+```fsharp
+// from ARCtrl.NET
+// https://github.com/nfdi4plants/ARCtrl.NET/blob/ba3d2fabe007d9ca2c8e07b62d02ddc5264306d0/src/ARCtrl.NET/Contract.fs#L7
+let fulfillReadContract basePath (c : Contract) =
+    match c.DTOType with
+    | Some DTOType.ISA_Assay 
+    | Some DTOType.ISA_Investigation 
+    | Some DTOType.ISA_Study ->
+        let path = System.IO.Path.Combine(basePath, c.Path)
+        let wb = FsWorkbook.fromXlsxFile path |> box |> DTO.Spreadsheet
+        {c with DTO = Some wb}
+    | Some DTOType.PlainText ->
+        let path: string = System.IO.Path.Combine(basePath, c.Path)
+        let text = System.IO.File.ReadAllText(path) |> DTO.Text
+        {c with DTO = Some text}
+    | _ -> 
+        printfn "Contract %s is not an ISA contract" c.Path 
+        c
+```
+
+```js
+export async function fulfillReadContract (basePath, contract) {
+  async function fulfill() {
+      const normalizedPath = normalizePathSeparators(path.join(basePath, contract.Path))
+      switch (contract.DTOType) {
+          case "ISA_Assay":
+          case "ISA_Study":
+          case "ISA_Investigation":
+              let fswb = await Xlsx.fromXlsxFile(normalizedPath)
+              return fswb
+              break;
+          case "PlainText":
+              let content = fs.readFile(normalizedPath)
+              return content
+              break;
+          default:
+              console.log(`Handling of ${contract.DTOType} in a READ contract is not yet implemented`)
+      }
+  }
+  if (contract.Operation == "READ") {
+      return await fulfill()
+  } else {
+      console.error(`Error (fulfillReadContract): "${contract}" is not a READ contract`)
+  }
+}
+```

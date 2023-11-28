@@ -2,6 +2,8 @@ import {Xlsx} from "fsspreadsheet";
 import fs from "fs";
 import path from "path";
 
+// Write
+
 export async function fulfillWriteContract (basePath, contract) {
     function ensureDirectory (filePath) {
         let dirPath = path.dirname(filePath)
@@ -24,4 +26,31 @@ export async function fulfillWriteContract (basePath, contract) {
             console.log("Warning: The given contract is not a correct ARC write contract: ", contract)
         }
     }
+}
+
+// Read
+
+export async function fulfillReadContract (basePath, contract) {
+  async function fulfill() {
+      const normalizedPath = normalizePathSeparators(path.join(basePath, contract.Path))
+      switch (contract.DTOType) {
+          case "ISA_Assay":
+          case "ISA_Study":
+          case "ISA_Investigation":
+              let fswb = await Xlsx.fromXlsxFile(normalizedPath)
+              return fswb
+              break;
+          case "PlainText":
+              let content = fs.readFile(normalizedPath)
+              return content
+              break;
+          default:
+              console.log(`Handling of ${contract.DTOType} in a READ contract is not yet implemented`)
+      }
+  }
+  if (contract.Operation == "READ") {
+      return await fulfill()
+  } else {
+      console.error(`Error (fulfillReadContract): "${contract}" is not a READ contract`)
+  }
 }

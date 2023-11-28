@@ -404,6 +404,10 @@ let tests_Study = testList "CRUD Study" [
             Expect.throws eval "Identifier already exists"
     ]
     testList "GetStudy" [
+        testCase "not existing, throws" <| fun _ ->
+            let i = createExampleInvestigation()
+            let func = fun () -> i.GetStudy("LOREM IPSUM; DOLOR") |> ignore
+            Expect.throws func "Should throw on non existing study"
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let s = i.GetStudy("Study 1")
@@ -544,6 +548,10 @@ let tests_Assay = testList "CRUD Assay" [
             Expect.equal actual expected "equal"
     ]
     testList "GetAssay" [ 
+        testCase "not existing, throws" <| fun _ ->
+            let i = createExampleInvestigation()
+            let func = fun () -> i.GetAssay("LOREM IPSUM; DOLOR") |> ignore
+            Expect.throws func "Should throw on non existing assay"
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let a = i.GetAssayAt(0)

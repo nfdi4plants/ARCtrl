@@ -6,7 +6,7 @@
   "main": "index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nfdi4plants/arcAPI.git"
+    "url": "git+https://github.com/nfdi4plants/ARCtrl.git"
   },
   "author": "Heinrich Lukas Weil <weil@rptu.de> (https://github.com/HLWeil)",
   "contributors": [
@@ -14,9 +14,9 @@
   ],
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/nfdi4plants/arcAPI/issues"
+    "url": "https://github.com/nfdi4plants/ARCtrl/issues"
   },
-  "homepage": "https://github.com/nfdi4plants/arcAPI#readme",
+  "homepage": "https://github.com/nfdi4plants/ARCtrl#readme",
   "dependencies": {
     "fable-library": "^1.1.1",
     "isomorphic-fetch": "^3.0.0"

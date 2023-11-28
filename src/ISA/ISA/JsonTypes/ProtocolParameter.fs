@@ -1,8 +1,9 @@
 ﻿namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
-open Update
+open Fable.Core
 
+[<AttachMembers>]
 type ProtocolParameter = 
     {
         ID : URI option

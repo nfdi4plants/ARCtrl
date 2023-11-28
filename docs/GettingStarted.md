@@ -15,8 +15,8 @@ Thats it! 🎉
 For any documentation we assume using ARCtrl from a .fsx file. Verify correct setup by creating a `ARC.fsx` file with the following content
 
 ```fsharp
-#r "nuget: FsSpreadsheet.ExcelIO, 4.1.0"
-#r "nuget: ARCtrl, 1.0.0-alpha9"
+#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
+#r "nuget: ARCtrl, 1.0.0-beta.8"
 
 open ARCtrl
 

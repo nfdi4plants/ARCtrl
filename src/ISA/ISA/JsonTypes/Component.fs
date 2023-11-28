@@ -1,6 +1,7 @@
 ﻿namespace ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
+open Regex.ActivePatterns
 
 type Component = 
     {
@@ -52,19 +53,17 @@ type Component =
         let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
         let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
 
-        let r = System.Text.RegularExpressions.Regex.Match(name,pattern)
-        let unitr = System.Text.RegularExpressions.Regex.Match(name,unitPattern)
-
-        if unitr.Success then
+        match name with
+        | Regex unitPattern unitr ->
             let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (unitr.Groups.Item "value").Value      |> Value.fromString
             let u =  (unitr.Groups.Item "unit").Value
             v, Some {oa with Name = (Some (AnnotationValue.Text u))}
-        elif r.Success then
+        | Regex pattern r ->
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
             Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.Text))}, None
-        else 
+        | _ -> 
             Value.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries

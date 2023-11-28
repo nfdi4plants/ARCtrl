@@ -355,14 +355,10 @@ paket-files/
 # Custom ignored files
 dist/
 tmp/
-/tests/FileSystem/FileSystem.Tests/js
-/tests/ISA/ISA.Json.Tests/js
-/tests/ISA/ISA.Spreadsheet.Tests/js
-/tests/ISA/ISA.Tests/js
 /tests/JavaScript/ARCtrl
 /tests/Python/ARCtrl
-/tests/ARCtrl/js
-/tests/FileSystem/js
-
-/tests/UI/cypress/screenshots/Tests/Dictionary.cy.js
 /tests/UI/ARCtrl
+/tests/**/js
+/tests/**/py
+/tests/UI/cypress/screenshots/Tests/Dictionary.cy.js
+/tests/ISA/ISA.Tests/py

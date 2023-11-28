@@ -24,7 +24,7 @@ module ActivePattern =
         | [AC name; TSRColumnHeader term1; TANColumnHeader term2] 
         //| [AC name; TermAccessionNumber term1; TermSourceREF term2] 
         //| [AC name; Unit; TermAccessionNumber term1; TermSourceREF term2] 
-        | [AC name; UnitColumnHeader; TSRColumnHeader term1; TANColumnHeader term2] ->
+        | [AC name; UnitColumnHeader _; TSRColumnHeader term1; TANColumnHeader term2] ->
             let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
             let ont = OntologyAnnotation.fromString(name, term.TermSourceRef, term.TermAccessionNumber)
             f ont

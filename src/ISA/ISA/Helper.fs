@@ -83,6 +83,12 @@ module HashCodes =
         |> Array.fold (fun acc o -> 0x9e3779b9 + o.GetHashCode() + (acc <<< 6) + (acc >>> 2) ) 0
         |> box
 
+    let boxHashSeq (a: seq<'a>) : obj =
+        a 
+        // from https://stackoverflow.com/a/53507559
+        |> Seq.fold (fun acc o -> 0x9e3779b9 + o.GetHashCode() + (acc <<< 6) + (acc >>> 2) ) 0
+        |> box
+
 [<RequireQualifiedAccess>]
 module Option =
  
@@ -227,14 +233,18 @@ module Update =
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
             .GetAssembly(typeof<_ list>)
-            .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
+            .GetType(
+                if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" 
+                elif fieldT.Name.Contains "FSharpList" then "Microsoft.FSharp.Collections.ListModule"
+                else "Microsoft.FSharp.Collections.SeqModule"
+                )
             .GetMethod("Append")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1;l2|])
         #endif
 
     /// This function accesses the distinct method of the list/array module and applies it accordingly to the element type.
-    let inline distinctGenericList l1 (t:Type) =
+    let inline distinctGenericList l1 (t:Type) : obj =
         #if FABLE_COMPILER
             ARCtrl.ISA.Fable.distinct_generic l1
         #else
@@ -242,7 +252,11 @@ module Update =
         // https://stackoverflow.com/questions/41253131/how-to-create-an-empty-list-of-a-specific-runtime-type
         System.Reflection.Assembly
             .GetAssembly(typeof<_ list>)
-            .GetType(if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" else "Microsoft.FSharp.Collections.ListModule")
+            .GetType(
+                if fieldT.IsArray then "Microsoft.FSharp.Collections.ArrayModule" 
+                elif fieldT.Name.Contains "FSharpList" then "Microsoft.FSharp.Collections.ListModule"
+                else "Microsoft.FSharp.Collections.SeqModule"
+                )
             .GetMethod("Distinct")
             .MakeGenericMethod(t)
             .Invoke(null, [|l1|])
@@ -294,7 +308,7 @@ module Update =
         // try to cast values to types to check for isEmpty according to type.
         match oldVal with 
         // Check if newValue isNull = isEmpty
-        | _ when newVal = null ->
+        | _ when Fable.isNone_generic newVal ->
             oldVal
         // Handle OptionTypes
         // https://stackoverflow.com/questions/6289761/how-to-downcast-from-obj-to-optionobj
@@ -328,7 +342,7 @@ module Update =
         // try to cast values to types to check for isEmpty according to type.
         match oldVal with 
         // Check if newValue isNull = isEmpty
-        | _ when newVal = null ->
+        | _ when Fable.isNone_generic newVal ->
             oldVal
         // Handle OptionTypes
         // https://stackoverflow.com/questions/6289761/how-to-downcast-from-obj-to-optionobj

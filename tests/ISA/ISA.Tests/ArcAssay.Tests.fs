@@ -404,7 +404,7 @@ let private tests_UpdateTableAt =
         )
     ]
 
-let private tests_UpdateTable = 
+let private tests_UpdateTable_Mutable = 
     testList "UpdateTable" [
         testCase "ensure table" (fun () ->
             let assay = create_exampleAssay()
@@ -434,7 +434,7 @@ let private tests_UpdateTable =
         )
     ]
 
-let private tests_updateTable = 
+let private tests_updateTable_Copy = 
     testList "updateTableAt" [
         testCase "ensure table" (fun () ->
             let assay = create_exampleAssay()
@@ -638,8 +638,8 @@ let main =
         tests_Copy
         tests_RemoveTable
         tests_UpdateTableAt
-        tests_UpdateTable
-        tests_updateTable
+        tests_UpdateTable_Mutable
+        tests_updateTable_Copy
         tests_technologyPlatform
         tests_UpdateBy
         tests_GetHashCode
