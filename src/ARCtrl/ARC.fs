@@ -254,13 +254,14 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
     /// <summary>
     /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
-    member this.GetWriteContracts () =
-
+    member this.GetWriteContracts (?isLight: bool) =
+        let isLight = defaultArg isLight true
         /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match this.ISA with
         | Some inv -> 
-            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook inv))
+            let investigationConverter = if isLight then ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook else ISA.Spreadsheet.ArcInvestigation.toFsWorkbook
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
             inv.Studies
             |> Seq.iter (fun s ->
                 workbooks.Add (
@@ -277,7 +278,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             
         | None -> 
             //printfn "ARC contains no ISA part."
-            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)

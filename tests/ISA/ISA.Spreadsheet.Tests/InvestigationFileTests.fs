@@ -21,7 +21,7 @@ let private testInvestigationWriterComponents =
         )
         testCase "InvestigationToRows" (fun () ->
             let i = ArcInvestigation.init("My Investigation")
-            let rows = i |> ArcInvestigation.toRows
+            let rows = i |> ArcInvestigation.toRows false
             Expect.isTrue (rows |> Seq.length |> (<) 0) "Investigation should have at least one row"
         )
         testCase "AddEmptyWorksheet" (fun () ->
@@ -32,7 +32,7 @@ let private testInvestigationWriterComponents =
         testCase "FillWorksheet" (fun () ->
             let i = ArcInvestigation.init("My Identifier")
             let sheet = FsWorksheet("Investigation")
-            let rows = i |> ArcInvestigation.toRows
+            let rows = i |> ArcInvestigation.toRows false
             rows
             |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet) 
             Expect.isTrue (sheet.Rows |> Seq.length |> (<) 0) "Worksheet should have at least one row"
@@ -41,7 +41,7 @@ let private testInvestigationWriterComponents =
             let i = ArcInvestigation.init("My Identifier")
             let wb = new FsWorkbook()
             let sheet = FsWorksheet("Investigation")
-            let rows = i |> ArcInvestigation.toRows
+            let rows = i |> ArcInvestigation.toRows false
             rows
             |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
             wb.AddWorksheet(sheet)
@@ -62,8 +62,21 @@ let private testInvestigationWriterComponents =
             Expect.sequenceEqual result.RegisteredStudyIdentifiers [registeredStudyIdentifier] "Only the registered study should be written and read"
         )
 
-                    
-                   
+        testCase "WriteLightInvestigationFile" <| fun _ ->
+            let isa = ArcInvestigation("MyInvestigation")
+            let registeredStudyIdentifier = "RegisteredStudy"
+            let registeredStudy = ArcStudy(registeredStudyIdentifier)
+            let unregisteredStudyIdentifier = "UnregisteredStudy"
+            let unregisteredStudy = ArcStudy(unregisteredStudyIdentifier)
+            isa.AddStudy(unregisteredStudy)
+            isa.AddRegisteredStudy(registeredStudy)
+            let assay1 = registeredStudy.InitRegisteredAssay("Assay 1")
+            let assay2 = registeredStudy.InitRegisteredAssay("Assay 2")
+            let result = ArcInvestigation.toLightFsWorkbook isa |> ArcInvestigation.fromFsWorkbook
+            Expect.hasLength result.Assays 0 "Assays hasLength"
+            Expect.equal result.AssayCount 0 "AssayCount"
+            Expect.hasLength result.Studies 0 "Studies hasLength"
+            Expect.equal result.StudyCount 0 "StudyCount"
     ]
 
 let private testInvestigationFile = 

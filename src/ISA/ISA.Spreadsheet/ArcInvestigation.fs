@@ -164,7 +164,7 @@ module ArcInvestigation =
             failwith "emptyInvestigationFile"
  
    
-    let toRows (investigation:ArcInvestigation) : seq<SparseRow> =
+    let toRows (isLight: bool) (investigation:ArcInvestigation) : seq<SparseRow> =
         let insertRemarks (remarks:Remark list) (rows:seq<SparseRow>) = 
             try 
                 let rm = remarks |> List.map Remark.toTuple |> Map.ofList            
@@ -194,10 +194,11 @@ module ArcInvestigation =
             yield  SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofArray investigation.Contacts)
 
-            for studyIdentifier in investigation.RegisteredStudyIdentifiers do
-                let study = investigation.TryGetStudy(studyIdentifier) |> Option.defaultValue (ArcStudy(studyIdentifier))
-                yield  SparseRow.fromValues [studyLabel]
-                yield! Studies.toRows study None
+            if not isLight then
+                for studyIdentifier in investigation.RegisteredStudyIdentifiers do
+                    let study = investigation.TryGetStudy(studyIdentifier) |> Option.defaultValue (ArcStudy(studyIdentifier))
+                    yield  SparseRow.fromValues [studyLabel]
+                    yield! Studies.toRows study None
         }
         |> insertRemarks (List.ofArray investigation.Remarks)
         |> seq
@@ -221,7 +222,19 @@ module ArcInvestigation =
             let wb = new FsWorkbook()
             let sheet = FsWorksheet(metaDataSheetName)
             investigation
-            |> toRows
+            |> toRows false
+            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
+            wb.AddWorksheet(sheet)
+            wb
+        with
+        | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message
+
+    let toLightFsWorkbook (investigation: ArcInvestigation) : FsWorkbook =
+        try
+            let wb = new FsWorkbook()
+            let sheet = FsWorksheet(metaDataSheetName)
+            investigation
+            |> toRows true
             |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
             wb.AddWorksheet(sheet)
             wb
