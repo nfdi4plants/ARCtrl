@@ -29,12 +29,12 @@ const myAssay = arctrl.ArcAssay.init("MyAssay");
 const growth = arctrl.ArcTable.init("Growth");
 
 // Add input column with one value to table
-growth.AddColumn(new arctrl.CompositeHeader(11, [new arctrl.IOType(0, [])]), [arctrl.CompositeCell.createFreeText("Input1")]);
+growth.AddColumn(new arctrl.CompositeHeader.input(arctrl.IOType.source), [arctrl.CompositeCell.createFreeText("Input1")]);
 
 // Add characteristic column with one value
 const oa_species = arctrl.OntologyAnnotation.fromString("species", "GO", "GO:0123456");
 const oa_chlamy = arctrl.OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456");
-growth.AddColumn(new arctrl.CompositeHeader(1, [oa_species]), [arctrl.CompositeCell.createTerm(oa_chlamy)]);
+growth.AddColumn(new arctrl.CompositeHeader.characteristic(oa_species), [arctrl.CompositeCell.createTerm(oa_chlamy)]);
 
 // Add table to assay
 myAssay.AddTable(growth);

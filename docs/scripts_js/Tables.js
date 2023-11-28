@@ -23,7 +23,7 @@ const oa_chlamy =
 // in xlsx this will be exactly 1 column.
 // Syntax on CompositeHeader, IOType and even CompositeCell will soon improve!
 growth.AddColumn(
-  new CompositeHeader(11, [new IOType(0, [])]),
+  CompositeHeader.input(IOType.source),
   [CompositeCell.createFreeText("Input1")]
 );
 
@@ -31,7 +31,7 @@ growth.AddColumn(
 // this will create an Characteristic [species] column with one row cell.
 // in xlsx this will be exactly 3 columns.
 growth.AddColumn(
-  new CompositeHeader(1, [oa_species]),
+  CompositeHeader.characteristic(oa_species),
   [CompositeCell.createTerm(oa_chlamy)]
 );
 
