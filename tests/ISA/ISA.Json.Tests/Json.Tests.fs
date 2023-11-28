@@ -645,7 +645,7 @@ let testProtocolFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.equal actual expected "Written protocol file does not match read protocol file"
+            Expect.sequenceEqual actual expected "Written protocol file does not match read protocol file"
         )
 
         testCase "OutputMatchesInputDefaultIDs" (fun () ->

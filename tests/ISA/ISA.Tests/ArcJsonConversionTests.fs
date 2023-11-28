@@ -421,7 +421,7 @@ let private tests_arcAssay =
             Expect.equal assay.CharacteristicCategories.Value.Length 1 "Should have 1 characteristicCategory"
 
             Expect.isSome assay.DataFiles "Assay should have dataFiles"
-            Expect.equal assay.DataFiles.Value.Length 1 "Should have 1 dataFile"
+            Expect.equal assay.DataFiles.Value.Length 2 "Should have 2 dataFiles"
 
             Expect.isSome assay.Comments "Assay should have comments"
             Expect.equal assay.Comments.Value.Length 1 "Should have 1 comment"                      
