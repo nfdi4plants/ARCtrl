@@ -7,6 +7,14 @@ module ArcTypesAux =
 
     open System.Collections.Generic
 
+    module ErrorMsgs =
+
+        let unableToFindAssayIdentifier assayIdentifier investigationIdentifier = 
+            $"Error. Unable to find assay with identifier '{assayIdentifier}' in investigation {investigationIdentifier}."
+
+        let unableToFindStudyIdentifier studyIdentifer investigationIdentifier =
+            $"Error. Unable to find study with identifier '{studyIdentifer}' in investigation {investigationIdentifier}."
+
     module SanityChecks = 
 
         let inline validateRegisteredInvestigation (investigation: ArcInvestigation option) =
@@ -1351,8 +1359,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Assay API - CRUD //
     member this.GetAssay(assayIdentifier: string) : ArcAssay =
-        let index = this.GetAssayIndex(assayIdentifier)
-        this.GetAssayAt index
+        match this.TryGetAssay(assayIdentifier) with
+        | Some a -> a
+        | None -> failwith (ArcTypesAux.ErrorMsgs.unableToFindAssayIdentifier assayIdentifier this.Identifier)
 
     static member getAssay(assayIdentifier: string) : ArcInvestigation -> ArcAssay =
         fun (inv: ArcInvestigation) ->
@@ -1577,7 +1586,9 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
 
     // - Study API - CRUD //
     member this.GetStudy(studyIdentifier: string) : ArcStudy =
-        this.Studies.Find (fun s -> s.Identifier = studyIdentifier)
+        match this.TryGetStudy studyIdentifier with
+        | Some s -> s
+        | None -> failwith (ArcTypesAux.ErrorMsgs.unableToFindStudyIdentifier studyIdentifier this.Identifier)
 
     static member getStudy(studyIdentifier: string) : ArcInvestigation -> ArcStudy =
         fun (inv: ArcInvestigation) ->
@@ -1585,8 +1596,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             newInv.GetStudy(studyIdentifier)
 
     member this.TryGetStudy(studyIdentifier: string) : ArcStudy option =
-        this.Studies
-        |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
+        this.Studies |> Seq.tryFind (fun s -> s.Identifier = studyIdentifier)
         
     static member tryGetStudy(studyIdentifier : string) : ArcInvestigation -> ArcStudy option = 
         fun (inv: ArcInvestigation) -> 
