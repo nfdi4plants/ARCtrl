@@ -659,13 +659,10 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     /// Returns the list of processes specidified in this ArcTable
     member this.GetProcesses() : Process list = 
         if this.RowCount = 0 then 
-            printfn "GetProcesses xddd"
             Process.create(Name = this.Name)
             |> List.singleton
         else
-            printfn "GetProcesses rofl"
-            let getter = ProcessParsing.getProcessGetter this.Name this.Headers
-            printfn "GetProcesses roflcopter"            
+            let getter = ProcessParsing.getProcessGetter this.Name this.Headers          
             [
                 for i in 0..this.RowCount-1 do
                     yield getter this.Values i        

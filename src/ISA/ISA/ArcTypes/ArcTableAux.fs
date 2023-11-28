@@ -709,7 +709,6 @@ module ProcessParsing =
 
     /// Merges processes with the same name, protocol and param values
     let mergeIdenticalProcesses (processes : list<Process>) =
-        printfn "Merging identical processes aaaaaa"
         processes
         |> List.groupBy (fun x -> 
             if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
@@ -720,7 +719,6 @@ module ProcessParsing =
                 ARCtrl.ISA.Identifier.createMissingIdentifier(), x.ExecutesProtocol, x.ParameterValues |> Option.map Aux.HashCodes.boxHashSeq
         )
         |> fun l ->
-            printfn "Merging identical processes adwwdadawwda"
             l
             |> List.mapi (fun i ((n,protocol,_),processes) -> 
                 let pVs = processes.[0].ParameterValues
