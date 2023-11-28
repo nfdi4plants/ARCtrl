@@ -145,13 +145,16 @@ open Fable.Core
 [<AttachMembers>]
 type ArcTables(initTables:ResizeArray<ArcTable>) = 
 
+    let mutable tables = initTables
+    member this.Tables 
+        with get() = tables
+        and set(newTables) = tables <- newTables
+
     interface IEnumerable<ArcTable> with
         member this.GetEnumerator() : IEnumerator<ArcTable> =
             this.Tables.GetEnumerator()
         member this.GetEnumerator(): System.Collections.IEnumerator = 
             this.Tables.GetEnumerator()
-
-    member val Tables = initTables with get, set
 
     member this.Item 
         with get(index) = 
