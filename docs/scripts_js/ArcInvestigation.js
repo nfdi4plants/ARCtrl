@@ -3,8 +3,9 @@ import { ArcInvestigation, Comment$ as Comment} from "@nfdi4plants/arctrl"
 import {Xlsx} from "@fslab/fsspreadsheet";
 // Import ARCtrl Investigation to Spreadsheet transformation
 import {toFsWorkbook, fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcInvestigation.js"
+import {ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString} from "@nfdi4plants/arctrl/ISA/ISA.Json/Investigation.js"
 
-// Comments
+// # Comments
 
 const investigation_comments = ArcInvestigation.init("My Investigation")
 
@@ -16,8 +17,26 @@ investigation_comments.Comments.push(newComment2)
 
 console.log(investigation_comments)
 
-// IO
+// # IO
+
+// ## XLSX - Write
 
 let fswb = toFsWorkbook(investigation_comments)
 
 Xlsx.toFile("test.isa.investigation.xlsx", fswb)
+
+// Json - Write
+
+const investigation = ArcInvestigation.init("My Investigation")
+
+const json = ArcInvestigation_toJsonString(investigation)
+
+console.log(json)
+
+// Json - Read
+
+const jsonString = json
+
+const investigation_2 = ArcInvestigation_fromJsonString(jsonString)
+
+console.log(investigation_2.Equals(investigation))
