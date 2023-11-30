@@ -1,4 +1,4 @@
-# Contracts - from a code perspective
+# ArcInvestigation
 
 **Table of contents**
 - [Fields](#fields)
@@ -43,6 +43,7 @@ Here `option` means the value is nullable.
 Comments can be used to add freetext information to the Investigation metadata sheet. 
 
 ```fsharp
+// F#
 #r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
 #r "nuget: ARCtrl, 1.0.0-beta.8"
 
@@ -58,6 +59,7 @@ investigation_comments.Comments <- Array.append investigation_comments.Comments 
 ```
 
 ```js
+// JavaScript
 import { ArcInvestigation, Comment$ as Comment} from "@nfdi4plants/arctrl"
 
 const investigation_comments = ArcInvestigation.init("My Investigation")
@@ -91,6 +93,7 @@ This code example will produce the following output after writing to `.xlsx`.
 ## Write
 
 ```fsharp
+// F#
 open ARCtrl.ISA.Spreadsheet
 open FsSpreadsheet.ExcelIO
 
@@ -100,9 +103,8 @@ fswb.ToFile("test2.isa.investigation.xlsx")
 ```
 
 ```js
-// Import Spreadsheet to XLSX reader/writer
+// JavaScript
 import {Xlsx} from "@fslab/fsspreadsheet";
-// Import ARCtrl Investigation to Spreadsheet transformation
 import {toFsWorkbook, fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcInvestigation.js"
 
 let fswb = toFsWorkbook(investigation_comments)
