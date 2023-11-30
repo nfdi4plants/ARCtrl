@@ -16,6 +16,10 @@ import * as arctrl from "@nfdi4plants/arctrl"
 
 // Import ARCtrl Assay to Spreadsheet transformation
 import {toFsWorkbook,fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcAssay.js"
+// Import ARCtrl Study to Spreadsheet transformation
+// import {toFsWorkbook,fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcStudy.js"
+// Import ARCtrl Investigation to Spreadsheet transformation
+// import {toFsWorkbook,fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcInvestigation.js"
 
 // Import Spreadsheet to XLSX reader/writer
 import {Xlsx} from "@fslab/fsspreadsheet";
