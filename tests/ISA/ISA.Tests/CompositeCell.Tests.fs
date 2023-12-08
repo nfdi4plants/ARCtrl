@@ -175,6 +175,23 @@ let private tests_UIHelper = testList "UIHelper" [
     ]
 ]
 
+let private tests_GetHashCode = testList "GetHashCode" [
+    testList "GetHashCode" [
+        testCase "Term" <| fun _ ->
+            let cc = CompositeCell.createTermFromString("TestTerm", "TEST", "TEST:00001")
+            cc.GetHashCode() |> ignore
+            Expect.isTrue true " "
+        testCase "Unitized" <| fun _ ->
+            let cc = CompositeCell.createUnitizedFromString("12", "TestTerm", "TEST", "TEST:00001")
+            cc.GetHashCode() |> ignore
+            Expect.isTrue true " "
+        testCase "FreeText" <| fun _ ->
+            let cc = CompositeCell.createFreeText("TestTerm")
+            cc.GetHashCode() |> ignore
+            Expect.isTrue true " "
+    ]
+]
+
 let main = 
     testList "CompositeCell" [
         tests_cellConverter
@@ -182,4 +199,5 @@ let main =
         tests_ToString
         tests_GetContent
         tests_UIHelper
+        tests_GetHashCode
     ]

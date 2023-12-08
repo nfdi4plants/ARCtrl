@@ -78,6 +78,20 @@ let private tests_member =
     ]
 
 let private tests_GetHashCode = testList "GetHashCode" [
+    testCase "Headers" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            let hash1 = table1.GetHeadersHashCode()
+            let hash2 = table2.GetHeadersHashCode()
+            Expect.sequenceEqual table1.Headers table2.Headers "Table"
+            Expect.equal hash1 hash2 "Headers HashCode"
+    testCase "Value" <| fun _ ->
+            let table1 = create_testTable()
+            let table2 = create_testTable()
+            let hash1 = table1.GetValuesHashCode()
+            let hash2 = table2.GetValuesHashCode()
+            //Expect.sequenceEqual table1.Headers table2.Headers "Table"
+            Expect.equal hash1 hash2 "Values HashCode"
     testCase "GetHashCode" <| fun _ ->
             let table1 = create_testTable()
             let table2 = create_testTable()
