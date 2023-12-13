@@ -119,3 +119,34 @@ let hashSeq (s:seq<'a>) =
     s
     |> Seq.map (fun x -> x.GetHashCode())
     |> Seq.reduce (fun a b -> a + b)
+
+module Array = 
+
+    
+    let sort (a : 'T []) = 
+         #if FABLE_COMPILER_PYTHON
+             a |> List.ofArray |> List.sort |> Array.ofList       
+         #else
+             a |> Array.sort
+         #endif
+
+    let sortBy (f : 'T -> 'U) (a : 'T []) = 
+         #if FABLE_COMPILER_PYTHON
+             a |> List.ofArray |> List.sortBy f |> Array.ofList       
+         #else
+             a |> Array.sortBy f
+         #endif
+
+    let sortDescending (a : 'T []) = 
+         #if FABLE_COMPILER_PYTHON
+             a |> List.ofArray |> List.sortDescending |> Array.ofList       
+         #else
+             a |> Array.sortDescending
+         #endif
+
+    let sortDescendingBy (f : 'T -> 'U) (a : 'T []) =
+        #if FABLE_COMPILER_PYTHON
+                a |> List.ofArray |> List.sortByDescending f |> Array.ofList       
+            #else
+                a |> Array.sortByDescending f
+            #endif

@@ -271,7 +271,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         // Sanity check here too, to avoid removing things from mutable to fail in the middle
         Array.iter (fun index -> SanityChecks.validateColumnIndex index this.ColumnCount false) indexArr
         /// go from highest to lowest so no wrong column gets removed after index shift
-        let indexArr = indexArr |> Array.sortDescending
+        let indexArr = indexArr |> ARCtrl.ISA.Fable.Array.sortDescending
         Array.iter (fun index -> this.RemoveColumn index) indexArr
 
     static member removeColumns(indexArr:int []) =
@@ -476,7 +476,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         // Sanity check here too, to avoid removing things from mutable to fail in the middle
         Array.iter (fun index -> ArcTableAux.SanityChecks.validateRowIndex index this.RowCount false) indexArr
         /// go from highest to lowest so no wrong column gets removed after index shift
-        let indexArr = indexArr |> Array.sortDescending
+        let indexArr = indexArr |> ARCtrl.ISA.Fable.Array.sortDescending
         Array.iter (fun index -> this.RemoveRow index) indexArr
         
     static member removeRows (indexArr:int []) =
@@ -757,7 +757,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         |> String.concat "\n"
 
     member this.StructurallyEquals (other: ArcTable) =
-        let sort = Array.ofSeq >> Array.sortBy (function |KeyValue (key,_) -> key)
+        let sort = Array.ofSeq >> ARCtrl.ISA.Fable.Array.sortBy (function |KeyValue (key,_) -> key)
         let n = this.Name = other.Name
         let headers = Aux.compareSeq this.Headers other.Headers
         let values = Aux.compareSeq (sort this.Values) (sort other.Values)
