@@ -1,13 +1,13 @@
 # ARC
 
 🔗 The script files for this documentation can be found here:
-- [JavaScript](/scripts_js/ARC.js)
-- [F#](/scripts_fsharp/ARC.fsx)
+- [JavaScript](./scripts_js/ARC.js)
+- [F#](./scripts_fsharp/ARC.fsx)
 
 Table of Content
-- [Create ARC](#create)
-- [Write ARC](#write)
-- [Read ARC](#read)
+- [Create](#create)
+- [Write](#write)
+- [Read](#read)
 
 ## Create
 
