@@ -89,21 +89,3 @@ module Assay =
 
     //let toFile (path : string) (p:Assay) = 
     //    File.WriteAllText(path,toString p)
-
-
-module ArcAssay = 
-
-    open Assay
-
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-        |> ArcAssay.fromAssay
-
-    let toJsonString (a:ArcAssay) = 
-        encoder (ConverterOptions()) (a.ToAssay())
-        |> Encode.toString 2
-
-    /// exports in json-ld format
-    let toStringLD (a:ArcAssay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToAssay())
-        |> Encode.toString 2
