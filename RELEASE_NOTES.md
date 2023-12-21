@@ -1,3 +1,8 @@
+### 1.0.1+443272b (Released 2023-12-21)
+* Bugfixes:
+    * [[#443272b](https://github.com/nfdi4plants/ARCtrl/commit/443272b53bd35868b014dbb0c0d9f81b00f06081)] Fix .fsproj files
+    * [[#febb0f6](https://github.com/nfdi4plants/ARCtrl/commit/febb0f6c95d8669045c761a0d389e13f6cee24f0)] fix npm release target and release 1.0.0
+
 ### 1.0.0+b42bd6f (Released 2023-12-21)
 * Additions:
     * Complete overhaul of the API.
