@@ -1,4 +1,4 @@
-### 1.0.0+1c6c4fa (Released 2023-9-22)
+### 1.0.0+b42bd6f (Released 2023-12-21)
 * Additions:
     * Complete overhaul of the API.
     * Shifted focus from only ISA to include full ARC.

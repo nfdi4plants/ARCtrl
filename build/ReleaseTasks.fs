@@ -64,7 +64,7 @@ let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] 
     let msg = sprintf "[NPM] release package with version %s?" stableVersionTag
     if promptYesNo msg then
         let apikey = Environment.environVarOrNone "NPM_KEY" 
-        let otp = if apikey.IsSome then $" --otp + {apikey.Value}" else ""
+        let otp = if apikey.IsSome then $" --otp {apikey.Value}" else ""
         Fake.JavaScript.Npm.exec $"publish {target} --access public{otp}" (fun o ->
             { o with
                 WorkingDirectory = "./dist/js/"
