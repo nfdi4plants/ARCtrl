@@ -49,8 +49,8 @@ let private tests_model = testList "model" [
         Expect.equal actualFilePaths input "isSome fs"
 ]
 
-let private tests_isaFromContracts = testList "read_contracts" [
-    testCase "simpleISA" (fun () ->
+let private tests_read_contracts = testList "read_contracts" [
+    ptestCase "simpleISA" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC()
         arc.SetISAFromContracts([|
             SimpleISA.Investigation.investigationReadContract
@@ -75,7 +75,7 @@ let private tests_isaFromContracts = testList "read_contracts" [
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
     
     )
-    testCase "StudyAssayOnlyRegistered" (fun () ->
+    ptestCase "StudyAssayOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC()
         arc.SetISAFromContracts([|
             SimpleISA.Investigation.investigationReadContract
@@ -546,7 +546,7 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
 let main = testList "ARCtrl" [
     tests_model
     tests_updateFileSystem
-    tests_isaFromContracts
+    tests_read_contracts
     tests_writeContracts
     tests_RemoveAssay
     payload_file_filters

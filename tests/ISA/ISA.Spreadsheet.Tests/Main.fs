@@ -16,6 +16,7 @@ let all = testSequenced <| testList "ISA.Spreadsheet" [
     ArcStudyTests.main
     SparseTableTests.main
     IdentifierTests.main
+    Tests.Performance.Main
 ]
 
 let [<EntryPoint>] main argv = 
