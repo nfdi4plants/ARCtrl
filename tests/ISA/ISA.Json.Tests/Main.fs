@@ -10,6 +10,7 @@ open Expecto
 let all = testSequenced <| testList "ISA.JSON" [
     Json.Tests.main
     JsonSchema.Tests.main
+    Tests.ArcTypes.Main
 ]
 
 

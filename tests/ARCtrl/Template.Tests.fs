@@ -262,7 +262,7 @@ let private tests_equality = testList "equality" [
 ]
 
 let private tests_Web = testList "Web" [
-    testCaseAsync "getTemplates" <| async {
+    ptestCaseAsync "getTemplates" <| async {
         let! templatesMap = ARCtrl.Template.Web.getTemplates(None)
         Expect.isTrue (templatesMap.Length > 0) "Count > 0"
     }

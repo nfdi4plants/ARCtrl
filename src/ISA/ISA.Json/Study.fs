@@ -103,21 +103,3 @@ module Study =
     let toStringLD (s:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
         |> Encode.toString 2
-
-
-module ArcStudy = 
-
-    open Study
-
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-        |> ArcStudy.fromStudy
-
-    let toJsonString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
-        encoder (ConverterOptions()) (a.ToStudy(assays))
-        |> Encode.toString 2
-
-    /// exports in json-ld format
-    let toStringLD (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy(assays))
-        |> Encode.toString 2
