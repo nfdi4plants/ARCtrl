@@ -74,17 +74,25 @@ module ArcAssay =
         Assay.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToAssay())
         |> Encode.toString 2
 
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (Assay.decoder (ConverterOptions())) s
+        |> ArcAssay.fromAssay
+
+    let toJsonString (a:ArcAssay) = 
+        Assay.encoder (ConverterOptions()) (a.ToAssay())
+        |> Encode.toString 2
+
 [<AutoOpen>]
 module ArcAssayExtensions =
 
     type ArcAssay with
-        static member fromJsonString (jsonString: string) : ArcAssay = 
+        static member fromArcJsonString (jsonString: string) : ArcAssay = 
             match Decode.fromString ArcAssay.decoder jsonString with
             | Ok a -> a
             | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
 
-        member this.ToJsonString(?spaces) : string =
+        member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
             Encode.toString spaces (ArcAssay.encoder this)
 
-        static member toJsonString (a:ArcAssay) = a.ToJsonString()
+        static member toArcJsonString (a:ArcAssay) = a.ToArcJsonString()

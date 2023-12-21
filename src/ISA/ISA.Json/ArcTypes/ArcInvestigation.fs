@@ -65,17 +65,25 @@ module ArcInvestigation =
         Investigation.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToInvestigation())
         |> Encode.toString 2
 
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (Investigation.decoder (ConverterOptions())) s
+        |> ArcInvestigation.fromInvestigation
+
+    let toJsonString (a:ArcInvestigation) = 
+        Investigation.encoder (ConverterOptions()) (a.ToInvestigation())
+        |> Encode.toString 2
+
 [<AutoOpen>]
 module ArcInvestigationExtensions =
 
     type ArcInvestigation with
-        static member fromJsonString (jsonString: string) : ArcInvestigation = 
+        static member fromArcJsonString (jsonString: string) : ArcInvestigation = 
             match Decode.fromString ArcInvestigation.decoder jsonString with
             | Ok r -> r
             | Error e -> failwithf "Error. Unable to parse json string to ArcInvestigation: %s" e
 
-        member this.ToJsonString(?spaces) : string =
+        member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
             Encode.toString spaces (ArcInvestigation.encoder this)
 
-        static member toJsonString(a:ArcInvestigation) = a.ToJsonString()
+        static member toArcJsonString(a:ArcInvestigation) = a.ToArcJsonString()

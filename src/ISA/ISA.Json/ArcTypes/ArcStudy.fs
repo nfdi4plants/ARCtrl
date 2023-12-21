@@ -59,17 +59,25 @@ module ArcStudy =
         Study.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy(assays))
         |> Encode.toString 2
 
+    let fromJsonString (s:string) = 
+        GDecode.fromJsonString (Study.decoder (ConverterOptions())) s
+        |> ArcStudy.fromStudy
+
+    let toJsonString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+        Study.encoder (ConverterOptions()) (a.ToStudy(assays))
+        |> Encode.toString 2
+
 [<AutoOpen>]
 module ArcStudyExtensions =
 
     type ArcStudy with
-        static member fromJsonString (jsonString: string) : ArcStudy = 
+        static member fromArcJsonString (jsonString: string) : ArcStudy = 
             match Decode.fromString ArcStudy.decoder jsonString with
             | Ok r -> r
             | Error e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e
 
-        member this.ToJsonString(?spaces) : string =
+        member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
             Encode.toString spaces (ArcStudy.encoder this)
 
-        static member toJsonString(a:ArcStudy) = a.ToJsonString()
+        static member toArcJsonString(a:ArcStudy) = a.ToArcJsonString()
