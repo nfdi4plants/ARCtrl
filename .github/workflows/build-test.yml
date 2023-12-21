@@ -11,7 +11,7 @@ jobs:
 
     strategy:
       matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     runs-on: ${{ matrix.os }}
 
@@ -34,10 +34,10 @@ jobs:
       working-directory: ./src/ISA
       run: npm install
     - name: make script executable
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      if: matrix.os == 'ubuntu-latest'
       run: chmod u+x build.sh
     - name: Test (Unix)
-      if: matrix.os == 'ubuntu-latest' || matrix.os == 'macOS-latest'
+      if: matrix.os == 'ubuntu-latest'
       working-directory: ./
       run: ./build.sh runtests
     - name: Test (Windows)
