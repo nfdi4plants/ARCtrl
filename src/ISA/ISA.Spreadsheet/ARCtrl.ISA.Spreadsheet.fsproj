@@ -5,9 +5,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Remove="StudyFile\**" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CollectionAux.fs" />
     <Compile Include="Metadata\Conversions.fs" />
