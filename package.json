@@ -9,7 +9,7 @@
     "pretestJson": "dotnet fable tests/ISA/ISA.Json.Tests -o tests/ISA/ISA.Json.Tests/js",
     "testJson": "mocha tests/ISA/ISA.Json.Tests/js --timeout 20000",
     "pretestXlsx": "dotnet fable tests/ISA/ISA.Spreadsheet.Tests -o tests/ISA/ISA.Spreadsheet.Tests/js",
-    "testXlsx": "mocha tests/ISA/ISA.Spreadsheet.Tests/js",
+    "testXlsx": "mocha tests/ISA/ISA.Spreadsheet.Tests/js --timeout 20000",
     "pretestIsa": "dotnet fable tests/ISA/ISA.Tests -o tests/ISA/ISA.Tests/js",
     "testIsa": "mocha tests/ISA/ISA.Tests/js",
     "pretestFiles": "dotnet fable tests/FileSystem -o tests/FileSystem/js",
