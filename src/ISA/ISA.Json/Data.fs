@@ -39,7 +39,7 @@ module Data =
         match d.ID with
         | Some id -> URI.toString id
         | None -> match d.Name with
-                  | Some n -> n
+                  | Some n -> n.Replace(" ","_")
                   | None -> "#EmptyData"
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 
