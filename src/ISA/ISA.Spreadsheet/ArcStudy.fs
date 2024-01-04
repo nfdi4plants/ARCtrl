@@ -3,6 +3,7 @@
 open ARCtrl.ISA
 open FsSpreadsheet
 
+open Aux
 
 module ArcStudy = 
 
@@ -58,7 +59,7 @@ module Extensions =
 
             let annotationTables = 
                 doc.GetWorksheets()
-                |> Seq.choose ArcTable.tryFromFsWorksheet
+                |> ResizeArray.choose ArcTable.tryFromFsWorksheet
             // Performance hotfix. This change is tested in ISA.Spreadsheet/Performance.Tests.fs and results in 2 pendings tests in ARCtrl/ARCtrl.Tests.fs.
             //if annotationTables |> Seq.isEmpty |> not then 
             //    let updatedTables = 
@@ -68,8 +69,8 @@ module Extensions =
             //                keepUnusedRefTables =  true
             //                )
             //    studyMetadata.Tables <- updatedTables.Tables
-            if annotationTables |> Seq.isEmpty |> not then
-                studyMetadata.Tables <- ResizeArray annotationTables
+            if annotationTables |> ResizeArray.isEmpty |> not then
+                studyMetadata.Tables <- annotationTables
             studyMetadata
             ,assays
 
@@ -79,6 +80,6 @@ module Extensions =
             doc.AddWorksheet metaDataSheet
 
             study.Tables
-            |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+            |> ResizeArray.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
 
             doc
