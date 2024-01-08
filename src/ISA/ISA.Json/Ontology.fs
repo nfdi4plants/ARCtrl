@@ -101,7 +101,7 @@ module OntologyAnnotation =
             if options.SetID then "@id", GEncode.toJsonString (oa :?> OntologyAnnotation |> genID)
                 else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.toJsonString "OntologyAnnotation"
-            GEncode.tryInclude "annotationValue" (AnnotationValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "annotationValue" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "termSource" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
             GEncode.tryInclude "termAccession" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
@@ -114,7 +114,7 @@ module OntologyAnnotation =
         Decode.object (fun get ->
             OntologyAnnotation.create(
                 ?Id = get.Optional.Field "@id" GDecode.uri,
-                ?Name = get.Optional.Field "annotationValue" (AnnotationValue.decoder options),
+                ?Name = get.Optional.Field "annotationValue" Decode.string,
                 ?TermSourceREF = get.Optional.Field "termSource" Decode.string,
                 ?TermAccessionNumber = get.Optional.Field "termAccession" Decode.string,
                 ?Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               

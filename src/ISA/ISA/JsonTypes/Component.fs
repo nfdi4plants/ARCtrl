@@ -58,11 +58,11 @@ type Component =
             let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (unitr.Groups.Item "value").Value      |> Value.fromString
             let u =  (unitr.Groups.Item "unit").Value
-            v, Some {oa with Name = (Some (AnnotationValue.Text u))}
+            v, Some {oa with Name = Some u}
         | Regex pattern r ->
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
-            Value.Ontology {oa with Name = (Some (AnnotationValue.Text v.Text))}, None
+            Value.Ontology {oa with Name = (Some  v.Text)}, None
         | _ -> 
             Value.Name (name), None       
 

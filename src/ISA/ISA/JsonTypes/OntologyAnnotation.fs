@@ -9,7 +9,7 @@ open Fable.Core
 type OntologyAnnotation =
     {
         ID : URI option
-        Name : AnnotationValue option
+        Name : string option
         TermSourceREF : string option
         TermAccessionNumber : URI option
         Comments : Comment [] option
@@ -38,27 +38,9 @@ type OntologyAnnotation =
             Regex.tryParseTermAnnotation v
         | None -> None
 
-    /// Returns the name of the ontology as string
-    // TODO: Why is this called Text, while everything else is called string?
-    member this.NameText =
+    member this.NameText = 
         this.Name
-        |> Option.map (fun av ->
-            match av with
-            | AnnotationValue.Text s  -> s
-            | AnnotationValue.Float f -> string f
-            | AnnotationValue.Int i   -> string i
-        )
         |> Option.defaultValue ""
-
-    /// Returns the name of the ontology as string
-    member this.TryNameText =
-        this.Name
-        |> Option.map (fun av ->
-            match av with
-            | AnnotationValue.Text s  -> s
-            | AnnotationValue.Float f -> string f
-            | AnnotationValue.Int i   -> string i
-        )
 
     /// Returns the term source of the ontology as string
     member this.TermSourceREFString =       
@@ -85,7 +67,7 @@ type OntologyAnnotation =
 
         OntologyAnnotation.make 
             None 
-            (termName |> Option.map AnnotationValue.fromString)
+            termName 
             tsr
             tan
             comments
@@ -128,7 +110,7 @@ type OntologyAnnotation =
     static member toString (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
         let asOntobeePurlUrlIfShort = Option.defaultValue false asOntobeePurlUrlIfShort
         {|
-            TermName = oa.Name |> Option.map AnnotationValue.toString |> Option.defaultValue ""
+            TermName = oa.Name |> Option.defaultValue ""
             TermSourceREF = oa.TermSourceREF |> Option.defaultValue ""
             TermAccessionNumber = 
                 if asOntobeePurlUrlIfShort then
@@ -174,8 +156,8 @@ type OntologyAnnotation =
                 false
 
     /// Returns the name of the ontology as string if it has a name
-    static member tryGetNameText (oa : OntologyAnnotation) =
-        oa.TryNameText
+    static member tryGetName (oa : OntologyAnnotation) =
+        oa.Name
 
     /// Returns the name of the ontology as string if it has a name
     static member getNameText (oa : OntologyAnnotation) =
@@ -186,11 +168,11 @@ type OntologyAnnotation =
         oa.NameText = name
 
     /// If an ontology annotation with the given annotation value exists in the list, returns it
-    static member tryGetByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
+    static member tryGetByName (name : string) (annotations : OntologyAnnotation list) =
         List.tryFind (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
 
     /// If a ontology annotation with the given annotation value exists in the list, returns true
-    static member existsByName (name : AnnotationValue) (annotations : OntologyAnnotation list) =
+    static member existsByName (name : string) (annotations : OntologyAnnotation list) =
         List.exists (fun (d:OntologyAnnotation) -> d.Name = Some name) annotations
 
     /// Adds the given ontology annotation to the Study.StudyDesignDescriptors
@@ -210,7 +192,7 @@ type OntologyAnnotation =
         OntologyAnnotation.updateBy (fun f -> f.Name = design.Name) updateOption design annotations
 
     /// If a ontology annotation with the annotation value exists in the list, removes it
-    static member removeByName (name : AnnotationValue) (annotations : OntologyAnnotation list) = 
+    static member removeByName (name : string) (annotations : OntologyAnnotation list) = 
         List.filter (fun (d:OntologyAnnotation) -> d.Name = Some name |> not) annotations
 
     // Comments

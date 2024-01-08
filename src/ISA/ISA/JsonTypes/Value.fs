@@ -36,7 +36,7 @@ type Value =
 
     static member toOptions (value : Value) =
         match value with
-        | Ontology oa -> oa.Name |> Option.map AnnotationValue.toString,oa.TermAccessionNumber,oa.TermSourceREF
+        | Ontology oa -> oa.Name,oa.TermAccessionNumber,oa.TermSourceREF
         | Int i -> string i |> Some, None, None
         | Float f -> string f |> Some, None, None
         | Name s -> s |> Some, None, None
