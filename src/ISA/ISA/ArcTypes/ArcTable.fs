@@ -243,10 +243,10 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         )
         if not(SkipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers this.Values
 
-    static member addColumns (columns: CompositeColumn [],?index: int) =
+    static member addColumns (columns: CompositeColumn [],?index: int,?SkipFillMissing) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.AddColumns(columns, ?index = index)
+            newTable.AddColumns(columns, ?index = index, ?SkipFillMissing = SkipFillMissing)
             newTable
 
     // - Column API - //
