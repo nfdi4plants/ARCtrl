@@ -165,18 +165,19 @@ module Process =
                         | Some n -> "#Process_" + n.Replace(" ","_")
                         | None -> "#EmptyProcess"
 
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (studyName:string Option) (assayName:string Option) (oa : obj) = 
         [
             if options.SetID then "@id", GEncode.toJsonString (oa :?> Process |> genID)
                 else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", ([GEncode.toJsonString "Process"; GEncode.toJsonString "ArcProcess"] |> Encode.list)
             GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "executesProtocol" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
+            let processName = (oa :?> Process).Name
+            GEncode.tryInclude "executesProtocol" (Protocol.encoder options studyName assayName processName) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
             GEncode.tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterValues")
             GEncode.tryInclude "performer" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Performer")
             GEncode.tryInclude "date" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Date")
-            GEncode.tryInclude "previousProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "PreviousProcess")
-            GEncode.tryInclude "nextProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "NextProcess")
+            GEncode.tryInclude "previousProcess" (encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "PreviousProcess")
+            GEncode.tryInclude "nextProcess" (encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "NextProcess")
             GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
             GEncode.tryInclude "outputs" (ProcessOutput.encoder options) (oa |> GEncode.tryGetPropertyValue "Outputs")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
@@ -206,15 +207,15 @@ module Process =
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (p:Process) = 
-        encoder (ConverterOptions()) p
+        encoder (ConverterOptions()) None None p
         |> Encode.toString 2
     
     /// exports in json-ld format
     let toJsonldString (p:Process) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) None None p
         |> Encode.toString 2
     let toJsonldStringWithContext (a:Process) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None None a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -231,19 +232,19 @@ module ProcessSequence =
 
     let toJsonString (p:Process list) = 
         p
-        |> List.map (Process.encoder (ConverterOptions()))
+        |> List.map (Process.encoder (ConverterOptions()) None None)
         |> Encode.list
         |> Encode.toString 2
     
     /// exports in json-ld format
     let toJsonldString (p:Process list) = 
         p
-        |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true)))
+        |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true)) None None)
         |> Encode.list
         |> Encode.toString 2
     let toJsonldStringWithContext (p:Process list) = 
         p
-        |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)))
+        |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None None)
         |> Encode.list
         |> Encode.toString 2
 

@@ -56,7 +56,7 @@ module Study =
             GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
-            GEncode.tryInclude "protocols" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "Protocols")
+            // GEncode.tryInclude "protocols" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "Protocols")
             if options.IsRoCrate then
                 let study = oa:?> Study
                 let mat = study.Materials
@@ -76,8 +76,8 @@ module Study =
                 | Some m -> GEncode.tryInclude "materials" (Material.encoder options) (m |> GEncode.tryGetPropertyValue "OtherMaterials")
                 | None -> ()
             if not options.IsRoCrate then (GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
-            GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
-            GEncode.tryInclude "assays" (Assay.encoder options) (oa |> GEncode.tryGetPropertyValue "Assays")            
+            GEncode.tryInclude "processSequence" (Process.encoder options (oa:?> Study).Identifier None) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
+            GEncode.tryInclude "assays" (Assay.encoder options (oa:?> Study).Identifier) (oa |> GEncode.tryGetPropertyValue "Assays")            
             GEncode.tryInclude "factors" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Factors")
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")            
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")

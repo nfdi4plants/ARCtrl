@@ -35,7 +35,7 @@ module Assay =
                   | Some n -> n.Replace(" ","_").Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
                   | None -> "#EmptyAssay"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (studyName:string Option) (oa : obj) = 
         let a = ["Assay";"ArcAssay"]
         [
             if options.SetID then "@id",  GEncode.toJsonString (oa :?> Assay |> genID)
@@ -61,7 +61,10 @@ module Assay =
             if not options.IsRoCrate then (GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
-            GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
+            let assayName = match (oa :?> Assay).FileName with
+                            | Some fn -> Some (Identifier.Assay.identifierFromFileName fn)
+                            | None -> None
+            GEncode.tryInclude "processSequence" (Process.encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
             if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ARCtrl.ISA.Json.ROCrateContext.Assay.context).GetValue("@context"))
         ]
@@ -89,15 +92,15 @@ module Assay =
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (p:Assay) = 
-        encoder (ConverterOptions()) p
+        encoder (ConverterOptions()) None p
         |> Encode.toString 2
 
     /// exports in json-ld format
     let toJsonldString (a:Assay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) a
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) None a
         |> Encode.toString 2
     let toJsonldStringWithContext (a:Assay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -117,13 +120,13 @@ module ArcAssay =
         |> ArcAssay.fromAssay
 
     let toJsonString (a:ArcAssay) = 
-        encoder (ConverterOptions()) (a.ToAssay())
+        encoder (ConverterOptions()) None (a.ToAssay())
         |> Encode.toString 2
 
     /// exports in json-ld format
     let toStringLD (a:ArcAssay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) a
+        encoder (ConverterOptions(SetID=true,IncludeType=true)) None a
         |> Encode.toString 2
     let toStringLDWithContext (a:ArcAssay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None a
         |> Encode.toString 2
