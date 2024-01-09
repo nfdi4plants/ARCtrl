@@ -11,11 +11,12 @@ type AnnotationValue =
 
     /// Create a ISAJson Annotation value from a ISATab string entry
     static member fromString (s : string) = 
-        try s |> int |> AnnotationValue.Int
-        with | _ -> 
-            try s |> float |> AnnotationValue.Float
-            with
-            | _ -> AnnotationValue.Text s
+        //try s |> int |> AnnotationValue.Int
+        //with | _ -> 
+        //    try s |> float |> AnnotationValue.Float
+        //    with
+        //    | _ -> 
+        AnnotationValue.Text s
 
     /// Get a ISATab string Annotation Name from a ISAJson object
     static member toString (v : AnnotationValue) = 

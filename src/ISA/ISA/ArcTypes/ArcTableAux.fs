@@ -245,9 +245,16 @@ module Unchecked =
             // Related Test: `All.ArcTable.addColumn.Existing Table.add less rows, replace input, force replace
             if hasDuplicateUnique.IsSome then
                 removeColumnCells(index) values
-            newCells |> Array.iteri (fun rowIndex cell ->
+            let f = 
+                if index >= startColCount then 
+                    fun (colIndex,rowIndex,cell) (values : Dictionary<int*int,CompositeCell>) -> 
+                        values.Add((colIndex,rowIndex),cell) |> ignore
+                else 
+                   setCellAt
+            newCells 
+            |> Array.iteri (fun rowIndex cell ->
                 let columnIndex = index
-                setCellAt (columnIndex,rowIndex,cell) values
+                f (columnIndex,rowIndex,cell) values
             )
         setNewHeader()
         // Only do this if column is inserted and not appended AND we do not execute forceReplace!

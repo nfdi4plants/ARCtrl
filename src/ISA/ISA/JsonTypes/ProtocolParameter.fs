@@ -41,7 +41,7 @@ type ProtocolParameter =
     /// Returns the name of the parameter as string
     member this.TryNameText =
         this.ParameterName
-        |> Option.bind (fun oa -> oa.TryNameText)
+        |> Option.bind (fun oa -> oa.Name)
 
     interface IISAPrintable with
         member this.Print() =

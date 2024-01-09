@@ -445,7 +445,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         | Regex.ActivePatterns.Regex pattern r -> 
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (r.Groups.Item "value").Value      |> Value.fromString
-            {oa with Name = (Some (AnnotationValue.Text v.Text))}
+            {oa with Name = (Some v.Text)}
         | _ ->
             OntologyAnnotation.fromString(termName = name)
 
