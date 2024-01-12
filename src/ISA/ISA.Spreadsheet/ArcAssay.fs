@@ -85,11 +85,11 @@ let fromFsWorkbook (doc:FsWorkbook) =
             | None -> 
                 printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" or \"%s\" sheet." metaDataSheetName obsoleteMetaDataSheetName
                 ArcAssay.create(Identifier.createMissingIdentifier())
-    let tables = 
+    let annotationTables = 
         doc.GetWorksheets()
         |> Seq.choose ArcTable.tryFromFsWorksheet
-    if tables |> Seq.isEmpty |> not then
-        assayMetaData.Tables <- ResizeArray(tables)
+    if annotationTables |> Seq.isEmpty |> not then
+        assayMetaData.Tables <- ResizeArray annotationTables
     assayMetaData
 
 let toFsWorkbook (assay : ArcAssay) =

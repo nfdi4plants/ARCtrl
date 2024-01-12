@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ArcTypes.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Json.Tests.fs" />
     <Compile Include="Main.fs" />

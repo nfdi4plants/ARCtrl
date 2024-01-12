@@ -56,17 +56,20 @@ module Extensions =
                         printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." ArcStudy.metaDataSheetName ArcStudy.obsoleteMetaDataSheetName
                         ArcStudy.create(Identifier.createMissingIdentifier()),[]
 
-            let sheets = 
+            let annotationTables = 
                 doc.GetWorksheets()
                 |> Seq.choose ArcTable.tryFromFsWorksheet
-            if sheets |> Seq.isEmpty |> not then
-                let updatedTables = 
-                        ArcTables.updateReferenceTablesBySheets(
-                            (ArcTables studyMetadata.Tables),
-                            (ArcTables (ResizeArray sheets)),
-                            keepUnusedRefTables =  true
-                            )
-                studyMetadata.Tables <- updatedTables.Tables
+            // Performance hotfix. This change is tested in ISA.Spreadsheet/Performance.Tests.fs and results in 2 pendings tests in ARCtrl/ARCtrl.Tests.fs.
+            //if annotationTables |> Seq.isEmpty |> not then 
+            //    let updatedTables = 
+            //            ArcTables.updateReferenceTablesBySheets( // This only kills performance with ProtocolREF
+            //                (ArcTables studyMetadata.Tables),
+            //                (ArcTables (ResizeArray annotationTables)),
+            //                keepUnusedRefTables =  true
+            //                )
+            //    studyMetadata.Tables <- updatedTables.Tables
+            if annotationTables |> Seq.isEmpty |> not then
+                studyMetadata.Tables <- ResizeArray annotationTables
             studyMetadata
             ,assays
 

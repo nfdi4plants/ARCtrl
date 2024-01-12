@@ -48,6 +48,7 @@ module Person =
             if options.SetID then "@id", GEncode.toJsonString (oa :?> Person |> genID)
                 else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", GEncode.toJsonString "Person"
+            let oa = oa :?> Person |> Person.setCommentFromORCID
             GEncode.tryInclude "firstName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FirstName")
             GEncode.tryInclude "lastName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "LastName")
             GEncode.tryInclude "midInitials" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "MidInitials")

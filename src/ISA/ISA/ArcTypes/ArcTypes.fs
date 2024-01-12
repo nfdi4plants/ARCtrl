@@ -581,7 +581,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     let mutable comments : Comment [] = comments
     /// Must be unique in one investigation
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
-    // read-online
+    // read-only
     member this.Investigation with get() = investigation and internal set(i) = investigation <- i
     member this.Title with get() = title and set(n) = title <- n
     member this.Description with get() = description and set(n) = description <- n

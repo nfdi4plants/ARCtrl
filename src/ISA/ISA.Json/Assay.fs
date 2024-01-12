@@ -61,9 +61,13 @@ module Assay =
             if not options.IsRoCrate then (GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
-            let assayName = match (oa :?> Assay).FileName with
-                            | Some fn -> Some (Identifier.Assay.identifierFromFileName fn)
-                            | None -> None
+            let assayName =
+                try 
+                    match (oa :?> Assay).FileName with
+                    | Some fn -> Some (Identifier.Assay.identifierFromFileName fn)
+                    | None -> None
+                with 
+                    | Failure(msg) -> None
             GEncode.tryInclude "processSequence" (Process.encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
             if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ARCtrl.ISA.Json.ROCrateContext.Assay.context).GetValue("@context"))
@@ -109,24 +113,3 @@ module Assay =
 
     //let toFile (path : string) (p:Assay) = 
     //    File.WriteAllText(path,toString p)
-
-
-module ArcAssay = 
-
-    open Assay
-
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-        |> ArcAssay.fromAssay
-
-    let toJsonString (a:ArcAssay) = 
-        encoder (ConverterOptions()) None (a.ToAssay())
-        |> Encode.toString 2
-
-    /// exports in json-ld format
-    let toStringLD (a:ArcAssay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) None a
-        |> Encode.toString 2
-    let toStringLDWithContext (a:ArcAssay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None a
-        |> Encode.toString 2

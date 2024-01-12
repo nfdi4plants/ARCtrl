@@ -6,7 +6,6 @@ open Thoth.Json
 open Thoth.Json.Net
 #endif
 open ARCtrl.ISA
-open System.IO
 
 module Investigation =
     
@@ -89,21 +88,4 @@ module Investigation =
         |> Encode.toString 2
     let toRoCrateString (i:Investigation) = 
         encodeRoCrate (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true,IsRoCrate=true)) i
-        |> Encode.toString 2
-
-module ArcInvestigation = 
-
-    open Investigation
-
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-        |> ArcInvestigation.fromInvestigation
-
-    let toJsonString (a:ArcInvestigation) = 
-        encoder (ConverterOptions()) (a.ToInvestigation())
-        |> Encode.toString 2
-
-    /// exports in json-ld format
-    let toStringLD (a:ArcInvestigation) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToInvestigation())
         |> Encode.toString 2

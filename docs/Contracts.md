@@ -104,7 +104,7 @@ export async function fulfillWriteContract (basePath, contract) {
         if (contract.DTO == undefined) {
             ensureDirectory(p)
             fs.writeFileSync(p, "")
-        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Investigation") {
+        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Study" || contract.DTOType == "ISA_Investigation") {
             ensureDirectory(p)
             await Xlsx.toFile(p, contract.DTO)
             console.log("ISA", p)

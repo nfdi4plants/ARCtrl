@@ -56,7 +56,8 @@ module Study =
             GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
-            // GEncode.tryInclude "protocols" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "Protocols")
+            if not options.IsRoCrate then 
+                GEncode.tryInclude "protocols" (Protocol.encoder options None None None) (oa |> GEncode.tryGetPropertyValue "Protocols")
             if options.IsRoCrate then
                 let study = oa:?> Study
                 let mat = study.Materials
@@ -124,22 +125,4 @@ module Study =
         |> Encode.toString 2
     let toJsonldStringWithContext (a:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
-
-
-module ArcStudy = 
-
-    open Study
-
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-        |> ArcStudy.fromStudy
-
-    let toJsonString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
-        encoder (ConverterOptions()) (a.ToStudy(assays))
-        |> Encode.toString 2
-
-    /// exports in json-ld format
-    let toJsonldString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy(assays))
         |> Encode.toString 2
