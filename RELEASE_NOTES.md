@@ -1,3 +1,7 @@
+### 1.0.4+167fae8 (Released 2024-1-15)
+* Additions:
+    * [[#167fae8](https://github.com/nfdi4plants/ARCtrl/commit/167fae8bcaa14d8e24055f60ac031b13d8b47199)] add json functions for better function names in js :sparkles:
+
 ### 1.0.3+533dab0 (Released 2024-1-15)
 * Additions:
     * [[#208839a](https://github.com/nfdi4plants/ARCtrl/commit/208839a2d50e3c7ffd2722a5e65262bea1e185cd)] change annotationValue of Ontology Annotation to string
