@@ -203,7 +203,7 @@ let investigationLD =
       "protocols": [
         {
           "@id": "Protocol/MyProtocol",
-          "@type": "Protocol",
+          "@type": ["Protocol","ArcProtocol"],
           "name": "MyProtocol",
           "protocolType": {
             "@id": "OntologyTerm/GrowthProtocol",
@@ -280,7 +280,7 @@ let investigationLD =
         "sources": [
           {
             "@id": "Source/MySource",
-            "@type": "Source",
+            "@type": ["Source","ArcSource"],
             "name": "MySource",
             "characteristics": [
               {
@@ -327,7 +327,7 @@ let investigationLD =
         "samples": [
           {
             "@id": "Sample/MySample",
-            "@type": "Sample",
+            "@type": ["Sample","ArcSample"],
             "name": "MySample",
             "characteristics": [
               {
@@ -422,7 +422,7 @@ let investigationLD =
             "derivesFrom": [
               {
                 "@id": "Source/MySource",
-                "@type": "Source",
+                "@type": ["Source","ArcSource"],
                 "name": "MySource",
                 "characteristics": [
                   {
@@ -471,7 +471,7 @@ let investigationLD =
         "otherMaterials": [
           {
             "@id": "Material/MyMaterial",
-            "@type": "Material",
+            "@type": ["Material","ArcMaterial"],
             "name": "MyMaterial",
             "type": "Extract Name",
             "characteristics": [
@@ -517,7 +517,7 @@ let investigationLD =
           },
           {
             "@id": "Material/MyDerivedMaterial",
-            "@type": "Material",
+            "@type": ["Material","ArcMaterial"],
             "name": "MyDerivedMaterial",
             "type": "Labeled Extract Name",
             "characteristics": [
@@ -563,7 +563,7 @@ let investigationLD =
             "derivesFrom": [
               {
                 "@id": "Material/MyMaterial",
-                "@type": "Material",
+                "@type": ["Material","ArcMaterial"],
                 "name": "MyMaterial",
                 "type": "Extract Name",
                 "characteristics": [
@@ -618,7 +618,7 @@ let investigationLD =
           "name": "MyProcess1",
           "executesProtocol": {
             "@id": "Protocol/MyProtocol",
-            "@type": "Protocol",
+            "@type": ["Protocol","ArcProtocol"],
             "name": "MyProtocol",
             "protocolType": {
               "@id": "OntologyTerm/GrowthProtocol",
@@ -784,7 +784,7 @@ let investigationLD =
           "outputs": [
             {
               "@id": "Sample/MySample",
-              "@type": "Sample",
+              "@type": ["Sample","ArcSample"],
               "name": "MySample",
               "characteristics": [
                 {
@@ -879,7 +879,7 @@ let investigationLD =
               "derivesFrom": [
                 {
                   "@id": "Source/MySource",
-                  "@type": "Source",
+                  "@type": ["Source","ArcSource"],
                   "name": "MySource",
                   "characteristics": [
                     {
@@ -990,7 +990,7 @@ let investigationLD =
             "samples": [
               {
                 "@id": "Sample/MySample",
-                "@type": "Sample",
+                "@type": ["Sample","ArcSample"],
                 "name": "MySample",
                 "characteristics": [
                   {
@@ -1085,7 +1085,7 @@ let investigationLD =
                 "derivesFrom": [
                   {
                     "@id": "Source/MySource",
-                    "@type": "Source",
+                    "@type": ["Source","ArcSource"],
                     "name": "MySource",
                     "characteristics": [
                       {
@@ -1134,7 +1134,7 @@ let investigationLD =
             "otherMaterials": [
               {
                 "@id": "Material/MyMaterial",
-                "@type": "Material",
+                "@type": ["Material","ArcMaterial"],
                 "name": "MyMaterial",
                 "type": "Extract Name",
                 "characteristics": [
@@ -1180,7 +1180,7 @@ let investigationLD =
               },
               {
                 "@id": "Material/MyDerivedMaterial",
-                "@type": "Material",
+                "@type": ["Material","ArcMaterial"],
                 "name": "MyDerivedMaterial",
                 "type": "Labeled Extract Name",
                 "characteristics": [
@@ -1226,7 +1226,7 @@ let investigationLD =
                 "derivesFrom": [
                   {
                     "@id": "Material/MyMaterial",
-                    "@type": "Material",
+                    "@type": ["Material","ArcMaterial"],
                     "name": "MyMaterial",
                     "type": "Extract Name",
                     "characteristics": [
@@ -1334,7 +1334,7 @@ let investigationLD =
               "name": "MyProcess2",
               "executesProtocol": {
                 "@id": "Protocol/MyProtocol",
-                "@type": "Protocol",
+                "@type": ["Protocol","ArcProtocol"],
                 "name": "MyProtocol",
                 "protocolType": {
                   "@id": "OntologyTerm/GrowthProtocol",
@@ -1454,7 +1454,7 @@ let investigationLD =
               "inputs": [
                 {
                   "@id": "Sample/MySample",
-                  "@type": "Sample",
+                  "@type": ["Sample","ArcSample"],
                   "name": "MySample",
                   "characteristics": [
                     {
@@ -1549,7 +1549,7 @@ let investigationLD =
                   "derivesFrom": [
                     {
                       "@id": "Source/MySource",
-                      "@type": "Source",
+                      "@type": ["Source","ArcSource"],
                       "name": "MySource",
                       "characteristics": [
                         {

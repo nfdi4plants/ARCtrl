@@ -23,7 +23,7 @@ let publicationLD =
   "doi": "doi:10.1186/jbiol54",
   "pubMedID": "17439666",
   "status": {
-    "@id": "#DummyOntologyAnnotation",
+    "@id": "#UserTerm_indexed_in_Pubmed",
     "@type": "OntologyAnnotation",
     "annotationValue": "indexed in Pubmed"
   },

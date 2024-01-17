@@ -12,9 +12,9 @@ let sampleSimpleLD =
     """
         {
             "@id": "#sample/sample-P-0.1-aliquot7",
-            "@type": "Sample",
+            "@type": ["Sample","ArcSample"],
             "name": "sample-P-0.1-aliquot7",
-            "derivesFrom": [ { "@id": "#source/source-culture8", "@type": "Source" } ]
+            "derivesFrom": [ { "@id": "#source/source-culture8", "@type": ["Source","ArcSource"] } ]
         }
     """
 let sampleSimpleWithoutID = 
@@ -28,9 +28,9 @@ let sampleSimpleWithDefaultLD =
     """
         {
             "@id": "#Sample_sample-P-0.1-aliquot7",
-            "@type": "Sample",
+            "@type": ["Sample","ArcSample"],
             "name": "sample-P-0.1-aliquot7",
-            "derivesFrom": [ { "@id": "#source/source-culture8", "@type": "Source" } ]
+            "derivesFrom": [ { "@id": "#source/source-culture8", "@type": ["Source","ArcSource"] } ]
         }
     """
 
@@ -76,7 +76,7 @@ let sourceLD =
     """
         { 
             "@id": "#source/source-culture8",
-            "@type": "Source",
+            "@type": ["Source", "ArcSource"],
             "name": "source-culture8"
         }
     """
@@ -90,7 +90,7 @@ let sourceWithDefaultLD =
     """
         { 
             "@id": "#Source_source-culture8",
-            "@type": "Source",
+            "@type": ["Source","ArcSource"],
             "name": "source-culture8"
         }
     """
@@ -108,7 +108,7 @@ let dataLD =
     """
     {
       "@id": "#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt",
-      "@type": "Data",
+      "@type": ["Data","ArcData"],
       "comments": [],
       "name": "JIC64_Nitrogen_0.07_External_1_3.txt",
       "type": "Raw Data File"
@@ -126,7 +126,7 @@ let dataWithDefaultLD =
     """
     {
       "@id": "JIC64_Nitrogen_0.07_External_1_3.txt",
-      "@type": "Data",
+      "@type": ["Data","ArcData"],
       "comments": [],
       "name": "JIC64_Nitrogen_0.07_External_1_3.txt",
       "type": "Raw Data File"
@@ -147,7 +147,7 @@ let materialLD =
     """
     {
         "@id": "#material/extract-G-0.1-aliquot1",
-        "@type": "Material",
+        "@type": ["Material","ArcMaterial"],
         "characteristics": [],
         "name": "extract-G-0.1-aliquot1",
         "type": "Extract Name"
@@ -167,7 +167,7 @@ let materialWithDefaultLD =
     """
     {
         "@id": "#Material_extract-G-0.1-aliquot1",
-        "@type": "Material",
+        "@type": ["Material","ArcMaterial"],
         "characteristics": [],
         "name": "extract-G-0.1-aliquot1",
         "type": "Extract Name"

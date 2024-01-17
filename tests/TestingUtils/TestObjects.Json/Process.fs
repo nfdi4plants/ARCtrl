@@ -177,11 +177,11 @@ let processLD =
     """
     {
     "@id": "#process/standard_trypsin_digestion",
-    "@type": "Process",
+    "@type": ["Process","ArcProcess"],
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
         "@id": "#protocols/peptide_digestion",
-        "@type": "Protocol",
+        "@type": ["Protocol","ArcProtocol"],
         "name": "peptide_digestion",
     
         "protocolType": {
@@ -198,7 +198,7 @@ let processLD =
         "parameters": [
             {
                 "@id": "protease",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "protease",
                     "@type": "OntologyAnnotation",
@@ -210,7 +210,7 @@ let processLD =
             },
             {
                 "@id": "temperature",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "temperature",
                     "@type": "OntologyAnnotation",
@@ -223,7 +223,7 @@ let processLD =
             },
             {
                 "@id": "time",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "time",
                     "@type": "OntologyAnnotation",
@@ -237,7 +237,7 @@ let processLD =
         "components": [
             {
                 "@id": "#Component_digestion_stopper",
-                "@type": "Component",
+                "@type": ["Component","ArcComponent"],
                 "componentName": "digestion_stopper",
                 "componentType": {
                     "@id": "formic_acid",
@@ -250,7 +250,7 @@ let processLD =
             },
             {
                 "@id": "#Component_heater",
-                "@type": "Component",
+                "@type": ["Component","ArcComponent"],
                 "componentName": "heater",
                 "componentType": {
                     "@id": "heater",
@@ -271,7 +271,7 @@ let processLD =
             "@type": "ProcessParameterValue",
             "category": {
                 "@id": "protease",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "protease",
                     "@type": "OntologyAnnotation",
@@ -296,7 +296,7 @@ let processLD =
             "@type": "ProcessParameterValue",
             "category": {
                 "@id": "temperature",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "temperature",
                     "@type": "OntologyAnnotation",
@@ -322,7 +322,7 @@ let processLD =
             "@type": "ProcessParameterValue",
             "category": {
                 "@id": "time",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "time",
                     "@type": "OntologyAnnotation",
@@ -345,28 +345,28 @@ let processLD =
     ],
     "date": "2020-10-23",
     "performer": "TUKL",
-    "previousProcess": { "@id": "#process/protein_extraction", "@type": "Process" },
-    "nextProcess":  { "@id": "#process/massspec_measurement", "@type": "Process"},
+    "previousProcess": { "@id": "#process/protein_extraction", "@type": ["Process","ArcProcess"] },
+    "nextProcess":  { "@id": "#process/massspec_measurement", "@type": ["Process","ArcProcess"]},
     "inputs": [
         {
-            "@id": "#sample/WT_protein", "@type": "Source"
+            "@id": "#sample/WT_protein", "@type": ["Source","ArcSource"]
         },
         {
-            "@id": "#sample/MUT1_protein", "@type": "Source"
+            "@id": "#sample/MUT1_protein", "@type": ["Source","ArcSource"]
         },
         {
-            "@id": "#sample/MUT2_protein", "@type": "Source"
+            "@id": "#sample/MUT2_protein", "@type": ["Source","ArcSource"]
         }
     ],
     "outputs": [
         {
-            "@id": "#sample/WT_digested", "@type": "Sample"
+            "@id": "#sample/WT_digested", "@type": ["Sample","ArcSample"]
         },
         {
-            "@id": "#sample/MUT1_digested", "@type": "Sample"
+            "@id": "#sample/MUT1_digested", "@type": ["Sample","ArcSample"]
         },
         {
-            "@id": "#sample/MUT2_digested", "@type": "Sample"
+            "@id": "#sample/MUT2_digested", "@type": ["Sample","ArcSample"]
         }
     ],
     "comments": []
@@ -509,11 +509,11 @@ let processWithDefaultLD =
     """
     {
     "@id": "#Process_standard_trypsin_digestion",
-    "@type": "Process",
+    "@type": ["Process","ArcProcess"],
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
         "@id": "http://madeUpProtocolWebsize.org/protein_digestion",
-        "@type": "Protocol",
+        "@type": ["Protocol","ArcProtocol"],
         "name": "peptide_digestion",
     
         "protocolType": {
@@ -530,7 +530,7 @@ let processWithDefaultLD =
         "parameters": [
             {
                 "@id": "#EmptyProtocolParameter",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                     "@type": "OntologyAnnotation",
@@ -542,7 +542,7 @@ let processWithDefaultLD =
             },
             {
                 "@id": "#EmptyProtocolParameter",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
                     "@type": "OntologyAnnotation",
@@ -555,7 +555,7 @@ let processWithDefaultLD =
             },
             {
                 "@id": "#Param_http://www.ebi.ac.uk/efo/EFO_0000721",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
                     "@type": "OntologyAnnotation",
@@ -569,7 +569,7 @@ let processWithDefaultLD =
         "components": [
             {
                 "@id": "#Component_digestion_stopper",
-                "@type": "Component",
+                "@type": ["Component","ArcComponent"],
                 "componentName": "digestion_stopper",
                 "componentType": {
                     "@id": "http://purl.obolibrary.org/obo/NCIT_C83719",
@@ -582,7 +582,7 @@ let processWithDefaultLD =
             },
             {
                 "@id": "#Component_heater",
-                "@type": "Component",
+                "@type": ["Component","ArcComponent"],
                 "componentName": "heater",
                 "componentType": {
                     "@id": "http://purl.obolibrary.org/obo/NCIT_C49986",
@@ -603,7 +603,7 @@ let processWithDefaultLD =
             "@type": "ProcessParameterValue",
             "category": {
                 "@id": "#Param_http://purl.obolibrary.org/obo/NCIT_C16965",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                     "@type": "OntologyAnnotation",
@@ -628,7 +628,7 @@ let processWithDefaultLD =
             "@type": "ProcessParameterValue",
             "category": {
                 "@id": "#EmptyProtocolParameter",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
                     "@type": "OntologyAnnotation",
@@ -654,7 +654,7 @@ let processWithDefaultLD =
             "@type": "ProcessParameterValue",
             "category": {
                 "@id": "#EmptyProtocolParameter",
-                "@type": "ProtocolParameter",
+                "@type": ["ProtocolParameter","ArcProtocolParameter"],
                 "parameterName": {
                     "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
                     "@type": "OntologyAnnotation",

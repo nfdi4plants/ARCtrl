@@ -83,7 +83,7 @@ let protocolLD =
     """
     {
     "@id": "#protocols/peptide_digestion",
-    "@type": "Protocol",
+    "@type": ["Protocol","ArcProtocol"],
     "name": "peptide_digestion",
     "protocolType": {
         "@id": "protein_digestion",
@@ -99,7 +99,7 @@ let protocolLD =
     "parameters": [
         {
             "@id": "protease",
-            "@type": "ProtocolParameter",
+            "@type": ["ProtocolParameter","ArcProtocolParameter"],
             "parameterName": {
                 "@id": "protease",
                 "@type": "OntologyAnnotation",
@@ -111,7 +111,7 @@ let protocolLD =
         },
         {
             "@id": "temperature",
-            "@type": "ProtocolParameter",
+            "@type": ["ProtocolParameter","ArcProtocolParameter"],
             "parameterName": {
                 "@id": "temperature",
                 "@type": "OntologyAnnotation",
@@ -123,7 +123,7 @@ let protocolLD =
         },
         {
             "@id": "time",
-            "@type": "ProtocolParameter",
+            "@type": ["ProtocolParameter","ArcProtocolParameter"],
             "parameterName": {
                 "@id": "time",
                 "@type": "OntologyAnnotation",
@@ -137,7 +137,7 @@ let protocolLD =
     "components": [
         {
             "@id": "#Component_digestion_stopper",
-            "@type": "Component",
+            "@type": ["Component","ArcComponent"],
             "componentName": "digestion_stopper",
             "componentType": {
                 "@id": "formic_acid",
@@ -150,7 +150,7 @@ let protocolLD =
         },
         {
             "@id": "#Component_heater",
-            "@type": "Component",
+            "@type": ["Component","ArcComponent"],
             "componentName": "heater",
             "componentType": {
                 "@id": "heater",
@@ -238,7 +238,7 @@ let protocolWithDefaultLD =
     """
     {
     "@id": "http://madeUpProtocolWebsize.org/protein_digestion",
-    "@type": "Protocol",
+    "@type": ["Protocol","ArcProtocol"],
     "name": "peptide_digestion",
     "protocolType": {
         "@id": "http://purl.obolibrary.org/obo/NCIT_C70845",
@@ -254,7 +254,7 @@ let protocolWithDefaultLD =
     "parameters": [
         {
             "@id": "#Param_http://purl.obolibrary.org/obo/NCIT_C16965",
-            "@type": "ProtocolParameter",
+            "@type": ["ProtocolParameter","ArcProtocolParameter"],
             "parameterName": {
                 "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                 "@type": "OntologyAnnotation",
@@ -266,7 +266,7 @@ let protocolWithDefaultLD =
         },
         {
             "@id": "#EmptyProtocolParameter",
-            "@type": "ProtocolParameter",
+            "@type": ["ProtocolParameter","ArcProtocolParameter"],
             "parameterName": {
                 "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
                 "@type": "OntologyAnnotation",
@@ -278,7 +278,7 @@ let protocolWithDefaultLD =
         },
         {
             "@id": "#EmptyProtocolParameter",
-            "@type": "ProtocolParameter",
+            "@type": ["ProtocolParameter","ArcProtocolParameter"],
             "parameterName": {
                 "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
                 "@type": "OntologyAnnotation",
@@ -292,7 +292,7 @@ let protocolWithDefaultLD =
     "components": [
         {
             "@id": "#Component_digestion_stopper",
-            "@type": "Component",
+            "@type": ["Component","ArcComponent"],
             "componentName": "digestion_stopper",
             "componentType": {
                 "@id": "http://purl.obolibrary.org/obo/NCIT_C83719",
@@ -305,7 +305,7 @@ let protocolWithDefaultLD =
         },
         {
             "@id": "#Component_heater",
-            "@type": "Component",
+            "@type": ["Component","ArcComponent"],
             "componentName": "heater",
             "componentType": {
                 "@id": "http://purl.obolibrary.org/obo/NCIT_C49986",

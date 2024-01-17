@@ -62,7 +62,7 @@ let personLD =
   ],
   "roles": [
     {
-      "@id": "#DummyOntologyAnnotation",
+      "@id": "#UserTerm_author",
       "@type": "OntologyAnnotation",
       "annotationValue": "author"
     }
@@ -118,7 +118,7 @@ let personWithDefaultLD =
   ],
   "roles": [
     {
-      "@id": "#DummyOntologyAnnotation",
+      "@id": "#UserTerm_author",
       "@type": "OntologyAnnotation",
       "annotationValue": "author"
     }
