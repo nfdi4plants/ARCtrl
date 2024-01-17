@@ -1637,7 +1637,7 @@ let testInvestigationFile =
 let testInvestigationFileLD = 
 
     testList "InvestigationLD" [
-        testCase "ReaderSuccess" (fun () -> 
+        ptestCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
@@ -1649,7 +1649,7 @@ let testInvestigationFileLD =
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
         )
 
-        testCase "WriterSuccess" (fun () ->
+        ptestCase "WriterSuccess" (fun () ->
 
             let i = Investigation.fromJsonString Investigation.investigation
 
@@ -1703,7 +1703,7 @@ let testInvestigationFileLD =
         //     Expect.equal i.Remarks List.empty "Remark list should be an empty list."
         // )
 
-        testCase "FullInvestigation" (fun () ->
+        ptestCase "FullInvestigation" (fun () ->
                   
             let comment = 
                 Comment.make (Some "MyComment") (Some "Key") (Some "Value")
@@ -2071,5 +2071,5 @@ let main =
         testPublicationFileLD
         testAssayFile
         testInvestigationFile
-        // testInvestigationFileLD
+        testInvestigationFileLD
     ]
