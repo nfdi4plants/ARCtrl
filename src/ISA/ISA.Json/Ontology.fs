@@ -10,26 +10,23 @@ open System.IO
 
 module AnnotationValue =
 
-    let encoder (options : ConverterOptions) (value : obj) = 
-        match value with
-        | :? AnnotationValue as AnnotationValue.Float f -> 
-            Encode.float f
-        | :? AnnotationValue as AnnotationValue.Int i -> 
-            Encode.int i
-        | :? AnnotationValue as AnnotationValue.Text s -> 
-            Encode.string s
-        | _ -> Encode.nil
-
-    let decoder (options : ConverterOptions) : Decoder<AnnotationValue> =
+    /// <summary>
+    /// This decodes from integer, float or string to string only!
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="s"></param>
+    /// <param name="json"></param>
+    let decoder (options : ConverterOptions) : Decoder<string> =
         fun s json ->
+            // is there a option to decode force to string?
             match Decode.int s json with
-            | Ok i -> Ok (AnnotationValue.Int i)
+            | Ok i -> Ok <| string i
             | Error _ -> 
                 match Decode.float s json with
-                | Ok f -> Ok (AnnotationValue.Float f)
+                | Ok f -> Ok <| string f
                 | Error _ -> 
                     match Decode.string s json with
-                    | Ok s -> Ok (AnnotationValue.Text s)
+                    | Ok s -> Ok <| s
                     | Error e -> Error e
 
 
@@ -38,9 +35,10 @@ module OntologySourceReference =
     let genID (o:OntologySourceReference) = 
         match o.File with
         | Some f -> f
-        | None -> match o.Name with
-                  | Some n -> "#OntologySourceRef_" + n.Replace(" ","_")
-                  | None -> "#DummyOntologySourceRef"
+        | None -> 
+            match o.Name with
+            | Some n -> "#OntologySourceRef_" + n.Replace(" ","_")
+            | None -> "#DummyOntologySourceRef"
 
     let encoder (options : ConverterOptions) (osr : obj) = 
         [
@@ -114,7 +112,7 @@ module OntologyAnnotation =
         Decode.object (fun get ->
             OntologyAnnotation.create(
                 ?Id = get.Optional.Field "@id" GDecode.uri,
-                ?Name = get.Optional.Field "annotationValue" Decode.string,
+                ?Name = get.Optional.Field "annotationValue" (AnnotationValue.decoder options),
                 ?TermSourceREF = get.Optional.Field "termSource" Decode.string,
                 ?TermAccessionNumber = get.Optional.Field "termAccession" Decode.string,
                 ?Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               

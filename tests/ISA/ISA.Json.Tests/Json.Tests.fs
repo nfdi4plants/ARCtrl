@@ -135,33 +135,55 @@ let testDecode =
 
 let testOntoloyAnnotation =
     testList "OntologyAnnotation" [
-        
-            testCase "ReaderSuccess" (fun () -> 
+
+        testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
+            let result = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
 
 
-                let comment = Comment.create(Name = "comment",Value = "This is a comment")
-                let expected = 
-                    OntologyAnnotation.create("protease","Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
+            let comment = Comment.create(Name = "comment",Value = "This is a comment")
+            let expected = 
+                OntologyAnnotation.create("protease","Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
                 
-                Expect.equal result expected "Source did not match"
-            )
-            testCase "WriterOutputMatchesInput" (fun () -> 
+            Expect.equal result expected "Source did not match"
+        )
+        testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
-                let o_out = OntologyAnnotation.toJsonString o_read_in
+            let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
+            let o_out = OntologyAnnotation.toJsonString o_read_in
 
-                let expected = 
-                    OntologyAnnotation.peptidase
-                    |> Utils.wordFrequency
+            let expected = 
+                OntologyAnnotation.peptidase
+                |> Utils.wordFrequency
 
-                let actual = 
-                    o_out
-                    |> Utils.wordFrequency
+            let actual = 
+                o_out
+                |> Utils.wordFrequency
 
-                Expect.sequenceEqual actual expected "Written processInput does not match read process input"
-            )
+            Expect.sequenceEqual actual expected "Written processInput does not match read process input"
+        )
+
+        testCase "Read AnnotationValue - integer" <| fun _ ->
+            let json = """{
+  "annotationValue": 4242424
+}"""
+            let oa = OntologyAnnotation.fromJsonString json
+            let name = Expect.wantSome oa.Name ""
+            Expect.equal name "4242424" ""
+        testCase "Read AnnotationValue - float" <| fun _ ->
+            let json = """{
+  "annotationValue": 42.42
+}"""
+            let oa = OntologyAnnotation.fromJsonString json
+            let name = Expect.wantSome oa.Name ""
+            Expect.equal name "42.42" ""
+        testCase "Read AnnotationValue - string" <| fun _ ->
+            let json = """{
+  "annotationValue": "Example"
+}"""
+            let oa = OntologyAnnotation.fromJsonString json
+            let name = Expect.wantSome oa.Name ""
+            Expect.equal name "Example" ""
     ]
 
 let testOntoloyAnnotationLD =

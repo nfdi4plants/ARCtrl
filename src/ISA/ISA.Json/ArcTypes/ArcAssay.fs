@@ -82,6 +82,15 @@ module ArcAssay =
         Assay.encoder (ConverterOptions()) (a.ToAssay())
         |> Encode.toString 2
 
+    let toArcJsonString (a:ArcAssay) : string =
+        let spaces = 0
+        Encode.toString spaces (encoder a)
+
+    let fromArcJsonString (jsonString: string) =
+        match Decode.fromString decoder jsonString with
+        | Ok a -> a
+        | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
+
 [<AutoOpen>]
 module ArcAssayExtensions =
 
