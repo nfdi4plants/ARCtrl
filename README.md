@@ -48,7 +48,6 @@ Currently we provide some documentation in form of markdown files in the `/docs`
 ### Local Setup
 
 1. `dotnet tool restore`
-2. `dotnet paket install`
 3. `npm install`
 
 Verify correct setup with `./build.cmd runtests` ✨
