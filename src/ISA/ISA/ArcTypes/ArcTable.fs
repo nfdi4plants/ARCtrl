@@ -503,12 +503,17 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     /// <summary>
     /// This function can be used to join two arc tables.
     /// </summary>
+    /// <param name="index">If not set default to append. -1 will also append.</param>
     /// <param name="table">The table to join to this table.</param>
     /// <param name="joinOptions">Can add only headers, header with unitized cell information, headers with values.</param>
     /// <param name="forceReplace">if set to true will replace unique columns.</param>
-    member this.Join(table:ArcTable, ?joinOptions: TableJoinOptions, ?forceReplace: bool, ?SkipFillMissing) : unit =
+    member this.Join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool, ?skipFillMissing) : unit =
         let joinOptions = defaultArg joinOptions TableJoinOptions.Headers
         let forceReplace = defaultArg forceReplace false
+        let skipFillMissing = defaultArg skipFillMissing false
+        let mutable index = defaultArg index this.ColumnCount
+        index <- if index = -1 then this.ColumnCount else index //make -1 default to append to make function usage more fluent.
+        SanityChecks.validateColumnIndex index this.ColumnCount true
         let onlyHeaders = joinOptions = TableJoinOptions.Headers
         let columns = 
             let pre = table.Columns
@@ -528,7 +533,6 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             | WithValues -> pre
         SanityChecks.validateNoDuplicateUniqueColumns columns
         columns |> Array.iter (fun x -> SanityChecks.validateColumn x)
-        let mutable index = this.ColumnCount
         columns
         |> Array.iter (fun col -> 
             let prevHeadersCount = this.Headers.Count
@@ -536,12 +540,12 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             // Check if more headers, otherwise `ArcTableAux.insertColumn` replaced a column and we do not need to increase index.
             if this.Headers.Count > prevHeadersCount then index <- index + 1
         )
-        if not(SkipFillMissing = Some true) then Unchecked.fillMissingCells this.Headers this.Values
+        if not(skipFillMissing) then Unchecked.fillMissingCells this.Headers this.Values
 
-    static member join(table:ArcTable, ?joinOptions: TableJoinOptions, ?forceReplace: bool) =
+    static member join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool) =
         fun (this: ArcTable) ->
             let copy = this.Copy()
-            copy.Join(table,?joinOptions=joinOptions,?forceReplace=forceReplace)
+            copy.Join(table,?index=index,?joinOptions=joinOptions,?forceReplace=forceReplace)
             copy
 
     static member insertParameterValue (t : ArcTable) (p : ProcessParameterValue) : ArcTable = 

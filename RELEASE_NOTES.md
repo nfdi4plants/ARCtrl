@@ -1,3 +1,13 @@
+### 1.0.5+b21e3bc (Released 2024-1-17)
+* Additions:
+    * [[#b21e3bc](https://github.com/nfdi4plants/ARCtrl/commit/b21e3bcb0a5679b5ec5494555d9e9d23822bdc9a)] Extend ArcTable.Join :sparkles::white_check_mark:
+    * [[#a112468](https://github.com/nfdi4plants/ARCtrl/commit/a1124684ea02d23301b67743ff761112fe9389ab)] Update readme badge
+    * [[#a0144e1](https://github.com/nfdi4plants/ARCtrl/commit/a0144e1282bb1e8206378eb6bb8b23619eb666e6)] Merge pull request #295 from nfdi4plants/Freymaurer-patch-1
+    * [[#9e5c1f6](https://github.com/nfdi4plants/ARCtrl/commit/9e5c1f67b676d63dcb69b586089e1e74ca1c2814)] Update README.md
+    * [[#6e0755b](https://github.com/nfdi4plants/ARCtrl/commit/6e0755b5e1c28bb72814247dad1e4ab457e25e40)] update and release version 1.0.4
+* Bugfixes:
+    * [[#8dd99e8](https://github.com/nfdi4plants/ARCtrl/commit/8dd99e82fc93add2950860d6eb185686be21f9ba)] Merge pull request #294 from nfdi4plants/fix_annotationValue_read
+
 ### 1.0.4+167fae8 (Released 2024-1-15)
 * Additions:
     * [[#167fae8](https://github.com/nfdi4plants/ARCtrl/commit/167fae8bcaa14d8e24055f60ac031b13d8b47199)] add json functions for better function names in js :sparkles:

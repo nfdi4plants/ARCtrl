@@ -2081,11 +2081,43 @@ let private tests_UpdateRefWithSheet =
     ]
 
 let private tests_Join = testList "Join" [
+    testList "index" [
+        testCase "ensure default is append" <| fun _ ->
+            let table1 = create_testTable()
+            let columnCount = table1.ColumnCount
+            let table2 = create_testTable()
+            table2.RemoveColumn 0 // rmv input
+            table2.RemoveColumn 0 // rmv output
+            let expectedJoinCount = columnCount + table2.ColumnCount
+            table1.Join(table2)
+            Expect.equal table1.ColumnCount expectedJoinCount "new column count"
+            Expect.equal (table1.Headers.[columnCount]) (table2.Headers.[0]) "column equal"
+        testCase "ensure -1 defaults to append" <| fun _ ->
+            let table1 = create_testTable()
+            let columnCount = table1.ColumnCount
+            let table2 = create_testTable()
+            table2.RemoveColumn 0 // rmv input
+            table2.RemoveColumn 0 // rmv output
+            let expectedJoinCount = columnCount + table2.ColumnCount
+            table1.Join(table2,-1)
+            Expect.equal table1.ColumnCount expectedJoinCount "new column count"
+            Expect.equal (table1.Headers.[columnCount]) (table2.Headers.[0]) "column equal"
+        testCase "insert at start" <| fun _ ->
+            let table1 = create_testTable()
+            let columnCount = table1.ColumnCount
+            let table2 = create_testTable()
+            table2.RemoveColumn 0 // rmv input
+            table2.RemoveColumn 0 // rmv output
+            let expectedJoinCount = columnCount + table2.ColumnCount
+            table1.Join(table2,0)
+            Expect.equal table1.ColumnCount expectedJoinCount "new column count"
+            Expect.equal (table1.Headers.[0]) (table2.Headers.[0]) "column equal"
+    ]
     testList "TableJoinOption.Headers" [
         testCase "Add to empty" <| fun _ ->
             let table = ArcTable.init("MyTable")
             let joinTable = create_testTable()
-            table.Join(joinTable,TableJoinOptions.Headers)
+            table.Join(joinTable,-1,TableJoinOptions.Headers)
             Expect.equal table.ColumnCount 5 "columnCount"
             // test headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
@@ -2098,12 +2130,12 @@ let private tests_Join = testList "Join" [
         testCase "Add to duplicate" <| fun _ ->
             let table = create_testTable()
             let joinTable = create_testTable()
-            let func = fun () -> table.Join(joinTable,TableJoinOptions.Headers)
+            let func = fun () -> table.Join(joinTable,-1,TableJoinOptions.Headers)
             Expect.throws func "This should fail as we try to add multiple inputs/outputs to one table"
         testCase "Add to duplicate, forceReplace" <| fun _ ->
             let table = create_testTable()
             let joinTable = create_testTable()
-            table.Join(joinTable,TableJoinOptions.Headers, true)
+            table.Join(joinTable,-1,TableJoinOptions.Headers,true)
             Expect.equal table.ColumnCount 8 "We expect 8 columns as there are 5 per table with 2 unique 5 + (5-2) = 8"
             // headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
@@ -2123,7 +2155,7 @@ let private tests_Join = testList "Join" [
                 ResizeArray([CompositeHeader.Input IOType.ImageFile]),
                 System.Collections.Generic.Dictionary()
             )
-            table.Join(joinTable,TableJoinOptions.Headers, true)
+            table.Join(joinTable,-1,TableJoinOptions.Headers,true)
             Expect.equal table.ColumnCount 5 "columnCount"
             // test headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.ImageFile) "Here should be new image input"
@@ -2142,7 +2174,7 @@ let private tests_Join = testList "Join" [
                 column_component 
             |]
             joinTable.AddColumns(columns)
-            table.Join(joinTable,TableJoinOptions.WithUnit)
+            table.Join(joinTable,-1,TableJoinOptions.WithUnit)
             Expect.equal table.ColumnCount 1 "column count"
             Expect.equal table.RowCount 0 "row count"
         testCase "Add to empty, with unit" <| fun _ ->
@@ -2158,11 +2190,11 @@ let private tests_Join = testList "Join" [
                 )
             |]
             joinTable.AddColumns(columns)
-            table.Join(joinTable,TableJoinOptions.WithUnit)
+            table.Join(joinTable,-1,TableJoinOptions.WithUnit, skipFillMissing=false)
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
-            Expect.equal table.Values.[0,0] (CompositeCell.createTerm OntologyAnnotation.empty) "empty term cell"
-            Expect.equal table.Values.[1,0] (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createTerm OntologyAnnotation.empty) "empty term cell"
+            Expect.equal table.Values.[(1,0)] (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
     ]
     testList "TableJoinOption.WithValues" [
         testCase "Add to empty" <| fun _ ->
@@ -2178,7 +2210,7 @@ let private tests_Join = testList "Join" [
                 )
             |]
             joinTable.AddColumns(columns)
-            table.Join(joinTable,TableJoinOptions.WithValues)
+            table.Join(joinTable,-1,TableJoinOptions.WithValues)
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
             Expect.equal table.Values.[0,0] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "sciex instrument model"
