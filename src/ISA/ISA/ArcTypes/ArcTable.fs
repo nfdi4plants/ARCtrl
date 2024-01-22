@@ -510,7 +510,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     member this.Join(table:ArcTable, ?index: int, ?joinOptions: TableJoinOptions, ?forceReplace: bool, ?skipFillMissing) : unit =
         let joinOptions = defaultArg joinOptions TableJoinOptions.Headers
         let forceReplace = defaultArg forceReplace false
-        let skipFillMissing = defaultArg skipFillMissing true
+        let skipFillMissing = defaultArg skipFillMissing false
         let mutable index = defaultArg index this.ColumnCount
         index <- if index = -1 then this.ColumnCount else index //make -1 default to append to make function usage more fluent.
         SanityChecks.validateColumnIndex index this.ColumnCount true
