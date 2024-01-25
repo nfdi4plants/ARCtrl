@@ -18,11 +18,15 @@ module ProtocolParameter =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> ProtocolParameter |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", ([GEncode.toJsonString "ProtocolParameter"; GEncode.toJsonString "ArcProtocolParameter"] |> Encode.list)
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> ProtocolParameter |> genID)
+            else 
+                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type", ([GEncode.toJsonString "ProtocolParameter"; GEncode.toJsonString "ArcProtocolParameter"] |> Encode.list)
             GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterName")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.ProtocolParameter.context).GetValue("@context"))
+            if options.IncludeContext then
+                "@context", ROCrateContext.ProtocolParameter.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
@@ -66,11 +70,14 @@ module Component =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Component |> genID)
-            if options.IncludeType then "@type", ([GEncode.toJsonString "Component"; GEncode.toJsonString "ArcComponent"] |> Encode.list)
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> Component |> genID)
+            if options.IncludeType then 
+                "@type", ([GEncode.toJsonString "Component"; GEncode.toJsonString "ArcComponent"] |> Encode.list)
             GEncode.tryInclude "componentName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ComponentName")
             GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ComponentType")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Component.context).GetValue("@context"))
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Component.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
@@ -133,9 +140,12 @@ module Protocol =
 
     let encoder (options : ConverterOptions) (studyName:string Option) (assayName:string Option) (processName:string Option) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Protocol |> (genID studyName assayName processName))
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", ([GEncode.toJsonString "Protocol"; GEncode.toJsonString "ArcProtocol"] |> Encode.list)
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> Protocol |> (genID studyName assayName processName))
+            else 
+                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type", ([GEncode.toJsonString "Protocol"; GEncode.toJsonString "ArcProtocol"] |> Encode.list)
             GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ProtocolType")
             GEncode.tryInclude "description" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
@@ -144,7 +154,8 @@ module Protocol =
             GEncode.tryInclude "parameters" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Parameters")
             GEncode.tryInclude "components" (Component.encoder options) (oa |> GEncode.tryGetPropertyValue "Components")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Protocol.context).GetValue("@context"))
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Protocol.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object

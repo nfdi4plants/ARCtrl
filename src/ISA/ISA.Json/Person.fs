@@ -37,7 +37,8 @@ module Person =
                 ("@type",GEncode.toJsonString "Organization")
                 ("@id",GEncode.toJsonString $"Organization/{affiliation}")
                 ("name",GEncode.toJsonString affiliation)
-                if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Organization.context).GetValue("@context"))
+                let ae = Encode.Auto.generateEncoder()
+                if options.IncludeContext then GEncode.tryInclude "@context" ae (Some ((Decode.Auto.fromString ARCtrl.ISA.Json.ROCrateContext.Organization.context_str) :> obj))
             ]
             |> Encode.object
         else
@@ -45,9 +46,12 @@ module Person =
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Person |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Person"
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> Person |> genID)
+            else 
+                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type", GEncode.toJsonString "Person"
             let oa = oa :?> Person |> Person.setCommentFromORCID
             GEncode.tryInclude "firstName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FirstName")
             GEncode.tryInclude "lastName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "LastName")
@@ -59,7 +63,8 @@ module Person =
             GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa |> GEncode.tryGetPropertyValue "Affiliation")
             GEncode.tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Roles")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Person.context).GetValue("@context"))
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Person.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object

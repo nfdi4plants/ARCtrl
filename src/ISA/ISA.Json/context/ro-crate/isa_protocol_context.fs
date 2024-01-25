@@ -1,8 +1,49 @@
 namespace ARCtrl.ISA.Json.ROCrateContext
 
+#if FABLE_COMPILER
+open Thoth.Json
+#else
+open Thoth.Json.Net
+#endif
+
 module Protocol =
 
-  let context =
+  type IContext = {
+    sdo : string
+    arc : string
+
+    Protocol: string
+    ArcProtocol: string
+
+    name: string
+    protocolType: string
+    description: string
+    version: string
+    components: string
+    parameters: string
+    uri: string
+    comments: string
+  }
+
+  let context_jsonvalue =
+    Encode.object [
+      "sdo", Encode.string "http://schema.org/"
+      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+
+      "Protocol", Encode.string "sdo:Thing"
+      "ArcProtocol", Encode.string "arc:ARC#ARC_00000040"
+
+      "name", Encode.string "arc:ARC#ARC_00000019"
+      "protocolType", Encode.string "arc:ARC#ARC_00000060"
+      "description", Encode.string "arc:ARC#ARC_00000004"
+      "version", Encode.string "arc:ARC#ARC_00000020"
+      "components", Encode.string "arc:ARC#ARC_00000064"
+      "parameters", Encode.string "arc:ARC#ARC_00000062"
+      "uri", Encode.string "arc:ARC#ARC_00000061"
+      "comments", Encode.string "arc:ARC#ARC_00000016"
+    ]
+
+  let context_str =
     """
 {
   "@context": {

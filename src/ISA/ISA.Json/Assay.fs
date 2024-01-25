@@ -38,9 +38,12 @@ module Assay =
     let encoder (options : ConverterOptions) (studyName:string Option) (oa : obj) = 
         let a = ["Assay";"ArcAssay"]
         [
-            if options.SetID then "@id",  GEncode.toJsonString (oa :?> Assay |> genID)
-                else GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", ([ GEncode.toJsonString "Assay";  GEncode.toJsonString "ArcAssay"] |> Encode.list)
+            if options.SetID then 
+                "@id",  GEncode.toJsonString (oa :?> Assay |> genID)
+            else
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then
+                "@type", ([ GEncode.toJsonString "Assay";  GEncode.toJsonString "ArcAssay"] |> Encode.list)
             GEncode.tryInclude "filename"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "MeasurementType")
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "TechnologyType")
@@ -58,7 +61,8 @@ module Assay =
                 match mat with
                 | Some m -> GEncode.tryInclude "materials" (Material.encoder options) (m |> GEncode.tryGetPropertyValue "OtherMaterials")
                 | None -> ()
-            if not options.IsRoCrate then (GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
+            if not options.IsRoCrate then
+                (GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
             let assayName =
@@ -70,8 +74,10 @@ module Assay =
                     | Failure(msg) -> None
             GEncode.tryInclude "processSequence" (Process.encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ARCtrl.ISA.Json.ROCrateContext.Assay.context).GetValue("@context"))
-        ]
+            // if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ARCtrl.ISA.Json.ROCrateContext.Assay.context).GetValue("@context"))
+            if options.IncludeContext then
+                "@context", ROCrateContext.Assay.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 

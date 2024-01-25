@@ -23,9 +23,12 @@ module Investigation =
         //                               | None -> "#EmptyStudy"
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id",  GEncode.toJsonString (oa :?> Investigation |> genID)
-                else GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type",  GEncode.toJsonString "Investigation"
+            if options.SetID then 
+                "@id",  GEncode.toJsonString (oa :?> Investigation |> genID)
+            else 
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type",  GEncode.toJsonString "Investigation"
             GEncode.tryInclude "filename"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "identifier"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
             GEncode.tryInclude "title"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
@@ -37,20 +40,23 @@ module Investigation =
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studies" (Study.encoder options) (oa |> GEncode.tryGetPropertyValue "Studies")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Investigation.context).GetValue("@context"))
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.Investigation.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 
     let encodeRoCrate (options : ConverterOptions) (oa : obj) = 
+        let ae = Encode.Auto.generateEncoder()
         [
             GEncode.tryInclude "@type"  GEncode.toJsonString (Some "CreativeWork")
             GEncode.tryInclude "@id"  GEncode.toJsonString (Some "ro-crate-metadata.json")
             GEncode.tryInclude "about" (encoder options) (Some oa)
-        ]
+            "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
+            if options.IncludeContext then
+                "@context", ROCrateContext.ROCrate.context_jsonvalue
+            ]
         |> GEncode.choose
-        |> List.append ([("conformsTo",Newtonsoft.Json.Linq.JObject.Parse("{\"@id\": \"https://w3id.org/ro/crate/1.1\"}"))])
-        |> List.append (if options.IncludeContext then [("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.ROCrate.context).GetValue("@context"))] else [])
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Investigation> =

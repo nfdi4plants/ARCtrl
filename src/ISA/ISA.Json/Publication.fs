@@ -21,15 +21,18 @@ module Publication =
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Publication |> genID)
-            if options.IncludeType then "@type", GEncode.toJsonString "Publication"
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> Publication |> genID)
+            if options.IncludeType then
+                "@type", GEncode.toJsonString "Publication"
             GEncode.tryInclude "pubMedID" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PubMedID")
             GEncode.tryInclude "doi" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "DOI")
             GEncode.tryInclude "authorList" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Authors")
             GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
             GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Status")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Publication.context).GetValue("@context"))
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Publication.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object

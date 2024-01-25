@@ -1,8 +1,57 @@
 namespace ARCtrl.ISA.Json.ROCrateContext
 
+#if FABLE_COMPILER
+open Thoth.Json
+#else
+open Thoth.Json.Net
+#endif
+
 module Investigation =
 
-  let context =
+  type IContext = {
+    sdo : string
+    arc : string
+    Investigation : string
+
+
+    identifier: string
+    title: string
+    description: string
+    submissionDate: string
+    publicReleaseDate: string
+    publications: string
+    people: string
+    studies: string
+    ontologySourceReferences: string
+    comments: string
+
+    ``publications?``: string
+    filename: string
+  }
+
+  let context_jsonvalue =
+    Encode.object [
+      "sdo", Encode.string "http://schema.org/"
+      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+
+      "Investigation", Encode.string "sdo:Dataset"
+
+      "identifier", Encode.string "sdo:identifier"
+      "title", Encode.string "sdo:headline"
+      "description", Encode.string "sdo:description"
+      "submissionDate", Encode.string "sdo:dateCreated"
+      "publicReleaseDate", Encode.string "sdo:datePublished"
+      "publications", Encode.string "sdo:citation"
+      "people", Encode.string "sdo:creator"
+      "studies", Encode.string "sdo:hasPart"
+      "ontologySourceReferences", Encode.string "sdo:mentions"
+      "comments", Encode.string "sdo:disambiguatingDescription"
+
+      "publications?", Encode.string "sdo:subjectOf?"
+      "filename", Encode.string "sdo:alternateName"
+    ]
+
+  let context_str =
     """
 {
   "@context": {

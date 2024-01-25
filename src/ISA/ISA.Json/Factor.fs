@@ -63,14 +63,17 @@ module Factor =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id",  GEncode.toJsonString (oa :?> Factor |> genID)
-                else GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.SetID then 
+                "@id",  GEncode.toJsonString (oa :?> Factor |> genID)
+            else 
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
             if options.IncludeType then "@type", ([ GEncode.toJsonString "Factor";  GEncode.toJsonString "ArcFactor"] |> Encode.list)
             GEncode.tryInclude "factorName"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorType")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Factor.context).GetValue("@context"))
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.Factor.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 
@@ -116,14 +119,18 @@ module FactorValue =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id",  GEncode.toJsonString (oa :?> FactorValue |> genID)
-                else GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", ([ GEncode.toJsonString "FactorValue";  GEncode.toJsonString "ArcFactorValue"] |> Encode.list)
+            if options.SetID then 
+                "@id",  GEncode.toJsonString (oa :?> FactorValue |> genID)
+            else 
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type", ([ GEncode.toJsonString "FactorValue";  GEncode.toJsonString "ArcFactorValue"] |> Encode.list)
             GEncode.tryInclude "category" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
             GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.FactorValue.context).GetValue("@context"))
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.FactorValue.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 

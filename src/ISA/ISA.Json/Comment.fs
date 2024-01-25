@@ -30,12 +30,16 @@ module Comment =
             | _ ->  GEncode.toJsonString ""
         else
             [
-                if options.SetID then "@id",  GEncode.toJsonString (comment :?> Comment |> genID)
-                    else GEncode.tryInclude "@id"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "ID")
-                if options.IncludeType then "@type",  GEncode.toJsonString "Comment"
+                if options.SetID then
+                    "@id",  GEncode.toJsonString (comment :?> Comment |> genID)
+                else 
+                    GEncode.tryInclude "@id"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "ID")
+                if options.IncludeType then
+                    "@type",  GEncode.toJsonString "Comment"
                 GEncode.tryInclude "name"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Name")
                 GEncode.tryInclude "value"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Value")
-                if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Comment.context).GetValue("@context"))
+                if options.IncludeContext then
+                    "@context", ROCrateContext.Comment.context_jsonvalue
             ]
             |> GEncode.choose
             |> Encode.object

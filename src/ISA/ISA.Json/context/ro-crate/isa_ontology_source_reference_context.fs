@@ -1,8 +1,41 @@
 namespace ARCtrl.ISA.Json.ROCrateContext
 
+#if FABLE_COMPILER
+open Thoth.Json
+#else
+open Thoth.Json.Net
+#endif
+
 module OntologySourceReference =
 
-  let context =
+  type IContext = {
+    sdo : string
+    arc : string
+
+    OntologySourceReference: string
+    
+    description: string
+    name: string
+    file: string
+    version: string
+    comments: string
+  }
+
+  let context_jsonvalue =
+    Encode.object [
+      "sdo", Encode.string "http://schema.org/"
+      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+
+      "OntologySourceReference", Encode.string "sdo:DefinedTermSet"
+      
+      "description", Encode.string "sdo:description"
+      "name", Encode.string "sdo:name"
+      "file", Encode.string "sdo:url"
+      "version", Encode.string "sdo:version"
+      "comments", Encode.string "sdo:disambiguatingDescription"
+    ]
+
+  let context_str =
     """
 {
   "@context": {
@@ -11,8 +44,6 @@ module OntologySourceReference =
 
     "OntologySourceReference": "sdo:DefinedTermSet",
     
-    "type": "sdo:",
-    "title": "sdo:headline",
     "description": "sdo:description",
     "name": "sdo:name",
     "file": "sdo:url",

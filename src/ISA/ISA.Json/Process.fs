@@ -21,13 +21,16 @@ module ProcessParameterValue =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> ProcessParameterValue |> genID)
-            if options.IncludeType then "@type", GEncode.toJsonString "ProcessParameterValue"
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> ProcessParameterValue |> genID)
+            if options.IncludeType then 
+                "@type", ([GEncode.toJsonString "ProcessParameterValue"; GEncode.toJsonString "ArcProcessParameterValue"] |> Encode.list)
             GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
             GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.ProcessParameterValue.context).GetValue("@context"))
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.ProcessParameterValue.context_jsonvalue
+         ]
         |> GEncode.choose
         |> Encode.object
 
@@ -167,9 +170,12 @@ module Process =
 
     let rec encoder (options : ConverterOptions) (studyName:string Option) (assayName:string Option) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Process |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", ([GEncode.toJsonString "Process"; GEncode.toJsonString "ArcProcess"] |> Encode.list)
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> Process |> genID)
+            else 
+                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type", ([GEncode.toJsonString "Process"; GEncode.toJsonString "ArcProcess"] |> Encode.list)
             GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             let processName = (oa :?> Process).Name
             GEncode.tryInclude "executesProtocol" (Protocol.encoder options studyName assayName processName) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
@@ -181,7 +187,8 @@ module Process =
             GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
             GEncode.tryInclude "outputs" (ProcessOutput.encoder options) (oa |> GEncode.tryGetPropertyValue "Outputs")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-            if options.IncludeContext then ("@context",Newtonsoft.Json.Linq.JObject.Parse(ROCrateContext.Process.context).GetValue("@context"))
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Process.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
