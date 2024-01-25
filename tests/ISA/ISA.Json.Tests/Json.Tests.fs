@@ -181,7 +181,7 @@ let testOntoloyAnnotationLD =
             testCase "WriterOutputMatchesInputGivenIDs" (fun () -> 
             
                 let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
-                let o_out = OntologyAnnotation.toJsonldString o_read_in
+                let o_out = OntologyAnnotation.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     OntologyAnnotation.peptidaseLD
@@ -196,7 +196,7 @@ let testOntoloyAnnotationLD =
             testCase "WriterOutputMatchesInputDefaultIDs" (fun () -> 
             
                 let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidaseWithoutIds
-                let o_out = OntologyAnnotation.toJsonldString o_read_in
+                let o_out = OntologyAnnotation.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     OntologyAnnotation.peptidaseWithDefaultLD
@@ -346,7 +346,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.source
-                let o_out = ProcessInput.toJsonldString o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.sourceLD
@@ -361,7 +361,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.sourceWithoutID
-                let o_out = ProcessInput.toJsonldString o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.sourceWithDefaultLD
@@ -390,7 +390,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.material
-                let o_out = ProcessInput.toJsonldString o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.materialLD
@@ -405,7 +405,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.materialWithoutID
-                let o_out = ProcessInput.toJsonldString o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.materialWithDefaultLD
@@ -430,7 +430,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.data
-                    let o_out = ProcessInput.toJsonldString o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.dataLD
@@ -445,7 +445,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.dataWithoutID
-                    let o_out = ProcessInput.toJsonldString o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.dataWithDefaultLD
@@ -475,7 +475,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputSimpleGivenID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimple
-                    let o_out = ProcessInput.toJsonldString o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.sampleSimpleLD
@@ -490,7 +490,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputSimpleDefaultID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimpleWithoutID
-                    let o_out = ProcessInput.toJsonldString o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.sampleSimpleWithDefaultLD
@@ -604,7 +604,7 @@ let testProtocolFileLD =
 
             let writingSuccess = 
                 try 
-                    Protocol.toJsonldString p |> ignore
+                    Protocol.toJsonldStringWithContext p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -631,7 +631,7 @@ let testProtocolFileLD =
             Expect.isSome actual_name "Should be some"
             Expect.equal actual_name (Some exptected_name) "Name exists"
 
-            let o = o_read_in |> Protocol.toJsonldString
+            let o = o_read_in |> Protocol.toJsonldStringWithContext
 
             let expected = 
                 Protocol.protocolLD
@@ -656,7 +656,7 @@ let testProtocolFileLD =
             Expect.isSome actual_name "Should be some"
             Expect.equal actual_name (Some exptected_name) "Name exists"
 
-            let o = o_read_in |> Protocol.toJsonldString
+            let o = o_read_in |> Protocol.toJsonldStringWithContext
 
             let expected = 
                 Protocol.protocolWithDefaultLD
@@ -759,7 +759,7 @@ let testProcessFileLD =
 
             let writingSuccess = 
                 try 
-                    Process.toJsonldString p |> ignore
+                    Process.toJsonldStringWithContext p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -782,7 +782,7 @@ let testProcessFileLD =
 
             let o =
                 Process.fromJsonString Process.process'
-                |> Process.toJsonldString
+                |> Process.toJsonldStringWithContext
 
             let expected = 
                 Process.processLD
@@ -803,7 +803,7 @@ let testProcessFileLD =
 
             let o =
                 Process.fromJsonString Process.processWithoutIDs
-                |> Process.toJsonldString
+                |> Process.toJsonldStringWithContext
 
             let expected = 
                 Process.processWithDefaultLD
@@ -816,6 +816,7 @@ let testProcessFileLD =
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
+
             Expect.sequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
@@ -947,7 +948,7 @@ let testPersonFileLD =
 
             let writingSuccess = 
                 try 
-                    Person.toJsonldString a |> ignore
+                    Person.toJsonldStringWithContext a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -970,7 +971,7 @@ let testPersonFileLD =
 
             let o = 
                 Person.fromJsonString Person.person
-                |> Person.toJsonldString
+                |> Person.toJsonldStringWithContext
 
             let expected = 
                 Person.personLD
@@ -991,7 +992,7 @@ let testPersonFileLD =
 
             let o = 
                 Person.fromJsonString Person.personWithoutID
-                |> Person.toJsonldString
+                |> Person.toJsonldStringWithContext
 
             let expected = 
                 Person.personWithDefaultLD
@@ -1094,7 +1095,7 @@ let testPublicationFileLD =
 
             let writingSuccess = 
                 try 
-                    Publication.toJsonldString a |> ignore
+                    Publication.toJsonldStringWithContext a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1117,7 +1118,7 @@ let testPublicationFileLD =
 
             let o = 
                 Publication.fromJsonString Publication.publication
-                |> Publication.toJsonldString
+                |> Publication.toJsonldStringWithContext
 
             let expected = 
                 Publication.publicationLD
@@ -1596,7 +1597,7 @@ let testInvestigationFile =
 
             let investigation = 
                 Investigation.make 
-                    (Some "Investigations/MyInvestigation")
+                    (Some "./")
                     (Some "isa.investigation.xlsx")
                     (Some "MyInvestigation")
                     (Some "bla bla bla")
@@ -1637,7 +1638,7 @@ let testInvestigationFile =
 let testInvestigationFileLD = 
 
     testList "InvestigationLD" [
-        ptestCase "ReaderSuccess" (fun () -> 
+        testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
@@ -1649,13 +1650,13 @@ let testInvestigationFileLD =
             Expect.isOk readingSuccess (Result.getMessage readingSuccess)
         )
 
-        ptestCase "WriterSuccess" (fun () ->
+        testCase "WriterSuccess" (fun () ->
 
             let i = Investigation.fromJsonString Investigation.investigation
 
             let writingSuccess = 
                 try 
-                    Investigation.toJsonldString i |> ignore
+                    Investigation.toJsonldStringWithContext i |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1677,11 +1678,11 @@ let testInvestigationFileLD =
         // testCase "OutputMatchesInput" (fun () ->
 
         //     let o = 
-        //         Investigation.fromString TestObjects.Investigation.investigation
-        //         |> Investigation.toString
+        //         Investigation.fromJsonString Investigation.investigationLD
+        //         |> Investigation.toJsonldString
 
         //     let expected = 
-        //         TestObjects.Investigation.investigation
+        //         Investigation.investigationLD
         //         |> Utils.extractWords
         //         |> Array.countBy id
         //         |> Array.sortBy fst
@@ -1694,6 +1695,7 @@ let testInvestigationFileLD =
 
         //     Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
         // )
+
         // testCase "HandleEmptyRemarks" (fun () ->
 
         //     let json = "{}"
@@ -1703,18 +1705,10 @@ let testInvestigationFileLD =
         //     Expect.equal i.Remarks List.empty "Remark list should be an empty list."
         // )
 
-        ptestCase "FullInvestigation" (fun () ->
+        testCase "FullInvestigation" (fun () ->
                   
             let comment = 
                 Comment.make (Some "MyComment") (Some "Key") (Some "Value")
-
-            let ontologySourceReference =
-                OntologySourceReference.make
-                    (Some "bla bla")
-                    (Some "filePath.txt")
-                    (Some "OO")
-                    (Some "1.3.3")
-                    (Some [|comment|])
 
             let publicationStatus = 
                 OntologyAnnotation.make 
@@ -2026,29 +2020,31 @@ let testInvestigationFileLD =
                     (Some "bla bla bla\nblabbbbblaaa")
                     (Some (JsonExtensions.DateTime.fromInts 2020 3 15 18 23))
                     (Some (JsonExtensions.Date.fromInts 2020 4 3))                   
-                    (Some [ontologySourceReference])
+                    (None)
                     (Some [publication])
                     (Some [person])
                     (Some [study])
                     (Some [comment])
                     ([Remark.make 0 "hallo"])
 
-            let s = Investigation.toJsonldString investigation
+            let s = Investigation.toJsonldStringWithContext investigation
 
-            // let expected = 
-            //     TestObjects.Investigation.investigationLD
-            //     |> Utils.extractWords
-            //     |> Array.countBy id
-            //     |> Array.sortBy fst
+            //MyExpect.matchingInvestigation s
 
-            // let actual = 
-            //     s
-            //     |> Utils.extractWords
-            //     |> Array.countBy id
-            //     |> Array.sortBy fst
+            let actual = 
+                s 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
-            // Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
-            Expect.sequenceEqual [1;2] [1;2] "bla"
+            let expected = 
+                TestObjects.Json.Investigation.investigationLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.equal actual expected "Written investigation file does not match read investigation file"
+            // Expect.sequenceEqual o i "Written investigation file does not match read investigation file"
 
         )
     ]
