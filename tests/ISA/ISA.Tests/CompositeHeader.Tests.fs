@@ -330,7 +330,7 @@ let tests_ToTerm = testList "ToTerm" [
 ]
 
 let tests_GetHashCode = testList "GetHashCode" [
-    ftestCase "SimpleParamEqual" (fun () ->
+    testCase "SimpleParamEqual" (fun () ->
         let oa1 = OntologyAnnotation.fromString("MyTerm",tan = "LOL:123")
         let p1 = CompositeHeader.Parameter(oa1)
         let oa2 = OntologyAnnotation.fromString("MyTerm",tan = "LOL:123")
@@ -339,7 +339,7 @@ let tests_GetHashCode = testList "GetHashCode" [
         let h2 = p2.GetHashCode()
         Expect.equal h1 h2 "Same Param Headers should have equal hash"    
     )
-    ftestCase "SimpleParamUnequal" (fun () ->
+    testCase "SimpleParamUnequal" (fun () ->
         let oa1 = OntologyAnnotation.fromString("MyTerm",tan = "LOL:123")
         let p1 = CompositeHeader.Parameter(oa1)
         let oa2 = OntologyAnnotation.fromString("YourTerm",tan = "ROFL:321")
@@ -348,7 +348,7 @@ let tests_GetHashCode = testList "GetHashCode" [
         let h2 = p2.GetHashCode()
         Expect.notEqual h1 h2 "Different Param Headers should have unequal hash"    
     )
-    ftestCase "EmptyParam" (fun () ->
+    testCase "EmptyParam" (fun () ->
         let oa1 = OntologyAnnotation.empty
         let p1 = CompositeHeader.Parameter(oa1)
         let oa2 = OntologyAnnotation.empty
@@ -357,7 +357,7 @@ let tests_GetHashCode = testList "GetHashCode" [
         let h2 = p2.GetHashCode()
         Expect.equal h1 h2 "Empty Param Headers should be equal"    
     )
-    ftestCase "EmptyParamAndFactor" (fun () ->
+    testCase "EmptyParamAndFactor" (fun () ->
         let oa1 = OntologyAnnotation.empty
         let p1 = CompositeHeader.Parameter(oa1)
         let oa2 = OntologyAnnotation.empty
@@ -366,21 +366,21 @@ let tests_GetHashCode = testList "GetHashCode" [
         let h2 = f2.GetHashCode()
         Expect.notEqual h1 h2 "Empty Param Header should be unequal to empty factor"    
     )
-    ftestCase "InputSameType" (fun () ->
+    testCase "InputSameType" (fun () ->
         let i1 = CompositeHeader.Input(IOType.Sample)
         let i2 = CompositeHeader.Input(IOType.Sample)
         let h1 = i1.GetHashCode()
         let h2 = i2.GetHashCode()
         Expect.equal h1 h2 "Input Sample Headers should be equal"    
     )
-    ftestCase "InputDifferentType" (fun () ->
+    testCase "InputDifferentType" (fun () ->
         let i1 = CompositeHeader.Input(IOType.Sample)
         let i2 = CompositeHeader.Input(IOType.RawDataFile)
         let h1 = i1.GetHashCode()
         let h2 = i2.GetHashCode()
         Expect.notEqual h1 h2 "Input Sample Header should be unequal to Input Data"    
     )
-    ftestCase "InputOutputSameType" (fun () ->
+    testCase "InputOutputSameType" (fun () ->
         let i = CompositeHeader.Input(IOType.Sample)
         let o = CompositeHeader.Output(IOType.Sample)
         let h1 = i.GetHashCode()

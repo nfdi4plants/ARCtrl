@@ -261,21 +261,21 @@ let ontologyAnnotationTests =
         let otherParseable = "http://www.ebi.ac.uk/efo/EFO_0000721"
         let other = "Unparseable"
         testList "GetHashCode" [
-            ftestCase "Empty" (fun () ->
+            testCase "Empty" (fun () ->
                 let oa1 = OntologyAnnotation.fromString()
                 let oa2 = OntologyAnnotation.fromString()
                 let h1 = oa1.GetHashCode()
                 let h2 = oa2.GetHashCode()
                 Expect.equal h1 h2 "Hashes should be equal"    
             )
-            ftestCase "Equal" (fun () ->
+            testCase "Equal" (fun () ->
                 let oa1 = OntologyAnnotation.fromString("MyOntology",tsr = "EFO",tan = uri)
                 let oa2 = OntologyAnnotation.fromString("MyOntology",tsr = "EFO",tan = uri)
                 let h1 = oa1.GetHashCode()
                 let h2 = oa2.GetHashCode()
                 Expect.equal h1 h2 "Hashes should be equal"
             )
-            ftestCase "Different" (fun () ->
+            testCase "Different" (fun () ->
                 let oa1 = OntologyAnnotation.fromString("MyOntology",tsr = "EFO",tan = uri)
                 let oa2 = OntologyAnnotation.fromString("YourOntology",tsr = "NCBI",tan = "http://purl.obolibrary.org/obo/NCBI_0000123")
                 let h1 = oa1.GetHashCode()
