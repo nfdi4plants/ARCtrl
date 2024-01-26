@@ -1,3 +1,15 @@
+### 1.0.6+c6d86b1 (Released 2024-1-26)
+* Additions:
+    * [[#c6d86b1](https://github.com/nfdi4plants/ARCtrl/commit/c6d86b104392447cc980bf3e16fa64bfb27ca5c6)] small performance improvement for reading ARCs
+    * [[#3f8c788](https://github.com/nfdi4plants/ARCtrl/commit/3f8c7883f6fc40f1be910afe20b19f0b3d0fad1d)] add case for speedtest project
+    * [[#a90a1f1](https://github.com/nfdi4plants/ARCtrl/commit/a90a1f1e135497e7613975c84ae1271849a6944f)] improve and test speed of investigation file writer
+    * [[#123f209](https://github.com/nfdi4plants/ARCtrl/commit/123f209fda76be179fd18cb96eab5871e764f38a)] Merge pull request #299 from nfdi4plants/small_cleanup
+    * [[#70d3c85](https://github.com/nfdi4plants/ARCtrl/commit/70d3c856c3aa45135b0ef1463f399437fefb8a4c)] Merge pull request #297 from nfdi4plants/table_join_296
+    * [[#13428ca](https://github.com/nfdi4plants/ARCtrl/commit/13428ca85f366eb13ba02b8557bec52bc643bab8)] Revert unintended change in default!
+    * [[#66b15f6](https://github.com/nfdi4plants/ARCtrl/commit/66b15f67214f10ee3cfbb97cca0ccf738c8ffb6c)] Update to v1.0.5
+* Deletions:
+    * [[#d121e5c](https://github.com/nfdi4plants/ARCtrl/commit/d121e5ccddf2715958069283e272369fc731b6a2)] remove playground and move speedtest folders
+
 ### 1.0.5+b21e3bc (Released 2024-1-17)
 * Additions:
     * [[#b21e3bc](https://github.com/nfdi4plants/ARCtrl/commit/b21e3bcb0a5679b5ec5494555d9e9d23822bdc9a)] Extend ArcTable.Join :sparkles::white_check_mark:
