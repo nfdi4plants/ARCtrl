@@ -696,7 +696,8 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
                 let headers  = table.Headers |> ResizeArray
                 let rows = 
                     indexGroup
-                    |> Array.map (fun i -> table.GetRow(i))
+                    // Max row index is the last row index of the table, so no validation needed
+                    |> Array.map (fun i -> table.GetRow(i,SkipValidation = true))
                 ArcTable.createFromRows(table.Name,headers,rows)
             )
             
