@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ManyStudies.fs" />
     <Compile Include="LargeStudy.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
