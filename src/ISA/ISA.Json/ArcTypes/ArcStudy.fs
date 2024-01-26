@@ -70,6 +70,15 @@ module ArcStudy =
         Study.encoder (ConverterOptions()) (a.ToStudy(assays))
         |> Encode.toString 2
 
+    let toArcJsonString (a:ArcStudy) : string =
+        let spaces = 0
+        Encode.toString spaces (encoder a)
+
+    let fromArcJsonString (jsonString: string) =
+        match Decode.fromString decoder jsonString with
+        | Ok a -> a
+        | Error e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e
+
 [<AutoOpen>]
 module ArcStudyExtensions =
 

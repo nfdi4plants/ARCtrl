@@ -65,7 +65,7 @@ let testEncode =
 
             let result' = result.Value
 
-            let expected = AnnotationValue.Text "MyAnnotation"
+            let expected = "MyAnnotation"
 
             Expect.equal result' expected "Retrieved value did not match"
         )
@@ -135,33 +135,55 @@ let testDecode =
 
 let testOntoloyAnnotation =
     testList "OntologyAnnotation" [
-        
-            testCase "ReaderSuccess" (fun () -> 
+
+        testCase "ReaderSuccess" (fun () -> 
            
-                let result = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
+            let result = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
 
 
-                let comment = Comment.create(Name = "comment",Value = "This is a comment")
-                let expected = 
-                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
+            let comment = Comment.create(Name = "comment",Value = "This is a comment")
+            let expected = 
+                OntologyAnnotation.create("protease","Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
                 
-                Expect.equal result expected "Source did not match"
-            )
-            testCase "WriterOutputMatchesInput" (fun () -> 
+            Expect.equal result expected "Source did not match"
+        )
+        testCase "WriterOutputMatchesInput" (fun () -> 
             
-                let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
-                let o_out = OntologyAnnotation.toJsonString o_read_in
+            let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
+            let o_out = OntologyAnnotation.toJsonString o_read_in
 
-                let expected = 
-                    OntologyAnnotation.peptidase
-                    |> Utils.wordFrequency
+            let expected = 
+                OntologyAnnotation.peptidase
+                |> Utils.wordFrequency
 
-                let actual = 
-                    o_out
-                    |> Utils.wordFrequency
+            let actual = 
+                o_out
+                |> Utils.wordFrequency
 
-                Expect.sequenceEqual actual expected "Written processInput does not match read process input"
-            )
+            Expect.sequenceEqual actual expected "Written processInput does not match read process input"
+        )
+
+        testCase "Read AnnotationValue - integer" <| fun _ ->
+            let json = """{
+  "annotationValue": 4242424
+}"""
+            let oa = OntologyAnnotation.fromJsonString json
+            let name = Expect.wantSome oa.Name ""
+            Expect.equal name "4242424" ""
+        testCase "Read AnnotationValue - float" <| fun _ ->
+            let json = """{
+  "annotationValue": 42.42
+}"""
+            let oa = OntologyAnnotation.fromJsonString json
+            let name = Expect.wantSome oa.Name ""
+            Expect.equal name "42.42" ""
+        testCase "Read AnnotationValue - string" <| fun _ ->
+            let json = """{
+  "annotationValue": "Example"
+}"""
+            let oa = OntologyAnnotation.fromJsonString json
+            let name = Expect.wantSome oa.Name ""
+            Expect.equal name "Example" ""
     ]
 
 let testOntoloyAnnotationLD =
@@ -174,7 +196,7 @@ let testOntoloyAnnotationLD =
 
                 let comment = Comment.create(Name = "comment",Value = "This is a comment")
                 let expected = 
-                    OntologyAnnotation.create("protease",AnnotationValue.Text "Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
+                    OntologyAnnotation.create("protease","Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965",Comments = [|comment|])
                 
                 Expect.equal result expected "Source did not match"
             )
@@ -1297,7 +1319,7 @@ let testInvestigationFile =
             let publicationStatus = 
                 OntologyAnnotation.make 
                     (Some "OntologyTerm/Published")
-                    (Some (AnnotationValue.Text "published"))
+                    (Some "published")
                     (Some "pso")
                     (Some "http://purl.org/spar/pso/published")
                     (Some [|comment|])
@@ -1314,7 +1336,7 @@ let testInvestigationFile =
             let role = 
                 OntologyAnnotation.make 
                     (Some "OntologyTerm/SoftwareDeveloperRole")
-                    (Some (AnnotationValue.Text "software developer role"))
+                    (Some "software developer role")
                     (Some "swo")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
                     (Some [|comment|])
@@ -1340,7 +1362,7 @@ let testInvestigationFile =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Organism")
-                            (Some (AnnotationValue.Text "organism"))
+                            (Some "organism")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [|comment|])
@@ -1353,7 +1375,7 @@ let testInvestigationFile =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Organism")
-                            (Some (AnnotationValue.Text "Arabidopsis thaliana"))
+                            (Some "Arabidopsis thaliana")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [|comment|])
@@ -1364,7 +1386,7 @@ let testInvestigationFile =
             let studyDesignDescriptor = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/TimeSeries")
-                    (Some (AnnotationValue.Text "Time Series Analysis"))
+                    (Some "Time Series Analysis")
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
                     (Some [|comment|])
@@ -1372,7 +1394,7 @@ let testInvestigationFile =
             let protocolType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/GrowthProtocol")
-                    (Some (AnnotationValue.Text "growth protocol"))
+                    (Some "growth protocol")
                     (Some "dfbo")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
                     (Some [|comment|])
@@ -1383,7 +1405,7 @@ let testInvestigationFile =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Temperature")
-                            (Some (AnnotationValue.Text "temperature unit"))
+                            (Some "temperature unit")
                             (Some "uo")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
                             (Some [|comment|])
@@ -1392,7 +1414,7 @@ let testInvestigationFile =
             let parameterUnit =              
                 OntologyAnnotation.make
                     (Some "OntologyTerm/DegreeCelsius")
-                    (Some (AnnotationValue.Text "degree celsius"))
+                    (Some "degree celsius")
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
                     (Some [|comment|])
@@ -1409,7 +1431,7 @@ let testInvestigationFile =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/RTPCR")
-                            (Some (AnnotationValue.Text "real-time PCR machine"))
+                            (Some "real-time PCR machine")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
                             (Some [|comment|])
@@ -1419,7 +1441,7 @@ let testInvestigationFile =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/PCR")
-                            (Some (AnnotationValue.Text "PCR instrument"))
+                            (Some "PCR instrument")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
                             (Some [|comment|])
@@ -1444,7 +1466,7 @@ let testInvestigationFile =
                         (Some (
                             OntologyAnnotation.make
                                 (Some "OntologyTerm/Time")
-                                (Some (AnnotationValue.Text "time"))
+                                (Some "time")
                                 (Some "pato")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
                                 (Some [|comment|])
@@ -1454,7 +1476,7 @@ let testInvestigationFile =
             let factorUnit = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/Hour")
-                    (Some (AnnotationValue.Text "hour"))
+                    (Some "hour")
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
                     (Some [|comment|])
@@ -1542,7 +1564,7 @@ let testInvestigationFile =
             let measurementType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/LFQuantification")
-                    (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
+                    (Some "LC/MS Label-Free Quantification")
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
                     (Some [|comment|])
@@ -1550,7 +1572,7 @@ let testInvestigationFile =
             let technologyType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/TOF")
-                    (Some (AnnotationValue.Text "Time-of-Flight"))
+                    (Some "Time-of-Flight")
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
                     (Some [|comment|])
@@ -1713,7 +1735,7 @@ let testInvestigationFileLD =
             let publicationStatus = 
                 OntologyAnnotation.make 
                     (Some "OntologyTerm/Published")
-                    (Some (AnnotationValue.Text "published"))
+                    (Some "published")
                     (Some "pso")
                     (Some "http://purl.org/spar/pso/published")
                     (Some [|comment|])
@@ -1730,7 +1752,7 @@ let testInvestigationFileLD =
             let role = 
                 OntologyAnnotation.make 
                     (Some "OntologyTerm/SoftwareDeveloperRole")
-                    (Some (AnnotationValue.Text "software developer role"))
+                    (Some "software developer role")
                     (Some "swo")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
                     (Some [|comment|])
@@ -1756,7 +1778,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Organism")
-                            (Some (AnnotationValue.Text "organism"))
+                            (Some "organism")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [|comment|])
@@ -1769,7 +1791,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Organism")
-                            (Some (AnnotationValue.Text "Arabidopsis thaliana"))
+                            (Some "Arabidopsis thaliana")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [|comment|])
@@ -1780,7 +1802,7 @@ let testInvestigationFileLD =
             let studyDesignDescriptor = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/TimeSeries")
-                    (Some (AnnotationValue.Text "Time Series Analysis"))
+                    (Some "Time Series Analysis")
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
                     (Some [|comment|])
@@ -1788,7 +1810,7 @@ let testInvestigationFileLD =
             let protocolType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/GrowthProtocol")
-                    (Some (AnnotationValue.Text "growth protocol"))
+                    (Some "growth protocol")
                     (Some "dfbo")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
                     (Some [|comment|])
@@ -1799,7 +1821,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Temperature")
-                            (Some (AnnotationValue.Text "temperature unit"))
+                            (Some "temperature unit")
                             (Some "uo")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
                             (Some [|comment|])
@@ -1808,7 +1830,7 @@ let testInvestigationFileLD =
             let parameterUnit =              
                 OntologyAnnotation.make
                     (Some "OntologyTerm/DegreeCelsius")
-                    (Some (AnnotationValue.Text "degree celsius"))
+                    (Some "degree celsius")
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
                     (Some [|comment|])
@@ -1825,7 +1847,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/RTPCR")
-                            (Some (AnnotationValue.Text "real-time PCR machine"))
+                            (Some "real-time PCR machine")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
                             (Some [|comment|])
@@ -1835,7 +1857,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/PCR")
-                            (Some (AnnotationValue.Text "PCR instrument"))
+                            (Some "PCR instrument")
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
                             (Some [|comment|])
@@ -1860,7 +1882,7 @@ let testInvestigationFileLD =
                         (Some (
                             OntologyAnnotation.make
                                 (Some "OntologyTerm/Time")
-                                (Some (AnnotationValue.Text "time"))
+                                (Some "time")
                                 (Some "pato")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
                                 (Some [|comment|])
@@ -1870,7 +1892,7 @@ let testInvestigationFileLD =
             let factorUnit = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/Hour")
-                    (Some (AnnotationValue.Text "hour"))
+                    (Some "hour")
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
                     (Some [|comment|])
@@ -1958,7 +1980,7 @@ let testInvestigationFileLD =
             let measurementType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/LFQuantification")
-                    (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
+                    (Some "LC/MS Label-Free Quantification")
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
                     (Some [|comment|])
@@ -1966,7 +1988,7 @@ let testInvestigationFileLD =
             let technologyType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/TOF")
-                    (Some (AnnotationValue.Text "Time-of-Flight"))
+                    (Some "Time-of-Flight")
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
                     (Some [|comment|])
@@ -2056,7 +2078,7 @@ let testInvestigationFileLD =
             let publicationStatus = 
                 OntologyAnnotation.make 
                     (Some "OntologyTerm/Published")
-                    (Some (AnnotationValue.Text "published"))
+                    (Some ("published"))
                     (Some "pso")
                     (Some "http://purl.org/spar/pso/published")
                     (Some [|comment|])
@@ -2073,7 +2095,7 @@ let testInvestigationFileLD =
             let role = 
                 OntologyAnnotation.make 
                     (Some "OntologyTerm/SoftwareDeveloperRole")
-                    (Some (AnnotationValue.Text "software developer role"))
+                    (Some ("software developer role"))
                     (Some "swo")
                     (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
                     (Some [|comment|])
@@ -2099,7 +2121,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Organism")
-                            (Some (AnnotationValue.Text "organism"))
+                            (Some ("organism"))
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [|comment|])
@@ -2112,7 +2134,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Organism")
-                            (Some (AnnotationValue.Text "Arabidopsis thaliana"))
+                            (Some ("Arabidopsis thaliana"))
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0100026")
                             (Some [|comment|])
@@ -2123,7 +2145,7 @@ let testInvestigationFileLD =
             let studyDesignDescriptor = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/TimeSeries")
-                    (Some (AnnotationValue.Text "Time Series Analysis"))
+                    (Some ("Time Series Analysis"))
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
                     (Some [|comment|])
@@ -2131,7 +2153,7 @@ let testInvestigationFileLD =
             let protocolType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/GrowthProtocol")
-                    (Some (AnnotationValue.Text "growth protocol"))
+                    (Some ("growth protocol"))
                     (Some "dfbo")
                     (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
                     (Some [|comment|])
@@ -2142,7 +2164,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/Temperature")
-                            (Some (AnnotationValue.Text "temperature unit"))
+                            (Some ("temperature unit"))
                             (Some "uo")
                             (Some "http://purl.obolibrary.org/obo/UO_0000005")
                             (Some [|comment|])
@@ -2151,7 +2173,7 @@ let testInvestigationFileLD =
             let parameterUnit =              
                 OntologyAnnotation.make
                     (Some "OntologyTerm/DegreeCelsius")
-                    (Some (AnnotationValue.Text "degree celsius"))
+                    (Some ("degree celsius"))
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000027")
                     (Some [|comment|])
@@ -2168,7 +2190,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/RTPCR")
-                            (Some (AnnotationValue.Text "real-time PCR machine"))
+                            (Some ("real-time PCR machine"))
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0001110")
                             (Some [|comment|])
@@ -2178,7 +2200,7 @@ let testInvestigationFileLD =
                     (Some (
                         OntologyAnnotation.make
                             (Some "OntologyTerm/PCR")
-                            (Some (AnnotationValue.Text "PCR instrument"))
+                            (Some ("PCR instrument"))
                             (Some "obi")
                             (Some "http://purl.obolibrary.org/obo/OBI_0000989")
                             (Some [|comment|])
@@ -2203,7 +2225,7 @@ let testInvestigationFileLD =
                         (Some (
                             OntologyAnnotation.make
                                 (Some "OntologyTerm/Time")
-                                (Some (AnnotationValue.Text "time"))
+                                (Some ("time"))
                                 (Some "pato")
                                 (Some "http://purl.obolibrary.org/obo/PATO_0000165")
                                 (Some [|comment|])
@@ -2213,7 +2235,7 @@ let testInvestigationFileLD =
             let factorUnit = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/Hour")
-                    (Some (AnnotationValue.Text "hour"))
+                    (Some ("hour"))
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000032")
                     (Some [|comment|])
@@ -2301,7 +2323,7 @@ let testInvestigationFileLD =
             let measurementType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/LFQuantification")
-                    (Some (AnnotationValue.Text "LC/MS Label-Free Quantification"))
+                    (Some ("LC/MS Label-Free Quantification"))
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
                     (Some [|comment|])
@@ -2309,7 +2331,7 @@ let testInvestigationFileLD =
             let technologyType = 
                 OntologyAnnotation.make
                     (Some "OntologyTerm/TOF")
-                    (Some (AnnotationValue.Text "Time-of-Flight"))
+                    (Some ("Time-of-Flight"))
                     (Some "ncit")
                     (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
                     (Some [|comment|])

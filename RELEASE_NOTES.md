@@ -1,3 +1,32 @@
+### 1.0.5+b21e3bc (Released 2024-1-17)
+* Additions:
+    * [[#b21e3bc](https://github.com/nfdi4plants/ARCtrl/commit/b21e3bcb0a5679b5ec5494555d9e9d23822bdc9a)] Extend ArcTable.Join :sparkles::white_check_mark:
+    * [[#a112468](https://github.com/nfdi4plants/ARCtrl/commit/a1124684ea02d23301b67743ff761112fe9389ab)] Update readme badge
+    * [[#a0144e1](https://github.com/nfdi4plants/ARCtrl/commit/a0144e1282bb1e8206378eb6bb8b23619eb666e6)] Merge pull request #295 from nfdi4plants/Freymaurer-patch-1
+    * [[#9e5c1f6](https://github.com/nfdi4plants/ARCtrl/commit/9e5c1f67b676d63dcb69b586089e1e74ca1c2814)] Update README.md
+    * [[#6e0755b](https://github.com/nfdi4plants/ARCtrl/commit/6e0755b5e1c28bb72814247dad1e4ab457e25e40)] update and release version 1.0.4
+* Bugfixes:
+    * [[#8dd99e8](https://github.com/nfdi4plants/ARCtrl/commit/8dd99e82fc93add2950860d6eb185686be21f9ba)] Merge pull request #294 from nfdi4plants/fix_annotationValue_read
+
+### 1.0.4+167fae8 (Released 2024-1-15)
+* Additions:
+    * [[#167fae8](https://github.com/nfdi4plants/ARCtrl/commit/167fae8bcaa14d8e24055f60ac031b13d8b47199)] add json functions for better function names in js :sparkles:
+
+### 1.0.3+533dab0 (Released 2024-1-15)
+* Additions:
+    * [[#208839a](https://github.com/nfdi4plants/ARCtrl/commit/208839a2d50e3c7ffd2722a5e65262bea1e185cd)] change annotationValue of Ontology Annotation to string
+    * [[#533dab0](https://github.com/nfdi4plants/ARCtrl/commit/533dab0039404d3dc0ba8e9612e1a083198ee056)] Add tests for edgecase :white_check_mark:
+* Bugfixes:
+    * [[#d42faaf](https://github.com/nfdi4plants/ARCtrl/commit/d42faaf5e41712b06991b111894bb6a7b3b09d58)] Fix template read issue. annotationvalue not correctly read :bug:
+
+### 1.0.2+533dab0 (Released 2024-1-15)
+* Additions:
+    * [[#cc7f35f](https://github.com/nfdi4plants/ARCtrl/commit/cc7f35f911b3960c9996276f808d8ee4bc7204d3)] add speedtest and make some small experimental changes
+    * [[#e85dba4](https://github.com/nfdi4plants/ARCtrl/commit/e85dba44d675a0896cf185c4ee39e5047896eb9c)] make some validation and checks optional for speed improvements
+    * [[#208839a](https://github.com/nfdi4plants/ARCtrl/commit/208839a2d50e3c7ffd2722a5e65262bea1e185cd)] change annotationValue of Ontology Annotation to string
+    * [[#a1921ef](https://github.com/nfdi4plants/ARCtrl/commit/a1921ef104e4f168cb6846b2b9de886e4ae774da)] make fillmissingcells optional for addcolumns
+    * [[#2aca309](https://github.com/nfdi4plants/ARCtrl/commit/2aca309623061171dc1c3ec3897d2c5cd388bf11)] Make ArcStudy IO performance test more strict
+
 ### 1.0.1+5576d43 (Released 2023-12-21)
 * Additions:
     * [[#66ff8f4](https://github.com/nfdi4plants/ARCtrl/commit/66ff8f4bb902e1234e84dfaec5411fd7ea5237b3)] improve github ci

@@ -40,7 +40,7 @@ type MaterialAttribute =
     /// Returns the name of the characteristic as string
     member this.TryNameText =
         this.CharacteristicType
-        |> Option.bind (fun oa -> oa.TryNameText)
+        |> Option.bind (fun oa -> oa.Name)
 
     member this.MapCategory(f : OntologyAnnotation -> OntologyAnnotation) =
         {this with CharacteristicType = Option.map f this.CharacteristicType}

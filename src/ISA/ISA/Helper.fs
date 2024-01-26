@@ -71,6 +71,9 @@ module ResizeArray =
                 b.Add(i)
         b
 
+    let isEmpty (a : ResizeArray<_>) =
+        a.Count = 0
+
 module HashCodes =
 
     let boxHashOption (a: 'a option) : obj =

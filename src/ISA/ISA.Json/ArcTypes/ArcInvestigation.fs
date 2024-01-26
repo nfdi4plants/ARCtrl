@@ -76,6 +76,15 @@ module ArcInvestigation =
         Investigation.encoder (ConverterOptions()) (a.ToInvestigation())
         |> Encode.toString 2
 
+    let toArcJsonString (a:ArcInvestigation) : string =
+        let spaces = 0
+        Encode.toString spaces (encoder a)
+
+    let fromArcJsonString (jsonString: string) =
+        match Decode.fromString decoder jsonString with
+        | Ok a -> a
+        | Error e -> failwithf "Error. Unable to parse json string to ArcInvestigation: %s" e
+
 [<AutoOpen>]
 module ArcInvestigationExtensions =
 

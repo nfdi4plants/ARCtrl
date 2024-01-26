@@ -66,7 +66,7 @@ type CompositeCell =
     member this.ToUnitizedCell() =
         match this with
         | Unitized _ -> this
-        | FreeText text -> CompositeCell.Unitized ("", OntologyAnnotation.create(Name = AnnotationValue.Text text))
+        | FreeText text -> CompositeCell.Unitized ("", OntologyAnnotation.create(Name = text))
         | Term term -> CompositeCell.Unitized ("", term)
 
     /// FreeText string will be converted to term name.
@@ -76,7 +76,7 @@ type CompositeCell =
         match this with
         | Term _ -> this
         | Unitized (_,unit) -> CompositeCell.Term unit
-        | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(Name = AnnotationValue.Text text))
+        | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(Name = text))
 
     /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
     member this.ToFreeTextCell() =

@@ -16,7 +16,6 @@
     <Compile Include="JsonTypes\URI.fs" />
     <Compile Include="JsonTypes\Comment.fs" />
     <Compile Include="JsonTypes\CommentList.fs" />
-    <Compile Include="JsonTypes\AnnotationValue.fs" />
     <Compile Include="JsonTypes\OntologyAnnotation.fs" />
     <Compile Include="JsonTypes\OntologySourceReference.fs" />
     <Compile Include="JsonTypes\Value.fs" />
