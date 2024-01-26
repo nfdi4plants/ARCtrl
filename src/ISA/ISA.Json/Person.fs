@@ -38,7 +38,8 @@ module Person =
                 ("@id",GEncode.toJsonString $"Organization/{affiliation}")
                 ("name",GEncode.toJsonString affiliation)
                 let ae = Encode.Auto.generateEncoder()
-                if options.IncludeContext then GEncode.tryInclude "@context" ae (Some ((Decode.Auto.fromString ARCtrl.ISA.Json.ROCrateContext.Organization.context_str) :> obj))
+                if options.IncludeContext then
+                    "@context", ROCrateContext.Organization.context_jsonvalue
             ]
             |> Encode.object
         else

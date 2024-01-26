@@ -21,28 +21,20 @@ module Comment =
                   | None -> "#EmptyComment"
 
     let encoder (options : ConverterOptions) (comment : obj) = 
-        if options.IsRoCrate then
-            let c = comment :?> Comment
-            match c.Name,c.Value with
-            | Some n, Some v -> GEncode.toJsonString (n+":"+v)
-            | Some n, None ->  GEncode.toJsonString n
-            | None, Some v ->  GEncode.toJsonString v
-            | _ ->  GEncode.toJsonString ""
-        else
-            [
-                if options.SetID then
-                    "@id",  GEncode.toJsonString (comment :?> Comment |> genID)
-                else 
-                    GEncode.tryInclude "@id"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "ID")
-                if options.IncludeType then
-                    "@type",  GEncode.toJsonString "Comment"
-                GEncode.tryInclude "name"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Name")
-                GEncode.tryInclude "value"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Value")
-                if options.IncludeContext then
-                    "@context", ROCrateContext.Comment.context_jsonvalue
-            ]
-            |> GEncode.choose
-            |> Encode.object
+        [
+            if options.SetID then
+                "@id",  GEncode.toJsonString (comment :?> Comment |> genID)
+            else 
+                GEncode.tryInclude "@id"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then
+                "@type",  GEncode.toJsonString "Comment"
+            GEncode.tryInclude "name"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "value"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Value")
+            if options.IncludeContext then
+                "@context", ROCrateContext.Comment.context_jsonvalue
+        ]
+        |> GEncode.choose
+        |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Comment> =
         Decode.object (fun get ->

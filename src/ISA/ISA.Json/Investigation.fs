@@ -47,7 +47,6 @@ module Investigation =
         |> Encode.object
 
     let encodeRoCrate (options : ConverterOptions) (oa : obj) = 
-        let ae = Encode.Auto.generateEncoder()
         [
             GEncode.tryInclude "@type"  GEncode.toJsonString (Some "CreativeWork")
             GEncode.tryInclude "@id"  GEncode.toJsonString (Some "ro-crate-metadata.json")
