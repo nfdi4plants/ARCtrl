@@ -332,6 +332,7 @@ module Unchecked =
         /// Store start rowCount here, so it does not get changed midway through
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
+        let numNewRows = newRows.Length
         let increaseRowIndices =  
             // Only do this if column is inserted and not appended!
             if index < rowCount then
@@ -340,7 +341,7 @@ module Unchecked =
                 // start with last row index and go down to `index`
                 for rowIndex = lastRowIndex downto index do
                     for columnIndex in 0 .. (columnCount-1) do
-                        moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+1) values
+                        moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+numNewRows) values
         let mutable currentRowIndex = index
         for row in newRows do
             /// Then we can set the new row at `index`
