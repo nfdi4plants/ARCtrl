@@ -21,11 +21,11 @@ let main argv =
         AddRows.newF t2
         1  
     elif Array.contains "--fillMissing" argv then
-        let t1,t2 = FillMissing.prepareTables()
-        FillMissing.newF t2
-        FillMissing.oldF t1
-        FillMissing.oldF t1
-        FillMissing.newF t2
+        let t1,t2,t3,t4 = FillMissing.prepareTables()
+        FillMissing.firstF t1
+        FillMissing.oldF t2
+        FillMissing.newF t3
+        FillMissing.newSeqF t4
         1
 
     else 

@@ -2280,6 +2280,36 @@ let private tests_equality = testList "equality" [
     ]
 ]
 
+
+let private tests_fillMissing = testList "fillMissing" [
+    testCase "performance" <| fun _ ->
+        
+        let headers = ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample]
+        let values = System.Collections.Generic.Dictionary()
+        for i = 0 to 20000 do       
+            if i%2 = 0 then
+                ArcTableAux.Unchecked.setCellAt(0,i,(CompositeCell.FreeText $"Source_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(1,i,(CompositeCell.FreeText $"FT1_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(2,i,(CompositeCell.FreeText $"FT2_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(3,i,(CompositeCell.FreeText $"FT3_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
+            else
+                ArcTableAux.Unchecked.setCellAt(0,i,(CompositeCell.FreeText $"Source_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(3,i,(CompositeCell.FreeText $"FT3_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(4,i,(CompositeCell.FreeText $"FT4_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(5,i,(CompositeCell.FreeText $"FT5_{i}")) values
+                ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
+        let stopwatch = Stopwatch()
+        stopwatch.Start()
+        ArcTableAux.Unchecked.fillMissingCells headers values
+        stopwatch.Stop()
+        let expectedTime = 200 // 80ms in dotnet, 150ms in javascript
+        let elapsed = stopwatch.Elapsed.Milliseconds
+        Expect.isTrue (elapsed < expectedTime) $"Elapsed time should be less than {expectedTime}ms, but was {elapsed}ms"
+
+    ]
+
+
 let main = 
     testList "ArcTable" [
         tests_SanityChecks
@@ -2303,4 +2333,5 @@ let main =
         tests_IterColumns
         tests_GetHashCode
         tests_equality
+        tests_fillMissing
     ]

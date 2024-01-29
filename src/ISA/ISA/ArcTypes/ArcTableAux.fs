@@ -271,31 +271,33 @@ module Unchecked =
     let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
-        let maxRows = rowCount
-        let lastColumnIndex = columnCount - 1
-        /// Get all keys, to map over relevant rows afterwards
-        let keys = values.Keys
-        // iterate over columns
-        for columnIndex in 0 .. lastColumnIndex do
-            /// Only get keys for the relevant column
-            let colKeys = keys |> Seq.filter (fun (c,_) -> c = columnIndex) |> Set.ofSeq 
-            /// Create set of expected keys
-            let expectedKeys = Seq.init maxRows (fun i -> columnIndex,i) |> Set.ofSeq 
-            /// Get the missing keys
-            let missingKeys = Set.difference expectedKeys colKeys 
-            // if no missing keys, we are done and skip the rest, if not empty missing keys we ...
-            if missingKeys.IsEmpty |> not then
-                /// .. first check which empty filler `CompositeCells` we need. 
-                ///
-                /// We use header to decide between CompositeCell.Term/CompositeCell.Unitized and CompositeCell.FreeText
-                let relatedHeader = headers.[columnIndex]
-                /// We use the first cell in the column to decide between CompositeCell.Term and CompositeCell.Unitized
-                ///
-                /// Not sure if we can add a better logic to infer if empty cells should be term or unitized ~Kevin F
-                let tryExistingCell = if colKeys.IsEmpty then None else Some values.[colKeys.MinimumElement]
-                let empty = getEmptyCellForHeader relatedHeader tryExistingCell
-                for missingColumn,missingRow in missingKeys do
-                    setCellAt (missingColumn,missingRow,empty) values
+
+        let columnKeyGroups = 
+            values.Keys // Get all keys, to map over relevant rows afterwards
+            |> Seq.toArray
+            |> Array.groupBy fst // Group by column index
+            |> Map.ofArray
+
+        for columnIndex = 0 to columnCount - 1 do
+            let header = headers.[columnIndex]
+            match Map.tryFind columnIndex columnKeyGroups with
+            // All values existed in this column. Nothing to do
+            | Some col when col.Length = rowCount ->
+                ()
+            // Some values existed in this column. Fill with default cells
+            | Some col ->
+                let firstCell = Some (values.[Seq.head col])
+                let defaultCell = getEmptyCellForHeader header firstCell
+                let rowKeys = Array.map snd col |> Set.ofArray
+                for rowIndex = 0 to rowCount - 1 do
+                    if not <| rowKeys.Contains rowIndex then
+                        setCellAt (columnIndex,rowIndex,defaultCell) values
+            // No values existed in this column. Fill with default cells
+            | None ->
+                let defaultCell = getEmptyCellForHeader header None
+                for rowIndex = 0 to rowCount - 1 do
+                    setCellAt (columnIndex,rowIndex,defaultCell) values
+
 
     /// Increases the table size to the given new row count and fills the new rows with the last value of the column
     let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
