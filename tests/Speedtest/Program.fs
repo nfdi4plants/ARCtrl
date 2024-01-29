@@ -1,5 +1,6 @@
 ﻿
-
+open ARCtrl
+open ARCtrl.ISA
 
 [<EntryPoint>]
 let main argv =
@@ -14,5 +15,18 @@ let main argv =
         |> LargeStudy.fromWorkbook
         |> ignore
         1
+    elif Array.contains "--addRows" argv then
+        let t1,t2 = AddRows.prepareTables()
+        AddRows.oldF t1
+        AddRows.newF t2
+        1  
+    elif Array.contains "--fillMissing" argv then
+        let t1,t2 = FillMissing.prepareTables()
+        FillMissing.newF t2
+        FillMissing.oldF t1
+        FillMissing.oldF t1
+        FillMissing.newF t2
+        1
+
     else 
         0

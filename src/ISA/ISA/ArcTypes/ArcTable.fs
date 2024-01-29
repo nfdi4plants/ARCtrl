@@ -433,11 +433,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
                 let column = CompositeColumn.create(h,[|row.[columnIndex]|])
                 SanityChecks.validateColumn column
         // Sanity checks - end
-        rows
-        |> Array.iter (fun row ->
-            Unchecked.addRow index row this.Headers this.Values
-            index <- index + 1
-        )
+        Unchecked.addRows index rows this.Headers this.Values
 
     static member addRows (rows: CompositeCell [] [], ?index: int) =
         fun (table:ArcTable) ->

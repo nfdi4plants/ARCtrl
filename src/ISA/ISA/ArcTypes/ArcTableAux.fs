@@ -328,6 +328,28 @@ module Unchecked =
             )
         ()
 
+    let addRows (index:int) (newRows:CompositeCell [][]) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+        /// Store start rowCount here, so it does not get changed midway through
+        let rowCount = getRowCount values
+        let columnCount = getColumnCount headers
+        let increaseRowIndices =  
+            // Only do this if column is inserted and not appended!
+            if index < rowCount then
+                /// Get last row index
+                let lastRowIndex = System.Math.Max(rowCount - 1, 0) // If there are no rows. We get negative last column index. In this case just return 0.
+                // start with last row index and go down to `index`
+                for rowIndex = lastRowIndex downto index do
+                    for columnIndex in 0 .. (columnCount-1) do
+                        moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+1) values
+        let mutable currentRowIndex = index
+        for row in newRows do
+            /// Then we can set the new row at `index`
+            let setNewCells =
+                row |> Array.iteri (fun columnIndex cell ->
+                    setCellAt (columnIndex,currentRowIndex,cell) values
+                )
+            currentRowIndex <- currentRowIndex + 1
+
 /// Functions for transforming base level ARC Table and ISA Json Objects
 module JsonTypes = 
 

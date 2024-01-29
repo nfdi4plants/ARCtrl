@@ -1988,6 +1988,19 @@ let private tests_AddRows =
                     else
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex-newColumnCount] $"Cell {columnIndex},{rowIndex}"
         )
+        testCase "performance" (fun () ->
+            let table = ArcTable("MyTable",ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample], System.Collections.Generic.Dictionary())
+            let rows = 
+                 Array.init 10000 (fun i -> 
+                    [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
+            let stopwatch = Stopwatch()
+            stopwatch.Start()
+            table.AddRows(rows)
+            stopwatch.Stop()
+            let expectedTime = 100
+            let elapsed = stopwatch.Elapsed.Milliseconds
+            Expect.isTrue (elapsed < expectedTime) $"Elapsed time should be less than {expectedTime}ms, but was {elapsed}ms"       
+        )
     ]
 
 let private tests_UpdateRefWithSheet =
