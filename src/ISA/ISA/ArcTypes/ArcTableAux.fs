@@ -115,8 +115,13 @@ module Unchecked =
     let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
         Dictionary.tryFind (column, row) cells
 
+    /// Add or update a cell in the dictionary.
     let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
         cells.[(columnIndex,rowIndex)] <- c
+
+    /// Add a cell to the dictionary. If a cell already exists at the given position, it fails.
+    let addCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
+        cells.Add((columnIndex,rowIndex),c)
 
     let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
         match Dictionary.tryFind (fromCol, fromRow) cells with
@@ -285,12 +290,12 @@ module Unchecked =
                 let rowKeys = Array.map snd col |> Set.ofArray
                 for rowIndex = 0 to rowCount - 1 do
                     if not <| rowKeys.Contains rowIndex then
-                        setCellAt (columnIndex,rowIndex,defaultCell) values
+                        addCellAt (columnIndex,rowIndex,defaultCell) values
             // No values existed in this column. Fill with default cells
             | None ->
                 let defaultCell = getEmptyCellForHeader header None
                 for rowIndex = 0 to rowCount - 1 do
-                    setCellAt (columnIndex,rowIndex,defaultCell) values
+                    addCellAt (columnIndex,rowIndex,defaultCell) values
 
 
     /// Increases the table size to the given new row count and fills the new rows with the last value of the column

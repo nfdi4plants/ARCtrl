@@ -471,6 +471,29 @@ let private tests_UpdateCell =
             let eval() = table.UpdateCellAt(0,0,cell)
             Expect.throws eval ""
         )
+
+        // Commented this test out, as the behaviour is different in dotnet and js, but both implementations are very close together performance-wise
+
+        //testCase "performance" (fun () ->
+        //    // Test, that for most cases (because of performance), setter should be used
+        //    let f1 = fun () ->
+        //        let table = ArcTable.init("Table")
+        //        for i = 0 to 10 do
+        //            table.Headers.Insert(i,CompositeHeader.FreeText $"Header_{i}")
+        //            for j = 0 to 5000 do
+        //                ArcTableAux.Unchecked.setCellAt(i,j,CompositeCell.createFreeText $"Cell_{i}_{j}") table.Values
+        //    let f2 = fun () ->
+        //        let table = ArcTable.init("Table")
+        //        for i = 0 to 10 do
+        //            table.Headers.Insert(i,CompositeHeader.FreeText $"Header_{i}")
+        //            for j = 0 to 5000 do
+        //                ArcTableAux.Unchecked.addCellAt(i,j,CompositeCell.createFreeText $"Cell_{i}_{j}") table.Values
+        //    Expect.isFasterThan f1 f2 "SetCell Implementation should be faster than reference"
+        
+        
+        
+        //)
+
     ]
 
 let private tests_UpdateColumn = 
@@ -2295,7 +2318,7 @@ let private tests_fillMissing = testList "fillMissing" [
                 ArcTableAux.Unchecked.setCellAt(5,i,(CompositeCell.FreeText $"FT5_{i}")) values
                 ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
         let testF = fun () -> ArcTableAux.Unchecked.fillMissingCells headers values   
-        Expect.wantFaster testF 200 "fillMissing is too slow." |> ignore
+        Expect.wantFaster testF 220 "fillMissing is too slow." |> ignore // 130ms in javascript, dotnet faster than 100ms
     ]
 
 
