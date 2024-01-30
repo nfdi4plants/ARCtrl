@@ -6,17 +6,7 @@ open Fable.Core
 
 // Taken from FSharpAux.Core
 /// .Net Dictionary
-module Dictionary = 
-    
-    /// <summary>Returns the dictionary with the binding added to the given dictionary.
-    /// If a binding with the given key already exists in the input dictionary, the existing binding is replaced by the new binding in the result dictionary.</summary>
-    /// <param name="key">The input key.</param>
-    /// <returns>The dictionary with change in place.</returns>
-    let addOrUpdateInPlace key value (table:IDictionary<_,_>) =
-        match table.ContainsKey(key) with
-        | true  -> table.[key] <- value
-        | false -> table.Add(key,value)
-        table
+module Dictionary =    
 
     /// <summary>Lookup an element in the dictionary, returning a <c>Some</c> value if the element is in the domain 
     /// of the dictionary and <c>None</c> if not.</summary>
@@ -122,8 +112,12 @@ module SanityChecks =
 
 module Unchecked =
         
-    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = Dictionary.tryFind (column, row) cells
-    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = Dictionary.addOrUpdateInPlace (columnIndex,rowIndex) c cells |> ignore
+    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
+        Dictionary.tryFind (column, row) cells
+
+    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
+        cells.[(columnIndex,rowIndex)] <- c
+
     let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
         match Dictionary.tryFind (fromCol, fromRow) cells with
         | Some c ->
