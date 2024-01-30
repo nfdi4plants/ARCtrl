@@ -25,15 +25,9 @@ let private tests_Investigation = testList "Investigation" [
         for i = 0 to 1500 do 
             let s = ArcStudy.init($"Study{i}")
             inv.AddRegisteredStudy(s)
-        let timer = Stopwatch()
-        timer.Start()
-        let wb = ArcInvestigation.toFsWorkbook inv
-        timer.Stop()
-        let runtime = timer.Elapsed.Milliseconds
-        let expected = 1000 // this is too high and should be reduced
-
+        let testF = fun () -> ArcInvestigation.toFsWorkbook inv
+        let wb = Expect.wantFaster testF 1000 "Parsing investigation to Workbook is too slow"    
         Expect.equal (wb.GetWorksheets().Count) 1 "Worksheet count"
-        Expect.isTrue (runtime <= expected) $"Expected conversion to be finished in under {expected}, but it took {runtime}"
 ]
 
 let Main = testList "Performance" [

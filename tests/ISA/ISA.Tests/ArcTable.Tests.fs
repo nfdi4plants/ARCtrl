@@ -1993,13 +1993,8 @@ let private tests_AddRows =
             let rows = 
                  Array.init 10000 (fun i -> 
                     [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
-            let stopwatch = Stopwatch()
-            stopwatch.Start()
-            table.AddRows(rows)
-            stopwatch.Stop()
-            let expectedTime = 100
-            let elapsed = stopwatch.Elapsed.Milliseconds
-            Expect.isTrue (elapsed < expectedTime) $"Elapsed time should be less than {expectedTime}ms, but was {elapsed}ms"       
+            let testF = fun () -> table.AddRows(rows)
+            Expect.wantFaster testF 100 $"AddRows is too slow." |> ignore     
         )
     ]
 
@@ -2299,14 +2294,8 @@ let private tests_fillMissing = testList "fillMissing" [
                 ArcTableAux.Unchecked.setCellAt(4,i,(CompositeCell.FreeText $"FT4_{i}")) values
                 ArcTableAux.Unchecked.setCellAt(5,i,(CompositeCell.FreeText $"FT5_{i}")) values
                 ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
-        let stopwatch = Stopwatch()
-        stopwatch.Start()
-        ArcTableAux.Unchecked.fillMissingCells headers values
-        stopwatch.Stop()
-        let expectedTime = 200 // 80ms in dotnet, 150ms in javascript
-        let elapsed = stopwatch.Elapsed.Milliseconds
-        Expect.isTrue (elapsed < expectedTime) $"Elapsed time should be less than {expectedTime}ms, but was {elapsed}ms"
-
+        let testF = fun () -> ArcTableAux.Unchecked.fillMissingCells headers values   
+        Expect.wantFaster testF 200 "fillMissing is too slow." |> ignore
     ]
 
 
