@@ -29,7 +29,7 @@
     <None Include="../../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="5.1.1" />
+    <PackageReference Include="FsSpreadsheet" Version="5.1.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
