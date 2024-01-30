@@ -433,11 +433,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
                 let column = CompositeColumn.create(h,[|row.[columnIndex]|])
                 SanityChecks.validateColumn column
         // Sanity checks - end
-        rows
-        |> Array.iter (fun row ->
-            Unchecked.addRow index row this.Headers this.Values
-            index <- index + 1
-        )
+        Unchecked.addRows index rows this.Headers this.Values
 
     static member addRows (rows: CompositeCell [] [], ?index: int) =
         fun (table:ArcTable) ->
@@ -696,7 +692,8 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
                 let headers  = table.Headers |> ResizeArray
                 let rows = 
                     indexGroup
-                    |> Array.map (fun i -> table.GetRow(i))
+                    // Max row index is the last row index of the table, so no validation needed
+                    |> Array.map (fun i -> table.GetRow(i,SkipValidation = true))
                 ArcTable.createFromRows(table.Name,headers,rows)
             )
             

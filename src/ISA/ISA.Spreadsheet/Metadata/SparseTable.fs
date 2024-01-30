@@ -48,8 +48,8 @@ module SparseRow =
         let rows = sheet.Rows |> Seq.map fromFsRow
         rows
 
-    let writeToSheet (rowI : int) (row : SparseRow) (sheet : FsWorksheet) =
-        let fsRow = sheet.Row(rowI)
+    let writeToSheet (rowI : int) (row : SparseRow) (sheet : FsWorksheet) =   
+        let fsRow = sheet.RowWithRange(FsRangeAddress(FsAddress(rowI,1),FsAddress(rowI,1)),true)
         row
         |> Seq.iter (fun (colI,v) -> 
             if v.Trim() <> "" then fsRow.[colI + 1].SetValueAs v)

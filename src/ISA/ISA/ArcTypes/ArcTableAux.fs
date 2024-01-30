@@ -6,17 +6,7 @@ open Fable.Core
 
 // Taken from FSharpAux.Core
 /// .Net Dictionary
-module Dictionary = 
-    
-    /// <summary>Returns the dictionary with the binding added to the given dictionary.
-    /// If a binding with the given key already exists in the input dictionary, the existing binding is replaced by the new binding in the result dictionary.</summary>
-    /// <param name="key">The input key.</param>
-    /// <returns>The dictionary with change in place.</returns>
-    let addOrUpdateInPlace key value (table:IDictionary<_,_>) =
-        match table.ContainsKey(key) with
-        | true  -> table.[key] <- value
-        | false -> table.Add(key,value)
-        table
+module Dictionary =    
 
     /// <summary>Lookup an element in the dictionary, returning a <c>Some</c> value if the element is in the domain 
     /// of the dictionary and <c>None</c> if not.</summary>
@@ -122,8 +112,17 @@ module SanityChecks =
 
 module Unchecked =
         
-    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = Dictionary.tryFind (column, row) cells
-    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = Dictionary.addOrUpdateInPlace (columnIndex,rowIndex) c cells |> ignore
+    let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
+        Dictionary.tryFind (column, row) cells
+
+    /// Add or update a cell in the dictionary.
+    let setCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
+        cells.[(columnIndex,rowIndex)] <- c
+
+    /// Add a cell to the dictionary. If a cell already exists at the given position, it fails.
+    let addCellAt(columnIndex, rowIndex,c : CompositeCell) (cells:Dictionary<int*int,CompositeCell>) = 
+        cells.Add((columnIndex,rowIndex),c)
+
     let moveCellTo (fromCol:int,fromRow:int,toCol:int,toRow:int) (cells:Dictionary<int*int,CompositeCell>) =
         match Dictionary.tryFind (fromCol, fromRow) cells with
         | Some c ->
@@ -271,31 +270,33 @@ module Unchecked =
     let fillMissingCells (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
         let rowCount = getRowCount values
         let columnCount = getColumnCount headers
-        let maxRows = rowCount
-        let lastColumnIndex = columnCount - 1
-        /// Get all keys, to map over relevant rows afterwards
-        let keys = values.Keys
-        // iterate over columns
-        for columnIndex in 0 .. lastColumnIndex do
-            /// Only get keys for the relevant column
-            let colKeys = keys |> Seq.filter (fun (c,_) -> c = columnIndex) |> Set.ofSeq 
-            /// Create set of expected keys
-            let expectedKeys = Seq.init maxRows (fun i -> columnIndex,i) |> Set.ofSeq 
-            /// Get the missing keys
-            let missingKeys = Set.difference expectedKeys colKeys 
-            // if no missing keys, we are done and skip the rest, if not empty missing keys we ...
-            if missingKeys.IsEmpty |> not then
-                /// .. first check which empty filler `CompositeCells` we need. 
-                ///
-                /// We use header to decide between CompositeCell.Term/CompositeCell.Unitized and CompositeCell.FreeText
-                let relatedHeader = headers.[columnIndex]
-                /// We use the first cell in the column to decide between CompositeCell.Term and CompositeCell.Unitized
-                ///
-                /// Not sure if we can add a better logic to infer if empty cells should be term or unitized ~Kevin F
-                let tryExistingCell = if colKeys.IsEmpty then None else Some values.[colKeys.MinimumElement]
-                let empty = getEmptyCellForHeader relatedHeader tryExistingCell
-                for missingColumn,missingRow in missingKeys do
-                    setCellAt (missingColumn,missingRow,empty) values
+
+        let columnKeyGroups = 
+            values.Keys // Get all keys, to map over relevant rows afterwards
+            |> Seq.toArray
+            |> Array.groupBy fst // Group by column index
+            |> Map.ofArray
+
+        for columnIndex = 0 to columnCount - 1 do
+            let header = headers.[columnIndex]
+            match Map.tryFind columnIndex columnKeyGroups with
+            // All values existed in this column. Nothing to do
+            | Some col when col.Length = rowCount ->
+                ()
+            // Some values existed in this column. Fill with default cells
+            | Some col ->
+                let firstCell = Some (values.[Seq.head col])
+                let defaultCell = getEmptyCellForHeader header firstCell
+                let rowKeys = Array.map snd col |> Set.ofArray
+                for rowIndex = 0 to rowCount - 1 do
+                    if not <| rowKeys.Contains rowIndex then
+                        addCellAt (columnIndex,rowIndex,defaultCell) values
+            // No values existed in this column. Fill with default cells
+            | None ->
+                let defaultCell = getEmptyCellForHeader header None
+                for rowIndex = 0 to rowCount - 1 do
+                    addCellAt (columnIndex,rowIndex,defaultCell) values
+
 
     /// Increases the table size to the given new row count and fills the new rows with the last value of the column
     let extendToRowCount rowCount (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
@@ -327,6 +328,29 @@ module Unchecked =
                 setCellAt (columnIndex,rowIndex,cell) values
             )
         ()
+
+    let addRows (index:int) (newRows:CompositeCell [][]) (headers: ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =
+        /// Store start rowCount here, so it does not get changed midway through
+        let rowCount = getRowCount values
+        let columnCount = getColumnCount headers
+        let numNewRows = newRows.Length
+        let increaseRowIndices =  
+            // Only do this if column is inserted and not appended!
+            if index < rowCount then
+                /// Get last row index
+                let lastRowIndex = System.Math.Max(rowCount - 1, 0) // If there are no rows. We get negative last column index. In this case just return 0.
+                // start with last row index and go down to `index`
+                for rowIndex = lastRowIndex downto index do
+                    for columnIndex in 0 .. (columnCount-1) do
+                        moveCellTo(columnIndex,rowIndex,columnIndex,rowIndex+numNewRows) values
+        let mutable currentRowIndex = index
+        for row in newRows do
+            /// Then we can set the new row at `index`
+            let setNewCells =
+                row |> Array.iteri (fun columnIndex cell ->
+                    setCellAt (columnIndex,currentRowIndex,cell) values
+                )
+            currentRowIndex <- currentRowIndex + 1
 
 /// Functions for transforming base level ARC Table and ISA Json Objects
 module JsonTypes = 

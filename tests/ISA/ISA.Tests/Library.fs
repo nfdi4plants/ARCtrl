@@ -48,6 +48,23 @@ module Result =
         | Ok m -> m
         | Error m -> m
 
+open System
+open Fable.Core
+
+[<AttachMembers>]
+type Stopwatch() =
+    member val StartTime: DateTime option = None with get, set
+    member val StopTime: DateTime option = None with get, set
+    member this.Start() = this.StartTime <- Some DateTime.Now
+    member this.Stop() = 
+        match this.StartTime with
+        | Some _ -> this.StopTime <- Some DateTime.Now
+        | None -> failwith "Error. Unable to call `Stop` before `Start`."
+    member this.Elapsed : TimeSpan = 
+        match this.StartTime, this.StopTime with
+        | Some start, Some stop -> stop - start
+        | _, _ -> failwith "Error. Unable to call `Elapsed` without calling `Start` and `Stop` before."
+
 /// Fable compatible Expecto/Mocha/Pyxpecto unification
 module Expect = 
     open Utils
@@ -78,6 +95,30 @@ module Expect =
 
     let exists actual asserter message = Expect.exists actual asserter message 
     let containsAll actual expected message = Expect.containsAll actual expected message
+
+    let wantFaster (f : unit -> 'T) (maxMilliseconds : int) (message : string) = 
+        let stopwatch = Stopwatch()
+        stopwatch.Start()
+        let res = f()
+        stopwatch.Stop()
+        let elapsed = stopwatch.Elapsed
+        if elapsed.TotalMilliseconds > float maxMilliseconds then
+            failwithf $"{message}. Expected to be faster than {maxMilliseconds}ms, but took {elapsed.TotalMilliseconds}ms"
+        res
+
+    let isFasterThan (f1 : unit -> _) (f2 : unit -> _) (message : string) =
+        let stopwatch = Stopwatch()
+        stopwatch.Start()
+        f1()
+        stopwatch.Stop()
+        let elapsed1 = stopwatch.Elapsed
+        stopwatch.Start()
+        f2()
+        stopwatch.Stop()
+        let elapsed2 = stopwatch.Elapsed
+        if elapsed1.TotalMilliseconds > elapsed2.TotalMilliseconds then
+            failwithf $"{message}. Expected {elapsed1.TotalMilliseconds}ms to be faster than {elapsed2.TotalMilliseconds}ms"
+        ()
 
     /// Expects the `actual` sequence to equal the `expected` one.
     let sequenceEqual actual expected message =
@@ -132,3 +173,5 @@ module Test =
 
 
     let testList = testList
+
+

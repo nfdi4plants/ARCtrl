@@ -6,7 +6,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="FillMissing.fs" />
+    <Compile Include="ManyStudies.fs" />
     <Compile Include="LargeStudy.fs" />
+    <Compile Include="AddRows.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

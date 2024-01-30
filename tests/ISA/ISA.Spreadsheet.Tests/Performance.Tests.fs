@@ -19,6 +19,18 @@ let private tests_Study = testList "Study" [
         convertToArcFile fswb
 ]
 
+let private tests_Investigation = testList "Investigation" [
+    testCase "WriteManyStudies" <| fun _ ->
+        let inv = ArcInvestigation.init("MyInvestigation")
+        for i = 0 to 1500 do 
+            let s = ArcStudy.init($"Study{i}")
+            inv.AddRegisteredStudy(s)
+        let testF = fun () -> ArcInvestigation.toFsWorkbook inv
+        let wb = Expect.wantFaster testF 1000 "Parsing investigation to Workbook is too slow"    
+        Expect.equal (wb.GetWorksheets().Count) 1 "Worksheet count"
+]
+
 let Main = testList "Performance" [
     tests_Study
+    tests_Investigation
 ]
