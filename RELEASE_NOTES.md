@@ -1,3 +1,14 @@
+### 1.0.7+14c14a9 (Released 2024-1-30)
+* Additions:
+    * [[#14c14a9](https://github.com/nfdi4plants/ARCtrl/commit/14c14a905b42bb75207a28a2ab1721ec31965fed)] update FsSpreadsheet reference
+    * [[#1d8d7b7](https://github.com/nfdi4plants/ARCtrl/commit/1d8d7b78961e117eff06244291f5e197096a7cee)] small changes to fillmissing and performance tests
+    * [[#68c65d0](https://github.com/nfdi4plants/ARCtrl/commit/68c65d0d347c6a93f97a9673834a5f4eeba6e8ea)] improve design of speed tests
+    * [[#d592cf3](https://github.com/nfdi4plants/ARCtrl/commit/d592cf3b8cfd8a8c262d4878a1f226254b670509)] small speed increase of setCell
+    * [[#38fe3a9](https://github.com/nfdi4plants/ARCtrl/commit/38fe3a9d46c6079cf908c60fbb2c4cd650f39fe2)] rework fillMissing
+    * [[#ddb8238](https://github.com/nfdi4plants/ARCtrl/commit/ddb8238426fd8212a4701cdc21461783e82b0b36)] improve speed of ArcTable.AddRows
+* Bugfixes:
+    * [[#2caadb7](https://github.com/nfdi4plants/ARCtrl/commit/2caadb72e0740495e32506ebbcf14f6fc8a59a52)] small fix to addRows
+
 ### 1.0.6+c6d86b1 (Released 2024-1-26)
 * Additions:
     * [[#c6d86b1](https://github.com/nfdi4plants/ARCtrl/commit/c6d86b104392447cc980bf3e16fa64bfb27ca5c6)] small performance improvement for reading ARCs
