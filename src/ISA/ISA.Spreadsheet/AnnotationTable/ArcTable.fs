@@ -101,6 +101,11 @@ let toFsWorksheet (table : ArcTable) =
     /// This dictionary is used to add spaces at the end of duplicate headers.
     let stringCount = System.Collections.Generic.Dictionary<string,string>()
     let ws = FsWorksheet(table.Name)
+
+    // Cancel if there are no columns
+    if table.Columns.Length = 0 then ws
+    else
+
     let columns = 
         table.Columns
         |> List.ofArray

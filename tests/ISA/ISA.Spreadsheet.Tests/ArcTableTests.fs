@@ -133,8 +133,8 @@ let private simpleTable =
         )
     ]
 
-let private emptyTable = 
-    testList "emptyTable" [
+let private valuelessTable = 
+    testList "valuelessTable" [
         let wsName = "MyWorksheet"
         let ws = 
                 initWorksheet wsName
@@ -363,6 +363,21 @@ let private writeOrder =
         )
     ]
 
+let private emptyTable = 
+    testList "emptyTable" [
+        let name = "EmptyTable"
+        let t = ArcTable.init(name)
+        testCase "Write" (fun () -> 
+            let sheet = ArcTable.toFsWorksheet t
+            Expect.equal name sheet.Name "Worksheet name did not match"
+            Expect.equal 0 sheet.Rows.Count "Row count should be 0"
+        )
+        testCase "Read" (fun () ->
+            let sheet = ArcTable.toFsWorksheet t
+            Expect.isNone (ArcTable.tryFromFsWorksheet sheet) "Table was not created"
+        )
+    ]
+
 let main = 
     testList "ArcTableTests" [
         ensureCorrectTestHeaders
@@ -370,7 +385,8 @@ let main =
         simpleTable
         mixedTable
         ioTable
-        emptyTable
+        valuelessTable
         deprecatedColumnTable
         writeOrder
+        emptyTable
     ]
