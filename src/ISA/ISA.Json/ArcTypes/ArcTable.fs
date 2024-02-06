@@ -52,7 +52,7 @@ module ArcTable =
             let decodedHeader = get.Optional.Field "h" (Decode.list CompositeHeader.decoder) |> Option.defaultValue List.empty |> ResizeArray 
             let keyDecoder : Decoder<int*int> = Decode.tuple2 Decode.int Decode.int
             let valueDecoder = CellTable.decodeCell cellTable
-            let decodedValues = get.Optional.Field "v" (Decode.map' keyDecoder valueDecoder) |> Option.defaultValue Map.empty |> System.Collections.Generic.Dictionary
+            let decodedValues = get.Optional.Field "c" (Decode.map' keyDecoder valueDecoder) |> Option.defaultValue Map.empty |> System.Collections.Generic.Dictionary
             ArcTable.create(
                 get.Required.Field "n" (StringTable.decodeString stringTable),
                 decodedHeader,
@@ -79,7 +79,7 @@ module ArcTableExtensions =
             let decoder = 
                 Decode.object(fun get ->
                     let stringTable = get.Required.Field "stringTable" (StringTable.decoder)
-                    let oaTable = get.Required.Field "stringTable" (OATable.decoder stringTable)
+                    let oaTable = get.Required.Field "oaTable" (OATable.decoder stringTable)
                     let cellTable = get.Required.Field "cellTable" (CellTable.decoder stringTable oaTable)
                     get.Required.Field "table" (ArcTable.compressedDecoder stringTable oaTable cellTable)
                 )
