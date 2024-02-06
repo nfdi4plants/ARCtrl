@@ -69,6 +69,41 @@ module ArcAssay =
                 (tryGetComments get "Comments")
         )
 
+    let compressedEncoder (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (assay:ArcAssay) =
+        Encode.object [ 
+            "Identifier", Encode.string assay.Identifier
+            if assay.MeasurementType.IsSome then
+                "MeasurementType", OATable.encodeOA oaTable assay.MeasurementType.Value
+            if assay.TechnologyType.IsSome then
+                "TechnologyType", OATable.encodeOA oaTable assay.TechnologyType.Value
+            if assay.TechnologyPlatform.IsSome then
+                "TechnologyPlatform", OATable.encodeOA oaTable assay.TechnologyPlatform.Value
+            if assay.Tables.Count <> 0 then 
+                "Tables", Encode.seq (Seq.map (ArcTable.compressedEncoder stringTable oaTable cellTable) assay.Tables) 
+            if assay.Performers.Length <> 0 then
+                "Performers", EncoderPersons assay.Performers
+            if assay.Comments.Length <> 0 then
+                "Comments", EncoderComments assay.Comments
+        ]
+
+
+    let compressedDecoder (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<ArcAssay> =
+        Decode.object (fun get ->
+            let tables = 
+                get.Optional.Field("Tables") (Decode.array (ArcTable.compressedDecoder stringTable oaTable cellTable))
+                |> Option.map ResizeArray 
+                |> Option.defaultValue (ResizeArray())
+            ArcAssay.make 
+                (get.Required.Field("Identifier") Decode.string)
+                (get.Optional.Field("MeasurementType") (OATable.decodeOA oaTable))
+                (get.Optional.Field("TechnologyType") (OATable.decodeOA oaTable))
+                (get.Optional.Field("TechnologyPlatform") (OATable.decodeOA oaTable))
+                tables
+                (tryGetPersons get "Performers")
+                (tryGetComments get "Comments")
+        )
+
+
     /// exports in json-ld format
     let toStringLD (a:ArcAssay) = 
         Assay.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToAssay())
@@ -94,6 +129,8 @@ module ArcAssay =
 [<AutoOpen>]
 module ArcAssayExtensions =
 
+    open System.Collections.Generic
+
     type ArcAssay with
         static member fromArcJsonString (jsonString: string) : ArcAssay = 
             match Decode.fromString ArcAssay.decoder jsonString with
@@ -105,3 +142,30 @@ module ArcAssayExtensions =
             Encode.toString spaces (ArcAssay.encoder this)
 
         static member toArcJsonString (a:ArcAssay) = a.ToArcJsonString()
+
+        static member fromCompressedJsonString (jsonString: string) : ArcAssay = 
+            let decoder = 
+                Decode.object(fun get ->
+                    let stringTable = get.Required.Field "stringTable" (StringTable.decoder)
+                    let oaTable = get.Required.Field "oaTable" (OATable.decoder stringTable)
+                    let cellTable = get.Required.Field "cellTable" (CellTable.decoder stringTable oaTable)
+                    get.Required.Field "assay" (ArcAssay.compressedDecoder stringTable oaTable cellTable)
+                )
+            match Decode.fromString decoder jsonString with
+            | Ok r -> r
+            | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
+
+        member this.ToCompressedJsonString(?spaces) : string =
+            let spaces = defaultArg spaces 0
+            let stringTable = Dictionary()
+            let oaTable = Dictionary()
+            let cellTable = Dictionary()
+            let arcAssay = ArcAssay.compressedEncoder stringTable oaTable cellTable this
+            let jObject = 
+                Encode.object [
+                    "cellTable", CellTable.arrayFromMap cellTable |> CellTable.encoder stringTable oaTable
+                    "oaTable", OATable.arrayFromMap oaTable |> OATable.encoder stringTable
+                    "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
+                    "assay", arcAssay
+                ] 
+            Encode.toString spaces jObject
