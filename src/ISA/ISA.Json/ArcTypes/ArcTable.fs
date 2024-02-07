@@ -35,6 +35,8 @@ module ArcTable =
             )
         )
 
+    //let compressedColumnEncoder (columnIndex : int) (rowCount : int) header (cellTable : CellTableMap) (table: ArcTable) =
+
     let compressedEncoder (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (table: ArcTable) =
         let keyEncoder : Encoder<int*int> = Encode.tuple2 Encode.int Encode.int
         Encode.object [
@@ -102,4 +104,4 @@ module ArcTableExtensions =
                 ] 
             Encode.toString spaces jObject
 
-        static member toCompressedJsonString(a:ArcTable) = a.ToJsonString()
+        static member toCompressedJsonString(a:ArcTable) = a.ToCompressedJsonString()

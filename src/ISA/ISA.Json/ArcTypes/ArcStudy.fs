@@ -81,7 +81,7 @@ module ArcStudy =
                 "Comments", EncoderComments study.Comments
         ]
 
-    let compressedDecoder (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<ArcStudy> =
+    let compressedDecoder (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray) : Decoder<ArcStudy> =
         Decode.object (fun get ->
             let tables = 
                 get.Optional.Field("Tables") (Decode.array (ArcTable.compressedDecoder stringTable oaTable cellTable))
@@ -168,3 +168,6 @@ module ArcStudyExtensions =
                     "study", arcStudy
                 ] 
             Encode.toString spaces jObject
+
+        static member toCompressedJsonString (s : ArcStudy) = 
+            s.ToCompressedJsonString()

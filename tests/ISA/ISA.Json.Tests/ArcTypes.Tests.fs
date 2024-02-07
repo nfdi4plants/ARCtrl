@@ -186,6 +186,16 @@ let tests_ArcTable = testList "ArcTable" [
       let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
+  testList "compressedIO" [
+    testCase "Empty" <| fun _ ->
+      let encoded = ArcTable.toCompressedJsonString init
+      let decoded = ArcTable.fromCompressedJsonString encoded
+      Expect.equal decoded init "empty table is wrong after compressed encoding and decoding"
+    testCase "Filled" <| fun _ ->
+      let encoded = ArcTable.toCompressedJsonString filled
+      let decoded = ArcTable.fromCompressedJsonString encoded
+      Expect.equal decoded filled "empty table is wrong after compressed encoding and decoding"
+  ]
 ]
 
 let tests_ArcAssay = testList "ArcAssay" [
@@ -225,6 +235,16 @@ let tests_ArcAssay = testList "ArcAssay" [
       let expected = filled
       let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
+  ]
+  testList "compressedIO" [
+    testCase "Empty" <| fun _ ->
+      let encoded = ArcAssay.toCompressedJsonString init
+      let decoded = ArcAssay.fromCompressedJsonString encoded
+      Expect.equal decoded init "empty table is wrong after compressed encoding and decoding"
+    testCase "Filled" <| fun _ ->
+      let encoded = ArcAssay.toCompressedJsonString filled
+      let decoded = ArcAssay.fromCompressedJsonString encoded
+      Expect.equal decoded filled "empty table is wrong after compressed encoding and decoding"
   ]
 ]
 

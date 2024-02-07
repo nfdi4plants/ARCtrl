@@ -169,3 +169,5 @@ module ArcAssayExtensions =
                     "assay", arcAssay
                 ] 
             Encode.toString spaces jObject
+
+        static member toCompressedJsonString (a:ArcAssay) = a.ToCompressedJsonString()
