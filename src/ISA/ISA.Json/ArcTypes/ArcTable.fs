@@ -35,10 +35,17 @@ module ArcTable =
             )
         )
 
-    //let compressedColumnEncoder (columnIndex : int) (rowCount : int) header (cellTable : CellTableMap) (table: ArcTable) =
+    let compressedColumnEncoder (columnIndex : int) (rowCount : int) (cellTable : CellTableMap) (table: ArcTable) =
+        //if header.IsIOType then
+            Encode.array [|for r = 0 to rowCount - 1 do CellTable.encodeCell cellTable table.Values[columnIndex,r]|]
+        //else
+            
+    let compressedColumnDecoder (columnIndex : int)(cellTable : CellTableArray) (table: ArcTable) (column : JsonValue)  =
+        match Decode.array (CellTable.decodeCell cellTable) "" column with
+        | Ok a -> a |> Array.iteri (fun r cell -> table.Values.Add((columnIndex,r),cell))
+        | Error err -> failwith "Could not parse col"
 
     let compressedEncoder (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (table: ArcTable) =
-        let keyEncoder : Encoder<int*int> = Encode.tuple2 Encode.int Encode.int
         Encode.object [
             "n", StringTable.encodeString stringTable table.Name
             if table.Headers.Count <> 0 then
@@ -46,20 +53,26 @@ module ArcTable =
                     for h in table.Headers do yield CompositeHeader.encoder h
                 ]
             if table.Values.Count <> 0 then
-                "c", Encode.map keyEncoder (CellTable.encodeCell cellTable) ([for KeyValue(k,v) in table.Values do yield k, v] |> Map)
+                let rowCount = table.RowCount
+                let columns = [|for c = 0 to table.ColumnCount - 1 do compressedColumnEncoder c rowCount cellTable table|]
+                "c", Encode.array columns
         ] 
 
     let compressedDecoder (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<ArcTable> =
         Decode.object(fun get ->
             let decodedHeader = get.Optional.Field "h" (Decode.list CompositeHeader.decoder) |> Option.defaultValue List.empty |> ResizeArray 
-            let keyDecoder : Decoder<int*int> = Decode.tuple2 Decode.int Decode.int
-            let valueDecoder = CellTable.decodeCell cellTable
-            let decodedValues = get.Optional.Field "c" (Decode.map' keyDecoder valueDecoder) |> Option.defaultValue Map.empty |> System.Collections.Generic.Dictionary
-            ArcTable.create(
-                get.Required.Field "n" (StringTable.decodeString stringTable),
-                decodedHeader,
-                decodedValues
-            )
+            //let decodedValues = get.Optional.Field "c" (Decode.map' keyDecoder valueDecoder) |> Option.defaultValue Map.empty |> System.Collections.Generic.Dictionary
+            let table = 
+                ArcTable.create(
+                    get.Required.Field "n" (StringTable.decodeString stringTable),
+                    decodedHeader,
+                    Dictionary()
+                )
+            let columns = get.Optional.Field "c" (Decode.array Decode.value)
+            columns
+            |> Option.iter (Array.iteri (fun c col -> compressedColumnDecoder c cellTable table col))
+            table 
+
         )
 
 [<AutoOpen>]
