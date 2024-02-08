@@ -36,14 +36,37 @@ module ArcTable =
         )
 
     let compressedColumnEncoder (columnIndex : int) (rowCount : int) (cellTable : CellTableMap) (table: ArcTable) =
-        //if header.IsIOType then
+        if table.Headers[columnIndex].IsIOType || rowCount < 100 then
             Encode.array [|for r = 0 to rowCount - 1 do CellTable.encodeCell cellTable table.Values[columnIndex,r]|]
-        //else
+        else
+            let mutable current = table.Values.[(columnIndex,0)]
+            let mutable from = 0
+            [|
+                for i = 1 to rowCount - 1 do
+                    let next = table.Values.[(columnIndex,i)]
+                    if next <> current then
+                        yield Encode.object ["f",Encode.int from; "t", Encode.int(i-1); "v",CellTable.encodeCell cellTable current]
+                        current <- next
+                        from <- i
+                yield Encode.object ["f",Encode.int from; "t", Encode.int(rowCount-1); "v",CellTable.encodeCell cellTable current]
+            |]
+            |> Encode.array
             
-    let compressedColumnDecoder (columnIndex : int)(cellTable : CellTableArray) (table: ArcTable) (column : JsonValue)  =
+    let compressedColumnDecoder (columnIndex : int) (cellTable : CellTableArray) (table: ArcTable) (column : JsonValue)  =
         match Decode.array (CellTable.decodeCell cellTable) "" column with
-        | Ok a -> a |> Array.iteri (fun r cell -> table.Values.Add((columnIndex,r),cell))
-        | Error err -> failwith "Could not parse col"
+        | Ok a ->             
+            a |> Array.iteri (fun r cell -> table.Values.Add((columnIndex,r),cell))
+        | Error err -> 
+            let rangeDecoder s jv = 
+                Decode.object (fun get -> 
+                    let from = get.Required.Field "f" Decode.int
+                    let to_ = get.Required.Field "t" Decode.int
+                    let value = get.Required.Field "v" (CellTable.decodeCell cellTable)
+                    for i = from to to_ do
+                        table.Values.Add((columnIndex,i),value)
+                ) s jv 
+            Decode.array (rangeDecoder) "" column |> ignore
+
 
     let compressedEncoder (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (table: ArcTable) =
         Encode.object [
