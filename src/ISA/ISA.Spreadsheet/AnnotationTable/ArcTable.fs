@@ -85,17 +85,21 @@ let composeColumns (columns : seq<FsColumn>) : CompositeColumn [] =
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
-    match tryAnnotationTable sheet with
-    | Some (t: FsTable) -> 
-        let compositeColumns = 
-            t.GetColumns(sheet.CellCollection)
-            |> Seq.map CompositeColumn.fixDeprecatedIOHeader
-            |> composeColumns
-        ArcTable.init sheet.Name
-        |> ArcTable.addColumns(compositeColumns,SkipFillMissing = true)
-        |> Some
-    | None ->
-        None
+    try
+        match tryAnnotationTable sheet with
+        | Some (t: FsTable) -> 
+            let compositeColumns = 
+                t.GetColumns(sheet.CellCollection)
+                |> Seq.map CompositeColumn.fixDeprecatedIOHeader
+                |> composeColumns
+            ArcTable.init sheet.Name
+            |> ArcTable.addColumns(compositeColumns,SkipFillMissing = true)
+            |> Some
+        | None ->
+            None
+    with
+    | err -> failwithf "Could not parse table with name \"%s\":\n%s" sheet.Name err.Message
+
 
 let toFsWorksheet (table : ArcTable) =
     /// This dictionary is used to add spaces at the end of duplicate headers.

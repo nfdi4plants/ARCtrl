@@ -26,15 +26,18 @@ module ArcStudy =
         sheet
 
     let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy*ArcAssay list =
-        let fromRows (rows: seq<SparseRow>) =
-            let en = rows.GetEnumerator()
-            en.MoveNext() |> ignore  
-            let _,_,_,study = Studies.fromRows 2 en
-            study
-        sheet.Rows 
-        |> Seq.map SparseRow.fromFsRow
-        |> fromRows
-        |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()),[])
+        try
+            let fromRows (rows: seq<SparseRow>) =
+                let en = rows.GetEnumerator()
+                en.MoveNext() |> ignore  
+                let _,_,_,study = Studies.fromRows 2 en
+                study
+            sheet.Rows 
+            |> Seq.map SparseRow.fromFsRow
+            |> fromRows
+            |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()),[])
+        with 
+        | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
 [<AutoOpen>]
 module Extensions =
@@ -43,36 +46,39 @@ module Extensions =
     
         /// Reads an assay from a spreadsheet
         static member fromFsWorkbook (doc:FsWorkbook) = 
-            // Reading the "Assay" metadata sheet. Here metadata 
-            let studyMetadata,assays = 
+            try
+                // Reading the "Assay" metadata sheet. Here metadata 
+                let studyMetadata,assays = 
         
-                match doc.TryGetWorksheetByName ArcStudy.metaDataSheetName with 
-                | Option.Some sheet ->
-                    ArcStudy.fromMetadataSheet sheet
-                | None ->  
-                    match doc.TryGetWorksheetByName ArcStudy.obsoleteMetaDataSheetName with 
+                    match doc.TryGetWorksheetByName ArcStudy.metaDataSheetName with 
                     | Option.Some sheet ->
                         ArcStudy.fromMetadataSheet sheet
-                    | None -> 
-                        printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." ArcStudy.metaDataSheetName ArcStudy.obsoleteMetaDataSheetName
-                        ArcStudy.create(Identifier.createMissingIdentifier()),[]
+                    | None ->  
+                        match doc.TryGetWorksheetByName ArcStudy.obsoleteMetaDataSheetName with 
+                        | Option.Some sheet ->
+                            ArcStudy.fromMetadataSheet sheet
+                        | None -> 
+                            printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." ArcStudy.metaDataSheetName ArcStudy.obsoleteMetaDataSheetName
+                            ArcStudy.create(Identifier.createMissingIdentifier()),[]
 
-            let annotationTables = 
-                doc.GetWorksheets()
-                |> ResizeArray.choose ArcTable.tryFromFsWorksheet
-            // Performance hotfix. This change is tested in ISA.Spreadsheet/Performance.Tests.fs and results in 2 pendings tests in ARCtrl/ARCtrl.Tests.fs.
-            //if annotationTables |> Seq.isEmpty |> not then 
-            //    let updatedTables = 
-            //            ArcTables.updateReferenceTablesBySheets( // This only kills performance with ProtocolREF
-            //                (ArcTables studyMetadata.Tables),
-            //                (ArcTables (ResizeArray annotationTables)),
-            //                keepUnusedRefTables =  true
-            //                )
-            //    studyMetadata.Tables <- updatedTables.Tables
-            if annotationTables |> ResizeArray.isEmpty |> not then
-                studyMetadata.Tables <- annotationTables
-            studyMetadata
-            ,assays
+                let annotationTables = 
+                    doc.GetWorksheets()
+                    |> ResizeArray.choose ArcTable.tryFromFsWorksheet
+                // Performance hotfix. This change is tested in ISA.Spreadsheet/Performance.Tests.fs and results in 2 pendings tests in ARCtrl/ARCtrl.Tests.fs.
+                //if annotationTables |> Seq.isEmpty |> not then 
+                //    let updatedTables = 
+                //            ArcTables.updateReferenceTablesBySheets( // This only kills performance with ProtocolREF
+                //                (ArcTables studyMetadata.Tables),
+                //                (ArcTables (ResizeArray annotationTables)),
+                //                keepUnusedRefTables =  true
+                //                )
+                //    studyMetadata.Tables <- updatedTables.Tables
+                if annotationTables |> ResizeArray.isEmpty |> not then
+                    studyMetadata.Tables <- annotationTables
+                studyMetadata
+                ,assays
+            with
+            | err -> failwithf "Could not parse study: \n%s" err.Message
 
         static member toFsWorkbook (study : ArcStudy,?assays : ArcAssay list) =
             let doc = new FsWorkbook()
