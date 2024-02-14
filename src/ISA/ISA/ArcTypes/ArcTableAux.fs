@@ -24,6 +24,15 @@ let getRowCount (values:Dictionary<int*int,CompositeCell>) =
     if values.Count = 0 then 0 else
         values.Keys |> Seq.maxBy snd |> snd |> (+) 1
 
+let boxHashValues colCount (values:Dictionary<int*int,CompositeCell>) =
+    let mutable hash = 0
+    let rowCount = getRowCount values
+    for col = 0 to colCount - 1 do
+        for row = 0 to rowCount - 1 do
+            hash <- 0x9e3779b9 + values.[col,row].GetHashCode() + (hash <<< 6) + (hash >>> 2)
+    hash    
+    |> box
+
 // TODO: Move to CompositeHeader?
 let (|IsUniqueExistingHeader|_|) existingHeaders (input: CompositeHeader) = 
     match input with

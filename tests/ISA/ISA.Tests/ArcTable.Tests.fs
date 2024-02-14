@@ -108,6 +108,13 @@ let private tests_GetHashCode = testList "GetHashCode" [
         let notActual = create_testTable()
         Expect.notEqual actual notActual "equal"
         Expect.notEqual (actual.GetHashCode()) (notActual.GetHashCode()) "Hash"
+    testCase "Performance" <| fun _ ->
+        let testTable = ArcTable.init("Test")
+        let values = Array.init 10000 (fun i -> CompositeCell.createFreeText (string i))
+        testTable.AddColumn(CompositeHeader.FreeText "Header", values)
+        let f1 () = testTable.GetHashCode()
+        // On i7-13800H, 2ms in Dotnet and 18ms in javascript
+        Expect.wantFaster f1 50 "GetHashCode is too slow" |> ignore
 ]
 
 let private tests_validate = 

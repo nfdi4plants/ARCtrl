@@ -226,6 +226,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
                 investigation.AddStudy(study)
+            study.StaticHash <- study.GetLightHashCode()
         )
         assays |> Array.iter (fun assay ->
             /// Try find registered study in parsed READ contracts
@@ -243,6 +244,9 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                 ) (ArcTables(assay.Tables))
             assay.Tables <- updatedTables.Tables
         )
+        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetHashCode())
+        investigation.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
+        investigation.StaticHash <- investigation.GetLightHashCode()
         this.ISA <- Some investigation
 
     member this.UpdateFileSystem() =   
@@ -262,8 +266,10 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         | Some inv -> 
             let investigationConverter = if isLight then ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook else ISA.Spreadsheet.ArcInvestigation.toFsWorkbook
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
+            inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
             |> Seq.iter (fun s ->
+                s.StaticHash <- s.GetLightHashCode()
                 workbooks.Add (
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
@@ -271,6 +277,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             )
             inv.Assays
             |> Seq.iter (fun a ->
+                a.StaticHash <- a.GetHashCode()
                 workbooks.Add (
                     Identifier.Assay.fileNameFromIdentifier a.Identifier,
                     (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
@@ -287,6 +294,52 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
             | Some (dto,wb) -> Contract.createCreate(fp,dto,DTO.Spreadsheet wb)
             | None -> Contract.createCreate(fp, DTOType.PlainText)
         )
+    /// <summary>
+    /// This function returns the all update Contracts for the current state of the ARC. Only update contracts for those ISA objects that have been changed will be returned. If an ISA object was added to the ARC, instead a write contract for the complete object folder will be returned. 
+    /// 
+    /// An obect is considered changed if its hash code has changed compared with the StaticHash. An object is considered added if its StaticHash code is 0.
+    /// 
+    /// ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
+    /// </summary>  
+    member this.GetUpdateContracts (?isLight: bool) =
+        let isLight = defaultArg isLight true
+        // Map containing the DTOTypes and objects for the ISA objects.
+        match this.ISA with
+        | None -> // if no ISA is present, return write contracts
+            this.GetWriteContracts(isLight) 
+        | Some inv when inv.StaticHash = 0 -> // if ISA is present but has not been written to disk, return write contracts
+            this.GetWriteContracts(isLight)
+        | Some inv -> 
+            [|
+                // Get Investigation contract
+                let hash = inv.GetLightHashCode()
+                // Currently catched by match case
+                //if inv.StaticHash = 0 then       
+                //    yield inv.ToCreateContract(isLight)
+                if inv.StaticHash <> hash then 
+                    yield inv.ToUpdateContract(isLight)
+                inv.StaticHash <- hash
+
+                // Get Study contracts             
+                for s in inv.Studies do
+                    let hash = s.GetLightHashCode()
+                    if s.StaticHash = 0 then 
+                        yield! s.ToCreateContract(WithFolder = true)
+                    elif s.StaticHash <> hash then 
+                        yield s.ToUpdateContract()
+                    s.StaticHash <- hash
+                
+                // Get Assay contracts
+                for a in inv.Assays do
+                    let hash = a.GetHashCode()
+                    if a.StaticHash = 0 then 
+                        yield! a.ToCreateContract(WithFolder = true)
+                    elif a.StaticHash <> hash then 
+                        yield a.ToUpdateContract()
+                    a.StaticHash <- hash
+            |]
+            
+
 
     member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitignore : bool) = 
         let defaultGitignore = defaultArg defaultGitignore false

@@ -49,17 +49,20 @@ let private tests_model = testList "model" [
         Expect.equal actualFilePaths input "isSome fs"
 ]
 
+let private simpleISAContracts = 
+    [|
+        SimpleISA.Investigation.investigationReadContract
+        SimpleISA.Study.bII_S_1ReadContract
+        SimpleISA.Study.bII_S_2ReadContract
+        SimpleISA.Assay.proteomeReadContract
+        SimpleISA.Assay.metabolomeReadContract
+        SimpleISA.Assay.transcriptomeReadContract
+    |]
+
 let private tests_read_contracts = testList "read_contracts" [
     ptestCase "simpleISA" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC()
-        arc.SetISAFromContracts([|
-            SimpleISA.Investigation.investigationReadContract
-            SimpleISA.Study.bII_S_1ReadContract
-            SimpleISA.Study.bII_S_2ReadContract
-            SimpleISA.Assay.proteomeReadContract
-            SimpleISA.Assay.metabolomeReadContract
-            SimpleISA.Assay.transcriptomeReadContract
-        |])
+        arc.SetISAFromContracts simpleISAContracts
         Expect.isSome arc.ISA "isa should be filled out"
         let inv = arc.ISA.Value
         Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
@@ -270,6 +273,75 @@ let private tests_writeContracts = testList "write_contracts" [
     )
 
 ]
+
+let private tests_updateContracts = testList "update_contracts" [
+    testCase "empty" (fun _ ->
+        let arc = ARC()
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 5 $"Should contain exactly as much contracts as base folders but contained: {contractPathsString}" 
+        Expect.exists contracts (fun c -> c.Path = "workflows/.gitkeep") "Contract for workflows folder missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/.gitkeep") "Contract for runs folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/.gitkeep") "Contract for assays folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/.gitkeep") "Contract for studies folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
+    )
+    testCase "init_simpleISA" (fun _ ->
+        let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+        inv.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
+        let arc = ARC(isa = inv)
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 13 $"Should contain more contracts as base folders but contained: {contractPathsString}"
+    )
+    testCase "simpleISA_NoChanges" (fun _ ->
+        let arc = ARC()
+        arc.SetISAFromContracts simpleISAContracts
+        let contracts = arc.GetUpdateContracts()
+        Expect.equal contracts.Length 0 "Should contain no contracts as there are no changes"
+    )
+    testCase "simpleISA_AssayChange" (fun _ ->
+        let arc = ARC()
+        arc.SetISAFromContracts simpleISAContracts
+        let isa = arc.ISA.Value
+        let testAssayIdentifier = TestObjects.Spreadsheet.Assay.Metabolome.assayIdentifier
+        isa.GetAssay(testAssayIdentifier).InitTable("MyNewTestTable") |> ignore
+        let contracts = arc.GetUpdateContracts()
+        Expect.equal contracts.Length 1 $"Should contain only assay change contract"
+        let expectedPath = Identifier.Assay.fileNameFromIdentifier testAssayIdentifier
+        Expect.equal contracts.[0].Path expectedPath "Should be the assay file"
+        let nextContracts = arc.GetUpdateContracts()
+        Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
+    )
+    testCase "simpleISA_StudyChange" (fun _ ->
+        let arc = ARC()
+        arc.SetISAFromContracts simpleISAContracts
+        let isa = arc.ISA.Value
+        let testStudyIdentifier = TestObjects.Spreadsheet.Study.BII_S_1.studyIdentifier
+        isa.GetStudy(testStudyIdentifier).InitTable("MyNewTestTable") |> ignore
+        let contracts = arc.GetUpdateContracts()
+        Expect.equal contracts.Length 1 $"Should contain only study change contract"
+        let expectedPath = Identifier.Study.fileNameFromIdentifier testStudyIdentifier
+        Expect.equal contracts.[0].Path expectedPath "Should be the study file"
+        let nextContracts = arc.GetUpdateContracts()
+        Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"      
+    )
+    testCase "simpleISA_InvestigationChange" (fun _ ->
+        let arc = ARC()
+        arc.SetISAFromContracts simpleISAContracts
+        let isa = arc.ISA.Value
+        isa.Title <- Some "NewTitle"
+        let contracts = arc.GetUpdateContracts()
+        Expect.equal contracts.Length 1 $"Should contain only investigation change contract"
+        let expectedPath = "isa.investigation.xlsx"
+        Expect.equal contracts.[0].Path expectedPath "Should be the investigation file"
+        let nextContracts = arc.GetUpdateContracts()
+        Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"   
+    )
+]
+
 
 let private tests_updateFileSystem = testList "update_Filesystem" [
     testCase "empty noChanges" (fun () ->
@@ -548,6 +620,7 @@ let main = testList "ARCtrl" [
     tests_updateFileSystem
     tests_read_contracts
     tests_writeContracts
+    tests_updateContracts
     tests_RemoveAssay
     payload_file_filters
 ]

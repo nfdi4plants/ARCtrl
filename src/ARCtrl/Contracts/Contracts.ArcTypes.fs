@@ -74,10 +74,18 @@ module ArcTypeExtensions =
 
     type ArcStudy with
 
-        member this.ToCreateContract () =
+        member this.ToCreateContract (?WithFolder) =
+            let withFolder = defaultArg WithFolder false
             let path = Identifier.Study.fileNameFromIdentifier this.Identifier
             let c = Contract.createCreate(path, DTOType.ISA_Study, DTO.Spreadsheet (this |> ArcStudy.toFsWorkbook))
-            c
+            
+            [|
+                if withFolder then 
+                    let folderFS = FileSystemTree.createStudiesFolder ([|FileSystemTree.createStudyFolder this.Identifier|])
+                    for p in folderFS.ToFilePaths(false) do
+                        if p <> path then Contract.createCreate(p, DTOType.PlainText)
+                c
+            |]
 
         member this.ToUpdateContract () =
             let path = Identifier.Study.fileNameFromIdentifier this.Identifier
@@ -92,8 +100,8 @@ module ArcTypeExtensions =
         static member toDeleteContract (study: ArcStudy) : Contract =
             study.ToDeleteContract()
 
-        static member toCreateContract (study: ArcStudy) : Contract =
-            study.ToCreateContract()
+        static member toCreateContract (study: ArcStudy, ?WithFolder) : Contract [] =
+            study.ToCreateContract(?WithFolder = WithFolder)
 
         static member toUpdateContract (study: ArcStudy) : Contract =
             study.ToUpdateContract()           
@@ -108,10 +116,18 @@ module ArcTypeExtensions =
 
     type ArcAssay with
 
-        member this.ToCreateContract () =
+        member this.ToCreateContract (?WithFolder) =
+            let withFolder = defaultArg WithFolder false
             let path = Identifier.Assay.fileNameFromIdentifier this.Identifier
             let c = Contract.createCreate(path, DTOType.ISA_Assay, DTO.Spreadsheet (this |> ArcAssay.toFsWorkbook))
-            c
+            [|
+                if withFolder then 
+                    let folderFS = FileSystemTree.createAssayFolder this.Identifier
+                    for p in folderFS.ToFilePaths(false) do
+                        if p <> path then Contract.createCreate(p, DTOType.PlainText)
+                c
+            |]
+
 
         member this.ToUpdateContract () =
             let path = Identifier.Assay.fileNameFromIdentifier this.Identifier
@@ -126,8 +142,8 @@ module ArcTypeExtensions =
         static member toDeleteContract (assay: ArcAssay) : Contract =
             assay.ToDeleteContract()
 
-        static member toCreateContract (assay: ArcAssay) : Contract =
-            assay.ToCreateContract()
+        static member toCreateContract (assay: ArcAssay,?WithFolder) : Contract [] =
+            assay.ToCreateContract(?WithFolder = WithFolder)
 
         static member toUpdateContract (assay: ArcAssay) : Contract =
             assay.ToUpdateContract()
