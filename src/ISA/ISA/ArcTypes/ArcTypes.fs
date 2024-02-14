@@ -88,7 +88,7 @@ module ArcTypesAux =
         
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) as this = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
     
     let performers = defaultArg performers [||]
@@ -559,7 +559,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) as this = 
+type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let publications = defaultArg publications [||]
