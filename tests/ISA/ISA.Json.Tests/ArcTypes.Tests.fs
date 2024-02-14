@@ -186,6 +186,47 @@ let tests_ArcTable = testList "ArcTable" [
       let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
+  testList "compressedIO" [
+    testCase "Empty" <| fun _ ->
+      let encoded = ArcTable.toCompressedJsonString init
+      let decoded = ArcTable.fromCompressedJsonString encoded
+      Expect.equal decoded init "empty table is wrong after compressed encoding and decoding"
+    testCase "Filled" <| fun _ ->
+      let encoded = ArcTable.toCompressedJsonString filled
+      let decoded = ArcTable.fromCompressedJsonString encoded
+      Expect.equal decoded filled "empty table is wrong after compressed encoding and decoding"
+    // Set to pTest in Fable, as compressed parsing is around 10times slower than uncompressed parsing. This is weird, since in dotnet it is around 10times faster
+    #if FABLE_COMPILER 
+    ptestCase "Performance" <| fun _ ->
+    #else
+    testCase "Performance" <| fun _ ->
+    #endif
+        let t = TestObjects.Spreadsheet.Study.LargeFile.table
+        Expect.isFasterThan (t.ToCompressedJsonString >> ignore) (t.ToJsonString  >> ignore) "toCompressedJsonString is slower than to uncompressed"
+        let json = t.ToJsonString()
+        let compressed = Expect.wantFaster (t.ToCompressedJsonString) 1000 "toCompressedJsonString should be faster"
+        Expect.isTrue (compressed.Length*5 < json.Length) $"compressed should be more than 10 times smaller than uncompressed, but was only {float json.Length / float compressed.Length}x smaller"
+    testCase "rangeColumnSize" <| fun _ ->
+        // testTable column should be saved as range column, this should make it smaller than the IO column even though it has more cells
+        let testTable = ArcTable.init("Test")
+        testTable.AddColumn (CompositeHeader.FreeText "ABC", [|for i = 0 to 200 do yield CompositeCell.FreeText "TestValue"|])
+        let referenceTable = ArcTable.init("Test")
+        referenceTable.AddColumn (CompositeHeader.Input IOType.Source, [|for i = 0 to 100 do yield CompositeCell.FreeText "TestValue"|])
+        let compressedTest = testTable.ToCompressedJsonString()
+        let compressedReference = referenceTable.ToCompressedJsonString()
+        Expect.isTrue (compressedTest.Length < compressedReference.Length) "range column should be smaller than IO column"
+        let decompressedTest = ArcTable.fromCompressedJsonString compressedTest
+        Expect.arcTableEqual decompressedTest testTable "decompressed table should be equal to original table"
+    testCase "rangeColumnCorrectness" <| fun _ ->
+        let testTable = ArcTable.init("Test")
+        testTable.AddColumn (CompositeHeader.FreeText "ABC")
+        for i = 0 to 100 do testTable.AddRow ([|CompositeCell.FreeText "TestValue1"|])
+        for i = 101 to 200 do testTable.AddRow ([|CompositeCell.FreeText "TestValue2"|])
+        testTable.AddRow ([|CompositeCell.FreeText "TestValue3"|])
+        let encoded = testTable.ToCompressedJsonString()
+        let decoded = ArcTable.fromCompressedJsonString encoded
+        Expect.arcTableEqual decoded testTable "decompressed table should be equal to original table"
+  ]
 ]
 
 let tests_ArcAssay = testList "ArcAssay" [
@@ -225,6 +266,16 @@ let tests_ArcAssay = testList "ArcAssay" [
       let expected = filled
       let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
+  ]
+  testList "compressedIO" [
+    testCase "Empty" <| fun _ ->
+      let encoded = ArcAssay.toCompressedJsonString init
+      let decoded = ArcAssay.fromCompressedJsonString encoded
+      Expect.equal decoded init "empty table is wrong after compressed encoding and decoding"
+    testCase "Filled" <| fun _ ->
+      let encoded = ArcAssay.toCompressedJsonString filled
+      let decoded = ArcAssay.fromCompressedJsonString encoded
+      Expect.equal decoded filled "empty table is wrong after compressed encoding and decoding"
   ]
 ]
 

@@ -23,6 +23,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     member this.Headers
         with get() = headers
         and set(newHeaders) = headers <- newHeaders
+    /// column * row index
     member this.Values
         with get() = values
         and set(newValues) = values <- newValues

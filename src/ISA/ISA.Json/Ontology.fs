@@ -119,6 +119,32 @@ module OntologyAnnotation =
             )
         )
 
+
+    let compressedEncoder (stringTable : StringTableMap) (options : ConverterOptions) (oa : obj) = 
+        [
+            if options.SetID then "@id", GEncode.toJsonString (oa :?> OntologyAnnotation |> genID)
+                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.toJsonString "OntologyAnnotation"
+            GEncode.tryInclude "a" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "ts" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
+            GEncode.tryInclude "ta" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
+            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+        ]
+        |> GEncode.choose
+        |> Encode.object
+
+
+    let compressedDecoder (stringTable : StringTableArray) (options : ConverterOptions) : Decoder<OntologyAnnotation> =
+        Decode.object (fun get ->
+            OntologyAnnotation.create(
+                ?Id = get.Optional.Field "@id" GDecode.uri,
+                ?Name = get.Optional.Field "a" (StringTable.decodeString stringTable),
+                ?TermSourceREF = get.Optional.Field "ts" (StringTable.decodeString stringTable),
+                ?TermAccessionNumber = get.Optional.Field "ta" (StringTable.decodeString stringTable),
+                ?Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
+            )
+        )
+
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s        
 
