@@ -88,7 +88,7 @@ module ArcTypesAux =
         
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) as this = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
     
     let performers = defaultArg performers [||]
@@ -100,6 +100,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
     let mutable performers : Person [] = performers
     let mutable comments : Comment [] = comments
+    let mutable staticHash : int = 0
 
     /// Must be unique in one study
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
@@ -110,6 +111,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
+    member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcAssay(identifier)
     static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
@@ -557,7 +559,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) = 
+type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?factors, ?comments) as this = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let publications = defaultArg publications [||]
@@ -579,6 +581,8 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     let mutable registeredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers
     let mutable factors : Factor [] = factors
     let mutable comments : Comment [] = comments
+    let mutable staticHash : int = 0
+
     /// Must be unique in one investigation
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
     // read-only
@@ -593,6 +597,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member this.RegisteredAssayIdentifiers with get() = registeredAssayIdentifiers and set(n) = registeredAssayIdentifiers <- n
     member this.Factors with get() = factors and set(n) = factors <- n
     member this.Comments with get() = comments and set(n) = comments <- n
+    member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init(identifier : string) = ArcStudy identifier
 
@@ -1150,6 +1155,23 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         |> Aux.HashCodes.boxHashArray 
         |> fun x -> x :?> int
 
+    member this.GetLightHashCode() = 
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.Title
+            Aux.HashCodes.boxHashOption this.Description
+            Aux.HashCodes.boxHashOption this.SubmissionDate
+            Aux.HashCodes.boxHashOption this.PublicReleaseDate
+            Aux.HashCodes.boxHashArray this.Publications
+            Aux.HashCodes.boxHashArray this.Contacts
+            Aux.HashCodes.boxHashArray this.StudyDesignDescriptors
+            Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Tables
+            Aux.HashCodes.boxHashArray this.Factors
+            Aux.HashCodes.boxHashArray this.Comments
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
 [<AttachMembers>]
 type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
 
@@ -1183,6 +1205,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     let mutable registeredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers
     let mutable comments : Comment [] = comments
     let mutable remarks : Remark [] = remarks
+    let mutable staticHash : int = 0
+
     /// Must be unique in one investigation
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
     member this.Title with get() = title and set(n) = title <- n
@@ -1197,6 +1221,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.RegisteredStudyIdentifiers with get() = registeredStudyIdentifiers and set(n) = registeredStudyIdentifiers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.Remarks with get() = remarks and set(n) = remarks <- n
+    member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member FileName = ARCtrl.Path.InvestigationFileName
 
@@ -1920,6 +1945,22 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Assays
             Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.Studies
             Array.ofSeq >> Aux.HashCodes.boxHashArray <| this.RegisteredStudyIdentifiers
+            Aux.HashCodes.boxHashArray this.Comments
+            Aux.HashCodes.boxHashArray this.Remarks
+        |]
+        |> Aux.HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
+    member this.GetLightHashCode() =
+        [|
+            box this.Identifier
+            Aux.HashCodes.boxHashOption this.Title
+            Aux.HashCodes.boxHashOption this.Description
+            Aux.HashCodes.boxHashOption this.SubmissionDate
+            Aux.HashCodes.boxHashOption this.PublicReleaseDate
+            Aux.HashCodes.boxHashArray this.Publications
+            Aux.HashCodes.boxHashArray this.Contacts
+            Aux.HashCodes.boxHashArray this.OntologySourceReferences
             Aux.HashCodes.boxHashArray this.Comments
             Aux.HashCodes.boxHashArray this.Remarks
         |]
