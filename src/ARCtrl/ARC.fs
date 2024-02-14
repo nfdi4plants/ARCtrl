@@ -226,6 +226,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
                 investigation.AddStudy(study)
+            study.StaticHash <- study.GetLightHashCode()
         )
         assays |> Array.iter (fun assay ->
             /// Try find registered study in parsed READ contracts
@@ -243,8 +244,8 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                 ) (ArcTables(assay.Tables))
             assay.Tables <- updatedTables.Tables
         )
-        assays |> Array.iter (fun assay -> assay.StaticHash <- assay.GetHashCode())
-        studies |> Array.iter (fun study -> study.StaticHash <- study.GetLightHashCode())
+        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetHashCode())
+        investigation.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
         investigation.StaticHash <- investigation.GetLightHashCode()
         this.ISA <- Some investigation
 
@@ -265,10 +266,10 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         | Some inv -> 
             let investigationConverter = if isLight then ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook else ISA.Spreadsheet.ArcInvestigation.toFsWorkbook
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
-            inv.StaticHash <- inv.GetHashCode()
+            inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
             |> Seq.iter (fun s ->
-                s.StaticHash <- s.GetHashCode()
+                s.StaticHash <- s.GetLightHashCode()
                 workbooks.Add (
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
@@ -304,14 +305,18 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let isLight = defaultArg isLight true
         // Map containing the DTOTypes and objects for the ISA objects.
         match this.ISA with
+        | None -> // if no ISA is present, return write contracts
+            this.GetWriteContracts(isLight) 
+        | Some inv when inv.StaticHash = 0 -> // if ISA is present but has not been written to disk, return write contracts
+            this.GetWriteContracts(isLight)
         | Some inv -> 
-            let investigationConverter = if isLight then ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook else ISA.Spreadsheet.ArcInvestigation.toFsWorkbook
-            [
+            [|
                 // Get Investigation contract
                 let hash = inv.GetLightHashCode()
-                if inv.StaticHash = 0 then       
-                    yield inv.ToCreateContract(isLight)
-                elif inv.StaticHash <> hash then 
+                // Currently catched by match case
+                //if inv.StaticHash = 0 then       
+                //    yield inv.ToCreateContract(isLight)
+                if inv.StaticHash <> hash then 
                     yield inv.ToUpdateContract(isLight)
                 inv.StaticHash <- hash
 
@@ -332,10 +337,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                     elif a.StaticHash <> hash then 
                         yield a.ToUpdateContract()
                     a.StaticHash <- hash
-            ]
-        | None -> 
-            let iWb = ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))
-            [Contract.createCreate(Path.InvestigationFileName,DTOType.ISA_Investigation,DTO.Spreadsheet iWb)]
+            |]
             
 
 

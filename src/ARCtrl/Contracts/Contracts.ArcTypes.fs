@@ -82,7 +82,7 @@ module ArcTypeExtensions =
             [|
                 if withFolder then 
                     let folderFS = FileSystemTree.createStudiesFolder ([|FileSystemTree.createStudyFolder this.Identifier|])
-                    for p in folderFS.ToFilePaths() do
+                    for p in folderFS.ToFilePaths(false) do
                         if p <> path then Contract.createCreate(p, DTOType.PlainText)
                 c
             |]
@@ -123,7 +123,7 @@ module ArcTypeExtensions =
             [|
                 if withFolder then 
                     let folderFS = FileSystemTree.createAssayFolder this.Identifier
-                    for p in folderFS.ToFilePaths() do
+                    for p in folderFS.ToFilePaths(false) do
                         if p <> path then Contract.createCreate(p, DTOType.PlainText)
                 c
             |]
