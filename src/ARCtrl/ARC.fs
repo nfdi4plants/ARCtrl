@@ -297,7 +297,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
     /// <summary>
     /// This function returns the all update Contracts for the current state of the ARC. Only update contracts for those ISA objects that have been changed will be returned. If an ISA object was added to the ARC, instead a write contract for the complete object folder will be returned. 
     /// 
-    /// 
+    /// An obect is considered changed if its hash code has changed compared with the StaticHash. An object is considered added if its StaticHash code is 0.
     /// 
     /// ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
