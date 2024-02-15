@@ -1,3 +1,22 @@
+### 1.1.0+6309e03 (Released 2024-2-15)
+* Additions:
+    * [[#544ffdc](https://github.com/nfdi4plants/ARCtrl/commit/544ffdcbcf2e19c12c995e408713b83157cda345)] add some additional information to failing spreadsheet parsers #306
+    * [[#ee67104](https://github.com/nfdi4plants/ARCtrl/commit/ee671049018b339c8fd98975ed33960e0313f5f1)] create first version of compressed arctable json exporter
+    * [[#8b36c55](https://github.com/nfdi4plants/ARCtrl/commit/8b36c55438cd0747ecc61778ff48c70fb787417b)] implement stringtable in arctable json compression
+    * [[#bb98bf4](https://github.com/nfdi4plants/ARCtrl/commit/bb98bf4fd84d62bfedfe5732b502f58e586471d2)] add compressed study and assay json encoders
+    * [[#6c5aa85](https://github.com/nfdi4plants/ARCtrl/commit/6c5aa85fd38e773d6e6f386da89c15a2f2e0ce06)] add tests for compressed json
+    * [[#689f60c](https://github.com/nfdi4plants/ARCtrl/commit/689f60c52c42e63639d744255da97f80b4279e74)] add more efficient compressed column encoding
+    * [[#a9fbdf6](https://github.com/nfdi4plants/ARCtrl/commit/a9fbdf600ab11c7cfe44cd66a71d05b49af49fad)] add rangeEncoding to compressed json
+    * [[#8635d76](https://github.com/nfdi4plants/ARCtrl/commit/8635d76d663895326a387ef371faa571ff661756)] Improve speed of GetHashCode
+    * [[#ed0e78e](https://github.com/nfdi4plants/ARCtrl/commit/ed0e78e2efd76f673ed23dcce31711f2ccf3ef06)] add GetUpdateContracts functionality
+    * [[#73ed27e](https://github.com/nfdi4plants/ARCtrl/commit/73ed27e54d4cac2658703b76a02bce418c7b9aea)] small clarification on getUpdateContracts
+    * [[#787368e](https://github.com/nfdi4plants/ARCtrl/commit/787368edf4bdfc6d972d33c5050092b3f347ccfe)] reinclude fable reference in isa.json.fsproj
+* Deletions:
+    * [[#f87b4b6](https://github.com/nfdi4plants/ARCtrl/commit/f87b4b6ec87fe713346956c9a4547759a38817fe)] removed unused self reference in assay and study constructors
+* Bugfixes:
+    * [[#c619cd9](https://github.com/nfdi4plants/ARCtrl/commit/c619cd98b5840c22c2efacc8759e59907d44f9dd)] small fix to compressed arcTable json
+    * [[#9d3392d](https://github.com/nfdi4plants/ARCtrl/commit/9d3392d7d8125a252ad58ae0da749f5673f27cfb)] add update contract tests and fix against them
+
 ### 1.0.7+14c14a9 (Released 2024-1-30)
 * Additions:
     * [[#14c14a9](https://github.com/nfdi4plants/ARCtrl/commit/14c14a905b42bb75207a28a2ab1721ec31965fed)] update FsSpreadsheet reference
