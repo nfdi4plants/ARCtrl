@@ -10,22 +10,17 @@ type Value =
     | Name of string
 
     static member fromString (value : string) =
-        try Value.Int (int value)
-        with
+        match System.Int32.TryParse value with
+        | (true, i) -> Value.Int i
         | _ -> 
-            try Value.Float (float value)
-            with
+            match System.Double.TryParse value with
+            | (true, f) -> Value.Float f
             | _ -> Value.Name value
 
     static member fromOptions (value : string Option) (termSource: string Option) (termAccesssion: string Option) =
         match value, termSource, termAccesssion with
         | Some value, None, None ->
-            try Value.Int (int value)
-            with
-            | _ -> 
-                try Value.Float (float value)
-                with
-                | _ -> Value.Name value
+            Value.fromString value
             |> Some
         | None, None, None -> 
             None
