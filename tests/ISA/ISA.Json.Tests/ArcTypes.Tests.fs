@@ -4,13 +4,8 @@ open TestingUtils
 
 open ARCtrl.ISA
 open ARCtrl.ISA.Json
-#if FABLE_COMPILER
-open Fable.Core
-open Fable.Core.JsInterop
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+
+open Thoth.Json.Core
 
 let tests_CompositeCell =
   testList "CompositeCell" [
@@ -26,51 +21,46 @@ let tests_CompositeCell =
     let cell_unitized_empty_jsonString = sprintf """{"%s":"Unitized","values":["",{}]}""" CompositeCell.CellType
     testList "encoder (toJsonString)" [
       testCase "FreeText" <| fun _ -> 
-        let actual = CompositeCell.encoder cell_freetext |> Encode.toString 0
+        let actual = CompositeCell.encoder cell_freetext |> GEncode.toJsonString  0
         let expected = cell_freetext_jsonString
         Expect.equal actual expected ""
       testCase "Term" <| fun _ -> 
-        let actual = CompositeCell.encoder cell_term |> Encode.toString 0
+        let actual = CompositeCell.encoder cell_term |> GEncode.toJsonString  0
         let expected = cell_term_jsonString
         Expect.equal actual expected ""
       testCase "Term empty" <| fun _ -> 
-        let actual = CompositeCell.encoder cell_term_empty |> Encode.toString 0
+        let actual = CompositeCell.encoder cell_term_empty |> GEncode.toJsonString  0
         let expected = cell_term_empty_jsonString
         Expect.equal actual expected ""
       testCase "Unitized" <| fun _ -> 
-        let actual = CompositeCell.encoder cell_unitized |> Encode.toString 0
+        let actual = CompositeCell.encoder cell_unitized |> GEncode.toJsonString  0
         let expected = cell_unitized_jsonString
         Expect.equal actual expected ""
       testCase "Unitized empty" <| fun _ -> 
-        let actual = CompositeCell.encoder cell_unitized_empty |> Encode.toString 0
+        let actual = CompositeCell.encoder cell_unitized_empty |> GEncode.toJsonString  0
         let expected = cell_unitized_empty_jsonString
         Expect.equal actual expected ""
     ]
     testList "decoder (fromJsonString)" [ 
       testCase "FreeText" <| fun _ -> 
-        let actual = Decode.fromString CompositeCell.decoder cell_freetext_jsonString
+        let actual = GDecode.fromJsonString CompositeCell.decoder cell_freetext_jsonString
         let expected = cell_freetext
-        let actual = Expect.wantOk actual ""
         Expect.equal actual expected ""
       testCase "Term" <| fun _ -> 
-        let actual = Decode.fromString CompositeCell.decoder cell_term_jsonString
+        let actual = GDecode.fromJsonString CompositeCell.decoder cell_term_jsonString
         let expected = cell_term
-        let actual = Expect.wantOk actual ""
         Expect.equal actual expected ""
       testCase "Term empty" <| fun _ -> 
-        let actual = Decode.fromString CompositeCell.decoder cell_term_empty_jsonString
+        let actual = GDecode.fromJsonString CompositeCell.decoder cell_term_empty_jsonString
         let expected = cell_term_empty
-        let actual = Expect.wantOk actual ""
         Expect.equal actual expected ""
       testCase "Unitized" <| fun _ -> 
-        let actual = Decode.fromString CompositeCell.decoder cell_unitized_jsonString
+        let actual = GDecode.fromJsonString CompositeCell.decoder cell_unitized_jsonString
         let expected = cell_unitized
-        let actual = Expect.wantOk actual ""
         Expect.equal actual expected ""
       testCase "Unitized empty" <| fun _ -> 
-        let actual = Decode.fromString CompositeCell.decoder cell_unitized_empty_jsonString
+        let actual = GDecode.fromJsonString CompositeCell.decoder cell_unitized_empty_jsonString
         let expected = cell_unitized_empty
-        let actual = Expect.wantOk actual ""
         Expect.equal actual expected ""
     ]
   ]
@@ -82,24 +72,22 @@ let tests_IOType = testList "IOType" [
   let io_sample_jsonString =  "\"Sample Name\"" 
   testList "encoder" [
     testCase "FreeText" <| fun _ ->
-      let actual = Encode.toString 0 <| IOType.encoder io_freetext
+      let actual = GEncode.toJsonString  0 <| IOType.encoder io_freetext
       let expected = io_freetext_jsonString
       Expect.equal actual expected ""
     testCase "Sample" <| fun _ ->
-      let actual = Encode.toString 0 <| IOType.encoder io_sample
+      let actual = GEncode.toJsonString  0 <| IOType.encoder io_sample
       let expected = io_sample_jsonString
       Expect.equal actual expected ""
   ]
   testList "decoder" [
     testCase "FreeText" <| fun _ ->
-      let actual = Decode.fromString IOType.decoder io_freetext_jsonString 
+      let actual = GDecode.fromJsonString IOType.decoder io_freetext_jsonString 
       let expected = io_freetext
-      let actual = Expect.wantOk actual "want ok"
       Expect.equal actual expected ""
     testCase "Sample" <| fun _ ->
-      let actual = Decode.fromString IOType.decoder io_sample_jsonString
+      let actual = GDecode.fromJsonString IOType.decoder io_sample_jsonString
       let expected = io_sample
-      let actual = Expect.wantOk actual "want ok"
       Expect.equal actual expected ""
   ]
 ]
@@ -113,33 +101,30 @@ let tests_CompositeHeader = testList "CompositeHeader" [
   let header_protocolref_jsonString =  """{"headertype":"ProtocolREF","values":[]}""" 
   testList "encoder" [
     testCase "Parameter" <| fun _ ->
-      let actual = Encode.toString 0 <| CompositeHeader.encoder header_parameter
+      let actual = GEncode.toJsonString  0 <| CompositeHeader.encoder header_parameter
       let expected = header_parameter_jsonString
       Expect.equal actual expected ""
     testCase "Input Source" <| fun _ ->
-      let actual = Encode.toString 0 <| CompositeHeader.encoder header_input_source
+      let actual = GEncode.toJsonString  0 <| CompositeHeader.encoder header_input_source
       let expected = header_input_source_jsonString
       Expect.equal actual expected ""
     testCase "ProtocolREF" <| fun _ ->
-      let actual = Encode.toString 0 <| CompositeHeader.encoder header_protocolref
+      let actual = GEncode.toJsonString  0 <| CompositeHeader.encoder header_protocolref
       let expected = header_protocolref_jsonString
       Expect.equal actual expected ""
   ]
   testList "decoder" [
     testCase "Parameter" <| fun _ ->
-      let actual = Decode.fromString CompositeHeader.decoder header_parameter_jsonString
+      let actual = GDecode.fromJsonString CompositeHeader.decoder header_parameter_jsonString
       let expected = header_parameter
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
     testCase "Input Source" <| fun _ ->
-      let actual = Decode.fromString CompositeHeader.decoder header_input_source_jsonString
+      let actual = GDecode.fromJsonString CompositeHeader.decoder header_input_source_jsonString
       let expected = header_input_source
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
     testCase "ProtocolREF" <| fun _ ->
-      let actual = Decode.fromString CompositeHeader.decoder header_protocolref_jsonString
+      let actual = GDecode.fromJsonString CompositeHeader.decoder header_protocolref_jsonString
       let expected = header_protocolref
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
 ]
@@ -166,24 +151,22 @@ let tests_ArcTable = testList "ArcTable" [
   let filled_jsonString =  """{"name":"New Table","header":[{"headertype":"Input","values":["Source Name"]},{"headertype":"Component","values":[{"annotationValue":"instrument model","termSource":"MS","termAccession":"MS:424242"}]},{"headertype":"Output","values":["Sample Name"]}],"values":[[[0,0],{"celltype":"FreeText","values":["Input 1"]}],[[0,1],{"celltype":"FreeText","values":["Input 2"]}],[[1,0],{"celltype":"Term","values":[{"annotationValue":"SCIES instrument model"}]}],[[1,1],{"celltype":"Term","values":[{"annotationValue":"SCIES instrument model"}]}],[[2,0],{"celltype":"FreeText","values":["Output 2"]}],[[2,1],{"celltype":"FreeText","values":["Output 2"]}]]}""" 
   testList "encode" [
     testCase "Empty" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcTable.encoder init
+      let actual = GEncode.toJsonString  0 <| ArcTable.encoder init
       let expected = init_jsonString
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcTable.encoder filled
+      let actual = GEncode.toJsonString  0 <| ArcTable.encoder filled
       let expected = filled_jsonString
       Expect.equal actual expected ""
   ]
   testList "decode" [
     testCase "Empty" <| fun _ ->
-      let actual = Decode.fromString ArcTable.decoder init_jsonString
+      let actual = GDecode.fromJsonString ArcTable.decoder init_jsonString
       let expected = init
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Decode.fromString ArcTable.decoder filled_jsonString
+      let actual = GDecode.fromJsonString ArcTable.decoder filled_jsonString
       let expected = filled
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
   testList "compressedIO" [
@@ -247,24 +230,22 @@ let tests_ArcAssay = testList "ArcAssay" [
 
   testList "encode" [
     testCase "Empty" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcAssay.encoder init
+      let actual = GEncode.toJsonString  0 <| ArcAssay.encoder init
       let expected = init_jsonString
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcAssay.encoder filled
+      let actual = GEncode.toJsonString  0 <| ArcAssay.encoder filled
       let expected = filled_jsonString
       Expect.equal actual expected ""
   ]
   testList "decode" [
     testCase "Empty" <| fun _ ->
-      let actual = Decode.fromString ArcAssay.decoder init_jsonString
+      let actual = GDecode.fromJsonString ArcAssay.decoder init_jsonString
       let expected = init
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Decode.fromString ArcAssay.decoder filled_jsonString
+      let actual = GDecode.fromJsonString ArcAssay.decoder filled_jsonString
       let expected = filled
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
   testList "compressedIO" [
@@ -303,24 +284,22 @@ let tests_ArcStudy = testList "ArcStudy" [
     """{"Identifier":"My Study","Title":"My Title","Description":"My Description","SubmissionDate":"My Submission Date","PublicReleaseDate":"My Release Date","Publications":[{"doi":"any-nice-doi-42"}],"Contacts":[{"firstName":"Kevin","lastName":"Frey"}],"StudyDesignDescriptors":[{},{}],"Tables":[{"name":"Table 1"},{"name":"Table 2"}],"RegisteredAssayIdentifiers":["Assay 1","Assay 2"],"Factors":[{},{"factorName":"My Factor"}],"Comments":[{"@id":"Hello","name":"World"}]}"""
   testList "encode" [
     testCase "Empty" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcStudy.encoder init
+      let actual = GEncode.toJsonString  0 <| ArcStudy.encoder init
       let expected = init_jsonString
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcStudy.encoder filled
+      let actual = GEncode.toJsonString  0 <| ArcStudy.encoder filled
       let expected = filled_jsonString
       Expect.equal actual expected ""
   ]
   testList "decode" [
     testCase "Empty" <| fun _ ->
-      let actual = Decode.fromString ArcStudy.decoder init_jsonString
+      let actual = GDecode.fromJsonString ArcStudy.decoder init_jsonString
       let expected = init
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Decode.fromString ArcStudy.decoder filled_jsonString
+      let actual = GDecode.fromJsonString ArcStudy.decoder filled_jsonString
       let expected = filled
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
 ]
@@ -351,24 +330,22 @@ let tests_ArcInvestigation = testList "ArcInvestigation" [
 
   testList "encode" [
     testCase "Empty" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcInvestigation.encoder init
+      let actual = GEncode.toJsonString  0 <| ArcInvestigation.encoder init
       let expected = init_jsonString
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Encode.toString 0 <| ArcInvestigation.encoder filled
+      let actual = GEncode.toJsonString  0 <| ArcInvestigation.encoder filled
       let expected = filled_jsonString
       Expect.equal actual expected ""
   ]
   testList "decode" [
     testCase "Empty" <| fun _ ->
-      let actual = Decode.fromString ArcInvestigation.decoder init_jsonString
+      let actual = GDecode.fromJsonString ArcInvestigation.decoder init_jsonString
       let expected = init
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
     testCase "Filled" <| fun _ ->
-      let actual = Decode.fromString ArcInvestigation.decoder filled_jsonString
+      let actual = GDecode.fromJsonString ArcInvestigation.decoder filled_jsonString
       let expected = filled
-      let actual = Expect.wantOk actual "wantok"
       Expect.equal actual expected ""
   ]
 ]

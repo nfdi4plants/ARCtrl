@@ -75,18 +75,16 @@ module ArcInvestigation =
         GEncode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
-        match Decode.fromString decoder jsonString with
-        | Ok a -> a
-        | Error e -> failwithf "Error. Unable to parse json string to ArcInvestigation: %s" e
+        try GDecode.fromJsonString decoder jsonString with
+        | e -> failwithf "Error. Unable to parse json string to ArcInvestigation: %s" e.Message
 
 [<AutoOpen>]
 module ArcInvestigationExtensions =
 
     type ArcInvestigation with
         static member fromArcJsonString (jsonString: string) : ArcInvestigation = 
-            match Decode.fromString ArcInvestigation.decoder jsonString with
-            | Ok r -> r
-            | Error e -> failwithf "Error. Unable to parse json string to ArcInvestigation: %s" e
+            try GDecode.fromJsonString ArcInvestigation.decoder jsonString with
+            | e -> failwithf "Error. Unable to parse json string to ArcInvestigation: %s" e.Message
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0

@@ -118,9 +118,8 @@ module ArcStudy =
         GEncode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
-        match Decode.fromString decoder jsonString with
-        | Ok a -> a
-        | Error e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e
+        try GDecode.fromJsonString decoder jsonString with
+        | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
 
 [<AutoOpen>]
 module ArcStudyExtensions =
@@ -129,9 +128,8 @@ module ArcStudyExtensions =
 
     type ArcStudy with
         static member fromArcJsonString (jsonString: string) : ArcStudy = 
-            match Decode.fromString ArcStudy.decoder jsonString with
-            | Ok r -> r
-            | Error e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e
+            try GDecode.fromJsonString ArcStudy.decoder jsonString with
+            | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
@@ -147,9 +145,8 @@ module ArcStudyExtensions =
                     let cellTable = get.Required.Field "cellTable" (CellTable.decoder stringTable oaTable)
                     get.Required.Field "study" (ArcStudy.compressedDecoder stringTable oaTable cellTable)
                 )
-            match Decode.fromString decoder jsonString with
-            | Ok r -> r
-            | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
+            try GDecode.fromJsonString decoder jsonString with
+            | e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e.Message
 
         member this.ToCompressedJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0

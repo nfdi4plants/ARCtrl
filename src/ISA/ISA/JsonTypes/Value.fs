@@ -1,6 +1,7 @@
 ﻿namespace ARCtrl.ISA
 
 open Fable.Core
+open System.Globalization
 
 [<AttachMembers>]
 type Value =
@@ -10,10 +11,11 @@ type Value =
     | Name of string
 
     static member fromString (value : string) =
-        match System.Int32.TryParse value with
+        match System.Int32.TryParse value  with
         | (true, i) -> Value.Int i
         | _ -> 
-            match System.Double.TryParse value with
+            
+            match System.Double.TryParse(value,NumberStyles.Any,CultureInfo.InvariantCulture) with
             | (true, f) -> Value.Float f
             | _ -> Value.Name value
 
