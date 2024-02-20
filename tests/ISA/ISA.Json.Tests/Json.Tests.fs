@@ -86,12 +86,8 @@ let testEncode =
             
             Expect.isSome result "Could not find the field, even though it exists"
 
-            let result' = 
-                #if FABLE_COMPILER
-                !!result.Value
-                #else
-                result.Value :?> Comment []
-                #endif
+            let result' = result.Value :?> Comment []
+                
 
             let expected = comments
 

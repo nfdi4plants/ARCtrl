@@ -35,7 +35,7 @@ module OATable =
 
     let decodeOA (ot : OATableArray) : Decoder<OntologyAnnotation> = 
         Decode.object (fun get ->
-            let i = get.Required.Field "t" Decode.int
+            let i = get.Required.Raw Decode.int
             ot.[i]
         )
         
