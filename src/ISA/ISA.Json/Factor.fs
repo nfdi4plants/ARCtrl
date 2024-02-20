@@ -8,15 +8,15 @@ open System.IO
 
 module Value = 
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : Value) = 
         match value with
-        | :? Value as Value.Float f -> 
+        | Value.Float f -> 
             Encode.float f
-        | :? Value as Value.Int i -> 
+        | Value.Int i -> 
             Encode.int i
-        | :? Value as Value.Name s -> 
+        | Value.Name s -> 
             Encode.string s
-        | :? Value as Value.Ontology s -> 
+        | Value.Ontology s -> 
             OntologyAnnotation.encoder options s
         | _ -> Encode.nil
 
@@ -63,14 +63,14 @@ module Factor =
                   | Some n -> "#Factor_" + n.Replace(" ","_")
                   | None -> "#EmptyFactor"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Factor) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Factor |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Factor"
-            GEncode.tryInclude "factorName" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorType")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Factor"
+            GEncode.tryInclude "factorName" Encode.string (oa.Name)
+            GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -112,14 +112,14 @@ module FactorValue =
         | Some id -> URI.toString id
         | None -> "#EmptyFactorValue"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : FactorValue) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> FactorValue |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "FactorValue"
-            GEncode.tryInclude "category" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
-            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
-            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "FactorValue"
+            GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
+            GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
         ]
         |> GEncode.choose
         |> Encode.object

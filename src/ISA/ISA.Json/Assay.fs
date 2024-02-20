@@ -7,10 +7,10 @@ open System.IO
 
 module AssayMaterials = 
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : AssayMaterials) = 
         [
-            GEncode.tryInclude "samples" (Sample.encoder options) (oa |> GEncode.tryGetPropertyValue "Samples")
-            GEncode.tryInclude "otherMaterials" (Material.encoder options) (oa |> GEncode.tryGetPropertyValue "OtherMaterials")
+            GEncode.tryIncludeList "samples" (Sample.encoder options) (oa.Samples)
+            GEncode.tryIncludeList "otherMaterials" (Material.encoder options) (oa.OtherMaterials)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -34,21 +34,21 @@ module Assay =
                   | Some n -> n
                   | None -> "#EmptyAssay"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Assay) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Assay |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Assay"
-            GEncode.tryInclude "filename" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "FileName")
-            GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "MeasurementType")
-            GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "TechnologyType")
-            GEncode.tryInclude "technologyPlatform" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
-            GEncode.tryInclude "dataFiles" (Data.encoder options) (oa |> GEncode.tryGetPropertyValue "DataFiles")
-            GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
-            GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
-            GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
-            GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Assay"
+            GEncode.tryInclude "filename" Encode.string (oa.FileName)
+            GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa.MeasurementType)
+            GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa.TechnologyType)
+            GEncode.tryInclude "technologyPlatform" Encode.string (oa.TechnologyPlatform)
+            GEncode.tryIncludeList "dataFiles" (Data.encoder options) (oa.DataFiles)
+            GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa.Materials)
+            GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)
+            GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
+            GEncode.tryIncludeList "processSequence" (Process.encoder options) (oa.ProcessSequence)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

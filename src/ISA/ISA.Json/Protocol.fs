@@ -13,12 +13,12 @@ module ProtocolParameter =
                   | Some n when not n.ID.IsNone -> "#Param_" + n.ID.Value
                   | _ -> "#EmptyProtocolParameter"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : ProtocolParameter) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> ProtocolParameter |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "ProtocolParameter"
-            GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterName")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "ProtocolParameter"
+            GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa.ParameterName)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -57,12 +57,12 @@ module Component =
         | Some cn -> "#Component_" + cn.Replace(" ","_")
         | None -> "#EmptyComponent"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Component) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Component |> genID)
-            if options.IncludeType then "@type", GEncode.includeString "Component"
-            GEncode.tryInclude "componentName" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ComponentName")
-            GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ComponentType")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+            if options.IncludeType then "@type", Encode.string "Component"
+            GEncode.tryInclude "componentName" Encode.string (oa.ComponentName)
+            GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa.ComponentType)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -117,19 +117,19 @@ module Protocol =
                             | Some n -> "#Protocol_" + n.Replace(" ","_")
                             | None -> "#EmptyProtocol" 
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Protocol) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Protocol |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Protocol"
-            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "ProtocolType")
-            GEncode.tryInclude "description" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "uri" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Uri")
-            GEncode.tryInclude "version" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Version")
-            GEncode.tryInclude "parameters" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Parameters")
-            GEncode.tryInclude "components" (Component.encoder options) (oa |> GEncode.tryGetPropertyValue "Components")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa  |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Protocol"
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa.ProtocolType)
+            GEncode.tryInclude "description" Encode.string (oa.Description)
+            GEncode.tryInclude "uri" Encode.string (oa.Uri)
+            GEncode.tryInclude "version" Encode.string (oa.Version)
+            GEncode.tryIncludeList "parameters" (ProtocolParameter.encoder options) (oa.Parameters)
+            GEncode.tryIncludeList "components" (Component.encoder options) (oa.Components)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

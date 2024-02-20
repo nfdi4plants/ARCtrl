@@ -26,8 +26,7 @@ module StringTable =
     let decoder : Decoder<StringTableArray> =
         Decode.array Decode.string
         
-    let encodeString (otm : StringTableMap) (s : obj) =
-        let s = s :?> string
+    let encodeString (otm : StringTableMap) (s : string) =
         match Dict.tryFind s otm with
         | Some i -> Encode.int i
         | None ->

@@ -38,10 +38,8 @@ module GEncode =
         Thoth.Json.Newtonsoft.Encode.toString spaces value
         #endif
 
-    let inline includeString (value : obj) = 
-        match value with
-        | :? string as s -> Json.String s
-        | _ -> Json.Null
+    let inline includeString (value : string) = 
+        Json.String value
 
     let inline choose (kvs : (string * Json) list) = 
         kvs
@@ -53,7 +51,7 @@ module GEncode =
     /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
     ///
     /// If the object is a sequence, encode each element using the given encoder and return the resulting sequence
-    let tryInclude name (encoder : obj -> Json) (value : obj option) = 
+    let tryIncludeObj name (encoder : obj -> Json) (value : obj option) = 
         name,
         match value with
         #if FABLE_COMPILER
@@ -66,6 +64,32 @@ module GEncode =
         | Some(o) -> encoder o
         | _ -> Encode.nil
 
+    /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
+    let tryInclude name (encoder : 'Value -> Json) (value : 'Value option) = 
+        name,
+        match value with
+        | Some(o) -> encoder o
+        | _ -> Encode.nil
+
+    /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
+    let tryIncludeSeq name (encoder : 'Value -> Json) (value : #seq<'Value> option) = 
+        name,
+        match value with
+        | Some(os) -> Seq.map encoder os |> Encode.seq
+        | _ -> Encode.nil
+
+
+    let tryIncludeArray name (encoder : 'Value -> Json) (value : 'Value array option) = 
+        name,
+        match value with
+        | Some(os) -> os |> Array.map encoder |> Encode.array
+        | _ -> Encode.nil
+
+    let tryIncludeList name (encoder : 'Value -> Json) (value : 'Value list option) = 
+        name,
+        match value with
+        | Some(os) -> os |> List.map encoder |> Encode.list
+        | _ -> Encode.nil
 
     // This seems to fail because due to dotnet not able to match the boxed lists against nongeneric System.Collections.IEnumerable
     //

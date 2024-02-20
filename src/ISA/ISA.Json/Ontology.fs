@@ -40,15 +40,15 @@ module OntologySourceReference =
             | Some n -> "#OntologySourceRef_" + n.Replace(" ","_")
             | None -> "#DummyOntologySourceRef"
 
-    let encoder (options : ConverterOptions) (osr : obj) = 
+    let encoder (options : ConverterOptions) (osr : OntologySourceReference) = 
         [
-            if options.SetID then "@id", GEncode.includeString (osr :?> OntologySourceReference |> genID)
-            if options.IncludeType then "@type", GEncode.includeString "OntologySourceReference"
-            GEncode.tryInclude "description" GEncode.includeString (osr |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "file" GEncode.includeString (osr |> GEncode.tryGetPropertyValue "File")
-            GEncode.tryInclude "name" GEncode.includeString (osr |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "version" GEncode.includeString (osr |> GEncode.tryGetPropertyValue "Version")
-            GEncode.tryInclude "comments" (Comment.encoder options) (osr |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (osr |> genID)
+            if options.IncludeType then "@type", Encode.string "OntologySourceReference"
+            GEncode.tryInclude "description" Encode.string (osr.Description)
+            GEncode.tryInclude "file" Encode.string (osr.File)
+            GEncode.tryInclude "name" Encode.string (osr.Name)
+            GEncode.tryInclude "version" Encode.string (osr.Version)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (osr.Comments)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -94,15 +94,15 @@ module OntologyAnnotation =
                             | Some r -> "#" + r.Replace(" ","_")
                             | None -> "#DummyOntologyAnnotation"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : OntologyAnnotation) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> OntologyAnnotation |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "OntologyAnnotation"
-            GEncode.tryInclude "annotationValue" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "termSource" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
-            GEncode.tryInclude "termAccession" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "OntologyAnnotation"
+            GEncode.tryInclude "annotationValue" Encode.string (oa.Name)
+            GEncode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
+            GEncode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -120,15 +120,15 @@ module OntologyAnnotation =
         )
 
 
-    let compressedEncoder (stringTable : StringTableMap) (options : ConverterOptions) (oa : obj) = 
+    let compressedEncoder (stringTable : StringTableMap) (options : ConverterOptions) (oa : OntologyAnnotation) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> OntologyAnnotation |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "OntologyAnnotation"
-            GEncode.tryInclude "a" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "ts" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
-            GEncode.tryInclude "ta" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "OntologyAnnotation"
+            GEncode.tryInclude "a" (StringTable.encodeString stringTable) (oa.Name)
+            GEncode.tryInclude "ts" (StringTable.encodeString stringTable) (oa.TermSourceREF)
+            GEncode.tryInclude "ta" (StringTable.encodeString stringTable) (oa.TermAccessionNumber)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

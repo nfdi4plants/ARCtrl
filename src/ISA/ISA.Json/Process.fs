@@ -16,14 +16,14 @@ module ProcessParameterValue =
             + (Value.getText v).Replace(" ","_")
         | _ -> "#EmptyParameterValue"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : ProcessParameterValue) = 
     
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> ProcessParameterValue |> genID)
-            if options.IncludeType then "@type", GEncode.includeString "ProcessParameterValue"
-            GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
-            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
-            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+            if options.IncludeType then "@type", Encode.string "ProcessParameterValue"
+            GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa.Category)
+            GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -59,15 +59,15 @@ module ProcessParameterValue =
 /// Functions for handling the ProcessInput Type
 module ProcessInput =
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : ProcessInput) = 
         match value with
-        | :? ProcessInput as ProcessInput.Source s-> 
+        | ProcessInput.Source s-> 
             Source.encoder options s
-        | :? ProcessInput as ProcessInput.Sample s -> 
+        | ProcessInput.Sample s -> 
             Sample.encoder options s
-        | :? ProcessInput as ProcessInput.Data d -> 
+        | ProcessInput.Data d -> 
             Data.encoder options d
-        | :? ProcessInput as ProcessInput.Material m -> 
+        | ProcessInput.Material m -> 
             Material.encoder options m
         | _ -> Encode.nil
 
@@ -110,13 +110,13 @@ module ProcessInput =
 /// Functions for handling the ProcessOutput Type
 module ProcessOutput =
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : ProcessOutput) = 
         match value with
-        | :? ProcessOutput as ProcessOutput.Sample s -> 
+        | ProcessOutput.Sample s -> 
             Sample.encoder options s
-        | :? ProcessOutput as ProcessOutput.Data d -> 
+        | ProcessOutput.Data d -> 
             Data.encoder options d
-        | :? ProcessOutput as ProcessOutput.Material m -> 
+        | ProcessOutput.Material m -> 
             Material.encoder options m
         | _ -> Encode.nil
 
@@ -137,7 +137,7 @@ module ProcessOutput =
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let toJsonString (m:ProcessInput) = 
+    let toJsonString (m:ProcessOutput) = 
         encoder (ConverterOptions()) m
         |> GEncode.toJsonString 2
 
@@ -158,21 +158,21 @@ module Process =
                         | Some n -> "#Process_" + n.Replace(" ","_")
                         | None -> "#EmptyProcess"
 
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (oa : Process) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Process |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Process"
-            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "executesProtocol" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
-            GEncode.tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterValues")
-            GEncode.tryInclude "performer" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Performer")
-            GEncode.tryInclude "date" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Date")
-            GEncode.tryInclude "previousProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "PreviousProcess")
-            GEncode.tryInclude "nextProcess" (encoder options) (oa |> GEncode.tryGetPropertyValue "NextProcess")
-            GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
-            GEncode.tryInclude "outputs" (ProcessOutput.encoder options) (oa |> GEncode.tryGetPropertyValue "Outputs")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Process"
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryInclude "executesProtocol" (Protocol.encoder options) (oa.ExecutesProtocol)
+            GEncode.tryIncludeList "parameterValues" (ProcessParameterValue.encoder options) (oa.ParameterValues)
+            GEncode.tryInclude "performer" Encode.string (oa.Performer)
+            GEncode.tryInclude "date" Encode.string (oa.Date)
+            GEncode.tryInclude "previousProcess" (encoder options) (oa.PreviousProcess)
+            GEncode.tryInclude "nextProcess" (encoder options) (oa.NextProcess)
+            GEncode.tryIncludeList "inputs" (ProcessInput.encoder options) (oa.Inputs)
+            GEncode.tryIncludeList "outputs" (ProcessOutput.encoder options) (oa.Outputs)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

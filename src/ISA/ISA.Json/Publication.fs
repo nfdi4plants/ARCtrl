@@ -16,16 +16,16 @@ module Publication =
                             | Some t -> "#Pub_" + t.Replace(" ","_")
                             | None -> "#EmptyPublication"
 
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (oa : Publication) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Publication |> genID)
-            if options.IncludeType then "@type", GEncode.includeString "Publication"
-            GEncode.tryInclude "pubMedID" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "PubMedID")
-            GEncode.tryInclude "doi" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "DOI")
-            GEncode.tryInclude "authorList" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Authors")
-            GEncode.tryInclude "title" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Title")
-            GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Status")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+            if options.IncludeType then "@type", Encode.string "Publication"
+            GEncode.tryInclude "pubMedID" Encode.string (oa.PubMedID)
+            GEncode.tryInclude "doi" Encode.string (oa.DOI)
+            GEncode.tryInclude "authorList" Encode.string (oa.Authors)
+            GEncode.tryInclude "title" Encode.string (oa.Title)
+            GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa.Status)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

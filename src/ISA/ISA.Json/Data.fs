@@ -7,13 +7,13 @@ open System.IO
 
 module DataFile = 
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : DataFile) = 
         match value with
-        | :? DataFile as DataFile.RawDataFile -> 
+        | DataFile.RawDataFile -> 
             Encode.string "Raw Data File"
-        | :? DataFile as DataFile.DerivedDataFile  -> 
+        | DataFile.DerivedDataFile  -> 
             Encode.string "Derived Data File"
-        | :? DataFile as DataFile.ImageFile  -> 
+        | DataFile.ImageFile  -> 
             Encode.string "Image File"
         | _ -> Encode.nil
 
@@ -40,14 +40,14 @@ module Data =
                   | Some n -> n
                   | None -> "#EmptyData"
     
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (oa : Data) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Data |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Data"
-            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "type" (DataFile.encoder options) (oa |> GEncode.tryGetPropertyValue "DataType")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Data"
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryInclude "type" (DataFile.encoder options) (oa.DataType)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -94,13 +94,13 @@ module Source =
                   | Some n -> "#Source_" + n.Replace(" ","_")
                   | None -> "#EmptySource"
     
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (oa : Source) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Source |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Source"
-            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")        ]
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Source"
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -145,15 +145,15 @@ module Sample =
                   | Some n -> "#Sample_" + n.Replace(" ","_")
                   | None -> "#EmptySample"
     
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Sample) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Sample |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Sample"
-            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
-            GEncode.tryInclude "factorValues" (FactorValue.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorValues")
-            GEncode.tryInclude "derivesFrom" (Source.encoder options) (oa |> GEncode.tryGetPropertyValue "DerivesFrom")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Sample"
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
+            GEncode.tryIncludeList "factorValues" (FactorValue.encoder options) (oa.FactorValues)
+            GEncode.tryIncludeList "derivesFrom" (Source.encoder options) (oa.DerivesFrom)
         ]
         |> GEncode.choose
         |> Encode.object

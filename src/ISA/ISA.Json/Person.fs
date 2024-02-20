@@ -28,22 +28,22 @@ module Person =
                                 | (Some fn,None,None) -> "#" + fn.Replace(" ","_")
                                 | _ -> "#EmptyPerson"
 
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
-        let oa = oa :?> Person |> Person.setCommentFromORCID
+    let rec encoder (options : ConverterOptions) (oa : Person) = 
+        let oa = oa |> Person.setCommentFromORCID
         [
-            if options.SetID then "@id", GEncode.includeString (oa |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Person"
-            GEncode.tryInclude "firstName" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "FirstName")
-            GEncode.tryInclude "lastName" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "LastName")
-            GEncode.tryInclude "midInitials" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "MidInitials")
-            GEncode.tryInclude "email" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "EMail")
-            GEncode.tryInclude "phone" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Phone")
-            GEncode.tryInclude "fax" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Fax")
-            GEncode.tryInclude "address" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Address")
-            GEncode.tryInclude "affiliation" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Affiliation")
-            GEncode.tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Roles")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Person"
+            GEncode.tryInclude "firstName" Encode.string (oa.FirstName)
+            GEncode.tryInclude "lastName" Encode.string (oa.LastName)
+            GEncode.tryInclude "midInitials" Encode.string (oa.MidInitials)
+            GEncode.tryInclude "email" Encode.string (oa.EMail)
+            GEncode.tryInclude "phone" Encode.string (oa.Phone)
+            GEncode.tryInclude "fax" Encode.string (oa.Fax)
+            GEncode.tryInclude "address" Encode.string (oa.Address)
+            GEncode.tryInclude "affiliation" Encode.string (oa.Affiliation)
+            GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

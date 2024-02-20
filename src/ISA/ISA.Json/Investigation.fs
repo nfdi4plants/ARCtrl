@@ -17,22 +17,22 @@ module Investigation =
                             | None -> match i.Title with
                                       | Some t -> "#Study_" + t.Replace(" ","_")
                                       | None -> "#EmptyStudy"
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Investigation) = 
         [
-            if options.SetID then "@id", GEncode.includeString (oa :?> Investigation |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Investigation"
-            GEncode.tryInclude "filename" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "FileName")
-            GEncode.tryInclude "identifier" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Identifier")
-            GEncode.tryInclude "title" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Title")
-            GEncode.tryInclude "description" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "submissionDate" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
-            GEncode.tryInclude "publicReleaseDate" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
-            GEncode.tryInclude "ontologySourceReferences" (OntologySourceReference.encoder options) (oa |> GEncode.tryGetPropertyValue "OntologySourceReferences")
-            GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
-            GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
-            GEncode.tryInclude "studies" (Study.encoder options) (oa |> GEncode.tryGetPropertyValue "Studies")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "Investigation"
+            GEncode.tryInclude "filename" Encode.string (oa.FileName)
+            GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
+            GEncode.tryInclude "title" Encode.string (oa.Title)
+            GEncode.tryInclude "description" Encode.string (oa.Description)
+            GEncode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
+            GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
+            GEncode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
+            GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
+            GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
+            GEncode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object

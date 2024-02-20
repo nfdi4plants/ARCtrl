@@ -19,13 +19,13 @@ module Comment =
 
 
 
-    let encoder (options : ConverterOptions) (comment : obj) = 
+    let encoder (options : ConverterOptions) (comment : Comment) = 
         [
-            if options.SetID then "@id", GEncode.includeString (comment :?> Comment |> genID)
-                else GEncode.tryInclude "@id" GEncode.includeString (comment |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.includeString "Comment"
-            GEncode.tryInclude "name" GEncode.includeString (comment |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "value" GEncode.includeString (comment |> GEncode.tryGetPropertyValue "Value")
+            if options.SetID then "@id", Encode.string (comment |> genID)
+                else GEncode.tryInclude "@id" Encode.string (comment.ID)
+            if options.IncludeType then "@type", Encode.string "Comment"
+            GEncode.tryInclude "name" Encode.string (comment.Name)
+            GEncode.tryInclude "value" Encode.string (comment.Value)
         ]
         |> GEncode.choose
         |> Encode.object
