@@ -269,7 +269,6 @@ let tests_ArcAssay = testList "ArcAssay" [
         t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
         t.AddColumn(CompositeHeader.Output IOType.Sample)
         let rowCount = 10000
-        printfn "rowCount: %d" rowCount
         for i = 0 to rowCount - 1 do
             let cells =             
                 [|
@@ -284,7 +283,8 @@ let tests_ArcAssay = testList "ArcAssay" [
                 t.Values.[(j,i)] <- cells.[j]
         let f() = ArcAssay.toJsonString a
         // 1200ms in Dotnet on i7-13800H
-        Expect.wantFaster f 2500 "toJsonString should be faster" |> ignore
+        // 3412ms in Javascript on i7-13800H
+        Expect.wantFaster f 5000 "toJsonString should be faster" |> ignore
   ]
 ]
 
