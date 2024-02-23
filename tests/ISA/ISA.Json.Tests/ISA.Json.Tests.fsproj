@@ -6,6 +6,18 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Validation\JsonValidation.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <Compile Include="Validation\ValidationResult.fs" />
+    <Compile Include="Validation\Fable.fs" />
+    <Compile Include="Validation\JsonSchemaValidation.fs" />
+    <Content Include="JsonSchemaValidation.fs">
+      <PackagePath>fable\</PackagePath>
+    </Content>
+    <Content Include="ValidationResult.fs">
+      <PackagePath>fable\</PackagePath>
+    </Content>
     <Compile Include="ArcTypes.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Json.Tests.fs" />

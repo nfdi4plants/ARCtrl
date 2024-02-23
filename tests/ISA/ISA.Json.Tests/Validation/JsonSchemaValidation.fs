@@ -1,5 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
+
+
 open ValidationTypes
 
 module JsonSchemaUrls =
@@ -83,7 +85,7 @@ module Validation =
     let validate (schemaURL : string) (objectString : string) = 
         async {
             try 
-                #if FABLE_COMPILER
+                #if FABLE_COMPILER_JAVASCRIPT
                 let! isValid, errorList = Fable.validate (schemaURL) (objectString)
                 #else
                 let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()

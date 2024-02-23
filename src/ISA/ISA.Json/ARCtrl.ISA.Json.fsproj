@@ -5,12 +5,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Validation\JsonValidation.js">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <Compile Include="Validation/ValidationResult.fs" />
-    <Compile Include="Validation/Fable.fs" />
-    <Compile Include="Validation/JsonSchemaValidation.fs" />
     <Compile Include="context/ro-crate/isa_assay_context.fs" />
     <Compile Include="context/ro-crate/isa_comment_context.fs" />
     <Compile Include="context/ro-crate/isa_component_context.fs" />
