@@ -3,18 +3,26 @@
 open Thoth.Json.Core
 
 open Fable.Core
+
+#if FABLE_COMPILER_PYTHON
+open Fable.Core.PyInterop
+#endif
+#if FABLE_COMPILER_JAVASCRIPT
 open Fable.Core.JsInterop
+#endif
 
 [<RequireQualifiedAccess>]
 module GEncode = 
-
+    
+    #if FABLE_COMPILER_JAVASCRIPT
     [<Emit("$1[$0]")>]
     let getFieldFable (name : string) (object : 'T) = jsNative
+    #endif
 
     /// Try to get a property value from a record by its name 
     let inline tryGetPropertyValue (name : string) (object : 'T) =
-        #if FABLE_COMPILER
-            getFieldFable name object
+        #if FABLE_COMPILER_JAVASCRIPT
+        getFieldFable name object
         #else
         let property = 
             FSharp.Reflection.FSharpType.GetRecordFields(object.GetType())
@@ -32,9 +40,13 @@ module GEncode =
         #endif
 
     let inline toJsonString spaces (value : Json) = 
-        #if FABLE_COMPILER
+        #if FABLE_COMPILER_PYTHON
+        Thoth.Json.Python.Encode.toString spaces value
+        #endif
+        #if FABLE_COMPILER_JAVASCRIPT
         Thoth.Json.JavaScript.Encode.toString spaces value
-        #else
+        #endif
+        #if !FABLE_COMPILER
         Thoth.Json.Newtonsoft.Encode.toString spaces value
         #endif
 
@@ -54,7 +66,7 @@ module GEncode =
     let tryIncludeObj name (encoder : obj -> Json) (value : obj option) = 
         name,
         match value with
-        #if FABLE_COMPILER
+        #if FABLE_COMPILER_JAVASCRIPT
         | Some (:? System.Collections.IEnumerable as v) ->                  
             !!Seq.map encoder v |> Encode.seq
         #else
@@ -90,22 +102,3 @@ module GEncode =
         match value with
         | Some(os) -> os |> List.map encoder |> Encode.list
         | _ -> Encode.nil
-
-    // This seems to fail because due to dotnet not able to match the boxed lists against nongeneric System.Collections.IEnumerable
-    //
-    // ->    ///// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
-    // ->    /////
-    // ->    ///// If the object is a sequence, encode each element using the given encoder and return the resulting sequence
-    // ->    //let tryInclude name (encoder : obj -> JsonValue) (value : obj option) = 
-    // ->    //    name,
-    // ->    //    match value with
-    // ->    //    | Some(:? System.Collections.IEnumerable as v) ->          
-    // ->    //        let os = 
-    // ->    //            #if FABLE_COMPILER
-    // ->    //            !!v
-    // ->    //            #else
-    // ->    //            v |> Seq.cast<obj>
-    // ->    //            #endif
-    // ->    //        Seq.map encoder os |> Encode.seq
-    // ->    //    | Some(o) -> encoder o
-    // ->    //    | _ -> Encode.nil
