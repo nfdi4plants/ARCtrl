@@ -1,16 +1,7 @@
 ﻿module ARCtrl.ISADotnet.Tests
 
-#if FABLE_COMPILER_PYTHON
 open Fable.Pyxpecto
-#endif
-#if FABLE_COMPILER_JAVASCRIPT
-open Fable.Mocha
-#endif
-#if !FABLE_COMPILER
-open Expecto
 
-[<Tests>]
-#endif
 let all = testSequenced <| testList "ISA" [
     Update.Tests.main
     DataModel.Tests.main
@@ -29,13 +20,5 @@ let all = testSequenced <| testList "ISA" [
     Fable.Tests.main
 ]
 
-let [<EntryPoint>] main argv = 
-    #if FABLE_COMPILER_PYTHON
-    Pyxpecto.runTests (ConfigArg.fromStrings argv) all
-    #endif
-    #if FABLE_COMPILER_JAVASCRIPT
-    Mocha.runTests all
-    #endif
-    #if !FABLE_COMPILER
-    Tests.runTestsWithCLIArgs [] [||] all
-    #endif
+[<EntryPoint>]
+let main argv = Pyxpecto.runTests [||] all

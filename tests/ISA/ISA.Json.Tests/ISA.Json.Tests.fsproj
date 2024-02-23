@@ -23,6 +23,7 @@
     <Compile Include="Json.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />
