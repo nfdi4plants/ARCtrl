@@ -355,6 +355,7 @@ paket-files/
 # Custom ignored files
 dist/
 tmp/
+/.venv
 /tests/JavaScript/ARCtrl
 /tests/Python/ARCtrl
 /tests/UI/ARCtrl
