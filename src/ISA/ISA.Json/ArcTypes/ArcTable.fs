@@ -160,7 +160,7 @@ module ArcTableExtensions =
 
         member this.ToCompressedJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            let stringTable = Dictionary()
+            let stringTable = Dictionary()            
             let oaTable = Dictionary()
             let cellTable = Dictionary()
             let arcTable = ArcTable.compressedEncoder stringTable oaTable cellTable this

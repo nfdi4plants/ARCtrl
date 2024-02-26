@@ -58,9 +58,9 @@
   <ItemGroup>
     <PackageReference Include="NJsonSchema" Version="10.8.0" />
     <PackageReference Include="Thoth.Json.Core" Version="0.2.1" />
-    <PackageReference Include="Thoth.Json.JavaScript" Version="0.1.0" />
     <PackageReference Include="Thoth.Json.Newtonsoft" Version="0.1.0" />
-    <PackageReference Include="Thoth.Json.Python" Version="0.1.0" />
+    <PackageReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="Thoth.Json.Python" Version="0.1.0" />
+    <PackageReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="Thoth.Json.JavaScript" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />

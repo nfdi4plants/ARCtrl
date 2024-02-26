@@ -2,6 +2,8 @@
 
 open Fable.Core
 open Fable.SimpleHttp
+
+#if FABLE_COMPILER_JAVASCRIPT
 open Fable.Core.JsInterop
 
 open Fable.SimpleHttp 
@@ -31,12 +33,9 @@ process.versions.node != null;"""
             txt
         )
         |> Async.AwaitPromise
+#endif
 
 let downloadFile url =
-    let mutable isFable = false
-    #if FABLE_COMPILER
-    isFable <- true
-    #endif
     let browserAndDotnet() =  
         async {
             let! (statusCode, responseText) = Http.get url
@@ -46,12 +45,16 @@ let downloadFile url =
                 | 200 -> responseText
                 | _ -> failwithf "Status %d => %s" statusCode responseText
         }
-    if not isFable then
-        browserAndDotnet()
+    #if FABLE_COMPILER_JAVASCRIPT
+    if NodeJs.isNode() then
+        // From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
+        importSideEffects "isomorphic-fetch"
+        NodeJs.downloadFile url
     else
-        if NodeJs.isNode() then
-            // From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
-            importSideEffects "isomorphic-fetch"
-            NodeJs.downloadFile url
-        else
-            browserAndDotnet()
+        browserAndDotnet()
+    #else
+    
+    browserAndDotnet()
+    #endif
+
+        
