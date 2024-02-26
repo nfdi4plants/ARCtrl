@@ -282,9 +282,19 @@ let tests_ArcAssay = testList "ArcAssay" [
             for j = 0 to cells.Length - 1 do
                 t.Values.[(j,i)] <- cells.[j]
         let f() = ArcAssay.toJsonString a
+        #if FABLE_COMPILER_JAVASCRIPT
+        let expectedMs = 5000
+        #endif
+        #if FABLE_COMPILER_PYTHON
+        let expectedMs = 40000
+        #endif
+        #if !FABLE_COMPILER
+        let expectedMs = 2000
+        #endif
         // 1200ms in Dotnet on i7-13800H
-        // 3412ms in Javascript on i7-13800H // 5857 on another occasion
-        Expect.wantFaster f 7000 "toJsonString should be faster" |> ignore
+        // 3412ms in Javascript on i7-13800H
+        // 24562ms in Javascript on i7-13800H
+        Expect.wantFaster f expectedMs "toJsonString should be faster" |> ignore
   ]
 ]
 
