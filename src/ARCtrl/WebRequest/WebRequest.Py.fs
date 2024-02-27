@@ -6,7 +6,6 @@ open Fable.Core
 // Can be replaced either with Fable.SimpleHttp when it supports Python
 // or Fable.Requests when it supports netstandard2.0
 
-
 #if FABLE_COMPILER_PYTHON
 type private InteropResponseType =
     abstract status_code : int

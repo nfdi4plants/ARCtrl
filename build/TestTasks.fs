@@ -41,9 +41,10 @@ module RunTests =
     /// </summary>
     let testProjectsPy = 
         [
-            "tests/ISA/ISA.Tests"
-            "tests/ISA/ISA.Json.Tests"
-            "tests/ISA/ISA.Spreadsheet.Tests"
+            //"tests/ISA/ISA.Tests"
+            //"tests/ISA/ISA.Json.Tests"
+            //"tests/ISA/ISA.Spreadsheet.Tests"
+            "tests/ARCtrl"
         ]
 
     let runTestsPy = BuildTask.create "runTestsPy" [clean; build] {
@@ -60,6 +61,6 @@ module RunTests =
         |> Seq.iter dotnetRun
     }
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; (*RunTests.runTestsUI;*) RunTests.runTestsDotnet] { 
+let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsDotnet] { 
     ()
 }

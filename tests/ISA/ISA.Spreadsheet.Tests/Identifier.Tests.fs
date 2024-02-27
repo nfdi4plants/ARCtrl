@@ -5,7 +5,7 @@ open TestingUtils
 open ARCtrl.ISA.Identifier
 
 // Function to test identifierFromFileName
-let private testIdentifierFromFileName () =
+let private initTestIdentifierFromFileName () =
     let validTestFileNames = [
         @"assays/MyAssay/isa.assay.xlsx", "MyAssay"
         @"MyAssay/isa.assay.xlsx", "MyAssay"
@@ -39,7 +39,7 @@ let private testIdentifierFromFileName () =
     validTestCases@invalidTestCases
 
 // Function to test fileNameFromIdentifier
-let private testFileNameFromIdentifier () =
+let private initTestFileNameFromIdentifier () =
     let validTestIdentifier = [
         "MyAssay", "assays/MyAssay/isa.assay.xlsx"
         "My_Assay", "assays/My_Assay/isa.assay.xlsx"
@@ -68,14 +68,14 @@ let private testFileNameFromIdentifier () =
     validTestCases@invalidTestCases
 
 let test_identifierFromFileName = testList "identifierFromFileName" [
-    yield! testIdentifierFromFileName ()
+    yield! initTestIdentifierFromFileName ()
     testCase "createMissingIdentifier" <| fun _ ->
         let pseudoFileName = createMissingIdentifier()
         let identifierFromFileName = Assay.identifierFromFileName pseudoFileName
         Expect.equal identifierFromFileName pseudoFileName ""
 
 ]
-let test_fileNameFromIdentifier = testList "fileNameFromIdentifier" (testFileNameFromIdentifier ())
+let test_fileNameFromIdentifier = testList "fileNameFromIdentifier" (initTestFileNameFromIdentifier ())
 
 let tests_Assay = testList "Assay" [
     test_identifierFromFileName

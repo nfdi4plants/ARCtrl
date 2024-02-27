@@ -4,7 +4,7 @@ open ARCtrl.ISA.Aux
 open Update
 open Fable.Core
 
-[<AttachMembers>]
+[<AttachMembers>][<CustomEquality>][<NoComparison>]
 type Person = 
     {   
         ID : URI option
@@ -180,3 +180,23 @@ type Person =
             this.Affiliation 
             nextRoles
             nextComments
+
+    override this.GetHashCode() : int = 
+        [|
+            Aux.HashCodes.boxHashOption this.ORCID
+            Aux.HashCodes.boxHashOption this.LastName
+            Aux.HashCodes.boxHashOption this.FirstName
+            Aux.HashCodes.boxHashOption this.MidInitials
+            Aux.HashCodes.boxHashOption this.EMail
+            Aux.HashCodes.boxHashOption this.Phone
+            Aux.HashCodes.boxHashOption this.Fax
+            Aux.HashCodes.boxHashOption this.Address
+            Aux.HashCodes.boxHashOption this.Affiliation
+            if this.Roles.IsSome then Aux.HashCodes.boxHashArray this.Roles.Value else (0).GetHashCode()
+            if this.Comments.IsSome then Aux.HashCodes.boxHashArray this.Comments.Value else (0).GetHashCode()
+        |]
+        |> Aux.HashCodes.boxHashArray
+        |> fun x -> x :?> int
+
+    override this.Equals(obj) : bool =
+        Aux.HashCodes.hash this = Aux.HashCodes.hash obj
