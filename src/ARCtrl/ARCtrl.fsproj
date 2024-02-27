@@ -21,6 +21,8 @@
     <Compile Include="Path.fs" />
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="SemVer.fs" />
+    <Compile Include="WebRequest\WebRequest.Node.fs" />
+    <Compile Include="WebRequest\WebRequest.Py.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Contracts\Contracts.ArcTypes.fs" />
     <Compile Include="Contracts\Contracts.Git.fs" />

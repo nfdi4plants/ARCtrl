@@ -3,38 +3,6 @@
 open Fable.Core
 open Fable.SimpleHttp
 
-#if FABLE_COMPILER_JAVASCRIPT
-open Fable.Core.JsInterop
-
-open Fable.SimpleHttp 
-
-[<RequireQualifiedAccess>]
-module NodeJs =
-    open Fable.Core
-    open Fable.Core.JsInterop
-    open Fetch
-
-    //// From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
-    //#if FABLE_COMPILER
-    //importSideEffects "isomorphic-fetch"
-    //#endif
-
-    let isNode() = 
-        emitJsExpr 
-            () 
-            """typeof process !== "undefined" &&
-process.versions != null &&
-process.versions.node != null;"""
-
-    let downloadFile url =
-        fetch url []
-        |> Promise.bind (fun res -> res.text()) // get the result
-        |> Promise.map (fun txt -> // bind the result to make further operation
-            txt
-        )
-        |> Async.AwaitPromise
-#endif
-
 let downloadFile url =
     let browserAndDotnet() =  
         async {
@@ -46,15 +14,19 @@ let downloadFile url =
                 | _ -> failwithf "Status %d => %s" statusCode responseText
         }
     #if FABLE_COMPILER_JAVASCRIPT
-    if NodeJs.isNode() then
+    
+    if ARCtrl.WebRequestHelpers.NodeJs.isNode() then
         // From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
-        importSideEffects "isomorphic-fetch"
-        NodeJs.downloadFile url
+        ARCtrl.WebRequestHelpers.NodeJs.importSideEffects()
+        ARCtrl.WebRequestHelpers.NodeJs.downloadFile url
     else
         browserAndDotnet()
-    #else
-    
-    browserAndDotnet()
     #endif
 
-        
+    #if FABLE_COMPILER_PYTHON
+    ARCtrl.WebRequestHelpers.Py.downloadFile url
+    #endif
+
+    #if !FABLE_COMPILER
+    browserAndDotnet()
+    #endif
