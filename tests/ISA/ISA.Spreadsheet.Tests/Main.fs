@@ -4,6 +4,7 @@ open Fable.Pyxpecto
 
 let all = testSequenced <| testList "ISA.Spreadsheet" [
     FableTests.main
+    RegexTests.main
     ArcInvestigationTests.main
     CompositeColumnTests.main
     ArcTableTests.main

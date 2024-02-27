@@ -2,22 +2,27 @@ namespace ARCtrl.ISA.Spreadsheet
 
 open ARCtrl.ISA
 open System.Text.RegularExpressions
+open ARCtrl.ISA.Regex.ActivePatterns
 
 module Comment = 
-    let commentRegex = Regex(@"(?<=Comment\[<).*(?=>\])")
 
-    let commentRegexNoAngleBrackets = Regex(@"(?<=Comment\[).*(?=\])")
+    
+    let commentValueKey = "commentValue"
 
-    let (|Comment|_|) (key : Option<string>) =
-        key
-        |> Option.bind (fun k ->
-            let r = commentRegex.Match(k)
-            if r.Success then Some r.Value
-            else 
-                let r = commentRegexNoAngleBrackets.Match(k)
-                if r.Success then Some r.Value
-                else None
-        )
+    let commentPattern = $@"Comment\s*\[<(?<{commentValueKey}>.+)>\]"
+
+    let commentPatternNoAngleBrackets = $@"Comment\s*\[(?<{commentValueKey}>.+)\]"
+
+    let (|Comment|_|) (key : string) =
+        
+        match key with
+        | Regex commentPattern r ->
+            Some r.Groups.[commentValueKey].Value
+        | Regex commentPatternNoAngleBrackets r -> 
+            let v = r.Groups.[commentValueKey].Value
+            if v = "<>" then None else Some v
+        | _ -> None
+        
    
     let wrapCommentKey k = 
         sprintf "Comment[%s]" k
@@ -34,15 +39,18 @@ module Comment =
 
 module Remark = 
 
-    let remarkRegex = Regex(@"(?<=#).*")
+    let remarkValueKey = "remarkValue"
+
+    let remarkPattern = $@"#(?<{remarkValueKey}>.+)"
 
 
     let (|Remark|_|) (key : Option<string>) =
         key
         |> Option.bind (fun k ->
-            let r = remarkRegex.Match(k)
-            if r.Success then Some r.Value
-            else None
+            match k with
+            | Regex remarkPattern r ->
+                Some r.Groups.[remarkValueKey].Value
+            | _ -> None
         )
 
 

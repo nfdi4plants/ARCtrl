@@ -131,7 +131,7 @@ type SparseTable =
                     let row = en.Current |> Seq.map (fun (i,v) -> int i - 1,v)
                     let key,vals = Seq.tryItem 0 row |> Option.map snd, Seq.trySkip 1 row
                     match key,vals with
-                    | Comment.Comment k, Option.Some v -> 
+                    | Option.Some (Comment.Comment k), Option.Some v -> 
                         loop (SparseTable.AddComment k v matrix) remarks (lineNumber + 1)
 
                     | Remark.Remark k, _  -> 
