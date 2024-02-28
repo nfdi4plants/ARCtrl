@@ -61,7 +61,11 @@ module Template =
                 get.Required.Field "authors" (Decode.array personDecoder),
                 get.Required.Field "endpoint_repositories" (Decode.array oaDecoder),
                 get.Required.Field "tags" (Decode.array oaDecoder),
+                #if FABLE_COMPILER_PYTHON
                 get.Required.Field "last_updated" Decode.datetimeLocal // Currently not supported in Thoth.Json.Core for python
+                #else
+                get.Required.Field "last_updated" Decode.datetimeUtc
+                #endif
             )
         )
 

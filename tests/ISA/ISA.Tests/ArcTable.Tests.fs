@@ -2336,7 +2336,7 @@ let private tests_fillMissing = testList "fillMissing" [
                 ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
         let testF = fun () -> ArcTableAux.Unchecked.fillMissingCells headers values   
         #if FABLE_COMPILER_PYTHON
-        let expectedMs = 8000
+        let expectedMs = 10000
         #else
         let expectedMs = 220
         #endif

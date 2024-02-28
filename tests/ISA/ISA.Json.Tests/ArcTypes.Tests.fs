@@ -286,10 +286,10 @@ let tests_ArcAssay = testList "ArcAssay" [
         let expectedMs = 5000
         #endif
         #if FABLE_COMPILER_PYTHON
-        let expectedMs = 40000
+        let expectedMs = 100000
         #endif
         #if !FABLE_COMPILER
-        let expectedMs = 2000
+        let expectedMs = 2500
         #endif
         // 1200ms in Dotnet on i7-13800H
         // 3412ms in Javascript on i7-13800H

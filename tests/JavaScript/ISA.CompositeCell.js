@@ -1,7 +1,7 @@
 import { equal, deepEqual, notEqual } from 'assert';
 import { CompositeCell } from "./ARCtrl/ISA/ISA/ArcTypes/CompositeCell.js"
 import { OntologyAnnotation } from './ARCtrl/ISA/ISA/JsonTypes/OntologyAnnotation.js';
-import { assertEqual } from './ARCtrl/fable_modules/fable-library.4.5.0/Util.js';
+import { assertEqual } from './ARCtrl/fable_modules/fable-library-js.4.13.0/Util.js';
 
 
 

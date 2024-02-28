@@ -2,7 +2,7 @@
 
 open Fable.Core
 open Fable.SimpleHttp
-let x = 1
+
 #if FABLE_COMPILER_JAVASCRIPT
 open Fable.Core.JsInterop
 

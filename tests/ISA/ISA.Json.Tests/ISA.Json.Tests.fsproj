@@ -17,7 +17,11 @@
     <Compile Include="Json.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
-  <ItemGroup />
+  <PropertyGroup>
+    <NpmDependencies>
+      <NpmPackage Name="jsonschema" Version="gte 1.1.0 lt 2.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />

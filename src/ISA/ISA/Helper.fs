@@ -78,11 +78,13 @@ module HashCodes =
     
     open Fable.Core
 
+    #if FABLE_COMPILER_PYTHON
     [<Emit("hasattr($0,\"__hash__\")")>]
     let pyHasCustomHash (obj) : bool = nativeOnly
         
     [<Emit("$0.__hash__()")>]
     let pyCustomHash (obj) : int = nativeOnly
+    #endif
 
     let hash obj =
         #if FABLE_COMPILER_PYTHON

@@ -48,7 +48,7 @@ module RunTests =
         ]
 
     let runTestsPy = BuildTask.create "runTestsPy" [clean; build] {
-        for path in testProjectsPy do
+        for path in ProjectInfo.testProjects do
             //transpile py files from fsharp code
             run dotnet $"fable {path} -o {path}/py --lang python" ""
             // run pyxpecto in target path to execute tests in python

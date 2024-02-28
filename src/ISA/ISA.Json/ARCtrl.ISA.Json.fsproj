@@ -65,11 +65,6 @@
   <ItemGroup>
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <NpmDependencies>
-      <NpmPackage Name="jsonschema" Version="gte 1.1.0 lt 2.0.0" ResolutionStrategy="Max" />
-    </NpmDependencies>
-  </PropertyGroup>
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
