@@ -16,7 +16,7 @@ module Publication =
                             | Some t -> "#Pub_" + t.Replace(" ","_")
                             | None -> "#EmptyPublication"
 
-    let rec encoder (options : ConverterOptions) (oa : Publication) = 
+    let encoder (options : ConverterOptions) (oa : Publication) = 
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)

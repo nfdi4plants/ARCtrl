@@ -26,8 +26,6 @@ module AnnotationValue =
                         | Ok s -> Ok <| s
                         | Error e -> Error e       
         }
-
-            // is there a option to decode force to string?
             
 
 module OntologySourceReference = 
