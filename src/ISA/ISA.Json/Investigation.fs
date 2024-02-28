@@ -44,6 +44,19 @@ module Investigation =
         |> GEncode.choose
         |> Encode.object
 
+    let encodeRoCrate (options : ConverterOptions) (oa : Investigation) = 
+        [
+            GEncode.tryInclude "@type" Encode.string (Some "CreativeWork")
+            GEncode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
+            GEncode.tryInclude "about" (encoder options) (Some oa)
+            "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
+            if options.IncludeContext then
+                "@context", ROCrateContext.ROCrate.context_jsonvalue
+            ]
+        |> GEncode.choose
+        |> Encode.object
+
+
     let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type";"@context"]
 
     let decoder (options : ConverterOptions) : Decoder<Investigation> =

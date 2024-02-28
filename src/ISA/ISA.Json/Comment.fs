@@ -21,8 +21,8 @@ module Comment =
 
     let encoder (options : ConverterOptions) (comment : Comment) = 
         [
-            if options.SetID then "@id", 
-                Encode.string (comment |> genID)
+            if options.SetID then 
+                "@id", Encode.string (comment |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (comment.ID)
             if options.IncludeType then 

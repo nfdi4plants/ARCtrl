@@ -58,7 +58,7 @@ module Person =
             GEncode.tryInclude "phone" Encode.string (oa.Phone)
             GEncode.tryInclude "fax" Encode.string (oa.Fax)
             GEncode.tryInclude "address" Encode.string (oa.Address)
-            GEncode.tryInclude "affiliation" Encode.string (oa.Affiliation)
+            GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa.Affiliation)
             GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then 
@@ -67,7 +67,7 @@ module Person =
         |> GEncode.choose
         |> Encode.object
 
-    let allowedFields = ["@id";"firstName";"lastName";"midInitials";"email";"phone";"fax";"address";"affiliation";"roles";"comments";"@type"]
+    let allowedFields = ["@id";"firstName";"lastName";"midInitials";"email";"phone";"fax";"address";"affiliation";"roles";"comments";"@type"; "@context"]
 
     let decoder (options : ConverterOptions) : Decoder<Person> =
         GDecode.object allowedFields (fun get ->

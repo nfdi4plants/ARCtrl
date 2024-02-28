@@ -22,7 +22,7 @@ module ProcessParameterValue =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "ProcessParameterValue"; GEncode.toJsonString "ArcProcessParameterValue"])
+                "@type", (Encode.list [Encode.string "ProcessParameterValue"; Encode.string "ArcProcessParameterValue"])
             GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa.Category)
             GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
@@ -153,7 +153,7 @@ module ProcessOutput =
         encoder (ConverterOptions()) m
         |> GEncode.toJsonString 2
 
-    let toJsonldStringWithContext (a:ProcessInput) = 
+    let toJsonldStringWithContext (a:ProcessOutput) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> GEncode.toJsonString 2
 
@@ -181,14 +181,14 @@ module Process =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "Process"; GEncode.toJsonString "ArcProcess"])
+                "@type", (Encode.list [Encode.string "Process"; Encode.string "ArcProcess"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryInclude "executesProtocol" (Protocol.encoder options studyName assayName oa.Name) (oa.ExecutesProtocol)
             GEncode.tryIncludeList "parameterValues" (ProcessParameterValue.encoder options) (oa.ParameterValues)
             GEncode.tryInclude "performer" Encode.string (oa.Performer)
             GEncode.tryInclude "date" Encode.string (oa.Date)
-            GEncode.tryInclude "previousProcess" (encoder options) (oa.PreviousProcess)
-            GEncode.tryInclude "nextProcess" (encoder options) (oa.NextProcess)
+            GEncode.tryInclude "previousProcess" (encoder options studyName assayName) (oa.PreviousProcess)
+            GEncode.tryInclude "nextProcess" (encoder options studyName assayName) (oa.NextProcess)
             GEncode.tryIncludeList "inputs" (ProcessInput.encoder options) (oa.Inputs)
             GEncode.tryIncludeList "outputs" (ProcessOutput.encoder options) (oa.Outputs)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)

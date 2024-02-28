@@ -42,7 +42,7 @@ module MaterialAttribute =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "MaterialAttribute";  GEncode.toJsonString "ArcMaterialAttribute"])
+                "@type", (Encode.list [Encode.string "MaterialAttribute"; Encode.string "ArcMaterialAttribute"])
             GEncode.tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa.CharacteristicType)
             if options.IncludeContext then
                 "@context", ROCrateContext.MaterialAttribute.context_jsonvalue
@@ -95,7 +95,7 @@ module MaterialAttributeValue =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "MaterialAttributeValue";  GEncode.toJsonString "ArcMaterialAttributeValue"])
+                "@type", (Encode.list [Encode.string "MaterialAttributeValue"; Encode.string "ArcMaterialAttributeValue"])
             GEncode.tryInclude "category" (MaterialAttribute.encoder options) (oa.Category)
             GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
@@ -155,7 +155,7 @@ module Material =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "Material";  GEncode.toJsonString "ArcMaterial"])
+                "@type", (Encode.list [Encode.string "Material"; Encode.string "ArcMaterial"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryInclude "type" (MaterialType.encoder options) (oa.MaterialType)
             GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)

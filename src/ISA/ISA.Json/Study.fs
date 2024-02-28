@@ -48,7 +48,7 @@ module Study =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "Study"; GEncode.toJsonString "ArcStudy"])
+                "@type", (Encode.list [Encode.string "Study"; Encode.string "ArcStudy"])
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
             GEncode.tryInclude "title" Encode.string (oa.Title)
@@ -59,19 +59,19 @@ module Study =
             GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
             GEncode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa.StudyDesignDescriptors)
             if not options.IsRoCrate then 
-                GEncode.tryInclude "protocols" (Protocol.encoder options None None None) (oa.Protocols)
+                GEncode.tryIncludeList "protocols" (Protocol.encoder options None None None) (oa.Protocols)
             if options.IsRoCrate then
-                match study.Materials with
+                match oa.Materials with
                 | Some m -> 
-                    GEncode.tryInclude "samples" (Sample.encoder options) (m.Samples)
-                    GEncode.tryInclude "sources" (Source.encoder options) (m.Sources)
-                    GEncode.tryInclude "materials" (Material.encoder options) (m.OtherMaterials)
+                    GEncode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
+                    GEncode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
+                    GEncode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
                 | None -> ()
             
             if not options.IsRoCrate then 
-                (GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa.Materials)
-            GEncode.tryIncludeList "processSequence" (Process.encoder options) (oa.ProcessSequence)
-            GEncode.tryIncludeList "assays" (Assay.encoder options) (oa.Assays)            
+                GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa.Materials)
+            GEncode.tryIncludeList "processSequence" (Process.encoder options oa.Identifier None) (oa.ProcessSequence)
+            GEncode.tryIncludeList "assays" (Assay.encoder options oa.Identifier) (oa.Assays)            
             GEncode.tryIncludeList "factors" (Factor.encoder options) (oa.Factors)
             GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)            
             GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
@@ -82,7 +82,7 @@ module Study =
         |> GEncode.choose
         |> Encode.object
 
-    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"]
+    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
 
     let decoder (options : ConverterOptions) : Decoder<Study> =
         GDecode.object allowedFields (fun get ->

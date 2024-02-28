@@ -20,7 +20,7 @@ module ProtocolParameter =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "ProtocolParameter"; GEncode.toJsonString "ArcProtocolParameter"])
+                "@type", (Encode.list [Encode.string "ProtocolParameter"; Encode.string "ArcProtocolParameter"])
             GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa.ParameterName)
             if options.IncludeContext then
                 "@context", ROCrateContext.ProtocolParameter.context_jsonvalue
@@ -71,7 +71,7 @@ module Component =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "Component"; GEncode.toJsonString "ArcComponent"])
+                "@type", (Encode.list [Encode.string "Component"; Encode.string "ArcComponent"])
             GEncode.tryInclude "componentName" Encode.string (oa.ComponentName)
             GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa.ComponentType)
             if options.IncludeContext then 
@@ -145,7 +145,7 @@ module Protocol =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "Protocol"; GEncode.toJsonString "ArcProtocol"])
+                "@type", (Encode.list [Encode.string "Protocol"; Encode.string "ArcProtocol"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa.ProtocolType)
             GEncode.tryInclude "description" Encode.string (oa.Description)

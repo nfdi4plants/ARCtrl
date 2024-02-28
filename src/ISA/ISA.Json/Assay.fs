@@ -49,13 +49,13 @@ module Assay =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "Assay";  GEncode.toJsonString "ArcAssay"])
+                "@type", (Encode.list [ Encode.string "Assay"; Encode.string "ArcAssay"])
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa.MeasurementType)
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa.TechnologyType)
             GEncode.tryInclude "technologyPlatform" Encode.string (oa.TechnologyPlatform)
             GEncode.tryIncludeList "dataFiles" (Data.encoder options) (oa.DataFiles)
-             if options.IsRoCrate then
+            if options.IsRoCrate then
                 match oa.Materials with
                 | Some m -> 
                     GEncode.tryIncludeList "samples" (Sample.encoder options) m.Samples
@@ -65,7 +65,7 @@ module Assay =
                 GEncode.tryInclude "materials" (AssayMaterials.encoder options) oa.Materials
             GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)
             GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
-            GEncode.tryIncludeList "processSequence" (Process.encoder assayName options) (oa.ProcessSequence)
+            GEncode.tryIncludeList "processSequence" (Process.encoder options studyName assayName) (oa.ProcessSequence)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then
                 "@context", ROCrateContext.Assay.context_jsonvalue

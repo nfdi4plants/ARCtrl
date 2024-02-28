@@ -70,7 +70,7 @@ module Factor =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [GEncode.toJsonString "Factor";  GEncode.toJsonString "ArcFactor"])
+                "@type", (Encode.list [Encode.string "Factor"; Encode.string "ArcFactor"])
             GEncode.tryInclude "factorName" Encode.string (oa.Name)
             GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
@@ -128,7 +128,7 @@ module FactorValue =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "FactorValue";  GEncode.toJsonString "ArcFactorValue"])
+                "@type", (Encode.list [Encode.string "FactorValue"; Encode.string "ArcFactorValue"])
             GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
             GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)

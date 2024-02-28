@@ -34,7 +34,7 @@ module Publication =
         |> GEncode.choose
         |> Encode.object
 
-    let allowedFields = ["@id";"pubMedID";"doi";"authorList";"title";"status";"comments";"@type"]
+    let allowedFields = ["@id";"pubMedID";"doi";"authorList";"title";"status";"comments";"@type"; "@context"]
 
     let rec decoder (options : ConverterOptions) : Decoder<Publication> =
         GDecode.object allowedFields (fun get ->

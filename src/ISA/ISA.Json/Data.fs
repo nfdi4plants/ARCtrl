@@ -47,7 +47,7 @@ module Data =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "Data";  GEncode.toJsonString "ArcData"])
+                "@type", (Encode.list [Encode.string "Data"; Encode.string "ArcData"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryInclude "type" (DataFile.encoder options) (oa.DataType)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
@@ -109,7 +109,7 @@ module Source =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "Source";  GEncode.toJsonString "ArcSource"])
+                "@type", (Encode.list [ Encode.string "Source"; Encode.string "ArcSource"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)      
             if options.IncludeContext then
@@ -170,7 +170,7 @@ module Sample =
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", (Encode.list [ GEncode.toJsonString "Sample";  GEncode.toJsonString "ArcSample"])
+                "@type", (Encode.list [ Encode.string "Sample";  Encode.string "ArcSample"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
             GEncode.tryIncludeList "factorValues" (FactorValue.encoder options) (oa.FactorValues)
