@@ -11,32 +11,50 @@ module Investigation =
     
     
     let genID (i:Investigation) : string = 
-        match i.ID with
-        | Some id -> URI.toString id
-        | None -> match i.FileName with
-                  | Some n -> "#Study_" + n.Replace(" ","_")
-                  | None -> match i.Identifier with
-                            | Some id -> "#Study_" + id.Replace(" ","_")
-                            | None -> match i.Title with
-                                      | Some t -> "#Study_" + t.Replace(" ","_")
-                                      | None -> "#EmptyStudy"
+        "./"
+        // match i.ID with
+        // | Some id -> URI.toString id
+        // | None -> match i.FileName with
+        //           | Some n -> "#Study_" + n.Replace(" ","_")
+        //           | None -> match i.Identifier with
+        //                     | Some id -> "#Study_" + id.Replace(" ","_")
+        //                     | None -> match i.Title with
+        //                               | Some t -> "#Study_" + t.Replace(" ","_")
+        //                               | None -> "#EmptyStudy"
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Investigation |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Investigation"
-            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
-            GEncode.tryInclude "identifier" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
-            GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
-            GEncode.tryInclude "description" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "submissionDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
-            GEncode.tryInclude "publicReleaseDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
+            if options.SetID then 
+                "@id",  GEncode.toJsonString (oa :?> Investigation |> genID)
+            else 
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type",  GEncode.toJsonString "Investigation"
+            GEncode.tryInclude "filename"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
+            GEncode.tryInclude "identifier"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
+            GEncode.tryInclude "title"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
+            GEncode.tryInclude "description"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "submissionDate"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
+            GEncode.tryInclude "publicReleaseDate"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate") 
             GEncode.tryInclude "ontologySourceReferences" (OntologySourceReference.encoder options) (oa |> GEncode.tryGetPropertyValue "OntologySourceReferences")
             GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studies" (Study.encoder options) (oa |> GEncode.tryGetPropertyValue "Studies")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.Investigation.context_jsonvalue
+            ]
+        |> GEncode.choose
+        |> Encode.object
+
+    let encodeRoCrate (options : ConverterOptions) (oa : obj) = 
+        [
+            GEncode.tryInclude "@type"  GEncode.toJsonString (Some "CreativeWork")
+            GEncode.tryInclude "@id"  GEncode.toJsonString (Some "ro-crate-metadata.json")
+            GEncode.tryInclude "about" (encoder options) (Some oa)
+            "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
+            if options.IncludeContext then
+                "@context", ROCrateContext.ROCrate.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 
@@ -67,6 +85,12 @@ module Investigation =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (i:Investigation) = 
+    let toJsonldString (i:Investigation) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) i
+        |> Encode.toString 2
+    let toJsonldStringWithContext (i:Investigation) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) i
+        |> Encode.toString 2
+    let toRoCrateString (i:Investigation) = 
+        encodeRoCrate (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true,IsRoCrate=true)) i
         |> Encode.toString 2

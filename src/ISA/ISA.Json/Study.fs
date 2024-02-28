@@ -35,7 +35,7 @@ module Study =
         match s.ID with
         | Some id -> URI.toString id
         | None -> match s.FileName with
-                  | Some n -> "#Study" + n.Replace(" ","_")
+                  | Some n -> n.Replace(" ","_").Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
                   | None -> match s.Identifier with
                             | Some id -> "#Study_" + id.Replace(" ","_")
                             | None -> match s.Title with
@@ -44,9 +44,12 @@ module Study =
     
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Study |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Study"
+            if options.SetID then 
+                "@id", GEncode.toJsonString (oa :?> Study |> genID)
+            else 
+                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then 
+                "@type", ([GEncode.toJsonString "Study"; GEncode.toJsonString "ArcStudy"] |> Encode.list)
             GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "identifier" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
             GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
@@ -56,14 +59,36 @@ module Study =
             GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
-            GEncode.tryInclude "protocols" (Protocol.encoder options) (oa |> GEncode.tryGetPropertyValue "Protocols")
-            GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
-            GEncode.tryInclude "processSequence" (Process.encoder options) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
-            GEncode.tryInclude "assays" (Assay.encoder options) (oa |> GEncode.tryGetPropertyValue "Assays")            
+            if not options.IsRoCrate then 
+                GEncode.tryInclude "protocols" (Protocol.encoder options None None None) (oa |> GEncode.tryGetPropertyValue "Protocols")
+            if options.IsRoCrate then
+                let study = oa:?> Study
+                let mat = study.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "samples" (Sample.encoder options) (m |> GEncode.tryGetPropertyValue "Samples")
+                | None -> ()
+            if options.IsRoCrate then
+                let study = oa:?> Study
+                let mat = study.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "sources" (Source.encoder options) (m |> GEncode.tryGetPropertyValue "Sources")
+                | None -> ()
+            if options.IsRoCrate then
+                let study = oa:?> Study
+                let mat = study.Materials
+                match mat with
+                | Some m -> GEncode.tryInclude "materials" (Material.encoder options) (m |> GEncode.tryGetPropertyValue "OtherMaterials")
+                | None -> ()
+            if not options.IsRoCrate then 
+                (GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
+            GEncode.tryInclude "processSequence" (Process.encoder options (oa:?> Study).Identifier None) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
+            GEncode.tryInclude "assays" (Assay.encoder options (oa:?> Study).Identifier) (oa |> GEncode.tryGetPropertyValue "Assays")            
             GEncode.tryInclude "factors" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Factors")
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")            
             GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Study.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
@@ -100,6 +125,9 @@ module Study =
         |> Encode.toString 2
 
     /// exports in json-ld format
-    let toStringLD (s:Study) = 
+    let toJsonldString (s:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Study) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2

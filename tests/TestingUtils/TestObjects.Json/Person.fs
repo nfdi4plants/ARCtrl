@@ -50,20 +50,56 @@ let personLD =
   "midInitials": "I",
   "@id": "#person/Castrillo",
   "@type": "Person",
+  "@context": {
+    "sdo": "http://schema.org/",
+    "arc": "http://purl.org/nfdi4plants/ontology/",
+
+    "Person": "sdo:Person",
+    
+    "firstName": "sdo:givenName",
+    "lastName": "sdo:familyName",
+    "midInitials": "sdo:additionalName",
+    "email": "sdo:email",
+    "address": "sdo:address",
+    "phone": "sdo:telephone",
+    "fax": "sdo:faxNumber",
+    "comments": "sdo:disambiguatingDescription",
+    "roles": "sdo:jobTitle",
+    "affiliation": "sdo:affiliation"
+  },
   "fax": "",
   "email": "lol@lal.das",
   "comments": [
     {
       "@id": "#Comment_Investigation_Person_REF_",
       "@type": "Comment",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        
+        "Comment": "sdo:Comment",
+        "name": "sdo:name",
+        "value": "sdo:value"
+      },
       "value": "",
       "name": "Investigation Person REF"
     }
   ],
   "roles": [
     {
-      "@id": "#DummyOntologyAnnotation",
+      "@id": "#UserTerm_author",
       "@type": "OntologyAnnotation",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+
+        "OntologyAnnotation": "sdo:DefinedTerm",
+        
+        "annotationValue": "sdo:name",
+        "termSource": "sdo:inDefinedTermSet",
+        "termAccession": "sdo:termCode",
+        "comments": "sdo:disambiguatingDescription"
+      },
       "annotationValue": "author"
     }
   ],
@@ -101,6 +137,23 @@ let personWithDefaultLD =
     {
   "@id": "lol@lal.das",
   "@type": "Person",
+  "@context": {
+    "sdo": "http://schema.org/",
+    "arc": "http://purl.org/nfdi4plants/ontology/",
+
+    "Person": "sdo:Person",
+    
+    "firstName": "sdo:givenName",
+    "lastName": "sdo:familyName",
+    "midInitials": "sdo:additionalName",
+    "email": "sdo:email",
+    "address": "sdo:address",
+    "phone": "sdo:telephone",
+    "fax": "sdo:faxNumber",
+    "comments": "sdo:disambiguatingDescription",
+    "roles": "sdo:jobTitle",
+    "affiliation": "sdo:affiliation"
+  },
   "phone": "",
   "firstName": "Juan",
   "address": "Oxford Road, Manchester M13 9PT, UK",
@@ -112,14 +165,33 @@ let personWithDefaultLD =
     {
       "@id": "#Comment_Investigation_Person_REF_",
       "@type": "Comment",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        
+        "Comment": "sdo:Comment",
+        "name": "sdo:name",
+        "value": "sdo:value"
+      },
       "value": "",
       "name": "Investigation Person REF"
     }
   ],
   "roles": [
     {
-      "@id": "#DummyOntologyAnnotation",
+      "@id": "#UserTerm_author",
       "@type": "OntologyAnnotation",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+
+        "OntologyAnnotation": "sdo:DefinedTerm",
+        
+        "annotationValue": "sdo:name",
+        "termSource": "sdo:inDefinedTermSet",
+        "termAccession": "sdo:termCode",
+        "comments": "sdo:disambiguatingDescription"
+      },
       "annotationValue": "author"
     }
   ],

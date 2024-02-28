@@ -203,7 +203,7 @@ let testOntoloyAnnotationLD =
             testCase "WriterOutputMatchesInputGivenIDs" (fun () -> 
             
                 let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidase
-                let o_out = OntologyAnnotation.toStringLD o_read_in
+                let o_out = OntologyAnnotation.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     OntologyAnnotation.peptidaseLD
@@ -218,7 +218,7 @@ let testOntoloyAnnotationLD =
             testCase "WriterOutputMatchesInputDefaultIDs" (fun () -> 
             
                 let o_read_in = OntologyAnnotation.fromJsonString OntologyAnnotation.peptidaseWithoutIds
-                let o_out = OntologyAnnotation.toStringLD o_read_in
+                let o_out = OntologyAnnotation.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     OntologyAnnotation.peptidaseWithDefaultLD
@@ -368,7 +368,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.source
-                let o_out = ProcessInput.toStringLD o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.sourceLD
@@ -383,7 +383,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.sourceWithoutID
-                let o_out = ProcessInput.toStringLD o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.sourceWithDefaultLD
@@ -412,7 +412,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.material
-                let o_out = ProcessInput.toStringLD o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.materialLD
@@ -427,7 +427,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
                 let o_read_in = ProcessInput.fromJsonString ProcessInput.materialWithoutID
-                let o_out = ProcessInput.toStringLD o_read_in
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                 let expected = 
                     ProcessInput.materialWithDefaultLD
@@ -452,7 +452,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputGivenID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.data
-                    let o_out = ProcessInput.toStringLD o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.dataLD
@@ -467,7 +467,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputDefaultID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.dataWithoutID
-                    let o_out = ProcessInput.toStringLD o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.dataWithDefaultLD
@@ -497,7 +497,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputSimpleGivenID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimple
-                    let o_out = ProcessInput.toStringLD o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.sampleSimpleLD
@@ -512,7 +512,7 @@ let testProcessInputLD =
             testCase "WriterOutputMatchesInputSimpleDefaultID" (fun () -> 
             
                     let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimpleWithoutID
-                    let o_out = ProcessInput.toStringLD o_read_in
+                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
                     let expected = 
                         ProcessInput.sampleSimpleWithDefaultLD
@@ -626,7 +626,7 @@ let testProtocolFileLD =
 
             let writingSuccess = 
                 try 
-                    Protocol.toStringLD p |> ignore
+                    Protocol.toJsonldStringWithContext p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -653,7 +653,7 @@ let testProtocolFileLD =
             Expect.isSome actual_name "Should be some"
             Expect.equal actual_name (Some exptected_name) "Name exists"
 
-            let o = o_read_in |> Protocol.toStringLD
+            let o = o_read_in |> Protocol.toJsonldStringWithContext
 
             let expected = 
                 Protocol.protocolLD
@@ -667,7 +667,7 @@ let testProtocolFileLD =
                 |> Array.countBy id
                 |> Array.sortBy fst
 
-            Expect.equal actual expected "Written protocol file does not match read protocol file"
+            Expect.sequenceEqual actual expected "Written protocol file does not match read protocol file"
         )
 
         testCase "OutputMatchesInputDefaultIDs" (fun () ->
@@ -678,7 +678,7 @@ let testProtocolFileLD =
             Expect.isSome actual_name "Should be some"
             Expect.equal actual_name (Some exptected_name) "Name exists"
 
-            let o = o_read_in |> Protocol.toStringLD
+            let o = o_read_in |> Protocol.toJsonldStringWithContext
 
             let expected = 
                 Protocol.protocolWithDefaultLD
@@ -781,7 +781,7 @@ let testProcessFileLD =
 
             let writingSuccess = 
                 try 
-                    Process.toStringLD p |> ignore
+                    Process.toJsonldStringWithContext p |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -804,7 +804,7 @@ let testProcessFileLD =
 
             let o =
                 Process.fromJsonString Process.process'
-                |> Process.toStringLD
+                |> Process.toJsonldStringWithContext
 
             let expected = 
                 Process.processLD
@@ -825,7 +825,7 @@ let testProcessFileLD =
 
             let o =
                 Process.fromJsonString Process.processWithoutIDs
-                |> Process.toStringLD
+                |> Process.toJsonldStringWithContext
 
             let expected = 
                 Process.processWithDefaultLD
@@ -838,6 +838,7 @@ let testProcessFileLD =
                 |> Utils.extractWords
                 |> Array.countBy id
                 |> Array.sortBy fst
+
             Expect.sequenceEqual actual expected "Written process file does not match read process file"
         )
     ]
@@ -969,7 +970,7 @@ let testPersonFileLD =
 
             let writingSuccess = 
                 try 
-                    Person.toStringLD a |> ignore
+                    Person.toJsonldStringWithContext a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -992,7 +993,7 @@ let testPersonFileLD =
 
             let o = 
                 Person.fromJsonString Person.person
-                |> Person.toStringLD
+                |> Person.toJsonldStringWithContext
 
             let expected = 
                 Person.personLD
@@ -1013,7 +1014,7 @@ let testPersonFileLD =
 
             let o = 
                 Person.fromJsonString Person.personWithoutID
-                |> Person.toStringLD
+                |> Person.toJsonldStringWithContext
 
             let expected = 
                 Person.personWithDefaultLD
@@ -1116,7 +1117,7 @@ let testPublicationFileLD =
 
             let writingSuccess = 
                 try 
-                    Publication.toStringLD a |> ignore
+                    Publication.toJsonldStringWithContext a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1139,7 +1140,7 @@ let testPublicationFileLD =
 
             let o = 
                 Publication.fromJsonString Publication.publication
-                |> Publication.toStringLD
+                |> Publication.toJsonldStringWithContext
 
             let expected = 
                 Publication.publicationLD
@@ -1618,7 +1619,7 @@ let testInvestigationFile =
 
             let investigation = 
                 Investigation.make 
-                    (Some "Investigations/MyInvestigation")
+                    (Some "./")
                     (Some "isa.investigation.xlsx")
                     (Some "MyInvestigation")
                     (Some "bla bla bla")
@@ -1677,7 +1678,7 @@ let testInvestigationFileLD =
 
             let writingSuccess = 
                 try 
-                    Investigation.toStringLD i |> ignore
+                    Investigation.toJsonldStringWithContext i |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1699,11 +1700,11 @@ let testInvestigationFileLD =
         // testCase "OutputMatchesInput" (fun () ->
 
         //     let o = 
-        //         Investigation.fromString TestObjects.Investigation.investigation
-        //         |> Investigation.toString
+        //         Investigation.fromJsonString Investigation.investigationLD
+        //         |> Investigation.toJsonldString
 
         //     let expected = 
-        //         TestObjects.Investigation.investigation
+        //         Investigation.investigationLD
         //         |> Utils.extractWords
         //         |> Array.countBy id
         //         |> Array.sortBy fst
@@ -1716,6 +1717,7 @@ let testInvestigationFileLD =
 
         //     Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
         // )
+
         // testCase "HandleEmptyRemarks" (fun () ->
 
         //     let json = "{}"
@@ -1729,14 +1731,6 @@ let testInvestigationFileLD =
                   
             let comment = 
                 Comment.make (Some "MyComment") (Some "Key") (Some "Value")
-
-            let ontologySourceReference =
-                OntologySourceReference.make
-                    (Some "bla bla")
-                    (Some "filePath.txt")
-                    (Some "OO")
-                    (Some "1.3.3")
-                    (Some [|comment|])
 
             let publicationStatus = 
                 OntologyAnnotation.make 
@@ -2048,29 +2042,374 @@ let testInvestigationFileLD =
                     (Some "bla bla bla\nblabbbbblaaa")
                     (Some (JsonExtensions.DateTime.fromInts 2020 3 15 18 23))
                     (Some (JsonExtensions.Date.fromInts 2020 4 3))                   
-                    (Some [ontologySourceReference])
+                    (None)
                     (Some [publication])
                     (Some [person])
                     (Some [study])
                     (Some [comment])
                     ([Remark.make 0 "hallo"])
 
-            let s = Investigation.toStringLD investigation
+            let s = Investigation.toJsonldStringWithContext investigation
 
-            // let expected = 
-            //     TestObjects.Investigation.investigationLD
-            //     |> Utils.extractWords
-            //     |> Array.countBy id
-            //     |> Array.sortBy fst
+            //MyExpect.matchingInvestigation s
 
-            // let actual = 
-            //     s
-            //     |> Utils.extractWords
-            //     |> Array.countBy id
-            //     |> Array.sortBy fst
+            let actual = 
+                s 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
 
+            let expected = 
+                TestObjects.Json.Investigation.investigationLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            // Expect.equal actual expected "Written investigation file does not match read investigation file"
+            Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
+
+        )
+
+        testCase "FullInvestigationToROCrate" (fun () ->
+                  
+            let comment = 
+                Comment.make (Some "MyComment") (Some "Key") (Some "Value")
+
+            let publicationStatus = 
+                OntologyAnnotation.make 
+                    (Some "OntologyTerm/Published")
+                    (Some ("published"))
+                    (Some "pso")
+                    (Some "http://purl.org/spar/pso/published")
+                    (Some [|comment|])
+
+            let publication =
+                Publication.make
+                    (Some "12345678")
+                    (Some "11.1111/abcdef123456789")
+                    (Some "Lukas Weil, Other Gzúy")
+                    (Some "Fair is great")
+                    (Some publicationStatus)
+                    (Some [|comment|])
+
+            let role = 
+                OntologyAnnotation.make 
+                    (Some "OntologyTerm/SoftwareDeveloperRole")
+                    (Some ("software developer role"))
+                    (Some "swo")
+                    (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
+                    (Some [|comment|])
+
+            let person =
+                Person.make
+                    (Some "Persons/LukasWeil")
+                    None
+                    (Some "Weil")
+                    (Some "Lukas")
+                    (Some "H")
+                    (Some "weil@email.com")
+                    (Some "0123 456789")
+                    (Some "9876 543210")
+                    (Some "fantasyStreet 23, 123 Town")
+                    (Some "Universiteee")
+                    (Some [|role|])
+                    (Some [|comment|])
+
+            let characteristic = 
+                MaterialAttribute.make 
+                    (Some "Characteristic/Organism")
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/Organism")
+                            (Some ("organism"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0100026")
+                            (Some [|comment|])
+                    ))
+
+            let characteristicValue = 
+                MaterialAttributeValue.make 
+                    (Some "CharacteristicValue/Arabidopsis")
+                    (Some characteristic)
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/Organism")
+                            (Some ("Arabidopsis thaliana"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0100026")
+                            (Some [|comment|])
+                        |> Value.Ontology
+                    ))
+                    None
+
+            let studyDesignDescriptor = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/TimeSeries")
+                    (Some ("Time Series Analysis"))
+                    (Some "ncit")
+                    (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
+                    (Some [|comment|])
+
+            let protocolType = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/GrowthProtocol")
+                    (Some ("growth protocol"))
+                    (Some "dfbo")
+                    (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
+                    (Some [|comment|])
+
+            let parameter = 
+                ProtocolParameter.make
+                    (Some "Parameter/Temperature")
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/Temperature")
+                            (Some ("temperature unit"))
+                            (Some "uo")
+                            (Some "http://purl.obolibrary.org/obo/UO_0000005")
+                            (Some [|comment|])
+                    ))
+
+            let parameterUnit =              
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/DegreeCelsius")
+                    (Some ("degree celsius"))
+                    (Some "uo")
+                    (Some "http://purl.obolibrary.org/obo/UO_0000027")
+                    (Some [|comment|])
+
+            let parameterValue = 
+                ProcessParameterValue.make
+                    (Some parameter)
+                    (Some (Value.Int 20))
+                    (Some parameterUnit)
+
+            let protocolComponent =
+                Component.make
+                    (Some "PCR instrument")
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/RTPCR")
+                            (Some ("real-time PCR machine"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0001110")
+                            (Some [|comment|])
+                        |> Value.Ontology
+                    ))
+                    None
+                    (Some (
+                        OntologyAnnotation.make
+                            (Some "OntologyTerm/PCR")
+                            (Some ("PCR instrument"))
+                            (Some "obi")
+                            (Some "http://purl.obolibrary.org/obo/OBI_0000989")
+                            (Some [|comment|])
+                    ))
+                
+            let protocol = 
+                Protocol.make 
+                    (Some "Protocol/MyProtocol")
+                    (Some "MyProtocol")
+                    (Some protocolType)
+                    (Some "bla bla bla\nblabbbbblaaa")
+                    (Some "http://nfdi4plants.org/protocols/MyProtocol")
+                    (Some "1.2.3")
+                    (Some [parameter])
+                    (Some [protocolComponent])                   
+                    (Some [comment])
+
+            let factor = 
+                Factor.make 
+                        (Some "Factor/Time")
+                        (Some "Time")
+                        (Some (
+                            OntologyAnnotation.make
+                                (Some "OntologyTerm/Time")
+                                (Some ("time"))
+                                (Some "pato")
+                                (Some "http://purl.obolibrary.org/obo/PATO_0000165")
+                                (Some [|comment|])
+                        ))
+                        (Some [|comment|])
+
+            let factorUnit = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/Hour")
+                    (Some ("hour"))
+                    (Some "uo")
+                    (Some "http://purl.obolibrary.org/obo/UO_0000032")
+                    (Some [|comment|])
+                    
+
+            let factorValue = 
+                FactorValue.make
+                    (Some "FactorValue/4hours")
+                    (Some factor)
+                    (Some (Value.Float 4.5))
+                    (Some factorUnit)
+
+            let source =
+                Source.make
+                    (Some "Source/MySource")
+                    (Some "MySource")
+                    (Some [characteristicValue])
+
+            let sample = 
+                Sample.make
+                    (Some "Sample/MySample")
+                    (Some "MySample")
+                    (Some [characteristicValue])
+                    (Some [factorValue])
+                    (Some [source])
+
+            let data = 
+                Data.make
+                    (Some "Data/MyData")
+                    (Some "MyData")
+                    (Some DataFile.DerivedDataFile)
+                    (Some [comment])
+        
+            let material = 
+                Material.make
+                    (Some "Material/MyMaterial")
+                    (Some "MyMaterial")
+                    (Some MaterialType.ExtractName)
+                    (Some [characteristicValue])
+                    None
+
+            let derivedMaterial = 
+                Material.make
+                    (Some "Material/MyDerivedMaterial")
+                    (Some "MyDerivedMaterial")
+                    (Some MaterialType.LabeledExtractName)
+                    (Some [characteristicValue])
+                    (Some [material])
+
+            let studyMaterials = 
+                StudyMaterials.make
+                    (Some [source])
+                    (Some [sample])
+                    (Some [material;derivedMaterial])
+
+            let studyProcess = 
+                Process.make
+                    (Some "Process/MyProcess1")
+                    (Some "MyProcess1")
+                    (Some protocol)
+                    (Some [parameterValue])
+                    (Some "Lukas While")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
+                    None
+                    (Some (Process.create (Id = "Process/MyProcess2")))
+                    (Some [ProcessInput.Source source])
+                    (Some [ProcessOutput.Sample sample])
+                    (Some [comment])
+
+            let assayProcess =
+                Process.make
+                    (Some "Process/MyProcess2")
+                    (Some "MyProcess2")
+                    (Some protocol)
+                    (Some [parameterValue])
+                    (Some "Lukas While")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
+                    (Some (Process.create (Id = "Process/MyProcess1")))
+                    None
+                    (Some [ProcessInput.Sample sample])
+                    (Some [ProcessOutput.Data data])
+                    (Some [comment])
+
+
+            let measurementType = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/LFQuantification")
+                    (Some ("LC/MS Label-Free Quantification"))
+                    (Some "ncit")
+                    (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
+                    (Some [|comment|])
+
+            let technologyType = 
+                OntologyAnnotation.make
+                    (Some "OntologyTerm/TOF")
+                    (Some ("Time-of-Flight"))
+                    (Some "ncit")
+                    (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
+                    (Some [|comment|])
+
+            let assayMaterials =
+                AssayMaterials.make
+                    (Some [sample])
+                    (Some [material;derivedMaterial])
+
+            let assay = 
+                Assay.make
+                    (Some "Assay/MyAssay")
+                    (Some "MyAssay/isa.assay.xlsx")
+                    (Some measurementType)
+                    (Some technologyType)
+                    (Some "Mass spectrometry platform")
+                    (Some [data])
+                    (Some assayMaterials)                   
+                    (Some [characteristic])
+                    (Some [parameterUnit;factorUnit])
+                    (Some [assayProcess])
+                    (Some [comment])
+
+            let study = 
+                Study.make 
+                    (Some "Study/MyStudy")
+                    (Some "MyStudy/isa.study.xlsx")
+                    (Some "MyStudy")
+                    (Some "bla bla bla")
+                    (Some "bla bla bla\nblabbbbblaaa")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
+                    (Some (JsonExtensions.Date.fromInts 2020 10 20))                   
+                    (Some [publication])
+                    (Some [person])
+                    (Some [studyDesignDescriptor])
+                    (Some [protocol])
+                    (Some studyMaterials)
+                    (Some [studyProcess])
+                    (Some [assay])
+                    (Some [factor])
+                    (Some [characteristic])
+                    (Some [parameterUnit;factorUnit])
+                    (Some [comment])
+
+            let investigation = 
+                Investigation.make 
+                    (Some "Investigations/MyInvestigation")
+                    (Some "isa.investigation.xlsx")
+                    (Some "MyInvestigation")
+                    (Some "bla bla bla")
+                    (Some "bla bla bla\nblabbbbblaaa")
+                    (Some (JsonExtensions.DateTime.fromInts 2020 3 15 18 23))
+                    (Some (JsonExtensions.Date.fromInts 2020 4 3))                   
+                    (None)
+                    (Some [publication])
+                    (Some [person])
+                    (Some [study])
+                    (Some [comment])
+                    ([Remark.make 0 "hallo"])
+
+            let s = Investigation.toRoCrateString investigation
+
+            //MyExpect.matchingInvestigation s
+
+            let actual = 
+                s 
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let expected = 
+                TestObjects.Json.Investigation.investigationROC
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.equal actual expected "Written investigation file does not match read investigation file"
             // Expect.sequenceEqual actual expected "Written investigation file does not match read investigation file"
-            Expect.sequenceEqual [1;2] [1;2] "bla"
 
         )
     ]

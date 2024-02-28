@@ -1,297 +1,484 @@
 ﻿module TestObjects.Json.Investigation
 
-let investigationLD = 
+let investigationROC = 
   """
 {
-  "@id": "Investigations/MyInvestigation",
-  "@type": "Investigation",
-  "filename": "isa.investigation.xlsx",
-  "identifier": "MyInvestigation",
-  "title": "bla bla bla",
-  "description": "bla bla bla\nblabbbbblaaa",
-  "submissionDate": "2020-03-15T18:23:00.0Z",
-  "publicReleaseDate": "2020-04-03",
-  "ontologySourceReferences": [
-    {
-      "@id": "filePath.txt",
-      "@type": "OntologySourceReference",
-      "description": "bla bla",
-      "file": "filePath.txt",
-      "name": "OO",
-      "version": "1.3.3",
-      "comments": [
-        {
-          "@id": "MyComment",
-          "@type": "Comment",
-          "name": "Key",
-          "value": "Value"
-        }
-      ]
-    }
-  ],
-  "publications": [
-    {
-      "@id": "11.1111/abcdef123456789",
-      "@type": "Publication",
-      "pubMedID": "12345678",
-      "doi": "11.1111/abcdef123456789",
-      "authorList": "Lukas Weil, Other Gzúy",
-      "title": "Fair is great",
-      "status": {
-        "@id": "OntologyTerm/Published",
-        "@type": "OntologyAnnotation",
-        "annotationValue": "published",
-        "termSource": "pso",
-        "termAccession": "http://purl.org/spar/pso/published",
+  "@context": {
+    "sdo": "http://schema.org/",
+    "arc": "http://purl.org/nfdi4plants/ontology/",
+    "CreativeWork": "sdo:CreativeWork",
+    "about": "sdo:about",
+    "conformsTo": "sdo:conformsTo"
+  },
+  "conformsTo": {
+    "@id": "https://w3id.org/ro/crate/1.1"
+  },
+  "@type": "CreativeWork",
+  "@id": "ro-crate-metadata.json",
+  "about": {
+    "@id": "./",
+    "@type": "Investigation",
+    "@context": {
+      "sdo": "http://schema.org/",
+      "arc": "http://purl.org/nfdi4plants/ontology/",
+      "Investigation": "sdo:Dataset",
+      "identifier": "sdo:identifier",
+      "title": "sdo:headline",
+      "description": "sdo:description",
+      "submissionDate": "sdo:dateCreated",
+      "publicReleaseDate": "sdo:datePublished",
+      "publications": "sdo:citation",
+      "people": "sdo:creator",
+      "studies": "sdo:hasPart",
+      "ontologySourceReferences": "sdo:mentions",
+      "comments": "sdo:disambiguatingDescription",
+      "publications?": "sdo:subjectOf?",
+      "filename": "sdo:alternateName"
+    },
+    "filename": "isa.investigation.xlsx",
+    "identifier": "MyInvestigation",
+    "title": "bla bla bla",
+    "description": "bla bla bla\nblabbbbblaaa",
+    "submissionDate": "2020-03-15T18:23:00.0Z",
+    "publicReleaseDate": "2020-04-03",
+    "publications": [
+      {
+        "@id": "11.1111/abcdef123456789",
+        "@type": "Publication",
+        "@context": {
+          "sdo": "http://schema.org/",
+          "arc": "http://purl.org/nfdi4plants/ontology/",
+          "Publication": "sdo:ScholarlyArticle",
+          "pubMedID": "sdo:url",
+          "doi": "sdo:sameAs",
+          "title": "sdo:headline",
+          "status": "sdo:creativeWorkStatus",
+          "authorList": "sdo:author",
+          "comments": "sdo:disambiguatingDescription"
+        },
+        "pubMedID": "12345678",
+        "doi": "11.1111/abcdef123456789",
+        "authorList": "Lukas Weil, Other Gzúy",
+        "title": "Fair is great",
+        "status": {
+          "@id": "OntologyTerm/Published",
+          "@type": "OntologyAnnotation",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "OntologyAnnotation": "sdo:DefinedTerm",
+            "annotationValue": "sdo:name",
+            "termSource": "sdo:inDefinedTermSet",
+            "termAccession": "sdo:termCode",
+            "comments": "sdo:disambiguatingDescription"
+          },
+          "annotationValue": "published",
+          "termSource": "pso",
+          "termAccession": "http://purl.org/spar/pso/published",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        },
         "comments": [
           {
             "@id": "MyComment",
             "@type": "Comment",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Comment": "sdo:Comment",
+              "name": "sdo:name",
+              "value": "sdo:value"
+            },
             "name": "Key",
             "value": "Value"
           }
         ]
-      },
-      "comments": [
-        {
-          "@id": "MyComment",
-          "@type": "Comment",
-          "name": "Key",
-          "value": "Value"
+      }
+    ],
+    "people": [
+      {
+        "@id": "Persons/LukasWeil",
+        "@type": "Person",
+        "@context": {
+          "sdo": "http://schema.org/",
+          "arc": "http://purl.org/nfdi4plants/ontology/",
+          "Person": "sdo:Person",
+          "firstName": "sdo:givenName",
+          "lastName": "sdo:familyName",
+          "midInitials": "sdo:additionalName",
+          "email": "sdo:email",
+          "address": "sdo:address",
+          "phone": "sdo:telephone",
+          "fax": "sdo:faxNumber",
+          "comments": "sdo:disambiguatingDescription",
+          "roles": "sdo:jobTitle",
+          "affiliation": "sdo:affiliation"
+        },
+        "firstName": "Lukas",
+        "lastName": "Weil",
+        "midInitials": "H",
+        "email": "weil@email.com",
+        "phone": "0123 456789",
+        "fax": "9876 543210",
+        "address": "fantasyStreet 23, 123 Town",
+        "affiliation": {
+          "@type": "Organization",
+          "@id": "Organization/Universiteee",
+          "name": "Universiteee",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Organization": "sdo:Organization",
+            "name": "sdo:name"
+          }
         }
-      ]
-    }
-  ],
-  "people": [
-    {
-      "@id": "Persons/LukasWeil",
-      "@type": "Person",
-      "firstName": "Lukas",
-      "lastName": "Weil",
-      "midInitials": "H",
-      "email": "weil@email.com",
-      "phone": "0123 456789",
-      "fax": "9876 543210",
-      "address": "fantasyStreet 23, 123 Town",
-      "affiliation": "Universiteee",
-      "roles": [
-        {
-          "@id": "OntologyTerm/SoftwareDeveloperRole",
-          "@type": "OntologyAnnotation",
-          "annotationValue": "software developer role",
-          "termSource": "swo",
-          "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
-          "comments": [
-            {
-              "@id": "MyComment",
-              "@type": "Comment",
-              "name": "Key",
-              "value": "Value"
-            }
-          ]
-        }
-      ],
-      "comments": [
-        {
-          "@id": "MyComment",
-          "@type": "Comment",
-          "name": "Key",
-          "value": "Value"
-        }
-      ]
-    }
-  ],
-  "studies": [
-    {
-      "@id": "Study/MyStudy",
-      "@type": "Study",
-      "filename": "MyStudy/isa.study.xlsx",
-      "identifier": "MyStudy",
-      "title": "bla bla bla",
-      "description": "bla bla bla\nblabbbbblaaa",
-      "submissionDate": "2020-10-05T03:03:00.0Z",
-      "publicReleaseDate": "2020-10-20",
-      "publications": [
-        {
-          "@id": "11.1111/abcdef123456789",
-          "@type": "Publication",
-          "pubMedID": "12345678",
-          "doi": "11.1111/abcdef123456789",
-          "authorList": "Lukas Weil, Other Gzúy",
-          "title": "Fair is great",
-          "status": {
-            "@id": "OntologyTerm/Published",
+        "roles": [
+          {
+            "@id": "OntologyTerm/SoftwareDeveloperRole",
             "@type": "OntologyAnnotation",
-            "annotationValue": "published",
-            "termSource": "pso",
-            "termAccession": "http://purl.org/spar/pso/published",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "annotationValue": "software developer role",
+            "termSource": "swo",
+            "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
             "comments": [
               {
                 "@id": "MyComment",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "name": "Key",
                 "value": "Value"
               }
             ]
-          },
-          "comments": [
-            {
-              "@id": "MyComment",
-              "@type": "Comment",
-              "name": "Key",
-              "value": "Value"
-            }
-          ]
-        }
-      ],
-      "people": [
-        {
-          "@id": "Persons/LukasWeil",
-          "@type": "Person",
-          "firstName": "Lukas",
-          "lastName": "Weil",
-          "midInitials": "H",
-          "email": "weil@email.com",
-          "phone": "0123 456789",
-          "fax": "9876 543210",
-          "address": "fantasyStreet 23, 123 Town",
-          "affiliation": "Universiteee",
-          "roles": [
-            {
-              "@id": "OntologyTerm/SoftwareDeveloperRole",
+          }
+        ],
+        "comments": [
+          {
+            "@id": "MyComment",
+            "@type": "Comment",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Comment": "sdo:Comment",
+              "name": "sdo:name",
+              "value": "sdo:value"
+            },
+            "name": "Key",
+            "value": "Value"
+          }
+        ]
+      }
+    ],
+    "studies": [
+      {
+        "@id": "Study/MyStudy",
+        "@type": [
+          "Study",
+          "ArcStudy"
+        ],
+        "@context": {
+          "sdo": "http://schema.org/",
+          "arc": "http://purl.org/nfdi4plants/ontology/",
+          "Study": "sdo:Dataset",
+          "ArcStudy": "arc:ARC#ARC_00000014",
+          "identifier": "sdo:identifier",
+          "title": "sdo:headline",
+          "description": "sdo:description",
+          "submissionDate": "sdo:dateCreated",
+          "publicReleaseDate": "sdo:datePublished",
+          "publications": "sdo:citation",
+          "people": "sdo:creator",
+          "assays": "sdo:hasPart",
+          "filename": "sdo:description",
+          "comments": "sdo:disambiguatingDescription",
+          "protocols": "arc:ARC#ARC_00000039",
+          "materials": "arc:ARC#ARC_00000045",
+          "otherMaterials": "arc:ARC#ARC_00000045",
+          "sources": "arc:ARC#ARC_00000045",
+          "samples": "arc:ARC#ARC_00000045",
+          "processSequence": "arc:ARC#ARC_00000047",
+          "factors": "arc:ARC#ARC_00000043",
+          "characteristicCategories": "arc:ARC#ARC_00000049",
+          "unitCategories": "arc:ARC#ARC_00000051",
+          "studyDesignDescriptors": "arc:ARC#ARC_00000037"
+        },
+        "filename": "MyStudy/isa.study.xlsx",
+        "identifier": "MyStudy",
+        "title": "bla bla bla",
+        "description": "bla bla bla\nblabbbbblaaa",
+        "submissionDate": "2020-10-05T03:03:00.0Z",
+        "publicReleaseDate": "2020-10-20",
+        "publications": [
+          {
+            "@id": "11.1111/abcdef123456789",
+            "@type": "Publication",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Publication": "sdo:ScholarlyArticle",
+              "pubMedID": "sdo:url",
+              "doi": "sdo:sameAs",
+              "title": "sdo:headline",
+              "status": "sdo:creativeWorkStatus",
+              "authorList": "sdo:author",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "pubMedID": "12345678",
+            "doi": "11.1111/abcdef123456789",
+            "authorList": "Lukas Weil, Other Gzúy",
+            "title": "Fair is great",
+            "status": {
+              "@id": "OntologyTerm/Published",
               "@type": "OntologyAnnotation",
-              "annotationValue": "software developer role",
-              "termSource": "swo",
-              "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
+              "annotationValue": "published",
+              "termSource": "pso",
+              "termAccession": "http://purl.org/spar/pso/published",
               "comments": [
                 {
                   "@id": "MyComment",
                   "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
                   "name": "Key",
                   "value": "Value"
                 }
               ]
-            }
-          ],
-          "comments": [
-            {
-              "@id": "MyComment",
-              "@type": "Comment",
-              "name": "Key",
-              "value": "Value"
-            }
-          ]
-        }
-      ],
-      "studyDesignDescriptors": [
-        {
-          "@id": "OntologyTerm/TimeSeries",
-          "@type": "OntologyAnnotation",
-          "annotationValue": "Time Series Analysis",
-          "termSource": "ncit",
-          "termAccession": "http://purl.obolibrary.org/obo/NCIT_C18235",
-          "comments": [
-            {
-              "@id": "MyComment",
-              "@type": "Comment",
-              "name": "Key",
-              "value": "Value"
-            }
-          ]
-        }
-      ],
-      "protocols": [
-        {
-          "@id": "Protocol/MyProtocol",
-          "@type": "Protocol",
-          "name": "MyProtocol",
-          "protocolType": {
-            "@id": "OntologyTerm/GrowthProtocol",
-            "@type": "OntologyAnnotation",
-            "annotationValue": "growth protocol",
-            "termSource": "dfbo",
-            "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+            },
             "comments": [
               {
                 "@id": "MyComment",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "name": "Key",
                 "value": "Value"
               }
             ]
-          },
-          "description": "bla bla bla\nblabbbbblaaa",
-          "uri": "http://nfdi4plants.org/protocols/MyProtocol",
-          "version": "1.2.3",
-          "parameters": [
-            {
-              "@id": "Parameter/Temperature",
-              "@type": "ProtocolParameter",
-              "parameterName": {
-                "@id": "OntologyTerm/Temperature",
+          }
+        ],
+        "people": [
+          {
+            "@id": "Persons/LukasWeil",
+            "@type": "Person",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Person": "sdo:Person",
+              "firstName": "sdo:givenName",
+              "lastName": "sdo:familyName",
+              "midInitials": "sdo:additionalName",
+              "email": "sdo:email",
+              "address": "sdo:address",
+              "phone": "sdo:telephone",
+              "fax": "sdo:faxNumber",
+              "comments": "sdo:disambiguatingDescription",
+              "roles": "sdo:jobTitle",
+              "affiliation": "sdo:affiliation"
+            },
+            "firstName": "Lukas",
+            "lastName": "Weil",
+            "midInitials": "H",
+            "email": "weil@email.com",
+            "phone": "0123 456789",
+            "fax": "9876 543210",
+            "address": "fantasyStreet 23, 123 Town",
+            "affiliation": {
+              "@type": "Organization",
+              "@id": "Organization/Universiteee",
+              "name": "Universiteee",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Organization": "sdo:Organization",
+                "name": "sdo:name"
+              }
+            }
+            "roles": [
+              {
+                "@id": "OntologyTerm/SoftwareDeveloperRole",
                 "@type": "OntologyAnnotation",
-                "annotationValue": "temperature unit",
-                "termSource": "uo",
-                "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "annotationValue": "software developer role",
+                "termSource": "swo",
+                "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
                 "comments": [
                   {
                     "@id": "MyComment",
                     "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
                     "name": "Key",
                     "value": "Value"
                   }
                 ]
               }
-            }
-          ],
-          "components": [
-            {
-              "@id": "#Component_PCR_instrument",
-              "@type": "Component",
-              "componentName": "PCR instrument",
-              "componentType": {
-                "@id": "OntologyTerm/PCR",
-                "@type": "OntologyAnnotation",
-                "annotationValue": "PCR instrument",
-                "termSource": "obi",
-                "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
-                "comments": [
-                  {
-                    "@id": "MyComment",
-                    "@type": "Comment",
-                    "name": "Key",
-                    "value": "Value"
-                  }
-                ]
+            ],
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
               }
-            }
-          ],
-          "comments": [
-            {
-              "@id": "MyComment",
-              "@type": "Comment",
-              "name": "Key",
-              "value": "Value"
-            }
-          ]
-        }
-      ],
-      "materials": {
+            ]
+          }
+        ],
+        "studyDesignDescriptors": [
+          {
+            "@id": "OntologyTerm/TimeSeries",
+            "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "annotationValue": "Time Series Analysis",
+            "termSource": "ncit",
+            "termAccession": "http://purl.obolibrary.org/obo/NCIT_C18235",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          }
+        ],
         "sources": [
           {
             "@id": "Source/MySource",
-            "@type": "Source",
+            "@type": [
+              "Source",
+              "ArcSource"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Source": "sdo:Thing",
+              "ArcSource": "arc:ARC#ARC_00000071",
+              "identifier": "sdo:identifier",
+              "name": "arc:ARC#ARC_00000019",
+              "characteristics": "arc:ARC#ARC_00000080"
+            },
             "name": "MySource",
             "characteristics": [
               {
                 "@id": "CharacteristicValue/Arabidopsis",
-                "@type": "MaterialAttributeValue",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
                 "category": {
                   "@id": "Characteristic/Organism",
-                  "@type": "MaterialAttribute",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
                   "characteristicType": {
                     "@id": "OntologyTerm/Organism",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "organism",
                     "termSource": "obi",
                     "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -299,6 +486,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -308,6 +502,15 @@ let investigationLD =
                 "value": {
                   "@id": "OntologyTerm/Organism",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "Arabidopsis thaliana",
                   "termSource": "obi",
                   "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -315,6 +518,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -327,18 +537,62 @@ let investigationLD =
         "samples": [
           {
             "@id": "Sample/MySample",
-            "@type": "Sample",
+            "@type": [
+              "Sample",
+              "ArcSample"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Sample": "sdo:Thing",
+              "ArcSample": "arc:ARC#ARC_00000070",
+              "name": "arc:name",
+              "characteristics": "arc:ARC#ARC_00000080",
+              "factorValues": "arc:ARC#ARC_00000083",
+              "derivesFrom": "arc:ARC#ARC_00000082"
+            },
             "name": "MySample",
             "characteristics": [
               {
                 "@id": "CharacteristicValue/Arabidopsis",
-                "@type": "MaterialAttributeValue",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
                 "category": {
                   "@id": "Characteristic/Organism",
-                  "@type": "MaterialAttribute",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
                   "characteristicType": {
                     "@id": "OntologyTerm/Organism",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "organism",
                     "termSource": "obi",
                     "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -346,6 +600,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -355,6 +616,15 @@ let investigationLD =
                 "value": {
                   "@id": "OntologyTerm/Organism",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "Arabidopsis thaliana",
                   "termSource": "obi",
                   "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -362,6 +632,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -372,14 +649,47 @@ let investigationLD =
             "factorValues": [
               {
                 "@id": "FactorValue/4hours",
-                "@type": "FactorValue",
+                "@type": [
+                  "FactorValue",
+                  "ArcFactorValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "FactorValue": "sdo:PropertyValue",
+                  "ArcFactorValue": "arc:ARC#ARC_00000084",
+                  "category": "arc:category",
+                  "value": "arc:ARC#ARC_00000044",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
                 "category": {
                   "@id": "Factor/Time",
-                  "@type": "Factor",
+                  "@type": [
+                    "Factor",
+                    "ArcFactor"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Factor": "sdo:Thing",
+                    "ArcFactor": "arc:ARC#ARC_00000044",
+                    "factorName": "arc:ARC#ARC_00000019",
+                    "factorType": "arc:ARC#ARC_00000078",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "factorName": "Time",
                   "factorType": {
                     "@id": "OntologyTerm/Time",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "time",
                     "termSource": "pato",
                     "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
@@ -387,6 +697,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -396,6 +713,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -405,6 +729,15 @@ let investigationLD =
                 "unit": {
                   "@id": "OntologyTerm/Hour",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "hour",
                   "termSource": "uo",
                   "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
@@ -412,6 +745,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -422,18 +762,61 @@ let investigationLD =
             "derivesFrom": [
               {
                 "@id": "Source/MySource",
-                "@type": "Source",
+                "@type": [
+                  "Source",
+                  "ArcSource"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Source": "sdo:Thing",
+                  "ArcSource": "arc:ARC#ARC_00000071",
+                  "identifier": "sdo:identifier",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080"
+                },
                 "name": "MySource",
                 "characteristics": [
                   {
                     "@id": "CharacteristicValue/Arabidopsis",
-                    "@type": "MaterialAttributeValue",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
                     "category": {
                       "@id": "Characteristic/Organism",
-                      "@type": "MaterialAttribute",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
                       "characteristicType": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "organism",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -441,6 +824,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -450,6 +840,15 @@ let investigationLD =
                     "value": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "Arabidopsis thaliana",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -457,6 +856,3996 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "materials": [
+          {
+            "@id": "Material/MyMaterial",
+            "@type": [
+              "Material",
+              "ArcMaterial"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "ArcMaterial": "arc:ARC#ARC_00000108",
+              "Material": "sdo:Thing",
+              "type": "arc:ARC#ARC_00000085",
+              "name": "arc:ARC#ARC_00000019",
+              "characteristics": "arc:ARC#ARC_00000080",
+              "derivesFrom": "arc:ARC#ARC_00000082"
+            },
+            "name": "MyMaterial",
+            "type": "Extract Name",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "@id": "Material/MyDerivedMaterial",
+            "@type": [
+              "Material",
+              "ArcMaterial"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "ArcMaterial": "arc:ARC#ARC_00000108",
+              "Material": "sdo:Thing",
+              "type": "arc:ARC#ARC_00000085",
+              "name": "arc:ARC#ARC_00000019",
+              "characteristics": "arc:ARC#ARC_00000080",
+              "derivesFrom": "arc:ARC#ARC_00000082"
+            },
+            "name": "MyDerivedMaterial",
+            "type": "Labeled Extract Name",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "derivesFrom": [
+              {
+                "@id": "Material/MyMaterial",
+                "@type": [
+                  "Material",
+                  "ArcMaterial"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ArcMaterial": "arc:ARC#ARC_00000108",
+                  "Material": "sdo:Thing",
+                  "type": "arc:ARC#ARC_00000085",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
+                "name": "MyMaterial",
+                "type": "Extract Name",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ],
+        "processSequence": [
+          {
+            "@id": "Process/MyProcess1",
+            "@type": [
+              "Process",
+              "ArcProcess"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Process": "sdo:Thing",
+              "ArcProcess": "arc:ARC#ARC_00000048",
+              "name": "arc:ARC#ARC_00000019",
+              "executesProtocol": "arc:ARC#ARC_00000086",
+              "performer": "arc:ARC#ARC_00000089",
+              "date": "arc:ARC#ARC_00000090",
+              "previousProcess": "arc:ARC#ARC_00000091",
+              "nextProcess": "arc:ARC#ARC_00000092",
+              "input": "arc:ARC#ARC_00000095",
+              "output": "arc:ARC#ARC_00000096",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "name": "MyProcess1",
+            "executesProtocol": {
+              "@id": "Protocol/MyProtocol",
+              "@type": [
+                "Protocol",
+                "ArcProtocol"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Protocol": "sdo:Thing",
+                "ArcProtocol": "arc:ARC#ARC_00000040",
+                "name": "arc:ARC#ARC_00000019",
+                "protocolType": "arc:ARC#ARC_00000060",
+                "description": "arc:ARC#ARC_00000004",
+                "version": "arc:ARC#ARC_00000020",
+                "components": "arc:ARC#ARC_00000064",
+                "parameters": "arc:ARC#ARC_00000062",
+                "uri": "arc:ARC#ARC_00000061",
+                "comments": "arc:ARC#ARC_00000016"
+              },
+              "name": "MyProtocol",
+              "protocolType": {
+                "@id": "OntologyTerm/GrowthProtocol",
+                "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "annotationValue": "growth protocol",
+                "termSource": "dfbo",
+                "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              },
+              "description": "bla bla bla\nblabbbbblaaa",
+              "uri": "http://nfdi4plants.org/protocols/MyProtocol",
+              "version": "1.2.3",
+              "parameters": [
+                {
+                  "@id": "Parameter/Temperature",
+                  "@type": [
+                    "ProtocolParameter",
+                    "ArcProtocolParameter"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "ProtocolParameter": "sdo:Thing",
+                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+                    "parameterName": "arc:ARC#ARC_00000100"
+                  },
+                  "parameterName": {
+                    "@id": "OntologyTerm/Temperature",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "temperature unit",
+                    "termSource": "uo",
+                    "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "components": [
+                {
+                  "@id": "#Component_PCR_instrument",
+                  "@type": [
+                    "Component",
+                    "ArcComponent"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Component": "sdo:Thing",
+                    "ArcComponent": "arc:ARC#ARC_00000065",
+                    "componentName": "arc:ARC#ARC_00000019",
+                    "componentType": "arc:ARC#ARC_00000102"
+                  },
+                  "componentName": "PCR instrument",
+                  "componentType": {
+                    "@id": "OntologyTerm/PCR",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "PCR instrument",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                }
+              ],
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            },
+            "parameterValues": [
+              {
+                "@id": "#Param_temperature_unit_20",
+                "@type": [
+                  "ProcessParameterValue",
+                  "ArcProcessParameterValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ProcessParameterValue": "sdo:PropertyValue",
+                  "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
+                  "category": "arc:ARC#ARC_00000062",
+                  "value": "arc:ARC#ARC_00000087",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
+                "category": {
+                  "@id": "Parameter/Temperature",
+                  "@type": [
+                    "ProtocolParameter",
+                    "ArcProtocolParameter"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "ProtocolParameter": "sdo:Thing",
+                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+                    "parameterName": "arc:ARC#ARC_00000100"
+                  },
+                  "parameterName": {
+                    "@id": "OntologyTerm/Temperature",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "temperature unit",
+                    "termSource": "uo",
+                    "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": 20,
+                "unit": {
+                  "@id": "OntologyTerm/DegreeCelsius",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "degree celsius",
+                  "termSource": "uo",
+                  "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "performer": "Lukas While",
+            "date": "2020-10-05T03:03:00.0Z",
+            "nextProcess": {
+              "@id": "Process/MyProcess2",
+              "@type": [
+                "Process",
+                "ArcProcess"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Process": "sdo:Thing",
+                "ArcProcess": "arc:ARC#ARC_00000048",
+                "name": "arc:ARC#ARC_00000019",
+                "executesProtocol": "arc:ARC#ARC_00000086",
+                "performer": "arc:ARC#ARC_00000089",
+                "date": "arc:ARC#ARC_00000090",
+                "previousProcess": "arc:ARC#ARC_00000091",
+                "nextProcess": "arc:ARC#ARC_00000092",
+                "input": "arc:ARC#ARC_00000095",
+                "output": "arc:ARC#ARC_00000096",
+                "comments": "sdo:disambiguatingDescription"
+              }
+            },
+            "inputs": [
+              {
+                "@id": "Source/MySource",
+                "@type": [
+                  "Source",
+                  "ArcSource"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Source": "sdo:Thing",
+                  "ArcSource": "arc:ARC#ARC_00000071",
+                  "identifier": "sdo:identifier",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080"
+                },
+                "name": "MySource",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ],
+            "outputs": [
+              {
+                "@id": "Sample/MySample",
+                "@type": [
+                  "Sample",
+                  "ArcSample"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Sample": "sdo:Thing",
+                  "ArcSample": "arc:ARC#ARC_00000070",
+                  "name": "arc:name",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "factorValues": "arc:ARC#ARC_00000083",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
+                "name": "MySample",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "factorValues": [
+                  {
+                    "@id": "FactorValue/4hours",
+                    "@type": [
+                      "FactorValue",
+                      "ArcFactorValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "FactorValue": "sdo:PropertyValue",
+                      "ArcFactorValue": "arc:ARC#ARC_00000084",
+                      "category": "arc:category",
+                      "value": "arc:ARC#ARC_00000044",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Factor/Time",
+                      "@type": [
+                        "Factor",
+                        "ArcFactor"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Factor": "sdo:Thing",
+                        "ArcFactor": "arc:ARC#ARC_00000044",
+                        "factorName": "arc:ARC#ARC_00000019",
+                        "factorType": "arc:ARC#ARC_00000078",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "factorName": "Time",
+                      "factorType": {
+                        "@id": "OntologyTerm/Time",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "time",
+                        "termSource": "pato",
+                        "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      },
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    },
+                    "value": 4.5,
+                    "unit": {
+                      "@id": "OntologyTerm/Hour",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "hour",
+                      "termSource": "uo",
+                      "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "derivesFrom": [
+                  {
+                    "@id": "Source/MySource",
+                    "@type": [
+                      "Source",
+                      "ArcSource"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Source": "sdo:Thing",
+                      "ArcSource": "arc:ARC#ARC_00000071",
+                      "identifier": "sdo:identifier",
+                      "name": "arc:ARC#ARC_00000019",
+                      "characteristics": "arc:ARC#ARC_00000080"
+                    },
+                    "name": "MySource",
+                    "characteristics": [
+                      {
+                        "@id": "CharacteristicValue/Arabidopsis",
+                        "@type": [
+                          "MaterialAttributeValue",
+                          "ArcMaterialAttributeValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttributeValue": "sdo:PropertyValue",
+                          "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                          "category": "arc:ARC#ARC_00000049",
+                          "value": "arc:ARC#ARC_00000036",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
+                        "category": {
+                          "@id": "Characteristic/Organism",
+                          "@type": [
+                            "MaterialAttribute",
+                            "ArcMaterialAttribute"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttribute": "sdo:Property",
+                            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                            "characteristicType": "arc:ARC#ARC_00000098"
+                          },
+                          "characteristicType": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
+                            "annotationValue": "organism",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        },
+                        "value": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
+                          "annotationValue": "Arabidopsis thaliana",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          }
+        ],
+        "assays": [
+          {
+            "@id": "Assay/MyAssay",
+            "@type": [
+              "Assay",
+              "ArcAssay"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Assay": "sdo:Dataset",
+              "ArcAssay": "arc:ARC#ARC_00000042",
+              "measurementType": "sdo:variableMeasured",
+              "technologyType": "sdo:measurementTechnique",
+              "technologyPlatform": "sdo:instrument",
+              "dataFiles": "sdo:hasPart",
+              "materials": "arc:ARC#ARC_00000074",
+              "otherMaterials": "arc:ARC#ARC_00000074",
+              "samples": "arc:ARC#ARC_00000074",
+              "characteristicCategories": "arc:ARC#ARC_00000049",
+              "processSequences": "arc:ARC#ARC_00000047",
+              "unitCategories": "arc:ARC#ARC_00000051",
+              "comments": "sdo:disambiguatingDescription",
+              "filename": "sdo:url"
+            },
+            "filename": "MyAssay/isa.assay.xlsx",
+            "measurementType": {
+              "@id": "OntologyTerm/LFQuantification",
+              "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
+              "annotationValue": "LC/MS Label-Free Quantification",
+              "termSource": "ncit",
+              "termAccession": "http://purl.obolibrary.org/obo/NCIT_C161813",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            },
+            "technologyType": {
+              "@id": "OntologyTerm/TOF",
+              "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
+              "annotationValue": "Time-of-Flight",
+              "termSource": "ncit",
+              "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70698",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            },
+            "technologyPlatform": "Mass spectrometry platform",
+            "dataFiles": [
+              {
+                "@id": "Data/MyData",
+                "@type": [
+                  "Data",
+                  "ArcData"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Data": "sdo:MediaObject",
+                  "ArcData": "arc:ARC#ARC_00000076",
+                  "type": "arc:ARC#ARC_00000107",
+                  "name": "sdo:name",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "name": "MyData",
+                "type": "Derived Data File",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            ],
+            "samples": [
+              {
+                "@id": "Sample/MySample",
+                "@type": [
+                  "Sample",
+                  "ArcSample"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Sample": "sdo:Thing",
+                  "ArcSample": "arc:ARC#ARC_00000070",
+                  "name": "arc:name",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "factorValues": "arc:ARC#ARC_00000083",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
+                "name": "MySample",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "factorValues": [
+                  {
+                    "@id": "FactorValue/4hours",
+                    "@type": [
+                      "FactorValue",
+                      "ArcFactorValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "FactorValue": "sdo:PropertyValue",
+                      "ArcFactorValue": "arc:ARC#ARC_00000084",
+                      "category": "arc:category",
+                      "value": "arc:ARC#ARC_00000044",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Factor/Time",
+                      "@type": [
+                        "Factor",
+                        "ArcFactor"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Factor": "sdo:Thing",
+                        "ArcFactor": "arc:ARC#ARC_00000044",
+                        "factorName": "arc:ARC#ARC_00000019",
+                        "factorType": "arc:ARC#ARC_00000078",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "factorName": "Time",
+                      "factorType": {
+                        "@id": "OntologyTerm/Time",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "time",
+                        "termSource": "pato",
+                        "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      },
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    },
+                    "value": 4.5,
+                    "unit": {
+                      "@id": "OntologyTerm/Hour",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "hour",
+                      "termSource": "uo",
+                      "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "derivesFrom": [
+                  {
+                    "@id": "Source/MySource",
+                    "@type": [
+                      "Source",
+                      "ArcSource"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Source": "sdo:Thing",
+                      "ArcSource": "arc:ARC#ARC_00000071",
+                      "identifier": "sdo:identifier",
+                      "name": "arc:ARC#ARC_00000019",
+                      "characteristics": "arc:ARC#ARC_00000080"
+                    },
+                    "name": "MySource",
+                    "characteristics": [
+                      {
+                        "@id": "CharacteristicValue/Arabidopsis",
+                        "@type": [
+                          "MaterialAttributeValue",
+                          "ArcMaterialAttributeValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttributeValue": "sdo:PropertyValue",
+                          "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                          "category": "arc:ARC#ARC_00000049",
+                          "value": "arc:ARC#ARC_00000036",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
+                        "category": {
+                          "@id": "Characteristic/Organism",
+                          "@type": [
+                            "MaterialAttribute",
+                            "ArcMaterialAttribute"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttribute": "sdo:Property",
+                            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                            "characteristicType": "arc:ARC#ARC_00000098"
+                          },
+                          "characteristicType": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
+                            "annotationValue": "organism",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        },
+                        "value": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
+                          "annotationValue": "Arabidopsis thaliana",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "materials": [
+              {
+                "@id": "Material/MyMaterial",
+                "@type": [
+                  "Material",
+                  "ArcMaterial"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ArcMaterial": "arc:ARC#ARC_00000108",
+                  "Material": "sdo:Thing",
+                  "type": "arc:ARC#ARC_00000085",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
+                "name": "MyMaterial",
+                "type": "Extract Name",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "@id": "Material/MyDerivedMaterial",
+                "@type": [
+                  "Material",
+                  "ArcMaterial"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ArcMaterial": "arc:ARC#ARC_00000108",
+                  "Material": "sdo:Thing",
+                  "type": "arc:ARC#ARC_00000085",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
+                "name": "MyDerivedMaterial",
+                "type": "Labeled Extract Name",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "derivesFrom": [
+                  {
+                    "@id": "Material/MyMaterial",
+                    "@type": [
+                      "Material",
+                      "ArcMaterial"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "ArcMaterial": "arc:ARC#ARC_00000108",
+                      "Material": "sdo:Thing",
+                      "type": "arc:ARC#ARC_00000085",
+                      "name": "arc:ARC#ARC_00000019",
+                      "characteristics": "arc:ARC#ARC_00000080",
+                      "derivesFrom": "arc:ARC#ARC_00000082"
+                    },
+                    "name": "MyMaterial",
+                    "type": "Extract Name",
+                    "characteristics": [
+                      {
+                        "@id": "CharacteristicValue/Arabidopsis",
+                        "@type": [
+                          "MaterialAttributeValue",
+                          "ArcMaterialAttributeValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttributeValue": "sdo:PropertyValue",
+                          "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                          "category": "arc:ARC#ARC_00000049",
+                          "value": "arc:ARC#ARC_00000036",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
+                        "category": {
+                          "@id": "Characteristic/Organism",
+                          "@type": [
+                            "MaterialAttribute",
+                            "ArcMaterialAttribute"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttribute": "sdo:Property",
+                            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                            "characteristicType": "arc:ARC#ARC_00000098"
+                          },
+                          "characteristicType": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
+                            "annotationValue": "organism",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        },
+                        "value": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
+                          "annotationValue": "Arabidopsis thaliana",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ],
+            "characteristicCategories": [
+              {
+                "@id": "Characteristic/Organism",
+                "@type": [
+                  "MaterialAttribute",
+                  "ArcMaterialAttribute"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttribute": "sdo:Property",
+                  "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                  "characteristicType": "arc:ARC#ARC_00000098"
+                },
+                "characteristicType": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "organism",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "unitCategories": [
+              {
+                "@id": "OntologyTerm/DegreeCelsius",
+                "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "annotationValue": "degree celsius",
+                "termSource": "uo",
+                "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              },
+              {
+                "@id": "OntologyTerm/Hour",
+                "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "annotationValue": "hour",
+                "termSource": "uo",
+                "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            ],
+            "processSequence": [
+              {
+                "@id": "Process/MyProcess2",
+                "@type": [
+                  "Process",
+                  "ArcProcess"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Process": "sdo:Thing",
+                  "ArcProcess": "arc:ARC#ARC_00000048",
+                  "name": "arc:ARC#ARC_00000019",
+                  "executesProtocol": "arc:ARC#ARC_00000086",
+                  "performer": "arc:ARC#ARC_00000089",
+                  "date": "arc:ARC#ARC_00000090",
+                  "previousProcess": "arc:ARC#ARC_00000091",
+                  "nextProcess": "arc:ARC#ARC_00000092",
+                  "input": "arc:ARC#ARC_00000095",
+                  "output": "arc:ARC#ARC_00000096",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "name": "MyProcess2",
+                "executesProtocol": {
+                  "@id": "Protocol/MyProtocol",
+                  "@type": [
+                    "Protocol",
+                    "ArcProtocol"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Protocol": "sdo:Thing",
+                    "ArcProtocol": "arc:ARC#ARC_00000040",
+                    "name": "arc:ARC#ARC_00000019",
+                    "protocolType": "arc:ARC#ARC_00000060",
+                    "description": "arc:ARC#ARC_00000004",
+                    "version": "arc:ARC#ARC_00000020",
+                    "components": "arc:ARC#ARC_00000064",
+                    "parameters": "arc:ARC#ARC_00000062",
+                    "uri": "arc:ARC#ARC_00000061",
+                    "comments": "arc:ARC#ARC_00000016"
+                  },
+                  "name": "MyProtocol",
+                  "protocolType": {
+                    "@id": "OntologyTerm/GrowthProtocol",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "growth protocol",
+                    "termSource": "dfbo",
+                    "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  },
+                  "description": "bla bla bla\nblabbbbblaaa",
+                  "uri": "http://nfdi4plants.org/protocols/MyProtocol",
+                  "version": "1.2.3",
+                  "parameters": [
+                    {
+                      "@id": "Parameter/Temperature",
+                      "@type": [
+                        "ProtocolParameter",
+                        "ArcProtocolParameter"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "ProtocolParameter": "sdo:Thing",
+                        "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+                        "parameterName": "arc:ARC#ARC_00000100"
+                      },
+                      "parameterName": {
+                        "@id": "OntologyTerm/Temperature",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "temperature unit",
+                        "termSource": "uo",
+                        "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "components": [
+                    {
+                      "@id": "#Component_PCR_instrument",
+                      "@type": [
+                        "Component",
+                        "ArcComponent"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Component": "sdo:Thing",
+                        "ArcComponent": "arc:ARC#ARC_00000065",
+                        "componentName": "arc:ARC#ARC_00000019",
+                        "componentType": "arc:ARC#ARC_00000102"
+                      },
+                      "componentName": "PCR instrument",
+                      "componentType": {
+                        "@id": "OntologyTerm/PCR",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "PCR instrument",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    }
+                  ],
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                },
+                "parameterValues": [
+                  {
+                    "@id": "#Param_temperature_unit_20",
+                    "@type": [
+                      "ProcessParameterValue",
+                      "ArcProcessParameterValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "ProcessParameterValue": "sdo:PropertyValue",
+                      "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
+                      "category": "arc:ARC#ARC_00000062",
+                      "value": "arc:ARC#ARC_00000087",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Parameter/Temperature",
+                      "@type": [
+                        "ProtocolParameter",
+                        "ArcProtocolParameter"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "ProtocolParameter": "sdo:Thing",
+                        "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+                        "parameterName": "arc:ARC#ARC_00000100"
+                      },
+                      "parameterName": {
+                        "@id": "OntologyTerm/Temperature",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "temperature unit",
+                        "termSource": "uo",
+                        "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": 20,
+                    "unit": {
+                      "@id": "OntologyTerm/DegreeCelsius",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "degree celsius",
+                      "termSource": "uo",
+                      "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
+                          "name": "Key",
+                          "value": "Value"
+                        }
+                      ]
+                    }
+                  }
+                ],
+                "performer": "Lukas While",
+                "date": "2020-10-05T03:03:00.0Z",
+                "previousProcess": {
+                  "@id": "Process/MyProcess1",
+                  "@type": [
+                    "Process",
+                    "ArcProcess"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Process": "sdo:Thing",
+                    "ArcProcess": "arc:ARC#ARC_00000048",
+                    "name": "arc:ARC#ARC_00000019",
+                    "executesProtocol": "arc:ARC#ARC_00000086",
+                    "performer": "arc:ARC#ARC_00000089",
+                    "date": "arc:ARC#ARC_00000090",
+                    "previousProcess": "arc:ARC#ARC_00000091",
+                    "nextProcess": "arc:ARC#ARC_00000092",
+                    "input": "arc:ARC#ARC_00000095",
+                    "output": "arc:ARC#ARC_00000096",
+                    "comments": "sdo:disambiguatingDescription"
+                  }
+                },
+                "inputs": [
+                  {
+                    "@id": "Sample/MySample",
+                    "@type": [
+                      "Sample",
+                      "ArcSample"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Sample": "sdo:Thing",
+                      "ArcSample": "arc:ARC#ARC_00000070",
+                      "name": "arc:name",
+                      "characteristics": "arc:ARC#ARC_00000080",
+                      "factorValues": "arc:ARC#ARC_00000083",
+                      "derivesFrom": "arc:ARC#ARC_00000082"
+                    },
+                    "name": "MySample",
+                    "characteristics": [
+                      {
+                        "@id": "CharacteristicValue/Arabidopsis",
+                        "@type": [
+                          "MaterialAttributeValue",
+                          "ArcMaterialAttributeValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttributeValue": "sdo:PropertyValue",
+                          "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                          "category": "arc:ARC#ARC_00000049",
+                          "value": "arc:ARC#ARC_00000036",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
+                        "category": {
+                          "@id": "Characteristic/Organism",
+                          "@type": [
+                            "MaterialAttribute",
+                            "ArcMaterialAttribute"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttribute": "sdo:Property",
+                            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                            "characteristicType": "arc:ARC#ARC_00000098"
+                          },
+                          "characteristicType": {
+                            "@id": "OntologyTerm/Organism",
+                            "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
+                            "annotationValue": "organism",
+                            "termSource": "obi",
+                            "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          }
+                        },
+                        "value": {
+                          "@id": "OntologyTerm/Organism",
+                          "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
+                          "annotationValue": "Arabidopsis thaliana",
+                          "termSource": "obi",
+                          "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "factorValues": [
+                      {
+                        "@id": "FactorValue/4hours",
+                        "@type": [
+                          "FactorValue",
+                          "ArcFactorValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "FactorValue": "sdo:PropertyValue",
+                          "ArcFactorValue": "arc:ARC#ARC_00000084",
+                          "category": "arc:category",
+                          "value": "arc:ARC#ARC_00000044",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
+                        "category": {
+                          "@id": "Factor/Time",
+                          "@type": [
+                            "Factor",
+                            "ArcFactor"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Factor": "sdo:Thing",
+                            "ArcFactor": "arc:ARC#ARC_00000044",
+                            "factorName": "arc:ARC#ARC_00000019",
+                            "factorType": "arc:ARC#ARC_00000078",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
+                          "factorName": "Time",
+                          "factorType": {
+                            "@id": "OntologyTerm/Time",
+                            "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
+                            "annotationValue": "time",
+                            "termSource": "pato",
+                            "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                            "comments": [
+                              {
+                                "@id": "MyComment",
+                                "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
+                                "name": "Key",
+                                "value": "Value"
+                              }
+                            ]
+                          },
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        },
+                        "value": 4.5,
+                        "unit": {
+                          "@id": "OntologyTerm/Hour",
+                          "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
+                          "annotationValue": "hour",
+                          "termSource": "uo",
+                          "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                          "comments": [
+                            {
+                              "@id": "MyComment",
+                              "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
+                              "name": "Key",
+                              "value": "Value"
+                            }
+                          ]
+                        }
+                      }
+                    ],
+                    "derivesFrom": [
+                      {
+                        "@id": "Source/MySource",
+                        "@type": [
+                          "Source",
+                          "ArcSource"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Source": "sdo:Thing",
+                          "ArcSource": "arc:ARC#ARC_00000071",
+                          "identifier": "sdo:identifier",
+                          "name": "arc:ARC#ARC_00000019",
+                          "characteristics": "arc:ARC#ARC_00000080"
+                        },
+                        "name": "MySource",
+                        "characteristics": [
+                          {
+                            "@id": "CharacteristicValue/Arabidopsis",
+                            "@type": [
+                              "MaterialAttributeValue",
+                              "ArcMaterialAttributeValue"
+                            ],
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "MaterialAttributeValue": "sdo:PropertyValue",
+                              "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                              "category": "arc:ARC#ARC_00000049",
+                              "value": "arc:ARC#ARC_00000036",
+                              "unit": "arc:ARC#ARC_00000106"
+                            },
+                            "category": {
+                              "@id": "Characteristic/Organism",
+                              "@type": [
+                                "MaterialAttribute",
+                                "ArcMaterialAttribute"
+                              ],
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "MaterialAttribute": "sdo:Property",
+                                "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                                "characteristicType": "arc:ARC#ARC_00000098"
+                              },
+                              "characteristicType": {
+                                "@id": "OntologyTerm/Organism",
+                                "@type": "OntologyAnnotation",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "OntologyAnnotation": "sdo:DefinedTerm",
+                                  "annotationValue": "sdo:name",
+                                  "termSource": "sdo:inDefinedTermSet",
+                                  "termAccession": "sdo:termCode",
+                                  "comments": "sdo:disambiguatingDescription"
+                                },
+                                "annotationValue": "organism",
+                                "termSource": "obi",
+                                "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                                "comments": [
+                                  {
+                                    "@id": "MyComment",
+                                    "@type": "Comment",
+                                    "@context": {
+                                      "sdo": "http://schema.org/",
+                                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                                      "Comment": "sdo:Comment",
+                                      "name": "sdo:name",
+                                      "value": "sdo:value"
+                                    },
+                                    "name": "Key",
+                                    "value": "Value"
+                                  }
+                                ]
+                              }
+                            },
+                            "value": {
+                              "@id": "OntologyTerm/Organism",
+                              "@type": "OntologyAnnotation",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "OntologyAnnotation": "sdo:DefinedTerm",
+                                "annotationValue": "sdo:name",
+                                "termSource": "sdo:inDefinedTermSet",
+                                "termAccession": "sdo:termCode",
+                                "comments": "sdo:disambiguatingDescription"
+                              },
+                              "annotationValue": "Arabidopsis thaliana",
+                              "termSource": "obi",
+                              "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                              "comments": [
+                                {
+                                  "@id": "MyComment",
+                                  "@type": "Comment",
+                                  "@context": {
+                                    "sdo": "http://schema.org/",
+                                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                                    "Comment": "sdo:Comment",
+                                    "name": "sdo:name",
+                                    "value": "sdo:value"
+                                  },
+                                  "name": "Key",
+                                  "value": "Value"
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "outputs": [
+                  {
+                    "@id": "Data/MyData",
+                    "@type": [
+                      "Data",
+                      "ArcData"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Data": "sdo:MediaObject",
+                      "ArcData": "arc:ARC#ARC_00000076",
+                      "type": "arc:ARC#ARC_00000107",
+                      "name": "sdo:name",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "name": "MyData",
+                    "type": "Derived Data File",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                ],
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            ],
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          }
+        ],
+        "factors": [
+          {
+            "@id": "Factor/Time",
+            "@type": [
+              "Factor",
+              "ArcFactor"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Factor": "sdo:Thing",
+              "ArcFactor": "arc:ARC#ARC_00000044",
+              "factorName": "arc:ARC#ARC_00000019",
+              "factorType": "arc:ARC#ARC_00000078",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "factorName": "Time",
+            "factorType": {
+              "@id": "OntologyTerm/Time",
+              "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
+              "annotationValue": "time",
+              "termSource": "pato",
+              "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "name": "Key",
+                  "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
+                  "value": "Value"
+                }
+              ]
+            },
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          }
+        ],
+        "characteristicCategories": [
+          {
+            "@id": "Characteristic/Organism",
+            "@type": [
+              "MaterialAttribute",
+              "ArcMaterialAttribute"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "MaterialAttribute": "sdo:Property",
+              "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+              "characteristicType": "arc:ARC#ARC_00000098"
+            },
+            "characteristicType": {
+              "@id": "OntologyTerm/Organism",
+              "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
+              "annotationValue": "organism",
+              "termSource": "obi",
+              "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            }
+          }
+        ],
+        "unitCategories": [
+          {
+            "@id": "OntologyTerm/DegreeCelsius",
+            "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "annotationValue": "degree celsius",
+            "termSource": "uo",
+            "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          {
+            "@id": "OntologyTerm/Hour",
+            "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "annotationValue": "hour",
+            "termSource": "uo",
+            "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          }
+        ],
+        "comments": [
+          {
+            "@id": "MyComment",
+            "@type": "Comment",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Comment": "sdo:Comment",
+              "name": "sdo:name",
+              "value": "sdo:value"
+            },
+            "name": "Key",
+            "value": "Value"
+          }
+        ]
+      }
+    ],
+    "comments": [
+      {
+        "@id": "MyComment",
+        "@type": "Comment",
+        "@context": {
+          "sdo": "http://schema.org/",
+          "arc": "http://purl.org/nfdi4plants/ontology/",
+          "Comment": "sdo:Comment",
+          "name": "sdo:name",
+          "value": "sdo:value"
+        },
+        "name": "Key",
+        "value": "Value"
+      }
+    ]
+  }
+}
+  """
+
+let investigationLD = 
+  """
+{
+  "@id": "./",
+  "@type": "Investigation",
+  "@context": {
+    "sdo": "http://schema.org/",
+    "arc": "http://purl.org/nfdi4plants/ontology/",
+    "Investigation": "sdo:Dataset",
+    "identifier": "sdo:identifier",
+    "title": "sdo:headline",
+    "description": "sdo:description",
+    "submissionDate": "sdo:dateCreated",
+    "publicReleaseDate": "sdo:datePublished",
+    "publications": "sdo:citation",
+    "people": "sdo:creator",
+    "studies": "sdo:hasPart",
+    "ontologySourceReferences": "sdo:mentions",
+    "comments": "sdo:disambiguatingDescription",
+    "publications?": "sdo:subjectOf?",
+    "filename": "sdo:alternateName"
+  },
+  "filename": "isa.investigation.xlsx",
+  "identifier": "MyInvestigation",
+  "title": "bla bla bla",
+  "description": "bla bla bla\nblabbbbblaaa",
+  "submissionDate": "2020-03-15T18:23:00.0Z",
+  "publicReleaseDate": "2020-04-03",
+  "publications": [
+    {
+      "@id": "11.1111/abcdef123456789",
+      "@type": "Publication",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "Publication": "sdo:ScholarlyArticle",
+        "pubMedID": "sdo:url",
+        "doi": "sdo:sameAs",
+        "title": "sdo:headline",
+        "status": "sdo:creativeWorkStatus",
+        "authorList": "sdo:author",
+        "comments": "sdo:disambiguatingDescription"
+      },
+      "pubMedID": "12345678",
+      "doi": "11.1111/abcdef123456789",
+      "authorList": "Lukas Weil, Other Gzúy",
+      "title": "Fair is great",
+      "status": {
+        "@id": "OntologyTerm/Published",
+        "@type": "OntologyAnnotation",
+        "@context": {
+          "sdo": "http://schema.org/",
+          "arc": "http://purl.org/nfdi4plants/ontology/",
+          "OntologyAnnotation": "sdo:DefinedTerm",
+          "annotationValue": "sdo:name",
+          "termSource": "sdo:inDefinedTermSet",
+          "termAccession": "sdo:termCode",
+          "comments": "sdo:disambiguatingDescription"
+        },
+        "annotationValue": "published",
+        "termSource": "pso",
+        "termAccession": "http://purl.org/spar/pso/published",
+        "comments": [
+          {
+            "@id": "MyComment",
+            "@type": "Comment",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Comment": "sdo:Comment",
+              "name": "sdo:name",
+              "value": "sdo:value"
+            },
+            "name": "Key",
+            "value": "Value"
+          }
+        ]
+      },
+      "comments": [
+        {
+          "@id": "MyComment",
+          "@type": "Comment",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Comment": "sdo:Comment",
+            "name": "sdo:name",
+            "value": "sdo:value"
+          },
+          "name": "Key",
+          "value": "Value"
+        }
+      ]
+    }
+  ],
+  "people": [
+    {
+      "@id": "Persons/LukasWeil",
+      "@type": "Person",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "Person": "sdo:Person",
+        "firstName": "sdo:givenName",
+        "lastName": "sdo:familyName",
+        "midInitials": "sdo:additionalName",
+        "email": "sdo:email",
+        "address": "sdo:address",
+        "phone": "sdo:telephone",
+        "fax": "sdo:faxNumber",
+        "comments": "sdo:disambiguatingDescription",
+        "roles": "sdo:jobTitle",
+        "affiliation": "sdo:affiliation"
+      },
+      "firstName": "Lukas",
+      "lastName": "Weil",
+      "midInitials": "H",
+      "email": "weil@email.com",
+      "phone": "0123 456789",
+      "fax": "9876 543210",
+      "address": "fantasyStreet 23, 123 Town",
+      "affiliation": "Universiteee",
+      "roles": [
+        {
+          "@id": "OntologyTerm/SoftwareDeveloperRole",
+          "@type": "OntologyAnnotation",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "OntologyAnnotation": "sdo:DefinedTerm",
+            "annotationValue": "sdo:name",
+            "termSource": "sdo:inDefinedTermSet",
+            "termAccession": "sdo:termCode",
+            "comments": "sdo:disambiguatingDescription"
+          },
+          "annotationValue": "software developer role",
+          "termSource": "swo",
+          "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "comments": [
+        {
+          "@id": "MyComment",
+          "@type": "Comment",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Comment": "sdo:Comment",
+            "name": "sdo:name",
+            "value": "sdo:value"
+          },
+          "name": "Key",
+          "value": "Value"
+        }
+      ]
+    }
+  ],
+  "studies": [
+    {
+      "@id": "Study/MyStudy",
+      "@type": [
+        "Study",
+        "ArcStudy"
+      ],
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "Study": "sdo:Dataset",
+        "ArcStudy": "arc:ARC#ARC_00000014",
+        "identifier": "sdo:identifier",
+        "title": "sdo:headline",
+        "description": "sdo:description",
+        "submissionDate": "sdo:dateCreated",
+        "publicReleaseDate": "sdo:datePublished",
+        "publications": "sdo:citation",
+        "people": "sdo:creator",
+        "assays": "sdo:hasPart",
+        "filename": "sdo:description",
+        "comments": "sdo:disambiguatingDescription",
+        "protocols": "arc:ARC#ARC_00000039",
+        "materials": "arc:ARC#ARC_00000045",
+        "otherMaterials": "arc:ARC#ARC_00000045",
+        "sources": "arc:ARC#ARC_00000045",
+        "samples": "arc:ARC#ARC_00000045",
+        "processSequence": "arc:ARC#ARC_00000047",
+        "factors": "arc:ARC#ARC_00000043",
+        "characteristicCategories": "arc:ARC#ARC_00000049",
+        "unitCategories": "arc:ARC#ARC_00000051",
+        "studyDesignDescriptors": "arc:ARC#ARC_00000037"
+      },
+      "filename": "MyStudy/isa.study.xlsx",
+      "identifier": "MyStudy",
+      "title": "bla bla bla",
+      "description": "bla bla bla\nblabbbbblaaa",
+      "submissionDate": "2020-10-05T03:03:00.0Z",
+      "publicReleaseDate": "2020-10-20",
+      "publications": [
+        {
+          "@id": "11.1111/abcdef123456789",
+          "@type": "Publication",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Publication": "sdo:ScholarlyArticle",
+            "pubMedID": "sdo:url",
+            "doi": "sdo:sameAs",
+            "title": "sdo:headline",
+            "status": "sdo:creativeWorkStatus",
+            "authorList": "sdo:author",
+            "comments": "sdo:disambiguatingDescription"
+          },
+          "pubMedID": "12345678",
+          "doi": "11.1111/abcdef123456789",
+          "authorList": "Lukas Weil, Other Gzúy",
+          "title": "Fair is great",
+          "status": {
+            "@id": "OntologyTerm/Published",
+            "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "annotationValue": "published",
+            "termSource": "pso",
+            "termAccession": "http://purl.org/spar/pso/published",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "people": [
+        {
+          "@id": "Persons/LukasWeil",
+          "@type": "Person",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Person": "sdo:Person",
+            "firstName": "sdo:givenName",
+            "lastName": "sdo:familyName",
+            "midInitials": "sdo:additionalName",
+            "email": "sdo:email",
+            "address": "sdo:address",
+            "phone": "sdo:telephone",
+            "fax": "sdo:faxNumber",
+            "comments": "sdo:disambiguatingDescription",
+            "roles": "sdo:jobTitle",
+            "affiliation": "sdo:affiliation"
+          },
+          "firstName": "Lukas",
+          "lastName": "Weil",
+          "midInitials": "H",
+          "email": "weil@email.com",
+          "phone": "0123 456789",
+          "fax": "9876 543210",
+          "address": "fantasyStreet 23, 123 Town",
+          "affiliation": "Universiteee",
+          "roles": [
+            {
+              "@id": "OntologyTerm/SoftwareDeveloperRole",
+              "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
+              "annotationValue": "software developer role",
+              "termSource": "swo",
+              "termAccession": "http://www.ebi.ac.uk/swo/SWO_0000392",
+              "comments": [
+                {
+                  "@id": "MyComment",
+                  "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
+                  "name": "Key",
+                  "value": "Value"
+                }
+              ]
+            }
+          ],
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "studyDesignDescriptors": [
+        {
+          "@id": "OntologyTerm/TimeSeries",
+          "@type": "OntologyAnnotation",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "OntologyAnnotation": "sdo:DefinedTerm",
+            "annotationValue": "sdo:name",
+            "termSource": "sdo:inDefinedTermSet",
+            "termAccession": "sdo:termCode",
+            "comments": "sdo:disambiguatingDescription"
+          },
+          "annotationValue": "Time Series Analysis",
+          "termSource": "ncit",
+          "termAccession": "http://purl.obolibrary.org/obo/NCIT_C18235",
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "protocols": [
+        {
+          "@id": "Protocol/MyProtocol",
+          "@type": [
+            "Protocol",
+            "ArcProtocol"
+          ],
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Protocol": "sdo:Thing",
+            "ArcProtocol": "arc:ARC#ARC_00000040",
+            "name": "arc:ARC#ARC_00000019",
+            "protocolType": "arc:ARC#ARC_00000060",
+            "description": "arc:ARC#ARC_00000004",
+            "version": "arc:ARC#ARC_00000020",
+            "components": "arc:ARC#ARC_00000064",
+            "parameters": "arc:ARC#ARC_00000062",
+            "uri": "arc:ARC#ARC_00000061",
+            "comments": "arc:ARC#ARC_00000016"
+          },
+          "name": "MyProtocol",
+          "protocolType": {
+            "@id": "OntologyTerm/GrowthProtocol",
+            "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
+            "annotationValue": "growth protocol",
+            "termSource": "dfbo",
+            "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
+            "comments": [
+              {
+                "@id": "MyComment",
+                "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
+                "name": "Key",
+                "value": "Value"
+              }
+            ]
+          },
+          "description": "bla bla bla\nblabbbbblaaa",
+          "uri": "http://nfdi4plants.org/protocols/MyProtocol",
+          "version": "1.2.3",
+          "parameters": [
+            {
+              "@id": "Parameter/Temperature",
+              "@type": [
+                "ProtocolParameter",
+                "ArcProtocolParameter"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+            
+                "ProtocolParameter": "sdo:Thing",
+                "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+            
+                "parameterName": "arc:ARC#ARC_00000100"
+              },
+              "parameterName": {
+                "@id": "OntologyTerm/Temperature",
+                "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "annotationValue": "temperature unit",
+                "termSource": "uo",
+                "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            }
+          ],
+          "components": [
+            {
+              "@id": "#Component_PCR_instrument",
+              "@type": [
+                "Component",
+                "ArcComponent"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Component": "sdo:Thing",
+                "ArcComponent": "arc:ARC#ARC_00000065",
+                "componentName": "arc:ARC#ARC_00000019",
+                "componentType": "arc:ARC#ARC_00000102"
+              },
+              "componentName": "PCR instrument",
+              "componentType": {
+                "@id": "OntologyTerm/PCR",
+                "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
+                "annotationValue": "PCR instrument",
+                "termSource": "obi",
+                "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
+                "comments": [
+                  {
+                    "@id": "MyComment",
+                    "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
+                    "name": "Key",
+                    "value": "Value"
+                  }
+                ]
+              }
+            }
+          ],
+          "comments": [
+            {
+              "@id": "MyComment",
+              "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
+              "name": "Key",
+              "value": "Value"
+            }
+          ]
+        }
+      ],
+      "materials": {
+        "sources": [
+          {
+            "@id": "Source/MySource",
+            "@type": [
+              "Source",
+              "ArcSource"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Source": "sdo:Thing",
+              "ArcSource": "arc:ARC#ARC_00000071",
+              "identifier": "sdo:identifier",
+              "name": "arc:ARC#ARC_00000019",
+              "characteristics": "arc:ARC#ARC_00000080"
+            },
+            "name": "MySource",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ],
+        "samples": [
+          {
+            "@id": "Sample/MySample",
+            "@type": [
+              "Sample",
+              "ArcSample"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Sample": "sdo:Thing",
+              "ArcSample": "arc:ARC#ARC_00000070",
+              "name": "arc:name",
+              "characteristics": "arc:ARC#ARC_00000080",
+              "factorValues": "arc:ARC#ARC_00000083",
+              "derivesFrom": "arc:ARC#ARC_00000082"
+            },
+            "name": "MySample",
+            "characteristics": [
+              {
+                "@id": "CharacteristicValue/Arabidopsis",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
+                "category": {
+                  "@id": "Characteristic/Organism",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
+                  "characteristicType": {
+                    "@id": "OntologyTerm/Organism",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "organism",
+                    "termSource": "obi",
+                    "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  }
+                },
+                "value": {
+                  "@id": "OntologyTerm/Organism",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "Arabidopsis thaliana",
+                  "termSource": "obi",
+                  "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "factorValues": [
+              {
+                "@id": "FactorValue/4hours",
+                "@type": [
+                  "FactorValue",
+                  "ArcFactorValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "FactorValue": "sdo:PropertyValue",
+                  "ArcFactorValue": "arc:ARC#ARC_00000084",
+                  "category": "arc:category",
+                  "value": "arc:ARC#ARC_00000044",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
+                "category": {
+                  "@id": "Factor/Time",
+                  "@type": [
+                    "Factor",
+                    "ArcFactor"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Factor": "sdo:Thing",
+                    "ArcFactor": "arc:ARC#ARC_00000044",
+                    "factorName": "arc:ARC#ARC_00000019",
+                    "factorType": "arc:ARC#ARC_00000078",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "factorName": "Time",
+                  "factorType": {
+                    "@id": "OntologyTerm/Time",
+                    "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
+                    "annotationValue": "time",
+                    "termSource": "pato",
+                    "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
+                    "comments": [
+                      {
+                        "@id": "MyComment",
+                        "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
+                        "name": "Key",
+                        "value": "Value"
+                      }
+                    ]
+                  },
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                },
+                "value": 4.5,
+                "unit": {
+                  "@id": "OntologyTerm/Hour",
+                  "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
+                  "annotationValue": "hour",
+                  "termSource": "uo",
+                  "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
+                  "comments": [
+                    {
+                      "@id": "MyComment",
+                      "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
+                      "name": "Key",
+                      "value": "Value"
+                    }
+                  ]
+                }
+              }
+            ],
+            "derivesFrom": [
+              {
+                "@id": "Source/MySource",
+                "@type": [
+                  "Source",
+                  "ArcSource"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Source": "sdo:Thing",
+                  "ArcSource": "arc:ARC#ARC_00000071",
+                  "identifier": "sdo:identifier",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080"
+                },
+                "name": "MySource",
+                "characteristics": [
+                  {
+                    "@id": "CharacteristicValue/Arabidopsis",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
+                    "category": {
+                      "@id": "Characteristic/Organism",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
+                      "characteristicType": {
+                        "@id": "OntologyTerm/Organism",
+                        "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
+                        "annotationValue": "organism",
+                        "termSource": "obi",
+                        "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                        "comments": [
+                          {
+                            "@id": "MyComment",
+                            "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
+                            "name": "Key",
+                            "value": "Value"
+                          }
+                        ]
+                      }
+                    },
+                    "value": {
+                      "@id": "OntologyTerm/Organism",
+                      "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
+                      "annotationValue": "Arabidopsis thaliana",
+                      "termSource": "obi",
+                      "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
+                      "comments": [
+                        {
+                          "@id": "MyComment",
+                          "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -471,19 +4860,63 @@ let investigationLD =
         "otherMaterials": [
           {
             "@id": "Material/MyMaterial",
-            "@type": "Material",
+            "@type": [
+              "Material",
+              "ArcMaterial"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "ArcMaterial": "arc:ARC#ARC_00000108",
+              "Material": "sdo:Thing",
+              "type": "arc:ARC#ARC_00000085",
+              "name": "arc:ARC#ARC_00000019",
+              "characteristics": "arc:ARC#ARC_00000080",
+              "derivesFrom": "arc:ARC#ARC_00000082"
+            },
             "name": "MyMaterial",
             "type": "Extract Name",
             "characteristics": [
               {
                 "@id": "CharacteristicValue/Arabidopsis",
-                "@type": "MaterialAttributeValue",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
                 "category": {
                   "@id": "Characteristic/Organism",
-                  "@type": "MaterialAttribute",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
                   "characteristicType": {
                     "@id": "OntologyTerm/Organism",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "organism",
                     "termSource": "obi",
                     "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -491,6 +4924,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -500,6 +4940,15 @@ let investigationLD =
                 "value": {
                   "@id": "OntologyTerm/Organism",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "Arabidopsis thaliana",
                   "termSource": "obi",
                   "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -507,6 +4956,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -517,19 +4973,63 @@ let investigationLD =
           },
           {
             "@id": "Material/MyDerivedMaterial",
-            "@type": "Material",
+            "@type": [
+              "Material",
+              "ArcMaterial"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "ArcMaterial": "arc:ARC#ARC_00000108",
+              "Material": "sdo:Thing",
+              "type": "arc:ARC#ARC_00000085",
+              "name": "arc:ARC#ARC_00000019",
+              "characteristics": "arc:ARC#ARC_00000080",
+              "derivesFrom": "arc:ARC#ARC_00000082"
+            },
             "name": "MyDerivedMaterial",
             "type": "Labeled Extract Name",
             "characteristics": [
               {
                 "@id": "CharacteristicValue/Arabidopsis",
-                "@type": "MaterialAttributeValue",
+                "@type": [
+                  "MaterialAttributeValue",
+                  "ArcMaterialAttributeValue"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "MaterialAttributeValue": "sdo:PropertyValue",
+                  "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                  "category": "arc:ARC#ARC_00000049",
+                  "value": "arc:ARC#ARC_00000036",
+                  "unit": "arc:ARC#ARC_00000106"
+                },
                 "category": {
                   "@id": "Characteristic/Organism",
-                  "@type": "MaterialAttribute",
+                  "@type": [
+                    "MaterialAttribute",
+                    "ArcMaterialAttribute"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttribute": "sdo:Property",
+                    "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                    "characteristicType": "arc:ARC#ARC_00000098"
+                  },
                   "characteristicType": {
                     "@id": "OntologyTerm/Organism",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "organism",
                     "termSource": "obi",
                     "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -537,6 +5037,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -546,6 +5053,15 @@ let investigationLD =
                 "value": {
                   "@id": "OntologyTerm/Organism",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "Arabidopsis thaliana",
                   "termSource": "obi",
                   "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -553,6 +5069,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -563,19 +5086,63 @@ let investigationLD =
             "derivesFrom": [
               {
                 "@id": "Material/MyMaterial",
-                "@type": "Material",
+                "@type": [
+                  "Material",
+                  "ArcMaterial"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ArcMaterial": "arc:ARC#ARC_00000108",
+                  "Material": "sdo:Thing",
+                  "type": "arc:ARC#ARC_00000085",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
                 "name": "MyMaterial",
                 "type": "Extract Name",
                 "characteristics": [
                   {
                     "@id": "CharacteristicValue/Arabidopsis",
-                    "@type": "MaterialAttributeValue",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
                     "category": {
                       "@id": "Characteristic/Organism",
-                      "@type": "MaterialAttribute",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
                       "characteristicType": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "organism",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -583,6 +5150,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -592,6 +5166,15 @@ let investigationLD =
                     "value": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "Arabidopsis thaliana",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -599,6 +5182,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -614,15 +5204,59 @@ let investigationLD =
       "processSequence": [
         {
           "@id": "Process/MyProcess1",
-          "@type": "Process",
+          "@type": [
+            "Process",
+            "ArcProcess"
+          ],
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Process": "sdo:Thing",
+            "ArcProcess": "arc:ARC#ARC_00000048",
+            "name": "arc:ARC#ARC_00000019",
+            "executesProtocol": "arc:ARC#ARC_00000086",
+            "performer": "arc:ARC#ARC_00000089",
+            "date": "arc:ARC#ARC_00000090",
+            "previousProcess": "arc:ARC#ARC_00000091",
+            "nextProcess": "arc:ARC#ARC_00000092",
+            "input": "arc:ARC#ARC_00000095",
+            "output": "arc:ARC#ARC_00000096",
+            "comments": "sdo:disambiguatingDescription"
+          },
           "name": "MyProcess1",
           "executesProtocol": {
             "@id": "Protocol/MyProtocol",
-            "@type": "Protocol",
+            "@type": [
+              "Protocol",
+              "ArcProtocol"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Protocol": "sdo:Thing",
+              "ArcProtocol": "arc:ARC#ARC_00000040",
+              "name": "arc:ARC#ARC_00000019",
+              "protocolType": "arc:ARC#ARC_00000060",
+              "description": "arc:ARC#ARC_00000004",
+              "version": "arc:ARC#ARC_00000020",
+              "components": "arc:ARC#ARC_00000064",
+              "parameters": "arc:ARC#ARC_00000062",
+              "uri": "arc:ARC#ARC_00000061",
+              "comments": "arc:ARC#ARC_00000016"
+            },
             "name": "MyProtocol",
             "protocolType": {
               "@id": "OntologyTerm/GrowthProtocol",
               "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
               "annotationValue": "growth protocol",
               "termSource": "dfbo",
               "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
@@ -630,6 +5264,13 @@ let investigationLD =
                 {
                   "@id": "MyComment",
                   "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
                   "name": "Key",
                   "value": "Value"
                 }
@@ -641,10 +5282,31 @@ let investigationLD =
             "parameters": [
               {
                 "@id": "Parameter/Temperature",
-                "@type": "ProtocolParameter",
+                "@type": [
+                  "ProtocolParameter",
+                  "ArcProtocolParameter"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+              
+                  "ProtocolParameter": "sdo:Thing",
+                  "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+              
+                  "parameterName": "arc:ARC#ARC_00000100"
+                },
                 "parameterName": {
                   "@id": "OntologyTerm/Temperature",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "temperature unit",
                   "termSource": "uo",
                   "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
@@ -652,6 +5314,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -662,11 +5331,31 @@ let investigationLD =
             "components": [
               {
                 "@id": "#Component_PCR_instrument",
-                "@type": "Component",
+                "@type": [
+                  "Component",
+                  "ArcComponent"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Component": "sdo:Thing",
+                  "ArcComponent": "arc:ARC#ARC_00000065",
+                  "componentName": "arc:ARC#ARC_00000019",
+                  "componentType": "arc:ARC#ARC_00000102"
+                },
                 "componentName": "PCR instrument",
                 "componentType": {
                   "@id": "OntologyTerm/PCR",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "PCR instrument",
                   "termSource": "obi",
                   "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
@@ -674,6 +5363,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -685,6 +5381,13 @@ let investigationLD =
               {
                 "@id": "MyComment",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "name": "Key",
                 "value": "Value"
               }
@@ -692,12 +5395,49 @@ let investigationLD =
           },
           "parameterValues": [
             {
+              "@id": "#Param_temperature_unit_20",
+              "@type": [
+                "ProcessParameterValue",
+                "ArcProcessParameterValue"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+            
+                "ProcessParameterValue": "sdo:PropertyValue",
+                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
+            
+                "category": "arc:ARC#ARC_00000062",
+                "value": "arc:ARC#ARC_00000087",
+                "unit": "arc:ARC#ARC_00000106"
+              },
               "category": {
                 "@id": "Parameter/Temperature",
-                "@type": "ProtocolParameter",
+                "@type": [
+                  "ProtocolParameter",
+                  "ArcProtocolParameter"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+              
+                  "ProtocolParameter": "sdo:Thing",
+                  "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+              
+                  "parameterName": "arc:ARC#ARC_00000100"
+                },
                 "parameterName": {
                   "@id": "OntologyTerm/Temperature",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "temperature unit",
                   "termSource": "uo",
                   "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
@@ -705,6 +5445,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -715,6 +5462,15 @@ let investigationLD =
               "unit": {
                 "@id": "OntologyTerm/DegreeCelsius",
                 "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
                 "annotationValue": "degree celsius",
                 "termSource": "uo",
                 "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
@@ -722,6 +5478,13 @@ let investigationLD =
                   {
                     "@id": "MyComment",
                     "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
                     "name": "Key",
                     "value": "Value"
                   }
@@ -733,22 +5496,84 @@ let investigationLD =
           "date": "2020-10-05T03:03:00.0Z",
           "nextProcess": {
             "@id": "Process/MyProcess2",
-            "@type": "Process"
+            "@type": [
+              "Process",
+              "ArcProcess"
+            ],
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "Process": "sdo:Thing",
+              "ArcProcess": "arc:ARC#ARC_00000048",
+              "name": "arc:ARC#ARC_00000019",
+              "executesProtocol": "arc:ARC#ARC_00000086",
+              "performer": "arc:ARC#ARC_00000089",
+              "date": "arc:ARC#ARC_00000090",
+              "previousProcess": "arc:ARC#ARC_00000091",
+              "nextProcess": "arc:ARC#ARC_00000092",
+              "input": "arc:ARC#ARC_00000095",
+              "output": "arc:ARC#ARC_00000096",
+              "comments": "sdo:disambiguatingDescription"
+            }
           },
           "inputs": [
             {
               "@id": "Source/MySource",
+              "@type": [
+                "Source",
+                "ArcSource"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Source": "sdo:Thing",
+                "ArcSource": "arc:ARC#ARC_00000071",
+                "identifier": "sdo:identifier",
+                "name": "arc:ARC#ARC_00000019",
+                "characteristics": "arc:ARC#ARC_00000080"
+              },
               "name": "MySource",
               "characteristics": [
                 {
                   "@id": "CharacteristicValue/Arabidopsis",
-                  "@type": "MaterialAttributeValue",
+                  "@type": [
+                    "MaterialAttributeValue",
+                    "ArcMaterialAttributeValue"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttributeValue": "sdo:PropertyValue",
+                    "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                    "category": "arc:ARC#ARC_00000049",
+                    "value": "arc:ARC#ARC_00000036",
+                    "unit": "arc:ARC#ARC_00000106"
+                  },
                   "category": {
                     "@id": "Characteristic/Organism",
-                    "@type": "MaterialAttribute",
+                    "@type": [
+                      "MaterialAttribute",
+                      "ArcMaterialAttribute"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttribute": "sdo:Property",
+                      "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                      "characteristicType": "arc:ARC#ARC_00000098"
+                    },
                     "characteristicType": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "organism",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -756,6 +5581,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -765,6 +5597,15 @@ let investigationLD =
                   "value": {
                     "@id": "OntologyTerm/Organism",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "Arabidopsis thaliana",
                     "termSource": "obi",
                     "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -772,6 +5613,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -784,18 +5632,62 @@ let investigationLD =
           "outputs": [
             {
               "@id": "Sample/MySample",
-              "@type": "Sample",
+              "@type": [
+                "Sample",
+                "ArcSample"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Sample": "sdo:Thing",
+                "ArcSample": "arc:ARC#ARC_00000070",
+                "name": "arc:name",
+                "characteristics": "arc:ARC#ARC_00000080",
+                "factorValues": "arc:ARC#ARC_00000083",
+                "derivesFrom": "arc:ARC#ARC_00000082"
+              },
               "name": "MySample",
               "characteristics": [
                 {
                   "@id": "CharacteristicValue/Arabidopsis",
-                  "@type": "MaterialAttributeValue",
+                  "@type": [
+                    "MaterialAttributeValue",
+                    "ArcMaterialAttributeValue"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "MaterialAttributeValue": "sdo:PropertyValue",
+                    "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                    "category": "arc:ARC#ARC_00000049",
+                    "value": "arc:ARC#ARC_00000036",
+                    "unit": "arc:ARC#ARC_00000106"
+                  },
                   "category": {
                     "@id": "Characteristic/Organism",
-                    "@type": "MaterialAttribute",
+                    "@type": [
+                      "MaterialAttribute",
+                      "ArcMaterialAttribute"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttribute": "sdo:Property",
+                      "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                      "characteristicType": "arc:ARC#ARC_00000098"
+                    },
                     "characteristicType": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "organism",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -803,6 +5695,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -812,6 +5711,15 @@ let investigationLD =
                   "value": {
                     "@id": "OntologyTerm/Organism",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "Arabidopsis thaliana",
                     "termSource": "obi",
                     "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -819,6 +5727,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -829,14 +5744,47 @@ let investigationLD =
               "factorValues": [
                 {
                   "@id": "FactorValue/4hours",
-                  "@type": "FactorValue",
+                  "@type": [
+                    "FactorValue",
+                    "ArcFactorValue"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "FactorValue": "sdo:PropertyValue",
+                    "ArcFactorValue": "arc:ARC#ARC_00000084",
+                    "category": "arc:category",
+                    "value": "arc:ARC#ARC_00000044",
+                    "unit": "arc:ARC#ARC_00000106"
+                  },
                   "category": {
                     "@id": "Factor/Time",
-                    "@type": "Factor",
+                    "@type": [
+                      "Factor",
+                      "ArcFactor"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Factor": "sdo:Thing",
+                      "ArcFactor": "arc:ARC#ARC_00000044",
+                      "factorName": "arc:ARC#ARC_00000019",
+                      "factorType": "arc:ARC#ARC_00000078",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "factorName": "Time",
                     "factorType": {
                       "@id": "OntologyTerm/Time",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "time",
                       "termSource": "pato",
                       "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
@@ -844,6 +5792,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -853,6 +5808,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -862,6 +5824,15 @@ let investigationLD =
                   "unit": {
                     "@id": "OntologyTerm/Hour",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "hour",
                     "termSource": "uo",
                     "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
@@ -869,6 +5840,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -879,18 +5857,61 @@ let investigationLD =
               "derivesFrom": [
                 {
                   "@id": "Source/MySource",
-                  "@type": "Source",
+                  "@type": [
+                    "Source",
+                    "ArcSource"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Source": "sdo:Thing",
+                    "ArcSource": "arc:ARC#ARC_00000071",
+                    "identifier": "sdo:identifier",
+                    "name": "arc:ARC#ARC_00000019",
+                    "characteristics": "arc:ARC#ARC_00000080"
+                  },
                   "name": "MySource",
                   "characteristics": [
                     {
                       "@id": "CharacteristicValue/Arabidopsis",
-                      "@type": "MaterialAttributeValue",
+                      "@type": [
+                        "MaterialAttributeValue",
+                        "ArcMaterialAttributeValue"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttributeValue": "sdo:PropertyValue",
+                        "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                        "category": "arc:ARC#ARC_00000049",
+                        "value": "arc:ARC#ARC_00000036",
+                        "unit": "arc:ARC#ARC_00000106"
+                      },
                       "category": {
                         "@id": "Characteristic/Organism",
-                        "@type": "MaterialAttribute",
+                        "@type": [
+                          "MaterialAttribute",
+                          "ArcMaterialAttribute"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttribute": "sdo:Property",
+                          "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                          "characteristicType": "arc:ARC#ARC_00000098"
+                        },
                         "characteristicType": {
                           "@id": "OntologyTerm/Organism",
                           "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
                           "annotationValue": "organism",
                           "termSource": "obi",
                           "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -898,6 +5919,13 @@ let investigationLD =
                             {
                               "@id": "MyComment",
                               "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
                               "name": "Key",
                               "value": "Value"
                             }
@@ -907,6 +5935,15 @@ let investigationLD =
                       "value": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "Arabidopsis thaliana",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -914,6 +5951,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -929,6 +5973,13 @@ let investigationLD =
             {
               "@id": "MyComment",
               "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
               "name": "Key",
               "value": "Value"
             }
@@ -938,11 +5989,41 @@ let investigationLD =
       "assays": [
         {
           "@id": "Assay/MyAssay",
-          "@type": "Assay",
+          "@type": [
+            "Assay",
+            "ArcAssay"
+          ],
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Assay": "sdo:Dataset",
+            "ArcAssay": "arc:ARC#ARC_00000042",
+            "measurementType": "sdo:variableMeasured",
+            "technologyType": "sdo:measurementTechnique",
+            "technologyPlatform": "sdo:instrument",
+            "dataFiles": "sdo:hasPart",
+            "materials": "arc:ARC#ARC_00000074",
+            "otherMaterials": "arc:ARC#ARC_00000074",
+            "samples": "arc:ARC#ARC_00000074",
+            "characteristicCategories": "arc:ARC#ARC_00000049",
+            "processSequences": "arc:ARC#ARC_00000047",
+            "unitCategories": "arc:ARC#ARC_00000051",
+            "comments": "sdo:disambiguatingDescription",
+            "filename": "sdo:url"
+          },
           "filename": "MyAssay/isa.assay.xlsx",
           "measurementType": {
             "@id": "OntologyTerm/LFQuantification",
             "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
             "annotationValue": "LC/MS Label-Free Quantification",
             "termSource": "ncit",
             "termAccession": "http://purl.obolibrary.org/obo/NCIT_C161813",
@@ -950,6 +6031,13 @@ let investigationLD =
               {
                 "@id": "MyComment",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "name": "Key",
                 "value": "Value"
               }
@@ -958,6 +6046,15 @@ let investigationLD =
           "technologyType": {
             "@id": "OntologyTerm/TOF",
             "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
             "annotationValue": "Time-of-Flight",
             "termSource": "ncit",
             "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70698",
@@ -965,6 +6062,13 @@ let investigationLD =
               {
                 "@id": "MyComment",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "name": "Key",
                 "value": "Value"
               }
@@ -974,12 +6078,32 @@ let investigationLD =
           "dataFiles": [
             {
               "@id": "Data/MyData",
+              "@type": [
+                "Data",
+                "ArcData"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Data": "sdo:MediaObject",
+                "ArcData": "arc:ARC#ARC_00000076",
+                "type": "arc:ARC#ARC_00000107",
+                "name": "sdo:name",
+                "comments": "sdo:disambiguatingDescription"
+              },
               "name": "MyData",
               "type": "Derived Data File",
               "comments": [
                 {
                   "@id": "MyComment",
                   "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
                   "name": "Key",
                   "value": "Value"
                 }
@@ -990,18 +6114,62 @@ let investigationLD =
             "samples": [
               {
                 "@id": "Sample/MySample",
-                "@type": "Sample",
+                "@type": [
+                  "Sample",
+                  "ArcSample"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Sample": "sdo:Thing",
+                  "ArcSample": "arc:ARC#ARC_00000070",
+                  "name": "arc:name",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "factorValues": "arc:ARC#ARC_00000083",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
                 "name": "MySample",
                 "characteristics": [
                   {
                     "@id": "CharacteristicValue/Arabidopsis",
-                    "@type": "MaterialAttributeValue",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
                     "category": {
                       "@id": "Characteristic/Organism",
-                      "@type": "MaterialAttribute",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
                       "characteristicType": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "organism",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1009,6 +6177,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1018,6 +6193,15 @@ let investigationLD =
                     "value": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "Arabidopsis thaliana",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1025,6 +6209,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1035,14 +6226,47 @@ let investigationLD =
                 "factorValues": [
                   {
                     "@id": "FactorValue/4hours",
-                    "@type": "FactorValue",
+                    "@type": [
+                      "FactorValue",
+                      "ArcFactorValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "FactorValue": "sdo:PropertyValue",
+                      "ArcFactorValue": "arc:ARC#ARC_00000084",
+                      "category": "arc:category",
+                      "value": "arc:ARC#ARC_00000044",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
                     "category": {
                       "@id": "Factor/Time",
-                      "@type": "Factor",
+                      "@type": [
+                        "Factor",
+                        "ArcFactor"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Factor": "sdo:Thing",
+                        "ArcFactor": "arc:ARC#ARC_00000044",
+                        "factorName": "arc:ARC#ARC_00000019",
+                        "factorType": "arc:ARC#ARC_00000078",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "factorName": "Time",
                       "factorType": {
                         "@id": "OntologyTerm/Time",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "time",
                         "termSource": "pato",
                         "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
@@ -1050,6 +6274,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1059,6 +6290,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1068,6 +6306,15 @@ let investigationLD =
                     "unit": {
                       "@id": "OntologyTerm/Hour",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "hour",
                       "termSource": "uo",
                       "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
@@ -1075,6 +6322,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1085,18 +6339,61 @@ let investigationLD =
                 "derivesFrom": [
                   {
                     "@id": "Source/MySource",
-                    "@type": "Source",
+                    "@type": [
+                      "Source",
+                      "ArcSource"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Source": "sdo:Thing",
+                      "ArcSource": "arc:ARC#ARC_00000071",
+                      "identifier": "sdo:identifier",
+                      "name": "arc:ARC#ARC_00000019",
+                      "characteristics": "arc:ARC#ARC_00000080"
+                    },
                     "name": "MySource",
                     "characteristics": [
                       {
                         "@id": "CharacteristicValue/Arabidopsis",
-                        "@type": "MaterialAttributeValue",
+                        "@type": [
+                          "MaterialAttributeValue",
+                          "ArcMaterialAttributeValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttributeValue": "sdo:PropertyValue",
+                          "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                          "category": "arc:ARC#ARC_00000049",
+                          "value": "arc:ARC#ARC_00000036",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
                         "category": {
                           "@id": "Characteristic/Organism",
-                          "@type": "MaterialAttribute",
+                          "@type": [
+                            "MaterialAttribute",
+                            "ArcMaterialAttribute"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttribute": "sdo:Property",
+                            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                            "characteristicType": "arc:ARC#ARC_00000098"
+                          },
                           "characteristicType": {
                             "@id": "OntologyTerm/Organism",
                             "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
                             "annotationValue": "organism",
                             "termSource": "obi",
                             "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1104,6 +6401,13 @@ let investigationLD =
                               {
                                 "@id": "MyComment",
                                 "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
                                 "name": "Key",
                                 "value": "Value"
                               }
@@ -1113,6 +6417,15 @@ let investigationLD =
                         "value": {
                           "@id": "OntologyTerm/Organism",
                           "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
                           "annotationValue": "Arabidopsis thaliana",
                           "termSource": "obi",
                           "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1120,6 +6433,13 @@ let investigationLD =
                             {
                               "@id": "MyComment",
                               "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
                               "name": "Key",
                               "value": "Value"
                             }
@@ -1134,19 +6454,63 @@ let investigationLD =
             "otherMaterials": [
               {
                 "@id": "Material/MyMaterial",
-                "@type": "Material",
+                "@type": [
+                  "Material",
+                  "ArcMaterial"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ArcMaterial": "arc:ARC#ARC_00000108",
+                  "Material": "sdo:Thing",
+                  "type": "arc:ARC#ARC_00000085",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
                 "name": "MyMaterial",
                 "type": "Extract Name",
                 "characteristics": [
                   {
                     "@id": "CharacteristicValue/Arabidopsis",
-                    "@type": "MaterialAttributeValue",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
                     "category": {
                       "@id": "Characteristic/Organism",
-                      "@type": "MaterialAttribute",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
                       "characteristicType": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "organism",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1154,6 +6518,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1163,6 +6534,15 @@ let investigationLD =
                     "value": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "Arabidopsis thaliana",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1170,6 +6550,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1180,19 +6567,63 @@ let investigationLD =
               },
               {
                 "@id": "Material/MyDerivedMaterial",
-                "@type": "Material",
+                "@type": [
+                  "Material",
+                  "ArcMaterial"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "ArcMaterial": "arc:ARC#ARC_00000108",
+                  "Material": "sdo:Thing",
+                  "type": "arc:ARC#ARC_00000085",
+                  "name": "arc:ARC#ARC_00000019",
+                  "characteristics": "arc:ARC#ARC_00000080",
+                  "derivesFrom": "arc:ARC#ARC_00000082"
+                },
                 "name": "MyDerivedMaterial",
                 "type": "Labeled Extract Name",
                 "characteristics": [
                   {
                     "@id": "CharacteristicValue/Arabidopsis",
-                    "@type": "MaterialAttributeValue",
+                    "@type": [
+                      "MaterialAttributeValue",
+                      "ArcMaterialAttributeValue"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "MaterialAttributeValue": "sdo:PropertyValue",
+                      "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                      "category": "arc:ARC#ARC_00000049",
+                      "value": "arc:ARC#ARC_00000036",
+                      "unit": "arc:ARC#ARC_00000106"
+                    },
                     "category": {
                       "@id": "Characteristic/Organism",
-                      "@type": "MaterialAttribute",
+                      "@type": [
+                        "MaterialAttribute",
+                        "ArcMaterialAttribute"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttribute": "sdo:Property",
+                        "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                        "characteristicType": "arc:ARC#ARC_00000098"
+                      },
                       "characteristicType": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "organism",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1200,6 +6631,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1209,6 +6647,15 @@ let investigationLD =
                     "value": {
                       "@id": "OntologyTerm/Organism",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "Arabidopsis thaliana",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1216,6 +6663,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1226,19 +6680,63 @@ let investigationLD =
                 "derivesFrom": [
                   {
                     "@id": "Material/MyMaterial",
-                    "@type": "Material",
+                    "@type": [
+                      "Material",
+                      "ArcMaterial"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "ArcMaterial": "arc:ARC#ARC_00000108",
+                      "Material": "sdo:Thing",
+                      "type": "arc:ARC#ARC_00000085",
+                      "name": "arc:ARC#ARC_00000019",
+                      "characteristics": "arc:ARC#ARC_00000080",
+                      "derivesFrom": "arc:ARC#ARC_00000082"
+                    },
                     "name": "MyMaterial",
                     "type": "Extract Name",
                     "characteristics": [
                       {
                         "@id": "CharacteristicValue/Arabidopsis",
-                        "@type": "MaterialAttributeValue",
+                        "@type": [
+                          "MaterialAttributeValue",
+                          "ArcMaterialAttributeValue"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttributeValue": "sdo:PropertyValue",
+                          "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                          "category": "arc:ARC#ARC_00000049",
+                          "value": "arc:ARC#ARC_00000036",
+                          "unit": "arc:ARC#ARC_00000106"
+                        },
                         "category": {
                           "@id": "Characteristic/Organism",
-                          "@type": "MaterialAttribute",
+                          "@type": [
+                            "MaterialAttribute",
+                            "ArcMaterialAttribute"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttribute": "sdo:Property",
+                            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                            "characteristicType": "arc:ARC#ARC_00000098"
+                          },
                           "characteristicType": {
                             "@id": "OntologyTerm/Organism",
                             "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
                             "annotationValue": "organism",
                             "termSource": "obi",
                             "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1246,6 +6744,13 @@ let investigationLD =
                               {
                                 "@id": "MyComment",
                                 "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
                                 "name": "Key",
                                 "value": "Value"
                               }
@@ -1255,6 +6760,15 @@ let investigationLD =
                         "value": {
                           "@id": "OntologyTerm/Organism",
                           "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
                           "annotationValue": "Arabidopsis thaliana",
                           "termSource": "obi",
                           "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1262,6 +6776,13 @@ let investigationLD =
                             {
                               "@id": "MyComment",
                               "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
                               "name": "Key",
                               "value": "Value"
                             }
@@ -1277,10 +6798,29 @@ let investigationLD =
           "characteristicCategories": [
             {
               "@id": "Characteristic/Organism",
-              "@type": "MaterialAttribute",
+              "@type": [
+                "MaterialAttribute",
+                "ArcMaterialAttribute"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "MaterialAttribute": "sdo:Property",
+                "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                "characteristicType": "arc:ARC#ARC_00000098"
+              },
               "characteristicType": {
                 "@id": "OntologyTerm/Organism",
                 "@type": "OntologyAnnotation",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "OntologyAnnotation": "sdo:DefinedTerm",
+                  "annotationValue": "sdo:name",
+                  "termSource": "sdo:inDefinedTermSet",
+                  "termAccession": "sdo:termCode",
+                  "comments": "sdo:disambiguatingDescription"
+                },
                 "annotationValue": "organism",
                 "termSource": "obi",
                 "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1288,6 +6828,13 @@ let investigationLD =
                   {
                     "@id": "MyComment",
                     "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
                     "name": "Key",
                     "value": "Value"
                   }
@@ -1299,6 +6846,15 @@ let investigationLD =
             {
               "@id": "OntologyTerm/DegreeCelsius",
               "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
               "annotationValue": "degree celsius",
               "termSource": "uo",
               "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
@@ -1306,6 +6862,13 @@ let investigationLD =
                 {
                   "@id": "MyComment",
                   "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
                   "name": "Key",
                   "value": "Value"
                 }
@@ -1314,6 +6877,15 @@ let investigationLD =
             {
               "@id": "OntologyTerm/Hour",
               "@type": "OntologyAnnotation",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "OntologyAnnotation": "sdo:DefinedTerm",
+                "annotationValue": "sdo:name",
+                "termSource": "sdo:inDefinedTermSet",
+                "termAccession": "sdo:termCode",
+                "comments": "sdo:disambiguatingDescription"
+              },
               "annotationValue": "hour",
               "termSource": "uo",
               "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
@@ -1321,6 +6893,13 @@ let investigationLD =
                 {
                   "@id": "MyComment",
                   "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
                   "name": "Key",
                   "value": "Value"
                 }
@@ -1330,15 +6909,59 @@ let investigationLD =
           "processSequence": [
             {
               "@id": "Process/MyProcess2",
-              "@type": "Process",
+              "@type": [
+                "Process",
+                "ArcProcess"
+              ],
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Process": "sdo:Thing",
+                "ArcProcess": "arc:ARC#ARC_00000048",
+                "name": "arc:ARC#ARC_00000019",
+                "executesProtocol": "arc:ARC#ARC_00000086",
+                "performer": "arc:ARC#ARC_00000089",
+                "date": "arc:ARC#ARC_00000090",
+                "previousProcess": "arc:ARC#ARC_00000091",
+                "nextProcess": "arc:ARC#ARC_00000092",
+                "input": "arc:ARC#ARC_00000095",
+                "output": "arc:ARC#ARC_00000096",
+                "comments": "sdo:disambiguatingDescription"
+              },
               "name": "MyProcess2",
               "executesProtocol": {
                 "@id": "Protocol/MyProtocol",
-                "@type": "Protocol",
+                "@type": [
+                  "Protocol",
+                  "ArcProtocol"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Protocol": "sdo:Thing",
+                  "ArcProtocol": "arc:ARC#ARC_00000040",
+                  "name": "arc:ARC#ARC_00000019",
+                  "protocolType": "arc:ARC#ARC_00000060",
+                  "description": "arc:ARC#ARC_00000004",
+                  "version": "arc:ARC#ARC_00000020",
+                  "components": "arc:ARC#ARC_00000064",
+                  "parameters": "arc:ARC#ARC_00000062",
+                  "uri": "arc:ARC#ARC_00000061",
+                  "comments": "arc:ARC#ARC_00000016"
+                },
                 "name": "MyProtocol",
                 "protocolType": {
                   "@id": "OntologyTerm/GrowthProtocol",
                   "@type": "OntologyAnnotation",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "OntologyAnnotation": "sdo:DefinedTerm",
+                    "annotationValue": "sdo:name",
+                    "termSource": "sdo:inDefinedTermSet",
+                    "termAccession": "sdo:termCode",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "annotationValue": "growth protocol",
                   "termSource": "dfbo",
                   "termAccession": "http://purl.obolibrary.org/obo/DFBO_1000162",
@@ -1346,6 +6969,13 @@ let investigationLD =
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -1357,10 +6987,31 @@ let investigationLD =
                 "parameters": [
                   {
                     "@id": "Parameter/Temperature",
-                    "@type": "ProtocolParameter",
+                    "@type": [
+                      "ProtocolParameter",
+                      "ArcProtocolParameter"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                  
+                      "ProtocolParameter": "sdo:Thing",
+                      "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+                  
+                      "parameterName": "arc:ARC#ARC_00000100"
+                    },
                     "parameterName": {
                       "@id": "OntologyTerm/Temperature",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "temperature unit",
                       "termSource": "uo",
                       "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
@@ -1368,6 +7019,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1378,11 +7036,31 @@ let investigationLD =
                 "components": [
                   {
                     "@id": "#Component_PCR_instrument",
-                    "@type": "Component",
+                    "@type": [
+                      "Component",
+                      "ArcComponent"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Component": "sdo:Thing",
+                      "ArcComponent": "arc:ARC#ARC_00000065",
+                      "componentName": "arc:ARC#ARC_00000019",
+                      "componentType": "arc:ARC#ARC_00000102"
+                    },
                     "componentName": "PCR instrument",
                     "componentType": {
                       "@id": "OntologyTerm/PCR",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "PCR instrument",
                       "termSource": "obi",
                       "termAccession": "http://purl.obolibrary.org/obo/OBI_0000989",
@@ -1390,6 +7068,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1401,6 +7086,13 @@ let investigationLD =
                   {
                     "@id": "MyComment",
                     "@type": "Comment",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "Comment": "sdo:Comment",
+                      "name": "sdo:name",
+                      "value": "sdo:value"
+                    },
                     "name": "Key",
                     "value": "Value"
                   }
@@ -1408,12 +7100,49 @@ let investigationLD =
               },
               "parameterValues": [
                 {
+                  "@id": "#Param_temperature_unit_20",
+                  "@type": [
+                    "ProcessParameterValue",
+                    "ArcProcessParameterValue"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                
+                    "ProcessParameterValue": "sdo:PropertyValue",
+                    "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
+                
+                    "category": "arc:ARC#ARC_00000062",
+                    "value": "arc:ARC#ARC_00000087",
+                    "unit": "arc:ARC#ARC_00000106"
+                  },
                   "category": {
                     "@id": "Parameter/Temperature",
-                    "@type": "ProtocolParameter",
+                    "@type": [
+                      "ProtocolParameter",
+                      "ArcProtocolParameter"
+                    ],
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                  
+                      "ProtocolParameter": "sdo:Thing",
+                      "ArcProtocolParameter": "arc:ARC#ARC_00000063",
+                  
+                      "parameterName": "arc:ARC#ARC_00000100"
+                    },
                     "parameterName": {
                       "@id": "OntologyTerm/Temperature",
                       "@type": "OntologyAnnotation",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "OntologyAnnotation": "sdo:DefinedTerm",
+                        "annotationValue": "sdo:name",
+                        "termSource": "sdo:inDefinedTermSet",
+                        "termAccession": "sdo:termCode",
+                        "comments": "sdo:disambiguatingDescription"
+                      },
                       "annotationValue": "temperature unit",
                       "termSource": "uo",
                       "termAccession": "http://purl.obolibrary.org/obo/UO_0000005",
@@ -1421,6 +7150,13 @@ let investigationLD =
                         {
                           "@id": "MyComment",
                           "@type": "Comment",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "Comment": "sdo:Comment",
+                            "name": "sdo:name",
+                            "value": "sdo:value"
+                          },
                           "name": "Key",
                           "value": "Value"
                         }
@@ -1431,6 +7167,15 @@ let investigationLD =
                   "unit": {
                     "@id": "OntologyTerm/DegreeCelsius",
                     "@type": "OntologyAnnotation",
+                    "@context": {
+                      "sdo": "http://schema.org/",
+                      "arc": "http://purl.org/nfdi4plants/ontology/",
+                      "OntologyAnnotation": "sdo:DefinedTerm",
+                      "annotationValue": "sdo:name",
+                      "termSource": "sdo:inDefinedTermSet",
+                      "termAccession": "sdo:termCode",
+                      "comments": "sdo:disambiguatingDescription"
+                    },
                     "annotationValue": "degree celsius",
                     "termSource": "uo",
                     "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
@@ -1438,6 +7183,13 @@ let investigationLD =
                       {
                         "@id": "MyComment",
                         "@type": "Comment",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Comment": "sdo:Comment",
+                          "name": "sdo:name",
+                          "value": "sdo:value"
+                        },
                         "name": "Key",
                         "value": "Value"
                       }
@@ -1449,23 +7201,85 @@ let investigationLD =
               "date": "2020-10-05T03:03:00.0Z",
               "previousProcess": {
                 "@id": "Process/MyProcess1",
-                "@type": "Process"
+                "@type": [
+                  "Process",
+                  "ArcProcess"
+                ],
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Process": "sdo:Thing",
+                  "ArcProcess": "arc:ARC#ARC_00000048",
+                  "name": "arc:ARC#ARC_00000019",
+                  "executesProtocol": "arc:ARC#ARC_00000086",
+                  "performer": "arc:ARC#ARC_00000089",
+                  "date": "arc:ARC#ARC_00000090",
+                  "previousProcess": "arc:ARC#ARC_00000091",
+                  "nextProcess": "arc:ARC#ARC_00000092",
+                  "input": "arc:ARC#ARC_00000095",
+                  "output": "arc:ARC#ARC_00000096",
+                  "comments": "sdo:disambiguatingDescription"
+                }
               },
               "inputs": [
                 {
                   "@id": "Sample/MySample",
-                  "@type": "Sample",
+                  "@type": [
+                    "Sample",
+                    "ArcSample"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Sample": "sdo:Thing",
+                    "ArcSample": "arc:ARC#ARC_00000070",
+                    "name": "arc:name",
+                    "characteristics": "arc:ARC#ARC_00000080",
+                    "factorValues": "arc:ARC#ARC_00000083",
+                    "derivesFrom": "arc:ARC#ARC_00000082"
+                  },
                   "name": "MySample",
                   "characteristics": [
                     {
                       "@id": "CharacteristicValue/Arabidopsis",
-                      "@type": "MaterialAttributeValue",
+                      "@type": [
+                        "MaterialAttributeValue",
+                        "ArcMaterialAttributeValue"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "MaterialAttributeValue": "sdo:PropertyValue",
+                        "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                        "category": "arc:ARC#ARC_00000049",
+                        "value": "arc:ARC#ARC_00000036",
+                        "unit": "arc:ARC#ARC_00000106"
+                      },
                       "category": {
                         "@id": "Characteristic/Organism",
-                        "@type": "MaterialAttribute",
+                        "@type": [
+                          "MaterialAttribute",
+                          "ArcMaterialAttribute"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "MaterialAttribute": "sdo:Property",
+                          "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                          "characteristicType": "arc:ARC#ARC_00000098"
+                        },
                         "characteristicType": {
                           "@id": "OntologyTerm/Organism",
                           "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
                           "annotationValue": "organism",
                           "termSource": "obi",
                           "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1473,6 +7287,13 @@ let investigationLD =
                             {
                               "@id": "MyComment",
                               "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
                               "name": "Key",
                               "value": "Value"
                             }
@@ -1482,6 +7303,15 @@ let investigationLD =
                       "value": {
                         "@id": "OntologyTerm/Organism",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "Arabidopsis thaliana",
                         "termSource": "obi",
                         "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1489,6 +7319,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1499,14 +7336,47 @@ let investigationLD =
                   "factorValues": [
                     {
                       "@id": "FactorValue/4hours",
-                      "@type": "FactorValue",
+                      "@type": [
+                        "FactorValue",
+                        "ArcFactorValue"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "FactorValue": "sdo:PropertyValue",
+                        "ArcFactorValue": "arc:ARC#ARC_00000084",
+                        "category": "arc:category",
+                        "value": "arc:ARC#ARC_00000044",
+                        "unit": "arc:ARC#ARC_00000106"
+                      },
                       "category": {
                         "@id": "Factor/Time",
-                        "@type": "Factor",
+                        "@type": [
+                          "Factor",
+                          "ArcFactor"
+                        ],
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "Factor": "sdo:Thing",
+                          "ArcFactor": "arc:ARC#ARC_00000044",
+                          "factorName": "arc:ARC#ARC_00000019",
+                          "factorType": "arc:ARC#ARC_00000078",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "factorName": "Time",
                         "factorType": {
                           "@id": "OntologyTerm/Time",
                           "@type": "OntologyAnnotation",
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                          },
                           "annotationValue": "time",
                           "termSource": "pato",
                           "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
@@ -1514,6 +7384,13 @@ let investigationLD =
                             {
                               "@id": "MyComment",
                               "@type": "Comment",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "Comment": "sdo:Comment",
+                                "name": "sdo:name",
+                                "value": "sdo:value"
+                              },
                               "name": "Key",
                               "value": "Value"
                             }
@@ -1523,6 +7400,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1532,6 +7416,15 @@ let investigationLD =
                       "unit": {
                         "@id": "OntologyTerm/Hour",
                         "@type": "OntologyAnnotation",
+                        "@context": {
+                          "sdo": "http://schema.org/",
+                          "arc": "http://purl.org/nfdi4plants/ontology/",
+                          "OntologyAnnotation": "sdo:DefinedTerm",
+                          "annotationValue": "sdo:name",
+                          "termSource": "sdo:inDefinedTermSet",
+                          "termAccession": "sdo:termCode",
+                          "comments": "sdo:disambiguatingDescription"
+                        },
                         "annotationValue": "hour",
                         "termSource": "uo",
                         "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
@@ -1539,6 +7432,13 @@ let investigationLD =
                           {
                             "@id": "MyComment",
                             "@type": "Comment",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "Comment": "sdo:Comment",
+                              "name": "sdo:name",
+                              "value": "sdo:value"
+                            },
                             "name": "Key",
                             "value": "Value"
                           }
@@ -1549,18 +7449,61 @@ let investigationLD =
                   "derivesFrom": [
                     {
                       "@id": "Source/MySource",
-                      "@type": "Source",
+                      "@type": [
+                        "Source",
+                        "ArcSource"
+                      ],
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Source": "sdo:Thing",
+                        "ArcSource": "arc:ARC#ARC_00000071",
+                        "identifier": "sdo:identifier",
+                        "name": "arc:ARC#ARC_00000019",
+                        "characteristics": "arc:ARC#ARC_00000080"
+                      },
                       "name": "MySource",
                       "characteristics": [
                         {
                           "@id": "CharacteristicValue/Arabidopsis",
-                          "@type": "MaterialAttributeValue",
+                          "@type": [
+                            "MaterialAttributeValue",
+                            "ArcMaterialAttributeValue"
+                          ],
+                          "@context": {
+                            "sdo": "http://schema.org/",
+                            "arc": "http://purl.org/nfdi4plants/ontology/",
+                            "MaterialAttributeValue": "sdo:PropertyValue",
+                            "ArcMaterialAttributeValue": "arc:ARC#ARC_00000079",
+                            "category": "arc:ARC#ARC_00000049",
+                            "value": "arc:ARC#ARC_00000036",
+                            "unit": "arc:ARC#ARC_00000106"
+                          },
                           "category": {
                             "@id": "Characteristic/Organism",
-                            "@type": "MaterialAttribute",
+                            "@type": [
+                              "MaterialAttribute",
+                              "ArcMaterialAttribute"
+                            ],
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "MaterialAttribute": "sdo:Property",
+                              "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+                              "characteristicType": "arc:ARC#ARC_00000098"
+                            },
                             "characteristicType": {
                               "@id": "OntologyTerm/Organism",
                               "@type": "OntologyAnnotation",
+                              "@context": {
+                                "sdo": "http://schema.org/",
+                                "arc": "http://purl.org/nfdi4plants/ontology/",
+                                "OntologyAnnotation": "sdo:DefinedTerm",
+                                "annotationValue": "sdo:name",
+                                "termSource": "sdo:inDefinedTermSet",
+                                "termAccession": "sdo:termCode",
+                                "comments": "sdo:disambiguatingDescription"
+                              },
                               "annotationValue": "organism",
                               "termSource": "obi",
                               "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1568,6 +7511,13 @@ let investigationLD =
                                 {
                                   "@id": "MyComment",
                                   "@type": "Comment",
+                                  "@context": {
+                                    "sdo": "http://schema.org/",
+                                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                                    "Comment": "sdo:Comment",
+                                    "name": "sdo:name",
+                                    "value": "sdo:value"
+                                  },
                                   "name": "Key",
                                   "value": "Value"
                                 }
@@ -1577,6 +7527,15 @@ let investigationLD =
                           "value": {
                             "@id": "OntologyTerm/Organism",
                             "@type": "OntologyAnnotation",
+                            "@context": {
+                              "sdo": "http://schema.org/",
+                              "arc": "http://purl.org/nfdi4plants/ontology/",
+                              "OntologyAnnotation": "sdo:DefinedTerm",
+                              "annotationValue": "sdo:name",
+                              "termSource": "sdo:inDefinedTermSet",
+                              "termAccession": "sdo:termCode",
+                              "comments": "sdo:disambiguatingDescription"
+                            },
                             "annotationValue": "Arabidopsis thaliana",
                             "termSource": "obi",
                             "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1584,6 +7543,13 @@ let investigationLD =
                               {
                                 "@id": "MyComment",
                                 "@type": "Comment",
+                                "@context": {
+                                  "sdo": "http://schema.org/",
+                                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                                  "Comment": "sdo:Comment",
+                                  "name": "sdo:name",
+                                  "value": "sdo:value"
+                                },
                                 "name": "Key",
                                 "value": "Value"
                               }
@@ -1598,12 +7564,32 @@ let investigationLD =
               "outputs": [
                 {
                   "@id": "Data/MyData",
+                  "@type": [
+                    "Data",
+                    "ArcData"
+                  ],
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Data": "sdo:MediaObject",
+                    "ArcData": "arc:ARC#ARC_00000076",
+                    "type": "arc:ARC#ARC_00000107",
+                    "name": "sdo:name",
+                    "comments": "sdo:disambiguatingDescription"
+                  },
                   "name": "MyData",
                   "type": "Derived Data File",
                   "comments": [
                     {
                       "@id": "MyComment",
                       "@type": "Comment",
+                      "@context": {
+                        "sdo": "http://schema.org/",
+                        "arc": "http://purl.org/nfdi4plants/ontology/",
+                        "Comment": "sdo:Comment",
+                        "name": "sdo:name",
+                        "value": "sdo:value"
+                      },
                       "name": "Key",
                       "value": "Value"
                     }
@@ -1614,6 +7600,13 @@ let investigationLD =
                 {
                   "@id": "MyComment",
                   "@type": "Comment",
+                  "@context": {
+                    "sdo": "http://schema.org/",
+                    "arc": "http://purl.org/nfdi4plants/ontology/",
+                    "Comment": "sdo:Comment",
+                    "name": "sdo:name",
+                    "value": "sdo:value"
+                  },
                   "name": "Key",
                   "value": "Value"
                 }
@@ -1624,6 +7617,13 @@ let investigationLD =
             {
               "@id": "MyComment",
               "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
               "name": "Key",
               "value": "Value"
             }
@@ -1633,11 +7633,32 @@ let investigationLD =
       "factors": [
         {
           "@id": "Factor/Time",
-          "@type": "Factor",
+          "@type": [
+            "Factor",
+            "ArcFactor"
+          ],
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Factor": "sdo:Thing",
+            "ArcFactor": "arc:ARC#ARC_00000044",
+            "factorName": "arc:ARC#ARC_00000019",
+            "factorType": "arc:ARC#ARC_00000078",
+            "comments": "sdo:disambiguatingDescription"
+          },
           "factorName": "Time",
           "factorType": {
             "@id": "OntologyTerm/Time",
             "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
             "annotationValue": "time",
             "termSource": "pato",
             "termAccession": "http://purl.obolibrary.org/obo/PATO_0000165",
@@ -1646,6 +7667,13 @@ let investigationLD =
                 "@id": "MyComment",
                 "name": "Key",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "value": "Value"
               }
             ]
@@ -1654,6 +7682,13 @@ let investigationLD =
             {
               "@id": "MyComment",
               "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
               "name": "Key",
               "value": "Value"
             }
@@ -1663,10 +7698,29 @@ let investigationLD =
       "characteristicCategories": [
         {
           "@id": "Characteristic/Organism",
-          "@type": "MaterialAttribute",
+          "@type": [
+            "MaterialAttribute",
+            "ArcMaterialAttribute"
+          ],
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "MaterialAttribute": "sdo:Property",
+            "ArcMaterialAttribute": "arc:ARC#ARC_00000050",
+            "characteristicType": "arc:ARC#ARC_00000098"
+          },
           "characteristicType": {
             "@id": "OntologyTerm/Organism",
             "@type": "OntologyAnnotation",
+            "@context": {
+              "sdo": "http://schema.org/",
+              "arc": "http://purl.org/nfdi4plants/ontology/",
+              "OntologyAnnotation": "sdo:DefinedTerm",
+              "annotationValue": "sdo:name",
+              "termSource": "sdo:inDefinedTermSet",
+              "termAccession": "sdo:termCode",
+              "comments": "sdo:disambiguatingDescription"
+            },
             "annotationValue": "organism",
             "termSource": "obi",
             "termAccession": "http://purl.obolibrary.org/obo/OBI_0100026",
@@ -1674,6 +7728,13 @@ let investigationLD =
               {
                 "@id": "MyComment",
                 "@type": "Comment",
+                "@context": {
+                  "sdo": "http://schema.org/",
+                  "arc": "http://purl.org/nfdi4plants/ontology/",
+                  "Comment": "sdo:Comment",
+                  "name": "sdo:name",
+                  "value": "sdo:value"
+                },
                 "name": "Key",
                 "value": "Value"
               }
@@ -1685,6 +7746,15 @@ let investigationLD =
         {
           "@id": "OntologyTerm/DegreeCelsius",
           "@type": "OntologyAnnotation",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "OntologyAnnotation": "sdo:DefinedTerm",
+            "annotationValue": "sdo:name",
+            "termSource": "sdo:inDefinedTermSet",
+            "termAccession": "sdo:termCode",
+            "comments": "sdo:disambiguatingDescription"
+          },
           "annotationValue": "degree celsius",
           "termSource": "uo",
           "termAccession": "http://purl.obolibrary.org/obo/UO_0000027",
@@ -1692,6 +7762,13 @@ let investigationLD =
             {
               "@id": "MyComment",
               "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
               "name": "Key",
               "value": "Value"
             }
@@ -1700,6 +7777,15 @@ let investigationLD =
         {
           "@id": "OntologyTerm/Hour",
           "@type": "OntologyAnnotation",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "OntologyAnnotation": "sdo:DefinedTerm",
+            "annotationValue": "sdo:name",
+            "termSource": "sdo:inDefinedTermSet",
+            "termAccession": "sdo:termCode",
+            "comments": "sdo:disambiguatingDescription"
+          },
           "annotationValue": "hour",
           "termSource": "uo",
           "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
@@ -1707,6 +7793,13 @@ let investigationLD =
             {
               "@id": "MyComment",
               "@type": "Comment",
+              "@context": {
+                "sdo": "http://schema.org/",
+                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "Comment": "sdo:Comment",
+                "name": "sdo:name",
+                "value": "sdo:value"
+              },
               "name": "Key",
               "value": "Value"
             }
@@ -1717,6 +7810,13 @@ let investigationLD =
         {
           "@id": "MyComment",
           "@type": "Comment",
+          "@context": {
+            "sdo": "http://schema.org/",
+            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "Comment": "sdo:Comment",
+            "name": "sdo:name",
+            "value": "sdo:value"
+          },
           "name": "Key",
           "value": "Value"
         }
@@ -1727,6 +7827,13 @@ let investigationLD =
     {
       "@id": "MyComment",
       "@type": "Comment",
+      "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "Comment": "sdo:Comment",
+        "name": "sdo:name",
+        "value": "sdo:value"
+      },
       "name": "Key",
       "value": "Value"
     }

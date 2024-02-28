@@ -39,25 +39,30 @@ module Data =
         match d.ID with
         | Some id -> URI.toString id
         | None -> match d.Name with
-                  | Some n -> n
+                  | Some n -> n.Replace(" ","_")
                   | None -> "#EmptyData"
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Data |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Data"
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then
+                "@id",  GEncode.toJsonString (oa :?> Data |> genID)
+            else
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then
+                "@type", ([ GEncode.toJsonString "Data";  GEncode.toJsonString "ArcData"] |> Encode.list)
+            GEncode.tryInclude "name"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "type" (DataFile.encoder options) (oa |> GEncode.tryGetPropertyValue "DataType")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.Data.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 
     let rec decoder (options : ConverterOptions) : Decoder<Data> =
         
         fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"type";"comments";"@type"] json then 
+            if GDecode.hasUnknownFields ["@id";"name";"type";"comments";"@type";"@context"] json then 
                 Error (DecoderError("Unknown fields in Data", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
 
@@ -79,8 +84,11 @@ module Data =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (d:Data) = 
+    let toJsonldString (d:Data) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) d
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Data) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -102,17 +110,23 @@ module Source =
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Source |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Source"
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")        ]
+            if options.SetID then
+                "@id",  GEncode.toJsonString (oa :?> Source |> genID)
+            else
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then
+                "@type", ([ GEncode.toJsonString "Source";  GEncode.toJsonString "ArcSource"] |> Encode.list)
+            GEncode.tryInclude "name"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
+            if options.IncludeContext then
+                "@context", ROCrateContext.Source.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 
     let rec decoder (options : ConverterOptions) : Decoder<Source> =
         fun s json -> 
-        if GDecode.hasUnknownFields ["@id";"name";"characteristics";"@type"] json then 
+        if GDecode.hasUnknownFields ["@id";"name";"characteristics";"@type";"@context"] json then 
                 Error (DecoderError("Unknown fields in Source", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
             Decode.object (fun get ->
@@ -133,8 +147,11 @@ module Source =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (s:Source) = 
+    let toJsonldString (s:Source) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Source) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
@@ -155,20 +172,25 @@ module Sample =
     
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Sample |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Sample"
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then 
+                "@id",  GEncode.toJsonString (oa :?> Sample |> genID)
+            else 
+                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then
+                "@type", ([ GEncode.toJsonString "Sample";  GEncode.toJsonString "ArcSample"] |> Encode.list)
+            GEncode.tryInclude "name"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
             GEncode.tryInclude "factorValues" (FactorValue.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorValues")
             GEncode.tryInclude "derivesFrom" (Source.encoder options) (oa |> GEncode.tryGetPropertyValue "DerivesFrom")
-        ]
+            if options.IncludeContext then
+                "@context", ROCrateContext.Sample.context_jsonvalue
+            ]
         |> GEncode.choose
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Sample> =
         fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"] json then 
+            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type";"@context"] json then 
                 Error (DecoderError("Unknown fields in Sample", ErrorReason.BadPrimitive(s,Encode.nil)))
             else
                 Decode.object (fun get ->
@@ -190,8 +212,11 @@ module Sample =
         |> Encode.toString 2
     
     /// exports in json-ld format
-    let toStringLD (s:Sample) = 
+    let toJsonldString (s:Sample) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        |> Encode.toString 2
+    let toJsonldStringWithContext (a:Sample) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> Encode.toString 2
 
     //let fromFile (path : string) = 
