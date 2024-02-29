@@ -213,19 +213,19 @@ type Process =
     static member getData (p : Process) =
         (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryData)
         @
-        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryData)
+        (p.Outputs |> Option.defaultValue [] |> List.choose ProcessOutput.tryData)
         |> List.distinct
 
     static member getSamples (p : Process) =
         (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.trySample)
         @
-        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.trySample)
+        (p.Outputs |> Option.defaultValue [] |> List.choose ProcessOutput.trySample)
         |> List.distinct       
         
     static member getMaterials (p : Process) =
         (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryMaterial)
         @
-        (p.Inputs |> Option.defaultValue [] |> List.choose ProcessInput.tryMaterial)
+        (p.Outputs |> Option.defaultValue [] |> List.choose ProcessOutput.tryMaterial)
         |> List.distinct
 
     static member updateProtocol (referenceProtocols : Protocol list) (p : Process) =

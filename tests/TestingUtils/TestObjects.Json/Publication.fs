@@ -20,11 +20,35 @@ let publicationLD =
     {
   "@id": "doi:10.1186/jbiol54",
   "@type": "Publication",
+  "@context": {
+    "sdo": "http://schema.org/",
+    "arc": "http://purl.org/nfdi4plants/ontology/",
+
+    "Publication": "sdo:ScholarlyArticle",
+    
+    "pubMedID": "sdo:url",
+    "doi": "sdo:sameAs",
+    "title": "sdo:headline",
+    "status": "sdo:creativeWorkStatus",
+    "authorList": "sdo:author",
+    "comments": "sdo:disambiguatingDescription"
+  },
   "doi": "doi:10.1186/jbiol54",
   "pubMedID": "17439666",
   "status": {
-    "@id": "#DummyOntologyAnnotation",
+    "@id": "#UserTerm_indexed_in_Pubmed",
     "@type": "OntologyAnnotation",
+    "@context": {
+      "sdo": "http://schema.org/",
+      "arc": "http://purl.org/nfdi4plants/ontology/",
+
+      "OntologyAnnotation": "sdo:DefinedTerm",
+      
+      "annotationValue": "sdo:name",
+      "termSource": "sdo:inDefinedTermSet",
+      "termAccession": "sdo:termCode",
+      "comments": "sdo:disambiguatingDescription"
+    },
     "annotationValue": "indexed in Pubmed"
   },
   "title": "Growth control of the eukaryote cell: a systems biology study in yeast.",

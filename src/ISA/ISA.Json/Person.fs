@@ -28,12 +28,29 @@ module Person =
                                 | (Some fn,None,None) -> "#" + fn.Replace(" ","_")
                                 | _ -> "#EmptyPerson"
 
+    let affiliationEncoder (options : ConverterOptions) (affiliation : string) =
+        if options.IsRoCrate then
+            [
+                ("@type",Encode.string "Organization")
+                ("@id",Encode.string $"Organization/{affiliation}")
+                ("name",Encode.string affiliation)               
+                if options.IncludeContext then
+                    "@context", ROCrateContext.Organization.context_jsonvalue
+            ]
+            |> Encode.object
+        else
+            Encode.string affiliation
+
+
     let rec encoder (options : ConverterOptions) (oa : Person) = 
         let oa = oa |> Person.setCommentFromORCID
         [
-            if options.SetID then "@id", Encode.string (oa |> genID)
-                else GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then "@type", Encode.string "Person"
+            if options.SetID then 
+                "@id", Encode.string (oa |> genID)
+            else 
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then 
+                "@type", Encode.string "Person"
             GEncode.tryInclude "firstName" Encode.string (oa.FirstName)
             GEncode.tryInclude "lastName" Encode.string (oa.LastName)
             GEncode.tryInclude "midInitials" Encode.string (oa.MidInitials)
@@ -44,6 +61,8 @@ module Person =
             GEncode.tryInclude "affiliation" Encode.string (oa.Affiliation)
             GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
+            if options.IncludeContext then 
+                "@context", ROCrateContext.Person.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
@@ -78,8 +97,12 @@ module Person =
         |> GEncode.toJsonString 2
 
     /// exports in json-ld format
-    let toStringLD (p:Person) = 
+    let toJsonldString (p:Person) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        |> GEncode.toJsonString 2
+
+    let toJsonldStringWithContext (a:Person) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

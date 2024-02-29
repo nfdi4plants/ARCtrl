@@ -22,7 +22,7 @@
     "pretestui": "dotnet fable src/ARCtrl -o tests/UI/ARCtrl ",
     "testui": "cd tests/UI & npx cypress run --component ",
     "testpy": "",
-    "postinstall": "cd src/ISA & npm install",
+    "postinstall": "cd src/ISA && npm install",
     "devui": "cd tests/UI & npx vite"
   },
   "author": "Heinrich Lukas Weil <weil@rptu.de> (https://github.com/HLWeil)",
@@ -33,7 +33,8 @@
     "exceljs": "^4.3.0",
     "fable-library": "^1.1.1",
     "fsspreadsheet": "^4.0.0-alpha2",
-    "isomorphic-fetch": "^3.0.0"
+    "isomorphic-fetch": "^3.0.0",
+    "jsonschema": "^1.4.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.4.1",

@@ -65,12 +65,17 @@ module Factor =
 
     let encoder (options : ConverterOptions) (oa : Factor) = 
         [
-            if options.SetID then "@id", Encode.string (oa |> genID)
-                else GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then "@type", Encode.string "Factor"
+            if options.SetID then 
+                "@id", Encode.string (oa |> genID)
+            else 
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then 
+                "@type", (Encode.list [GEncode.toJsonString "Factor";  GEncode.toJsonString "ArcFactor"])
             GEncode.tryInclude "factorName" Encode.string (oa.Name)
             GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
+            if options.IncludeContext then
+                "@context", ROCrateContext.Factor.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
@@ -93,8 +98,12 @@ module Factor =
         |> GEncode.toJsonString 2
     
     /// exports in json-ld format
-    let toStringLD (f:Factor) = 
+    let toJsonldString (f:Factor) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) f
+        |> GEncode.toJsonString 2
+
+    let toJsonldStringWithContext (a:Factor) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
@@ -114,12 +123,17 @@ module FactorValue =
 
     let encoder (options : ConverterOptions) (oa : FactorValue) = 
         [
-            if options.SetID then "@id", Encode.string (oa |> genID)
-                else GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then "@type", Encode.string "FactorValue"
+            if options.SetID then 
+                "@id", Encode.string (oa |> genID)
+            else 
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then 
+                "@type", (Encode.list [ GEncode.toJsonString "FactorValue";  GEncode.toJsonString "ArcFactorValue"])
             GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
             GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
             GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
+            if options.IncludeContext then
+                "@context", ROCrateContext.FactorValue.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
@@ -142,8 +156,12 @@ module FactorValue =
         |> GEncode.toJsonString 2
     
     /// exports in json-ld format
-    let toStringLD (f:FactorValue) = 
+    let toJsonldString (f:FactorValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) f
+        |> GEncode.toJsonString 2
+
+    let toJsonldStringWithContext (a:FactorValue) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

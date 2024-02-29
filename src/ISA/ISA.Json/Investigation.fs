@@ -8,20 +8,25 @@ module Investigation =
     
     
     let genID (i:Investigation) : string = 
-        match i.ID with
-        | Some id -> URI.toString id
-        | None -> match i.FileName with
-                  | Some n -> "#Study_" + n.Replace(" ","_")
-                  | None -> match i.Identifier with
-                            | Some id -> "#Study_" + id.Replace(" ","_")
-                            | None -> match i.Title with
-                                      | Some t -> "#Study_" + t.Replace(" ","_")
-                                      | None -> "#EmptyStudy"
+        "./"
+        // match i.ID with
+        // | Some id -> URI.toString id
+        // | None -> match i.FileName with
+        //           | Some n -> "#Study_" + n.Replace(" ","_")
+        //           | None -> match i.Identifier with
+        //                     | Some id -> "#Study_" + id.Replace(" ","_")
+        //                     | None -> match i.Title with
+        //                               | Some t -> "#Study_" + t.Replace(" ","_")
+        //                               | None -> "#EmptyStudy"
+
     let encoder (options : ConverterOptions) (oa : Investigation) = 
         [
-            if options.SetID then "@id", Encode.string (oa |> genID)
-                else GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then "@type", Encode.string "Investigation"
+            if options.SetID then 
+                "@id", Encode.string (oa |> genID)
+            else 
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then 
+                "@type", Encode.string "Investigation"
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
             GEncode.tryInclude "title" Encode.string (oa.Title)
@@ -33,11 +38,13 @@ module Investigation =
             GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
             GEncode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
+            if options.IncludeContext then
+                "@context", ROCrateContext.Investigation.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
 
-    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type"]
+    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type";"@context"]
 
     let decoder (options : ConverterOptions) : Decoder<Investigation> =
         GDecode.object allowedFields (fun get ->
@@ -66,6 +73,14 @@ module Investigation =
         |> GEncode.toJsonString 2
 
     /// exports in json-ld format
-    let toStringLD (i:Investigation) = 
+    let toJsonldString (i:Investigation) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) i
+        |> GEncode.toJsonString 2
+
+    let toJsonldStringWithContext (i:Investigation) = 
+        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) i
+        |> GEncode.toJsonString 2
+
+    let toRoCrateString (i:Investigation) = 
+        encodeRoCrate (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true,IsRoCrate=true)) i
         |> GEncode.toJsonString 2

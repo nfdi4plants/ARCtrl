@@ -101,8 +101,12 @@ module ArcStudy =
 
 
     /// exports in json-ld format
-    let toStringLD (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+    let toJsonldString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
         Study.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToStudy(assays))
+        |> GEncode.toJsonString 2
+
+    let toJsonldStringWithContext (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
+        Study.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) (a.ToStudy(assays))
         |> GEncode.toJsonString 2
 
     let fromJsonString (s:string) = 
