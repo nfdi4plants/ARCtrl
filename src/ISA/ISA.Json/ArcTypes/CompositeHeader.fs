@@ -1,10 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 
 module CompositeHeader =
@@ -62,12 +59,10 @@ module CompositeHeaderExtensions =
 
     type CompositeHeader with
         static member fromJsonString (jsonString: string) : CompositeHeader = 
-            match Decode.fromString CompositeHeader.decoder jsonString with
-            | Ok r -> r
-            | Error e -> failwithf "Error. Unable to parse json string to CompositeHeader: %s" e
+            GDecode.fromJsonString CompositeHeader.decoder jsonString
 
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (CompositeHeader.encoder this)
+            GEncode.toJsonString spaces (CompositeHeader.encoder this)
 
         static member toJsonString(a:CompositeHeader) = a.ToJsonString()

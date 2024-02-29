@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -19,8 +16,10 @@ module StudyMaterials =
         |> GEncode.choose
         |> Encode.object
     
+    let allowedFields = ["sources";"samples";"otherMaterials"]
+
     let decoder (options : ConverterOptions) : Decoder<StudyMaterials> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 Sources = get.Optional.Field "sources" (Decode.list (Source.decoder options))
                 Samples = get.Optional.Field "samples" (Decode.list (Sample.decoder options))
@@ -44,15 +43,15 @@ module Study =
     
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Study |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Study"
-            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
-            GEncode.tryInclude "identifier" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
-            GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
-            GEncode.tryInclude "description" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "submissionDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
-            GEncode.tryInclude "publicReleaseDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
+            if options.SetID then "@id", GEncode.includeString (oa :?> Study |> genID)
+                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.includeString "Study"
+            GEncode.tryInclude "filename" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "FileName")
+            GEncode.tryInclude "identifier" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Identifier")
+            GEncode.tryInclude "title" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Title")
+            GEncode.tryInclude "description" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Description")
+            GEncode.tryInclude "submissionDate" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
+            GEncode.tryInclude "publicReleaseDate" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
             GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
             GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
             GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
@@ -68,8 +67,10 @@ module Study =
         |> GEncode.choose
         |> Encode.object
 
+    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"]
+
     let decoder (options : ConverterOptions) : Decoder<Study> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
                 FileName = get.Optional.Field "filename" Decode.string
@@ -97,9 +98,9 @@ module Study =
 
     let toJsonString (p:Study) = 
         encoder (ConverterOptions()) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toStringLD (s:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2

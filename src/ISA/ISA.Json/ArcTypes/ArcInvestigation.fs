@@ -1,10 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA   
 
 open JsonHelper
@@ -63,7 +60,7 @@ module ArcInvestigation =
     /// exports in json-ld format
     let toStringLD (a:ArcInvestigation) = 
         Investigation.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToInvestigation())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (Investigation.decoder (ConverterOptions())) s
@@ -71,11 +68,11 @@ module ArcInvestigation =
 
     let toJsonString (a:ArcInvestigation) = 
         Investigation.encoder (ConverterOptions()) (a.ToInvestigation())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let toArcJsonString (a:ArcInvestigation) : string =
         let spaces = 0
-        Encode.toString spaces (encoder a)
+        GEncode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
         match Decode.fromString decoder jsonString with
@@ -93,6 +90,6 @@ module ArcInvestigationExtensions =
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (ArcInvestigation.encoder this)
+            GEncode.toJsonString spaces (ArcInvestigation.encoder this)
 
         static member toArcJsonString(a:ArcInvestigation) = a.ToArcJsonString()

@@ -1,11 +1,8 @@
 namespace ARCtrl.ISA.Json
 
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -20,13 +17,15 @@ module Comment =
                     "#Comment_" + n.Replace(" ","_") + v
                   | None -> "#EmptyComment"
 
+
+
     let encoder (options : ConverterOptions) (comment : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (comment :?> Comment |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Comment"
-            GEncode.tryInclude "name" GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "value" GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Value")
+            if options.SetID then "@id", GEncode.includeString (comment :?> Comment |> genID)
+                else GEncode.tryInclude "@id" GEncode.includeString (comment |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.includeString "Comment"
+            GEncode.tryInclude "name" GEncode.includeString (comment |> GEncode.tryGetPropertyValue "Name")
+            GEncode.tryInclude "value" GEncode.includeString (comment |> GEncode.tryGetPropertyValue "Value")
         ]
         |> GEncode.choose
         |> Encode.object
@@ -45,12 +44,12 @@ module Comment =
 
     let toJsonString (c:Comment) = 
         encoder (ConverterOptions()) c
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toStringLD (c:Comment) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) c
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

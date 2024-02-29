@@ -1,10 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 
 module JsonHelper =
@@ -107,7 +104,7 @@ module ArcAssay =
     /// exports in json-ld format
     let toStringLD (a:ArcAssay) = 
         Assay.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToAssay())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (Assay.decoder (ConverterOptions())) s
@@ -115,11 +112,11 @@ module ArcAssay =
 
     let toJsonString (a:ArcAssay) = 
         Assay.encoder (ConverterOptions()) (a.ToAssay())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let toArcJsonString (a:ArcAssay) : string =
         let spaces = 0
-        Encode.toString spaces (encoder a)
+        GEncode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
         match Decode.fromString decoder jsonString with
@@ -139,7 +136,7 @@ module ArcAssayExtensions =
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (ArcAssay.encoder this)
+            GEncode.toJsonString spaces (ArcAssay.encoder this)
 
         static member toArcJsonString (a:ArcAssay) = a.ToArcJsonString()
 
@@ -168,6 +165,6 @@ module ArcAssayExtensions =
                     "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
                     "assay", arcAssay
                 ] 
-            Encode.toString spaces jObject
+            GEncode.toJsonString spaces jObject
 
         static member toCompressedJsonString (a:ArcAssay) = a.ToCompressedJsonString()

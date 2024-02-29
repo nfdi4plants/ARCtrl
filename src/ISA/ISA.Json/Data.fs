@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -21,17 +18,18 @@ module DataFile =
         | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<DataFile> =
-        fun s json ->
-            match Decode.string s json with
-            | Ok "Raw Data File" -> 
-                Ok DataFile.RawDataFile
-            | Ok "Derived Data File" -> 
-                Ok DataFile.DerivedDataFile
-            | Ok "Image File" -> 
-                Ok DataFile.ImageFile
-            | Ok s -> Error (DecoderError($"Could not parse {s}.", ErrorReason.BadPrimitive(s,Encode.nil)))
-            | Error e -> Error e
-
+        { new Decoder<DataFile> with
+            member this.Decode (s,json) = 
+                match Decode.string.Decode(s,json) with
+                | Ok "Raw Data File" -> 
+                    Ok DataFile.RawDataFile
+                | Ok "Derived Data File" -> 
+                    Ok DataFile.DerivedDataFile
+                | Ok "Image File" -> 
+                    Ok DataFile.ImageFile
+                | Ok s -> Error (DecoderError($"Could not parse {s}.", ErrorReason.BadPrimitive(s,json)))
+                | Error e -> Error e
+        }
 
 module Data = 
     
@@ -44,44 +42,40 @@ module Data =
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Data |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Data"
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then "@id", GEncode.includeString (oa :?> Data |> genID)
+                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.includeString "Data"
+            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "type" (DataFile.encoder options) (oa |> GEncode.tryGetPropertyValue "DataType")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
 
-    let rec decoder (options : ConverterOptions) : Decoder<Data> =
-        
-        fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"type";"comments";"@type"] json then 
-                Error (DecoderError("Unknown fields in Data", ErrorReason.BadPrimitive(s,Encode.nil)))
-            else
+    let allowedFields = ["@id";"name";"type";"comments";"@type"]
 
-                Decode.object (fun get ->
-                    {
-                        ID = get.Optional.Field "@id" GDecode.uri
-                        Name = get.Optional.Field "name" Decode.string
-                        DataType = get.Optional.Field "type" (DataFile.decoder options)
-                        Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
-                    }
+    let rec decoder (options : ConverterOptions) : Decoder<Data> =
+        GDecode.object allowedFields (fun get ->
+            {
+                ID = get.Optional.Field "@id" GDecode.uri
+                Name = get.Optional.Field "name" Decode.string
+                DataType = get.Optional.Field "type" (DataFile.decoder options)
+                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
+            }
             
-                )  s json
+        )
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (m:Data) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toStringLD (d:Data) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) d
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -102,40 +96,38 @@ module Source =
     
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Source |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Source"
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then "@id", GEncode.includeString (oa :?> Source |> genID)
+                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.includeString "Source"
+            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")        ]
         |> GEncode.choose
         |> Encode.object
 
-    let rec decoder (options : ConverterOptions) : Decoder<Source> =
-        fun s json -> 
-        if GDecode.hasUnknownFields ["@id";"name";"characteristics";"@type"] json then 
-                Error (DecoderError("Unknown fields in Source", ErrorReason.BadPrimitive(s,Encode.nil)))
-            else
-            Decode.object (fun get ->
+    let allowedFields = ["@id";"name";"characteristics";"@type"]
+
+    let rec decoder (options : ConverterOptions) : Decoder<Source> =     
+        GDecode.object allowedFields (fun get ->
             
-                    {
-                        ID = get.Optional.Field "@id" GDecode.uri
-                        Name = get.Optional.Field "name" Decode.string
-                        Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-                    } 
+                {
+                    ID = get.Optional.Field "@id" GDecode.uri
+                    Name = get.Optional.Field "name" Decode.string
+                    Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
+                } 
             
-            ) s json
+        )
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (m:Source) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toStringLD (s:Source) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -155,10 +147,10 @@ module Sample =
     
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Sample |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Sample"
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
+            if options.SetID then "@id", GEncode.includeString (oa :?> Sample |> genID)
+                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.includeString "Sample"
+            GEncode.tryInclude "name" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Name")
             GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
             GEncode.tryInclude "factorValues" (FactorValue.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorValues")
             GEncode.tryInclude "derivesFrom" (Source.encoder options) (oa |> GEncode.tryGetPropertyValue "DerivesFrom")
@@ -166,33 +158,31 @@ module Sample =
         |> GEncode.choose
         |> Encode.object
 
-    let decoder (options : ConverterOptions) : Decoder<Sample> =
-        fun s json -> 
-            if GDecode.hasUnknownFields ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"] json then 
-                Error (DecoderError("Unknown fields in Sample", ErrorReason.BadPrimitive(s,Encode.nil)))
-            else
-                Decode.object (fun get ->
-                    {
-                        ID = get.Optional.Field "@id" GDecode.uri
-                        Name = get.Optional.Field "name" Decode.string
-                        Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-                        FactorValues = get.Optional.Field "factorValues" (Decode.list (FactorValue.decoder options))
-                        DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (Source.decoder options))
-                    }
+    let allowedFields = ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"]
+
+    let decoder (options : ConverterOptions) : Decoder<Sample> =       
+        GDecode.object allowedFields (fun get ->
+            {
+                ID = get.Optional.Field "@id" GDecode.uri
+                Name = get.Optional.Field "name" Decode.string
+                Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
+                FactorValues = get.Optional.Field "factorValues" (Decode.list (FactorValue.decoder options))
+                DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (Source.decoder options))
+            }
             
-                ) s json
+        )
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (m:Sample) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toStringLD (s:Sample) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

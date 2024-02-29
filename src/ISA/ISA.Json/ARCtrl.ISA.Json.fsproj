@@ -40,8 +40,9 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NJsonSchema" Version="10.8.0" />
-    <PackageReference Include="Thoth.Json" Version="10.1.0" />
-    <PackageReference Include="Thoth.Json.Net" Version="11.0.0" />
+    <PackageReference Include="Thoth.Json.Core" Version="0.2.1" />
+    <PackageReference Include="Thoth.Json.JavaScript" Version="0.1.0" />
+    <PackageReference Include="Thoth.Json.Newtonsoft" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />

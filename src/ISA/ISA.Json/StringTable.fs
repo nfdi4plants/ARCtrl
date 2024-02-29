@@ -1,10 +1,7 @@
 ﻿namespace rec ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
@@ -39,7 +36,9 @@ module StringTable =
             Encode.int i
 
     let decodeString (ot : StringTableArray) : Decoder<string> = 
-        fun s o -> 
-            match Decode.int s o with
-            | Ok i -> Ok ot.[i]
-            | Error err -> Error err
+        { new Decoder<string> with
+            member this.Decode (s,json) = 
+                match Decode.int.Decode(s,json) with
+                | Ok i -> Ok ot.[i]
+                | Error err -> Error err
+        }

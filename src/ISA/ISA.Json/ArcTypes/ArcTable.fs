@@ -1,10 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.Collections.Generic
 
@@ -53,7 +50,7 @@ module ArcTable =
             |> Encode.array
             
     let compressedColumnDecoder (columnIndex : int) (cellTable : CellTableArray) (table: ArcTable) (column : JsonValue)  =
-        match Decode.array (CellTable.decodeCell cellTable) "" column with
+        match (Decode.array (CellTable.decodeCell cellTable)).Decode "" column with
         | Ok a ->             
             a |> Array.iteri (fun r cell -> table.Values.Add((columnIndex,r),cell))
         | Error err -> 
@@ -109,7 +106,7 @@ module ArcTableExtensions =
 
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (ArcTable.encoder this)
+            GEncode.toJsonString spaces (ArcTable.encoder this)
 
         static member toJsonString(a:ArcTable) = a.ToJsonString()
 
@@ -138,6 +135,6 @@ module ArcTableExtensions =
                     "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
                     "table", arcTable
                 ] 
-            Encode.toString spaces jObject
+            GEncode.toJsonString spaces jObject
 
         static member toCompressedJsonString(a:ArcTable) = a.ToCompressedJsonString()

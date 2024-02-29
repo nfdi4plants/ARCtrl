@@ -1,10 +1,6 @@
 ﻿namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
 
 open Fable.Core
 open Fable.Core.JsInterop
@@ -35,12 +31,19 @@ module GEncode =
         )
         #endif
 
-    let inline toJsonString (value : obj) = 
-        match value with
-        | :? string as s -> Encode.string s
-        | _ -> Encode.nil
+    let inline toJsonString spaces (value : Json) = 
+        #if FABLE_COMPILER
+        Thoth.Json.JavaScript.Encode.toString spaces value
+        #else
+        Thoth.Json.Newtonsoft.Encode.toString spaces value
+        #endif
 
-    let inline choose (kvs : (string * JsonValue) list) = 
+    let inline includeString (value : obj) = 
+        match value with
+        | :? string as s -> Json.String s
+        | _ -> Json.Null
+
+    let inline choose (kvs : (string * Json) list) = 
         kvs
         |> List.choose (fun (k,v) -> 
             if v = Encode.nil then None
@@ -50,7 +53,7 @@ module GEncode =
     /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
     ///
     /// If the object is a sequence, encode each element using the given encoder and return the resulting sequence
-    let tryInclude name (encoder : obj -> JsonValue) (value : obj option) = 
+    let tryInclude name (encoder : obj -> Json) (value : obj option) = 
         name,
         match value with
         #if FABLE_COMPILER

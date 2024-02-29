@@ -1,10 +1,7 @@
 ﻿namespace rec ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
@@ -41,7 +38,7 @@ module CellTable =
             Encode.int i
 
     let decodeCell (ot : CellTableArray) : Decoder<CompositeCell> = 
-        fun s o -> 
-            match Decode.int s o with
-            | Ok i -> Ok ot.[i]
-            | Error err -> Error err
+        Decode.object (fun get ->
+            let i = get.Required.Field "t" Decode.int
+            ot.[i]
+        )

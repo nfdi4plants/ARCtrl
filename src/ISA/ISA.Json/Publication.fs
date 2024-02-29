@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -21,20 +18,22 @@ module Publication =
 
     let rec encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Publication |> genID)
-            if options.IncludeType then "@type", GEncode.toJsonString "Publication"
-            GEncode.tryInclude "pubMedID" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PubMedID")
-            GEncode.tryInclude "doi" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "DOI")
-            GEncode.tryInclude "authorList" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Authors")
-            GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
+            if options.SetID then "@id", GEncode.includeString (oa :?> Publication |> genID)
+            if options.IncludeType then "@type", GEncode.includeString "Publication"
+            GEncode.tryInclude "pubMedID" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "PubMedID")
+            GEncode.tryInclude "doi" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "DOI")
+            GEncode.tryInclude "authorList" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Authors")
+            GEncode.tryInclude "title" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "Title")
             GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Status")
             GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
         ]
         |> GEncode.choose
         |> Encode.object
 
+    let allowedFields = ["@id";"pubMedID";"doi";"authorList";"title";"status";"comments";"@type"]
+
     let rec decoder (options : ConverterOptions) : Decoder<Publication> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 PubMedID = get.Optional.Field "pubMedID" GDecode.uri
                 DOI = get.Optional.Field "doi" Decode.string
@@ -51,12 +50,12 @@ module Publication =
 
     let toJsonString (p:Publication) = 
         encoder (ConverterOptions()) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toStringLD (p:Publication) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

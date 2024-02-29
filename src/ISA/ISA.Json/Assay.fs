@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -18,8 +15,10 @@ module AssayMaterials =
         |> GEncode.choose
         |> Encode.object
     
+    let allowedFields = ["samples";"otherMaterials"]
+
     let decoder (options : ConverterOptions) : Decoder<AssayMaterials> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 Samples = get.Optional.Field "samples" (Decode.list (Sample.decoder options))
                 OtherMaterials = get.Optional.Field "otherMaterials" (Decode.list (Material.decoder options))
@@ -37,13 +36,13 @@ module Assay =
 
     let encoder (options : ConverterOptions) (oa : obj) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> Assay |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "Assay"
-            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
+            if options.SetID then "@id", GEncode.includeString (oa :?> Assay |> genID)
+                else GEncode.tryInclude "@id" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "ID")
+            if options.IncludeType then "@type", GEncode.includeString "Assay"
+            GEncode.tryInclude "filename" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "FileName")
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "MeasurementType")
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "TechnologyType")
-            GEncode.tryInclude "technologyPlatform" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
+            GEncode.tryInclude "technologyPlatform" GEncode.includeString (oa |> GEncode.tryGetPropertyValue "TechnologyPlatform")
             GEncode.tryInclude "dataFiles" (Data.encoder options) (oa |> GEncode.tryGetPropertyValue "DataFiles")
             GEncode.tryInclude "materials" (AssayMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials")
             GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")
@@ -54,8 +53,10 @@ module Assay =
         |> GEncode.choose
         |> Encode.object
 
+    let allowedFields = ["@id";"filename";"measurementType";"technologyType";"technologyPlatform";"dataFiles";"materials";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"]
+
     let decoder (options : ConverterOptions) : Decoder<Assay> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
                 FileName = get.Optional.Field "filename" Decode.string
@@ -76,12 +77,12 @@ module Assay =
 
     let toJsonString (p:Assay) = 
         encoder (ConverterOptions()) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toStringLD (a:Assay) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
