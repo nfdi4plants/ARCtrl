@@ -1,26 +1,25 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
 module StudyMaterials = 
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : StudyMaterials) = 
         [
-            GEncode.tryInclude "sources" (Source.encoder options) (oa |> GEncode.tryGetPropertyValue "Sources")
-            GEncode.tryInclude "samples" (Sample.encoder options) (oa |> GEncode.tryGetPropertyValue "Samples")
-            GEncode.tryInclude "otherMaterials" (Material.encoder options) (oa |> GEncode.tryGetPropertyValue "OtherMaterials")
+            GEncode.tryIncludeList "sources" (Source.encoder options) (oa.Sources)
+            GEncode.tryIncludeList "samples" (Sample.encoder options) (oa.Samples)
+            GEncode.tryIncludeList "otherMaterials" (Material.encoder options) (oa.OtherMaterials)
         ]
         |> GEncode.choose
         |> Encode.object
     
+    let allowedFields = ["sources";"samples";"otherMaterials"]
+
     let decoder (options : ConverterOptions) : Decoder<StudyMaterials> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 Sources = get.Optional.Field "sources" (Decode.list (Source.decoder options))
                 Samples = get.Optional.Field "samples" (Decode.list (Sample.decoder options))
@@ -42,59 +41,51 @@ module Study =
                                       | Some t -> "#Study_" + t.Replace(" ","_")
                                       | None -> "#EmptyStudy"
     
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Study) = 
         [
             if options.SetID then 
-                "@id", GEncode.toJsonString (oa :?> Study |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", ([GEncode.toJsonString "Study"; GEncode.toJsonString "ArcStudy"] |> Encode.list)
-            GEncode.tryInclude "filename" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FileName")
-            GEncode.tryInclude "identifier" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Identifier")
-            GEncode.tryInclude "title" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Title")
-            GEncode.tryInclude "description" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "submissionDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "SubmissionDate")
-            GEncode.tryInclude "publicReleaseDate" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "PublicReleaseDate")
-            GEncode.tryInclude "publications" (Publication.encoder options) (oa |> GEncode.tryGetPropertyValue "Publications")
-            GEncode.tryInclude "people" (Person.encoder options) (oa |> GEncode.tryGetPropertyValue "Contacts")
-            GEncode.tryInclude "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "StudyDesignDescriptors")
+                "@type", (Encode.list [Encode.string "Study"; Encode.string "ArcStudy"])
+            GEncode.tryInclude "filename" Encode.string (oa.FileName)
+            GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
+            GEncode.tryInclude "title" Encode.string (oa.Title)
+            GEncode.tryInclude "description" Encode.string (oa.Description)
+            GEncode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
+            GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
+            GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
+            GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
+            GEncode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa.StudyDesignDescriptors)
             if not options.IsRoCrate then 
-                GEncode.tryInclude "protocols" (Protocol.encoder options None None None) (oa |> GEncode.tryGetPropertyValue "Protocols")
+                GEncode.tryIncludeList "protocols" (Protocol.encoder options None None None) (oa.Protocols)
             if options.IsRoCrate then
-                let study = oa:?> Study
-                let mat = study.Materials
-                match mat with
-                | Some m -> GEncode.tryInclude "samples" (Sample.encoder options) (m |> GEncode.tryGetPropertyValue "Samples")
+                match oa.Materials with
+                | Some m -> 
+                    GEncode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
+                    GEncode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
+                    GEncode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
                 | None -> ()
-            if options.IsRoCrate then
-                let study = oa:?> Study
-                let mat = study.Materials
-                match mat with
-                | Some m -> GEncode.tryInclude "sources" (Source.encoder options) (m |> GEncode.tryGetPropertyValue "Sources")
-                | None -> ()
-            if options.IsRoCrate then
-                let study = oa:?> Study
-                let mat = study.Materials
-                match mat with
-                | Some m -> GEncode.tryInclude "materials" (Material.encoder options) (m |> GEncode.tryGetPropertyValue "OtherMaterials")
-                | None -> ()
+            
             if not options.IsRoCrate then 
-                (GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa |> GEncode.tryGetPropertyValue "Materials"))
-            GEncode.tryInclude "processSequence" (Process.encoder options (oa:?> Study).Identifier None) (oa |> GEncode.tryGetPropertyValue "ProcessSequence")
-            GEncode.tryInclude "assays" (Assay.encoder options (oa:?> Study).Identifier) (oa |> GEncode.tryGetPropertyValue "Assays")            
-            GEncode.tryInclude "factors" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Factors")
-            GEncode.tryInclude "characteristicCategories" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicCategories")            
-            GEncode.tryInclude "unitCategories" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "UnitCategories")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+                GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa.Materials)
+            GEncode.tryIncludeList "processSequence" (Process.encoder options oa.Identifier None) (oa.ProcessSequence)
+            GEncode.tryIncludeList "assays" (Assay.encoder options oa.Identifier) (oa.Assays)            
+            GEncode.tryIncludeList "factors" (Factor.encoder options) (oa.Factors)
+            GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)            
+            GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then 
                 "@context", ROCrateContext.Study.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
 
+    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
+
     let decoder (options : ConverterOptions) : Decoder<Study> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
                 FileName = get.Optional.Field "filename" Decode.string
@@ -122,12 +113,13 @@ module Study =
 
     let toJsonString (p:Study) = 
         encoder (ConverterOptions()) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (s:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) s
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:Study) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2

@@ -3,12 +3,10 @@
 open ARCtrl.Template
 open ARCtrl.ISA
 open System
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
 open ARCtrl
-#endif
+
+open Thoth.Json.Core
+open ARCtrl.ISA.Json
 
 //https://thoth-org.github.io/Thoth.Json/documentation/auto/extra-coders.html#ready-to-use-extra-coders
 
@@ -25,7 +23,7 @@ module Organisation =
 
 module Template =
 
-    open ARCtrl.ISA.Json
+    
 
     let encode (template: Template) =
         let personEncoder = ARCtrl.ISA.Json.Person.encoder (ConverterOptions())
@@ -68,12 +66,11 @@ module Template =
         )
 
     let fromJsonString (jsonString: string) =
-        match Decode.fromString decode jsonString with
-        | Ok template   -> template
-        | Error exn     -> failwithf "Error. Given json string cannot be parsed to Template: %A" exn
+        try GDecode.fromJsonString decode jsonString with
+        | exn     -> failwithf "Error. Given json string cannot be parsed to Template: %A" exn
 
     let toJsonString (spaces: int) (template:Template) =
-        Encode.toString spaces (encode template)
+        GEncode.toJsonString spaces (encode template)
 
 module Templates =
 
@@ -84,16 +81,15 @@ module Templates =
         |> Encode.object
 
     let decode =
-        let d = Decode.dict Template.decode
-        Decode.fromString d
+        Decode.dict Template.decode
+        
 
     let fromJsonString (jsonString: string) =
-        match decode jsonString with
-        | Ok templateMap    -> templateMap.Values |> Array.ofSeq
-        | Error exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
+        try GDecode.fromJsonString decode jsonString with
+        | exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
 
     let toJsonString (spaces: int) (templateList: (string*Template) []) =
-        Encode.toString spaces (encode templateList)
+        GEncode.toJsonString spaces (encode templateList)
 
 
 [<AutoOpen>]

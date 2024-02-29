@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -31,47 +28,49 @@ module Person =
                                 | (Some fn,None,None) -> "#" + fn.Replace(" ","_")
                                 | _ -> "#EmptyPerson"
 
-    let affiliationEncoder (options : ConverterOptions) (affiliation : obj) =
+    let affiliationEncoder (options : ConverterOptions) (affiliation : string) =
         if options.IsRoCrate then
             [
-                ("@type",GEncode.toJsonString "Organization")
-                ("@id",GEncode.toJsonString $"Organization/{affiliation}")
-                ("name",GEncode.toJsonString affiliation)
-                let ae = Encode.Auto.generateEncoder()
+                ("@type",Encode.string "Organization")
+                ("@id",Encode.string $"Organization/{affiliation}")
+                ("name",Encode.string affiliation)               
                 if options.IncludeContext then
                     "@context", ROCrateContext.Organization.context_jsonvalue
             ]
             |> Encode.object
         else
-            GEncode.toJsonString affiliation
+            Encode.string affiliation
 
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+
+    let rec encoder (options : ConverterOptions) (oa : Person) = 
+        let oa = oa |> Person.setCommentFromORCID
         [
             if options.SetID then 
-                "@id", GEncode.toJsonString (oa :?> Person |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", GEncode.toJsonString "Person"
-            let oa = oa :?> Person |> Person.setCommentFromORCID
-            GEncode.tryInclude "firstName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "FirstName")
-            GEncode.tryInclude "lastName" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "LastName")
-            GEncode.tryInclude "midInitials" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "MidInitials")
-            GEncode.tryInclude "email" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "EMail")
-            GEncode.tryInclude "phone" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Phone")
-            GEncode.tryInclude "fax" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Fax")
-            GEncode.tryInclude "address" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Address")
-            GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa |> GEncode.tryGetPropertyValue "Affiliation")
-            GEncode.tryInclude "roles" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Roles")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+                "@type", Encode.string "Person"
+            GEncode.tryInclude "firstName" Encode.string (oa.FirstName)
+            GEncode.tryInclude "lastName" Encode.string (oa.LastName)
+            GEncode.tryInclude "midInitials" Encode.string (oa.MidInitials)
+            GEncode.tryInclude "email" Encode.string (oa.EMail)
+            GEncode.tryInclude "phone" Encode.string (oa.Phone)
+            GEncode.tryInclude "fax" Encode.string (oa.Fax)
+            GEncode.tryInclude "address" Encode.string (oa.Address)
+            GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa.Affiliation)
+            GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then 
                 "@context", ROCrateContext.Person.context_jsonvalue
         ]
         |> GEncode.choose
         |> Encode.object
 
+    let allowedFields = ["@id";"firstName";"lastName";"midInitials";"email";"phone";"fax";"address";"affiliation";"roles";"comments";"@type"; "@context"]
+
     let decoder (options : ConverterOptions) : Decoder<Person> =
-        Decode.object (fun get ->
+        GDecode.object allowedFields (fun get ->
             {
                 ID = get.Optional.Field "@id" GDecode.uri
                 ORCID = None
@@ -95,15 +94,16 @@ module Person =
 
     let toJsonString (p:Person) = 
         encoder (ConverterOptions()) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (p:Person) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:Person) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

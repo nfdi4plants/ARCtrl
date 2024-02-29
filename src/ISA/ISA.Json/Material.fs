@@ -1,31 +1,31 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
 
 module MaterialType = 
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : MaterialType) = 
         match value with
-        | :? MaterialType as MaterialType.ExtractName -> 
+        | MaterialType.ExtractName -> 
             Encode.string "Extract Name"
-        | :? MaterialType as MaterialType.LabeledExtractName -> 
+        | MaterialType.LabeledExtractName -> 
             Encode.string "Labeled Extract Name"
         | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<MaterialType> =
-        fun s json ->
-            match Decode.string s json with
-            | Ok "Extract Name" -> Ok (MaterialType.ExtractName)
-            | Ok "Labeled Extract Name" -> Ok (MaterialType.LabeledExtractName)
-            | Ok s -> Error (DecoderError($"Could not parse {s}No other value than \"Extract Name\" or \"Labeled Extract Name\" allowed for materialtype", ErrorReason.BadPrimitive(s,Encode.nil)))
-            | Error e -> Error e
+        { new Decoder<MaterialType> with
+            member this.Decode (s,json) = 
+                match Decode.string.Decode(s,json) with
+                | Ok "Extract Name" -> Ok MaterialType.ExtractName
+                | Ok "Labeled Extract Name" -> Ok MaterialType.LabeledExtractName
+                | Ok s -> Error (DecoderError($"Could not parse {s}No other value than \"Extract Name\" or \"Labeled Extract Name\" allowed for materialtype", ErrorReason.BadPrimitive(s,json)))
+                | Error e -> Error e
+        
+        }
 
 
 module MaterialAttribute =
@@ -35,19 +35,18 @@ module MaterialAttribute =
             | Some id -> URI.toString id
             | None -> "#EmptyMaterialAttribute"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : MaterialAttribute) = 
         [
             if options.SetID then 
-                "@id",  GEncode.toJsonString (oa :?> MaterialAttribute |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", ([ GEncode.toJsonString "MaterialAttribute";  GEncode.toJsonString "ArcMaterialAttribute"] |> Encode.list)
-            GEncode.tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "CharacteristicType")
-            let ae = Encode.Auto.generateEncoder()
+                "@type", (Encode.list [Encode.string "MaterialAttribute"; Encode.string "ArcMaterialAttribute"])
+            GEncode.tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa.CharacteristicType)
             if options.IncludeContext then
                 "@context", ROCrateContext.MaterialAttribute.context_jsonvalue
-            ]
+        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -64,15 +63,16 @@ module MaterialAttribute =
 
     let toJsonString (m:MaterialAttribute) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (m:MaterialAttribute) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:MaterialAttribute) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -88,20 +88,20 @@ module MaterialAttributeValue =
         | Some id -> URI.toString id
         | None -> "#EmptyMaterialAttributeValue"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : MaterialAttributeValue) = 
         [
-            if options.SetID then
-                "@id",  GEncode.toJsonString (oa :?> MaterialAttributeValue |> genID)
+            if options.SetID then 
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", ([ GEncode.toJsonString "MaterialAttributeValue";  GEncode.toJsonString "ArcMaterialAttributeValue"] |> Encode.list)
-            GEncode.tryInclude "category" (MaterialAttribute.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
-            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
-            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
+                "@type", (Encode.list [Encode.string "MaterialAttributeValue"; Encode.string "ArcMaterialAttributeValue"])
+            GEncode.tryInclude "category" (MaterialAttribute.encoder options) (oa.Category)
+            GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
             if options.IncludeContext then 
                 "@context", ROCrateContext.MaterialAttributeValue.context_jsonvalue
-            ]
+        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -120,15 +120,16 @@ module MaterialAttributeValue =
 
     let toJsonString (m:MaterialAttributeValue) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (m:MaterialAttributeValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:MaterialAttributeValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -147,54 +148,52 @@ module Material =
                         | Some n -> "#Material_" + n.Replace(" ","_")
                         | None -> "#EmptyMaterial"
     
-    let rec encoder (options : ConverterOptions) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (oa : Material) = 
         [
             if options.SetID then 
-                "@id",  GEncode.toJsonString (oa :?> Material |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", ([ GEncode.toJsonString "Material";  GEncode.toJsonString "ArcMaterial"] |> Encode.list)
-            GEncode.tryInclude "name"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "type" (MaterialType.encoder options) (oa |> GEncode.tryGetPropertyValue "MaterialType")
-            GEncode.tryInclude "characteristics" (MaterialAttributeValue.encoder options) (oa |> GEncode.tryGetPropertyValue "Characteristics")
-            GEncode.tryInclude "derivesFrom" (encoder options) (oa |> GEncode.tryGetPropertyValue "DerivesFrom")
-            let ae = Encode.Auto.generateEncoder()
+                "@type", (Encode.list [Encode.string "Material"; Encode.string "ArcMaterial"])
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryInclude "type" (MaterialType.encoder options) (oa.MaterialType)
+            GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
+            GEncode.tryIncludeList "derivesFrom" (encoder options) (oa.DerivesFrom)
             if options.IncludeContext then 
                 "@context", ROCrateContext.Material.context_jsonvalue
-            ]
+        ]
         |> GEncode.choose
         |> Encode.object
 
-    let rec decoder (options : ConverterOptions) : Decoder<Material> =
-        fun s json ->
-            if GDecode.hasUnknownFields ["@id";"@type";"name";"type";"characteristics";"derivesFrom";"@context"] json then
-                Error (DecoderError("Unknown fields in material", ErrorReason.BadPrimitive(s,Encode.nil)))
-            else
-                Decode.object (fun get ->
-                    {
-                        ID = get.Optional.Field "@id" GDecode.uri
-                        Name = get.Optional.Field "name" Decode.string
-                        MaterialType = get.Optional.Field "type" (MaterialType.decoder options)
-                        Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-                        DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (decoder options))
-                    }
-                ) s json
+    let allowedFields = ["@id";"@type";"name";"type";"characteristics";"derivesFrom"; "@context"]
 
+    let rec decoder (options : ConverterOptions) : Decoder<Material> =       
+        GDecode.object allowedFields (fun get -> 
+            {                       
+                ID = get.Optional.Field "@id" GDecode.uri
+                Name = get.Optional.Field "name" Decode.string
+                MaterialType = get.Optional.Field "type" (MaterialType.decoder options)
+                Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
+                DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (decoder options))
+            }
+        )
+        
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (m:Material) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (m:Material) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:Material) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 22
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

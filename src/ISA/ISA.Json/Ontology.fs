@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -17,18 +14,19 @@ module AnnotationValue =
     /// <param name="s"></param>
     /// <param name="json"></param>
     let decoder (options : ConverterOptions) : Decoder<string> =
-        fun s json ->
-            // is there a option to decode force to string?
-            match Decode.int s json with
-            | Ok i -> Ok <| string i
-            | Error _ -> 
-                match Decode.float s json with
-                | Ok f -> Ok <| string f
+        { new Decoder<string> with
+            member this.Decode (s,json) =
+                match Decode.int.Decode(s,json) with
+                | Ok i -> Ok <| string i
                 | Error _ -> 
-                    match Decode.string s json with
-                    | Ok s -> Ok <| s
-                    | Error e -> Error e
-
+                    match Decode.float.Decode(s,json) with
+                    | Ok f -> Ok <| string f
+                    | Error _ -> 
+                        match Decode.string.Decode(s,json) with
+                        | Ok s -> Ok <| s
+                        | Error e -> Error e       
+        }
+            
 
 module OntologySourceReference = 
     
@@ -40,17 +38,17 @@ module OntologySourceReference =
             | Some n -> "#OntologySourceRef_" + n.Replace(" ","_")
             | None -> "#DummyOntologySourceRef"
 
-    let encoder (options : ConverterOptions) (osr : obj) = 
+    let encoder (options : ConverterOptions) (osr : OntologySourceReference) = 
         [
             if options.SetID then 
-                "@id",  GEncode.toJsonString (osr :?> OntologySourceReference |> genID)
+                "@id", Encode.string (osr |> genID)
             if options.IncludeType then 
-                "@type",  GEncode.toJsonString "OntologySourceReference"
-            GEncode.tryInclude "description"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Description")
-            GEncode.tryInclude "file"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "File")
-            GEncode.tryInclude "name"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "version"  GEncode.toJsonString (osr |> GEncode.tryGetPropertyValue "Version")
-            GEncode.tryInclude "comments" (Comment.encoder options) (osr |> GEncode.tryGetPropertyValue "Comments")
+                "@type", Encode.string "OntologySourceReference"
+            GEncode.tryInclude "description" Encode.string (osr.Description)
+            GEncode.tryInclude "file" Encode.string (osr.File)
+            GEncode.tryInclude "name" Encode.string (osr.Name)
+            GEncode.tryInclude "version" Encode.string (osr.Version)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (osr.Comments)
             if options.IncludeContext then
                 "@context", ROCrateContext.OntologySourceReference.context_jsonvalue
         ]
@@ -73,15 +71,16 @@ module OntologySourceReference =
 
     let toJsonString (oa:OntologySourceReference) = 
         encoder (ConverterOptions()) oa
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (oa:OntologySourceReference) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) oa
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:OntologySourceReference) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     // let fromFile (path : string) = 
     //     File.ReadAllText path 
@@ -103,18 +102,18 @@ module OntologyAnnotation =
                                         | Some n -> "#UserTerm_" + n .Replace(" ","_")
                                         | None -> "#DummyOntologyAnnotation"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : OntologyAnnotation) = 
         [
-            if options.SetID then
-                "@id", GEncode.toJsonString (oa :?> OntologyAnnotation |> genID)
+            if options.SetID then 
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then
-                "@type", GEncode.toJsonString "OntologyAnnotation"
-            GEncode.tryInclude "annotationValue" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "termSource" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
-            GEncode.tryInclude "termAccession" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then 
+                "@type", Encode.string "OntologyAnnotation"
+            GEncode.tryInclude "annotationValue" Encode.string (oa.Name)
+            GEncode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
+            GEncode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then
                 "@context", ROCrateContext.OntologyAnnotation.context_jsonvalue
         ]
@@ -134,15 +133,15 @@ module OntologyAnnotation =
         )
 
 
-    let compressedEncoder (stringTable : StringTableMap) (options : ConverterOptions) (oa : obj) = 
+    let compressedEncoder (stringTable : StringTableMap) (options : ConverterOptions) (oa : OntologyAnnotation) = 
         [
-            if options.SetID then "@id", GEncode.toJsonString (oa :?> OntologyAnnotation |> genID)
-                else GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", GEncode.toJsonString "OntologyAnnotation"
-            GEncode.tryInclude "a" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "ts" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "TermSourceREF")
-            GEncode.tryInclude "ta" (StringTable.encodeString stringTable) (oa |> GEncode.tryGetPropertyValue "TermAccessionNumber")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+            if options.SetID then "@id", Encode.string (oa |> genID)
+                else GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then "@type", Encode.string "OntologyAnnotation"
+            GEncode.tryInclude "a" (StringTable.encodeString stringTable) (oa.Name)
+            GEncode.tryInclude "ts" (StringTable.encodeString stringTable) (oa.TermSourceREF)
+            GEncode.tryInclude "ta" (StringTable.encodeString stringTable) (oa.TermAccessionNumber)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
         ]
         |> GEncode.choose
         |> Encode.object
@@ -164,15 +163,16 @@ module OntologyAnnotation =
 
     let toJsonString (oa:OntologyAnnotation) = 
         encoder (ConverterOptions()) oa
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (oa:OntologyAnnotation) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) oa
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:OntologyAnnotation) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

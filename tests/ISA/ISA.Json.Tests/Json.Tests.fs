@@ -4,13 +4,7 @@ open ARCtrl.ISA
 open ARCtrl.ISA.Json
 open ARCtrl.ISA
 
-#if FABLE_COMPILER
-open Fable.Core
-open Fable.Core.JsInterop
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
 
 open TestingUtils
 
@@ -92,45 +86,14 @@ let testEncode =
             
             Expect.isSome result "Could not find the field, even though it exists"
 
-            let result' = 
-                #if FABLE_COMPILER
-                !!result.Value
-                #else
-                result.Value :?> Comment []
-                #endif
+            let result' = result.Value :?> Comment []
+                
 
             let expected = comments
 
             Expect.sequenceEqual result' expected "Retrieved value did not match"
         )
 
-    ]
-
-let testDecode =
-
-    testList "Decode" [
-        testCase "getFieldNames" (fun () -> 
-            
-            let s = 
-                """
-                {
-                "@id": "#material/extract-C-0.07-aliquot10",
-                "characteristics": [],
-                "name": "extract-C-0.07-aliquot10",
-                "type": "Extract Name"
-                }
-                """
-            let v = Decode.fromString Decode.value s
-           
-            let result = 
-                match v with 
-                | Result.Ok v -> GDecode.getFieldNames v
-                | Error e -> failwith e
-            
-            let expected = ["@id";"characteristics";"name";"type"]
-
-            Expect.sequenceEqual result expected "Field names did not match"
-        )
     ]
 
 let testOntoloyAnnotation =
@@ -2417,7 +2380,6 @@ let testInvestigationFileLD =
 let main = 
     testList "Json" [
         testEncode
-        testDecode
         testOntoloyAnnotation
         testOntoloyAnnotationLD
         testProcessInput     

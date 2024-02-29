@@ -1,10 +1,6 @@
 namespace ARCtrl.ISA.Json.ROCrateContext
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
 
 module Material =
 

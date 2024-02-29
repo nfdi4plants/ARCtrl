@@ -1,41 +1,43 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
 module Value = 
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : Value) = 
         match value with
-        | :? Value as Value.Float f -> 
+        | Value.Float f -> 
             Encode.float f
-        | :? Value as Value.Int i -> 
+        | Value.Int i -> 
             Encode.int i
-        | :? Value as Value.Name s -> 
+        | Value.Name s -> 
             Encode.string s
-        | :? Value as Value.Ontology s -> 
+        | Value.Ontology s -> 
             OntologyAnnotation.encoder options s
         | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<Value> =
-        fun s json ->
-            match Decode.int s json with
-            | Ok i -> Ok (Value.Int i)
-            | Error _ -> 
-                match Decode.float s json with
-                | Ok f -> Ok (Value.Float f)
+        {
+        
+        new Decoder<Value> with
+            member this.Decode (s,json) = 
+                match Decode.int.Decode(s,json) with
+                | Ok i -> Ok (Value.Int i)
                 | Error _ -> 
-                    match OntologyAnnotation.decoder options s json with
-                    | Ok f -> Ok (Value.Ontology f)
+                    match Decode.float.Decode(s,json) with
+                    | Ok f -> Ok (Value.Float f)
                     | Error _ -> 
-                        match Decode.string s json with
-                        | Ok s -> Ok (Value.Name s)
-                        | Error e -> Error e
+                        match OntologyAnnotation.decoder(options).Decode(s,json) with
+                        | Ok f -> Ok (Value.Ontology f)
+                        | Error _ -> 
+                            match Decode.string.Decode(s,json) with
+                            | Ok s -> Ok (Value.Name s)
+                            | Error e -> Error e}
+
 
 
     let fromJsonString (s:string) = 
@@ -43,7 +45,7 @@ module Value =
 
     let toJsonString (v:Value) = 
         encoder (ConverterOptions()) v
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -61,19 +63,20 @@ module Factor =
                   | Some n -> "#Factor_" + n.Replace(" ","_")
                   | None -> "#EmptyFactor"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : Factor) = 
         [
             if options.SetID then 
-                "@id",  GEncode.toJsonString (oa :?> Factor |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then "@type", ([ GEncode.toJsonString "Factor";  GEncode.toJsonString "ArcFactor"] |> Encode.list)
-            GEncode.tryInclude "factorName"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "FactorType")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
+            if options.IncludeType then 
+                "@type", (Encode.list [Encode.string "Factor"; Encode.string "ArcFactor"])
+            GEncode.tryInclude "factorName" Encode.string (oa.Name)
+            GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
+            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then
                 "@context", ROCrateContext.Factor.context_jsonvalue
-            ]
+        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -92,15 +95,16 @@ module Factor =
 
     let toJsonString (f:Factor) = 
         encoder (ConverterOptions()) f
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (f:Factor) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) f
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:Factor) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -117,20 +121,20 @@ module FactorValue =
         | Some id -> URI.toString id
         | None -> "#EmptyFactorValue"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : FactorValue) = 
         [
             if options.SetID then 
-                "@id",  GEncode.toJsonString (oa :?> FactorValue |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id"  GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", ([ GEncode.toJsonString "FactorValue";  GEncode.toJsonString "ArcFactorValue"] |> Encode.list)
-            GEncode.tryInclude "category" (Factor.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
-            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
-            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
+                "@type", (Encode.list [Encode.string "FactorValue"; Encode.string "ArcFactorValue"])
+            GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
+            GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
             if options.IncludeContext then
                 "@context", ROCrateContext.FactorValue.context_jsonvalue
-            ]
+        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -149,15 +153,16 @@ module FactorValue =
 
     let toJsonString (f:FactorValue) = 
         encoder (ConverterOptions()) f
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (f:FactorValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) f
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:FactorValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

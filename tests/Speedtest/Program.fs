@@ -1,6 +1,8 @@
 ﻿
 open ARCtrl
 open ARCtrl.ISA
+open ARCtrl.ISA.Json
+
 
 [<EntryPoint>]
 let main argv =
@@ -27,6 +29,42 @@ let main argv =
         FillMissing.newF t3
         FillMissing.newSeqF t4
         1
+    elif Array.contains "--bigJson" argv then
+        let createAssay() = 
+            let a = ArcAssay.init("MyAssay")
+            let t = a.InitTable("MyTable")
+            t.AddColumn(CompositeHeader.Input IOType.Source)
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter1")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter2")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter3")))
+            t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
+            t.AddColumn(CompositeHeader.Output IOType.Sample)
+            let rowCount = 10000
+            printfn "rowCount: %d" rowCount
+            for i = 0 to rowCount - 1 do
+                let cells =             
+                    [|
+                        CompositeCell.FreeText $"Source{i}"
+                        CompositeCell.FreeText $"Parameter1_value"
+                        CompositeCell.FreeText $"Parameter2_value"
+                        CompositeCell.FreeText $"Parameter3_value{i - i % 10}"
+                        CompositeCell.FreeText $"Characteristic_value"
+                        CompositeCell.FreeText $"Sample{i}"
+                    |]
+                for j = 0 to cells.Length - 1 do
+                    t.Values.[(j,i)] <- cells.[j]
+            a
+        let toAssay(a : ArcAssay) = 
+            a.ToAssay()
+        let toJson(a : Assay) =
+            Assay.toJsonString a
+        let toFS(a : string) =
+            System.IO.File.WriteAllText((__SOURCE_DIRECTORY__ + "/big.json"), a)
 
+        createAssay()
+        |> toAssay
+        |> toJson
+        |> toFS
+        1
     else 
         0

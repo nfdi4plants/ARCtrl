@@ -400,7 +400,6 @@ let private tests_arcAssay =
         testCase "FullAssay ToAssay" (fun () ->
             let arcAssay = fullArcAssay.Copy()
             let assay = arcAssay.ToAssay()
-            printfn "%A" assay
 
             Expect.isSome assay.FileName "Assay should have fileName"
             let expectedFileName = Identifier.Assay.fileNameFromIdentifier identifier

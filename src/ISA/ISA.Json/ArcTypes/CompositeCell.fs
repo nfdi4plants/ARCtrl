@@ -1,10 +1,7 @@
 ﻿namespace rec ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 
 open ARCtrl.ISA.Aux
@@ -79,13 +76,11 @@ module CompositeCellExtensions =
 
     type CompositeCell with
         static member fromJsonString (jsonString: string) : CompositeCell = 
-            match Decode.fromString CompositeCell.decoder jsonString with
-            | Ok r -> r
-            | Error e -> failwithf "Error. Unable to parse json string to CompositeCell: %s" e
-
+            GDecode.fromJsonString CompositeCell.decoder jsonString
+            
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (CompositeCell.encoder this)
+            GEncode.toJsonString spaces (CompositeCell.encoder this)
 
         static member toJsonString(a:CompositeCell) = a.ToJsonString()
         

@@ -14,6 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\..\src\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
   </ItemGroup>
 

@@ -1,10 +1,7 @@
 namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -19,18 +16,19 @@ module ProcessParameterValue =
             + (Value.getText v).Replace(" ","_")
         | _ -> "#EmptyParameterValue"
 
-    let encoder (options : ConverterOptions) (oa : obj) = 
+    let encoder (options : ConverterOptions) (oa : ProcessParameterValue) = 
+    
         [
             if options.SetID then 
-                "@id", GEncode.toJsonString (oa :?> ProcessParameterValue |> genID)
+                "@id", Encode.string (oa |> genID)
             if options.IncludeType then 
-                "@type", ([GEncode.toJsonString "ProcessParameterValue"; GEncode.toJsonString "ArcProcessParameterValue"] |> Encode.list)
-            GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa |> GEncode.tryGetPropertyValue "Category")
-            GEncode.tryInclude "value" (Value.encoder options) (oa |> GEncode.tryGetPropertyValue "Value")
-            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa |> GEncode.tryGetPropertyValue "Unit")
+                "@type", (Encode.list [Encode.string "ProcessParameterValue"; Encode.string "ArcProcessParameterValue"])
+            GEncode.tryInclude "category" (ProtocolParameter.encoder options) (oa.Category)
+            GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
+            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
             if options.IncludeContext then
                 "@context", ROCrateContext.ProcessParameterValue.context_jsonvalue
-         ]
+        ]
         |> GEncode.choose
         |> Encode.object
 
@@ -48,15 +46,16 @@ module ProcessParameterValue =
 
     let toJsonString (p:ProcessParameterValue) = 
         encoder (ConverterOptions()) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (p:ProcessParameterValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:ProcessParameterValue) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -68,46 +67,50 @@ module ProcessParameterValue =
 /// Functions for handling the ProcessInput Type
 module ProcessInput =
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : ProcessInput) = 
         match value with
-        | :? ProcessInput as ProcessInput.Source s-> 
+        | ProcessInput.Source s-> 
             Source.encoder options s
-        | :? ProcessInput as ProcessInput.Sample s -> 
+        | ProcessInput.Sample s -> 
             Sample.encoder options s
-        | :? ProcessInput as ProcessInput.Data d -> 
+        | ProcessInput.Data d -> 
             Data.encoder options d
-        | :? ProcessInput as ProcessInput.Material m -> 
+        | ProcessInput.Material m -> 
             Material.encoder options m
         | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<ProcessInput> =
-        fun s json ->
-            match Source.decoder options s json with
-            | Ok s -> Ok (ProcessInput.Source s)
-            | Error _ -> 
-                match Sample.decoder options s json with
-                | Ok s -> Ok (ProcessInput.Sample s)
+        { new Decoder<ProcessInput> with
+            member this.Decode(s,json) = 
+                match Source.decoder(options).Decode(s,json) with
+                | Ok s -> Ok (ProcessInput.Source s)
                 | Error _ -> 
-                    match Data.decoder options s json with
-                    | Ok s -> Ok (ProcessInput.Data s)
+                    match Sample.decoder(options).Decode(s,json) with
+                    | Ok s -> Ok (ProcessInput.Sample s)
                     | Error _ -> 
-                        match Material.decoder options s json with
-                        | Ok s -> Ok (ProcessInput.Material s)
-                        | Error e -> Error e
+                        match Data.decoder(options).Decode(s,json) with
+                        | Ok s -> Ok (ProcessInput.Data s)
+                        | Error _ -> 
+                            match Material.decoder(options).Decode(s,json) with
+                            | Ok s -> Ok (ProcessInput.Material s)
+                            | Error e -> Error e
+
+        }
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
     let toJsonString (m:ProcessInput) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let toJsonldString (m:ProcessInput) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) m
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:ProcessInput) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -119,37 +122,40 @@ module ProcessInput =
 /// Functions for handling the ProcessOutput Type
 module ProcessOutput =
 
-    let encoder (options : ConverterOptions) (value : obj) = 
+    let encoder (options : ConverterOptions) (value : ProcessOutput) = 
         match value with
-        | :? ProcessOutput as ProcessOutput.Sample s -> 
+        | ProcessOutput.Sample s -> 
             Sample.encoder options s
-        | :? ProcessOutput as ProcessOutput.Data d -> 
+        | ProcessOutput.Data d -> 
             Data.encoder options d
-        | :? ProcessOutput as ProcessOutput.Material m -> 
+        | ProcessOutput.Material m -> 
             Material.encoder options m
         | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<ProcessOutput> =
-        fun s json ->
-            match Sample.decoder options s json with
-            | Ok s -> Ok (ProcessOutput.Sample s)
-            | Error _ -> 
-                match Data.decoder options s json with
-                | Ok s -> Ok (ProcessOutput.Data s)
+        { new Decoder<ProcessOutput> with
+            member this.Decode(s,json) = 
+                match Sample.decoder(options).Decode(s,json) with
+                | Ok s -> Ok (ProcessOutput.Sample s)
                 | Error _ -> 
-                    match Material.decoder options s json with
-                    | Ok s -> Ok (ProcessOutput.Material s)
-                    | Error e -> Error e
+                    match Data.decoder(options).Decode(s,json) with
+                    | Ok s -> Ok (ProcessOutput.Data s)
+                    | Error _ -> 
+                        match Material.decoder(options).Decode(s,json) with
+                        | Ok s -> Ok (ProcessOutput.Material s)
+                        | Error e -> Error e
+        }
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
 
-    let toJsonString (m:ProcessInput) = 
+    let toJsonString (m:ProcessOutput) = 
         encoder (ConverterOptions()) m
-        |> Encode.toString 2
-    let toJsonldStringWithContext (a:ProcessInput) = 
+        |> GEncode.toJsonString 2
+
+    let toJsonldStringWithContext (a:ProcessOutput) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -168,25 +174,24 @@ module Process =
                         | Some n -> "#Process_" + n.Replace(" ","_")
                         | None -> "#EmptyProcess"
 
-    let rec encoder (options : ConverterOptions) (studyName:string Option) (assayName:string Option) (oa : obj) = 
+    let rec encoder (options : ConverterOptions) (studyName:string Option) (assayName:string Option) (oa : Process) = 
         [
             if options.SetID then 
-                "@id", GEncode.toJsonString (oa :?> Process |> genID)
+                "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "ID")
+                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IncludeType then 
-                "@type", ([GEncode.toJsonString "Process"; GEncode.toJsonString "ArcProcess"] |> Encode.list)
-            GEncode.tryInclude "name" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Name")
-            let processName = (oa :?> Process).Name
-            GEncode.tryInclude "executesProtocol" (Protocol.encoder options studyName assayName processName) (oa |> GEncode.tryGetPropertyValue "ExecutesProtocol")
-            GEncode.tryInclude "parameterValues" (ProcessParameterValue.encoder options) (oa |> GEncode.tryGetPropertyValue "ParameterValues")
-            GEncode.tryInclude "performer" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Performer")
-            GEncode.tryInclude "date" GEncode.toJsonString (oa |> GEncode.tryGetPropertyValue "Date")
-            GEncode.tryInclude "previousProcess" (encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "PreviousProcess")
-            GEncode.tryInclude "nextProcess" (encoder options studyName assayName) (oa |> GEncode.tryGetPropertyValue "NextProcess")
-            GEncode.tryInclude "inputs" (ProcessInput.encoder options) (oa |> GEncode.tryGetPropertyValue "Inputs")
-            GEncode.tryInclude "outputs" (ProcessOutput.encoder options) (oa |> GEncode.tryGetPropertyValue "Outputs")
-            GEncode.tryInclude "comments" (Comment.encoder options) (oa |> GEncode.tryGetPropertyValue "Comments")
+                "@type", (Encode.list [Encode.string "Process"; Encode.string "ArcProcess"])
+            GEncode.tryInclude "name" Encode.string (oa.Name)
+            GEncode.tryInclude "executesProtocol" (Protocol.encoder options studyName assayName oa.Name) (oa.ExecutesProtocol)
+            GEncode.tryIncludeList "parameterValues" (ProcessParameterValue.encoder options) (oa.ParameterValues)
+            GEncode.tryInclude "performer" Encode.string (oa.Performer)
+            GEncode.tryInclude "date" Encode.string (oa.Date)
+            GEncode.tryInclude "previousProcess" (encoder options studyName assayName) (oa.PreviousProcess)
+            GEncode.tryInclude "nextProcess" (encoder options studyName assayName) (oa.NextProcess)
+            GEncode.tryIncludeList "inputs" (ProcessInput.encoder options) (oa.Inputs)
+            GEncode.tryIncludeList "outputs" (ProcessOutput.encoder options) (oa.Outputs)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IncludeContext then 
                 "@context", ROCrateContext.Process.context_jsonvalue
         ]
@@ -215,15 +220,16 @@ module Process =
 
     let toJsonString (p:Process) = 
         encoder (ConverterOptions()) None None p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (p:Process) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) None None p
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:Process) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None None a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -241,19 +247,20 @@ module ProcessSequence =
         p
         |> List.map (Process.encoder (ConverterOptions()) None None)
         |> Encode.list
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (p:Process list) = 
         p
         |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true)) None None)
         |> Encode.list
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (p:Process list) = 
         p
         |> List.map (Process.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None None)
         |> Encode.list
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

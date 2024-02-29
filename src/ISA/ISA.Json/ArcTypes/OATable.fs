@@ -1,12 +1,8 @@
 ﻿namespace rec ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
-open ARCtrl.ISA
+open Thoth.Json.Core
 
+open ARCtrl.ISA
 open ARCtrl.ISA.Aux
 
 type OATableMap = System.Collections.Generic.Dictionary<OntologyAnnotation,int>
@@ -38,7 +34,8 @@ module OATable =
             Encode.int i
 
     let decodeOA (ot : OATableArray) : Decoder<OntologyAnnotation> = 
-        fun s o -> 
-            match Decode.int s o with
-            | Ok i -> Ok ot.[i]
-            | Error err -> Error err
+        Decode.object (fun get ->
+            let i = get.Required.Raw Decode.int
+            ot.[i]
+        )
+        

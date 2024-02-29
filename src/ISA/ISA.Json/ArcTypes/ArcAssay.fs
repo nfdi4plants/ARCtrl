@@ -1,10 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 
 module JsonHelper =
@@ -107,10 +104,11 @@ module ArcAssay =
     /// exports in json-ld format
     let toJsonldString (a:ArcAssay) = 
         Assay.encoder (ConverterOptions(SetID=true,IncludeType=true)) None (a.ToAssay())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:ArcAssay) = 
         Assay.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None (a.ToAssay())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (Assay.decoder (ConverterOptions())) s
@@ -118,16 +116,15 @@ module ArcAssay =
 
     let toJsonString (a:ArcAssay) = 
         Assay.encoder (ConverterOptions()) None (a.ToAssay())
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     let toArcJsonString (a:ArcAssay) : string =
         let spaces = 0
-        Encode.toString spaces (encoder a)
+        GEncode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
-        match Decode.fromString decoder jsonString with
-        | Ok a -> a
-        | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
+        try GDecode.fromJsonString decoder jsonString with
+        | e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e.Message
 
 [<AutoOpen>]
 module ArcAssayExtensions =
@@ -136,13 +133,12 @@ module ArcAssayExtensions =
 
     type ArcAssay with
         static member fromArcJsonString (jsonString: string) : ArcAssay = 
-            match Decode.fromString ArcAssay.decoder jsonString with
-            | Ok a -> a
-            | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
+            try GDecode.fromJsonString ArcAssay.decoder jsonString with
+            | e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e.Message
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            Encode.toString spaces (ArcAssay.encoder this)
+            GEncode.toJsonString spaces (ArcAssay.encoder this)
 
         static member toArcJsonString (a:ArcAssay) = a.ToArcJsonString()
 
@@ -154,9 +150,8 @@ module ArcAssayExtensions =
                     let cellTable = get.Required.Field "cellTable" (CellTable.decoder stringTable oaTable)
                     get.Required.Field "assay" (ArcAssay.compressedDecoder stringTable oaTable cellTable)
                 )
-            match Decode.fromString decoder jsonString with
-            | Ok r -> r
-            | Error e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e
+            try GDecode.fromJsonString decoder jsonString with
+            | e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e.Message
 
         member this.ToCompressedJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
@@ -171,6 +166,6 @@ module ArcAssayExtensions =
                     "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
                     "assay", arcAssay
                 ] 
-            Encode.toString spaces jObject
+            GEncode.toJsonString spaces jObject
 
         static member toCompressedJsonString (a:ArcAssay) = a.ToCompressedJsonString()

@@ -1,12 +1,10 @@
 ﻿module ARCtrl.Template.Tests
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 
 open ARCtrl.Template.Json
+open ARCtrl.ISA.Json
 open ARCtrl.ISA
 
 open TestingUtils
@@ -18,12 +16,12 @@ let private tests_Organisation = testList "Organisation" [
     testList "encode" [
         testCase "DataPLANT" <| fun _ ->
             let o = Organisation.DataPLANT
-            let actual = Organisation.encode o |> Encode.toString 4
+            let actual = Organisation.encode o |> GEncode.toJsonString 4
             let expected = "\"DataPLANT\""
             Expect.equal actual expected ""
         testCase "Other" <| fun _ ->
             let o = Organisation.Other "My Custom Org"
-            let actual = Organisation.encode o |> Encode.toString 4
+            let actual = Organisation.encode o |> GEncode.toJsonString 4
             let expected = "\"My Custom Org\""
             // replace line endings to normalize for all editors/environments.
             Expect.equal (fableReplaceLineEndings actual) (fableReplaceLineEndings expected) ""
@@ -31,27 +29,27 @@ let private tests_Organisation = testList "Organisation" [
     testList "decode" [
         testCase "DataPLANT" <| fun _ ->
             let json = "\"DataPLANT\""
-            let actual = Decode.fromString Organisation.decode json
-            let expected =  Ok (Organisation.DataPLANT)
+            let actual = GDecode.fromJsonString Organisation.decode json
+            let expected =  Organisation.DataPLANT
             Expect.equal actual expected ""
         testCase "Other" <| fun _ ->
             let json = "\"My Custom Org\""
-            let actual = Decode.fromString Organisation.decode json
-            let expected =  Ok (Other "My Custom Org")
+            let actual = GDecode.fromJsonString Organisation.decode json
+            let expected =  Other "My Custom Org"
             Expect.equal actual expected ""
     ]
     testList "roundabout" [
         testCase "DataPLANT" <| fun _ ->
             let o = Organisation.DataPLANT
-            let json = Organisation.encode o |> Encode.toString 4
-            let actual = Decode.fromString Organisation.decode json
-            let expected = Ok (o)
+            let json = Organisation.encode o |> GEncode.toJsonString 4
+            let actual = GDecode.fromJsonString Organisation.decode json
+            let expected = o
             Expect.equal actual expected ""
         testCase "Other" <| fun _ ->
             let o = Organisation.Other "My Custom Org"
-            let json = Organisation.encode o |> Encode.toString 4
-            let actual = Decode.fromString Organisation.decode json
-            let expected = Ok (o)
+            let json = Organisation.encode o |> GEncode.toJsonString 4
+            let actual = GDecode.fromJsonString Organisation.decode json
+            let expected = o
             Expect.equal actual expected ""
     ]
 ]
@@ -66,29 +64,28 @@ let tests_Template = testList "Template" [
             o.Table <- table
             o.Authors <- [|ARCtrl.ISA.Person.create(FirstName="John", LastName="Doe"); ARCtrl.ISA.Person.create(FirstName="Jane", LastName="Doe");|]
             o.EndpointRepositories <- [|ARCtrl.ISA.OntologyAnnotation.fromString "Test"; ARCtrl.ISA.OntologyAnnotation.fromString "Testing second"|]
-            let json = Encode.toString 4 (Template.encode o)
-            let actual = Decode.fromString Template.decode json
+            let json = GEncode.toJsonString  4 (Template.encode o)
+            let actual = GDecode.fromJsonString Template.decode json
             let expected = o
-            let actualValue = Expect.wantOk actual "Ok"
-            Expect.equal actualValue.Id expected.Id "id"
-            Expect.equal actualValue.Authors expected.Authors "Authors"
-            Expect.equal actualValue.EndpointRepositories expected.EndpointRepositories "EndpointRepositories"
-            Expect.equal actualValue.LastUpdated expected.LastUpdated "LastUpdated"
-            Expect.equal actualValue.Name expected.Name "Name"
-            Expect.equal actualValue.Organisation expected.Organisation "Organisation"
-            Expect.equal actualValue.SemVer expected.SemVer "SemVer"
+            Expect.equal actual.Id expected.Id "id"
+            Expect.equal actual.Authors expected.Authors "Authors"
+            Expect.equal actual.EndpointRepositories expected.EndpointRepositories "EndpointRepositories"
+            Expect.equal actual.LastUpdated expected.LastUpdated "LastUpdated"
+            Expect.equal actual.Name expected.Name "Name"
+            Expect.equal actual.Organisation expected.Organisation "Organisation"
+            Expect.equal actual.SemVer expected.SemVer "SemVer"
             //printfn "ACTUAL: %A" actualValue.Table
             //printfn "EXPECTED: %A" expected.Table
                 
-            Expect.equal actualValue.Table.Name expected.Table.Name "Name should be equal"
-            Expect.sequenceEqual actualValue.Table.Headers expected.Table.Headers "Headers should be equal"
-            Expect.sequenceEqual actualValue.Table.Values expected.Table.Values "Headers should be equal"
+            Expect.equal actual.Table.Name expected.Table.Name "Name should be equal"
+            Expect.sequenceEqual actual.Table.Headers expected.Table.Headers "Headers should be equal"
+            Expect.sequenceEqual actual.Table.Values expected.Table.Values "Headers should be equal"
 
-            Expect.equal actualValue.Table.RowCount expected.Table.RowCount "RowCount should be equal"
-            Expect.equal actualValue.Table.ColumnCount expected.Table.ColumnCount "ColumnCount should be equal"
+            Expect.equal actual.Table.RowCount expected.Table.RowCount "RowCount should be equal"
+            Expect.equal actual.Table.ColumnCount expected.Table.ColumnCount "ColumnCount should be equal"
 
-            Expect.equal actualValue.Table expected.Table "Table"
-            Expect.equal actualValue expected "template"
+            Expect.equal actual.Table expected.Table "Table"
+            Expect.equal actual expected "template"
     ]
 ]
 
@@ -264,7 +261,7 @@ let private tests_equality = testList "equality" [
 let private tests_Web = testList "Web" [
     testCaseAsync "getTemplates" <| async {
         let! templatesMap = ARCtrl.Template.Web.getTemplates(None)
-        Expect.isTrue (templatesMap.Length > 0) "Count > 0"
+        Expect.isTrue (templatesMap.Count > 0) "Count > 0"
     }
 ]
 

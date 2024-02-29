@@ -1,11 +1,8 @@
 namespace ARCtrl.ISA.Json
 
 
-#if FABLE_COMPILER
-open Thoth.Json
-#else
-open Thoth.Json.Net
-#endif
+open Thoth.Json.Core
+
 open ARCtrl.ISA
 open System.IO
 
@@ -20,16 +17,18 @@ module Comment =
                     "#Comment_" + n.Replace(" ","_") + v
                   | None -> "#EmptyComment"
 
-    let encoder (options : ConverterOptions) (comment : obj) = 
+
+
+    let encoder (options : ConverterOptions) (comment : Comment) = 
         [
-            if options.SetID then
-                "@id",  GEncode.toJsonString (comment :?> Comment |> genID)
+            if options.SetID then 
+                "@id", Encode.string (comment |> genID)
             else 
-                GEncode.tryInclude "@id"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "ID")
-            if options.IncludeType then
-                "@type",  GEncode.toJsonString "Comment"
-            GEncode.tryInclude "name"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Name")
-            GEncode.tryInclude "value"  GEncode.toJsonString (comment |> GEncode.tryGetPropertyValue "Value")
+                GEncode.tryInclude "@id" Encode.string (comment.ID)
+            if options.IncludeType then 
+                "@type", Encode.string "Comment"
+            GEncode.tryInclude "name" Encode.string (comment.Name)
+            GEncode.tryInclude "value" Encode.string (comment.Value)
             if options.IncludeContext then
                 "@context", ROCrateContext.Comment.context_jsonvalue
         ]
@@ -50,15 +49,16 @@ module Comment =
 
     let toJsonString (c:Comment) = 
         encoder (ConverterOptions()) c
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (c:Comment) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true)) c
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
+
     let toJsonldStringWithContext (a:Comment) = 
         encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
-        |> Encode.toString 2
+        |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
