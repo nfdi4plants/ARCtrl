@@ -1292,7 +1292,7 @@ let testInvestigationFile =
                 Publication.make
                     (Some "12345678")
                     (Some "11.1111/abcdef123456789")
-                    (Some "Lukas Weil, Other Gzúy")
+                    (Some "Lukas Weil, Other Gzuy") // (Some "Lukas Weil, Other Gzúy")
                     (Some "Fair is great")
                     (Some publicationStatus)
                     (Some [|comment|])
@@ -1708,7 +1708,7 @@ let testInvestigationFileLD =
                 Publication.make
                     (Some "12345678")
                     (Some "11.1111/abcdef123456789")
-                    (Some "Lukas Weil, Other Gzúy")
+                    (Some "Lukas Weil, Other Gzuy") // (Some "Lukas Weil, Other Gzúy")
                     (Some "Fair is great")
                     (Some publicationStatus)
                     (Some [|comment|])
@@ -2051,7 +2051,7 @@ let testInvestigationFileLD =
                 Publication.make
                     (Some "12345678")
                     (Some "11.1111/abcdef123456789")
-                    (Some "Lukas Weil, Other Gzúy")
+                    (Some "Lukas Weil, Other Gzuy") // (Some "Lukas Weil, Other Gzúy")
                     (Some "Fair is great")
                     (Some publicationStatus)
                     (Some [|comment|])

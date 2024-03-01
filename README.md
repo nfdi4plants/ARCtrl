@@ -20,7 +20,7 @@ and __JavaScript__! ❤️
 ``` 
 
 ```bash
-<PackageReference Include="ARCtrl" Version="1.0.0-beta.1" />
+<PackageReference Include="ARCtrl" Version="1.1.0" />
 ```
 
 ### JavaScript
@@ -44,10 +44,27 @@ Currently we provide some documentation in form of markdown files in the `/docs`
     - verify with `npm --version` (Tested with v9.2.0)
 - [.NET SDK](https://dotnet.microsoft.com/en-us/download)
     - verify with `dotnet --version` (Tested with 7.0.306)
+- [Python](https://www.python.org/downloads/)
+    - verify with `py --version` (Tested with 3.12.2)
 
 ### Local Setup
 
-1. `dotnet tool restore`
-3. `npm install`
+1. Setup dotnet tools
+
+   `dotnet tool restore`
+
+2. Install NPM dependencies
+   
+   `npm install`
+
+3. Setup python environment
+    
+   `py -m venv .venv`
+
+4. Install [Poetry](https://python-poetry.org/) and dependencies
+
+   1. `.\.venv\Scripts\python.exe -m pip install -U pip setuptools`
+   2. `.\.venv\Scripts\python.exe -m pip install poetry`
+   3. `.\.venv\Scripts\python.exe -m poetry install --no-root`
 
 Verify correct setup with `./build.cmd runtests` ✨
