@@ -17,7 +17,7 @@ let downloadFile url =
     
     if ARCtrl.WebRequestHelpers.NodeJs.isNode() then
         // From here: https://github.com/fable-compiler/fable3-samples/blob/25ea2404b28c897988b144f0141bc116da292679/nodejs/src/App.fs#L7
-        ARCtrl.WebRequestHelpers.NodeJs.importSideEffects()
+        Fable.Core.JsInterop.importSideEffects "isomorphic-fetch"
         ARCtrl.WebRequestHelpers.NodeJs.downloadFile url
     else
         browserAndDotnet()
