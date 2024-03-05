@@ -105,7 +105,13 @@ module Helper =
 
         createProcess npmPath
 
-    let python = createProcess @".\.venv\Scripts\python.exe"
+    let python = 
+        if System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) then
+            Fake.Core.Trace.log "Detected Windows System."
+            createProcess @".\.venv\Scripts\python.exe"
+        else
+            Fake.Core.Trace.log "Detected Unix System."
+            createProcess @"./.venv/bin/python"
 
     let run proc arg dir =
         proc arg dir
