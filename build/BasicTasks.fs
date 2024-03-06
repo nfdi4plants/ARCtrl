@@ -108,10 +108,10 @@ module Helper =
     let python = 
         if System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows) then
             Fake.Core.Trace.log "Detected Windows System."
-            createProcess @".\.venv\Scripts\python.exe"
+            createProcess (__SOURCE_DIRECTORY__.Replace(@"\build",@"\.venv\Scripts\python.exe"))
         else
             Fake.Core.Trace.log "Detected Unix System."
-            createProcess @"./.venv/bin/python"
+            createProcess (__SOURCE_DIRECTORY__.Replace(@"/build",@"/.venv/bin/python"))
 
     let run proc arg dir =
         proc arg dir
@@ -137,7 +137,7 @@ let clean = BuildTask.create "Clean" [] {
     ++ "tests/**/bin"
     ++ "tests/**/obj"
     ++ "dist"
-    ++ ProjectInfo.pkgDir
+    ++ ProjectInfo.netPkgDir
     |> Shell.cleanDirs 
 }
 

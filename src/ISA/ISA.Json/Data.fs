@@ -15,7 +15,6 @@ module DataFile =
             Encode.string "Derived Data File"
         | DataFile.ImageFile  -> 
             Encode.string "Image File"
-        | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<DataFile> =
         { new Decoder<DataFile> with

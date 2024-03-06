@@ -13,16 +13,23 @@ let createAssemblyVersion = BuildTask.create "createvfs" [] {
 let updateReleaseNotes = BuildTask.createFn "ReleaseNotes" [] (fun config ->
     ReleaseNotes.update(ProjectInfo.gitOwner, ProjectInfo.project, config)
 
-    let semVer = 
+    let semVerLong,semVerShort = 
         Fake.Core.ReleaseNotes.load "RELEASE_NOTES.md"
-        |> fun x -> x.SemVer.AsString
+        |> fun x -> 
+            x.SemVer.AsString,
+            $"{x.SemVer.Major}.{x.SemVer.Minor}.{x.SemVer.Patch}"
     Trace.trace "Start updating package.json version"
     // Update Version in src/Nfdi4Plants.Fornax.Template/package.json
     let p = "build/release_package.json"
     let t = System.IO.File.ReadAllText p
-    let tNew = System.Text.RegularExpressions.Regex.Replace(t, """\"version\": \".*\",""", sprintf "\"version\": \"%s\"," semVer )
+    let tNew = System.Text.RegularExpressions.Regex.Replace(t, """\"version\": \".*\",""", sprintf "\"version\": \"%s\"," semVerLong )
     System.IO.File.WriteAllText(p, tNew)
     Trace.trace "Finish updating package.json version"
+    Trace.trace "Start updating pyproject.toml version"
+    let p = "pyproject.toml"
+    let t = System.IO.File.ReadAllText p
+    let tNew = System.Text.RegularExpressions.Regex.Replace(t, "version = \".*\"", sprintf "version = \"%s\"" semVerShort )
+    System.IO.File.WriteAllText(p, tNew)
 )
 
 
