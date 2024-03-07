@@ -45,7 +45,7 @@ Currently we provide some documentation in form of markdown files in the `/docs`
 - [.NET SDK](https://dotnet.microsoft.com/en-us/download)
     - verify with `dotnet --version` (Tested with 7.0.306)
 - [Python](https://www.python.org/downloads/)
-    - verify with `py --version` (Tested with 3.12.2)
+    - verify with `py --version` (Tested with 3.12.2, known to work only for >=3.11)
 
 ### Local Setup
 

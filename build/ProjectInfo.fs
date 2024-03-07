@@ -30,7 +30,8 @@ let gitHome = $"https://github.com/{gitOwner}"
 
 let projectRepo = $"https://github.com/{gitOwner}/{project}"
 
-let netPkgDir = "dist/pkg"
+
+let netPkgDir = "./dist/net"
 let npmPkgDir = "./dist/js"
 let pyPkgDir = "./dist/py"
 

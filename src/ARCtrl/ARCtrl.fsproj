@@ -51,6 +51,9 @@
     <NpmDependencies>
       <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
     </NpmDependencies>
+    <PythonDependencies>
+      <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
+    </PythonDependencies>
   </PropertyGroup>
 	<ItemGroup>
 		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
