@@ -77,7 +77,6 @@ module ProcessInput =
             Data.encoder options d
         | ProcessInput.Material m -> 
             Material.encoder options m
-        | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<ProcessInput> =
         { new Decoder<ProcessInput> with
@@ -130,7 +129,6 @@ module ProcessOutput =
             Data.encoder options d
         | ProcessOutput.Material m -> 
             Material.encoder options m
-        | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<ProcessOutput> =
         { new Decoder<ProcessOutput> with

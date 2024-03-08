@@ -3,7 +3,9 @@
 open Fable.Core
 open Fable.Core.JsInterop
 
+#if FABLE_COMPILER_JAVASCRIPT
 [<StringEnum>]
+#endif
 [<RequireQualifiedAccess>]
 type DTOType = 
     | [<CompiledName("ISA_Assay")>] ISA_Assay // isa.assay.xlsx
@@ -25,7 +27,9 @@ type CLITool =
 
     static member create(name,arguments) = {Name = name; Arguments = arguments}
 
+#if FABLE_COMPILER_JAVASCRIPT
 [<Erase>]
+#endif
 [<RequireQualifiedAccess>]
 type DTO =
     | Spreadsheet of obj
@@ -70,7 +74,9 @@ type Contract =
         /// The actual DTO, as discriminate union.
         DTO: DTO option
     }
+    #if FABLE_COMPILER_JAVASCRIPT
     [<NamedParams(fromIndex=2)>]
+    #endif    
     static member create(op, path, ?dtoType, ?dto) = {Operation= op; Path = path; DTOType = dtoType; DTO = dto}
     /// <summary>Create a CREATE contract with all necessary information.</summary>
     /// <param name="path">The path relative from ARC root, at which the new file should be created.</param>

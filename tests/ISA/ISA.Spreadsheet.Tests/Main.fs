@@ -1,14 +1,10 @@
 ﻿module ARCtrl.ISA.XLSX.Tests
 
-#if FABLE_COMPILER
-open Fable.Mocha
-#else
-open Expecto
+open Fable.Pyxpecto
 
-[<Tests>]
-#endif
 let all = testSequenced <| testList "ISA.Spreadsheet" [
     FableTests.main
+    RegexTests.main
     ArcInvestigationTests.main
     CompositeColumnTests.main
     ArcTableTests.main
@@ -19,9 +15,5 @@ let all = testSequenced <| testList "ISA.Spreadsheet" [
     Tests.Performance.Main
 ]
 
-let [<EntryPoint>] main argv = 
-    #if FABLE_COMPILER
-    Mocha.runTests all
-    #else
-    Tests.runTestsWithCLIArgs [] argv all
-    #endif
+[<EntryPoint>]
+let main argv = Pyxpecto.runTests [||] all

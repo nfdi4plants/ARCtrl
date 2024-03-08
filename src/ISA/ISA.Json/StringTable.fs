@@ -12,11 +12,11 @@ type StringTableArray = array<string>
 
 module StringTable =
 
-    let arrayFromMap (otm : StringTableMap) : StringTableArray=
+    let arrayFromMap (otm : StringTableMap) : StringTableArray =
+        let a = Array.zeroCreate<string> otm.Count
         otm
-        |> Seq.sortBy (fun kv -> kv.Value)
-        |> Seq.map (fun kv -> kv.Key)
-        |> Seq.toArray
+        |> Seq.iter (fun kv -> a.[kv.Value] <- kv.Key)
+        a
 
     let encoder (ot: StringTableArray) =
         ot

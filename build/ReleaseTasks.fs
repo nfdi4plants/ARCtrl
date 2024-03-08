@@ -31,7 +31,7 @@ let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseT
 }
 
 let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; packDotNet] {
-    let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
+    let targets = (!! (sprintf "%s/*.*pkg" netPkgDir ))
     for target in targets do printfn "%A" target
     let msg = sprintf "[NUGET] release package with version %s?" stableVersionTag
     if promptYesNo msg then
@@ -44,7 +44,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
 }
 
 let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; runTests; packDotNetPrerelease] {
-    let targets = (!! (sprintf "%s/*.*pkg" pkgDir ))
+    let targets = (!! (sprintf "%s/*.*pkg" netPkgDir ))
     for target in targets do printfn "%A" target
     let msg = sprintf "[NUGET] release package with version %s?" prereleaseTag 
     if promptYesNo msg then
@@ -85,5 +85,17 @@ let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build
             { o with
                 WorkingDirectory = "./dist/js/"
             })      
+    else failwith "aborted"
+}
+
+let publishPyPi = BuildTask.create "PublishPyPi" [packPy] {
+    let msg = sprintf "[PyPi] release package with version %s?" stableVersionTag
+    if promptYesNo msg then
+        let apikey = Environment.environVarOrNone "PYPI_KEY"
+        match apikey with
+        | Some key -> 
+            run python $"-m poetry config pypi-token.pypi {key}" ProjectInfo.pyPkgDir
+        | None -> ()
+        run python "-m poetry publish" ProjectInfo.pyPkgDir
     else failwith "aborted"
 }

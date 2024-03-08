@@ -14,7 +14,6 @@ module MaterialType =
             Encode.string "Extract Name"
         | MaterialType.LabeledExtractName -> 
             Encode.string "Labeled Extract Name"
-        | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<MaterialType> =
         { new Decoder<MaterialType> with

@@ -58,7 +58,7 @@ let investigationROC =
         },
         "pubMedID": "12345678",
         "doi": "11.1111/abcdef123456789",
-        "authorList": "Lukas Weil, Other Gzúy",
+        "authorList": "Lukas Weil, Other Gzuy",
         "title": "Fair is great",
         "status": {
           "@id": "OntologyTerm/Published",
@@ -251,7 +251,7 @@ let investigationROC =
             },
             "pubMedID": "12345678",
             "doi": "11.1111/abcdef123456789",
-            "authorList": "Lukas Weil, Other Gzúy",
+            "authorList": "Lukas Weil, Other Gzuy",
             "title": "Fair is great",
             "status": {
               "@id": "OntologyTerm/Published",
@@ -3889,7 +3889,7 @@ let investigationLD =
       },
       "pubMedID": "12345678",
       "doi": "11.1111/abcdef123456789",
-      "authorList": "Lukas Weil, Other Gzúy",
+      "authorList": "Lukas Weil, Other Gzuy",
       "title": "Fair is great",
       "status": {
         "@id": "OntologyTerm/Published",
@@ -4072,7 +4072,7 @@ let investigationLD =
           },
           "pubMedID": "12345678",
           "doi": "11.1111/abcdef123456789",
-          "authorList": "Lukas Weil, Other Gzúy",
+          "authorList": "Lukas Weil, Other Gzuy",
           "title": "Fair is great",
           "status": {
             "@id": "OntologyTerm/Published",

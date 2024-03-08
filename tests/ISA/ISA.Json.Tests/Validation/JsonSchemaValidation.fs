@@ -1,5 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
+
+
 open ValidationTypes
 
 module JsonSchemaUrls =
@@ -78,14 +80,18 @@ module JSchema =
         download 1
 #endif
 
+
+#if !FABLE_COMPILER_PYTHON
 module Validation =
 
     let validate (schemaURL : string) (objectString : string) = 
         async {
             try 
-                #if FABLE_COMPILER
+#endif
+                #if FABLE_COMPILER_JAVASCRIPT
                 let! isValid, errorList = Fable.validate (schemaURL) (objectString)
-                #else
+                #endif
+                #if !FABLE_COMPILER
                 let settings = NJsonSchema.Validation.JsonSchemaValidatorSettings()
                 let schema = JSchema.tryDownloadSchema schemaURL
                 let r = schema.Result.Validate(objectString,settings)
@@ -95,6 +101,7 @@ module Validation =
                     |> Seq.map (fun err -> err.ToString()) 
                     |> Seq.toArray
                 #endif 
+#if !FABLE_COMPILER_PYTHON
                 // if you change isValid and errorList remember to check for fable compatibility.
                 // for exmaple must use same name as in `let! isValid, errorList =...`
                 return ValidationResult.OfJSchemaOutput(isValid, errorList)
@@ -163,3 +170,4 @@ module Validation =
 
     let validateStudy (studyString : string) =
         validate JsonSchemaUrls.Study studyString
+#endif

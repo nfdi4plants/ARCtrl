@@ -7,7 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="FableTests.fs" />
-    <Compile Include="StringConversionTests.fs" />
+    <Compile Include="RegexTests.fs" />
     <Compile Include="SparseTableTests.fs" />
     <Compile Include="CompositeHeaderTests.fs" />
     <Compile Include="CompositeCellTests.fs" />

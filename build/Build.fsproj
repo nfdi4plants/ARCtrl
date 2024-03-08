@@ -12,6 +12,7 @@
     <Compile Include="ReleaseNotesTasks.fs" />
     <Compile Include="BasicTasks.fs" />
     <Compile Include="GenerateIndexJs.fs" />
+    <Compile Include="GenerateIndexPy.fs" />
     <Compile Include="TestTasks.fs" />
     <Compile Include="PackageTasks.fs" />
     <Compile Include="ReleaseTasks.fs" />

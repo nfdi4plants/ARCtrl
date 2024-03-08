@@ -113,8 +113,13 @@ let private tests_GetHashCode = testList "GetHashCode" [
         let values = Array.init 10000 (fun i -> CompositeCell.createFreeText (string i))
         testTable.AddColumn(CompositeHeader.FreeText "Header", values)
         let f1 () = testTable.GetHashCode()
+        #if FABLE_COMPILER_PYTHON
+        let expectedMs = 500
+        #else
+        let expectedMs = 50
+        #endif
         // On i7-13800H, 2ms in Dotnet and 18ms in javascript
-        Expect.wantFaster f1 50 "GetHashCode is too slow" |> ignore
+        Expect.wantFaster f1 expectedMs "GetHashCode is too slow" |> ignore
 ]
 
 let private tests_validate = 
@@ -2024,7 +2029,12 @@ let private tests_AddRows =
                  Array.init 10000 (fun i -> 
                     [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
             let testF = fun () -> table.AddRows(rows)
-            Expect.wantFaster testF 100 $"AddRows is too slow." |> ignore     
+            #if FABLE_COMPILER_PYTHON
+            let expectedMs = 1000
+            #else
+            let expectedMs = 100
+            #endif
+            Expect.wantFaster testF expectedMs $"AddRows is too slow." |> ignore     
         )
     ]
 
@@ -2325,7 +2335,13 @@ let private tests_fillMissing = testList "fillMissing" [
                 ArcTableAux.Unchecked.setCellAt(5,i,(CompositeCell.FreeText $"FT5_{i}")) values
                 ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
         let testF = fun () -> ArcTableAux.Unchecked.fillMissingCells headers values   
-        Expect.wantFaster testF 220 "fillMissing is too slow." |> ignore // 130ms in javascript, dotnet faster than 100ms
+        #if FABLE_COMPILER_PYTHON
+        let expectedMs = 10000
+        #else
+        let expectedMs = 220
+        #endif
+        //4800ms in python on i7-13800H
+        Expect.wantFaster testF expectedMs "fillMissing is too slow." |> ignore // 130ms in javascript, dotnet faster than 100ms
     ]
 
 

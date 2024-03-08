@@ -1,5 +1,7 @@
 ﻿namespace ARCtrl.ISA.Json
 
+#if !FABLE_COMPILER_PYTHON
+
 module Fable =
 
     open Fable.Core
@@ -72,3 +74,5 @@ module Fable =
                     .ToValidationResult() 
             return output
         }
+
+#endif

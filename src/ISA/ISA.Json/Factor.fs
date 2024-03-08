@@ -18,7 +18,6 @@ module Value =
             Encode.string s
         | Value.Ontology s -> 
             OntologyAnnotation.encoder options s
-        | _ -> Encode.nil
 
     let decoder (options : ConverterOptions) : Decoder<Value> =
         {

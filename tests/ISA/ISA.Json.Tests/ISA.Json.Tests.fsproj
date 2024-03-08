@@ -6,11 +6,22 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="Validation\JsonValidation.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <Compile Include="Validation\ValidationResult.fs" />
+    <Compile Include="Validation\Fable.fs" />
+    <Compile Include="Validation\JsonSchemaValidation.fs" />
     <Compile Include="ArcTypes.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Json.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
+  <PropertyGroup>
+    <NpmDependencies>
+      <NpmPackage Name="jsonschema" Version="gte 1.1.0 lt 2.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+  </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />

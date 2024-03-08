@@ -13,9 +13,13 @@ let private tests_Study = testList "Study" [
             let s,_ = ArcStudy.fromFsWorkbook fswb
             let timer_end = System.DateTime.Now
             let runtime = (timer_end - timer_start).Milliseconds
-            let expected = 300 // this is too high and should be reduced
+            #if FABLE_COMPILER_PYTHON
+            let expectedMs = 1500
+            #else
+            let expectedMs = 300 // this is too high and should be reduced
+            #endif
             Expect.equal s.TableCount 1 "Table count"
-            Expect.isTrue (runtime <= expected) $"Expected conversion to be finished in under {expected}, but it took {runtime}"
+            Expect.isTrue (runtime <= expectedMs) $"Expected conversion to be finished in under {expectedMs}, but it took {runtime}"
         convertToArcFile fswb
 ]
 
@@ -26,7 +30,12 @@ let private tests_Investigation = testList "Investigation" [
             let s = ArcStudy.init($"Study{i}")
             inv.AddRegisteredStudy(s)
         let testF = fun () -> ArcInvestigation.toFsWorkbook inv
-        let wb = Expect.wantFaster testF 1000 "Parsing investigation to Workbook is too slow"    
+        #if FABLE_COMPILER_PYTHON
+        let expectedMs = 50000
+        #else
+        let expectedMs = 1000
+        #endif
+        let wb = Expect.wantFaster testF expectedMs "Parsing investigation to Workbook is too slow"    
         Expect.equal (wb.GetWorksheets().Count) 1 "Worksheet count"
 ]
 

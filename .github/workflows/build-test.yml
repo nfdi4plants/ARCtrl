@@ -10,6 +10,7 @@ jobs:
   test:
 
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
 
@@ -17,12 +18,16 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+  
+    # SETUP .NET
     - name: Setup .NET
       uses: actions/setup-dotnet@v3
       with:
         dotnet-version: 6.x.x
     - name: Restore fable
       run: dotnet tool restore
+
+    # SETUP NODE
     - name: Setup Node.js environment
       uses: actions/setup-node@v3
       with:
@@ -33,6 +38,28 @@ jobs:
     - name: install node modules ISA
       working-directory: ./src/ISA
       run: npm install
+
+    # SETUP PYTHON
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Setup Virtual Environment
+      run: python -m venv .venv
+    - name: Setup Poetry Windows
+      if: matrix.os == 'windows-latest'
+      run: |
+          .\.venv\Scripts\python.exe -m pip install -U pip setuptools
+          .\.venv\Scripts\python.exe -m pip install poetry
+          .\.venv\Scripts\python.exe -m poetry install --no-root
+    - name: Setup Poetry Unix
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+          ./.venv/bin/python -m pip install -U pip setuptools
+          ./.venv/bin/python -m pip install poetry
+          ./.venv/bin/python -m poetry install --no-root
+
+    # BUILD
     - name: make script executable
       if: matrix.os == 'ubuntu-latest'
       run: chmod u+x build.sh

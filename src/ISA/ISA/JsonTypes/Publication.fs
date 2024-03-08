@@ -5,7 +5,7 @@ open Update
 open Fable.Core
 
 [<AttachMembers>]
-type Publication = 
+type Publication = // ScholarlyArticle
     {
         PubMedID : URI option
         DOI : string option
