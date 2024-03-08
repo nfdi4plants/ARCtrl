@@ -1,3 +1,43 @@
+### 1.2.0+19d850e (Released 2024-3-8)
+* Additions:
+    * Added Python compatability
+    * [[#19d850e](https://github.com/nfdi4plants/ARCtrl/commit/19d850ed5e1474a5e82cd98537db3f398fbacc18)] several small cleanups according to PR #317 comments
+    * [[#8becc67](https://github.com/nfdi4plants/ARCtrl/commit/8becc672c432eb4399fc3a0e250a87e63044de2b)] update build project for releasing python package
+    * [[#df663cb](https://github.com/nfdi4plants/ARCtrl/commit/df663cbfe8cdfaa7ac48690f89539b17715ae0c0)] include python setup in CI
+    * [[#66b83a2](https://github.com/nfdi4plants/ARCtrl/commit/66b83a2292b082e96676a52c1dd176695173f949)] several small changes to test stack
+    * [[#3dfaad7](https://github.com/nfdi4plants/ARCtrl/commit/3dfaad77a14aa70715388ef6a1fa77cb337bd622)] adjustments to web and validation to allowe for python transpilation
+    * [[#688c628](https://github.com/nfdi4plants/ARCtrl/commit/688c6283e9b2bd332fd93388b10d8661e185bc1b)] work on json io support in python
+    * [[#93b6d94](https://github.com/nfdi4plants/ARCtrl/commit/93b6d9490acdf16045bd844f4cec22f2d54c7eca)] replace mocha and expecto with pyxpecto
+    * [[#aa30389](https://github.com/nfdi4plants/ARCtrl/commit/aa30389f070a248e547373779de64247d0b017cc)] move json schema validation to json tests
+    * [[#f0bb78d](https://github.com/nfdi4plants/ARCtrl/commit/f0bb78dcdccb1b2bfc31e6cc1c36c6905c950045)] switch towards using .venv for running transpiled python
+    * [[#2d35cfb](https://github.com/nfdi4plants/ARCtrl/commit/2d35cfbb7b75ca79e5b2d5f28cb6dc56514acab0)] update Fable and pyxpecto
+    * [[#32a4128](https://github.com/nfdi4plants/ARCtrl/commit/32a4128fcad38d35e695d4dd86db9b19478c1543)] add hashcode tests
+    * [[#cc8c116](https://github.com/nfdi4plants/ARCtrl/commit/cc8c11661e640ce96c73eb136ae4681f710a65b8)] increase json write test timeout
+    * [[#3d00621](https://github.com/nfdi4plants/ARCtrl/commit/3d00621ff1feb76f1a4628f6cdad7a3a7cdb49fd)] small adjustments in isa.json
+    * [[#10c5538](https://github.com/nfdi4plants/ARCtrl/commit/10c55387c420c12804b3f10e737e1d5b1f4b3b43)] cleanup merge of json-ld and thoth.json
+    * [[#58b3d5a](https://github.com/nfdi4plants/ARCtrl/commit/58b3d5a500c36dd09b34cac2cb2cc62efaf8d3d6)] merge json-ld changes into thoth.json update changes and refactor
+    * [[#87ab15d](https://github.com/nfdi4plants/ARCtrl/commit/87ab15df0930389a8a9e6bdd7824a89b1ae30790)] increase json parsing test timeout
+    * [[#90c60b9](https://github.com/nfdi4plants/ARCtrl/commit/90c60b90031b80efd6b23486e7e8061a2b2cc8cb)] rework json encoding
+    * [[#c482c86](https://github.com/nfdi4plants/ARCtrl/commit/c482c86806d5734755a46b9c5b80bbdc32f5e001)] finish thoth conversion
+    * [[#d0a99a3](https://github.com/nfdi4plants/ARCtrl/commit/d0a99a314da50eba37f23aa0e0e5c52f97dbd6ce)] start reworking json towards net Thoth.Json
+    * [[#4f77082](https://github.com/nfdi4plants/ARCtrl/commit/4f77082708909086ec0113e18b2ed8102cd975bd)] Merge pull request #271 from nfdi4plants/jsonld
+    * [[#3f84e17](https://github.com/nfdi4plants/ARCtrl/commit/3f84e17a2ac724a5fc74a33e5352e34b79b1022a)] increase speed of ARC to Json Type conversion
+    * [[#5ceb732](https://github.com/nfdi4plants/ARCtrl/commit/5ceb73209026e512b16461ca6ef6788100bdfe18)] bump to 1.1.0
+* Bugfixes:
+    * [[#890048e](https://github.com/nfdi4plants/ARCtrl/commit/890048e84e06a88b4b957fc46e30113c40c014d0)] set ci fail-fast to false and fix py encoding in windows
+    * [[#3e403cd](https://github.com/nfdi4plants/ARCtrl/commit/3e403cdd687be78f1cbadfafb30b148247800bdd)] small fix to CI
+    * [[#b0186f4](https://github.com/nfdi4plants/ARCtrl/commit/b0186f4c3e28fbf9a6678dde5795e6e0723934c0)] small fix to CI
+    * [[#89aa3c2](https://github.com/nfdi4plants/ARCtrl/commit/89aa3c2a93cb718ca77433e35599d2d22deb2886)] fixed python tests to work on all platforms
+    * [[#4262833](https://github.com/nfdi4plants/ARCtrl/commit/4262833f532c3ed8deedc1ca30b6ad30c04c17b3)] hotfix js webrequest
+    * [[#f75ce4d](https://github.com/nfdi4plants/ARCtrl/commit/f75ce4d3d9abc84600a769d8ead47a6bd2befe8b)] small python tests hotfix
+    * [[#9385d06](https://github.com/nfdi4plants/ARCtrl/commit/9385d06c4bb728edd6c3d95f528fd0a40a19062d)] small fixes in python and setup instructions
+    * [[#b5eaaed](https://github.com/nfdi4plants/ARCtrl/commit/b5eaaedd24cad0a24423aec39dbdf56bbaac14dd)] hotfix fable python hashing of person
+    * [[#556e2bf](https://github.com/nfdi4plants/ARCtrl/commit/556e2bf7f0bd85417ce43078ff3c2357819bef1d)] fix http requests in python
+    * [[#c534acf](https://github.com/nfdi4plants/ARCtrl/commit/c534acf43e16d1e76bb22bbc7e0d1e7134d213e5)] fix and test comment regex handling for python
+    * [[#2540056](https://github.com/nfdi4plants/ARCtrl/commit/2540056063a107fb18ad30b577214e946a6ae48c)] small fix for compressed json io stringtable conversion https://github.com/fable-compiler/Fable/issues/3771
+    * [[#92c72ee](https://github.com/nfdi4plants/ARCtrl/commit/92c72ee0135c712ded59c00c9a0111909ce99c3a)] array fixes in python compilation
+    * [[#b55d360](https://github.com/nfdi4plants/ARCtrl/commit/b55d3608eb73273a84cca756e0662811ff7b6244)] fix and finish up thoth migration
+
 ### 1.1.0+6309e03 (Released 2024-2-15)
 * Additions:
     * [[#544ffdc](https://github.com/nfdi4plants/ARCtrl/commit/544ffdcbcf2e19c12c995e408713b83157cda345)] add some additional information to failing spreadsheet parsers #306

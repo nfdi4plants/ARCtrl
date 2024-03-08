@@ -93,7 +93,7 @@ module BundlePy =
         run python "-m poetry build" ProjectInfo.pyPkgDir //Remove "-o ." because not compatible with publish 
 
 
-let packPy = BuildTask.create "PackPy" [clean; build; (*runTests*)] {
+let packPy = BuildTask.create "PackPy" [clean; build; runTests] {
     BundlePy.bundle ProjectInfo.stableVersionTag
 
 }

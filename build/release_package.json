@@ -1,6 +1,6 @@
 {
   "name": "@nfdi4plants/arctrl",
-  "version": "1.1.0+6309e03",
+  "version": "1.2.0+19d850e",
   "description": "Top level ARC DataModel and API function descriptions.",
   "type": "module",
   "main": "index.js",

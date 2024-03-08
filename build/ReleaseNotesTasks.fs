@@ -30,6 +30,7 @@ let updateReleaseNotes = BuildTask.createFn "ReleaseNotes" [] (fun config ->
     let t = System.IO.File.ReadAllText p
     let tNew = System.Text.RegularExpressions.Regex.Replace(t, "version = \".*\"", sprintf "version = \"%s\"" semVerShort )
     System.IO.File.WriteAllText(p, tNew)
+    Trace.trace "Finish updating pyproject.toml version"
 )
 
 

@@ -78,6 +78,8 @@ module HashCodes =
     
     open Fable.Core
 
+    // This is necessary until https://github.com/fable-compiler/Fable/issues/3778 is resolved
+
     #if FABLE_COMPILER_PYTHON
     [<Emit("hasattr($0,\"__hash__\")")>]
     let pyHasCustomHash (obj) : bool = nativeOnly
