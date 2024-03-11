@@ -9,7 +9,6 @@ let process' =
     "executesProtocol": {
         "@id": "#protocols/peptide_digestion",
         "name": "peptide_digestion",
-    
         "protocolType": {
             "@id": "protein_digestion",
             "annotationValue": "Protein Digestion",
@@ -39,7 +38,6 @@ let process' =
                     "termSource": "Ontobee",
                     "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
                     "comments": []
-    
                 }
             },
             {
@@ -96,7 +94,6 @@ let process' =
                 "termSource": "NCI",
                 "termAccession": "http://purl.obolibrary.org/obo/MS_1001313",
                 "comments": []
-                
             }
         },
         {
@@ -108,7 +105,6 @@ let process' =
                     "termSource": "Ontobee",
                     "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
                     "comments": []
-
                 }
             },
             "value": 37,
@@ -168,7 +164,6 @@ let process' =
         }
     ],
     "comments": []
-
 }
     """
 
@@ -177,53 +172,47 @@ let processLD =
     """
     {
     "@id": "#process/standard_trypsin_digestion",
-    "@type": ["Process","ArcProcess"],
+    "@type": ["Process"],
     "@context": {
         "sdo": "http://schema.org/",
-        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "bio": "https://bioschemas.org/",
 
-        "Process": "sdo:Thing",
-        "ArcProcess": "arc:ARC#ARC_00000048",
+        "Process": "bio:LabProcess",
 
-        "name": "arc:ARC#ARC_00000019",
-        "executesProtocol": "arc:ARC#ARC_00000086",
-        "performer": "arc:ARC#ARC_00000089",
-        "date": "arc:ARC#ARC_00000090",
-        "previousProcess": "arc:ARC#ARC_00000091",
-        "nextProcess": "arc:ARC#ARC_00000092",
-        "input": "arc:ARC#ARC_00000095",
-        "output": "arc:ARC#ARC_00000096",
+        "name": "sdo:name",
+        "executesProtocol": "bio:executesProtocol",
+        "parameterValues": "bio:parameterValues",
+        "performer": "sdo:agent",
+        "date": "sdo:endTime",
+        "input": "sdo:object",
+        "output": "sdo:result",
 
         "comments": "sdo:disambiguatingDescription"
     },
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
         "@id": "#protocols/peptide_digestion",
-        "@type": ["Protocol","ArcProtocol"], 
+        "@type": ["Protocol"], 
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "bio": "https://bioschemas.org/",
 
-            "Protocol": "sdo:Thing",
-            "ArcProtocol": "arc:ARC#ARC_00000040",
+            "Protocol": "bio:LabProtocol",
 
-            "name": "arc:ARC#ARC_00000019",
-            "protocolType": "arc:ARC#ARC_00000060",
-            "description": "arc:ARC#ARC_00000004",
-            "version": "arc:ARC#ARC_00000020",
-            "components": "arc:ARC#ARC_00000064",
-            "parameters": "arc:ARC#ARC_00000062",
-            "uri": "arc:ARC#ARC_00000061",
-            "comments": "arc:ARC#ARC_00000016"
+            "name": "sdo:name",
+            "protocolType": "bio:intendedUse",
+            "description": "sdo:description",
+            "version": "sdo:version",
+            "components": "bio:labEquipment",
+            "uri": "sdo:url",
+            "comments": "sdo:comment"
         },
         "name": "peptide_digestion",
-    
         "protocolType": {
             "@id": "protein_digestion",
             "@type": "OntologyAnnotation",
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "OntologyAnnotation": "sdo:DefinedTerm",
                 
@@ -240,524 +229,194 @@ let processLD =
         "description": "The isolated proteins get solubilized. Given protease is added and the solution is heated to a given temperature. After a given amount of time, the digestion is stopped by adding a denaturation agent.",
         "uri": "http://madeUpProtocolWebsize.org/protein_digestion",
         "version": "1.0.0",
-        "parameters": [
-            {
-                "@id": "protease",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "protease",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Peptidase",
-                    "termSource": "MS",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                    "comments": []
-                }
-            },
-            {
-                "@id": "temperature",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "temperature",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "temperature",
-                    "termSource": "Ontobee",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                    "comments": []
-    
-                }
-            },
-            {
-                "@id": "time",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "time",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "time",
-                    "termSource": "EFO",
-                    "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                    "comments": []
-                }
-            }
-        ],
         "components": [
             {
                 "@id": "#Component_digestion_stopper",
-                "@type": ["Component","ArcComponent"],
+                "@type": ["Component"],
                 "@context": {
                     "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-                    
-                    "Component": "sdo:Thing",
-                    "ArcComponent": "arc:ARC#ARC_00000065",
+        
+                    "Component": "sdo:PropertyValue",
 
-                    "componentName": "arc:ARC#ARC_00000019",
-                    "componentType": "arc:ARC#ARC_00000102"
+                    "category": "sdo:name",
+                    "categoryCode": "sdo:propertyID",
+                    "value": "sdo:value",
+                    "valueCode": "sdo:valueReference",
+                    "unit": "sdo:unitText",
+                    "unitCode": "sdo:unitCode"
                 },
-                "componentName": "digestion_stopper",
-                "componentType": {
-                    "@id": "formic_acid",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Formic Acid",
-                    "termSource": "NCIT",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C83719",
-                    "comments": []
-                }
+                "value": "digestion_stopper",
+                "category": "Formic Acid",
+                "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C83719"
             },
             {
                 "@id": "#Component_heater",
-                "@type": ["Component","ArcComponent"],
+                "@type": ["Component"],
                 "@context": {
                     "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-                    
-                    "Component": "sdo:Thing",
-                    "ArcComponent": "arc:ARC#ARC_00000065",
+        
+                    "Component": "sdo:PropertyValue",
 
-                    "componentName": "arc:ARC#ARC_00000019",
-                    "componentType": "arc:ARC#ARC_00000102"
+                    "category": "sdo:name",
+                    "categoryCode": "sdo:propertyID",
+                    "value": "sdo:value",
+                    "valueCode": "sdo:valueReference",
+                    "unit": "sdo:unitText",
+                    "unitCode": "sdo:unitCode"
                 },
-                "componentName": "heater",
-                "componentType": {
-                    "@id": "heater",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Heater Device",
-                    "termSource": "NCIT",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C49986",
-                    "comments": []
-                }
+                "value": "heater",
+                "category": "Heater Device",
+                "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C49986"
             }
-            
         ],
         "comments": []
     },
     "parameterValues": [
         {
             "@id": "#Param_Peptidase_Trypsin/P",
-            "@type": ["ProcessParameterValue","ArcProcessParameterValue"],
+            "@type": ["ProcessParameterValue"],
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "ProcessParameterValue": "sdo:PropertyValue",
-                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
 
-                "category": "arc:ARC#ARC_00000062",
-                "value": "arc:ARC#ARC_00000087",
-                "unit": "arc:ARC#ARC_00000106"
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode"
             },
-            "category": {
-                "@id": "protease",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "protease",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Peptidase",
-                    "termSource": "MS",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                    "comments": []
-                }
-            },
-            "value": {
-                "@id": "trypsin",
-                "@type": "OntologyAnnotation",
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "OntologyAnnotation": "sdo:DefinedTerm",
-                    
-                    "annotationValue": "sdo:name",
-                    "termSource": "sdo:inDefinedTermSet",
-                    "termAccession": "sdo:termCode",
-                    "comments": "sdo:disambiguatingDescription"
-                },
-                "annotationValue": "Trypsin/P",
-                "termSource": "NCI",
-                "termAccession": "http://purl.obolibrary.org/obo/MS_1001313",
-                "comments": []
-                
-            }
+            "category": "Peptidase",
+            "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C16965",
+            "value": "Trypsin/P",
+            "valueCode": "http://purl.obolibrary.org/obo/MS_1001313"
         },
         {
             "@id": "#Param_temperature_37",
-            "@type": ["ProcessParameterValue","ArcProcessParameterValue"],
+            "@type": ["ProcessParameterValue"],
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "ProcessParameterValue": "sdo:PropertyValue",
-                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
 
-                "category": "arc:ARC#ARC_00000062",
-                "value": "arc:ARC#ARC_00000087",
-                "unit": "arc:ARC#ARC_00000106"
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode"
             },
-            "category": {
-                "@id": "temperature",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "temperature",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "temperature",
-                    "termSource": "Ontobee",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                    "comments": []
-
-                }
-            },
+            "category": "temperature",
+            "categoryCode": "http://purl.obolibrary.org/obo/NCRO_0000029",
             "value": 37,
-            "unit": {
-                "@id": "degree_celcius",
-                "@type": "OntologyAnnotation",
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "OntologyAnnotation": "sdo:DefinedTerm",
-                    
-                    "annotationValue": "sdo:name",
-                    "termSource": "sdo:inDefinedTermSet",
-                    "termAccession": "sdo:termCode",
-                    "comments": "sdo:disambiguatingDescription"
-                },
-                "annotationValue": "degree Celsius",
-                "termSource": "OM2",
-                "termAccession": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius",
-                "comments": []
-            }
+            "unit": "degree Celsius",
+            "unitCode": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius"
         },
         {
             "@id": "#Param_time_1",
-            "@type": ["ProcessParameterValue","ArcProcessParameterValue"],
+            "@type": ["ProcessParameterValue"],
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "ProcessParameterValue": "sdo:PropertyValue",
-                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
 
-                "category": "arc:ARC#ARC_00000062",
-                "value": "arc:ARC#ARC_00000087",
-                "unit": "arc:ARC#ARC_00000106"
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode"
             },
-            "category": {
-                "@id": "time",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "time",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "time",
-                    "termSource": "EFO",
-                    "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                    "comments": []
-                }
-            },
+            "category": "time",
+            "categoryCode": "http://www.ebi.ac.uk/efo/EFO_0000721",
             "value": 1,
-            "unit": {
-                "@id": "h",
-                "@type": "OntologyAnnotation",
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "OntologyAnnotation": "sdo:DefinedTerm",
-                    
-                    "annotationValue": "sdo:name",
-                    "termSource": "sdo:inDefinedTermSet",
-                    "termAccession": "sdo:termCode",
-                    "comments": "sdo:disambiguatingDescription"
-                },
-                "annotationValue": "hour",
-                "termSource": "UO",
-                "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
-                "comments": []
-            }
+            "unit": "hour",
+            "unitCode": "http://purl.obolibrary.org/obo/UO_0000032"
         }
     ],
     "date": "2020-10-23",
     "performer": "TUKL",
-    "previousProcess": {
-        "@id": "#process/protein_extraction",
-        "@type": ["Process","ArcProcess"],
-        "@context": {
-            "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
-
-            "Process": "sdo:Thing",
-            "ArcProcess": "arc:ARC#ARC_00000048",
-
-            "name": "arc:ARC#ARC_00000019",
-            "executesProtocol": "arc:ARC#ARC_00000086",
-            "performer": "arc:ARC#ARC_00000089",
-            "date": "arc:ARC#ARC_00000090",
-            "previousProcess": "arc:ARC#ARC_00000091",
-            "nextProcess": "arc:ARC#ARC_00000092",
-            "input": "arc:ARC#ARC_00000095",
-            "output": "arc:ARC#ARC_00000096",
-
-            "comments": "sdo:disambiguatingDescription"
-        }
-    },
-    "nextProcess":  { 
-        "@id": "#process/massspec_measurement", 
-        "@type": ["Process","ArcProcess"],
-        "@context": {
-            "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
-
-            "Process": "sdo:Thing",
-            "ArcProcess": "arc:ARC#ARC_00000048",
-
-            "name": "arc:ARC#ARC_00000019",
-            "executesProtocol": "arc:ARC#ARC_00000086",
-            "performer": "arc:ARC#ARC_00000089",
-            "date": "arc:ARC#ARC_00000090",
-            "previousProcess": "arc:ARC#ARC_00000091",
-            "nextProcess": "arc:ARC#ARC_00000092",
-            "input": "arc:ARC#ARC_00000095",
-            "output": "arc:ARC#ARC_00000096",
-
-            "comments": "sdo:disambiguatingDescription"
-        }
-    },
     "inputs": [
         {
-            "@id": "#sample/WT_protein", "@type": ["Source","ArcSource"],
+            "@id": "#sample/WT_protein", "@type": ["Source"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Source": "sdo:Thing",
-                "ArcSource": "arc:ARC#ARC_00000071",
+                "Source": "bio:Sample",
 
-                "identifier": "sdo:identifier",
-
-                "name": "arc:ARC#ARC_00000019",
-                "characteristics": "arc:ARC#ARC_00000080"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty"
             }
         },
         {
-            "@id": "#sample/MUT1_protein", "@type": ["Source","ArcSource"],
+            "@id": "#sample/MUT1_protein", "@type": ["Source"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Source": "sdo:Thing",
-                "ArcSource": "arc:ARC#ARC_00000071",
+                "Source": "bio:Sample",
 
-                "identifier": "sdo:identifier",
-
-                "name": "arc:ARC#ARC_00000019",
-                "characteristics": "arc:ARC#ARC_00000080"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty"
             }
         },
         {
-            "@id": "#sample/MUT2_protein", "@type": ["Source","ArcSource"],
+            "@id": "#sample/MUT2_protein", "@type": ["Source"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Source": "sdo:Thing",
-                "ArcSource": "arc:ARC#ARC_00000071",
+                "Source": "bio:Sample",
 
-                "identifier": "sdo:identifier",
-
-                "name": "arc:ARC#ARC_00000019",
-                "characteristics": "arc:ARC#ARC_00000080"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty"
             }
         }
     ],
     "outputs": [
         {
-            "@id": "#sample/WT_digested", "@type": ["Sample","ArcSample"],
+            "@id": "#sample/WT_digested", "@type": ["Sample"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Sample": "sdo:Thing",
-                "ArcSample": "arc:ARC#ARC_00000070",
+                "Sample": "bio:Sample",
 
-                "name": "arc:name",
-                "characteristics": "arc:ARC#ARC_00000080",
-                "factorValues": "arc:ARC#ARC_00000083",
-                "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty",
+                "factorValues": "bio:additionalProperty"
             }
         },
         {
-            "@id": "#sample/MUT1_digested", "@type": ["Sample","ArcSample"],
+            "@id": "#sample/MUT1_digested", "@type": ["Sample"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Sample": "sdo:Thing",
-                "ArcSample": "arc:ARC#ARC_00000070",
+                "Sample": "bio:Sample",
 
-                "name": "arc:name",
-                "characteristics": "arc:ARC#ARC_00000080",
-                "factorValues": "arc:ARC#ARC_00000083",
-                "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty",
+                "factorValues": "bio:additionalProperty"
             }
         },
         {
-            "@id": "#sample/MUT2_digested", "@type": ["Sample","ArcSample"],
+            "@id": "#sample/MUT2_digested", "@type": ["Sample"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Sample": "sdo:Thing",
-                "ArcSample": "arc:ARC#ARC_00000070",
+                "Sample": "bio:Sample",
 
-                "name": "arc:name",
-                "characteristics": "arc:ARC#ARC_00000080",
-                "factorValues": "arc:ARC#ARC_00000083",
-                "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty",
+                "factorValues": "bio:additionalProperty"
             }
         }
     ],
     "comments": []
-
 }
     """
 
@@ -887,7 +546,6 @@ let processWithoutIDs =
     "date": "2020-10-23",
     "performer": "TUKL",
     "comments": []
-
 }
     """
 
@@ -896,53 +554,47 @@ let processWithDefaultLD =
     """
     {
     "@id": "#Process_standard_trypsin_digestion",
-    "@type": ["Process","ArcProcess"],
+    "@type": ["Process"],
     "@context": {
         "sdo": "http://schema.org/",
-        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "bio": "https://bioschemas.org/",
 
-        "Process": "sdo:Thing",
-        "ArcProcess": "arc:ARC#ARC_00000048",
+        "Process": "bio:LabProcess",
 
-        "name": "arc:ARC#ARC_00000019",
-        "executesProtocol": "arc:ARC#ARC_00000086",
-        "performer": "arc:ARC#ARC_00000089",
-        "date": "arc:ARC#ARC_00000090",
-        "previousProcess": "arc:ARC#ARC_00000091",
-        "nextProcess": "arc:ARC#ARC_00000092",
-        "input": "arc:ARC#ARC_00000095",
-        "output": "arc:ARC#ARC_00000096",
+        "name": "sdo:name",
+        "executesProtocol": "bio:executesProtocol",
+        "parameterValues": "bio:parameterValues",
+        "performer": "sdo:agent",
+        "date": "sdo:endTime",
+        "input": "sdo:object",
+        "output": "sdo:result",
 
         "comments": "sdo:disambiguatingDescription"
-    },
+    }
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
         "@id": "http://madeUpProtocolWebsize.org/protein_digestion",
-        "@type": ["Protocol","ArcProtocol"], 
+        "@type": ["Protocol"], 
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
+            "bio": "https://bioschemas.org/",
 
-            "Protocol": "sdo:Thing",
-            "ArcProtocol": "arc:ARC#ARC_00000040",
+            "Protocol": "bio:LabProtocol",
 
-            "name": "arc:ARC#ARC_00000019",
-            "protocolType": "arc:ARC#ARC_00000060",
-            "description": "arc:ARC#ARC_00000004",
-            "version": "arc:ARC#ARC_00000020",
-            "components": "arc:ARC#ARC_00000064",
-            "parameters": "arc:ARC#ARC_00000062",
-            "uri": "arc:ARC#ARC_00000061",
-            "comments": "arc:ARC#ARC_00000016"
+            "name": "sdo:name",
+            "protocolType": "bio:intendedUse",
+            "description": "sdo:description",
+            "version": "sdo:version",
+            "components": "bio:labEquipment",
+            "uri": "sdo:url",
+            "comments": "sdo:comment"
         },
         "name": "peptide_digestion",
-    
         "protocolType": {
             "@id": "http://purl.obolibrary.org/obo/NCIT_C70845",
             "@type": "OntologyAnnotation",
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "OntologyAnnotation": "sdo:DefinedTerm",
                 
@@ -959,172 +611,45 @@ let processWithDefaultLD =
         "description": "The isolated proteins get solubilized. Given protease is added and the solution is heated to a given temperature. After a given amount of time, the digestion is stopped by adding a denaturation agent.",
         "uri": "http://madeUpProtocolWebsize.org/protein_digestion",
         "version": "1.0.0",
-        "parameters": [
-            {
-                "@id": "#EmptyProtocolParameter",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Peptidase",
-                    "termSource": "MS",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                    "comments": []
-                }
-            },
-            {
-                "@id": "#EmptyProtocolParameter",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "temperature",
-                    "termSource": "Ontobee",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                    "comments": []
-    
-                }
-            },
-            {
-                "@id": "#Param_http://www.ebi.ac.uk/efo/EFO_0000721",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "time",
-                    "termSource": "EFO",
-                    "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                    "comments": []
-                }
-            }
-        ],
         "components": [
             {
                 "@id": "#Component_digestion_stopper",
-                "@type": ["Component","ArcComponent"],
+                "@type": ["Component"],
                 "@context": {
                     "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-                    
-                    "Component": "sdo:Thing",
-                    "ArcComponent": "arc:ARC#ARC_00000065",
+        
+                    "Component": "sdo:PropertyValue",
 
-                    "componentName": "arc:ARC#ARC_00000019",
-                    "componentType": "arc:ARC#ARC_00000102"
+                    "category": "sdo:name",
+                    "categoryCode": "sdo:propertyID",
+                    "value": "sdo:value",
+                    "valueCode": "sdo:valueReference",
+                    "unit": "sdo:unitText",
+                    "unitCode": "sdo:unitCode"
                 },
-                "componentName": "digestion_stopper",
-                "componentType": {
-                    "@id": "http://purl.obolibrary.org/obo/NCIT_C83719",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Formic Acid",
-                    "termSource": "NCIT",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C83719",
-                    "comments": []
+                "value": "digestion_stopper",
+                "category": "Formic Acid",
+                "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C83719"
                 }
             },
             {
                 "@id": "#Component_heater",
-                "@type": ["Component","ArcComponent"],
+                "@type": ["Component"],
                 "@context": {
                     "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-                    
-                    "Component": "sdo:Thing",
-                    "ArcComponent": "arc:ARC#ARC_00000065",
+        
+                    "Component": "sdo:PropertyValue",
 
-                    "componentName": "arc:ARC#ARC_00000019",
-                    "componentType": "arc:ARC#ARC_00000102"
+                    "category": "sdo:name",
+                    "categoryCode": "sdo:propertyID",
+                    "value": "sdo:value",
+                    "valueCode": "sdo:valueReference",
+                    "unit": "sdo:unitText",
+                    "unitCode": "sdo:unitCode"
                 },
-                "componentName": "heater",
-                "componentType": {
-                    "@id": "http://purl.obolibrary.org/obo/NCIT_C49986",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Heater Device",
-                    "termSource": "NCIT",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C49986",
-                    "comments": []
+                "value": "heater",
+                "category": "Heater Device",
+                "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C49986"
                 }
             }
             
@@ -1134,205 +659,65 @@ let processWithDefaultLD =
     "parameterValues": [
         {
             "@id": "#Param_Peptidase_Trypsin/P",
-            "@type": ["ProcessParameterValue","ArcProcessParameterValue"],
+            "@type": ["ProcessParameterValue"],
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "ProcessParameterValue": "sdo:PropertyValue",
-                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
 
-                "category": "arc:ARC#ARC_00000062",
-                "value": "arc:ARC#ARC_00000087",
-                "unit": "arc:ARC#ARC_00000106"
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode"
             },
-            "category": {
-                "@id": "#Param_http://purl.obolibrary.org/obo/NCIT_C16965",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "Peptidase",
-                    "termSource": "MS",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                    "comments": []
-                }
-            },
-            "value": {
-                "@id": "http://purl.obolibrary.org/obo/MS_1001313",
-                "@type": "OntologyAnnotation",
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "OntologyAnnotation": "sdo:DefinedTerm",
-                    
-                    "annotationValue": "sdo:name",
-                    "termSource": "sdo:inDefinedTermSet",
-                    "termAccession": "sdo:termCode",
-                    "comments": "sdo:disambiguatingDescription"
-                },
-                "annotationValue": "Trypsin/P",
-                "termSource": "NCI",
-                "termAccession": "http://purl.obolibrary.org/obo/MS_1001313",
-                "comments": []
-                
-            }
+            "category": "Peptidase",
+            "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C16965",
+            "value": "Trypsin/P",
+            "valueCode": "http://purl.obolibrary.org/obo/MS_1001313"
         },
         {
             "@id": "#Param_temperature_37",
-            "@type": ["ProcessParameterValue","ArcProcessParameterValue"],
+            "@type": ["ProcessParameterValue"],
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "ProcessParameterValue": "sdo:PropertyValue",
-                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
 
-                "category": "arc:ARC#ARC_00000062",
-                "value": "arc:ARC#ARC_00000087",
-                "unit": "arc:ARC#ARC_00000106"
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode"
             },
-            "category": {
-                "@id": "#EmptyProtocolParameter",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "temperature",
-                    "termSource": "Ontobee",
-                    "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                    "comments": []
-
-                }
-            },
+            "category": "temperature",
+            "categoryCode": "http://purl.obolibrary.org/obo/NCRO_0000029",
             "value": 37,
-            "unit": {
-                "@id": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius",
-                "@type": "OntologyAnnotation",
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "OntologyAnnotation": "sdo:DefinedTerm",
-                    
-                    "annotationValue": "sdo:name",
-                    "termSource": "sdo:inDefinedTermSet",
-                    "termAccession": "sdo:termCode",
-                    "comments": "sdo:disambiguatingDescription"
-                },
-                "annotationValue": "degree Celsius",
-                "termSource": "OM2",
-                "termAccession": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius",
-                "comments": []
-            }
+            "unit": "degree Celsius",
+            "unitCode": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius"
         },
         {
             "@id": "#Param_time_1",
-            "@type": ["ProcessParameterValue","ArcProcessParameterValue"],
+            "@type": ["ProcessParameterValue"],
             "@context": {
-                "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "sdo": "http://schema.org/", 
 
                 "ProcessParameterValue": "sdo:PropertyValue",
-                "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
 
-                "category": "arc:ARC#ARC_00000062",
-                "value": "arc:ARC#ARC_00000087",
-                "unit": "arc:ARC#ARC_00000106"
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode"
             },
-            "category": {
-                "@id": "#EmptyProtocolParameter",
-                "@type": ["ProtocolParameter","ArcProtocolParameter"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "ProtocolParameter": "sdo:Thing",
-                    "ArcProtocolParameter": "arc:ARC#ARC_00000063",
-
-                    "parameterName": "arc:ARC#ARC_00000100"
-                },
-                "parameterName": {
-                    "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                    "@type": "OntologyAnnotation",
-                    "@context": {
-                        "sdo": "http://schema.org/",
-                        "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                        "OntologyAnnotation": "sdo:DefinedTerm",
-                        
-                        "annotationValue": "sdo:name",
-                        "termSource": "sdo:inDefinedTermSet",
-                        "termAccession": "sdo:termCode",
-                        "comments": "sdo:disambiguatingDescription"
-                    },
-                    "annotationValue": "time",
-                    "termSource": "EFO",
-                    "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                    "comments": []
-                }
-            },
+            "category": "time",
+            "categoryCode": "http://www.ebi.ac.uk/efo/EFO_0000721",
             "value": 1,
-            "unit": {
-                "@id": "http://purl.obolibrary.org/obo/UO_0000032",
-                "@type": "OntologyAnnotation",
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "OntologyAnnotation": "sdo:DefinedTerm",
-                    
-                    "annotationValue": "sdo:name",
-                    "termSource": "sdo:inDefinedTermSet",
-                    "termAccession": "sdo:termCode",
-                    "comments": "sdo:disambiguatingDescription"
-                },
-                "annotationValue": "hour",
-                "termSource": "UO",
-                "termAccession": "http://purl.obolibrary.org/obo/UO_0000032",
-                "comments": []
-            }
+            "unit": "hour",
+            "unitCode": "http://purl.obolibrary.org/obo/UO_0000032"
         }
     ],
     "date": "2020-10-23",
