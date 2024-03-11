@@ -34,7 +34,8 @@ module Investigation =
             GEncode.tryInclude "description" Encode.string (oa.Description)
             GEncode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
             GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-            GEncode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
+            if not options.IsJsonLD then
+                GEncode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
             GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
             GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
             GEncode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
