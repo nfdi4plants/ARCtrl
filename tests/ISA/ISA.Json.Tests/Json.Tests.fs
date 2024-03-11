@@ -725,7 +725,7 @@ let testProcessFile =
 let testProcessFileLD =
 
     testList "ProcessLD" [
-        testCase "ReaderSuccess" (fun () -> 
+        ptestCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
@@ -936,7 +936,7 @@ let testPersonFile =
 let testPersonFileLD =
 
     testList "PersonLD" [
-        testCase "ReaderSuccess" (fun () -> 
+        ptestCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
