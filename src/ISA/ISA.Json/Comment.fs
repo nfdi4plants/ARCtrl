@@ -25,11 +25,11 @@ module Comment =
                 "@id", Encode.string (comment |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (comment.ID)
-            if options.IncludeType then 
+            if options.IsJsonLD then 
                 "@type", Encode.string "Comment"
             GEncode.tryInclude "name" Encode.string (comment.Name)
             GEncode.tryInclude "value" Encode.string (comment.Value)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Comment.context_jsonvalue
         ]
         |> GEncode.choose
@@ -53,11 +53,11 @@ module Comment =
 
     /// exports in json-ld format
     let toJsonldString (c:Comment) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) c
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) c
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Comment) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

@@ -21,7 +21,6 @@ module Publication =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "Publication", Encode.string "sdo:ScholarlyArticle"
       

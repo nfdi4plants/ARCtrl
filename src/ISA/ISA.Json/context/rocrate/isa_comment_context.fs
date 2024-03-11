@@ -16,7 +16,6 @@ module Comment =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
     
       "Comment", Encode.string "sdo:Comment"
       "name", Encode.string "sdo:name"
@@ -28,7 +27,6 @@ module Comment =
 {
   "@context": {
     "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
     
     "Comment": "sdo:Comment",
     "name": "sdo:name",

@@ -17,14 +17,15 @@ module MaterialAttributeValue =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "MaterialAttributeValue", Encode.string "sdo:PropertyValue"
-      "ArcMaterialAttributeValue", Encode.string "arc:ARC#ARC_00000079"
 
-      "category", Encode.string "arc:ARC#ARC_00000049"
-      "value", Encode.string "arc:ARC#ARC_00000036"
-      "unit", Encode.string "arc:ARC#ARC_00000106"
+      "category", Encode.string "sdo:name"
+      "categoryCode", Encode.string "sdo:propertyID"
+      "value", Encode.string "sdo:value"
+      "valueCode", Encode.string "sdo:valueReference"
+      "unit", Encode.string "sdo:unitText"
+      "unitCode", Encode.string "sdo:unitCode"
     ]
 
   let context_str =

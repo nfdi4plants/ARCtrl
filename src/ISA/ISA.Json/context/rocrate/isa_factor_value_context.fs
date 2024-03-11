@@ -18,14 +18,16 @@ module FactorValue =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "FactorValue", Encode.string "sdo:PropertyValue"
-      "ArcFactorValue", Encode.string "arc:ARC#ARC_00000084"
 
-      "category", Encode.string "arc:category"
-      "value", Encode.string "arc:ARC#ARC_00000044"
-      "unit", Encode.string "arc:ARC#ARC_00000106"
+      "category", Encode.string "sdo:name"
+      "categoryName", Encode.string "sdo:alternateName"
+      "categoryCode", Encode.string "sdo:propertyID"
+      "value", Encode.string "sdo:value"
+      "valueCode", Encode.string "sdo:valueReference"
+      "unit", Encode.string "sdo:unitText"
+      "unitCode", Encode.string "sdo:unitCode"
     ]
 
   let context_str =

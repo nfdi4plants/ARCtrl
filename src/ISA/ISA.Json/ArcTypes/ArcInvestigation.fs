@@ -59,11 +59,11 @@ module ArcInvestigation =
 
     /// exports in json-ld format
     let toJsonldString (a:ArcInvestigation) = 
-        Investigation.encoder (ConverterOptions(SetID=true,IncludeType=true)) (a.ToInvestigation())
+        Investigation.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) (a.ToInvestigation())
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:ArcInvestigation) = 
-        Investigation.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) (a.ToInvestigation())
+        Investigation.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) (a.ToInvestigation())
         |> GEncode.toJsonString 2
 
     let fromJsonString (s:string) = 

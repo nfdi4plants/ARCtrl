@@ -16,13 +16,15 @@ module Component =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
     
-      "Component", Encode.string "sdo:Thing"
-      "ArcComponent", Encode.string "arc:ARC#ARC_00000065"
+      "Component", Encode.string "sdo:PropertyValue"
 
-      "componentName", Encode.string "arc:ARC#ARC_00000019"
-      "componentType", Encode.string "arc:ARC#ARC_00000102"
+      "category", Encode.string "sdo:name"
+      "categoryCode", Encode.string "sdo:propertyID"
+      "value", Encode.string "sdo:value"
+      "valueCode", Encode.string "sdo:valueReference"
+      "unit", Encode.string "sdo:unitText"
+      "unitCode", Encode.string "sdo:unitCode"
     ]
 
   let context_str =
@@ -30,12 +32,10 @@ module Component =
 {
   "@context": {
     "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
     
-    "Component": "sdo:Thing",
-    "ArcComponent": "arc:ARC#ARC_00000065",
+    "Component": "sdo:PropertyValue",
 
-    "componentName": "arc:ARC#ARC_00000019",
+    "componentName": "sdo",
     "componentType": "arc:ARC#ARC_00000102"
   }
 }

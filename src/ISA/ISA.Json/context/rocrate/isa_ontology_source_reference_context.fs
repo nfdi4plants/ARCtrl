@@ -20,7 +20,6 @@ module OntologySourceReference =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "OntologySourceReference", Encode.string "sdo:DefinedTermSet"
       

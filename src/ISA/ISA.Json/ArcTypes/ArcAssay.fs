@@ -103,11 +103,11 @@ module ArcAssay =
 
     /// exports in json-ld format
     let toJsonldString (a:ArcAssay) = 
-        Assay.encoder (ConverterOptions(SetID=true,IncludeType=true)) None (a.ToAssay())
+        Assay.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None (a.ToAssay())
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:ArcAssay) = 
-        Assay.encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None (a.ToAssay())
+        Assay.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None (a.ToAssay())
         |> GEncode.toJsonString 2
 
     let fromJsonString (s:string) = 

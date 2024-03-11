@@ -28,7 +28,6 @@ module Investigation =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "Investigation", Encode.string "sdo:Dataset"
 
@@ -42,8 +41,6 @@ module Investigation =
       "studies", Encode.string "sdo:hasPart"
       "ontologySourceReferences", Encode.string "sdo:mentions"
       "comments", Encode.string "sdo:disambiguatingDescription"
-
-      "publications?", Encode.string "sdo:subjectOf?"
       "filename", Encode.string "sdo:alternateName"
     ]
 

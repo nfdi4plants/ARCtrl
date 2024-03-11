@@ -16,7 +16,6 @@ module Organization =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "Organization", Encode.string "sdo:Organization"
       
