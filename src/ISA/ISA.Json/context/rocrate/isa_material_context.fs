@@ -19,15 +19,13 @@ module Material =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+      "bio", Encode.string "https://bioschemas.org/"
 
-      "ArcMaterial", Encode.string "arc:ARC#ARC_00000108"
-      "Material", Encode.string "sdo:Thing"
+      "Material", Encode.string "bio:Sample"
 
-      "type", Encode.string "arc:ARC#ARC_00000085"
-      "name", Encode.string "arc:ARC#ARC_00000019"
-      "characteristics", Encode.string "arc:ARC#ARC_00000080"
-      "derivesFrom", Encode.string "arc:ARC#ARC_00000082"
+      "type", Encode.string "sdo:disambiguatingDescription"
+      "name", Encode.string "sdo:name"
+      "characteristics", Encode.string "bio:additionalProperty"
     ]
 
   let context_str =

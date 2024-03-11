@@ -25,7 +25,6 @@ module Person =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "Person", Encode.string "sdo:Person"
       

@@ -45,12 +45,12 @@ module Data =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [Encode.string "Data"; Encode.string "ArcData"])
+            if options.IsJsonLD then 
+                "@type", (Encode.list [Encode.string "Data"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryInclude "type" (DataFile.encoder options) (oa.DataType)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Data.context_jsonvalue
         ]
         |> GEncode.choose
@@ -78,10 +78,10 @@ module Data =
     
     /// exports in json-ld format
     let toJsonldString (d:Data) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) d
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) d
         |> GEncode.toJsonString 2
     let toJsonldStringWithContext (a:Data) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
@@ -107,11 +107,11 @@ module Source =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [ Encode.string "Source"; Encode.string "ArcSource"])
+            if options.IsJsonLD then 
+                "@type", (Encode.list [ Encode.string "Source"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)      
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Source.context_jsonvalue
             ]
         |> GEncode.choose
@@ -139,11 +139,11 @@ module Source =
     
     /// exports in json-ld format
     let toJsonldString (s:Source) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) s
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Source) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
@@ -168,13 +168,14 @@ module Sample =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [ Encode.string "Sample";  Encode.string "ArcSample"])
+            if options.IsJsonLD then 
+                "@type", (Encode.list [ Encode.string "Sample"])
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
             GEncode.tryIncludeList "factorValues" (FactorValue.encoder options) (oa.FactorValues)
-            GEncode.tryIncludeList "derivesFrom" (Source.encoder options) (oa.DerivesFrom)
-            if options.IncludeContext then
+            if not options.IsJsonLD then 
+                GEncode.tryIncludeList "derivesFrom" (Source.encoder options) (oa.DerivesFrom)
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Sample.context_jsonvalue
         ]
         |> GEncode.choose
@@ -203,11 +204,11 @@ module Sample =
     
     /// exports in json-ld format
     let toJsonldString (s:Sample) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) s
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Sample) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

@@ -37,10 +37,8 @@ module Study =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "Study", Encode.string "sdo:Dataset"
-      "ArcStudy", Encode.string "arc:ARC#ARC_00000014"
 
       "identifier", Encode.string "sdo:identifier"
       "title", Encode.string "sdo:headline"
@@ -53,15 +51,7 @@ module Study =
       "filename", Encode.string "sdo:description"
       "comments", Encode.string "sdo:disambiguatingDescription"
 
-      "protocols", Encode.string "arc:ARC#ARC_00000039"
-      "materials", Encode.string "arc:ARC#ARC_00000045"
-      "otherMaterials", Encode.string "arc:ARC#ARC_00000045"
-      "sources", Encode.string "arc:ARC#ARC_00000045"
-      "samples", Encode.string "arc:ARC#ARC_00000045"
-      "processSequence", Encode.string "arc:ARC#ARC_00000047"
-      "factors", Encode.string "arc:ARC#ARC_00000043"
-      "characteristicCategories", Encode.string "arc:ARC#ARC_00000049"
-      "unitCategories", Encode.string "arc:ARC#ARC_00000051"
+      "processSequence", Encode.string "sdo:about"
       "studyDesignDescriptors", Encode.string "arc:ARC#ARC_00000037"
     ]
 

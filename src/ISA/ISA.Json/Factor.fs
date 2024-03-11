@@ -68,12 +68,18 @@ module Factor =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [Encode.string "Factor"; Encode.string "ArcFactor"])
+            if options.IsJsonLD then 
+                "@type", (Encode.list [Encode.string "Factor"])
             GEncode.tryInclude "factorName" Encode.string (oa.Name)
-            GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
+            if options.IsJsonLD then
+                if oa.FactorType.IsSome then
+                    GEncode.tryInclude "annotationValue" Encode.string (oa.Name)
+                    GEncode.tryInclude "termSource" Encode.string (oa.FactorType.Value.TermSourceREF)
+                    GEncode.tryInclude "termAccession" Encode.string (oa.FactorType.Value.TermAccessionNumber)
+            else
+                GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Factor.context_jsonvalue
         ]
         |> GEncode.choose
@@ -98,11 +104,11 @@ module Factor =
     
     /// exports in json-ld format
     let toJsonldString (f:Factor) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) f
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) f
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Factor) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
@@ -126,12 +132,25 @@ module FactorValue =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [Encode.string "FactorValue"; Encode.string "ArcFactorValue"])
-            GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
-            GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
-            GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
-            if options.IncludeContext then
+            if options.IsJsonLD then 
+                "@type", (Encode.list [Encode.string "FactorValue"])
+            if options.IsJsonLD then
+                if oa.Category.IsSome then
+                    GEncode.tryInclude "categoryName" Encode.string (oa.Category.Value.Name)
+                if oa.Category.IsSome && oa.Category.Value.FactorType.IsSome then
+                    GEncode.tryInclude "category" Encode.string (oa.Category.Value.FactorType.Value.Name)
+                if oa.Category.IsSome && oa.Category.Value.FactorType.IsSome then
+                    GEncode.tryInclude "categoryCode" Encode.string (oa.Category.Value.FactorType.Value.TermAccessionNumber)
+                if oa.Value.IsSome then "value", Encode.string (oa.ValueText)
+                if oa.Value.IsSome && oa.Value.Value.IsAnOntology then
+                    GEncode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
+                if oa.Unit.IsSome then GEncode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
+                if oa.Unit.IsSome then GEncode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
+            else
+                GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
+                GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
+                GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
+            if options.IsJsonLD then
                 "@context", ROCrateContext.FactorValue.context_jsonvalue
         ]
         |> GEncode.choose
@@ -156,11 +175,11 @@ module FactorValue =
     
     /// exports in json-ld format
     let toJsonldString (f:FactorValue) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) f
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) f
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:FactorValue) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

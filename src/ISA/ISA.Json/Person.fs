@@ -29,12 +29,13 @@ module Person =
                                 | _ -> "#EmptyPerson"
 
     let affiliationEncoder (options : ConverterOptions) (affiliation : string) =
-        if options.IsRoCrate then
+        if options.IsJsonLD then
+            let idStr = $"#Organization_{affiliation}"
             [
                 ("@type",Encode.string "Organization")
-                ("@id",Encode.string $"Organization/{affiliation}")
+                ("@id",Encode.string (idStr.Replace(" ","_")))
                 ("name",Encode.string affiliation)               
-                if options.IncludeContext then
+                if options.IsJsonLD then
                     "@context", ROCrateContext.Organization.context_jsonvalue
             ]
             |> Encode.object
@@ -49,7 +50,7 @@ module Person =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
+            if options.IsJsonLD then 
                 "@type", Encode.string "Person"
             GEncode.tryInclude "firstName" Encode.string (oa.FirstName)
             GEncode.tryInclude "lastName" Encode.string (oa.LastName)
@@ -61,7 +62,7 @@ module Person =
             GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa.Affiliation)
             GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then 
+            if options.IsJsonLD then 
                 "@context", ROCrateContext.Person.context_jsonvalue
         ]
         |> GEncode.choose
@@ -98,11 +99,11 @@ module Person =
 
     /// exports in json-ld format
     let toJsonldString (p:Person) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) p
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Person) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

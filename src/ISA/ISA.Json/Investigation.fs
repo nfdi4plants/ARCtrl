@@ -25,7 +25,7 @@ module Investigation =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
+            if options.IsJsonLD then 
                 "@type", Encode.string "Investigation"
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
@@ -33,12 +33,13 @@ module Investigation =
             GEncode.tryInclude "description" Encode.string (oa.Description)
             GEncode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
             GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-            GEncode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
+            if not options.IsJsonLD then
+                GEncode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
             GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
             GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
             GEncode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Investigation.context_jsonvalue
         ]
         |> GEncode.choose
@@ -50,7 +51,7 @@ module Investigation =
             GEncode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
             GEncode.tryInclude "about" (encoder options) (Some oa)
             "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.ROCrate.context_jsonvalue
             ]
         |> GEncode.choose
@@ -87,13 +88,13 @@ module Investigation =
 
     /// exports in json-ld format
     let toJsonldString (i:Investigation) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) i
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) i
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (i:Investigation) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) i
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) i
         |> GEncode.toJsonString 2
 
     let toRoCrateString (i:Investigation) = 
-        encodeRoCrate (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true,IsRoCrate=true)) i
+        encodeRoCrate (ConverterOptions(SetID=true,IsJsonLD=true)) i
         |> GEncode.toJsonString 2

@@ -20,15 +20,13 @@ module Sample =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+      "bio", Encode.string "https://bioschemas.org/"
 
-      "Sample", Encode.string "sdo:Thing"
-      "ArcSample", Encode.string "arc:ARC#ARC_00000070"
+      "Sample", Encode.string "bio:Sample"
 
-      "name", Encode.string "arc:name"
-      "characteristics", Encode.string "arc:ARC#ARC_00000080"
-      "factorValues", Encode.string "arc:ARC#ARC_00000083"
-      "derivesFrom", Encode.string "arc:ARC#ARC_00000082"
+      "name", Encode.string "sdo:name"
+      "characteristics", Encode.string "bio:additionalProperty"
+      "factorValues", Encode.string "bio:additionalProperty"
     ]
 
   let context_str =

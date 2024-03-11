@@ -18,15 +18,13 @@ module Data =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "Data", Encode.string "sdo:MediaObject"
-      "ArcData", Encode.string "arc:ARC#ARC_00000076"
 
-      "type", Encode.string "arc:ARC#ARC_00000107"
+      "type", Encode.string "sdo:disambiguatingDescription"
 
       "name", Encode.string "sdo:name"
-      "comments", Encode.string "sdo:disambiguatingDescription"
+      "comments", Encode.string "sdo:comment"
     ]
 
   let context_str =
