@@ -443,7 +443,7 @@ let testProcessInputLD =
             )
         ]
         testList "Sample" [
-            testCase "ReaderSuccessSimple" (fun () -> 
+            ptestCase "ReaderSuccessSimple" (fun () -> 
            
                 let result = ProcessInput.fromJsonString ProcessInput.sampleSimpleLD
 
@@ -458,33 +458,33 @@ let testProcessInputLD =
             )
             testCase "WriterOutputMatchesInputSimpleGivenID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimple
-                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
+                let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimple
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
-                    let expected = 
-                        ProcessInput.sampleSimpleLD
-                        |> Utils.wordFrequency
+                let expected = 
+                    ProcessInput.sampleSimpleLD
+                    |> Utils.wordFrequency
 
-                    let actual = 
-                        o_out
-                        |> Utils.wordFrequency
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
 
-                    Expect.equal actual expected "Written processInput does not match read process input"
+                Expect.equal actual expected "Written processInput does not match read process input"
             )
             testCase "WriterOutputMatchesInputSimpleDefaultID" (fun () -> 
             
-                    let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimpleWithoutID
-                    let o_out = ProcessInput.toJsonldStringWithContext o_read_in
+                let o_read_in = ProcessInput.fromJsonString ProcessInput.sampleSimpleWithoutID
+                let o_out = ProcessInput.toJsonldStringWithContext o_read_in
 
-                    let expected = 
-                        ProcessInput.sampleSimpleWithDefaultLD
-                        |> Utils.wordFrequency
+                let expected = 
+                    ProcessInput.sampleSimpleWithDefaultLD
+                    |> Utils.wordFrequency
 
-                    let actual = 
-                        o_out
-                        |> Utils.wordFrequency
+                let actual = 
+                    o_out
+                    |> Utils.wordFrequency
 
-                    Expect.equal actual expected "Written processInput does not match read process input"
+                Expect.equal actual expected "Written processInput does not match read process input"
             )
         ]
     ]
@@ -725,7 +725,7 @@ let testProcessFile =
 let testProcessFileLD =
 
     testList "ProcessLD" [
-        testCase "ReaderSuccess" (fun () -> 
+        ptestCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
@@ -740,7 +740,7 @@ let testProcessFileLD =
 
         testCase "WriterSuccess" (fun () ->
 
-            let p = Process.fromJsonString Process.processLD
+            let p = Process.fromJsonString Process.process'
 
             let writingSuccess = 
                 try 
@@ -914,7 +914,7 @@ let testPersonFile =
 let testPersonFileLD =
 
     testList "PersonLD" [
-        testCase "ReaderSuccess" (fun () -> 
+        ptestCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
