@@ -18,7 +18,6 @@ module OntologyAnnotation =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
 
       "OntologyAnnotation", Encode.string "sdo:DefinedTerm"
       

@@ -31,7 +31,7 @@ module Assay =
         match a.ID with
         | Some id -> URI.toString id
         | None -> match a.FileName with
-                  | Some n -> n.Replace(" ","_").Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
+                  | Some n -> n.Replace(" ","_")//.Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
                   | None -> "#EmptyAssay"
 
     let encoder (options : ConverterOptions) (studyName:string Option) (oa : Assay) = 
@@ -42,32 +42,25 @@ module Assay =
                     | None -> None
                 with 
                     | Failure(msg) -> None
-        let a = ["Assay";"ArcAssay"]
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [ Encode.string "Assay"; Encode.string "ArcAssay"])
+            if options.IsJsonLD then 
+                "@type", (Encode.list [ Encode.string "Assay"])
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa.MeasurementType)
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa.TechnologyType)
             GEncode.tryInclude "technologyPlatform" Encode.string (oa.TechnologyPlatform)
             GEncode.tryIncludeList "dataFiles" (Data.encoder options) (oa.DataFiles)
-            if options.IsRoCrate then
-                match oa.Materials with
-                | Some m -> 
-                    GEncode.tryIncludeList "samples" (Sample.encoder options) m.Samples
-                    GEncode.tryIncludeList "materials" (Material.encoder options) m.OtherMaterials
-                | None -> ()
-            if not options.IsRoCrate then
+            if not options.IsJsonLD then
                 GEncode.tryInclude "materials" (AssayMaterials.encoder options) oa.Materials
-            GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)
-            GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
+                GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)
+                GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
             GEncode.tryIncludeList "processSequence" (Process.encoder options studyName assayName) (oa.ProcessSequence)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.Assay.context_jsonvalue
         ]
         |> GEncode.choose
@@ -101,11 +94,11 @@ module Assay =
 
     /// exports in json-ld format
     let toJsonldString (a:Assay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) None a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None a
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Assay) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) None a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

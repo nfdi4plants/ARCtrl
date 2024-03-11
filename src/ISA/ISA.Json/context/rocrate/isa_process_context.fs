@@ -26,19 +26,17 @@ module Process =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+      "bio", Encode.string "https://bioschemas.org/"
 
-      "Process", Encode.string "sdo:Thing"
-      "ArcProcess", Encode.string "arc:ARC#ARC_00000048"
+      "Process", Encode.string "bio:LabProcess"
 
-      "name", Encode.string "arc:ARC#ARC_00000019"
-      "executesProtocol", Encode.string "arc:ARC#ARC_00000086"
-      "performer", Encode.string "arc:ARC#ARC_00000089"
-      "date", Encode.string "arc:ARC#ARC_00000090"
-      "previousProcess", Encode.string "arc:ARC#ARC_00000091"
-      "nextProcess", Encode.string "arc:ARC#ARC_00000092"
-      "input", Encode.string "arc:ARC#ARC_00000095"
-      "output", Encode.string "arc:ARC#ARC_00000096"
+      "name", Encode.string "sdo:name"
+      "executesProtocol", Encode.string "bio:executesProtocol"
+      "parameterValues", Encode.string "bio:parameterValues"
+      "performer", Encode.string "sdo:agent"
+      "date", Encode.string "sdo:endTime"
+      "input", Encode.string "sdo:object"
+      "output", Encode.string "sdo:result"
 
       "comments", Encode.string "sdo:disambiguatingDescription"
     ]

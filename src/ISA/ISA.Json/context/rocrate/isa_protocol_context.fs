@@ -24,19 +24,17 @@ module Protocol =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-      "arc", Encode.string "http://purl.org/nfdi4plants/ontology/"
+      "bio", Encode.string "https://bioschemas.org/"
 
-      "Protocol", Encode.string "sdo:Thing"
-      "ArcProtocol", Encode.string "arc:ARC#ARC_00000040"
+      "Protocol", Encode.string "bio:LabProtocol"
 
-      "name", Encode.string "arc:ARC#ARC_00000019"
-      "protocolType", Encode.string "arc:ARC#ARC_00000060"
-      "description", Encode.string "arc:ARC#ARC_00000004"
-      "version", Encode.string "arc:ARC#ARC_00000020"
-      "components", Encode.string "arc:ARC#ARC_00000064"
-      "parameters", Encode.string "arc:ARC#ARC_00000062"
-      "uri", Encode.string "arc:ARC#ARC_00000061"
-      "comments", Encode.string "arc:ARC#ARC_00000016"
+      "name", Encode.string "sdo:name"
+      "protocolType", Encode.string "bio:intendedUse"
+      "description", Encode.string "sdo:description"
+      "version", Encode.string "sdo:version"
+      "components", Encode.string "bio:labEquipment"
+      "uri", Encode.string "sdo:url"
+      "comments", Encode.string "sdo:comment"
     ]
 
   let context_str =

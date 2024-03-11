@@ -34,7 +34,7 @@ module Study =
         match s.ID with
         | Some id -> URI.toString id
         | None -> match s.FileName with
-                  | Some n -> n.Replace(" ","_").Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
+                  | Some n -> n.Replace(" ","_")//.Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
                   | None -> match s.Identifier with
                             | Some id -> "#Study_" + id.Replace(" ","_")
                             | None -> match s.Title with
@@ -47,8 +47,8 @@ module Study =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
-                "@type", (Encode.list [Encode.string "Study"; Encode.string "ArcStudy"])
+            if options.IsJsonLD then 
+                "@type", (Encode.list [Encode.string "Study"])
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
             GEncode.tryInclude "title" Encode.string (oa.Title)
@@ -57,26 +57,24 @@ module Study =
             GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
             GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
             GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
-            GEncode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa.StudyDesignDescriptors)
-            if not options.IsRoCrate then 
+            if not options.IsJsonLD then
+                GEncode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa.StudyDesignDescriptors) 
                 GEncode.tryIncludeList "protocols" (Protocol.encoder options None None None) (oa.Protocols)
-            if options.IsRoCrate then
-                match oa.Materials with
-                | Some m -> 
-                    GEncode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
-                    GEncode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
-                    GEncode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
-                | None -> ()
-            
-            if not options.IsRoCrate then 
                 GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa.Materials)
+                GEncode.tryIncludeList "factors" (Factor.encoder options) (oa.Factors)
+                GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)            
+                GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
+            // if options.IsJsonLD then
+            //     match oa.Materials with
+            //     | Some m -> 
+            //         GEncode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
+            //         GEncode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
+            //         GEncode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
+            //     | None -> ()
             GEncode.tryIncludeList "processSequence" (Process.encoder options oa.Identifier None) (oa.ProcessSequence)
             GEncode.tryIncludeList "assays" (Assay.encoder options oa.Identifier) (oa.Assays)            
-            GEncode.tryIncludeList "factors" (Factor.encoder options) (oa.Factors)
-            GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)            
-            GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
             GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then 
+            if options.IsJsonLD then 
                 "@context", ROCrateContext.Study.context_jsonvalue
         ]
         |> GEncode.choose
@@ -117,9 +115,9 @@ module Study =
 
     /// exports in json-ld format
     let toJsonldString (s:Study) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) s
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) s
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:Study) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2

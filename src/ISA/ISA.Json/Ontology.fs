@@ -42,14 +42,14 @@ module OntologySourceReference =
         [
             if options.SetID then 
                 "@id", Encode.string (osr |> genID)
-            if options.IncludeType then 
+            if options.IsJsonLD then 
                 "@type", Encode.string "OntologySourceReference"
             GEncode.tryInclude "description" Encode.string (osr.Description)
             GEncode.tryInclude "file" Encode.string (osr.File)
             GEncode.tryInclude "name" Encode.string (osr.Name)
             GEncode.tryInclude "version" Encode.string (osr.Version)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (osr.Comments)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.OntologySourceReference.context_jsonvalue
         ]
         |> GEncode.choose
@@ -75,11 +75,11 @@ module OntologySourceReference =
 
     /// exports in json-ld format
     let toJsonldString (oa:OntologySourceReference) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) oa
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) oa
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:OntologySourceReference) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     // let fromFile (path : string) = 
@@ -108,13 +108,13 @@ module OntologyAnnotation =
                 "@id", Encode.string (oa |> genID)
             else 
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then 
+            if options.IsJsonLD then 
                 "@type", Encode.string "OntologyAnnotation"
             GEncode.tryInclude "annotationValue" Encode.string (oa.Name)
             GEncode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
             GEncode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
             GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
-            if options.IncludeContext then
+            if options.IsJsonLD then
                 "@context", ROCrateContext.OntologyAnnotation.context_jsonvalue
         ]
         |> GEncode.choose
@@ -137,7 +137,7 @@ module OntologyAnnotation =
         [
             if options.SetID then "@id", Encode.string (oa |> genID)
                 else GEncode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IncludeType then "@type", Encode.string "OntologyAnnotation"
+            if options.IsJsonLD then "@type", Encode.string "OntologyAnnotation"
             GEncode.tryInclude "a" (StringTable.encodeString stringTable) (oa.Name)
             GEncode.tryInclude "ts" (StringTable.encodeString stringTable) (oa.TermSourceREF)
             GEncode.tryInclude "ta" (StringTable.encodeString stringTable) (oa.TermAccessionNumber)
@@ -167,11 +167,11 @@ module OntologyAnnotation =
     
     /// exports in json-ld format
     let toJsonldString (oa:OntologyAnnotation) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true)) oa
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) oa
         |> GEncode.toJsonString 2
 
     let toJsonldStringWithContext (a:OntologyAnnotation) = 
-        encoder (ConverterOptions(SetID=true,IncludeType=true,IncludeContext=true)) a
+        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 
