@@ -44,6 +44,19 @@ export class Contract extends Record {
         this.DTO = DTO;
     }
 ```
+```python
+# Python
+class Contract(Record):
+    # Can be any of: "CREATE", "UPDATE", "DELETE", "READ", "EXECUTE"
+    Operation: str
+    # string, the path where the io operation should be executed. The path is relative to ARC root
+    Path: str
+    # Can be undefined or any of: "ISA_Assay", "ISA_Study", "ISA_Investigation", "JSON", "Markdown", "CWL", "PlainText", "Cli".
+    DTOType: DTOType | None
+    # Can be undefined or any of: `FsWorkbook` (from fsspreadsheet), string (e.g. json,..), or a `CLITool`.
+    DTO: DTO | None
+```
+
 
 Handling contracts can be generalized in a few functions.
 
@@ -57,15 +70,17 @@ Next we need to know how to handle our DTO. In .NET this is implemented as Discr
 In both languages we must specify how spreadsheet objects and plain text objects are correctly handled.
 
 ```fsharp
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+// FSharp
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl
 open ARCtrl.Contract
 open FsSpreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet.Net
 
 /// From ARCtrl.NET
+/// https://github.com/nfdi4plants/ARCtrl.NET/blob/f3eda8e96a3a7791288c1b5975050742c1d803d9/src/ARCtrl.NET/Contract.fs#L24
 let fulfillWriteContract basePath (c : Contract) =
     let ensureDirectory (filePath : string) =
         let file = new System.IO.FileInfo(filePath);
@@ -74,7 +89,7 @@ let fulfillWriteContract basePath (c : Contract) =
     | Some (DTO.Spreadsheet wb) ->
         let path = System.IO.Path.Combine(basePath, c.Path)
         ensureDirectory path
-        FsWorkbook.toFile path (wb :?> FsWorkbook)
+        FsWorkbook.toXlsxFile path (wb :?> FsWorkbook)
     | Some (DTO.Text t) ->
         let path = System.IO.Path.Combine(basePath, c.Path)
         ensureDirectory path
@@ -117,6 +132,37 @@ export async function fulfillWriteContract (basePath, contract) {
     }
 }
 ```
+```python
+import {Xlsx} from "fsspreadsheet";
+import fs from "fs";
+import path from "path";
+
+export async function fulfillWriteContract (basePath, contract) {
+    function ensureDirectory (filePath) {
+        let dirPath = path.dirname(filePath)
+        if (!fs.existsSync(dirPath)){
+            fs.mkdirSync(dirPath, { recursive: true });
+        }
+    }
+    const p = path.join(basePath,contract.Path)
+    if (contract.Operation = "CREATE") {
+        if (contract.DTO == undefined) {
+            ensureDirectory(p)
+            fs.writeFileSync(p, "")
+        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Study" || contract.DTOType == "ISA_Investigation") {
+            ensureDirectory(p)
+            await Xlsx.toFile(p, contract.DTO)
+            console.log("ISA", p)
+        } else if (contract.DTOType == "PlainText") {
+            ensureDirectory(p)
+            fs.writeFileSync(p, contract.DTO)
+        } else {
+            console.log("Warning: The given contract is not a correct ARC write contract: ", contract)
+        }
+    }
+}
+```
+
 
 
 ## READ contracts

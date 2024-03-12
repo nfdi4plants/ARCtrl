@@ -1,10 +1,10 @@
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl
 open ARCtrl.Contract
 open FsSpreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet.Net
 
 // # Write
 
@@ -18,7 +18,7 @@ let fulfillWriteContract basePath (c : Contract) =
     | Some (DTO.Spreadsheet wb) ->
         let path = System.IO.Path.Combine(basePath, c.Path)
         ensureDirectory path
-        FsWorkbook.toFile path (wb :?> FsWorkbook)
+        FsWorkbook.toXlsxFile path (wb :?> FsWorkbook)
     | Some (DTO.Text t) ->
         let path = System.IO.Path.Combine(basePath, c.Path)
         ensureDirectory path

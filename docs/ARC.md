@@ -15,8 +15,8 @@ ARCtrl aims to provide an easy solution to create and manipulate ARCs in memory.
 
 ```fsharp
 // F#
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl
 
@@ -29,6 +29,13 @@ let arc = ARC()
 import {ARC} from "@nfdi4plants/arctrl";
 
 let arc = new ARC()
+```
+
+```python
+# Python
+from arctrl.arc import ARC
+
+myArc = ARC()
 ```
 
 This will initialize an ARC without metadata but with the basic ARC folder structure in `arc.FileSystem`
@@ -48,7 +55,7 @@ In .NET you can use [ARCtrl.NET][1] to handle any contract based read/write oper
 // F#
 open ARCtrl.Contract
 open FsSpreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet.Net
 
 let arcRootPath = @"path/where/you/want/the/NewTestARC"
 
@@ -75,6 +82,19 @@ async function write(arcPath, arc)  {
 
 await write(arcRootPath, arc)
 ```
+
+```python
+# Python
+from arctrl.arc import ARC
+from Contract import fulfill_write_contract, fulfill_read_contract
+
+async def write(arc_path, arc):
+    contracts = arc.GetWriteContracts()
+    for contract in contracts:
+        # from Contracts.js docs
+        await fulfill_write_contract(arc_path, contract)
+```
+
 
 ## Read
 
@@ -174,5 +194,42 @@ async function read(basePath) {
 
 await read(arcRootPath).then(arc => console.log(arc))
 ```
+```python
+import os
+from arctrl.arc import ARC
+from Contract import fulfill_write_contract, fulfill_read_contract
 
+#Python
+def normalize_path_separators(path_str):
+    normalized_path = os.path.normpath(path_str)
+    return normalized_path.replace('\\', '/')
+
+def get_all_file_paths(base_path):
+    files_list = []
+    def loop(dir_path):
+        files = os.listdir(dir_path)
+        for file_name in files:
+            file_path = os.path.join(dir_path, file_name)
+            if os.path.isdir(file_path):
+                loop(file_path)
+            else:
+                relative_path = os.path.relpath(file_path, base_path)
+                normalize_path = normalize_path_separators(relative_path)
+                files_list.append(normalize_path)
+    loop(base_path)
+    return files_list
+
+# put it all together
+def read(base_path):
+    all_file_paths = get_all_file_paths(base_path)
+    arc = ARC.from_file_paths(all_file_paths)
+    read_contracts = arc.GetReadContracts()
+    print(read_contracts)
+    fcontracts = (fulfill_read_contract(base_path, contract) for contract in read_contracts)
+    for contract, content in zip(read_contracts, fcontracts):
+        contract.DTO = content
+    arc.SetISAFromContracts(fcontracts)
+    return arc
+
+```
 [1]: <https://www.nuget.org/packages/ARCtrl.NET> "ARCtrl.NET Nuget"

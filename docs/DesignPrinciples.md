@@ -431,7 +431,7 @@ end
 
 subgraph IO
     node[node.fs]   
-    fsspreadx[FsSpreadsheet.ExcelIO]   
+    fsspreadx[FsSpreadsheet.Net]   
     excelJS[exceljs]
     systemio[System.IO]
 end
@@ -539,7 +539,7 @@ class cwl["CWL"] {
     Workflows
 }
 class io["IO"] {
-    FsSpreadsheet.ExcelIO
+    FsSpreadsheet.Net
     System.IO
     exceljs
     node fs
