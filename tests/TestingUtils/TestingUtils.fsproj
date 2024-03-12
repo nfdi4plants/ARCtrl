@@ -2,6 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
+    <OutputType>Exe</OutputType>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
@@ -22,6 +23,7 @@
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Template.fs" />
     <Compile Include="TestObjects.Contract\ISA.fs" />
     <Compile Include="Library.fs" />
+    <Compile Include="PerformanceReport.fs" />
   </ItemGroup>
 <ItemGroup>
   <PackageReference Include="Fable.Pyxpecto" Version="1.0.1" />

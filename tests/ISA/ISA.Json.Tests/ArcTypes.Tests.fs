@@ -179,16 +179,6 @@ let tests_ArcTable = testList "ArcTable" [
       let decoded = ArcTable.fromCompressedJsonString encoded
       Expect.equal decoded filled "empty table is wrong after compressed encoding and decoding"
     // Set to pTest in Fable, as compressed parsing is around 10times slower than uncompressed parsing. This is weird, since in dotnet it is around 10times faster
-    #if FABLE_COMPILER 
-    ptestCase "Performance" <| fun _ ->
-    #else
-    testCase "Performance" <| fun _ ->
-    #endif
-        let t = TestObjects.Spreadsheet.Study.LargeFile.table
-        Expect.isFasterThan (t.ToCompressedJsonString >> ignore) (t.ToJsonString  >> ignore) "toCompressedJsonString is slower than to uncompressed"
-        let json = t.ToJsonString()
-        let compressed = Expect.wantFaster (t.ToCompressedJsonString) 1000 "toCompressedJsonString should be faster"
-        Expect.isTrue (compressed.Length*5 < json.Length) $"compressed should be more than 10 times smaller than uncompressed, but was only {float json.Length / float compressed.Length}x smaller"
     testCase "rangeColumnSize" <| fun _ ->
         // testTable column should be saved as range column, this should make it smaller than the IO column even though it has more cells
         let testTable = ArcTable.init("Test")
@@ -257,44 +247,6 @@ let tests_ArcAssay = testList "ArcAssay" [
       let encoded = ArcAssay.toCompressedJsonString filled
       let decoded = ArcAssay.fromCompressedJsonString encoded
       Expect.equal decoded filled "empty table is wrong after compressed encoding and decoding"
-  ]
-  testList "performance" [
-    testCase "SingleLongTable_JsonAssay" <| fun _ ->
-        let a = ArcAssay.init("MyAssay")
-        let t = a.InitTable("MyTable")
-        t.AddColumn(CompositeHeader.Input IOType.Source)
-        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter1")))
-        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter2")))
-        t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter3")))
-        t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
-        t.AddColumn(CompositeHeader.Output IOType.Sample)
-        let rowCount = 10000
-        for i = 0 to rowCount - 1 do
-            let cells =             
-                [|
-                    CompositeCell.FreeText $"Source{i}"
-                    CompositeCell.FreeText $"Parameter1_value"
-                    CompositeCell.FreeText $"Parameter2_value"
-                    CompositeCell.FreeText $"Parameter3_value{i - i % 10}"
-                    CompositeCell.FreeText $"Characteristic_value"
-                    CompositeCell.FreeText $"Sample{i}"
-                |]
-            for j = 0 to cells.Length - 1 do
-                t.Values.[(j,i)] <- cells.[j]
-        let f() = ArcAssay.toJsonString a
-        #if FABLE_COMPILER_JAVASCRIPT
-        let expectedMs = 5000
-        #endif
-        #if FABLE_COMPILER_PYTHON
-        let expectedMs = 100000
-        #endif
-        #if !FABLE_COMPILER
-        let expectedMs = 2500
-        #endif
-        // 1200ms in Dotnet on i7-13800H
-        // 3412ms in Javascript on i7-13800H
-        // 24562ms in Javascript on i7-13800H
-        Expect.wantFaster f expectedMs "toJsonString should be faster" |> ignore
   ]
 ]
 

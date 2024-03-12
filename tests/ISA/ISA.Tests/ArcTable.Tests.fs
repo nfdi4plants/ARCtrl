@@ -108,18 +108,6 @@ let private tests_GetHashCode = testList "GetHashCode" [
         let notActual = create_testTable()
         Expect.notEqual actual notActual "equal"
         Expect.notEqual (actual.GetHashCode()) (notActual.GetHashCode()) "Hash"
-    testCase "Performance" <| fun _ ->
-        let testTable = ArcTable.init("Test")
-        let values = Array.init 10000 (fun i -> CompositeCell.createFreeText (string i))
-        testTable.AddColumn(CompositeHeader.FreeText "Header", values)
-        let f1 () = testTable.GetHashCode()
-        #if FABLE_COMPILER_PYTHON
-        let expectedMs = 500
-        #else
-        let expectedMs = 50
-        #endif
-        // On i7-13800H, 2ms in Dotnet and 18ms in javascript
-        Expect.wantFaster f1 expectedMs "GetHashCode is too slow" |> ignore
 ]
 
 let private tests_validate = 
@@ -483,29 +471,6 @@ let private tests_UpdateCell =
             let eval() = table.UpdateCellAt(0,0,cell)
             Expect.throws eval ""
         )
-
-        // Commented this test out, as the behaviour is different in dotnet and js, but both implementations are very close together performance-wise
-
-        //testCase "performance" (fun () ->
-        //    // Test, that for most cases (because of performance), setter should be used
-        //    let f1 = fun () ->
-        //        let table = ArcTable.init("Table")
-        //        for i = 0 to 10 do
-        //            table.Headers.Insert(i,CompositeHeader.FreeText $"Header_{i}")
-        //            for j = 0 to 5000 do
-        //                ArcTableAux.Unchecked.setCellAt(i,j,CompositeCell.createFreeText $"Cell_{i}_{j}") table.Values
-        //    let f2 = fun () ->
-        //        let table = ArcTable.init("Table")
-        //        for i = 0 to 10 do
-        //            table.Headers.Insert(i,CompositeHeader.FreeText $"Header_{i}")
-        //            for j = 0 to 5000 do
-        //                ArcTableAux.Unchecked.addCellAt(i,j,CompositeCell.createFreeText $"Cell_{i}_{j}") table.Values
-        //    Expect.isFasterThan f1 f2 "SetCell Implementation should be faster than reference"
-        
-        
-        
-        //)
-
     ]
 
 let private tests_UpdateColumn = 
@@ -2023,19 +1988,6 @@ let private tests_AddRows =
                     else
                         Expect.equal table.Values.[columnIndex, rowIndex] newTable.Values.[columnIndex, rowIndex-newColumnCount] $"Cell {columnIndex},{rowIndex}"
         )
-        testCase "performance" (fun () ->
-            let table = ArcTable("MyTable",ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample], System.Collections.Generic.Dictionary())
-            let rows = 
-                 Array.init 10000 (fun i -> 
-                    [|CompositeCell.FreeText $"Source_{i}"; CompositeCell.FreeText $"FT1_{i}"; CompositeCell.FreeText $"FT2_{i}"; CompositeCell.FreeText $"Sample_{i}"; |])
-            let testF = fun () -> table.AddRows(rows)
-            #if FABLE_COMPILER_PYTHON
-            let expectedMs = 1000
-            #else
-            let expectedMs = 100
-            #endif
-            Expect.wantFaster testF expectedMs $"AddRows is too slow." |> ignore     
-        )
     ]
 
 let private tests_UpdateRefWithSheet =
@@ -2316,34 +2268,9 @@ let private tests_equality = testList "equality" [
 ]
 
 
-let private tests_fillMissing = testList "fillMissing" [
-    testCase "performance" <| fun _ ->
-        
-        let headers = ResizeArray [CompositeHeader.Input IOType.Sample;CompositeHeader.FreeText "Freetext1" ; CompositeHeader.FreeText "Freetext2"; CompositeHeader.Output IOType.Sample]
-        let values = System.Collections.Generic.Dictionary()
-        for i = 0 to 20000 do       
-            if i%2 = 0 then
-                ArcTableAux.Unchecked.setCellAt(0,i,(CompositeCell.FreeText $"Source_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(1,i,(CompositeCell.FreeText $"FT1_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(2,i,(CompositeCell.FreeText $"FT2_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(3,i,(CompositeCell.FreeText $"FT3_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
-            else
-                ArcTableAux.Unchecked.setCellAt(0,i,(CompositeCell.FreeText $"Source_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(3,i,(CompositeCell.FreeText $"FT3_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(4,i,(CompositeCell.FreeText $"FT4_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(5,i,(CompositeCell.FreeText $"FT5_{i}")) values
-                ArcTableAux.Unchecked.setCellAt(6,i,(CompositeCell.FreeText $"Sample_{i}")) values
-        let testF = fun () -> ArcTableAux.Unchecked.fillMissingCells headers values   
-        #if FABLE_COMPILER_PYTHON
-        let expectedMs = 10000
-        #else
-        let expectedMs = 220
-        #endif
-        //4800ms in python on i7-13800H
-        Expect.wantFaster testF expectedMs "fillMissing is too slow." |> ignore // 130ms in javascript, dotnet faster than 100ms
-    ]
+//let private tests_fillMissing = testList "fillMissing" [
 
+//    ]
 
 let main = 
     testList "ArcTable" [
@@ -2368,5 +2295,5 @@ let main =
         tests_IterColumns
         tests_GetHashCode
         tests_equality
-        tests_fillMissing
+        //tests_fillMissing
     ]
