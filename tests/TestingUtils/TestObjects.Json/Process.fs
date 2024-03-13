@@ -570,7 +570,7 @@ let processWithDefaultLD =
         "output": "sdo:result",
 
         "comments": "sdo:disambiguatingDescription"
-    }
+    },
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
         "@id": "http://madeUpProtocolWebsize.org/protein_digestion",
@@ -630,7 +630,6 @@ let processWithDefaultLD =
                 "value": "digestion_stopper",
                 "category": "Formic Acid",
                 "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C83719"
-                }
             },
             {
                 "@id": "#Component_heater",
@@ -650,7 +649,6 @@ let processWithDefaultLD =
                 "value": "heater",
                 "category": "Heater Device",
                 "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C49986"
-                }
             }
             
         ],
