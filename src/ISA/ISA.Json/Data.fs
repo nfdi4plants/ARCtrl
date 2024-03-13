@@ -71,6 +71,8 @@ module Data =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:Data) = 
         encoder (ConverterOptions()) m
@@ -132,6 +134,8 @@ module Source =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:Source) = 
         encoder (ConverterOptions()) m
@@ -192,11 +196,12 @@ module Sample =
                 FactorValues = get.Optional.Field "factorValues" (Decode.list (FactorValue.decoder options))
                 DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (Source.decoder options))
             }
-            
         )
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:Sample) = 
         encoder (ConverterOptions()) m

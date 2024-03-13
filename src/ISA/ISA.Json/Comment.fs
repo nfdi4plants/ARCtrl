@@ -46,6 +46,8 @@ module Comment =
 
     let fromJsonString (s:string)  = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (c:Comment) = 
         encoder (ConverterOptions()) c

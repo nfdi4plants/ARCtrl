@@ -108,6 +108,8 @@ module Study =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:Study) = 
         encoder (ConverterOptions()) p

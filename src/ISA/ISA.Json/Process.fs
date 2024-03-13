@@ -54,16 +54,55 @@ module ProcessParameterValue =
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<ProcessParameterValue> =
-        Decode.object (fun get ->
-            {
-                Category = get.Optional.Field "category" (ProtocolParameter.decoder options)
-                Value = get.Optional.Field "value" (Value.decoder options)
-                Unit = get.Optional.Field "unit" (OntologyAnnotation.decoder options)
-            }
-        )
+        if not options.IsJsonLD then
+            Decode.object (fun get ->
+                {
+                    Category = get.Optional.Field "category" (ProtocolParameter.decoder options)
+                    Value = get.Optional.Field "value" (Value.decoder options)
+                    Unit = get.Optional.Field "unit" (OntologyAnnotation.decoder options)
+                }
+            )
+        else
+            Decode.object (fun get ->
+                let categoryName = get.Optional.Field "category" (Decode.string)
+                let categoryCode = get.Optional.Field "categoryCode" (Decode.string)
+                let category =
+                    match categoryName,categoryCode with
+                    | None,None -> None
+                    | _ -> Some (ProtocolParameter.make None (Some (OntologyAnnotation.make None categoryName None categoryCode None)))
+                let valueName = get.Optional.Field "value" (Value.decoder options)
+                let valueCode = get.Optional.Field "valueCode" (Decode.string)
+                let value =
+                    match valueName,valueCode with
+                    | Some (Value.Name name), Some code ->
+                        let oa = OntologyAnnotation.make None (Some name) None (Some (URI.fromString code)) None
+                        let vo = Value.Ontology(oa)
+                        Some vo
+                    | None, Some code ->
+                        let oa = OntologyAnnotation.make None None None (Some (URI.fromString code)) None
+                        let vo = Value.Ontology(oa)
+                        Some vo
+                    | Some (Value.Name name), None -> valueName
+                    | Some (Value.Float name), None -> valueName
+                    | Some (Value.Int name), None -> valueName
+                    | _ -> None
+                let unitName = get.Optional.Field "unit" (Decode.string)
+                let unitCode = get.Optional.Field "unitCode" (Decode.string)
+                let unit = 
+                    match unitName,unitCode with
+                    | None,None -> None
+                    | _ -> Some (OntologyAnnotation.make None unitName None unitCode None)
+                {
+                    Category = category
+                    Value = value
+                    Unit = unit
+                }
+            )
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:ProcessParameterValue) = 
         encoder (ConverterOptions()) p
@@ -119,6 +158,8 @@ module ProcessInput =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:ProcessInput) = 
         encoder (ConverterOptions()) m
@@ -167,6 +208,8 @@ module ProcessOutput =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:ProcessOutput) = 
         encoder (ConverterOptions()) m
@@ -237,6 +280,8 @@ module Process =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:Process) = 
         encoder (ConverterOptions()) None None p
