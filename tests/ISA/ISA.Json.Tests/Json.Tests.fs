@@ -726,11 +726,11 @@ let testProcessFile =
 let testProcessFileLD =
 
     testList "ProcessLD" [
-        ptestCase "ReaderSuccess" (fun () -> 
+        testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Process.fromJsonString Process.processLD |> ignore
+                    Process.fromJsonldString Process.processLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
@@ -789,6 +789,28 @@ let testProcessFileLD =
 
             let o =
                 Process.fromJsonString Process.processWithoutIDs
+                |> Process.toJsonldStringWithContext
+
+            let expected = 
+                Process.processWithDefaultLD
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            let actual = 
+                o
+                |> Utils.extractWords
+                |> Array.countBy id
+                |> Array.sortBy fst
+
+            Expect.sequenceEqual actual expected "Written process file does not match read process file"
+        )
+
+        testCase "OutputMatchesInputLDtoLD" (fun () ->
+
+            let o_read = Process.fromJsonldString Process.processWithDefaultLD
+            let o =
+                o_read
                 |> Process.toJsonldStringWithContext
 
             let expected = 
@@ -915,11 +937,11 @@ let testPersonFile =
 let testPersonFileLD =
 
     testList "PersonLD" [
-        ptestCase "ReaderSuccess" (fun () -> 
+        testCase "ReaderSuccess" (fun () -> 
             
             let readingSuccess = 
                 try 
-                    Person.fromJsonString Person.personLD |> ignore
+                    Person.fromJsonldString Person.personLD |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Reading the test file failed: %s" err.Message)
