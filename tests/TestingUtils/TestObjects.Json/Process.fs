@@ -570,7 +570,7 @@ let processWithDefaultLD =
         "output": "sdo:result",
 
         "comments": "sdo:disambiguatingDescription"
-    }
+    },
     "name": "standard_trypsin_digestion",
     "executesProtocol": {
         "@id": "http://madeUpProtocolWebsize.org/protein_digestion",
