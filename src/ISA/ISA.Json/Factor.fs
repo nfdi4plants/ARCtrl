@@ -40,7 +40,9 @@ module Value =
 
 
     let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s        
+        GDecode.fromJsonString (decoder (ConverterOptions())) s   
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s     
 
     let toJsonString (v:Value) = 
         encoder (ConverterOptions()) v
@@ -97,6 +99,8 @@ module Factor =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (f:Factor) = 
         encoder (ConverterOptions()) f
@@ -168,6 +172,8 @@ module FactorValue =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (f:FactorValue) = 
         encoder (ConverterOptions()) f

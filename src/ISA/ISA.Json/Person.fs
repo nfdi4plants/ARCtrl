@@ -41,6 +41,14 @@ module Person =
             |> Encode.object
         else
             Encode.string affiliation
+    
+    let affiliationDecoder (options : ConverterOptions) : Decoder<string> =
+        if options.IsJsonLD then
+            Decode.object (fun get ->
+                get.Required.Field "name" Decode.string
+            ) 
+        else
+            Decode.string
 
 
     let rec encoder (options : ConverterOptions) (oa : Person) = 
@@ -82,7 +90,7 @@ module Person =
                 Phone = get.Optional.Field "phone" Decode.string
                 Fax = get.Optional.Field "fax" Decode.string
                 Address = get.Optional.Field "address" Decode.string
-                Affiliation = get.Optional.Field "affiliation" Decode.string
+                Affiliation = get.Optional.Field "affiliation" (affiliationDecoder options)
                 Roles = get.Optional.Field "roles" (Decode.array (OntologyAnnotation.decoder options))
                 Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))
             }
@@ -92,6 +100,9 @@ module Person =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:Person) = 
         encoder (ConverterOptions()) p

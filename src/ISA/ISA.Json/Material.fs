@@ -64,6 +64,8 @@ module MaterialAttribute =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:MaterialAttribute) = 
         encoder (ConverterOptions()) m
@@ -132,6 +134,8 @@ module MaterialAttributeValue =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:MaterialAttributeValue) = 
         encoder (ConverterOptions()) m
@@ -196,6 +200,8 @@ module Material =
         
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (m:Material) = 
         encoder (ConverterOptions()) m
