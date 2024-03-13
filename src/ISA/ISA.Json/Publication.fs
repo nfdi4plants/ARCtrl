@@ -51,6 +51,8 @@ module Publication =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:Publication) = 
         encoder (ConverterOptions()) p

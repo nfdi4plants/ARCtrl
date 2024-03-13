@@ -67,7 +67,9 @@ module OntologySourceReference =
         )
 
     let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s        
+        GDecode.fromJsonString (decoder (ConverterOptions())) s  
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s      
 
     let toJsonString (oa:OntologySourceReference) = 
         encoder (ConverterOptions()) oa
@@ -159,7 +161,9 @@ module OntologyAnnotation =
         )
 
     let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s        
+        GDecode.fromJsonString (decoder (ConverterOptions())) s      
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s  
 
     let toJsonString (oa:OntologyAnnotation) = 
         encoder (ConverterOptions()) oa

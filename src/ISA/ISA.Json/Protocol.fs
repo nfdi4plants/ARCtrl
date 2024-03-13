@@ -43,6 +43,8 @@ module ProtocolParameter =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toString (p:ProtocolParameter) = 
         encoder (ConverterOptions()) p
@@ -100,24 +102,64 @@ module Component =
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Component> =
-        Decode.object (fun get ->
-            let name = get.Optional.Field "componentName" GDecode.uri
-            let value, unit =
-                match name with
-                | Some n -> 
-                    let v,u = Component.decomposeName n
-                    Some v, u
-                | None -> None, None
-            {
-                ComponentName = None
-                ComponentValue = value
-                ComponentUnit = unit
-                ComponentType = get.Optional.Field "componentType" (OntologyAnnotation.decoder options)
-            }
-        )
+        if not options.IsJsonLD then
+            Decode.object (fun get ->
+                let name = get.Optional.Field "componentName" GDecode.uri
+                let value, unit =
+                    match name with
+                    | Some n -> 
+                        let v,u = Component.decomposeName n
+                        Some v, u
+                    | None -> None, None
+                {
+                    ComponentName = None
+                    ComponentValue = value
+                    ComponentUnit = unit
+                    ComponentType = get.Optional.Field "componentType" (OntologyAnnotation.decoder options)
+                }
+            )
+        else 
+            Decode.object (fun get ->
+                let categoryName = get.Optional.Field "category" (Decode.string)
+                let categoryCode = get.Optional.Field "categoryCode" (Decode.string)
+                let category =
+                    match categoryName,categoryCode with
+                    | None,None -> None
+                    | _ -> Some (OntologyAnnotation.make None categoryName None categoryCode None)
+                let valueName = get.Optional.Field "value" (Value.decoder options)
+                let valueCode = get.Optional.Field "valueCode" (Decode.string)
+                let value =
+                    match valueName,valueCode with
+                    | Some (Value.Name name), Some code ->
+                        let oa = OntologyAnnotation.make None (Some name) None (Some (URI.fromString code)) None
+                        let vo = Value.Ontology(oa)
+                        Some vo
+                    | None, Some code ->
+                        let oa = OntologyAnnotation.make None None None (Some (URI.fromString code)) None
+                        let vo = Value.Ontology(oa)
+                        Some vo
+                    | Some (Value.Name name), None -> valueName
+                    | Some (Value.Float name), None -> valueName
+                    | Some (Value.Int name), None -> valueName
+                    | _ -> None
+                let unitName = get.Optional.Field "unit" (Decode.string)
+                let unitCode = get.Optional.Field "unitCode" (Decode.string)
+                let unit = 
+                    match unitName,unitCode with
+                    | None,None -> None
+                    | _ -> Some (OntologyAnnotation.make None unitName None unitCode None)
+                {
+                    ComponentName = None
+                    ComponentValue = value
+                    ComponentUnit = unit
+                    ComponentType = category
+                }
+            )
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:Component) = 
         encoder (ConverterOptions()) p
@@ -194,6 +236,8 @@ module Protocol =
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
+    let fromJsonldString (s:string) = 
+        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
 
     let toJsonString (p:Protocol) = 
         encoder (ConverterOptions()) None None None p
