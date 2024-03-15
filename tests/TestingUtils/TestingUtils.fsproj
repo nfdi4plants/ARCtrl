@@ -23,7 +23,6 @@
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Template.fs" />
     <Compile Include="TestObjects.Contract\ISA.fs" />
     <Compile Include="Library.fs" />
-    <Compile Include="PerformanceReport.fs" />
   </ItemGroup>
 <ItemGroup>
   <PackageReference Include="Fable.Node" Version="1.2.0" />

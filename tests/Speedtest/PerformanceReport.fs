@@ -215,26 +215,12 @@ let lang =
     "FSharp"
     #endif
 
-
-let argumentNumber = 
-    #if FABLE_COMPILER_JAVASCRIPT
-    1
-    #else 
-    0
-    #endif
-
-
-[<EntryPoint>]
-let main argv =
-    printfn "Arguments:" 
-    for arg in argv do
-        printfn "\t%s" arg
-    let cpu = argv.[argumentNumber]
+let runReport cpu =
     let report = createMarkdownPerformanceReport lang cpu
     let timeString = 
         let dt = System.DateTime.Today
         $"{dt.Year}_{dt.Month}_{dt.Day}"
-    let outFile = $"tests/TestingUtils/PerformanceReport/{timeString}_PerformanceReport_{lang}.md"
+    let outFile = $"tests/Speedtest/PerformanceReport/{timeString}_PerformanceReport_{lang}.md"
     writeFile outFile report
     printfn "%s" report
     0

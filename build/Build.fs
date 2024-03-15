@@ -29,6 +29,9 @@ let _preRelease =
         "PreRelease" 
         [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease]
 
+ReleaseNotesTasks.updateReleaseNotes |> ignore
+PerformanceTasks.perforanceReport |> ignore
+
 [<EntryPoint>]
 let main args = 
     runOrDefault build args

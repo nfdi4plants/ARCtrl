@@ -29,6 +29,7 @@ let main argv =
         FillMissing.newF t3
         FillMissing.newSeqF t4
         1
+    #if !FABLE_COMPILER
     elif Array.contains "--bigJson" argv then
         let createAssay() = 
             let a = ArcAssay.init("MyAssay")
@@ -66,5 +67,14 @@ let main argv =
         |> toJson
         |> toFS
         1
+    #endif
     else 
-        0
+        printfn "ARE YOU DOING STUFF?"
+        //let argumentNumber = 
+        //    #if FABLE_COMPILER_JAVASCRIPT
+        //    1
+        //    #else 
+        //    0
+        //    #endif
+        let cpu = argv.[0]
+        PerformanceReport.runReport cpu
