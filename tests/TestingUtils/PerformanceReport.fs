@@ -3,6 +3,29 @@
 open ARCtrl.ISA
 open ARCtrl.ISA.Json
 open ARCtrl.ISA.Spreadsheet
+open Fable.Core
+
+#if FABLE_COMPILER_JAVASCRIPT
+open Node.Api
+#endif
+
+#if FABLE_COMPILER_PYTHON
+open Fable.Python.Builtins
+#endif
+
+let writeFile (path : string) (content : string) =
+    #if FABLE_COMPILER_JAVASCRIPT
+    fs.writeFileSync(path,content)
+    #endif
+    #if FABLE_COMPILER_PYTHON
+    let file = builtins.``open``(path, OpenTextMode.Write)
+    file.write(content) |> ignore
+    #endif
+    #if !FABLE_COMPILER
+    System.IO.File.WriteAllText(path,content)
+    #endif
+
+    //fs.writeFile(path,content)
 
 type PerformanceTest =
     {
@@ -13,12 +36,10 @@ type PerformanceTest =
     }
 
     member this.Run() =
-        printfn "Running test: %s" this.Name
-        let timer_start = System.DateTime.Now
-        this.Test()
-        let timer_end = System.DateTime.Now
-        let runtime = (timer_end - timer_start).Milliseconds
-        {this with Time = Some runtime}
+        printfn "%A: Running test: %s" System.DateTime.Now this.Name
+        let time = TestingUtils.Stopwatch.measure(this.Test) |> int
+        printfn "\tC%A: Completeted in %ims" System.DateTime.Now time
+        {this with Time = Some time}
 
     static member create name description test = {Name = name; Description = description; Test = test; Time = None}
 
@@ -35,7 +56,7 @@ type PerformanceReport =
         {this with Tests = this.Tests |> List.map (fun t -> t.Run())}
 
     member this.ToMarkdown() = 
-        let header = $"| Name | Description | CPU | Lang Time (ms) |"
+        let header = $"| Name | Description | CPU | {this.Lang} Time (ms) |"
         let separator = $"| --- | --- | --- | --- |"
         let tests = this.Tests |> List.map (fun t -> $"| {t.Name} | {t.Description} | {this.CPU} | {t.Time.Value} |")
         String.concat "\n" [header; separator; tests |> String.concat "\n"]
@@ -111,16 +132,15 @@ let table_toJson =
     let t = TestObjects.Spreadsheet.Study.LargeFile.table
     PerformanceTest.create
         "Table_ToJson"
-        ""
+        "Serialize a table with 5 columns and 10000 rows to json."
         (fun _ -> t.ToJsonString() |> ignore)
 
 let table_toCompressedJson =
     let t = TestObjects.Spreadsheet.Study.LargeFile.table
     PerformanceTest.create
         "Table_ToCompressedJson"
-        ""
-        (fun _ -> t.ToCompressedJsonString() |> ignore)
-        
+        "Serialize a table with 5 columns and 10000 rows to compressed json."
+        (fun _ -> t.ToCompressedJsonString() |> ignore)       
     
 let assay_toJson =
     let a = ArcAssay.init("MyAssay")
@@ -192,13 +212,29 @@ let lang =
     "Python"
     #endif
     #if !FABLE_COMPILER
-    "F#"
+    "FSharp"
+    #endif
+
+
+let argumentNumber = 
+    #if FABLE_COMPILER_JAVASCRIPT
+    1
+    #else 
+    0
     #endif
 
 
 [<EntryPoint>]
 let main argv =
-    let cpu = argv.[1]
+    printfn "Arguments:" 
+    for arg in argv do
+        printfn "\t%s" arg
+    let cpu = argv.[argumentNumber]
     let report = createMarkdownPerformanceReport lang cpu
+    let timeString = 
+        let dt = System.DateTime.Today
+        $"{dt.Year}_{dt.Month}_{dt.Day}"
+    let outFile = $"tests/TestingUtils/PerformanceReport/{timeString}_PerformanceReport_{lang}.md"
+    writeFile outFile report
     printfn "%s" report
     0

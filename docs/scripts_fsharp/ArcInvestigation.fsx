@@ -20,7 +20,7 @@ open FsSpreadsheet.Net
 
 let fswb = ArcInvestigation.toFsWorkbook investigation_comments
 
-fswb.ToFile("test2.isa.investigation.xlsx")
+fswb.ToXlsxFile("test2.isa.investigation.xlsx")
 
 // ## Json - Write
 

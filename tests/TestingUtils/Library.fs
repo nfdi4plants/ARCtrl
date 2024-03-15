@@ -59,6 +59,13 @@ type Stopwatch() =
         | Some start, Some stop -> stop - start
         | _, _ -> failwith "Error. Unable to call `Elapsed` without calling `Start` and `Stop` before."
 
+    static member measure f = 
+        let stopwatch = Stopwatch()
+        stopwatch.Start()
+        let res = f()
+        stopwatch.Stop()
+        stopwatch.Elapsed.TotalMilliseconds
+
 /// Fable compatible Expecto/Mocha/Pyxpecto unification
 module Expect = 
     open Utils
