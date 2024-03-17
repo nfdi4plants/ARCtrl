@@ -27,8 +27,7 @@ module AnnotationValue =
                         | Error e -> Error e       
         }
             
-
-module OntologySourceReference = 
+module OntologySourceReference =
     
     let genID (o:OntologySourceReference) = 
         match o.File with
@@ -84,12 +83,12 @@ module OntologySourceReference =
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
-    // let fromFile (path : string) = 
-    //     File.ReadAllText path 
-    //     |> fromString
+        // let fromFile (path : string) = 
+        //     File.ReadAllText path 
+        //     |> fromString
 
-    //let toFile (path : string) (osr:OntologySourceReference) = 
-    //    File.WriteAllText(path,toString osr)
+        //let toFile (path : string) (osr:OntologySourceReference) = 
+        //    File.WriteAllText(path,toString osr)
 
 module OntologyAnnotation =  
     
@@ -105,6 +104,7 @@ module OntologyAnnotation =
                                         | None -> "#DummyOntologyAnnotation"
 
     let encoder (options : ConverterOptions) (oa : OntologyAnnotation) = 
+        let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
@@ -115,7 +115,7 @@ module OntologyAnnotation =
             GEncode.tryInclude "annotationValue" Encode.string (oa.Name)
             GEncode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
             GEncode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
-            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
+            GEncode.tryIncludeArray "comments" commentEncoder (oa.Comments)
             if options.IsJsonLD then
                 "@context", ROCrateContext.OntologyAnnotation.context_jsonvalue
         ]

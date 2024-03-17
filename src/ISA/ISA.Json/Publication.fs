@@ -17,6 +17,7 @@ module Publication =
                             | None -> "#EmptyPublication"
 
     let encoder (options : ConverterOptions) (oa : Publication) = 
+        let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
@@ -27,7 +28,7 @@ module Publication =
             GEncode.tryInclude "authorList" Encode.string (oa.Authors)
             GEncode.tryInclude "title" Encode.string (oa.Title)
             GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa.Status)
-            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
+            GEncode.tryIncludeArray "comments" commentEncoder (oa.Comments)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Publication.context_jsonvalue
         ]
@@ -36,7 +37,7 @@ module Publication =
 
     let allowedFields = ["@id";"pubMedID";"doi";"authorList";"title";"status";"comments";"@type"; "@context"]
 
-    let rec decoder (options : ConverterOptions) : Decoder<Publication> =
+    let decoder (options : ConverterOptions) : Decoder<Publication> =
         GDecode.object allowedFields (fun get ->
             {
                 PubMedID = get.Optional.Field "pubMedID" GDecode.uri
