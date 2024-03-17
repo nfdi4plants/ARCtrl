@@ -2,12 +2,11 @@ namespace ARCtrl.ISA.Json
 
 
 open Thoth.Json.Core
-
 open ARCtrl.ISA
 open System.IO
 
 module Comment = 
-    
+
     let genID (c:Comment) : string = 
         match c.ID with
         | Some id -> URI.toString id
@@ -16,8 +15,6 @@ module Comment =
                     let v = if c.Value.IsSome then "_" + c.Value.Value.Replace(" ","_") else ""
                     "#Comment_" + n.Replace(" ","_") + v
                   | None -> "#EmptyComment"
-
-
 
     let encoder (options : ConverterOptions) (comment : Comment) = 
         [
@@ -44,6 +41,15 @@ module Comment =
             }
         )
 
+    let encoderDisambiguatingDescription (comment : Comment) = encoder (ConverterOptions()) comment |> GEncode.toJsonString 2 |> Encode.string
+
+    let decoderDisambiguatingDescription : Decoder<Comment> = 
+        Decode.string 
+        |> Decode.map(fun s -> 
+            let d = decoder (ConverterOptions())
+            GDecode.fromJsonString d s
+        )
+
     let fromJsonString (s:string)  = 
         GDecode.fromJsonString (decoder (ConverterOptions())) s
     let fromJsonldString (s:string) = 
@@ -57,10 +63,7 @@ module Comment =
     let toJsonldString (c:Comment) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) c
         |> GEncode.toJsonString 2
-
-    let toJsonldStringWithContext (a:Comment) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

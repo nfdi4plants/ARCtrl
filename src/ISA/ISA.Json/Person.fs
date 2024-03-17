@@ -51,8 +51,9 @@ module Person =
             Decode.string
 
 
-    let rec encoder (options : ConverterOptions) (oa : Person) = 
+    let encoder (options : ConverterOptions) (oa : Person) = 
         let oa = oa |> Person.setCommentFromORCID
+        let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
@@ -69,7 +70,7 @@ module Person =
             GEncode.tryInclude "address" Encode.string (oa.Address)
             GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa.Affiliation)
             GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
-            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
+            GEncode.tryIncludeArray "comments" commentEncoder (oa.Comments)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Person.context_jsonvalue
         ]
