@@ -4,6 +4,12 @@ import path from "path";
 
 // Write
 
+export function normalizePathSeparators (str) {
+  const normalizedPath = path.normalize(str)
+  return normalizedPath.replace(/\\/g, '/');
+}
+
+
 export async function fulfillWriteContract (basePath, contract) {
     function ensureDirectory (filePath) {
         let dirPath = path.dirname(filePath)

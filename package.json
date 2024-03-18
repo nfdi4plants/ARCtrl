@@ -30,9 +30,7 @@
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
   ],
   "dependencies": {
-    "exceljs": "^4.3.0",
     "fable-library": "^1.1.1",
-    "fsspreadsheet": "^4.0.0-alpha2",
     "isomorphic-fetch": "^3.0.0",
     "jsonschema": "^1.4.1"
   },
