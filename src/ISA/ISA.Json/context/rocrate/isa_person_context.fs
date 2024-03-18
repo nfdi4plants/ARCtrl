@@ -27,7 +27,7 @@ module Person =
       "sdo", Encode.string "http://schema.org/"
 
       "Person", Encode.string "sdo:Person"
-      
+      "name", Encode.string "sdo:name"
       "firstName", Encode.string "sdo:givenName"
       "lastName", Encode.string "sdo:familyName"
       "midInitials", Encode.string "sdo:additionalName"
@@ -48,7 +48,7 @@ module Person =
     "arc": "http://purl.org/nfdi4plants/ontology/",
 
     "Person": "sdo:Person",
-    
+    "name": "sdo:name",
     "firstName": "sdo:givenName",
     "lastName": "sdo:familyName",
     "midInitials": "sdo:additionalName",
