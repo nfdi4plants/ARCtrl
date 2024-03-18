@@ -1,5 +1,5 @@
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 #load "Contracts.fsx"
 
 // # Create
@@ -15,7 +15,7 @@ arc.FileSystem
 
 open ARCtrl.Contract
 open FsSpreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet.Net
 
 let arcRootPath = @"C:\Users\Kevin\Desktop\NewTestARCNET"
 

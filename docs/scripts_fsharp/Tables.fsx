@@ -1,5 +1,5 @@
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl.ISA
 

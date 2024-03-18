@@ -10,9 +10,9 @@ To create the `ARC` model from an existing ARC on your disc you can do the follo
 // reference ARC from anywhere, in this case from local built nuget packages
 #i @"nuget: C:/Users/Kevin/source/repos/ISADotNet/pkg/"
 #r "nuget: ARC"
-// Example is done in .NET, so we use FsSpreadsheet.ExcelIO to read in the xlsx files.
-#r "nuget: FsSpreadsheet, 2.0.2"
-#r "nuget: FsSpreadsheet.ExcelIO, 2.0.2"
+// Example is done in .NET, so we use FsSpreadsheet.Net to read in the xlsx files.
+#r "nuget: FsSpreadsheet"
+#r "nuget: FsSpreadsheet.Net"
 open ARC
 open Contract
 
@@ -22,7 +22,7 @@ let [<Literal>] rootPath = @"C:\Users\Kevin\Desktop\TestARC"
 /// Functions found here might be moved to a ARCtrl.NETIO Implementation
 module ARC_IO =
     open FsSpreadsheet
-    open FsSpreadsheet.ExcelIO
+    open FsSpreadsheet.Net
 
     /// Read all files in ARC and return their relative paths to `rootPath`
     let readFilePaths (arcRootPath: string) = 

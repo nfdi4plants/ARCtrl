@@ -7,7 +7,7 @@
 
 1. Install [.NET SDK](https://dotnet.microsoft.com/en-us/download).
 2. Get the [ARCtrl nuget package](www.nuget.org/packages/ARCtrl).
-3. (*OPTIONAL*) Use [FsSpreadsheet.ExcelIO](https://www.nuget.org/packages/FsSpreadsheet.ExcelIO) to get any xlsx files into the correct format with our supported readers.
+3. (*OPTIONAL*) Use [FsSpreadsheet.Net](https://www.nuget.org/packages/FsSpreadsheet.Net) to get any xlsx files into the correct format with our supported readers.
 4. (*OPTIONAL*) You can use contract handling from [ARCtrl.NET](https://www.nuget.org/packages/ARCtrl.NET). This documentation will avoid using ARCtrl.NET and extract the relevant functions.
 
 Thats it! 🎉 
@@ -15,8 +15,8 @@ Thats it! 🎉
 For any documentation we assume using ARCtrl from a .fsx file. Verify correct setup by creating a `ARC.fsx` file with the following content
 
 ```fsharp
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl
 
@@ -54,8 +54,8 @@ Your `package.json` might look similiar to this:
   "author": "Kevin Frey",
   "license": "MIT",
   "dependencies": {
-    "@nfdi4plants/arctrl": "^1.0.0-alpha9",
-    "fsspreadsheet": "^4.0.0-alpha2"
+    "@nfdi4plants/arctrl": "^1.2.0",
+    "fsspreadsheet": "^5.2.0"
   }
 }
 ```
@@ -69,4 +69,30 @@ Verify correct setup by creating `ARC.js` file with the content from below in th
 import {ARC} from "@nfdi4plants/arctrl";
 
 console.log(ARC) // [class ARC]
+```
+
+## Setup - Python
+
+1. Install [python >3.11.x](https://www.python.org/downloads/)
+2. Create folder and put an `requirements.txt` file inside.
+3. Write `arctrl` and `fsspreadsheet` in two separate lines into it
+   ```
+   arctrl
+   fsspreadsheet
+   ```
+4. run `py -m pip install -r requirements.txt`
+
+   Of course you can replace the command `py` with anything that leads to the python executable of your liking.
+
+Thats it! 🎉
+
+You can now reference ARCtrl in any `.py` file and run it with `py path/to/Any.py`.
+
+Verify correct setup by creating `ARCTest.py` file with the content from below in the same folder, which contains your `requirements.txt`. Then run `py ./ArcTest.py`. This will print `<class 'arctrl.arc.ARC'>` into the console.
+
+```python
+// ARCTest.py
+from arctrl.arctrl import ARC;
+
+print(ARC) // <class 'arctrl.arc.ARC'>
 ```

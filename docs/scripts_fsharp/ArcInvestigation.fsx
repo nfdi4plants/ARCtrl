@@ -1,5 +1,5 @@
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.9"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl.ISA
 
@@ -16,7 +16,7 @@ investigation_comments.Comments <- Array.append investigation_comments.Comments 
 
 // ## Xlsx - Write
 open ARCtrl.ISA.Spreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet.Net
 
 let fswb = ArcInvestigation.toFsWorkbook investigation_comments
 

@@ -48,8 +48,8 @@ Comments can be used to add freetext information to the Investigation metadata s
 
 ```fsharp
 // F#
-#r "nuget: FsSpreadsheet.ExcelIO, 5.0.2"
-#r "nuget: ARCtrl, 1.0.0-beta.8"
+#r "nuget: FsSpreadsheet.Net"
+#r "nuget: ARCtrl"
 
 open ARCtrl.ISA
 
@@ -76,7 +76,21 @@ investigation_comments.Comments.push(newComment2)
 
 console.log(investigation_comments)
 ```
+```python
+#Python
+from arctrl.arctrl import ArcInvestigation, Comment
 
+# Comments
+investigation_comments = ArcInvestigation.init("My Investigation")
+
+new_comment = Comment.create("The Id", "The Name", "The Value")
+new_comment2 = Comment.create("My other ID", "My other Name", "My other Value")
+
+investigation_comments.Comments.append(new_comment)
+investigation_comments.Comments.append(new_comment2)
+
+print(investigation_comments)
+```
 This code example will produce the following output after writing to `.xlsx`.
 
 | INVESTIGATION                     |                  |
@@ -101,7 +115,7 @@ This code example will produce the following output after writing to `.xlsx`.
 ```fsharp
 // F#
 open ARCtrl.ISA.Spreadsheet
-open FsSpreadsheet.ExcelIO
+open FsSpreadsheet.Net
 
 let fswb = ArcInvestigation.toFsWorkbook investigation_comments
 
@@ -117,6 +131,16 @@ let fswb = toFsWorkbook(investigation_comments)
 
 Xlsx.toFile("test.isa.investigation.xlsx", fswb)
 ```
+```python
+# Python
+from fsspreadsheet.xlsx import Xlsx
+from arctrl.ISA.ISA_Spreadsheet.arc_investigation import to_fs_workbook, from_fs_workbook
+
+fswb = to_fs_workbook(investigation_comments)
+
+Xlsx.to_file("test.isa.investigation.xlsx", fswb)
+```
+
 
 ## Json
 
@@ -147,6 +171,16 @@ const json = ArcInvestigation_toJsonString(investigation)
 
 console.log(json)
 ```
+```python
+# Python
+from arctrl.ISA.ISA_Json.ArcTypes.arc_investigation import ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString
+
+investigation = ArcInvestigation.init("My Investigation")
+
+json_str = ArcInvestigation_toJsonString(investigation)
+
+print(json_str)
+```
 
 ### Read Json
 
@@ -174,4 +208,14 @@ const jsonString = json
 const investigation_2 = ArcInvestigation_fromJsonString(jsonString)
 
 console.log(investigation_2)
+```
+```python
+# Python
+from arctrl.ISA.ISA_Json.ArcTypes.arc_investigation import ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString
+
+json_string = json_str
+
+investigation_2 = ArcInvestigation_fromJsonString(json_string)
+
+print(investigation_2.Equals(investigation))
 ```
