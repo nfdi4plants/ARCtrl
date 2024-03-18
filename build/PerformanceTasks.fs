@@ -9,10 +9,15 @@ open Fake.Core
 
 module PerformanceReport = 
 
-    let cpu = 
-        Microsoft.Win32.Registry.GetValue("HKEY_LOCAL_MACHINE\\HARDWARE\\DESCRIPTION\\SYSTEM\\CentralProcessor\\0", "ProcessorNameString", null) :?> string
+    let mutable cpu = ""
+
+    let promptCpu() =
+        if cpu = "" then
+            printfn "Please enter your cpu name"
+            cpu <- System.Console.ReadLine()
 
     let testPerformancePy = BuildTask.create "testPerformancePy" [clean; build] {
+        promptCpu()
         let path = "tests/Speedtest"
      //transpile py files from fsharp code
         run dotnet $"fable {path} -o {path}/py --lang python" ""
@@ -20,6 +25,7 @@ module PerformanceReport =
         run python $"{path}/py/program.py \"{cpu}\"" ""
     }
     let testPerformanceJs = BuildTask.create "testPerformanceJS" [clean; build] {
+        promptCpu()
         let path = "tests/Speedtest"
         // transpile js files from fsharp code
         run dotnet $"fable {path} -o {path}/js" ""
@@ -27,6 +33,7 @@ module PerformanceReport =
         run node $"{path}/js/program.js \"{cpu}\"" ""
     }
     let testPerformanceDotnet = BuildTask.create "testPerformanceDotnet" [clean; build] {
+        promptCpu()
         let path = "tests/Speedtest"
         run dotnet $"run --project {path} \"{cpu}\"" ""
     }
