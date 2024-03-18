@@ -1,12 +1,15 @@
 import {ARC} from "@nfdi4plants/arctrl";
-import {fulfillWriteContract, fulfillReadContract} from "./Contracts.js";
+import {fulfillWriteContract, fulfillReadContract, normalizePathSeparators} from "./Contracts.js";
+import {ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString} from "@nfdi4plants/arctrl/ISA/ISA.Json/ArcTypes/ArcInvestigation.js"
+import fs from "fs";
+import path from "path";
 
 // # Create
 
 let arc = new ARC()
 
 // # Write
-const arcRootPath = "C:/Users/Kevin/Desktop/NewTestARCJS"
+const arcRootPath = "TestArc"
 
 async function write(arcPath, arc)  {
     let contracts = arc.GetWriteContracts()
@@ -16,15 +19,11 @@ async function write(arcPath, arc)  {
     };
 }
 
-await write(arcRootPath, arc)
+// await write(arcRootPath, arc)
 
 // # Read
 
 // Setup
-function normalizePathSeparators (str) {
-  const normalizedPath = path.normalize(str)
-  return normalizedPath.replace(/\\/g, '/');
-}
 
 export function getAllFilePaths(basePath) {
   const filesList = []
@@ -55,7 +54,7 @@ async function read(basePath) {
     let arc = ARC.fromFilePaths(allFilePaths)
     // Read contracts will tell us what we need to read from disc.
     let readContracts = arc.GetReadContracts()
-    console.log(readContracts)
+    // console.log(readContracts)
     let fcontracts = await Promise.all(
         readContracts.map(async (contract) => {
             let content = await fulfillReadContract(basePath, contract)
@@ -69,4 +68,8 @@ async function read(basePath) {
 
 // Execution
 
-await read(arcRootPath).then(arc => console.log(arc))
+await read(arcRootPath).then(arc => {
+  // let json = ArcInvestigation_toJsonString(arc.ISA)
+  // console.log(json)
+  console.log(arc)
+})

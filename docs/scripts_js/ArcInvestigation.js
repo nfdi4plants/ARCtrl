@@ -3,7 +3,7 @@ import { ArcInvestigation, Comment$ as Comment} from "@nfdi4plants/arctrl"
 import {Xlsx} from "@fslab/fsspreadsheet";
 // Import ARCtrl Investigation to Spreadsheet transformation
 import {toFsWorkbook, fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcInvestigation.js"
-import {ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString} from "@nfdi4plants/arctrl/ISA/ISA.Json/Investigation.js"
+import {ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString} from "@nfdi4plants/arctrl/ISA/ISA.Json/ArcTypes/ArcInvestigation.js"
 
 // # Comments
 
@@ -23,7 +23,7 @@ console.log(investigation_comments)
 
 let fswb = toFsWorkbook(investigation_comments)
 
-Xlsx.toFile("test.isa.investigation.xlsx", fswb)
+// Xlsx.toFile("test.isa.investigation.xlsx", fswb)
 
 // Json - Write
 
