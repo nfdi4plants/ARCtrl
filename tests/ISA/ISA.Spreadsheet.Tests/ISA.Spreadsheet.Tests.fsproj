@@ -17,7 +17,6 @@
     <Compile Include="StudyFileTests.fs" />
     <Compile Include="AssayFileTests.fs" />
     <Compile Include="InvestigationFileTests.fs" />
-    <Compile Include="Performance.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

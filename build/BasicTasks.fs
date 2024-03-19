@@ -83,6 +83,17 @@ module Helper =
 
     let dotnet = createProcess "dotnet"
 
+    let node =
+        let nodePath =
+            match ProcessUtils.tryFindFileOnPath "node" with
+            | Some path -> path
+            | None ->
+                "node was not found in path. Please install it and make sure it's available from your path. " +
+                "See https://safe-stack.github.io/docs/quickstart/#install-pre-requisites for more info"
+                |> failwith
+
+        createProcess nodePath
+
     let npx =
         let npmPath =
             match ProcessUtils.tryFindFileOnPath "npx" with

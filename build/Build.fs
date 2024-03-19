@@ -30,6 +30,7 @@ let _preRelease =
         [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease]
 
 ReleaseNotesTasks.updateReleaseNotes |> ignore
+PerformanceTasks.perforanceReport |> ignore
 
 [<EntryPoint>]
 let main args = 

@@ -6,16 +6,26 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="PerformanceReport/PerformanceReport_FSharp.md" />
+    <None Include="PerformanceReport/PerformanceReport_JavaScript.md" />
+    <None Include="PerformanceReport/PerformanceReport_Python.md" />
     <Compile Include="FillMissing.fs" />
     <Compile Include="ManyStudies.fs" />
     <Compile Include="LargeStudy.fs" />
     <Compile Include="AddRows.fs" />
+    <Compile Include="PerformanceReport.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
+
+  <ItemGroup />
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
     <ProjectReference Include="..\..\src\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
+    <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
   </ItemGroup>
 
 </Project>
