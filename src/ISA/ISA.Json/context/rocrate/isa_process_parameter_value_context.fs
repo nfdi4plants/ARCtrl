@@ -18,7 +18,7 @@ module ProcessParameterValue =
   let context_jsonvalue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
-
+      "additionalType", Encode.string "sdo:additionalType"
       "ProcessParameterValue", Encode.string "sdo:PropertyValue"
 
       "category", Encode.string "sdo:name"
@@ -28,20 +28,3 @@ module ProcessParameterValue =
       "unit", Encode.string "sdo:unitText"
       "unitCode", Encode.string "sdo:unitCode"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-    "ProcessParameterValue": "sdo:PropertyValue",
-    "ArcProcessParameterValue": "arc:ARC#ARC_00000088",
-
-    "category": "arc:ARC#ARC_00000062",
-    "value": "arc:ARC#ARC_00000087",
-    "unit": "arc:ARC#ARC_00000106"
-  }
-}
-    """

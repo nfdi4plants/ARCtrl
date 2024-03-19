@@ -22,6 +22,7 @@ module ProcessParameterValue =
                 "@id", Encode.string (oa |> genID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "ProcessParameterValue"])
+                "additionalType", Encode.string "ProcessParameterValue"
             if options.IsJsonLD then
                 if oa.Category.IsSome && oa.Category.Value.ParameterName.IsSome then
                     GEncode.tryInclude "category" Encode.string (oa.Category.Value.ParameterName.Value.Name)
