@@ -20,7 +20,6 @@ module Investigation =
         //                               | None -> "#EmptyStudy"
 
     let encoder (options : ConverterOptions) (oa : Investigation) = 
-        let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
@@ -28,6 +27,7 @@ module Investigation =
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", Encode.string "Investigation"
+                "additionalType", Encode.string "Investigation"
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
             GEncode.tryInclude "title" Encode.string (oa.Title)
@@ -38,7 +38,7 @@ module Investigation =
             GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
             GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
             GEncode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
-            GEncode.tryIncludeList "comments" commentEncoder (oa.Comments)
+            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IsJsonLD then
                 "@context", ROCrateContext.Investigation.context_jsonvalue
         ]

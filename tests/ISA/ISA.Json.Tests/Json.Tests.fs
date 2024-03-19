@@ -1102,7 +1102,7 @@ let testPublicationFileLD =
 
             let writingSuccess = 
                 try 
-                    Publication.toJsonldStringWithContext a |> ignore
+                    Publication.toJsonldString a |> ignore
                     Result.Ok "DidRun"
                 with
                 | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
@@ -1125,7 +1125,7 @@ let testPublicationFileLD =
 
             let o = 
                 Publication.fromJsonString Publication.publication
-                |> Publication.toJsonldStringWithContext
+                |> Publication.toJsonldString
 
             let expected = 
                 Publication.publicationLD

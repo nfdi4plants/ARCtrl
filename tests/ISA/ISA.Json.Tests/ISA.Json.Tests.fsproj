@@ -6,13 +6,13 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="ROCrate.Tests.fs" />
     <EmbeddedResource Include="Validation\JsonValidation.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <Compile Include="Validation\ValidationResult.fs" />
     <Compile Include="Validation\Fable.fs" />
     <Compile Include="Validation\JsonSchemaValidation.fs" />
+    <Compile Include="ROCrate.Tests.fs" />
     <Compile Include="ArcTypes.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Json.Tests.fs" />

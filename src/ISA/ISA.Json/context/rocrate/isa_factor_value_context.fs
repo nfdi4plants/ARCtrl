@@ -20,7 +20,8 @@ module FactorValue =
       "sdo", Encode.string "http://schema.org/"
 
       "FactorValue", Encode.string "sdo:PropertyValue"
-
+      // Will define if PropertyValue is Factor/Chara.. etc.
+      "additionalType", Encode.string "sdo:additionalType"
       "category", Encode.string "sdo:name"
       "categoryName", Encode.string "sdo:alternateName"
       "categoryCode", Encode.string "sdo:propertyID"
@@ -29,20 +30,3 @@ module FactorValue =
       "unit", Encode.string "sdo:unitText"
       "unitCode", Encode.string "sdo:unitCode"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-    "FactorValue": "sdo:PropertyValue",
-    "ArcFactorValue": "arc:ARC#ARC_00000084",
-
-    "category": "arc:category",
-    "value": "arc:ARC#ARC_00000044",
-    "unit": "arc:ARC#ARC_00000106"
-  }
-}
-    """

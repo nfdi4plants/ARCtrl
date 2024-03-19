@@ -18,6 +18,7 @@ module Publication =
 
     let encoder (options : ConverterOptions) (oa : Publication) = 
         let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
+        let authorListEncoder = if options.IsJsonLD then ROCrateHelper.Person.authorListStringEncoder else Encode.string
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
@@ -25,7 +26,7 @@ module Publication =
                 "@type", Encode.string "Publication"
             GEncode.tryInclude "pubMedID" Encode.string (oa.PubMedID)
             GEncode.tryInclude "doi" Encode.string (oa.DOI)
-            GEncode.tryInclude "authorList" Encode.string (oa.Authors)
+            GEncode.tryInclude "authorList" authorListEncoder (oa.Authors)
             GEncode.tryInclude "title" Encode.string (oa.Title)
             GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa.Status)
             GEncode.tryIncludeArray "comments" commentEncoder (oa.Comments)
@@ -62,10 +63,6 @@ module Publication =
     /// exports in json-ld format
     let toJsonldString (p:Publication) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-        |> GEncode.toJsonString 2
-
-    let toJsonldStringWithContext (a:Publication) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
         |> GEncode.toJsonString 2
 
     //let fromFile (path : string) = 

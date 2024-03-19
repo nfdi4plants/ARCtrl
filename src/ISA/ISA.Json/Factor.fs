@@ -138,6 +138,7 @@ module FactorValue =
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "FactorValue"])
+                "additionalType", Encode.string "FactorValue"
             if options.IsJsonLD then
                 if oa.Category.IsSome then
                     GEncode.tryInclude "categoryName" Encode.string (oa.Category.Value.Name)

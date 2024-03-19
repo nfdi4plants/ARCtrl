@@ -49,6 +49,7 @@ module Assay =
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [ Encode.string "Assay"])
+                "additionalType", Encode.string "Assay"
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa.MeasurementType)
             GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa.TechnologyType)
