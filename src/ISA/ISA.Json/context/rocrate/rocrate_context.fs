@@ -29,18 +29,3 @@ module ROCrate =
       "about", Encode.string "sdo:about"
       "conformsTo", Encode.string "sdo:conformsTo"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
-    
-    "CreativeWork": "sdo:CreativeWork",
-
-    "about": "sdo:about",
-    "conformsTo": "sdo:conformsTo"
-  }
-}
-    """

@@ -33,6 +33,7 @@ module Investigation =
 
       "identifier", Encode.string "sdo:identifier"
       "title", Encode.string "sdo:headline"
+      "additionalType", Encode.string "sdo:additionalType"
       "description", Encode.string "sdo:description"
       "submissionDate", Encode.string "sdo:dateCreated"
       "publicReleaseDate", Encode.string "sdo:datePublished"
@@ -40,7 +41,7 @@ module Investigation =
       "people", Encode.string "sdo:creator"
       "studies", Encode.string "sdo:hasPart"
       "ontologySourceReferences", Encode.string "sdo:mentions"
-      "comments", Encode.string "sdo:disambiguatingDescription"
+      "comments", Encode.string "sdo:comment"
       "filename", Encode.string "sdo:alternateName"
     ]
 

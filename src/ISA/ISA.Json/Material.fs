@@ -102,6 +102,7 @@ module MaterialAttributeValue =
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "MaterialAttributeValue"])
+                "additionalType", Encode.string "MaterialAttributeValue"
             if options.IsJsonLD then
                 if oa.Category.IsSome && oa.Category.Value.CharacteristicType.IsSome then
                     GEncode.tryInclude "category" Encode.string (oa.Category.Value.CharacteristicType.Value.Name)

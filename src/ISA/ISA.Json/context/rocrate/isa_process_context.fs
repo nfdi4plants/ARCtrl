@@ -31,36 +31,12 @@ module Process =
       "Process", Encode.string "bio:LabProcess"
 
       "name", Encode.string "sdo:name"
-      "executesProtocol", Encode.string "bio:executesProtocol"
-      "parameterValues", Encode.string "bio:parameterValues"
+      "executesProtocol", Encode.string "bio:executesLabProtocol"
+      "parameterValues", Encode.string "bio:parameterValue"
       "performer", Encode.string "sdo:agent"
       "date", Encode.string "sdo:endTime"
-      "input", Encode.string "sdo:object"
-      "output", Encode.string "sdo:result"
+      "inputs", Encode.string "sdo:object"
+      "outputs", Encode.string "sdo:result"
 
       "comments", Encode.string "sdo:disambiguatingDescription"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-    "Process": "sdo:Thing",
-    "ArcProcess": "arc:ARC#ARC_00000048",
-
-    "name": "arc:ARC#ARC_00000019",
-    "executesProtocol": "arc:ARC#ARC_00000086",
-    "performer": "arc:ARC#ARC_00000089",
-    "date": "arc:ARC#ARC_00000090",
-    "previousProcess": "arc:ARC#ARC_00000091",
-    "nextProcess": "arc:ARC#ARC_00000092",
-    "input": "arc:ARC#ARC_00000095",
-    "output": "arc:ARC#ARC_00000096",
-
-    "comments": "sdo:disambiguatingDescription"
-  }
-}
-    """

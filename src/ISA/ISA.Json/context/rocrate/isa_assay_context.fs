@@ -31,7 +31,7 @@ module Assay =
       "sdo", Encode.string "http://schema.org/"
 
       "Assay", Encode.string "sdo:Dataset"
-
+      "additionalType", Encode.string "sdo:additionalType"
       "measurementType", Encode.string "sdo:variableMeasured"
       "technologyType", Encode.string "sdo:measurementTechnique"
       "technologyPlatform", Encode.string "sdo:instrument"
@@ -42,24 +42,3 @@ module Assay =
       "comments", Encode.string "sdo:comment"
       "filename", Encode.string "sdo:url"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "https://schema.org/",
-
-    "Assay": "sdo:Dataset",
-
-    "measurementType": "sdo:variableMeasured",
-    "technologyType": "sdo:measurementTechnique",
-    "technologyPlatform": "sdo:instrument",
-    "dataFiles": "sdo:hasPart",
-
-    "processSequences": "sdo:about",
-
-    "comments": "sdo:disambiguatingDescription",
-    "filename": "sdo:url"
-  }
-}
-    """

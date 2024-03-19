@@ -49,6 +49,7 @@ module Study =
                 GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "Study"])
+                "additionalType", Encode.string "Study"
             GEncode.tryInclude "filename" Encode.string (oa.FileName)
             GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
             GEncode.tryInclude "title" Encode.string (oa.Title)

@@ -28,17 +28,17 @@ module ProcessParameterValue =
                 if oa.Category.IsSome && oa.Category.Value.ParameterName.IsSome then
                     GEncode.tryInclude "categoryCode" Encode.string (oa.Category.Value.ParameterName.Value.TermAccessionNumber)
                 if oa.Value.IsSome then
-                    "value", (match oa.Value.Value with
-                    | Value.Float f -> 
-                        Encode.float f
-                    | Value.Int i -> 
-                        Encode.int i
-                    | Value.Name s -> 
-                        Encode.string s
-                    | Value.Ontology s -> 
-                        Encode.string oa.ValueText
-                    | _ -> Encode.nil
-                )
+                    "value", 
+                        (match oa.Value.Value with
+                            | Value.Float f -> 
+                                Encode.float f
+                            | Value.Int i -> 
+                                Encode.int i
+                            | Value.Name s -> 
+                                Encode.string s
+                            | Value.Ontology s -> 
+                                Encode.string oa.ValueText
+                        )
                 if oa.Value.IsSome && oa.Value.Value.IsAnOntology then
                     GEncode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
                 if oa.Unit.IsSome then GEncode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
@@ -237,6 +237,7 @@ module Process =
                         | None -> "#EmptyProcess"
 
     let rec encoder (options : ConverterOptions) (studyName:string Option) (assayName:string Option) (oa : Process) = 
+        let performer = if options.IsJsonLD then ROCrateHelper.Person.authorListStringEncoder else Encode.string
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
@@ -247,7 +248,7 @@ module Process =
             GEncode.tryInclude "name" Encode.string (oa.Name)
             GEncode.tryInclude "executesProtocol" (Protocol.encoder options studyName assayName oa.Name) (oa.ExecutesProtocol)
             GEncode.tryIncludeList "parameterValues" (ProcessParameterValue.encoder options) (oa.ParameterValues)
-            GEncode.tryInclude "performer" Encode.string (oa.Performer)
+            GEncode.tryInclude "performer" performer (oa.Performer)
             GEncode.tryInclude "date" Encode.string (oa.Date)
             if not options.IsJsonLD then
                 GEncode.tryInclude "previousProcess" (encoder options studyName assayName) (oa.PreviousProcess)

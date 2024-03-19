@@ -19,7 +19,7 @@ module Comment =
     
       "Comment", Encode.string "sdo:Comment"
       "name", Encode.string "sdo:name"
-      "value", Encode.string "sdo:value"
+      "value", Encode.string "sdo:text"
     ]
 
   let context_str =
@@ -30,7 +30,7 @@ module Comment =
     
     "Comment": "sdo:Comment",
     "name": "sdo:name",
-    "value": "sdo:value"
+    "value": "sdo:text"
   }
 }
     """
