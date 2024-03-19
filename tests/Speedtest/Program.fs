@@ -69,7 +69,6 @@ let main argv =
         1
     #endif
     else 
-        printfn "ARE YOU DOING STUFF?"
         //let argumentNumber = 
         //    #if FABLE_COMPILER_JAVASCRIPT
         //    1

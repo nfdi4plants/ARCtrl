@@ -217,10 +217,7 @@ let lang =
 
 let runReport cpu =
     let report = createMarkdownPerformanceReport lang cpu
-    let timeString = 
-        let dt = System.DateTime.Today
-        $"{dt.Year}_{dt.Month}_{dt.Day}"
-    let outFile = $"tests/Speedtest/PerformanceReport/{timeString}_PerformanceReport_{lang}.md"
+    let outFile = $"tests/Speedtest/PerformanceReport/PerformanceReport_{lang}.md"
     writeFile outFile report
     printfn "%s" report
     0
