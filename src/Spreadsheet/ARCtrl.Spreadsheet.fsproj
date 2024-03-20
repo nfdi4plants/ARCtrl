@@ -26,17 +26,16 @@
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcInvestigation.fs" />
-    <None Include="../../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FsSpreadsheet" Version="5.1.3" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
-    <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
+  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
   <ItemGroup>
-  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil</Authors>

@@ -55,10 +55,10 @@
     <None Include="../../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+    <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Muas</Authors>

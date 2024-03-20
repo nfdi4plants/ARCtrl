@@ -17,11 +17,9 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
-  <ItemGroup />
-
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
-    <ProjectReference Include="..\..\src\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
+    <ProjectReference Include="..\..\src\ARCtrl.Json\ARCtrl.Json.fsproj" />
+    <ProjectReference Include="..\..\src\ARCtrl.Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <ItemGroup>
