@@ -67,9 +67,8 @@
     <PackageReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="Thoth.Json.JavaScript" Version="0.1.0" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ISA\ARCtrl.ISA.fsproj" />
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
   </ItemGroup>
-  <ItemGroup />
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
     <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>

@@ -24,14 +24,13 @@
     <Compile Include="Fable.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
-  <ItemGroup />
-  <ItemGroup>
-    <!--Also includes ISA-->
-    <ProjectReference Include="..\..\..\src\ISA\ISA\ARCtrl.ISA.fsproj" />
-  </ItemGroup>
 	<ItemGroup>
     <PackageReference Include="Fable.Pyxpecto" Version="1.0.1" />
 		<PackageReference Include="Fable.Core" Version="4.2.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\Core\ARCtrl.Core.fsproj" />
+	  <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <PackageReference Update="FSharp.Core" Version="7.0.402" />

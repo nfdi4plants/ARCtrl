@@ -1,6 +1,6 @@
 ﻿namespace ARCtrl.Contract
 
-open ARCtrl
+open ARCtrl.FileSystem
 open ARCtrl.Path
 open ARCtrl.ISA.Spreadsheet
 open ARCtrl.ISA
@@ -93,7 +93,7 @@ module ArcTypeExtensions =
             c
 
         member this.ToDeleteContract () =
-            let path = Path.getStudyFolderPath(this.Identifier)
+            let path = getStudyFolderPath(this.Identifier)
             let c = Contract.createDelete(path)
             c
 
@@ -135,7 +135,7 @@ module ArcTypeExtensions =
             c
 
         member this.ToDeleteContract () =
-            let path = Path.getAssayFolderPath(this.Identifier)
+            let path = getAssayFolderPath(this.Identifier)
             let c = Contract.createDelete(path)
             c
 

@@ -21,8 +21,8 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\src\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
-    <ProjectReference Include="..\..\TestingUtils\TestingUtils.fsproj" />
+    <ProjectReference Include="..\..\src\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
+    <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.401" />

@@ -41,9 +41,8 @@
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
-    <ProjectReference Include="..\ISA\ISA\ARCtrl.ISA.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
+    <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
+    <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <NpmDependencies>
