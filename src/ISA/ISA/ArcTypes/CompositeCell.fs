@@ -114,6 +114,30 @@ type CompositeCell =
     static member emptyFreeText = FreeText ""
     static member emptyUnitized = Unitized ("", OntologyAnnotation.empty)
 
+    /// <summary>
+    /// Updates current CompositeCell with information from OntologyAnnotation.
+    ///
+    /// For `Term`, OntologyAnnotation (oa) is fully set. For `Unitized`, oa is set as unit while value is untouched.
+    /// For `FreeText` oa.NameText is set.
+    /// </summary>
+    /// <param name="oa"></param>
+    member this.UpdateWithOA (oa:OntologyAnnotation) =
+        match this with
+        | CompositeCell.Term _ -> CompositeCell.createTerm oa
+        | CompositeCell.Unitized (v,_) -> CompositeCell.createUnitized (v,oa)
+        | CompositeCell.FreeText _ -> CompositeCell.createFreeText oa.NameText
+
+    /// <summary>
+    /// Updates current CompositeCell with information from OntologyAnnotation.
+    ///
+    /// For `Term`, OntologyAnnotation (oa) is fully set. For `Unitized`, oa is set as unit while value is untouched.
+    /// For `FreeText` oa.NameText is set.
+    /// </summary>
+    /// <param name="oa"></param>
+    /// <param name="cell"></param>
+    static member updateWithOA (oa:OntologyAnnotation) (cell: CompositeCell) =
+        cell.UpdateWithOA oa
+
     override this.ToString() = 
         match this with
         | Term oa -> $"{oa.NameText}"

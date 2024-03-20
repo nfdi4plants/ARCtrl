@@ -4,8 +4,7 @@
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  <ItemGroup> 
     <Compile Include="Path.fs" />
     <Compile Include="Url.fs" />
     <Compile Include="Regex.fs" />
@@ -54,7 +53,6 @@
     <Compile Include="ArcTypes\ArcTables.fs" />
     <Compile Include="ArcTypes\ArcTypes.fs" />
     <Compile Include="ArcTypes\IdentifierSetters.fs" />
-    <Compile Include="UIHelper.fs" />
     <Compile Include="Builder\Types.fs" />
     <Compile Include="Builder\ProcessBuilder.fs" />
     <Compile Include="Builder\AssayBuilder.fs" />
@@ -63,6 +61,9 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\FileSystem\ARCtrl.FileSystem.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Muas</Authors>
