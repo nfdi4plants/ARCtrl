@@ -18,8 +18,6 @@
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Path.fs" />
-    <Compile Include="FileSystemTree.fs" />
     <Compile Include="SemVer.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
     <Compile Include="WebRequest\WebRequest.Py.fs" />
