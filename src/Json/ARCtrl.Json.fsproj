@@ -38,7 +38,13 @@
     <Compile Include="OntologySourceReference.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="Person.fs" />
+    <Compile Include="Process\Value.fs" />
     <Compile Include="Process\Factor.fs" />
+    <Compile Include="Process\FactorValue.fs" />
+    <Compile Include="Process\ProtocolParameter.fs" />
+    <Compile Include="Process\MaterialType.fs" />
+    <Compile Include="Process\MaterialAttribute.fs" />
+    <Compile Include="Process\Component.fs" />
     <Compile Include="Process\Protocol.fs" />
     <Compile Include="Process\Material.fs" />
     <Compile Include="Process\Data.fs" />
@@ -56,10 +62,6 @@
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcInvestigation.fs" />
   </ItemGroup>
-	<ItemGroup>
-	  <Folder Include="Table\" />
-	  <Folder Include="Process\" />
-	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="NJsonSchema" Version="10.8.0" />
     <PackageReference Include="Thoth.Json.Core" Version="0.2.1" />

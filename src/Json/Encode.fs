@@ -74,7 +74,7 @@ module Encode =
         | _ -> Encode.nil
 
     /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
-    let tryInclude name (encoder : 'Value -> Json) (value : 'Value option) = 
+    let tryInclude (name : string) (encoder : 'Value -> Json) (value : 'Value option) = 
         name,
         match value with
         | Some(o) -> encoder o
