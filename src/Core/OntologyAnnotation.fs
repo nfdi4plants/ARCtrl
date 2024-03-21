@@ -41,8 +41,6 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     static member create(?name,?tsr,?tan,?comments) : OntologyAnnotation =
         OntologyAnnotation.make name tsr tan (defaultArg comments <| ResizeArray())
 
-    static member empty = OntologyAnnotation.create()
-
     member this.TANInfo = 
         match this.TermAccessionNumber with
         | Some v -> 
@@ -92,22 +90,22 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     ///
     /// `asOntobeePurlUrl`: option to return term accession in Ontobee purl-url format (`http://purl.obolibrary.org/obo/MS_1000121`)
     /// </summary>
-    // TODO: Not sure if still needed ~Kevin F. 2024.03.20
-    //static member toString (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
-    //    let asOntobeePurlUrlIfShort = Option.defaultValue false asOntobeePurlUrlIfShort
-    //    {|
-    //        TermName = oa.Name |> Option.defaultValue ""
-    //        TermSourceREF = oa.TermSourceREF |> Option.defaultValue ""
-    //        TermAccessionNumber = 
-    //            if asOntobeePurlUrlIfShort then
-    //                let url = oa.TermAccessionAndOntobeeUrlIfShort
-    //                if url = "" then 
-    //                    oa.TermAccessionNumber |> Option.defaultValue ""
-    //                else
-    //                    url
-    //            else
-    //                oa.TermAccessionNumber |> Option.defaultValue ""
-    //    |}
+    ///// TODO: Not sure if still needed ~Kevin F. 2024.03.20
+    static member toString (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
+        let asOntobeePurlUrlIfShort = Option.defaultValue false asOntobeePurlUrlIfShort
+        {|
+            TermName = oa.Name |> Option.defaultValue ""
+            TermSourceREF = oa.TermSourceREF |> Option.defaultValue ""
+            TermAccessionNumber = 
+                if asOntobeePurlUrlIfShort then
+                    let url = oa.TermAccessionAndOntobeeUrlIfShort
+                    if url = "" then 
+                        oa.TermAccessionNumber |> Option.defaultValue ""
+                    else
+                        url
+                else
+                    oa.TermAccessionNumber |> Option.defaultValue ""
+        |}
 
     interface IISAPrintable with
         member this.Print() =

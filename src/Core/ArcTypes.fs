@@ -77,7 +77,7 @@ module ArcTypesAux =
             Array.append origin next
             |> Array.distinct
 
-    let inline updateAppendResizeArray (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) = 
+    let inline updateAppendResizeArrayInplace (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) = 
         if not append then
             next
         else
@@ -85,21 +85,34 @@ module ArcTypesAux =
                 if origin.Contains e |> not then
                     origin.Add(e)
             origin
-        
+       
+    let inline updateAppendResizeArray (append:bool) (origin: ResizeArray<'A>) (next: ResizeArray<'A>) = 
+        if not append then
+            next |> ResizeArray.map id
+        else
+            let combined = ResizeArray()
+            for e in origin do
+                if combined.Contains e |> not then
+                    combined.Add(e)
+            for e in next do
+                if combined.Contains e |> not then
+                    combined.Add(e)
+            combined
+
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
     
-    let performers = defaultArg performers [||]
-    let comments = defaultArg comments [||]
+    let performers = defaultArg performers <| ResizeArray()
+    let comments = defaultArg comments <| ResizeArray()
     let mutable identifier : string = identifier
     let mutable investigation : ArcInvestigation option = None
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
-    let mutable performers : Person [] = performers
-    let mutable comments : Comment [] = comments
+    let mutable performers = performers
+    let mutable comments  = comments
     let mutable staticHash : int = 0
 
     /// Must be unique in one study
@@ -114,7 +127,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : Person [], ?comments : Comment []) = 
+    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?performers = performers, ?comments = comments)
 
     static member make 
@@ -123,8 +136,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : OntologyAnnotation option)
         (tables : ResizeArray<ArcTable>)
-        (performers : Person [])
-        (comments : Comment []) = 
+        (performers : ResizeArray<Person>)
+        (comments : ResizeArray<Comment>) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
 
     static member FileName = ARCtrl.Path.AssayFileName
@@ -366,8 +379,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         for table in this.Tables do
             let copy = table.Copy()
             nextTables.Add(copy)
-        let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
-        let nextPerformers = this.Performers |> Array.map (fun c -> c.Copy())
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
         ArcAssay.make
             this.Identifier
             this.MeasurementType
@@ -396,11 +409,11 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         if assay.Tables.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables assay.Tables
             this.Tables <- s
-        if assay.Performers.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Performers assay.Performers
+        if assay.Performers.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Performers assay.Performers
             this.Performers <- s
-        if assay.Comments.Length <> 0 || updateAlways then
-            let s = ArcTypesAux.updateAppendArray appendSequences this.Comments assay.Comments
+        if assay.Comments.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Comments assay.Comments
             this.Comments <- s
 
     // Use this for better print debugging and better unit test output
@@ -441,9 +454,9 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             this.TechnologyType <- assay.TechnologyType
         if assay.Tables.Count <> 0 || updateAlways then          
             this.Tables <- assay.Tables
-        if assay.Comments.Length <> 0 || updateAlways then          
+        if assay.Comments.Count <> 0 || updateAlways then          
             this.Comments <- assay.Comments  
-        if assay.Performers.Length <> 0 || updateAlways then          
+        if assay.Performers.Count <> 0 || updateAlways then          
             this.Performers <- assay.Performers  
 
     member this.StructurallyEquals (other: ArcAssay) : bool =
@@ -478,9 +491,9 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
-            Array.ofSeq >> HashCodes.boxHashArray <| this.Tables
-            HashCodes.boxHashArray this.Performers
-            HashCodes.boxHashArray this.Comments
+            HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.Performers
+            HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
@@ -489,11 +502,11 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
 type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?comments) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
-    let publications = defaultArg publications [||]
-    let contacts = defaultArg contacts [||]
-    let studyDesignDescriptors = defaultArg studyDesignDescriptors [||]
+    let publications = defaultArg publications <| ResizeArray()
+    let contacts = defaultArg contacts <| ResizeArray()
+    let studyDesignDescriptors = defaultArg studyDesignDescriptors <| ResizeArray()
     let registeredAssayIdentifiers = defaultArg registeredAssayIdentifiers <| ResizeArray()
-    let comments = defaultArg comments [||]
+    let comments = defaultArg comments <| ResizeArray()
 
     let mutable identifier = identifier
     let mutable investigation : ArcInvestigation option = None
@@ -501,11 +514,11 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     let mutable description : string option = description 
     let mutable submissionDate : string option = submissionDate
     let mutable publicReleaseDate : string option = publicReleaseDate
-    let mutable publications : Publication [] = publications
-    let mutable contacts : Person [] = contacts
-    let mutable studyDesignDescriptors : OntologyAnnotation [] = studyDesignDescriptors
+    let mutable publications : ResizeArray<Publication> = publications
+    let mutable contacts : ResizeArray<Person> = contacts
+    let mutable studyDesignDescriptors : ResizeArray<OntologyAnnotation> = studyDesignDescriptors
     let mutable registeredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers
-    let mutable comments : Comment [] = comments
+    let mutable comments : ResizeArray<Comment> = comments
     let mutable staticHash : int = 0
 
     /// Must be unique in one investigation
@@ -540,12 +553,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             (this.Description = None) &&
             (this.SubmissionDate = None) &&
             (this.PublicReleaseDate = None) &&
-            (this.Publications = [||]) &&
-            (this.Contacts = [||]) &&
-            (this.StudyDesignDescriptors = [||]) &&
+            (this.Publications.Count = 0) &&
+            (this.Contacts.Count = 0) &&
+            (this.StudyDesignDescriptors.Count = 0) &&
             (this.Tables.Count = 0) &&
             (this.RegisteredAssayIdentifiers.Count = 0) &&
-            (this.Comments = [||])
+            (this.Comments.Count = 0)
 
     // Not sure how to handle this best case.
     static member FileName = ARCtrl.Path.StudyFileName
@@ -911,10 +924,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         for table in this.Tables do
             let copy = table.Copy()
             nextTables.Add(copy)
-        let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
-        let nextContacts = this.Contacts |> Array.map (fun c -> c.Copy())
-        let nextPublications = this.Publications |> Array.map (fun c -> c.Copy())
-        let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> Array.map (fun c -> c.Copy())
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
+        let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
+        let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> ResizeArray.map (fun c -> c.Copy())
         ArcStudy.make
             this.Identifier
             this.Title
@@ -944,18 +957,18 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             this.SubmissionDate <- study.SubmissionDate
         if study.PublicReleaseDate.IsSome || updateAlways then 
             this.PublicReleaseDate <- study.PublicReleaseDate
-        if study.Publications.Length <> 0 || updateAlways then
+        if study.Publications.Count <> 0 || updateAlways then
             this.Publications <- study.Publications
-        if study.Contacts.Length <> 0 || updateAlways then
+        if study.Contacts.Count <> 0 || updateAlways then
             this.Contacts <- study.Contacts
-        if study.StudyDesignDescriptors.Length <> 0 || updateAlways then
+        if study.StudyDesignDescriptors.Count <> 0 || updateAlways then
             this.StudyDesignDescriptors <- study.StudyDesignDescriptors
         if study.Tables.Count <> 0 || updateAlways then
             let tables = ArcTables.updateReferenceTablesBySheets(ArcTables(this.Tables),ArcTables(study.Tables),?keepUnusedRefTables = keepUnusedRefTables)
             this.Tables <- tables.Tables
         if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
             this.RegisteredAssayIdentifiers <- study.RegisteredAssayIdentifiers
-        if study.Comments.Length <> 0 || updateAlways then
+        if study.Comments.Count <> 0 || updateAlways then
             this.Comments <- study.Comments
 
     member this.StructurallyEquals (other: ArcStudy) : bool =
@@ -995,12 +1008,12 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.SubmissionDate
             HashCodes.boxHashOption this.PublicReleaseDate
-            HashCodes.boxHashArray this.Publications
-            HashCodes.boxHashArray this.Contacts
-            HashCodes.boxHashArray this.StudyDesignDescriptors
-            Array.ofSeq >> HashCodes.boxHashArray <| this.Tables
-            Array.ofSeq >> HashCodes.boxHashArray <| this.RegisteredAssayIdentifiers
-            HashCodes.boxHashArray this.Comments
+            HashCodes.boxHashSeq this.Publications
+            HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashSeq this.StudyDesignDescriptors
+            HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.RegisteredAssayIdentifiers
+            HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
@@ -1012,21 +1025,21 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.SubmissionDate
             HashCodes.boxHashOption this.PublicReleaseDate
-            HashCodes.boxHashArray this.Publications
-            HashCodes.boxHashArray this.Contacts
-            HashCodes.boxHashArray this.StudyDesignDescriptors
-            Array.ofSeq >> HashCodes.boxHashArray <| this.Tables
-            HashCodes.boxHashArray this.Comments
+            HashCodes.boxHashSeq this.Publications
+            HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashSeq this.StudyDesignDescriptors
+            HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) as this = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this = 
 
-    let ontologySourceReferences = defaultArg ontologySourceReferences [||]
-    let publications = defaultArg publications [||]
-    let contacts = defaultArg contacts [||]
+    let ontologySourceReferences = defaultArg ontologySourceReferences <| ResizeArray()
+    let publications = defaultArg publications <| ResizeArray()
+    let contacts = defaultArg contacts <| ResizeArray()
     let assays = 
         let ass = defaultArg assays (ResizeArray())
         for a in ass do 
@@ -1037,23 +1050,23 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         for s in sss do 
             s.Investigation <- Some this
         sss
-    let registeredStudyIdentifiers = defaultArg registeredStudyIdentifiers (ResizeArray())
-    let comments = defaultArg comments [||]
-    let remarks = defaultArg remarks [||]
+    let registeredStudyIdentifiers = defaultArg registeredStudyIdentifiers <| ResizeArray()
+    let comments = defaultArg comments <| ResizeArray()
+    let remarks = defaultArg remarks <| ResizeArray()
 
     let mutable identifier = identifier
     let mutable title : string option = title
     let mutable description : string option = description
     let mutable submissionDate : string option = submissionDate
     let mutable publicReleaseDate : string option = publicReleaseDate
-    let mutable ontologySourceReferences : OntologySourceReference [] = ontologySourceReferences
-    let mutable publications : Publication [] = publications
-    let mutable contacts : Person [] = contacts
+    let mutable ontologySourceReferences : ResizeArray<OntologySourceReference> = ontologySourceReferences
+    let mutable publications : ResizeArray<Publication> = publications
+    let mutable contacts : ResizeArray<Person> = contacts
     let mutable assays : ResizeArray<ArcAssay> = assays
     let mutable studies : ResizeArray<ArcStudy> = studies
     let mutable registeredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers
-    let mutable comments : Comment [] = comments
-    let mutable remarks : Remark [] = remarks
+    let mutable comments : ResizeArray<Comment> = comments
+    let mutable remarks : ResizeArray<Remark> = remarks
     let mutable staticHash : int = 0
 
     /// Must be unique in one investigation
@@ -1075,10 +1088,10 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     static member FileName = ARCtrl.Path.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
-    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences : OntologySourceReference [], ?publications : Publication [], ?contacts : Person [], ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>,?registeredStudyIdentifiers : ResizeArray<string>, ?comments : Comment [], ?remarks : Remark []) = 
+    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>,?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) = 
         ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks)
 
-    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences : OntologySourceReference []) (publications : Publication []) (contacts : Person []) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (registeredStudyIdentifiers : ResizeArray<string>) (comments : Comment []) (remarks : Remark []) : ArcInvestigation =
+    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences) (publications) (contacts) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (registeredStudyIdentifiers : ResizeArray<string>) (comments : ResizeArray<Comment>) (remarks) : ArcInvestigation =
         ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, assays = assays, studies = studies, registeredStudyIdentifiers = registeredStudyIdentifiers, comments = comments, remarks = remarks)
 
     member this.AssayCount 
@@ -1635,11 +1648,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         for study in this.Studies do
             let copy = study.Copy()
             nextStudies.Add(copy)
-        let nextComments = this.Comments |> Array.map (fun c -> c.Copy())
-        let nextRemarks = this.Remarks |> Array.map (fun c -> c.Copy())
-        let nextContacts = this.Contacts |> Array.map (fun c -> c.Copy())
-        let nextPublications = this.Publications |> Array.map (fun c -> c.Copy())
-        let nextOntologySourceReferences = this.OntologySourceReferences |> Array.map (fun c -> c.Copy())
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextRemarks = this.Remarks |> ResizeArray.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
+        let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
+        let nextOntologySourceReferences = this.OntologySourceReferences |> ResizeArray.map (fun c -> c.Copy())
         let nextStudyIdentifiers = ResizeArray(this.RegisteredStudyIdentifiers)
         let i = ArcInvestigation(
             this.Identifier,
@@ -1740,14 +1753,14 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.SubmissionDate
             HashCodes.boxHashOption this.PublicReleaseDate
-            HashCodes.boxHashArray this.Publications
-            HashCodes.boxHashArray this.Contacts
-            HashCodes.boxHashArray this.OntologySourceReferences
-            Array.ofSeq >> HashCodes.boxHashArray <| this.Assays
-            Array.ofSeq >> HashCodes.boxHashArray <| this.Studies
-            Array.ofSeq >> HashCodes.boxHashArray <| this.RegisteredStudyIdentifiers
-            HashCodes.boxHashArray this.Comments
-            HashCodes.boxHashArray this.Remarks
+            HashCodes.boxHashSeq this.Publications
+            HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashSeq this.OntologySourceReferences
+            HashCodes.boxHashSeq this.Assays
+            HashCodes.boxHashSeq this.Studies
+            HashCodes.boxHashSeq this.RegisteredStudyIdentifiers
+            HashCodes.boxHashSeq this.Comments
+            HashCodes.boxHashSeq this.Remarks
         |]
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
@@ -1759,11 +1772,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.SubmissionDate
             HashCodes.boxHashOption this.PublicReleaseDate
-            HashCodes.boxHashArray this.Publications
-            HashCodes.boxHashArray this.Contacts
-            HashCodes.boxHashArray this.OntologySourceReferences
-            HashCodes.boxHashArray this.Comments
-            HashCodes.boxHashArray this.Remarks
+            HashCodes.boxHashSeq this.Publications
+            HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashSeq this.OntologySourceReferences
+            HashCodes.boxHashSeq this.Comments
+            HashCodes.boxHashSeq this.Remarks
         |]
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
