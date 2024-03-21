@@ -1,8 +1,8 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
 open System.Text.RegularExpressions
-open ARCtrl.ISA.Regex.ActivePatterns
+open ARCtrl.Helper.Regex.ActivePatterns
 
 module Comment = 
 
@@ -29,7 +29,6 @@ module Comment =
 
     let fromString k v =
         Comment.make 
-            None 
             (Option.fromValueWithDefault "" k) 
             (Option.fromValueWithDefault "" v)
 

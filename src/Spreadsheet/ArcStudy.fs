@@ -1,9 +1,9 @@
-﻿namespace ARCtrl.ISA.Spreadsheet
+﻿namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
 open FsSpreadsheet
 
-open Aux
+open ARCtrl.Helper
 
 module ArcStudy = 
 

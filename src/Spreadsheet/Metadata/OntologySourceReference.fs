@@ -1,7 +1,8 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
 open FsSpreadsheet
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 
 open System.Collections.Generic
 
@@ -21,7 +22,7 @@ module OntologySourceReference =
             (file)
             (name)
             (version)
-            (Option.fromValueWithDefault [||] comments)
+            comments
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -35,7 +36,7 @@ module OntologySourceReference =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                    |> Array.ofList
+                    |> ResizeArray
 
                 fromString
                     (matrix.TryGetValue(descriptionLabel,i))
@@ -56,15 +57,13 @@ module OntologySourceReference =
             do matrix.Matrix.Add ((versionLabel,i),     (Option.defaultValue "" o.Version))
             do matrix.Matrix.Add ((descriptionLabel,i), (Option.defaultValue "" o.Description))
 
-            match o.Comments with 
-            | None -> ()
-            | Some c ->
-                c
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )     
+
+            o.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )     
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 

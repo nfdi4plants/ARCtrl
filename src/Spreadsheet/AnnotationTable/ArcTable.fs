@@ -1,6 +1,7 @@
-﻿module ARCtrl.ISA.Spreadsheet.ArcTable
+﻿module ARCtrl.Spreadsheet.ArcTable
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 open FsSpreadsheet
 
 // I think we really should not add FSharpAux for exactly one function.
@@ -93,7 +94,7 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
                 |> Seq.map CompositeColumn.fixDeprecatedIOHeader
                 |> composeColumns
             ArcTable.init sheet.Name
-            |> ArcTable.addColumns(compositeColumns,SkipFillMissing = true)
+            |> ArcTable.addColumns(compositeColumns,skipFillMissing = true)
             |> Some
         | None ->
             None

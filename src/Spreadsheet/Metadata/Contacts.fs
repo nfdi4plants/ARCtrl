@@ -1,6 +1,8 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
+open ARCtrl.Process.Conversion
 open Comment
 open Remark
 open System.Collections.Generic
@@ -24,7 +26,6 @@ module Contacts =
     let fromString lastName firstName midInitials email phone fax address affiliation role rolesTermAccessionNumber rolesTermSourceREF comments =
         let roles = OntologyAnnotation.fromAggregatedStrings ';' role rolesTermSourceREF rolesTermAccessionNumber
         Person.make 
-            None 
             None
             (lastName   ) 
             (firstName  )
@@ -34,8 +35,8 @@ module Contacts =
             (fax        )
             (address    )
             (affiliation) 
-            (Option.fromValueWithDefault [||] roles    )
-            (Option.fromValueWithDefault [||] comments )
+            (roles    )
+            (comments )
         |> Person.setOrcidFromComments
 
     let fromSparseTable (matrix : SparseTable) =
@@ -49,7 +50,7 @@ module Contacts =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                    |> Array.ofList
+                    |> ResizeArray
                 fromString
                     (matrix.TryGetValue(lastNameLabel,i))
                     (matrix.TryGetValue(firstNameLabel,i))
@@ -72,7 +73,7 @@ module Contacts =
         |> List.map Person.setCommentFromORCID
         |> List.iteri (fun i p ->
             let i = i + 1
-            let rAgg = Option.defaultValue [||] p.Roles |> OntologyAnnotation.toAggregatedStrings ';'
+            let rAgg = p.Roles |> Array.ofSeq |> OntologyAnnotation.toAggregatedStrings ';'
             do matrix.Matrix.Add ((lastNameLabel,i),                    (Option.defaultValue ""  p.LastName     ))
             do matrix.Matrix.Add ((firstNameLabel,i),                   (Option.defaultValue ""  p.FirstName    ))
             do matrix.Matrix.Add ((midInitialsLabel,i),                 (Option.defaultValue ""  p.MidInitials  ))
@@ -85,15 +86,12 @@ module Contacts =
             do matrix.Matrix.Add ((rolesTermAccessionNumberLabel,i),    rAgg.TermAccessionNumberAgg)
             do matrix.Matrix.Add ((rolesTermSourceREFLabel,i),          rAgg.TermSourceREFAgg)
 
-            match p.Comments with 
-            | None -> ()
-            | Some c ->
-                c
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )
+            p.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

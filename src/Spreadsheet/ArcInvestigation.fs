@@ -1,6 +1,7 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 open FsSpreadsheet
 open Comment
 open Remark
@@ -78,13 +79,12 @@ module ArcInvestigation =
             do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" investigation.SubmissionDate))
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" investigation.PublicReleaseDate))
 
-            if Array.isEmpty investigation.Comments |> not then
-                investigation.Comments
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )   
+            investigation.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )   
 
             {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
@@ -106,14 +106,14 @@ module ArcInvestigation =
             (Option.fromValueWithDefault "" investigationInfo.Description) 
             (Option.fromValueWithDefault "" investigationInfo.SubmissionDate) 
             (Option.fromValueWithDefault "" investigationInfo.PublicReleaseDate)
-            (Array.ofList ontologySourceReference) 
-            (Array.ofList publications)  
-            (Array.ofList contacts)  
-            (ResizeArray(assays))
-            (ResizeArray(studies))  
-            (ResizeArray(studyIdentifiers))
-            (Array.ofList investigationInfo.Comments)  
-            (Array.ofList remarks)
+            (ResizeArray ontologySourceReference) 
+            (ResizeArray publications)  
+            (ResizeArray contacts)  
+            (ResizeArray assays)
+            (ResizeArray studies)
+            (ResizeArray studyIdentifiers)
+            (ResizeArray investigationInfo.Comments)  
+            (ResizeArray remarks)
 
 
     let fromRows (rows:seq<SparseRow>) =
@@ -183,16 +183,16 @@ module ArcInvestigation =
             with | _ -> rows |> Seq.toList
         seq {
             yield  SparseRow.fromValues [ontologySourceReferenceLabel]
-            yield! OntologySourceReference.toRows (List.ofArray investigation.OntologySourceReferences)
+            yield! OntologySourceReference.toRows (List.ofSeq investigation.OntologySourceReferences)
 
             yield  SparseRow.fromValues [investigationLabel]
             yield! InvestigationInfo.toRows investigation
 
             yield  SparseRow.fromValues [publicationsLabel]
-            yield! Publications.toRows (Some publicationsLabelPrefix) (List.ofArray investigation.Publications)
+            yield! Publications.toRows (Some publicationsLabelPrefix) (List.ofSeq investigation.Publications)
 
             yield  SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofArray investigation.Contacts)
+            yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofSeq investigation.Contacts)
 
             if not isLight then
                 for studyIdentifier in investigation.RegisteredStudyIdentifiers do
@@ -200,7 +200,7 @@ module ArcInvestigation =
                     yield  SparseRow.fromValues [studyLabel]
                     yield! Studies.toRows study None
         }
-        |> insertRemarks (List.ofArray investigation.Remarks)
+        |> insertRemarks (List.ofSeq investigation.Remarks)
         |> seq
 
     let fromFsWorkbook (doc:FsWorkbook) =  

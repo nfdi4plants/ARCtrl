@@ -1,9 +1,12 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
 open Comment
 open Remark
 open System.Collections.Generic
+open ARCtrl.Helper
+open ARCtrl.Process.Conversion
+
 
 module Assays = 
 
@@ -24,15 +27,15 @@ module Assays =
 
     
     let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
-        let measurementType = OntologyAnnotation.fromString(?termName = measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
-        let technologyType = OntologyAnnotation.fromString(?termName = technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
+        let measurementType = OntologyAnnotation.create(?name = measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
+        let technologyType = OntologyAnnotation.create(?name = technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
         ArcAssay.make 
             (fileName)
-            (Option.fromValueWithDefault OntologyAnnotation.empty measurementType)
-            (Option.fromValueWithDefault OntologyAnnotation.empty technologyType) 
-            (technologyPlatform |> Option.map ArcAssay.decomposeTechnologyPlatform)
+            (Option.fromValueWithDefault (OntologyAnnotation()) measurementType)
+            (Option.fromValueWithDefault (OntologyAnnotation()) technologyType) 
+            (technologyPlatform |> Option.map JsonTypes.decomposeTechnologyPlatform)
             (ResizeArray())             
-            [||] 
+            (ResizeArray())      
             (comments)
         
     let fromSparseTable (matrix : SparseTable) : ArcAssay list=
@@ -47,7 +50,7 @@ module Assays =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                    |> Array.ofList
+                    |> ResizeArray
 
                 fromString
                     (matrix.TryGetValue(measurementTypeLabel,i))            
@@ -69,24 +72,23 @@ module Assays =
             let processedFileName =
                 if a.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then Identifier.removeMissingIdentifier(a.Identifier) else Identifier.Assay.fileNameFromIdentifier(a.Identifier)
             let i = i + 1
-            let mt = Option.defaultValue OntologyAnnotation.empty a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
-            let tt = Option.defaultValue OntologyAnnotation.empty a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
+            let mt = Option.defaultValue (OntologyAnnotation()) a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
+            let tt = Option.defaultValue (OntologyAnnotation()) a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       mt.TermName)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    mt.TermAccessionNumber)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          mt.TermSourceREF)
             do matrix.Matrix.Add ((technologyTypeLabel,i),                        tt.TermName)
             do matrix.Matrix.Add ((technologyTypeTermAccessionNumberLabel,i),     tt.TermAccessionNumber)
             do matrix.Matrix.Add ((technologyTypeTermSourceREFLabel,i),           tt.TermSourceREF)
-            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" (a.TechnologyPlatform |> Option.map ArcAssay.composeTechnologyPlatform)))
+            do matrix.Matrix.Add ((technologyPlatformLabel,i),                    (Option.defaultValue "" (a.TechnologyPlatform |> Option.map JsonTypes.composeTechnologyPlatform)))
             do matrix.Matrix.Add ((fileNameLabel,i),                              processedFileName)
 
-            if Array.isEmpty a.Comments |> not then
-                a.Comments
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )   
+            a.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )   
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 

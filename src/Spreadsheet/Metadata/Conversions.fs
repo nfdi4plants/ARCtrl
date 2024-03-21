@@ -1,7 +1,8 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
-
+open ARCtrl
+open ARCtrl.Helper
+open ARCtrl.Process
 
 module internal Option =
  
@@ -37,14 +38,15 @@ module OntologyAnnotation =
         ) 0
 
     /// Returns a list of ISAJson OntologyAnnotation objects from ISATab aggregated strings
-    let fromAggregatedStrings (separator:char) (terms:string) (source:string) (accessions:string) : OntologyAnnotation []=
+    let fromAggregatedStrings (separator:char) (terms:string) (source:string) (accessions:string) : ResizeArray<OntologyAnnotation> =
         let l = getLengthOfAggregatedStrings separator [|terms;source;accessions|]
-        if l = 0 then [||]
+        if l = 0 then ResizeArray()
         else 
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
-            Array.map3 (fun a b c -> OntologyAnnotation.fromString(a,b,c)) terms sources accessions
+            Array.map3 (fun a b c -> OntologyAnnotation.create(a,b,c)) terms sources accessions
+            |> ResizeArray
 
     /// Returns the aggregated ISATab OntologyAnnotation Name, ontology source and Accession number from a list of ISAJson OntologyAnnotation objects
     let toAggregatedStrings (separator:char) (oas : OntologyAnnotation []) =
@@ -52,15 +54,15 @@ module OntologyAnnotation =
         if oas = [||] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}       
         else
             oas
-            |> Array.map OntologyAnnotation.toString
             |> Array.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
+                let name,tsr,tan = Option.defaultValue "" term.Name, Option.defaultValue "" term.TermSourceREF, Option.defaultValue "" term.TermAccessionNumber
                 if first then 
                     first <- false
-                    term.TermName,term.TermSourceREF,term.TermAccessionNumber
+                    name,tsr,tan
                 else 
-                    sprintf "%s%c%s" nameAgg    separator term.TermName,
-                    sprintf "%s%c%s" tsrAgg     separator term.TermSourceREF,
-                    sprintf "%s%c%s" tanAgg     separator term.TermAccessionNumber
+                    sprintf "%s%c%s" nameAgg    separator name,
+                    sprintf "%s%c%s" tsrAgg     separator tsr,
+                    sprintf "%s%c%s" tanAgg     separator tan
             ) ("","","")
             |> fun (nameAgg,tsrAgg,tanAgg) -> {|TermNameAgg = nameAgg; TermAccessionNumberAgg = tanAgg; TermSourceREFAgg = tsrAgg|}
 
@@ -76,7 +78,7 @@ module Component =
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
             Array.map4 (fun a b c d -> Component.fromString(a,b,c,d)) names terms sources accessions
-            |> Array.toList
+            |> List.ofArray
 
     /// Returns the aggregated ISATAb Component Name, Ontology Annotation value, Accession number and ontology source from a list of ISAJson Component objects
     let toAggregatedStrings (separator:char) (cs : Component list) =
@@ -102,7 +104,7 @@ module ProtocolParameter =
     /// Returns a list of ISAJson ProtocolParameter objects from ISATab aggregated strings
     let fromAggregatedStrings (separator:char) (terms:string) (source:string) (accessions:string) =
         OntologyAnnotation.fromAggregatedStrings separator terms source accessions
-        |> Array.map (Some >> (ProtocolParameter.make None))
+        |> ResizeArray.map (Some >> (ProtocolParameter.make None))
 
     /// Returns the aggregated ISATAb Ontology Annotation value, Accession number and ontology source from a list of ISAJson ProtocolParameter objects
     let toAggregatedStrings (separator:char) (oas : ProtocolParameter list) =

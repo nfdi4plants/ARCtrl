@@ -1,6 +1,7 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 open Comment
 open Remark
 open System.Collections.Generic
@@ -18,14 +19,14 @@ module Publications =
     let labels = [pubMedIDLabel;doiLabel;authorListLabel;titleLabel;statusLabel;statusTermAccessionNumberLabel;statusTermSourceREFLabel]
 
     let fromString pubMedID doi author title status statusTermSourceREF statusTermAccessionNumber comments =
-        let status = OntologyAnnotation.fromString(?termName = status,?tan = statusTermAccessionNumber,?tsr = statusTermSourceREF)
+        let status = OntologyAnnotation(?name = status,?tan = statusTermAccessionNumber,?tsr = statusTermSourceREF)
         Publication.make 
             (pubMedID |> Option.map URI.fromString)
             (doi)
             (author)
             (title) 
-            (Option.fromValueWithDefault OntologyAnnotation.empty status) 
-            (Option.fromValueWithDefault [||] comments)
+            (Option.fromValueWithDefault (OntologyAnnotation()) status) 
+            comments
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -39,7 +40,7 @@ module Publications =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                    |> Array.ofList
+                    |> ResizeArray
 
                 fromString
                     (matrix.TryGetValue(pubMedIDLabel,i))            
@@ -58,7 +59,7 @@ module Publications =
         publications
         |> List.iteri (fun i p ->
             let i = i + 1
-            let s = Option.defaultValue OntologyAnnotation.empty p.Status |> fun s -> OntologyAnnotation.toString (s,true)
+            let s = Option.defaultValue (OntologyAnnotation()) p.Status |> fun s -> OntologyAnnotation.toString (s,true)
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
             do matrix.Matrix.Add ((authorListLabel,i),                  (Option.defaultValue "" p.Authors))
@@ -67,15 +68,12 @@ module Publications =
             do matrix.Matrix.Add ((statusTermAccessionNumberLabel,i),   s.TermAccessionNumber)
             do matrix.Matrix.Add ((statusTermSourceREFLabel,i),         s.TermSourceREF)
 
-            match p.Comments with 
-            | None -> ()
-            | Some c ->
-                c
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )
+            p.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

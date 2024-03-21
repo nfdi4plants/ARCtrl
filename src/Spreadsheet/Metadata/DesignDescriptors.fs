@@ -1,6 +1,6 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
 open Comment
 open Remark
 open System.Collections.Generic

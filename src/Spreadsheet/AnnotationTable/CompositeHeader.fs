@@ -1,11 +1,12 @@
-﻿module ARCtrl.ISA.Spreadsheet.CompositeHeader
+﻿module ARCtrl.Spreadsheet.CompositeHeader
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 open FsSpreadsheet
 
 module ActivePattern = 
 
-    open ARCtrl.ISA.Regex.ActivePatterns
+    open Regex.ActivePatterns
 
     let mergeIDInfo idSpace1 localID1 idSpace2 localID2 =
         if idSpace1 <> idSpace2 then failwithf "TermSourceRef %s and %s do not match" idSpace1 idSpace2
@@ -18,7 +19,7 @@ module ActivePattern =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | [AC name] -> 
-            let ont = OntologyAnnotation.fromString(name)
+            let ont = OntologyAnnotation.create(name)
             f ont
             |> Some
         | [AC name; TSRColumnHeader term1; TANColumnHeader term2] 
@@ -26,7 +27,7 @@ module ActivePattern =
         //| [AC name; Unit; TermAccessionNumber term1; TermSourceREF term2] 
         | [AC name; UnitColumnHeader _; TSRColumnHeader term1; TANColumnHeader term2] ->
             let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
-            let ont = OntologyAnnotation.fromString(name, term.TermSourceRef, term.TermAccessionNumber)
+            let ont = OntologyAnnotation.create(name, term.TermSourceRef, term.TermAccessionNumber)
             f ont
             |> Some
         | _ -> None
