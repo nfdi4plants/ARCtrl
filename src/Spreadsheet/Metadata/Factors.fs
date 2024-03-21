@@ -1,6 +1,8 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
+open ARCtrl.Process
 open Comment
 open Remark
 open System.Collections.Generic
@@ -15,12 +17,11 @@ module Factors =
     let labels = [nameLabel;factorTypeLabel;typeTermAccessionNumberLabel;typeTermSourceREFLabel]
     
     let fromString name designType typeTermSourceREF typeTermAccessionNumber comments =
-        let factorType = OntologyAnnotation.fromString(?termName = designType,?tan = typeTermAccessionNumber, ?tsr = typeTermSourceREF)
+        let factorType = OntologyAnnotation.create(?name = designType,?tan = typeTermAccessionNumber, ?tsr = typeTermSourceREF)
         Factor.make 
-            None 
             (name) 
-            (Option.fromValueWithDefault OntologyAnnotation.empty factorType) 
-            (Option.fromValueWithDefault [||] comments)
+            (Option.fromValueWithDefault (OntologyAnnotation()) factorType) 
+            (Option.fromValueWithDefault (ResizeArray()) comments)
 
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
@@ -34,7 +35,7 @@ module Factors =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                    |> Array.ofList
+                    |> ResizeArray
 
                 fromString
                     (matrix.TryGetValue(nameLabel,i))
@@ -50,7 +51,7 @@ module Factors =
         factors
         |> List.iteri (fun i f ->
             let i = i + 1
-            let ft = f.FactorType |> Option.defaultValue OntologyAnnotation.empty |> fun f -> OntologyAnnotation.toString(f,true)
+            let ft = f.FactorType |> Option.defaultValue (OntologyAnnotation()) |> fun f -> OntologyAnnotation.toString(f,true)
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              ft.TermName)
             do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), ft.TermAccessionNumber)
@@ -60,7 +61,7 @@ module Factors =
             | None -> ()
             | Some c ->
                 c
-                |> Array.iter (fun comment -> 
+                |> ResizeArray.iter (fun comment -> 
                     let n,v = comment |> Comment.toString
                     commentKeys <- n :: commentKeys
                     matrix.Matrix.Add((n,i),v)

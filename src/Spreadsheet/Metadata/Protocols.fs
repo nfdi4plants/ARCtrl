@@ -1,6 +1,7 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Process
 open Comment
 open Remark
 open System.Collections.Generic
@@ -30,14 +31,14 @@ module Protocols =
         ]
 
     let fromString name protocolType typeTermAccessionNumber typeTermSourceREF description uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF comments =
-        let protocolType = OntologyAnnotation.fromString(?termName = protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
-        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> List.ofArray
+        let protocolType = OntologyAnnotation.create(?name = protocolType,?tan =  typeTermAccessionNumber,?tsr = typeTermSourceREF)
+        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> List.ofSeq
         let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber
         
         Protocol.make 
             None 
             (name |> Option.map URI.fromString) 
-            (Option.fromValueWithDefault OntologyAnnotation.empty protocolType)
+            (Option.fromValueWithDefault (OntologyAnnotation()) protocolType)
             (description)
             (uri |> Option.map URI.fromString) 
             (version)
@@ -49,7 +50,7 @@ module Protocols =
     let fromSparseTable (matrix : SparseTable) =
         if matrix.ColumnCount = 0 && matrix.CommentKeys.Length <> 0 then
             let comments = SparseTable.GetEmptyComments matrix
-            Protocol.create(Comments = List.ofArray comments)
+            Protocol.create(Comments = List.ofSeq comments)
             |> List.singleton
         else
             List.init matrix.ColumnCount (fun i -> 
@@ -83,7 +84,7 @@ module Protocols =
         protocols
         |> List.iteri (fun i p ->
             let i = i + 1
-            let pt = p.ProtocolType |> Option.defaultValue OntologyAnnotation.empty |> fun pt -> OntologyAnnotation.toString(pt,true)
+            let pt = p.ProtocolType |> Option.defaultValue (OntologyAnnotation()) |> fun pt -> OntologyAnnotation.toString(pt,true)
             let pAgg = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
             let cAgg = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 

@@ -1,6 +1,7 @@
-﻿module ARCtrl.ISA.Spreadsheet.ArcAssay
+﻿module ARCtrl.Spreadsheet.ArcAssay
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 open FsSpreadsheet
 
 let [<Literal>] obsoleteAssaysLabel = "ASSAY METADATA"
@@ -20,7 +21,7 @@ let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
             yield! Assays.toRows (Some assaysPrefix) [assay]
 
             yield SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsPrefix) (List.ofArray assay.Performers)
+            yield! Contacts.toRows (Some contactsPrefix) (List.ofSeq assay.Performers)
         }
     let sheet = FsWorksheet(metaDataSheetName)
     assay
@@ -54,7 +55,7 @@ let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
                         assays
                         |> Seq.tryHead 
                         |> Option.defaultValue (ArcAssay.create(Identifier.createMissingIdentifier()))
-                        |> ArcAssay.setPerformers (Array.ofList contacts)
+                        |> ArcAssay.setPerformers (ResizeArray contacts)
         
             if en.MoveNext () then
                 let currentLine = en.Current |> SparseRow.tryGetValueAt 0

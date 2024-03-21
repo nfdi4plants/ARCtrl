@@ -1,7 +1,6 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Aux
+open ARCtrl
 open System.Collections.Generic
 open FsSpreadsheet.DSL
 open FsSpreadsheet
@@ -158,7 +157,7 @@ type SparseTable =
                 (SparseRow.fromValues (Comment.wrapCommentKey key :: List.init (matrix.ColumnCount - 1) (fun i -> matrix.TryGetValueDefault("",(key,i + 1)))))
         }
 
-    static member GetEmptyComments(matrix) : Comment [] = 
+    static member GetEmptyComments(matrix) : ResizeArray<Comment> = 
         matrix.CommentKeys
-        |> List.map (fun key -> Comment.create(Name = key))
-        |> Array.ofList
+        |> List.map (fun key -> Comment.create(name = key))
+        |> ResizeArray

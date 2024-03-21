@@ -1,6 +1,7 @@
-﻿namespace ARCtrl.ISA.Spreadsheet
+﻿namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Helper
 open Comment
 open Remark
 open System.Collections.Generic
@@ -20,14 +21,13 @@ module OntologyAnnotationSection =
                     matrix.CommentKeys 
                     |> List.map (fun k -> 
                         Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
-                    |> Array.ofList
-                    |> Option.fromValueWithDefault [||]
+                    |> ResizeArray
 
-                OntologyAnnotation.fromString(
-                    ?termName = matrix.TryGetValue(label,i),
+                OntologyAnnotation(
+                    ?name = matrix.TryGetValue(label,i),
                     ?tsr = matrix.TryGetValue(labelTSR,i),
                     ?tan = matrix.TryGetValue(labelTAN,i),
-                    ?comments = comments
+                    comments = comments
                 )
             )
 
@@ -42,15 +42,12 @@ module OntologyAnnotationSection =
             do matrix.Matrix.Add ((labelTAN,i),   oa.TermAccessionNumber)
             do matrix.Matrix.Add ((labelTSR,i),         oa.TermSourceREF)
 
-            match d.Comments with 
-            | None -> ()
-            | Some c ->
-                c
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )
+            d.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )
         )
         {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev} 
 

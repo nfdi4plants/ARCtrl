@@ -1,9 +1,12 @@
-namespace ARCtrl.ISA.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
-open ARCtrl.ISA
+open ARCtrl
 open Comment
 open Remark
 open System.Collections.Generic
+open ARCtrl.Helper
+open ARCtrl.Process
+open ARCtrl.Process.Conversion
 
 module Studies = 
 
@@ -86,13 +89,12 @@ module Studies =
             do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
             do matrix.Matrix.Add ((fileNameLabel,i),            processedFileName)
 
-            if Array.isEmpty study.Comments |> not then
-                study.Comments
-                |> Array.iter (fun comment -> 
-                    let n,v = comment |> Comment.toString
-                    commentKeys <- n :: commentKeys
-                    matrix.Matrix.Add((n,i),v)
-                )    
+            study.Comments
+            |> ResizeArray.iter (fun comment -> 
+                let n,v = comment |> Comment.toString
+                commentKeys <- n :: commentKeys
+                matrix.Matrix.Add((n,i),v)
+            )    
 
             {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
@@ -105,6 +107,8 @@ module Studies =
             |> StudyInfo.ToSparseTable
             |> SparseTable.ToRows
     
+    /// FACTORS AND PROTOCOLS ARE NOT USED ANYMORE, Lukas, 21.03.24
+    // We made these changes as merging duplicated top level metadata with the underlying Table sequence is time consuming, complex and error prone
     let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) (publications: Publication list) (factors: Factor list) (assays: ArcAssay list) (protocols : Protocol list) (contacts: Person list) =
         let assayIdentifiers = assays |> List.map (fun assay -> assay.Identifier)
         ArcStudy.make 
@@ -113,13 +117,12 @@ module Studies =
             (Option.fromValueWithDefault "" studyInfo.Description) 
             (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
             (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
-            (Array.ofList publications)
-            (Array.ofList contacts)
-            (Array.ofList designDescriptors)  
-            (protocols |> List.map ArcTable.fromProtocol |> ResizeArray)
+            (ResizeArray publications)
+            (ResizeArray contacts)
+            (ResizeArray designDescriptors)  
+            (ResizeArray())
             (ResizeArray(assayIdentifiers))
-            (Array.ofList factors) 
-            (Array.ofList studyInfo.Comments)
+            (ResizeArray studyInfo.Comments)
         |> fun arcstudy -> 
             if arcstudy.isEmpty && arcstudy.Identifier = "" 
             then None else Some (arcstudy,assays)
@@ -163,18 +166,19 @@ module Studies =
     
     let toRows (study : ArcStudy) (assays : ArcAssay list option) =
         let protocols = study.Tables |> Seq.collect (fun p -> p.GetProtocols()) |> List.ofSeq
+        let factors = study.Tables |> Seq.collect (fun f -> f.GetProcesses() |> ProcessSequence.getFactors) |> List.ofSeq
         let assays = assays |> Option.defaultValue (study.GetRegisteredAssaysOrIdentifier() |> List.ofSeq)
         seq {          
             yield! StudyInfo.toRows study
 
             yield  SparseRow.fromValues [designDescriptorsLabel]
-            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (List.ofArray study.StudyDesignDescriptors)
+            yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (List.ofSeq study.StudyDesignDescriptors)
 
             yield  SparseRow.fromValues [publicationsLabel]
-            yield! Publications.toRows (Some publicationsLabelPrefix) (List.ofArray study.Publications)
+            yield! Publications.toRows (Some publicationsLabelPrefix) (List.ofSeq study.Publications)
 
             yield  SparseRow.fromValues [factorsLabel]
-            yield! Factors.toRows (Some factorsLabelPrefix) (List.ofArray study.Factors)
+            yield! Factors.toRows (Some factorsLabelPrefix) factors
 
             yield  SparseRow.fromValues [assaysLabel]
             yield! Assays.toRows (Some assaysLabelPrefix) assays
@@ -183,5 +187,5 @@ module Studies =
             yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
 
             yield  SparseRow.fromValues [contactsLabel]
-            yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofArray study.Contacts)
+            yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofSeq study.Contacts)
         }
