@@ -2,7 +2,6 @@ namespace ARCtrl.Json
 
 open Thoth.Json.Core
 open ARCtrl
-open System.IO
 
 module Comment = 
 
@@ -51,7 +50,7 @@ module Comment =
             )    
 
         let encoderDisambiguatingDescription (comment : Comment) = 
-            encoder comment |> Encode.toJsonString 2 |> Encode.string
+            encoder comment |> Encode.toJsonString 0 |> Encode.string
 
         let decoderDisambiguatingDescription : Decoder<Comment> = 
             Decode.string 

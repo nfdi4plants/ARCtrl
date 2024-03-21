@@ -32,8 +32,8 @@
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
     <Compile Include="ROCrateHelper.fs" />
-    <Compile Include="Comment.fs" />
     <Compile Include="StringTable.fs" />
+    <Compile Include="Comment.fs" />
     <Compile Include="OntologyAnnotation.fs" />
     <Compile Include="OntologySourceReference.fs" />
     <Compile Include="Publication.fs" />

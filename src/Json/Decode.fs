@@ -39,8 +39,8 @@ module Decode =
         true
         //s.StartsWith("http://") || s.StartsWith("https://")
     
-    let uri =
-         { new Decoder<URI> with
+    let uri : Decoder<URI> =
+        { new Decoder<URI> with
              member this.Decode(s,json) = 
                     match Decode.string.Decode(s,json) with
                     | Ok s when isURI s -> Ok s
@@ -66,12 +66,12 @@ module Decode =
         helpers.getProperties json
         |> Seq.exists (fun x -> not (knownFields |> Set.contains x))
 
-    let object (allowedFields : string seq) (builder: Decode.IGetters -> 'value) : Decoder<'value> =
-        let allowedFields = Set.ofSeq allowedFields
+    let objectNoAdditionalProperties (allowedProperties : string seq) (builder: Decode.IGetters -> 'value) : Decoder<'value> =
+        let allowedProperties = Set.ofSeq allowedProperties
         { new Decoder<'value> with
             member _.Decode(helpers, value) =
                 let getters = Decode.Getters(helpers, value)
-                if hasUnknownFields helpers allowedFields value then
+                if hasUnknownFields helpers allowedProperties value then
                     Error (DecoderError("Unknown fields in object", ErrorReason.BadPrimitive("",value)))
                 else
                     let result = builder getters
