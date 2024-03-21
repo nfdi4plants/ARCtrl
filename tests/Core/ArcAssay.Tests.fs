@@ -6,11 +6,11 @@ open TestingUtils
 
 module Helper =
     let TableName = "Test"
-    let oa_species = OntologyAnnotation.fromString("species", "GO", "GO:0123456")
-    let oa_chlamy = OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456")
-    let oa_instrumentModel = OntologyAnnotation.fromString("instrument model", "MS", "MS:0123456")
-    let oa_SCIEXInstrumentModel = OntologyAnnotation.fromString("SCIEX instrument model", "MS", "MS:654321")
-    let oa_temperature = OntologyAnnotation.fromString("temperature","NCIT","NCIT:0123210")
+    let oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
+    let oa_chlamy = OntologyAnnotation("Chlamy", "NCBI", "NCBI:0123456")
+    let oa_instrumentModel = OntologyAnnotation("instrument model", "MS", "MS:0123456")
+    let oa_SCIEXInstrumentModel = OntologyAnnotation("SCIEX instrument model", "MS", "MS:654321")
+    let oa_temperature = OntologyAnnotation("temperature","NCIT","NCIT:0123210")
 
     /// This function can be used to put ArcTable.Values into a nice format for printing/writing to IO
     let tableValues_printable (table:ArcTable) = 
@@ -21,12 +21,12 @@ module Helper =
 
     let createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
     let createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
-    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
+    let createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation()))
     /// Input [Source] --> Source_0 .. Source_4
     let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
     let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
     let column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
-    let column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
+    let column_param = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()), createCells_Unitized 5)
     /// Valid TestTable "Test" with 5 columns, 5 rows: 
     ///
     /// Input [Source] -> 5 cells: [Source_1; Source_2..]
@@ -70,12 +70,12 @@ let private test_create =
     testList "create" [
         testCase "constructor" <| fun _ ->
             let identifier = "MyIdentifier"
-            let oa_mt = OntologyAnnotation.fromString("measurement type")
-            let oa_tt = OntologyAnnotation.fromString("technology type")
-            let technologyPlatform = OntologyAnnotation.fromString("tp")
+            let oa_mt = OntologyAnnotation("measurement type")
+            let oa_tt = OntologyAnnotation("technology type")
+            let technologyPlatform = OntologyAnnotation("tp")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
-            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
-            let comments = Comment.create("Comment Name") |> Array.singleton
+            let performers = ResizeArray [|Person(firstName = "Kevin", lastName = "Frey")|]
+            let comments = ResizeArray [|Comment.create("Comment Name")|]
             let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
@@ -86,12 +86,12 @@ let private test_create =
             Expect.equal actual.Comments comments "Comments"
         testCase "constructor_tpOntology" <| fun _ ->
             let identifier = "MyIdentifier"
-            let oa_mt = OntologyAnnotation.fromString("measurement type")
-            let oa_tt = OntologyAnnotation.fromString("technology type")
-            let technologyPlatform = OntologyAnnotation.fromString("tp","ABC","ABC:123")
+            let oa_mt = OntologyAnnotation("measurement type")
+            let oa_tt = OntologyAnnotation("technology type")
+            let technologyPlatform = OntologyAnnotation("tp","ABC","ABC:123")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
-            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
-            let comments = Comment.create("Comment Name") |> Array.singleton
+            let performers = ResizeArray [|Person.create(firstName = "Kevin", lastName = "Frey")|]
+            let comments = ResizeArray [|Comment.create("Comment Name")|]
             let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
@@ -102,12 +102,12 @@ let private test_create =
             Expect.equal actual.Comments comments "Comments"
         testCase "create" <| fun _ ->
             let identifier = "MyIdentifier"
-            let oa_mt = OntologyAnnotation.fromString("measurement type")
-            let oa_tt = OntologyAnnotation.fromString("technology type")
-            let technologyPlatform = OntologyAnnotation.fromString("tp")
+            let oa_mt = OntologyAnnotation("measurement type")
+            let oa_tt = OntologyAnnotation("technology type")
+            let technologyPlatform = OntologyAnnotation("tp")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
-            let performers = Person.create(FirstName = "Kevin", LastName = "Frey") |> Array.singleton
-            let comments = Comment.create("Comment Name") |> Array.singleton
+            let performers = ResizeArray[|Person.create(firstName = "Kevin", lastName = "Frey")|]
+            let comments = ResizeArray[|Comment.create("Comment Name")|]
             let actual = ArcAssay.create(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
@@ -124,16 +124,16 @@ let private test_create =
             Expect.equal actual.TechnologyType None "TechnologyType"
             Expect.equal actual.TechnologyPlatform None "technologyPlatform"
             Expect.equal actual.Tables.Count 0 "tables"
-            Expect.equal actual.Performers.Length 0 "performers"
-            Expect.equal actual.Comments.Length 0 "Comments"
+            Expect.equal actual.Performers.Count 0 "performers"
+            Expect.equal actual.Comments.Count 0 "Comments"
         testCase "make" <| fun _ ->
             let identifier = "MyIdentifier"
-            let measurementType = Some (OntologyAnnotation.fromString("Measurement Type"))
-            let technologyType = Some (OntologyAnnotation.fromString("Technology Type"))
-            let technologyPlatform = Some (OntologyAnnotation.fromString("Technology Platform"))
+            let measurementType = Some (OntologyAnnotation("Measurement Type"))
+            let technologyType = Some (OntologyAnnotation("Technology Type"))
+            let technologyPlatform = Some (OntologyAnnotation("Technology Platform"))
             let tables = ResizeArray([ArcTable.init("Table 1")])
-            let performers = Person.create(FirstName = "John", LastName = "Doe") |> Array.singleton
-            let comments = Comment.create("Comment 1") |> Array.singleton
+            let performers = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
 
             let actual = 
                 ArcAssay.make
@@ -474,25 +474,25 @@ let private tests_technologyPlatform =
         let name = "MyOntology"
         let tsr = "ABC"
         let tan = "ABC:123"
-        let tp_Term = OntologyAnnotation.fromString(name,tsr,tan)
-        let tp_String = OntologyAnnotation.fromString(name)
+        let tp_Term = OntologyAnnotation(name,tsr,tan)
+        let tp_String = OntologyAnnotation(name)
         testCase "compose Term" (fun () ->
-            let s = ArcAssay.composeTechnologyPlatform tp_Term
+            let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_Term
             Expect.equal s $"{name} ({tan})" "Term was not correctly composed as string."
         )
         testCase "decompose Term" (fun () ->
-            let s = ArcAssay.composeTechnologyPlatform tp_Term
-            let pt_new = ArcAssay.decomposeTechnologyPlatform s
+            let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_Term
+            let pt_new = Process.Conversion.JsonTypes.decomposeTechnologyPlatform s
             Expect.equal pt_new.NameText name "NameText should match"
             Expect.equal pt_new.TermAccessionShort tan "ShortTan should match"
         )
         testCase "compose String" (fun () ->
-            let s = ArcAssay.composeTechnologyPlatform tp_String
+            let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_String
             Expect.equal s $"{name}" "String was not correctly composed as string."
         )
         testCase "decompose String" (fun () ->
-            let s = ArcAssay.composeTechnologyPlatform tp_String
-            let pt_new = ArcAssay.decomposeTechnologyPlatform s
+            let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_String
+            let pt_new = Process.Conversion.JsonTypes.decomposeTechnologyPlatform s
             Expect.equal pt_new.NameText name "NameText should match"
             Expect.isNone pt_new.TermAccessionNumber "TermAccessionNumber should be None"
             Expect.equal pt_new.TermAccessionShort "" "ShortTan should match"
@@ -503,22 +503,22 @@ let private tests_UpdateBy = testList "UpdateBy" [
     let create_testAssay() = 
         ArcAssay.create(
             "MyAssay", 
-            OntologyAnnotation.fromString("MyMeasurementType"),
-            OntologyAnnotation.fromString("MyTechnologyType"),
-            OntologyAnnotation.fromString("MyTechnologyPlatform"),
+            OntologyAnnotation("MyMeasurementType"),
+            OntologyAnnotation("MyTechnologyType"),
+            OntologyAnnotation("MyTechnologyPlatform"),
             ResizeArray([ArcTable.init("MyTable")]),
-            [|Person.create(FirstName="Kevin", LastName="Frey")|],
-            [|Comment.create(Name="CommentName", Value="CommentValue")|]
+            ResizeArray [|Person(firstName="Kevin", lastName="Frey")|],
+            ResizeArray [|Comment(name="CommentName", value="CommentValue")|]
         )
     testCase "UpdateBy, full replace" <| fun _ ->
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
                 "NextAssay", 
-                OntologyAnnotation.fromString("NextMeasurementType"),
-                OntologyAnnotation.fromString("NextTechnologyType"),
-                tables=ResizeArray([ArcTable.init("NextTable")]),
-                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+                OntologyAnnotation("NextMeasurementType"),
+                OntologyAnnotation("NextTechnologyType"),
+                tables= ResizeArray ([ArcTable.init("NextTable")]),
+                performers= ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|]
             )
         actual.UpdateBy(next)
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
@@ -533,10 +533,10 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let next = 
             ArcAssay.create(
                 "NextAssay", 
-                OntologyAnnotation.fromString("NextMeasurementType"),
-                OntologyAnnotation.fromString("NextTechnologyType"),
-                tables=ResizeArray([ArcTable.init("NextTable")]),
-                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+                OntologyAnnotation("NextMeasurementType"),
+                OntologyAnnotation("NextTechnologyType"),
+                tables= ResizeArray ([ArcTable.init("NextTable")]),
+                performers= ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|]
             )
         let expected = create_testAssay()
         actual.UpdateBy(next, true)
@@ -552,9 +552,9 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let next = 
             ArcAssay.create(
                 "NextAssay", 
-                OntologyAnnotation.fromString("NextMeasurementType"),
-                OntologyAnnotation.fromString("NextTechnologyType"),
-                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+                OntologyAnnotation("NextMeasurementType"),
+                OntologyAnnotation("NextTechnologyType"),
+                performers= ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|]
             )
         let expected = create_testAssay()
         actual.UpdateBy(next, true)
@@ -564,10 +564,10 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let next = 
             ArcAssay.create(
                 "NextAssay", 
-                OntologyAnnotation.fromString("NextMeasurementType"),
-                OntologyAnnotation.fromString("NextTechnologyType"),
+                OntologyAnnotation("NextMeasurementType"),
+                OntologyAnnotation("NextTechnologyType"),
                 tables=ResizeArray([ArcTable.init("NextTable")]),
-                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+                performers= ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|]
             )
         let expected = create_testAssay()
         actual.UpdateBy(next, true, true)
@@ -576,17 +576,19 @@ let private tests_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
         TestingUtils.Expect.sequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
-        Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
-        Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
+        let exptectedPerformer = ResizeArray [|yield! expected.Performers; yield! next.Performers|]
+        let expectedComments = ResizeArray [|yield! expected.Comments; yield! next.Comments|]
+        Expect.equal actual.Performers exptectedPerformer "Performers"
+        Expect.equal actual.Comments expectedComments "Comments"
     testCase "UpdateBy, replace all, append" <| fun _ ->
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
                 "NextAssay", 
-                OntologyAnnotation.fromString("NextMeasurementType"),
-                OntologyAnnotation.fromString("NextTechnologyType"),
-                tables=ResizeArray([ArcTable.init("NextTable")]),
-                performers=[|Person.create(FirstName="NextKevin", LastName="NextFrey")|]
+                OntologyAnnotation("NextMeasurementType"),
+                OntologyAnnotation("NextTechnologyType"),
+                tables= ResizeArray ([ArcTable.init("NextTable")]),
+                performers= ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|]
             )
         let expected = create_testAssay()
         actual.UpdateBy(next, false, true)
@@ -595,20 +597,22 @@ let private tests_UpdateBy = testList "UpdateBy" [
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
         TestingUtils.Expect.sequenceEqual actual.Tables (ResizeArray([yield! expected.Tables; yield! next.Tables])) "Tables"
-        Expect.equal actual.Performers [|yield! expected.Performers; yield! next.Performers|] "Performers"
-        Expect.equal actual.Comments [|yield! expected.Comments; yield! next.Comments|] "Comments"
+        let expectedPerformers = ResizeArray [|yield! expected.Performers; yield! next.Performers|]
+        let expectedComments = ResizeArray [|yield! expected.Comments; yield! next.Comments|]
+        Expect.equal actual.Performers expectedPerformers "Performers"
+        Expect.equal actual.Comments expectedComments "Comments"
 ]
 
 let private tests_GetHashCode = testList "GetHashCode" [
     let createFullAssay(name) =
         ArcAssay.make 
             name
-            (OntologyAnnotation.fromString "mt" |> Some)
-            (OntologyAnnotation.fromString "tt" |> Some)
-            (OntologyAnnotation.fromString "tp" |> Some)
+            (OntologyAnnotation "mt" |> Some)
+            (OntologyAnnotation "tt" |> Some)
+            (OntologyAnnotation "tp" |> Some)
             (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
-            ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
-            ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+            (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
+            (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
     testCase "passing" <| fun _ ->
         let actual = ArcStudy.init("MyStudy")
         Expect.isSome (actual.GetHashCode() |> Some) ""

@@ -35,10 +35,10 @@ let main argv =
             let a = ArcAssay.init("MyAssay")
             let t = a.InitTable("MyTable")
             t.AddColumn(CompositeHeader.Input IOType.Source)
-            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter1")))
-            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter2")))
-            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter3")))
-            t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter1")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter2")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter3")))
+            t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation("MyCharacteristic")))
             t.AddColumn(CompositeHeader.Output IOType.Sample)
             let rowCount = 10000
             printfn "rowCount: %d" rowCount

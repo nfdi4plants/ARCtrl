@@ -5,7 +5,7 @@ open ARCtrl
 open TestingUtils
 
 let private assay_Identifier = "MyAssay"
-let private assay_MeasurementType = OntologyAnnotation.fromString("My Measurement Type", "MST", "MST:42424242")
+let private assay_MeasurementType = OntologyAnnotation("My Measurement Type", "MST", "MST:42424242")
 let private create_ExampleAssay() = ArcAssay.create(assay_Identifier,assay_MeasurementType)
 let private create_ExampleAssays() = ResizeArray([create_ExampleAssay()])
 
@@ -17,13 +17,13 @@ let private tests_create =
             let description = "Investigation Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
-            let publications = [|Publication.create("Publication 1")|]
-            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let ontologySourceReferences = ResizeArray [|OntologySourceReference.create("Reference 1")|]
+            let publications = ResizeArray [|Publication.create("Publication 1")|]
+            let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
-            let comments = [|Comment.create("Comment 1")|]
-            let remarks = [|Remark.create(1, "Remark 1")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
+            let remarks = ResizeArray [|Remark.create(1, "Remark 1")|]
 
             let actual =
                 ArcInvestigation(
@@ -60,13 +60,13 @@ let private tests_create =
             let description = "Investigation Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
-            let publications = [|Publication.create("Publication 1")|]
-            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let ontologySourceReferences = ResizeArray [|OntologySourceReference.create("Reference 1")|]
+            let publications = ResizeArray [|Publication.create("Publication 1")|]
+            let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let assays = create_ExampleAssays()
-            let studies = ResizeArray([|ArcStudy.init("Study 1")|])
-            let comments = [|Comment.create("Comment 1")|]
-            let remarks = [|Remark.create(1, "Remark 1")|]
+            let studies = ResizeArray [|ArcStudy.init("Study 1")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
+            let remarks = ResizeArray [|Remark.create(1, "Remark 1")|]
 
             let actual = ArcInvestigation.create(
                 identifier = identifier,
@@ -120,14 +120,14 @@ let private tests_create =
             let description = Some "Investigation Description"
             let submissionDate = Some "2023-07-19"
             let publicReleaseDate = Some "2023-12-31"
-            let ontologySourceReferences = [|OntologySourceReference.create("Reference 1")|]
-            let publications = [|Publication.create("Publication 1")|]
-            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
+            let ontologySourceReferences = ResizeArray [|OntologySourceReference.create("Reference 1")|]
+            let publications = ResizeArray [|Publication.create("Publication 1")|]
+            let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
             let registeredStudyIdentifiers = ResizeArray(["Study 1"])
-            let comments = [|Comment.create("Comment 1")|]
-            let remarks = [|Remark.create(1, "Remark 1")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
+            let remarks = ResizeArray [|Remark.create(1, "Remark 1")|]
 
             let actual = 
                 ArcInvestigation.make
@@ -299,7 +299,7 @@ let tests_MutableFields = testList "MutableFields" [
         Expect.equal i.Description None ""
     testCase "test mutable fields" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        let persons = [|Person.create(FirstName="Kevin", LastName="Frey")|]
+        let persons = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|]
         i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
@@ -328,7 +328,7 @@ let tests_MutableFields = testList "MutableFields" [
 let tests_Copy = testList "Copy" [
     testCase "test mutable fields" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        let persons = [|Person.create(FirstName="Kevin", LastName="Frey")|]
+        let persons = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|]
         i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
@@ -336,7 +336,7 @@ let tests_Copy = testList "Copy" [
         Expect.equal i.Contacts persons "Contacts"
         Expect.equal i.Title (Some "Awesome Title") "Title"
         let copy = i.Copy()
-        let nextPersons = [|Person.create(FirstName="Pascal", LastName="Gevangen")|]
+        let nextPersons = ResizeArray [|Person.create(firstName="Pascal", lastName="Gevangen")|]
         copy.Description <- Some "Next FileName"
         copy.Contacts <- nextPersons
         copy.Title <- Some "Next Title"
@@ -348,7 +348,7 @@ let tests_Copy = testList "Copy" [
         Expect.equal copy.Title (Some "Next Title") "copy Title"
     testCase "test mutable fields on study" <| fun _ ->
         let i = ArcInvestigation.init("MyInvestigation")
-        let persons = [|Person.create(FirstName="Kevin", LastName="Frey")|]
+        let persons = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|]
         i.Description <- Some "MyName"
         i.Contacts <- persons
         i.Title <- Some "Awesome Title"
@@ -363,7 +363,7 @@ let tests_Copy = testList "Copy" [
         Expect.equal sNext.Description (Some "My Test Desciption") "study description"
         // Create `copy` and change params. Then `i` should still be the same while `copy` must be changed
         let copy = i.Copy()
-        let nextPersons = [|Person.create(FirstName="Pascal", LastName="Gevangen")|]
+        let nextPersons = ResizeArray [|Person.create(firstName="Pascal", lastName="Gevangen")|]
         copy.Description <- Some "Next FileName"
         copy.Contacts <- nextPersons
         copy.Title <- Some "Next Title"
@@ -489,7 +489,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
+            let assay_techPlatform = OntologyAnnotation("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.AddAssay(expected)
             i.RegisterAssayAt(0, expected.Identifier)
@@ -501,7 +501,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
+            let assay_techPlatform = OntologyAnnotation("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.AddAssay(expected)
             i.RegisterAssay("Study 1", expected.Identifier)
@@ -515,7 +515,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by index" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
+            let assay_techPlatform = OntologyAnnotation("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssayAt(0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -526,7 +526,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by index tpOntology" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech","ABC","ABC:123")
+            let assay_techPlatform = OntologyAnnotation("Assay Tech","ABC","ABC:123")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssayAt(0, expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -537,7 +537,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "by identifier" <| fun _ ->
             let i = createExampleInvestigation()
             let assay_ident = "New Assay"
-            let assay_techPlatform = OntologyAnnotation.fromString("Assay Tech")
+            let assay_techPlatform = OntologyAnnotation("Assay Tech")
             let expected = ArcAssay(assay_ident, technologyPlatform = assay_techPlatform)
             i.SetAssay("Assay 2", expected)
             Expect.equal i.StudyCount 2 "StudyCount"
@@ -562,7 +562,7 @@ let tests_Assay = testList "CRUD Assay" [
             Expect.equal a.Identifier "Assay 2" "FileName"
         testCase "mutable propagation" <| fun _ ->
             let i = createExampleInvestigation()
-            let tech = Some (OntologyAnnotation.fromString("New Tech Stuff"))
+            let tech = Some (OntologyAnnotation("New Tech Stuff"))
             let a = i.GetAssayAt(0)
             Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
@@ -572,7 +572,7 @@ let tests_Assay = testList "CRUD Assay" [
         testCase "mutable propagation, copy" <| fun _ ->
             let i = createExampleInvestigation()
             let copy = createExampleInvestigation()
-            let tech = Some (OntologyAnnotation.fromString("New Tech Stuff"))
+            let tech = Some (OntologyAnnotation("New Tech Stuff"))
             let a = i.GetAssayAt(0)
             Expect.equal a.Identifier "Assay 1" "FileName"
             Expect.equal a.TechnologyPlatform None "TechnologyPlatform"
@@ -706,14 +706,14 @@ let private tests_GetHashCode = testList "GetHashCode" [
                 (Some "My Inv Description")
                 (Some "My Inv SubmissionDate")
                 (Some "My Inv PRD")
-                [|OntologySourceReference.create("Some Lorem ipsum description", Name="Descriptore"); OntologySourceReference.empty|]
-                [|Publication.empty; Publication.create(Title="Some nice title")|]
-                ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
-                (ResizeArray([ArcAssay.init("Registered Assay1"); ArcAssay.init("Registered Assay2")]))
-                (ResizeArray([ArcStudy.init("Registered Study1"); ArcStudy.init("Registered Study2")]))
-                (ResizeArray(["Registered Study1"; "Registered Study2"]))
-                ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
-                [|Remark.create(12,"Test"); Remark.create(42, "The answer")|]
+                (ResizeArray  [|OntologySourceReference("Some Lorem ipsum description", name="Descriptore"); OntologySourceReference.empty|])
+                (ResizeArray [|Publication(); Publication(title="Some nice title")|])
+                (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
+                (ResizeArray ([ArcAssay.init("Registered Assay1"); ArcAssay.init("Registered Assay2")]))
+                (ResizeArray ([ArcStudy.init("Registered Study1"); ArcStudy.init("Registered Study2")]))
+                (ResizeArray (["Registered Study1"; "Registered Study2"]))
+                (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
+                (ResizeArray [|Remark.create(12,"Test"); Remark.create(42, "The answer")|])
         let copy = actual.Copy()
         Expect.equal (actual.GetHashCode()) (copy.GetHashCode()) ""
     testCase "not equal" <| fun _ ->

@@ -5,11 +5,11 @@ open ARCtrl
 open TestingUtils
 module TestObjects = 
     let TableName = "Test"
-    let oa_species = OntologyAnnotation.fromString("species", "GO", "GO:0123456")
-    let oa_chlamy = OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456")
-    let oa_instrumentModel = OntologyAnnotation.fromString("instrument model", "MS", "MS:0123456")
-    let oa_SCIEXInstrumentModel = OntologyAnnotation.fromString("SCIEX instrument model", "MS", "MS:654321")
-    let oa_temperature = OntologyAnnotation.fromString("temperature","NCIT","NCIT:0123210")
+    let oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
+    let oa_chlamy = OntologyAnnotation("Chlamy", "NCBI", "NCBI:0123456")
+    let oa_instrumentModel = OntologyAnnotation("instrument model", "MS", "MS:0123456")
+    let oa_SCIEXInstrumentModel = OntologyAnnotation("SCIEX instrument model", "MS", "MS:654321")
+    let oa_temperature = OntologyAnnotation("temperature","NCIT","NCIT:0123210")
   
     
     let protocolName1 = "Protocol 1"

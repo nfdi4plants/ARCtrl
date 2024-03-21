@@ -6,15 +6,15 @@ open TestingUtils
 
 let private TableName = "Test"
 /// "species", "GO", "GO:0123456"
-let private oa_species = OntologyAnnotation.fromString("species", "GO", "GO:0123456")
+let private oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
 /// "Chlamy", "NCBI", "NCBI:0123456"
-let private oa_chlamy = OntologyAnnotation.fromString("Chlamy", "NCBI", "NCBI:0123456")
+let private oa_chlamy = OntologyAnnotation("Chlamy", "NCBI", "NCBI:0123456")
 /// "instrument model", "MS", "MS:0123456"
-let private oa_instrumentModel = OntologyAnnotation.fromString("instrument model", "MS", "MS:0123456")
+let private oa_instrumentModel = OntologyAnnotation("instrument model", "MS", "MS:0123456")
 /// "SCIEX instrument model", "MS", "MS:654321"
-let private oa_SCIEXInstrumentModel = OntologyAnnotation.fromString("SCIEX instrument model", "MS", "MS:654321")
+let private oa_SCIEXInstrumentModel = OntologyAnnotation("SCIEX instrument model", "MS", "MS:654321")
 /// "temperature","NCIT","NCIT:0123210"
-let private oa_temperature = OntologyAnnotation.fromString("temperature","NCIT","NCIT:0123210")
+let private oa_temperature = OntologyAnnotation("temperature","NCIT","NCIT:0123210")
 
 /// This function can be used to put ArcTable.Values into a nice format for printing/writing to IO
 let private tableValues_printable (table:ArcTable) = 
@@ -25,11 +25,11 @@ let private tableValues_printable (table:ArcTable) =
 
 let private createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
 let private createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
-let private createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation.empty))
+let private createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation()))
 let private column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
 let private column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
 let private column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
-let private column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty, createCells_Unitized 5)
+let private column_param = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()), createCells_Unitized 5)
 /// Valid TestTable with 5 columns, 5 rows: 
 ///
 /// Input [Source] -> 5 cells: [Source_1; Source_2..]
@@ -139,7 +139,7 @@ let private tests_SanityChecks = testList "SanityChecks" [
         let headers_valid = [
             CompositeHeader.Input IOType.Sample
             CompositeHeader.FreeText "Any"
-            CompositeHeader.Component OntologyAnnotation.empty
+            CompositeHeader.Component (OntologyAnnotation())
             CompositeHeader.ProtocolREF
             CompositeHeader.ProtocolType
             CompositeHeader.Output IOType.DerivedDataFile
@@ -151,7 +151,7 @@ let private tests_SanityChecks = testList "SanityChecks" [
             Expect.isTrue true "We canot eval for 'not throw'"
         )
         testCase "valid headers, multiplied non unique" (fun () ->
-            let header_valid2 = [CompositeHeader.FreeText "Any"; CompositeHeader.Component OntologyAnnotation.empty; CompositeHeader.Component OntologyAnnotation.empty]@headers_valid
+            let header_valid2 = [CompositeHeader.FreeText "Any"; CompositeHeader.Component (OntologyAnnotation()); CompositeHeader.Component (OntologyAnnotation())]@headers_valid
             let columns = header_valid2 |> Seq.map (fun x -> CompositeColumn.create(x))
             let eval() = ArcTableAux.SanityChecks.validateNoDuplicateUniqueColumns columns
             eval()
@@ -234,28 +234,28 @@ let private tests_ArcTableAux =
             let headers = [
                 CompositeHeader.Input IOType.Sample
                 CompositeHeader.FreeText "Any"
-                CompositeHeader.Component OntologyAnnotation.empty
+                CompositeHeader.Component (OntologyAnnotation())
                 CompositeHeader.ProtocolREF
                 CompositeHeader.ProtocolType
                 CompositeHeader.Output IOType.DerivedDataFile
             ]
             testCase "No duplicate, component" (fun () ->
-                let header = CompositeHeader.Component OntologyAnnotation.empty
+                let header = CompositeHeader.Component (OntologyAnnotation())
                 let hasDuplicate = headers |> ArcTableAux.tryFindDuplicateUnique header
                 Expect.isNone hasDuplicate "Some/None"
             )
             testCase "No duplicate, parameter" (fun () ->
-                let header = CompositeHeader.Parameter OntologyAnnotation.empty
+                let header = CompositeHeader.Component (OntologyAnnotation())
                 let hasDuplicate = headers |> ArcTableAux.tryFindDuplicateUnique header
                 Expect.isNone hasDuplicate "Some/None"
             )
             testCase "No duplicate, factor" (fun () ->
-                let header = CompositeHeader.Factor OntologyAnnotation.empty
+                let header = CompositeHeader.Factor (OntologyAnnotation())
                 let hasDuplicate = headers |> ArcTableAux.tryFindDuplicateUnique header
                 Expect.isNone hasDuplicate "Some/None"
             )
             testCase "No duplicate, chara" (fun () ->
-                let header = CompositeHeader.Characteristic OntologyAnnotation.empty
+                let header = CompositeHeader.Characteristic (OntologyAnnotation())
                 let hasDuplicate = headers |> ArcTableAux.tryFindDuplicateUnique header
                 Expect.isNone hasDuplicate "Some/None"
             )
@@ -315,16 +315,16 @@ let private tests_UpdateHeader =
             Expect.equal testTable.Headers.[2] column_param.Header "header3"
             Expect.equal testTable.Headers.[3] column_component.Header "header2"
             Expect.equal testTable.Headers.[4] column_param.Header "header4"
-            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set outside of range" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.UpdateHeader(12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            let table() = testTable.UpdateHeader(12, CompositeHeader.Characteristic (OntologyAnnotation()))
             Expect.throws table ""
         )
         testCase "set outside of range negative" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.UpdateHeader(-12, CompositeHeader.Characteristic OntologyAnnotation.empty)
+            let table() = testTable.UpdateHeader(-12, CompositeHeader.Characteristic (OntologyAnnotation()))
             Expect.throws table ""
         )
         testCase "set unique at different index" (fun () ->
@@ -344,7 +344,7 @@ let private tests_UpdateHeader =
             Expect.equal table.Headers.[3] column_component.Header "header2"
             Expect.equal table.Headers.[4] column_param.Header "header4"
             Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set invalid" (fun () ->
             let table = create_testTable()
@@ -364,7 +364,7 @@ let private tests_UpdateHeader =
             Expect.equal table.Headers.[2] column_param.Header "header3"
             Expect.equal table.Headers.[3] column_component.Header "header2"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
@@ -376,11 +376,11 @@ let private tests_UpdateHeader =
             Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
             Expect.equal table.Headers.[1] column_output.Header "header1"
             Expect.equal table.Headers.[2] column_param.Header "header2"
-            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 2,4"
+            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 2,4"
             Expect.equal table.Headers.[3] newHeader "header3"
             Expect.equal table.Values.[3,4] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "cell 3,4"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         // force convert should never do anything in valid case
         testCase "set valid, force convert, term cells" (fun () ->
@@ -395,11 +395,11 @@ let private tests_UpdateHeader =
             Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
             Expect.equal table.Headers.[1] column_output.Header "header1"
             Expect.equal table.Headers.[2] column_param.Header "header2"
-            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 2,4"
+            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 2,4"
             Expect.equal table.Headers.[3] newHeader "header3"
             Expect.equal table.Values.[3,4] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "cell 3,4"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
             TestingUtils.Expect.sequenceEqual table.Headers table2.Headers "equal table headers"
             TestingUtils.Expect.sequenceEqual table.Values table2.Values "equal table values"
         )
@@ -415,11 +415,11 @@ let private tests_UpdateHeader =
             Expect.equal table.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
             Expect.equal table.Headers.[1] column_output.Header "header1"
             Expect.equal table.Headers.[2] column_param.Header "header2"
-            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 2,4"
+            Expect.equal table.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 2,4"
             Expect.equal table.Headers.[3] column_component.Header "header3"
             Expect.equal table.Values.[3,4] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "cell 3,4"
             Expect.equal table.Headers.[4] newHeader "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
             TestingUtils.Expect.sequenceEqual table.Headers table2.Headers "equal table headers"
             TestingUtils.Expect.sequenceEqual table.Values table2.Values "equal table values"
     ]
@@ -436,7 +436,7 @@ let private tests_UpdateCell =
             Expect.equal testTable.Headers.[2] column_param.Header "header2"
             Expect.equal testTable.Headers.[3] column_component.Header "header3"
             Expect.equal testTable.Headers.[4] column_param.Header "header4"
-            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
@@ -451,7 +451,7 @@ let private tests_UpdateCell =
             Expect.equal table.Headers.[2] column_param.Header "header2"
             Expect.equal table.Headers.[3] column_component.Header "header3"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set valid, at invalid indices" (fun () ->
             let table = create_testTable()
@@ -467,7 +467,7 @@ let private tests_UpdateCell =
         )
         testCase "set invalid" (fun () ->
             let table = create_testTable()
-            let cell = CompositeCell.createTerm OntologyAnnotation.empty
+            let cell = CompositeCell.createTerm (OntologyAnnotation())
             let eval() = table.UpdateCellAt(0,0,cell)
             Expect.throws eval ""
         )
@@ -485,25 +485,25 @@ let private tests_UpdateColumn =
             Expect.equal testTable.Headers.[2] column_param.Header "header3"
             Expect.equal testTable.Headers.[3] column_component.Header "header2"
             Expect.equal testTable.Headers.[4] column_param.Header "header4"
-            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set valid, at invalid index = columnCount" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation(name="TestTerm")
             let cells = createCells_Term 5
             let eval() = table.UpdateColumn(table.ColumnCount, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid, at invalid negative index" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation(name="TestTerm")
             let cells = createCells_Term 5
             let eval() = table.UpdateColumn(-1, h, cells)
             Expect.throws eval ""
         )
         testCase "set valid" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation(name="TestTerm")
             let cells = createCells_Term 5
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
@@ -514,7 +514,7 @@ let private tests_UpdateColumn =
             Expect.equal table.Headers.[2] column_param.Header "header3"
             Expect.equal table.Headers.[3] column_component.Header "header2"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set unique duplicate, different index" (fun () ->
             let table = create_testTable()
@@ -537,11 +537,11 @@ let private tests_UpdateColumn =
             Expect.equal table.Headers.[2] column_param.Header "header3"
             Expect.equal table.Headers.[3] column_component.Header "header2"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set valid, less rows" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation(name="TestTerm")
             let cells = createCells_Term 2
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
@@ -553,11 +553,11 @@ let private tests_UpdateColumn =
             Expect.equal table.Headers.[2] column_param.Header "header3"
             Expect.equal table.Headers.[3] column_component.Header "header2"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
         )
         testCase "set valid, more rows" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Component <| OntologyAnnotation.fromString(termName="TestTerm")
+            let h = CompositeHeader.Component <| OntologyAnnotation(name="TestTerm")
             let cells = createCells_Term 7
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 7 "RowCount"
@@ -569,7 +569,7 @@ let private tests_UpdateColumn =
             Expect.equal table.Headers.[2] column_param.Header "header3"
             Expect.equal table.Headers.[3] column_component.Header "header2"
             Expect.equal table.Headers.[4] column_param.Header "header4"
-            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+            Expect.equal table.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
             Expect.equal table.Values.[4,5] (CompositeCell.emptyUnitized) "cell 4,5"
         )
     ]
@@ -1061,8 +1061,8 @@ let private tests_AddColumns =
                 let table = create_table()
                 let column_0 = CompositeColumn.create(CompositeHeader.Input IOType.Source)
                 let column_1 = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
-                let column_2 = CompositeColumn.create(CompositeHeader.Component OntologyAnnotation.empty)
-                let column_3 = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty)
+                let column_2 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
+                let column_3 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
                 let columns = [|
                     column_0
                     column_1
@@ -1083,7 +1083,7 @@ let private tests_AddColumns =
                 let table = create_table()
                 let column_0 = CompositeColumn.create(CompositeHeader.Input IOType.Source)
                 let column_1 = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
-                let column_2 = CompositeColumn.create(CompositeHeader.Component OntologyAnnotation.empty)
+                let column_2 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
                 let columns = [|
                     column_0
                     column_1
@@ -1125,8 +1125,8 @@ let private tests_AddColumns =
                 let table = create_table()
                 let column_0 = CompositeColumn.create(CompositeHeader.Input IOType.Source)
                 let column_1 = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
-                let column_2 = CompositeColumn.create(CompositeHeader.Component OntologyAnnotation.empty)
-                let column_3 = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty)
+                let column_2 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
+                let column_3 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
                 let columns = [|
                     column_0
                     column_1
@@ -1147,8 +1147,8 @@ let private tests_AddColumns =
         testList "To Table, no cells" [
             let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source)
             let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
-            let column_component = CompositeColumn.create(CompositeHeader.Component OntologyAnnotation.empty)
-            let column_param = CompositeColumn.create(CompositeHeader.Parameter OntologyAnnotation.empty)
+            let column_component = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
+            let column_param = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
             /// Valid TestTable with 5 columns, no cells: Input [Source] - >Output [Sample] -> Component [instrument model] -> Parameter [empty] -> Parameter [empty]
             let create_testTable() = 
                 let t = ArcTable.init(TableName)
@@ -1362,7 +1362,7 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
             )
             testCase "multiple columns, same rowCount" (fun () ->
                 let testTable = create_testTable() 
@@ -1383,12 +1383,12 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Headers.[5] column_param.Header "header4"
                 Expect.equal testTable.Headers.[6] column_param.Header "header4"
                 Expect.equal testTable.Headers.[7] column_param.Header "header4"
                 Expect.equal testTable.Headers.[8] column_param.Header "header4"
-                Expect.equal testTable.Values.[8,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 8,4"
+                Expect.equal testTable.Values.[8,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 8,4"
             )
             testCase "multiple columns, same rowCount, insert at" (fun () ->
                 let testTable = create_testTable()
@@ -1409,12 +1409,12 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[7] column_component.Header "header3"
                 Expect.equal testTable.Headers.[8] column_param.Header "header4"
                 Expect.equal testTable.Values.[4,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-                Expect.equal testTable.Values.[8,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[8,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Headers.[0] column_param.Header "header4"
                 Expect.equal testTable.Headers.[1] column_param.Header "header4"
                 Expect.equal testTable.Headers.[2] column_param.Header "header4"
                 Expect.equal testTable.Headers.[3] column_param.Header "header4"
-                Expect.equal testTable.Values.[3,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 8,4"
+                Expect.equal testTable.Values.[3,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 8,4"
             )
             testCase "multiple columns, same rowCount, duplicate throw" (fun () ->
                 let testTable = create_testTable()
@@ -1447,11 +1447,11 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "NEW_0") "cell 0,0"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Headers.[5] column_param.Header "header4"
                 Expect.equal testTable.Headers.[6] column_param.Header "header4"
                 Expect.equal testTable.Headers.[7] column_param.Header "header4"
-                Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 7,4"
+                Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 7,4"
             )
             testCase "multiple columns, same rowCount, duplicate replace, insert at" (fun () ->
                 let testTable = create_testTable()
@@ -1473,11 +1473,11 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[5] column_param.Header "header2"
                 Expect.equal testTable.Headers.[6] column_component.Header "header3"
                 Expect.equal testTable.Headers.[7] column_param.Header "header4"
-                Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Headers.[0] column_param.Header "header4"
                 Expect.equal testTable.Headers.[1] column_param.Header "header4"
                 Expect.equal testTable.Headers.[2] column_param.Header "header4"
-                Expect.equal testTable.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 7,4"
+                Expect.equal testTable.Values.[2,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 7,4"
             )
             testCase "multiple columns, same rowCount, duplicate replace, insert at2" (fun () ->
                 let testTable = create_testTable()
@@ -1499,11 +1499,11 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[5] column_param.Header "header2"
                 Expect.equal testTable.Headers.[6] column_component.Header "header3"
                 Expect.equal testTable.Headers.[7] column_param.Header "header4"
-                Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 7,4"
+                Expect.equal testTable.Values.[7,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 7,4"
                 Expect.equal testTable.Headers.[2] column_param.Header "header4"
                 Expect.equal testTable.Headers.[3] column_param.Header "header4"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
             )
             testCase "multiple columns, less rowCount" (fun () ->
                 let testTable = create_testTable()
@@ -1525,7 +1525,7 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
                 Expect.equal testTable.Values.[0,0] (CompositeCell.FreeText "Source_0") "cell 0,0"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Headers.[5] newColumn.Header "header5"
                 Expect.equal testTable.Headers.[6] newColumn.Header "header6"
                 Expect.equal testTable.Headers.[7] newColumn.Header "header7"
@@ -1553,7 +1553,7 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[2] column_param.Header "header2"
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Values.[4,7] (CompositeCell.emptyUnitized) "cell 4,7"
                 Expect.equal testTable.Headers.[5] newColumn.Header "header5"
                 Expect.equal testTable.Headers.[6] newColumn.Header "header6"
@@ -1583,7 +1583,7 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[2] column_param.Header "header2"
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Values.[4,7] (CompositeCell.emptyUnitized) "cell 4,7"
                 Expect.equal testTable.Headers.[5] newColumn.Header "header5"
                 Expect.equal testTable.Headers.[6] newColumn.Header "header6"
@@ -1613,7 +1613,7 @@ let private tests_AddColumns =
                 Expect.equal testTable.Headers.[2] column_param.Header "header2"
                 Expect.equal testTable.Headers.[3] column_component.Header "header3"
                 Expect.equal testTable.Headers.[4] column_param.Header "header4"
-                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation.empty)) "cell 4,4"
+                Expect.equal testTable.Values.[4,4] (CompositeCell.createUnitized (string 4,OntologyAnnotation())) "cell 4,4"
                 Expect.equal testTable.Values.[4,7] (CompositeCell.emptyUnitized) "cell 4,7"
                 Expect.equal testTable.Headers.[5] newColumn.Header "header5"
                 Expect.equal testTable.Headers.[6] newColumn.Header "header6"
@@ -1676,7 +1676,7 @@ let private tests_RemoveColumns =
             table.RemoveColumns([|0;1|])
             Expect.equal table.ColumnCount 3 "ColumnCount"
             Expect.equal table.RowCount 5 "RowCount"
-            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitized ("4", OntologyAnnotation.empty)) "table.ColumnCount-1,table.RowCount-1"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitized ("4", OntologyAnnotation())) "table.ColumnCount-1,table.RowCount-1"
             Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitizedFromString ("4")) "3,4"
         )
         testCase "remove last 2" (fun () ->
@@ -1685,7 +1685,7 @@ let private tests_RemoveColumns =
             Expect.equal table.ColumnCount 3 "ColumnCount"
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.Values.[(0,0)] (CompositeCell.createFreeText "Source_0") "0,0"
-            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitized ("4", OntologyAnnotation.empty)) "table.ColumnCount-1,table.RowCount-1"
+            Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createUnitized ("4", OntologyAnnotation())) "table.ColumnCount-1,table.RowCount-1"
         )
         // if indices are NOT managed correctly, the first one will be removed shifting column index -1. 
         // This will result in an raised error trying to remove the last column, from an index which does not exist anymore
@@ -1800,9 +1800,9 @@ let private tests_AddRow =
         let row_default = [|
             CompositeCell.FreeText "NewSource"
             CompositeCell.FreeText "NewSample"
-            CompositeCell.createTerm OntologyAnnotation.empty
+            CompositeCell.createTerm (OntologyAnnotation())
             CompositeCell.createTerm oa_SCIEXInstrumentModel
-            CompositeCell.createTerm OntologyAnnotation.empty
+            CompositeCell.createTerm (OntologyAnnotation())
         |]
         let row_empty = [|
             CompositeCell.emptyFreeText
@@ -1917,9 +1917,9 @@ let private tests_AddRows =
         let row_default prefix = [|
             CompositeCell.FreeText $"{prefix}Source"
             CompositeCell.FreeText $"{prefix}Sample"
-            CompositeCell.createTerm OntologyAnnotation.empty
+            CompositeCell.createTerm (OntologyAnnotation())
             CompositeCell.createTerm oa_SCIEXInstrumentModel
-            CompositeCell.createTerm OntologyAnnotation.empty
+            CompositeCell.createTerm (OntologyAnnotation())
         |]
         let rows_default = [|
             row_default "Nice"
@@ -2122,9 +2122,9 @@ let private tests_Join = testList "Join" [
             // test headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
-            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty]"
+            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
-            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 2"
             // test rows
             Expect.equal table.RowCount 0 "rowcount"
         testCase "Add to duplicate" <| fun _ ->
@@ -2140,12 +2140,12 @@ let private tests_Join = testList "Join" [
             // headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
-            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty]"
+            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
-            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 2"
-            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 3"
+            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 3"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model] 2"
-            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 4"
+            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 4"
             // rows should be untouched
             Expect.equal table.RowCount 5 "rows should be untouched"
         testCase "Join replace input" <| fun _ ->
@@ -2160,9 +2160,9 @@ let private tests_Join = testList "Join" [
             // test headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.ImageFile) "Here should be new image input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
-            Expect.equal table.Headers.[2] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty]"
+            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
-            Expect.equal table.Headers.[4] (CompositeHeader.Parameter OntologyAnnotation.empty) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 2"
             Expect.equal (table.TryGetCellAt(0,4).Value) (CompositeCell.createFreeText "Source_4") "Input cell should be unchanged, only header should be changed"
     ]
     testList "TableJoinOption.WithUnits" [ 
@@ -2193,7 +2193,7 @@ let private tests_Join = testList "Join" [
             table.Join(joinTable,-1,TableJoinOptions.WithUnit, skipFillMissing=false)
             Expect.equal table.ColumnCount 2 "column count"
             Expect.equal table.RowCount 5 "row count"
-            Expect.equal table.Values.[(0,0)] (CompositeCell.createTerm OntologyAnnotation.empty) "empty term cell"
+            Expect.equal table.Values.[(0,0)] (CompositeCell.createTerm (OntologyAnnotation())) "empty term cell"
             Expect.equal table.Values.[(1,0)] (CompositeCell.createUnitized("",oa_temperature)) "temperature unit cell"
     ]
     testList "TableJoinOption.WithValues" [

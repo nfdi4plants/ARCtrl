@@ -54,7 +54,7 @@ let private tests_Copy = testList "Copy" [
         let person = createTestPerson()
         Expect.equal person.FirstName (Some "Kevin") "firstname"
         let copy = person.Copy()
-        let changedPerson = {person with FirstName = Some "DefNotKevin"}
+        let changedPerson = {person with firstName = Some "DefNotKevin"}
         Expect.equal copy.FirstName (Some "Kevin") "copy firstname"
         Expect.equal changedPerson.FirstName (Some "DefNotKevin") "changedPerson firstname"
 ]

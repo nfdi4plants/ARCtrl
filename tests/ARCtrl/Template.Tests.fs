@@ -112,9 +112,9 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
             Expect.equal tags.[4] expectedLast "Last TAG should be equal"
 
             Expect.equal authors.Length 5 "Should be 5 authors"
-            let expectedFirst = Person.create(FirstName = "Heinrich", LastName = "Weil", MidInitials = "L",ORCID = "0000-0003-1945-6342",Email = "weil@rptu.de")
+            let expectedFirst = Person.create(firstName = "Heinrich", lastName = "Weil", MidInitials = "L",ORCID = "0000-0003-1945-6342",Email = "weil@rptu.de")
             Expect.equal authors.[0] expectedFirst "First AUTHOR should be equal"
-            let expectedFourth = Person.create(FirstName = "Martin", LastName = "Kuhl")
+            let expectedFourth = Person.create(firstName = "Martin", lastName = "Kuhl")
             Expect.equal authors.[3] expectedFourth "Fourth AUTHOR should be equal"
         testCase "complete roundabout" <| fun _ ->
             let templateInfo,ers,tags,authors = Spreadsheet.Template.fromMetadataSheet TestObjects.Spreadsheet.Template.templateMetadata

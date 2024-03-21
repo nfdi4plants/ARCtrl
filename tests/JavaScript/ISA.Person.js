@@ -11,7 +11,7 @@ describe('ISA.Person', function () {
             equal(copy.ORCID, "0000-0002-1825-0097")
             equal(person.FirstName, "Kevin");
             equal(copy.FirstName, "Kevin");
-            person.FirstName = "NotKevin"
+            person.firstName = "NotKevin"
             equal(person.FirstName, "NotKevin");
             equal(copy.FirstName, "Kevin");
         });

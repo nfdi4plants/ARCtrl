@@ -17,9 +17,9 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
+  <ItemGroup />
+
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ARCtrl.Json\ARCtrl.Json.fsproj" />
-    <ProjectReference Include="..\..\src\ARCtrl.Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <ItemGroup>

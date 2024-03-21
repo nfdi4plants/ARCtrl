@@ -16,14 +16,13 @@ let private test_create =
             let description = "Study Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let publications = [|Publication.create("Publication 1")|]
-            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
-            let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+            let publications = ResizeArray [|Publication.create("Publication 1")|]
+            let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
+            let studyDesignDescriptors = ResizeArray [|OntologyAnnotation("Design Descriptor")|]
             let tables = ResizeArray([|ArcTable.init("Table 1")|])
             let assays = createExampleAssays()
             let assay_identifiers = getAssayIdentifiers assays
-            let factors = [|Factor.create("Factor 1")|]
-            let comments = [|Comment.create("Comment 1")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
 
             let actual =
                 ArcStudy(
@@ -37,7 +36,6 @@ let private test_create =
                     studyDesignDescriptors = studyDesignDescriptors,
                     tables = tables,
                     registeredAssayIdentifiers = assay_identifiers,
-                    factors = factors,
                     comments = comments
                 )
 
@@ -51,7 +49,6 @@ let private test_create =
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
             Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
-            Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
 
         testCase "create" <| fun _ ->
@@ -60,14 +57,13 @@ let private test_create =
             let description = "Study Description"
             let submissionDate = "2023-07-19"
             let publicReleaseDate = "2023-12-31"
-            let publications = [|Publication.create("Publication 1")|]
-            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
-            let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
-            let tables = ResizeArray([|ArcTable.init("Table 1")|])
+            let publications = ResizeArray [|Publication.create("Publication 1")|]
+            let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
+            let studyDesignDescriptors = ResizeArray [|OntologyAnnotation("Design Descriptor")|]
+            let tables = ResizeArray [|ArcTable.init("Table 1")|]
             let assays = createExampleAssays()
             let assay_identifiers = getAssayIdentifiers assays
-            let factors = [|Factor.create("Factor 1")|]
-            let comments = [|Comment.create("Comment 1")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
 
             let actual = ArcStudy.create(
                 identifier = identifier,
@@ -80,7 +76,6 @@ let private test_create =
                 studyDesignDescriptors = studyDesignDescriptors,
                 tables = tables,
                 registeredAssayIdentifiers = assay_identifiers,
-                factors = factors,
                 comments = comments
             )
 
@@ -94,7 +89,6 @@ let private test_create =
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
             Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
-            Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
 
         testCase "init" <| fun _ ->
@@ -110,7 +104,6 @@ let private test_create =
             Expect.isEmpty actual.StudyDesignDescriptors "StudyDesignDescriptors"
             Expect.isEmpty actual.Tables "Tables"
             Expect.isEmpty actual.RegisteredAssayIdentifiers "Assays"
-            Expect.isEmpty actual.Factors "Factors"
             Expect.isEmpty actual.Comments "Comments"
         testCase "make" <| fun _ ->
             let identifier = "MyIdentifier"
@@ -118,14 +111,13 @@ let private test_create =
             let description = Some "Study Description"
             let submissionDate = Some "2023-07-19"
             let publicReleaseDate = Some "2023-12-31"
-            let publications = [|Publication.create("Publication 1")|]
-            let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
-            let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+            let publications = ResizeArray [|Publication.create("Publication 1")|]
+            let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
+            let studyDesignDescriptors = ResizeArray [|OntologyAnnotation("Design Descriptor")|]
             let tables = ResizeArray([|ArcTable.init("Table 1")|])
             let assays = createExampleAssays()
             let assay_identifiers = getAssayIdentifiers assays
-            let factors = [|Factor.create("Factor 1")|]
-            let comments = [|Comment.create("Comment 1")|]
+            let comments = ResizeArray [|Comment.create("Comment 1")|]
 
             let actual = 
                 ArcStudy.make
@@ -139,7 +131,6 @@ let private test_create =
                     studyDesignDescriptors
                     tables
                     assay_identifiers
-                    factors
                     comments
 
             Expect.equal actual.Identifier identifier "Identifier"
@@ -152,7 +143,6 @@ let private test_create =
             Expect.equal actual.StudyDesignDescriptors studyDesignDescriptors "StudyDesignDescriptors"
             Expect.equal actual.Tables tables "Tables"
             Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
-            Expect.equal actual.Factors factors "Factors"
             Expect.equal actual.Comments comments "Comments"
     ]
 
@@ -321,9 +311,9 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         let description = "Study Description"
         let submissionDate = "2023-07-19"
         let publicReleaseDate = "2023-12-31"
-        let publications = [|Publication.create("Publication 1")|]
-        let contacts = [|Person.create(FirstName = "John", LastName = "Doe")|]
-        let studyDesignDescriptors = [|OntologyAnnotation.fromString("Design Descriptor")|]
+        let publications = ResizeArray [|Publication.create("Publication 1")|]
+        let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
+        let studyDesignDescriptors = ResizeArray [|OntologyAnnotation("Design Descriptor")|]
         let tables = 
             let refTable = ArcTable.init(protocolREF)
             refTable.AddProtocolNameColumn [|protocolREF|]
@@ -331,8 +321,7 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
             ResizeArray([|refTable|])
         let assays = createExampleAssays()
         let assay_identifiers = getAssayIdentifiers assays
-        let factors = [|Factor.create("Factor 1")|]
-        let comments = [|Comment.create("Comment 1")|]
+        let comments = ResizeArray [|Comment.create("Comment 1")|]
         ArcStudy(
             identifier = identifier,
             title = title,
@@ -344,7 +333,6 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
             studyDesignDescriptors = studyDesignDescriptors,
             tables = tables,
             registeredAssayIdentifiers = assay_identifiers,
-            factors = factors,
             comments = comments
         )
     testCase "tablesAreUpdated" <| fun _ ->
@@ -400,7 +388,6 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
         TestingUtils.Expect.sequenceEqual actual.Tables expected.Tables "Tables" 
         TestingUtils.Expect.sequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
-        Expect.equal actual.Factors expected.Factors "Factors"
         Expect.equal actual.Comments expected.Comments "Comments"
     testCase "replace existing, all replaced" <| fun _ ->
         let actual = createFullStudy()
@@ -411,13 +398,12 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
                 description = "Description",
                 submissionDate = "Next_SubmissionDate",
                 publicReleaseDate = "Next_PublicReleaseDate",
-                publications = [|Publication.create(Title="My Next Title")|],
-                contacts = [|Person.create(FirstName="NextKevin", LastName="NextFrey")|],
-                studyDesignDescriptors = [|OntologyAnnotation.fromString "Next OA"|],
+                publications = ResizeArray [|Publication(title="My Next Title")|],
+                contacts = ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|],
+                studyDesignDescriptors = ResizeArray [|OntologyAnnotation "Next OA"|],
                 tables = ResizeArray([ArcTable.init("NextTable")]),
                 registeredAssayIdentifiers = ResizeArray(["NextIdentifier"]),
-                factors = [|Factor.create(Name="NextFactor")|],
-                comments = [|Comment.create(Name="NextCommentName", Value="NextCommentValue")|]
+                comments = ResizeArray [|Comment(name="NextCommentName", value="NextCommentValue")|]
             )
         actual.UpdateReferenceByStudyFile(next, true)
         Expect.notEqual actual next "not equal"
@@ -431,7 +417,6 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
         TestingUtils.Expect.sequenceEqual actual.Tables next.Tables "Tables" 
         TestingUtils.Expect.sequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
-        Expect.equal actual.Factors next.Factors "Factors"
         Expect.equal actual.Comments next.Comments "Comments"
     testCase "full replace, empty" <| fun _ ->
         let actual = createFullStudy()
@@ -452,7 +437,6 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.isEmpty actual.StudyDesignDescriptors "StudyDesignDescriptors"
         Expect.isEmpty actual.Tables "Tables" 
         Expect.isEmpty actual.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
-        Expect.isEmpty actual.Factors "Factors"
         Expect.isEmpty actual.Comments "Comments"
 ]
 
@@ -464,13 +448,12 @@ let private tests_GetHashCode = testList "GetHashCode" [
             (Some "My Study Description")
             (Some "My Study SubmissionDate")
             (Some "My Study PRD")
-            [|Publication.empty; Publication.create(Title="Some nice title")|]
-            ([|Person.create(FirstName="John",LastName="Doe"); Person.create(FirstName="Jane",LastName="Doe")|])
-            [|OntologyAnnotation.empty; OntologyAnnotation.empty; OntologyAnnotation.fromString("Name", "tsr", "Tan")|]
+            (ResizeArray [|Publication(); Publication.create(title="Some nice title")|])
+            (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
+            (ResizeArray [|OntologyAnnotation(); OntologyAnnotation(); OntologyAnnotation("Name", "tsr", "Tan")|])
             (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
             (ResizeArray(["Registered Assay1"; "Registered Assay2"]))
-            [|Factor.empty; Factor.create(Name="Factorios")|]
-            ([|Comment.create("Hello", "World"); Comment.create("ByeBye", "World") |])
+            (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
     testCase "passing" <| fun _ ->
         let actual = ArcAssay.create("MyAssay", tables= ResizeArray([ArcTable.init("My Table")]))
         Expect.isSome (actual.GetHashCode() |> Some) ""
