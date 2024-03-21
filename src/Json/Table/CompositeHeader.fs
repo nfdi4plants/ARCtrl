@@ -10,7 +10,7 @@ module CompositeHeader =
   let [<Literal>] HeaderValues = "values"
 
   let encoder (ch: CompositeHeader) = 
-    let oaToJsonString (oa:OntologyAnnotation) = OntologyAnnotation.encoder (ConverterOptions()) oa
+    let oaToJsonString (oa:OntologyAnnotation) = OntologyAnnotation.encoder oa
     let t, v = 
       match ch with
       | CompositeHeader.FreeText s -> s, []
@@ -34,9 +34,9 @@ module CompositeHeader =
 
   let decoder : Decoder<CompositeHeader> = 
     Decode.object (fun get ->
-      let headerType = get.Required.Field (HeaderType) Decode.string
-      let oa() = get.Required.Field (HeaderValues) (Decode.index 0 <| OntologyAnnotation.decoder (ConverterOptions()))
-      let io() = get.Required.Field (HeaderValues) (Decode.index 0 <| IOType.decoder)
+      let headerType = get.Required.Field HeaderType Decode.string
+      let oa() = get.Required.Field HeaderValues (Decode.index 0 OntologyAnnotation.decoder)
+      let io() = get.Required.Field HeaderValues (Decode.index 0 IOType.decoder)
       match headerType with
       | "Characteristic" -> oa() |> CompositeHeader.Characteristic
       | "Parameter" -> oa() |> CompositeHeader.Parameter
@@ -58,11 +58,14 @@ module CompositeHeader =
 module CompositeHeaderExtensions =
 
     type CompositeHeader with
-        static member fromJsonString (jsonString: string) : CompositeHeader = 
-            GDecode.fromJsonString CompositeHeader.decoder jsonString
 
-        member this.ToJsonString(?spaces) : string =
-            let spaces = defaultArg spaces 0
-            Encode.toJsonString spaces (CompositeHeader.encoder this)
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString CompositeHeader.decoder s
 
-        static member toJsonString(a:CompositeHeader) = a.ToJsonString()
+        static member toJsonString(?spaces) = 
+            fun (obj:CompositeHeader) ->
+                CompositeHeader.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToJsonString(?spaces) =
+            CompositeHeader.toJsonString(?spaces=spaces) this

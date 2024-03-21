@@ -6,6 +6,7 @@ open ARCtrl
 open System.Collections.Generic
 
 module ArcTable =
+
     let encoder (table: ArcTable) =
         let keyEncoder : Encoder<int*int> = Encode.tuple2 Encode.int Encode.int
         let valueEncoder = CompositeCell.encoder
@@ -32,7 +33,9 @@ module ArcTable =
             )
         )
 
-    let compressedColumnEncoder (columnIndex : int) (rowCount : int) (cellTable : CellTableMap) (table: ArcTable) =
+    open CellTable
+
+    let encoderCompressedColumn (columnIndex : int) (rowCount : int) (cellTable : CellTableMap) (table: ArcTable) =
         if table.Headers[columnIndex].IsIOType || rowCount < 100 then
             Encode.array [|for r = 0 to rowCount - 1 do CellTable.encodeCell cellTable table.Values[columnIndex,r]|]
         else
@@ -49,7 +52,7 @@ module ArcTable =
             |]
             |> Encode.array
       
-    let compressedColumnDecoder (cellTable : CellTableArray) (table: ArcTable) (columnIndex : int)  =
+    let decoderCompressedColumn (cellTable : CellTableArray) (table: ArcTable) (columnIndex : int)  =
         {new Decoder<unit> with
             member this.Decode (helper,column) =
                 match (Decode.array (CellTable.decodeCell cellTable)).Decode(helper,column) with
@@ -70,7 +73,6 @@ module ArcTable =
                     | Error err -> Error err
         } 
             
-    
     let arrayi (decoderi: int -> Decoder<'value>) : Decoder<'value array> =
         { new Decoder<'value array> with
             member _.Decode(helpers, value) =
@@ -102,8 +104,9 @@ module ArcTable =
                     ("", BadPrimitive("an array", value)) |> Error
         }
         
+    open OATable
 
-    let compressedEncoder (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (table: ArcTable) =
+    let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (table: ArcTable) =
         Encode.object [
             "n", StringTable.encodeString stringTable table.Name
             if table.Headers.Count <> 0 then
@@ -112,11 +115,11 @@ module ArcTable =
                 ]
             if table.Values.Count <> 0 then
                 let rowCount = table.RowCount
-                let columns = [|for c = 0 to table.ColumnCount - 1 do compressedColumnEncoder c rowCount cellTable table|]
+                let columns = [|for c = 0 to table.ColumnCount - 1 do encoderCompressedColumn c rowCount cellTable table|]
                 "c", Encode.array columns
         ] 
 
-    let compressedDecoder (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<ArcTable> =
+    let decoderCompressed (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray)  : Decoder<ArcTable> =
         Decode.object(fun get ->
             let decodedHeader = get.Optional.Field "h" (Decode.list CompositeHeader.decoder) |> Option.defaultValue List.empty |> ResizeArray 
             //let decodedValues = get.Optional.Field "c" (Decode.map' keyDecoder valueDecoder) |> Option.defaultValue Map.empty |> System.Collections.Generic.Dictionary
@@ -128,9 +131,8 @@ module ArcTable =
                 )
                 
             // Columns
-            get.Optional.Field "c" (arrayi (compressedColumnDecoder cellTable table)) |> ignore
+            get.Optional.Field "c" (arrayi (decoderCompressedColumn cellTable table)) |> ignore
             
-
             table 
 
         )
@@ -139,14 +141,16 @@ module ArcTable =
 module ArcTableExtensions =
 
     type ArcTable with
-        static member fromJsonString (jsonString: string) : ArcTable = 
-            GDecode.fromJsonString ArcTable.decoder jsonString
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString ArcTable.decoder s
 
-        member this.ToJsonString(?spaces) : string =
-            let spaces = defaultArg spaces 0
-            Encode.toJsonString spaces (ArcTable.encoder this)
+        static member toJsonString(?spaces) = 
+            fun (obj:ArcTable) ->
+                ArcTable.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        static member toJsonString(a:ArcTable) = a.ToJsonString()
+        member this.ToJsonString(?spaces) =
+            ArcTable.toJsonString(?spaces=spaces) this
 
         static member fromCompressedJsonString (jsonString: string) : ArcTable = 
             let decoder = 
@@ -154,16 +158,16 @@ module ArcTableExtensions =
                     let stringTable = get.Required.Field "stringTable" (StringTable.decoder)
                     let oaTable = get.Required.Field "oaTable" (OATable.decoder stringTable)
                     let cellTable = get.Required.Field "cellTable" (CellTable.decoder stringTable oaTable)
-                    get.Required.Field "table" (ArcTable.compressedDecoder stringTable oaTable cellTable)
+                    get.Required.Field "table" (ArcTable.decoderCompressed stringTable oaTable cellTable)
                 )
-            GDecode.fromJsonString decoder jsonString
+            Decode.fromJsonString decoder jsonString
 
         member this.ToCompressedJsonString(?spaces) : string =
-            let spaces = defaultArg spaces 0
+            let spaces = Encode.defaultSpaces spaces
             let stringTable = Dictionary()
             let oaTable = Dictionary()
             let cellTable = Dictionary()
-            let arcTable = ArcTable.compressedEncoder stringTable oaTable cellTable this
+            let arcTable = ArcTable.encoderCompressed stringTable oaTable cellTable this
             let jObject = 
                 Encode.object [
                     "cellTable", CellTable.arrayFromMap cellTable |> CellTable.encoder stringTable oaTable
@@ -173,4 +177,6 @@ module ArcTableExtensions =
                 ] 
             Encode.toJsonString spaces jObject
 
-        static member toCompressedJsonString(a:ArcTable) = a.ToCompressedJsonString()
+        static member toCompressedJsonString(?spaces) = 
+            fun (obj:ArcTable) ->
+                obj.ToCompressedJsonString(?spaces=spaces)

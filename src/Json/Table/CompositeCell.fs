@@ -1,10 +1,8 @@
-﻿namespace rec ARCtrl.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
 open ARCtrl
-
-open ARCtrl.Aux
 
 module CompositeCell =
 
@@ -15,7 +13,7 @@ module CompositeCell =
     let [<Literal>] CompressedCellValues = "v"
 
     let encoder (cc: CompositeCell) =
-        let oaToJsonString (oa:OntologyAnnotation) = OntologyAnnotation.encoder (ConverterOptions()) oa
+        let oaToJsonString (oa:OntologyAnnotation) = OntologyAnnotation.encoder oa
         let t, v =
             match cc with
             | CompositeCell.FreeText s-> "FreeText", [Encode.string s]
@@ -24,7 +22,7 @@ module CompositeCell =
         Encode.object [
             CellType, Encode.string t
             CellValues, v |> Encode.list
-    ]
+        ]
 
     let decoder : Decoder<CompositeCell> =
         Decode.object (fun get ->
@@ -33,16 +31,18 @@ module CompositeCell =
                 let s = get.Required.Field (CellValues) (Decode.index 0 Decode.string)
                 CompositeCell.FreeText s
             | "Term" -> 
-                let oa = get.Required.Field (CellValues) (Decode.index 0 <| OntologyAnnotation.decoder (ConverterOptions()) )
+                let oa = get.Required.Field (CellValues) (Decode.index 0 OntologyAnnotation.decoder)
                 CompositeCell.Term oa
             | "Unitized" -> 
-                let v = get.Required.Field (CellValues) (Decode.index 0 <| Decode.string )
-                let oa = get.Required.Field (CellValues) (Decode.index 1 <| OntologyAnnotation.decoder (ConverterOptions()) )
+                let v = get.Required.Field (CellValues) (Decode.index 0 Decode.string)
+                let oa = get.Required.Field (CellValues) (Decode.index 1 OntologyAnnotation.decoder)
                 CompositeCell.Unitized (v, oa)
             | anyelse -> failwithf "Error reading CompositeCell from json string: %A" anyelse 
         ) 
 
-    let compressedEncoder (stringTable : StringTableMap) (oaTable : OATableMap) (cc: CompositeCell) =
+    open OATable
+
+    let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cc: CompositeCell) =
 
         let t, v =
             match cc with
@@ -54,7 +54,7 @@ module CompositeCell =
             CompressedCellValues, v |> Encode.list
     ]
     
-    let compressedDecoder (stringTable : StringTableArray) (oaTable : OATableArray) : Decoder<CompositeCell> =
+    let decoderCompressed (stringTable : StringTableArray) (oaTable : OATableArray) : Decoder<CompositeCell> =
 
         Decode.object (fun get ->
             match get.Required.Field (CompressedCellType) (StringTable.decodeString stringTable) with
@@ -75,12 +75,14 @@ module CompositeCell =
 module CompositeCellExtensions =
 
     type CompositeCell with
-        static member fromJsonString (jsonString: string) : CompositeCell = 
-            GDecode.fromJsonString CompositeCell.decoder jsonString
-            
-        member this.ToJsonString(?spaces) : string =
-            let spaces = defaultArg spaces 0
-            Encode.toJsonString spaces (CompositeCell.encoder this)
 
-        static member toJsonString(a:CompositeCell) = a.ToJsonString()
-        
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString CompositeCell.decoder s
+
+        static member toJsonString(?spaces) = 
+            fun (obj:CompositeCell) ->
+                CompositeCell.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToJsonString(?spaces) =
+            CompositeCell.toJsonString(?spaces=spaces) this

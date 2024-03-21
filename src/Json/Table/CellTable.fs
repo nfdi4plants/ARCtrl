@@ -4,13 +4,14 @@ open Thoth.Json.Core
 
 open ARCtrl
 
-open ARCtrl.Aux
-
-type CellTableMap = System.Collections.Generic.Dictionary<CompositeCell,int>
-
-type CellTableArray = array<CompositeCell>
+open ARCtrl.Helper
 
 module CellTable =
+
+    open OATable
+
+    type CellTableMap = System.Collections.Generic.Dictionary<CompositeCell,int>
+    type CellTableArray = array<CompositeCell>
 
     let [<Literal>] CellType = "celltype"
     let [<Literal>] CellValues = "values"
@@ -23,14 +24,14 @@ module CellTable =
 
     let encoder (stringTable : StringTableMap) (oaTable : OATableMap) (ot: CellTableArray) =
         ot
-        |> Array.map (CompositeCell.compressedEncoder stringTable oaTable)
+        |> Array.map (CompositeCell.encoderCompressed stringTable oaTable)
         |> Encode.array
 
     let decoder (stringTable : StringTableArray) (oaTable : OATableArray) : Decoder<CellTableArray> =
-        Decode.array (CompositeCell.compressedDecoder stringTable oaTable)
+        Decode.array (CompositeCell.decoderCompressed stringTable oaTable)
         
     let encodeCell (otm : CellTableMap) (cc : CompositeCell) =
-        match Dict.tryFind cc otm with
+        match Dictionary.tryFind cc otm with
         | Some i -> Encode.int i
         | None ->
             let i = otm.Count

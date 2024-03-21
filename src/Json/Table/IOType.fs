@@ -11,15 +11,19 @@ module IOType =
       fun s -> IOType.ofString s |> Decode.succeed
     )
 
+
 [<AutoOpen>]
 module IOTypeExtensions =
 
     type IOType with
-        static member fromJsonString (jsonString: string) : IOType = 
-            GDecode.fromJsonString IOType.decoder jsonString
 
-        member this.ToJsonString(?spaces) : string =
-            let spaces = defaultArg spaces 0
-            Encode.toJsonString spaces (IOType.encoder this)
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString IOType.decoder s
 
-        static member toJsonString(a:IOType) = a.ToJsonString()
+        static member toJsonString(?spaces) = 
+            fun (obj:IOType) ->
+                IOType.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToJsonString(?spaces) =
+            IOType.toJsonString(?spaces=spaces) this
