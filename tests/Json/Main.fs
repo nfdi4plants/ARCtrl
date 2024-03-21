@@ -4,6 +4,7 @@ open Fable.Pyxpecto
 
 
 let all = testSequenced <| testList "ISA.JSON" [
+    Tests.Decoder.Main
     Json.Tests.main
     JsonSchema.Tests.main
     Tests.ROCrate.Main

@@ -95,3 +95,8 @@ module Encode =
         name,
         if List.isEmpty value then Encode.nil
         else value |> List.map encoder |> Encode.list
+
+
+    let DefaultSpaces = 0
+
+    let defaultSpaces spaces = defaultArg spaces DefaultSpaces

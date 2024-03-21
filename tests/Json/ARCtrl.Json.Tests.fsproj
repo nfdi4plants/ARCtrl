@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Decoder.Tests.fs" />
     <Compile Include="ISAJson.Tests.fs" />
     <Compile Include="ARCtrlJson.Tests.fs" />
     <EmbeddedResource Include="Validation\JsonValidation.js">

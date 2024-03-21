@@ -14,7 +14,6 @@ module OntologySourceReference =
             Encode.tryInclude "name" Encode.string (osr.Name)
             Encode.tryInclude "version" Encode.string (osr.Version)
             Encode.tryIncludeSeq "comments" Comment.encoder (osr.Comments)
-            "@context", ROCrateContext.OntologySourceReference.context_jsonvalue
         ]
         |> Encode.choose
         |> Encode.object
@@ -55,7 +54,7 @@ module OntologySourceReference =
             |> Encode.choose
             |> Encode.object
 
-        let decoder (options : ConverterOptions) : Decoder<OntologySourceReference> =
+        let decoder : Decoder<OntologySourceReference> =
             Decode.object (fun get ->
                 OntologySourceReference(
                     ?description = get.Optional.Field "description" Decode.uri,
@@ -66,31 +65,36 @@ module OntologySourceReference =
                 )
             )
 
-module OntologySourceReference =
-    
-  
-    let fromJsonString (s:string) = 
-        Decode.fromJsonString decoder s  
+    module ISAJson =
+        let encoder = encoder
+        let decoder = decoder
 
-    let fromJsonldString (s:string) = 
-        Decode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s      
+[<AutoOpen>]
+module OntologySourceReferenceExtensions =
 
-    let toJsonString (oa:OntologySourceReference) = 
-        encoder (ConverterOptions()) oa
-        |> Encode.toJsonString 2
+    type OntologySourceReference with
+       
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString OntologySourceReference.decoder s
 
-    /// exports in json-ld format
-    let toJsonldString (oa:OntologySourceReference) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) oa
-        |> Encode.toJsonString 2
+        static member toJsonString(?spaces) = 
+            fun (obj:OntologySourceReference) ->
+                OntologySourceReference.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
 
-    let toJsonldStringWithContext (a:OntologySourceReference) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> Encode.toJsonString 2
+        static member fromROCrateJsonString (s:string) = 
+            Decode.fromJsonString OntologySourceReference.ROCrate.decoder s
 
-        // let fromFile (path : string) = 
-        //     File.ReadAllText path 
-        //     |> fromString
+        /// exports in json-ld format
+        static member toROCrateJsonString(?spaces) =
+            fun (obj:OntologySourceReference) ->
+                OntologySourceReference.ROCrate.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        //let toFile (path : string) (osr:OntologySourceReference) = 
-        //    File.WriteAllText(path,toString osr)
+        static member toISAJsonString(?spaces) =
+            fun (obj:OntologySourceReference) ->
+                OntologySourceReference.ISAJson.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString OntologySourceReference.ISAJson.decoder s

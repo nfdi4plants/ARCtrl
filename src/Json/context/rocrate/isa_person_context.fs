@@ -27,7 +27,7 @@ module Person =
             "sdo", Encode.string "http://schema.org/"
 
             "Person", Encode.string "sdo:Person"
-            
+            "orcid", Encode.string "sdo:identifier"
             "firstName", Encode.string "sdo:givenName"
             "lastName", Encode.string "sdo:familyName"
             "midInitials", Encode.string "sdo:additionalName"

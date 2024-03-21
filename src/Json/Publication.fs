@@ -5,69 +5,118 @@ open Thoth.Json.Core
 open ARCtrl
 open System.IO
 
-module Publication =    
-    
-    let genID (p:Publication) = 
-        match p.DOI with
-        | Some doi -> doi
-        | None -> match p.PubMedID with
-                  | Some id -> id
-                  | None -> match p.Title with
-                            | Some t -> "#Pub_" + t.Replace(" ","_")
-                            | None -> "#EmptyPublication"
+module Publication = 
 
-    let encoder (options : ConverterOptions) (oa : Publication) = 
-        let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
-        let authorListEncoder = if options.IsJsonLD then ROCrateHelper.Person.authorListStrinEncoder else Encode.string
+    let encoder (oa : Publication) = 
         [
-            if options.SetID then 
-                "@id", Encode.string (oa |> genID)
-            if options.IsJsonLD then 
-                "@type", Encode.string "Publication"
             Encode.tryInclude "pubMedID" Encode.string (oa.PubMedID)
             Encode.tryInclude "doi" Encode.string (oa.DOI)
-            Encode.tryInclude "authorList" authorListEncoder (oa.Authors)
+            Encode.tryInclude "authorList" Encode.string (oa.Authors)
             Encode.tryInclude "title" Encode.string (oa.Title)
-            Encode.tryInclude "status" (OntologyAnnotation.encoder options) (oa.Status)
-            Encode.tryIncludeArray "comments" commentEncoder (oa.Comments)
-            if options.IsJsonLD then 
-                "@context", ROCrateContext.Publication.context_jsonvalue
+            Encode.tryInclude "status" OntologyAnnotation.encoder (oa.Status)
+            Encode.tryIncludeSeq "comments" Comment.encoder oa.Comments
         ]
         |> Encode.choose
         |> Encode.object
 
-    let allowedFields = ["@id";"pubMedID";"doi";"authorList";"title";"status";"comments";"@type"; "@context"]
-
-    let decoder (options : ConverterOptions) : Decoder<Publication> =
-        GDecode.object allowedFields (fun get ->
-            {
-                PubMedID = get.Optional.Field "pubMedID" GDecode.uri
-                DOI = get.Optional.Field "doi" Decode.string
-                Authors = get.Optional.Field "authorList" Decode.string
-                Title = get.Optional.Field "title" Decode.string
-                Status = get.Optional.Field "status" (OntologyAnnotation.decoder options)
-                Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))
-            }
-            
+    let decoder : Decoder<Publication> =
+        Decode.object (fun get ->
+            Publication(
+                ?pubMedID = get.Optional.Field "pubMedID" Decode.uri,
+                ?doi= get.Optional.Field "doi" Decode.string,
+                ?authors = get.Optional.Field "authorList" Decode.string,
+                ?title = get.Optional.Field "title" Decode.string,
+                ?status = get.Optional.Field "status" OntologyAnnotation.decoder,
+                ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.decoder)
+            )
         )
 
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-    let fromJsonldString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
+    module ROCrate =
 
-    let toJsonString (p:Publication) = 
-        encoder (ConverterOptions()) p
-        |> Encode.toJsonString 2
+        let genID (p:Publication) = 
+            match p.DOI with
+            | Some doi -> doi
+            | None -> 
+                match p.PubMedID with
+                | Some id -> id
+                | None -> 
+                    match p.Title with
+                    | Some t -> "#Pub_" + t.Replace(" ","_")
+                    | None -> "#EmptyPublication"
 
-    /// exports in json-ld format
-    let toJsonldString (p:Publication) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-        |> Encode.toJsonString 2
+        let encoder (oa : Publication) = 
+            [
+                "@id", Encode.string (oa |> genID)
+                "@type", Encode.string "Publication"
+                Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
+                Encode.tryInclude "doi" Encode.string (oa.DOI)
+                Encode.tryInclude "authorList" Person.ROCrate.encodeAuthorListString oa.Authors
+                Encode.tryInclude "title" Encode.string (oa.Title)
+                Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
+                "@context", ROCrateContext.Publication.context_jsonvalue
+            ]
+            |> Encode.choose
+            |> Encode.object
 
-    //let fromFile (path : string) = 
-    //    File.ReadAllText path 
-    //    |> fromString
+        let decoder : Decoder<Publication> =
+            Decode.object (fun get ->
+                Publication(
+                    ?pubMedID = get.Optional.Field "pubMedID" Decode.uri,
+                    ?doi= get.Optional.Field "doi" Decode.string,
+                    ?authors = get.Optional.Field "authorList" Person.ROCrate.decodeAuthorListString,
+                    ?title = get.Optional.Field "title" Decode.string,
+                    ?status = get.Optional.Field "status" OntologyAnnotation.decoder,
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription)
+                )           
+            )
 
-    //let toFile (path : string) (p:Publication) = 
-    //    File.WriteAllText(path,toString p)
+    module ISAJson =
+        
+        let encoder (oa : Publication) = 
+            [
+                Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
+                Encode.tryInclude "doi" Encode.string (oa.DOI)
+                Encode.tryInclude "authorList" Encode.string oa.Authors
+                Encode.tryInclude "title" Encode.string (oa.Title)
+                Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
+            ]
+            |> Encode.choose
+            |> Encode.object
+
+        let allowedFields = ["pubMedID";"doi";"authorList";"title";"status";"comments";]
+
+        let decoder : Decoder<Publication> =
+            decoder 
+            |> Decode.noAdditionalProperties allowedFields
+
+[<AutoOpen>]
+module PublicationExtensions =
+
+    type Publication with
+       
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString Publication.decoder s
+
+        static member toJsonString(?spaces) = 
+            fun (obj:Publication) ->
+                Publication.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
+
+        static member fromROCrateJsonString (s:string) = 
+            Decode.fromJsonString Publication.ROCrate.decoder s
+
+        /// exports in json-ld format
+        static member toROCrateJsonString(?spaces) =
+            fun (obj:Publication) ->
+                Publication.ROCrate.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member toISAJsonString(?spaces) =
+            fun (obj:Publication) ->
+                Publication.ISAJson.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString Publication.ISAJson.decoder s

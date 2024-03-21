@@ -85,6 +85,19 @@ module Decode =
                             Error fst
         }
 
+    let noAdditionalProperties (allowedProperties : string seq) (decoder : Decoder<'value>) : Decoder<'value> =
+        let allowedProperties = Set.ofSeq allowedProperties
+        { new Decoder<'value> with
+            member _.Decode(helpers, value) =
+                let getters = Decode.Getters(helpers, value)
+                if hasUnknownFields helpers allowedProperties value then
+                    Error (DecoderError("Unknown fields in object", ErrorReason.BadPrimitive("",value)))
+                else
+                    decoder.Decode(helpers,value)
+        }
+
+
+
     let resizeArray (decoder: Decoder<'value>) : Decoder<ResizeArray<'value>> =
         { new Decoder<ResizeArray<'value>> with
             member _.Decode(helpers, value) =

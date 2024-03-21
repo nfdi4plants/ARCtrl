@@ -31,13 +31,12 @@
     <Compile Include="ConverterOptions.fs" />
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
-    <Compile Include="ROCrateHelper.fs" />
     <Compile Include="StringTable.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="OntologyAnnotation.fs" />
     <Compile Include="OntologySourceReference.fs" />
-    <Compile Include="Publication.fs" />
     <Compile Include="Person.fs" />
+    <Compile Include="Publication.fs" />
     <Compile Include="Process\Value.fs" />
     <Compile Include="Process\Factor.fs" />
     <Compile Include="Process\FactorValue.fs" />
