@@ -1,4 +1,4 @@
-﻿module ARCtrl.ISA.Json.ValidationTypes
+﻿module ARCtrl.Json.ValidationTypes
 
 type ValidationResult = 
     | Ok

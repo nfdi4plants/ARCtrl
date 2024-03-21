@@ -30,34 +30,35 @@
     <Compile Include="context\rocrate\rocrate_context.fs" />
     <Compile Include="ConverterOptions.fs" />
     <Compile Include="Decode.fs" />
-    <Compile Include="GEncode.fs" />
+    <Compile Include="Encode.fs" />
     <Compile Include="ROCrateHelper.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="StringTable.fs" />
-    <Compile Include="Ontology.fs" />
-    <Compile Include="Factor.fs" />
-    <Compile Include="Protocol.fs" />
-    <Compile Include="Material.fs" />
-    <Compile Include="Data.fs" />
-    <Compile Include="Process.fs" />
+    <Compile Include="OntologyAnnotation.fs" />
+    <Compile Include="OntologySourceReference.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="Person.fs" />
+    <Compile Include="Process\Factor.fs" />
+    <Compile Include="Process\Protocol.fs" />
+    <Compile Include="Process\Material.fs" />
+    <Compile Include="Process\Data.fs" />
+    <Compile Include="Process\Process.fs" />
+    <Compile Include="Table\OATable.fs" />
+	  <Compile Include="Table\CompositeCell.fs" />
+	  <Compile Include="Table\CellTable.fs" />
+	  <Compile Include="Table\IOType.fs" />
+	  <Compile Include="Table\CompositeHeader.fs" />
+    <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
-    <Compile Include="ArcTypes\OATable.fs" />
-	  <Compile Include="ArcTypes\CompositeCell.fs" />
-	  <Compile Include="ArcTypes\CellTable.fs" />
-	  <Compile Include="ArcTypes\IOType.fs" />
-	  <Compile Include="ArcTypes\CompositeHeader.fs" />
-    <Compile Include="ArcTypes\ArcTable.fs" />
-    <Compile Include="ArcTypes\ArcAssay.fs" />
-    <Compile Include="ArcTypes\ArcStudy.fs" />
-    <Compile Include="ArcTypes\ArcInvestigation.fs" />
-    <None Include="../../../build/logo.png" Pack="true" PackagePath="\" />
+    <Compile Include="ArcAssay.fs" />
+    <Compile Include="ArcStudy.fs" />
+    <Compile Include="ArcInvestigation.fs" />
   </ItemGroup>
 	<ItemGroup>
-		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+	  <Folder Include="Table\" />
+	  <Folder Include="Process\" />
 	</ItemGroup>
   <ItemGroup>
     <PackageReference Include="NJsonSchema" Version="10.8.0" />

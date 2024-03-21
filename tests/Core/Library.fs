@@ -1,6 +1,6 @@
 ﻿namespace TestingUtils
 
-open ARCtrl.ISA
+open ARCtrl
 open ARCtrl.FileSystem
 
 open Fable.Pyxpecto

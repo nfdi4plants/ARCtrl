@@ -1,12 +1,12 @@
 ﻿module ARCtrl.Template.Json
 
 open ARCtrl.Template
-open ARCtrl.ISA
+open ARCtrl
 open System
 open ARCtrl
 
 open Thoth.Json.Core
-open ARCtrl.ISA.Json
+open ARCtrl.Json
 
 //https://thoth-org.github.io/Thoth.Json/documentation/auto/extra-coders.html#ready-to-use-extra-coders
 
@@ -26,8 +26,8 @@ module Template =
     
 
     let encode (template: Template) =
-        let personEncoder = ARCtrl.ISA.Json.Person.encoder (ConverterOptions())
-        let oaEncoder = ARCtrl.ISA.Json.OntologyAnnotation.encoder (ConverterOptions())
+        let personEncoder = ARCtrl.Json.Person.encoder (ConverterOptions())
+        let oaEncoder = ARCtrl.Json.OntologyAnnotation.encoder (ConverterOptions())
         Encode.object [
             "id", Encode.guid template.Id
             "table", ArcTable.encoder template.Table
@@ -48,8 +48,8 @@ module Template =
         ]
 
     let decode : Decoder<Template> =
-        let personDecoder = ARCtrl.ISA.Json.Person.decoder (ConverterOptions())
-        let oaDecoder = ARCtrl.ISA.Json.OntologyAnnotation.decoder (ConverterOptions())
+        let personDecoder = ARCtrl.Json.Person.decoder (ConverterOptions())
+        let oaDecoder = ARCtrl.Json.OntologyAnnotation.decoder (ConverterOptions())
         Decode.object(fun get ->
             Template.create(
                 get.Required.Field "id" Decode.guid,
@@ -74,7 +74,7 @@ module Template =
         | exn     -> failwithf "Error. Given json string cannot be parsed to Template: %A" exn
 
     let toJsonString (spaces: int) (template:Template) =
-        GEncode.toJsonString spaces (encode template)
+        Encode.toJsonString spaces (encode template)
 
 module Templates =
 
@@ -93,7 +93,7 @@ module Templates =
         | exn         -> failwithf "Error. Given json string cannot be parsed to Templates map: %A" exn
 
     let toJsonString (spaces: int) (templateList: (string*Template) []) =
-        GEncode.toJsonString spaces (encode templateList)
+        Encode.toJsonString spaces (encode templateList)
 
 
 [<AutoOpen>]

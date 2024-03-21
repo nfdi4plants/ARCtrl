@@ -1,7 +1,7 @@
 ﻿
 open ARCtrl
-open ARCtrl.ISA
-open ARCtrl.ISA.Json
+open ARCtrl
+open ARCtrl.Json
 
 
 [<EntryPoint>]

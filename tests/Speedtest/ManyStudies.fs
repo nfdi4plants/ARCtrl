@@ -1,7 +1,7 @@
 ﻿module ManyStudies
 
-open ARCtrl.ISA.Spreadsheet
-open ARCtrl.ISA
+open ARCtrl.Spreadsheet
+open ARCtrl
 
 
 let write () =

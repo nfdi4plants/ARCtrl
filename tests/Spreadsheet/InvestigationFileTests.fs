@@ -1,10 +1,10 @@
 ﻿module ArcInvestigationTests
 
 
-open ARCtrl.ISA
+open ARCtrl
 open FsSpreadsheet
 open TestingUtils
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Spreadsheet
 
 open TestObjects.Spreadsheet
 

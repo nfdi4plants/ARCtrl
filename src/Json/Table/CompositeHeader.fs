@@ -1,8 +1,8 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
 module CompositeHeader =
 
@@ -63,6 +63,6 @@ module CompositeHeaderExtensions =
 
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (CompositeHeader.encoder this)
+            Encode.toJsonString spaces (CompositeHeader.encoder this)
 
         static member toJsonString(a:CompositeHeader) = a.ToJsonString()

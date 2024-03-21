@@ -1,10 +1,10 @@
 ﻿module Identifier.Tests
 
-open ARCtrl.ISA
+open ARCtrl
 
 open TestingUtils
 
-open ARCtrl.ISA.Identifier
+open ARCtrl.Identifier
 
 let private tests_checkValidCharacters = testList "checkValidCharacters" [
     // Function to test the checkValidCharacters function with a given identifier

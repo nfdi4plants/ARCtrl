@@ -2,7 +2,7 @@
 
 open TestingUtils
 
-open ARCtrl.ISA.Identifier
+open ARCtrl.Identifier
 
 // Function to test identifierFromFileName
 let private initTestIdentifierFromFileName () =

@@ -1,8 +1,8 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA   
+open ARCtrl   
 
 open JsonHelper
 
@@ -60,11 +60,11 @@ module ArcInvestigation =
     /// exports in json-ld format
     let toJsonldString (a:ArcInvestigation) = 
         Investigation.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) (a.ToInvestigation())
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:ArcInvestigation) = 
         Investigation.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) (a.ToInvestigation())
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (Investigation.decoder (ConverterOptions())) s
@@ -72,11 +72,11 @@ module ArcInvestigation =
 
     let toJsonString (a:ArcInvestigation) = 
         Investigation.encoder (ConverterOptions()) (a.ToInvestigation())
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toArcJsonString (a:ArcInvestigation) : string =
         let spaces = 0
-        GEncode.toJsonString spaces (encoder a)
+        Encode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
         try GDecode.fromJsonString decoder jsonString with
@@ -92,6 +92,6 @@ module ArcInvestigationExtensions =
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (ArcInvestigation.encoder this)
+            Encode.toJsonString spaces (ArcInvestigation.encoder this)
 
         static member toArcJsonString(a:ArcInvestigation) = a.ToArcJsonString()

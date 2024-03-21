@@ -1,8 +1,8 @@
 ﻿module TestObjects.Spreadsheet.ArcTable
 
 open FsSpreadsheet
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Spreadsheet
 
 type FsTable with
     member this.IsEmpty(c : FsCellsCollection) =

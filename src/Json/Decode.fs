@@ -1,11 +1,27 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open Fable.Core
 
-module GDecode =
+module internal Helpers =
+
+    let prependPath
+        (path: string)
+        (err: DecoderError<'JsonValue>)
+        : DecoderError<'JsonValue>
+        =
+        let (oldPath, reason) = err
+        (path + oldPath, reason)
+
+    let inline prependPathToResult<'T, 'JsonValue>
+        (path: string)
+        (res: Result<'T, DecoderError<'JsonValue>>)
+        =
+        res |> Result.mapError (prependPath path)
+
+module Decode =
 
     let helpers = 
         #if FABLE_COMPILER_PYTHON
@@ -67,4 +83,35 @@ module GDecode =
                             ("", BadOneOf errors) |> Error
                         else
                             Error fst
+        }
+
+    let resizeArray (decoder: Decoder<'value>) : Decoder<ResizeArray<'value>> =
+        { new Decoder<ResizeArray<'value>> with
+            member _.Decode(helpers, value) =
+                if helpers.isArray value then
+                    let mutable i = -1
+                    let tokens = helpers.asArray value
+                    let arr = ResizeArray()
+
+                    (Ok arr, tokens)
+                    ||> Array.fold (fun acc value ->
+                        i <- i + 1
+
+                        match acc with
+                        | Error _ -> acc
+                        | Ok acc ->
+                            match decoder.Decode(helpers, value) with
+                            | Error er ->
+                                Error(
+                                    er
+                                    |> Helpers.prependPath (
+                                        ".[" + (i.ToString()) + "]"
+                                    )
+                                )
+                            | Ok value ->
+                                acc.Add value
+                                Ok acc
+                    )
+                else
+                    ("", BadPrimitive("an array", value)) |> Error
         }

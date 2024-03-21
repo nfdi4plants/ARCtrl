@@ -1,4 +1,4 @@
-namespace ARCtrl.ISA.Json.ROCrateContext
+namespace ARCtrl.Json.ROCrateContext
 open Thoth.Json.Core
 
 module Component =

@@ -1,9 +1,9 @@
-﻿namespace rec ARCtrl.ISA.Json
+﻿namespace rec ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Aux
+open ARCtrl
+open ARCtrl.Aux
 
 type OATableMap = System.Collections.Generic.Dictionary<OntologyAnnotation,int>
 

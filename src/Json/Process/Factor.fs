@@ -1,9 +1,10 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Process
 open System.IO
 
 module Value = 
@@ -40,13 +41,14 @@ module Value =
 
 
     let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s   
+        Decode.fromJsonString (decoder (ConverterOptions())) s   
+
     let fromJsonldString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s     
+        Decode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s     
 
     let toJsonString (v:Value) = 
         encoder (ConverterOptions()) v
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -58,39 +60,34 @@ module Value =
 module Factor =  
     
     let genID (f:Factor) : string = 
-        match f.ID with
-        | Some id -> URI.toString id 
-        | None -> match f.Name with
-                  | Some n -> "#Factor_" + n.Replace(" ","_")
-                  | None -> "#EmptyFactor"
+        match f.Name with
+        | Some n -> "#Factor_" + n.Replace(" ","_")
+        | None -> "#EmptyFactor"
 
     let encoder (options : ConverterOptions) (oa : Factor) = 
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
-            else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "Factor"])
-            GEncode.tryInclude "factorName" Encode.string (oa.Name)
+            Encode.tryInclude "factorName" Encode.string (oa.Name)
             if options.IsJsonLD then
                 if oa.FactorType.IsSome then
-                    GEncode.tryInclude "annotationValue" Encode.string (oa.Name)
-                    GEncode.tryInclude "termSource" Encode.string (oa.FactorType.Value.TermSourceREF)
-                    GEncode.tryInclude "termAccession" Encode.string (oa.FactorType.Value.TermAccessionNumber)
+                    Encode.tryInclude "annotationValue" Encode.string (oa.Name)
+                    Encode.tryInclude "termSource" Encode.string (oa.FactorType.Value.TermSourceREF)
+                    Encode.tryInclude "termAccession" Encode.string (oa.FactorType.Value.TermAccessionNumber)
             else
-                GEncode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
-            GEncode.tryIncludeArray "comments" (Comment.encoder options) (oa.Comments)
+                Encode.tryInclude "factorType" (OntologyAnnotation.encoder options) (oa.FactorType)
+            Encode.tryIncludeSeq "comments" (Comment.encoder options) (oa.Comments |> Option.defaultValue (ResizeArray()))
             if options.IsJsonLD then
                 "@context", ROCrateContext.Factor.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Factor> =
         Decode.object (fun get ->
             {
-                ID = get.Optional.Field "@id" GDecode.uri
                 Name = get.Optional.Field "factorName" Decode.string
                 FactorType = get.Optional.Field "factorType" (OntologyAnnotation.decoder options)
                 Comments = get.Optional.Field "comments" (Decode.array (Comment.decoder options))               
@@ -104,16 +101,16 @@ module Factor =
 
     let toJsonString (f:Factor) = 
         encoder (ConverterOptions()) f
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (f:Factor) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) f
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Factor) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -135,30 +132,30 @@ module FactorValue =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "FactorValue"])
                 "additionalType", Encode.string "FactorValue"
             if options.IsJsonLD then
                 if oa.Category.IsSome then
-                    GEncode.tryInclude "categoryName" Encode.string (oa.Category.Value.Name)
+                    Encode.tryInclude "categoryName" Encode.string (oa.Category.Value.Name)
                 if oa.Category.IsSome && oa.Category.Value.FactorType.IsSome then
-                    GEncode.tryInclude "category" Encode.string (oa.Category.Value.FactorType.Value.Name)
+                    Encode.tryInclude "category" Encode.string (oa.Category.Value.FactorType.Value.Name)
                 if oa.Category.IsSome && oa.Category.Value.FactorType.IsSome then
-                    GEncode.tryInclude "categoryCode" Encode.string (oa.Category.Value.FactorType.Value.TermAccessionNumber)
+                    Encode.tryInclude "categoryCode" Encode.string (oa.Category.Value.FactorType.Value.TermAccessionNumber)
                 if oa.Value.IsSome then "value", Encode.string (oa.ValueText)
                 if oa.Value.IsSome && oa.Value.Value.IsAnOntology then
-                    GEncode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
-                if oa.Unit.IsSome then GEncode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
-                if oa.Unit.IsSome then GEncode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
+                    Encode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
+                if oa.Unit.IsSome then Encode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
+                if oa.Unit.IsSome then Encode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
             else
-                GEncode.tryInclude "category" (Factor.encoder options) (oa.Category)
-                GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
-                GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
+                Encode.tryInclude "category" (Factor.encoder options) (oa.Category)
+                Encode.tryInclude "value" (Value.encoder options) (oa.Value)
+                Encode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
             if options.IsJsonLD then
                 "@context", ROCrateContext.FactorValue.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<FactorValue> =
@@ -178,16 +175,16 @@ module FactorValue =
 
     let toJsonString (f:FactorValue) = 
         encoder (ConverterOptions()) f
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (f:FactorValue) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) f
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:FactorValue) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

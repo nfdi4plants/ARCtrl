@@ -1,8 +1,8 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
 open JsonHelper
 
@@ -103,11 +103,11 @@ module ArcStudy =
     /// exports in json-ld format
     let toJsonldString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
         Study.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) (a.ToStudy(assays))
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
         Study.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) (a.ToStudy(assays))
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (Study.decoder (ConverterOptions())) s
@@ -115,11 +115,11 @@ module ArcStudy =
 
     let toJsonString (a:ArcStudy) (assays: ResizeArray<ArcAssay>) = 
         Study.encoder (ConverterOptions()) (a.ToStudy(assays))
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toArcJsonString (a:ArcStudy) : string =
         let spaces = 0
-        GEncode.toJsonString spaces (encoder a)
+        Encode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
         try GDecode.fromJsonString decoder jsonString with
@@ -137,7 +137,7 @@ module ArcStudyExtensions =
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (ArcStudy.encoder this)
+            Encode.toJsonString spaces (ArcStudy.encoder this)
 
         static member toArcJsonString(a:ArcStudy) = a.ToArcJsonString()
 
@@ -165,7 +165,7 @@ module ArcStudyExtensions =
                     "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
                     "study", arcStudy
                 ] 
-            GEncode.toJsonString spaces jObject
+            Encode.toJsonString spaces jObject
 
         static member toCompressedJsonString (s : ArcStudy) = 
             s.ToCompressedJsonString()

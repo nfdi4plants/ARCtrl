@@ -1,7 +1,7 @@
 ﻿module ArcTableTests
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Spreadsheet
 
 open TestingUtils
 open TestObjects.Spreadsheet.ArcTable

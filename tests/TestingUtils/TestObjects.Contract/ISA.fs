@@ -3,8 +3,8 @@
 open FsSpreadsheet
 open ARCtrl.Contract
 open ARCtrl
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Spreadsheet
 
 open TestObjects.Spreadsheet
 

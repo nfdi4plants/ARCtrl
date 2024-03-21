@@ -1,10 +1,10 @@
-﻿namespace rec ARCtrl.ISA.Json
+﻿namespace rec ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
-open ARCtrl.ISA.Aux
+open ARCtrl.Aux
 
 module CompositeCell =
 
@@ -80,7 +80,7 @@ module CompositeCellExtensions =
             
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (CompositeCell.encoder this)
+            Encode.toJsonString spaces (CompositeCell.encoder this)
 
         static member toJsonString(a:CompositeCell) = a.ToJsonString()
         

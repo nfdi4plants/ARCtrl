@@ -2,7 +2,7 @@
 
 open TestingUtils
 
-open ARCtrl.ISA.Json
+open ARCtrl.Json
 
 #if !FABLE_COMPILER_PYTHON
 /// ⚠️ This testlist is only used to test correct execution of Fable bindings on `JsonValidation.js` functions.
@@ -35,7 +35,7 @@ let tests_FableBindings = testList "FableBindings" [
     }
 ]
 
-open ARCtrl.ISA
+open ARCtrl
 
 let tests_Process =     
 

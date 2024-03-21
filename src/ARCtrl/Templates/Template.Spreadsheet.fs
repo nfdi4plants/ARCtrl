@@ -1,9 +1,9 @@
 ﻿module ARCtrl.Template.Spreadsheet
 
 open FsSpreadsheet
-open ARCtrl.ISA.Aux
-open ARCtrl.ISA.Spreadsheet
-open ARCtrl.ISA
+open ARCtrl.Aux
+open ARCtrl.Spreadsheet
+open ARCtrl
 open System.Collections.Generic
 
 exception TemplateReadError of string

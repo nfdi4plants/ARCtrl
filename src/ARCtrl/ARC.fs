@@ -2,8 +2,9 @@
 
 open ARCtrl.FileSystem
 open ARCtrl.Contract
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Helper
+open ARCtrl.Spreadsheet
 open FsSpreadsheet
 open Fable.Core
 
@@ -48,7 +49,7 @@ module ARCAux =
         fs.Union(tree)    
 
 [<AttachMembers>]
-type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
+type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
     let mutable _isa = isa
     let mutable _cwl = cwl
@@ -264,7 +265,7 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match this.ISA with
         | Some inv -> 
-            let investigationConverter = if isLight then ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook else ISA.Spreadsheet.ArcInvestigation.toFsWorkbook
+            let investigationConverter = if isLight then Spreadsheet.ArcInvestigation.toLightFsWorkbook else Spreadsheet.ArcInvestigation.toFsWorkbook
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
             inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
@@ -280,12 +281,12 @@ type ARC(?isa : ISA.ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSyste
                 a.StaticHash <- a.GetHashCode()
                 workbooks.Add (
                     Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Assay, ISA.Spreadsheet.ArcAssay.toFsWorkbook a))                
+                    (DTOType.ISA_Assay, Spreadsheet.ArcAssay.toFsWorkbook a))                
             )
             
         | None -> 
             //printfn "ARC contains no ISA part."
-            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, ISA.Spreadsheet.ArcInvestigation.toLightFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toLightFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)

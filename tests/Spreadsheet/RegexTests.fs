@@ -1,10 +1,10 @@
 ﻿module RegexTests
 
-open ARCtrl.ISA
+open ARCtrl
 
 open TestingUtils
 
-open ARCtrl.ISA.Spreadsheet.Comment
+open ARCtrl.Spreadsheet.Comment
 
 let comment_tests = 
     testList "Comment" [

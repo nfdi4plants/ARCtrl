@@ -2,8 +2,9 @@
 
 open ARCtrl.FileSystem
 open ARCtrl.Path
-open ARCtrl.ISA.Spreadsheet
-open ARCtrl.ISA
+open ARCtrl.Spreadsheet
+open ARCtrl
+open ARCtrl.Helper
 open FsSpreadsheet
 
 

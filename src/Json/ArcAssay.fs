@@ -1,8 +1,8 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
 module JsonHelper =
   let DecodeOa : Decoder<OntologyAnnotation> = OntologyAnnotation.decoder (ConverterOptions()) 
@@ -104,11 +104,11 @@ module ArcAssay =
     /// exports in json-ld format
     let toJsonldString (a:ArcAssay) = 
         Assay.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None (a.ToAssay())
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:ArcAssay) = 
         Assay.encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None (a.ToAssay())
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let fromJsonString (s:string) = 
         GDecode.fromJsonString (Assay.decoder (ConverterOptions())) s
@@ -116,11 +116,11 @@ module ArcAssay =
 
     let toJsonString (a:ArcAssay) = 
         Assay.encoder (ConverterOptions()) None (a.ToAssay())
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toArcJsonString (a:ArcAssay) : string =
         let spaces = 0
-        GEncode.toJsonString spaces (encoder a)
+        Encode.toJsonString spaces (encoder a)
 
     let fromArcJsonString (jsonString: string) =
         try GDecode.fromJsonString decoder jsonString with
@@ -138,7 +138,7 @@ module ArcAssayExtensions =
 
         member this.ToArcJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (ArcAssay.encoder this)
+            Encode.toJsonString spaces (ArcAssay.encoder this)
 
         static member toArcJsonString (a:ArcAssay) = a.ToArcJsonString()
 
@@ -166,6 +166,6 @@ module ArcAssayExtensions =
                     "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
                     "assay", arcAssay
                 ] 
-            GEncode.toJsonString spaces jObject
+            Encode.toJsonString spaces jObject
 
         static member toCompressedJsonString (a:ArcAssay) = a.ToCompressedJsonString()

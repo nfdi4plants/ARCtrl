@@ -1,8 +1,8 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
 module Investigation =
     
@@ -24,37 +24,37 @@ module Investigation =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", Encode.string "Investigation"
                 "additionalType", Encode.string "Investigation"
-            GEncode.tryInclude "filename" Encode.string (oa.FileName)
-            GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
-            GEncode.tryInclude "title" Encode.string (oa.Title)
-            GEncode.tryInclude "description" Encode.string (oa.Description)
-            GEncode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
-            GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-            GEncode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
-            GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
-            GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
-            GEncode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
-            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
+            Encode.tryInclude "filename" Encode.string (oa.FileName)
+            Encode.tryInclude "identifier" Encode.string (oa.Identifier)
+            Encode.tryInclude "title" Encode.string (oa.Title)
+            Encode.tryInclude "description" Encode.string (oa.Description)
+            Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
+            Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
+            Encode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
+            Encode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
+            Encode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
+            Encode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
+            Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IsJsonLD then
                 "@context", ROCrateContext.Investigation.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let encodeRoCrate (options : ConverterOptions) (oa : Investigation) = 
         [
-            GEncode.tryInclude "@type" Encode.string (Some "CreativeWork")
-            GEncode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
-            GEncode.tryInclude "about" (encoder options) (Some oa)
+            Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
+            Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
+            Encode.tryInclude "about" (encoder options) (Some oa)
             "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
             if options.IsJsonLD then
                 "@context", ROCrateContext.ROCrate.context_jsonvalue
             ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
 
@@ -86,17 +86,17 @@ module Investigation =
 
     let toJsonString (p:Investigation) = 
         encoder (ConverterOptions()) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (i:Investigation) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) i
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (i:Investigation) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) i
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toRoCrateString (i:Investigation) = 
         encodeRoCrate (ConverterOptions(SetID=true,IsJsonLD=true)) i
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2

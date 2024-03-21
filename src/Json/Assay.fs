@@ -1,18 +1,18 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.IO
 
 module AssayMaterials = 
 
     let encoder (options : ConverterOptions) (oa : AssayMaterials) = 
         [
-            GEncode.tryIncludeList "samples" (Sample.encoder options) (oa.Samples)
-            GEncode.tryIncludeList "otherMaterials" (Material.encoder options) (oa.OtherMaterials)
+            Encode.tryIncludeList "samples" (Sample.encoder options) (oa.Samples)
+            Encode.tryIncludeList "otherMaterials" (Material.encoder options) (oa.OtherMaterials)
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
     
     let allowedFields = ["samples";"otherMaterials"]
@@ -46,25 +46,25 @@ module Assay =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [ Encode.string "Assay"])
                 "additionalType", Encode.string "Assay"
-            GEncode.tryInclude "filename" Encode.string (oa.FileName)
-            GEncode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa.MeasurementType)
-            GEncode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa.TechnologyType)
-            GEncode.tryInclude "technologyPlatform" Encode.string (oa.TechnologyPlatform)
-            GEncode.tryIncludeList "dataFiles" (Data.encoder options) (oa.DataFiles)
+            Encode.tryInclude "filename" Encode.string (oa.FileName)
+            Encode.tryInclude "measurementType" (OntologyAnnotation.encoder options) (oa.MeasurementType)
+            Encode.tryInclude "technologyType" (OntologyAnnotation.encoder options) (oa.TechnologyType)
+            Encode.tryInclude "technologyPlatform" Encode.string (oa.TechnologyPlatform)
+            Encode.tryIncludeList "dataFiles" (Data.encoder options) (oa.DataFiles)
             if not options.IsJsonLD then
-                GEncode.tryInclude "materials" (AssayMaterials.encoder options) oa.Materials
-                GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)
-                GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
-            GEncode.tryIncludeList "processSequence" (Process.encoder options studyName assayName) (oa.ProcessSequence)
-            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
+                Encode.tryInclude "materials" (AssayMaterials.encoder options) oa.Materials
+                Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)
+                Encode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
+            Encode.tryIncludeList "processSequence" (Process.encoder options studyName assayName) (oa.ProcessSequence)
+            Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IsJsonLD then
                 "@context", ROCrateContext.Assay.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let allowedFields = ["@id";"filename";"measurementType";"technologyType";"technologyPlatform";"dataFiles";"materials";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
@@ -93,16 +93,16 @@ module Assay =
 
     let toJsonString (p:Assay) = 
         encoder (ConverterOptions()) None p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (a:Assay) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Assay) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

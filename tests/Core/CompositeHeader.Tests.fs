@@ -1,6 +1,6 @@
 ﻿module CompositeHeader.Tests
 
-open ARCtrl.ISA
+open ARCtrl
 
 open TestingUtils
 open Fable.Core
@@ -290,7 +290,7 @@ let private tests_compositeHeader =
         ]
     ]
 
-open ARCtrl.ISA
+open ARCtrl
 
 let tests_ToTerm = testList "ToTerm" [
     let testToTerm (ch: CompositeHeader) =

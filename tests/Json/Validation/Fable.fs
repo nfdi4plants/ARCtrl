@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 #if !FABLE_COMPILER_PYTHON
 
