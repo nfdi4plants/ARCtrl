@@ -1,8 +1,8 @@
 ﻿module Json.Tests
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Json
-open ARCtrl.ISA
+open ARCtrl
+open ARCtrl.Json
+open ARCtrl
 
 open Thoth.Json.Core
 
@@ -53,7 +53,7 @@ let testEncode =
                 
             let field = "Name" 
 
-            let result = GEncode.tryGetPropertyValue field oa
+            let result = Encode.tryGetPropertyValue field oa
             
             Expect.isSome result "Could not find the field, even though it exists"
 
@@ -70,7 +70,7 @@ let testEncode =
                 
             let field = "FantasyValue" 
 
-            let result = GEncode.tryGetPropertyValue field oa
+            let result = Encode.tryGetPropertyValue field oa
             
             Expect.isNone result "Could find a value, even though it shouldn't exists"
         )
@@ -82,7 +82,7 @@ let testEncode =
 
             let field = "Comments" 
 
-            let result : obj option = GEncode.tryGetPropertyValue field oa
+            let result : obj option = Encode.tryGetPropertyValue field oa
             
             Expect.isSome result "Could not find the field, even though it exists"
 

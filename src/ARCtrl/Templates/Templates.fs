@@ -1,6 +1,6 @@
 ﻿namespace ARCtrl.Template
 
-open ARCtrl.ISA
+open ARCtrl
 open Fable.Core
 
 /// This module contains unchecked helper functions for templates

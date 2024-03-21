@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -12,7 +12,7 @@ open Fable.Core.JsInterop
 #endif
 
 [<RequireQualifiedAccess>]
-module GEncode = 
+module Encode = 
     
     #if FABLE_COMPILER_JAVASCRIPT
     [<Emit("$1[$0]")>]
@@ -30,7 +30,7 @@ module GEncode =
         property
         |> Option.bind (fun property -> 
             match FSharp.Reflection.FSharpValue.GetRecordField (object,property) with
-            | ARCtrl.ISA.Aux.Update.SomeObj o -> 
+            | ARCtrl.Helper.Update.SomeObj o -> 
                 Some o
             | o when isNull o -> 
                 None
@@ -50,15 +50,12 @@ module GEncode =
         Thoth.Json.Newtonsoft.Encode.toString spaces value
         #endif
 
-    let inline includeString (value : string) = 
-        Json.String value
-
     let inline choose (kvs : (string * Json) list) = 
         kvs
         |> List.choose (fun (k,v) -> 
             if v = Encode.nil then None
             else Some (k,v)
-        )
+        )       
 
     /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
     ///
@@ -84,21 +81,17 @@ module GEncode =
         | _ -> Encode.nil
 
     /// Try to encode the given object using the given encoder, or return Encode.nil if the object is null
-    let tryIncludeSeq name (encoder : 'Value -> Json) (value : #seq<'Value> option) = 
+    let tryIncludeSeq name (encoder : 'Value -> Json) (value : #seq<'Value>) = 
         name,
-        match value with
-        | Some(os) -> Seq.map encoder os |> Encode.seq
-        | _ -> Encode.nil
+        if Seq.isEmpty value then Encode.nil
+        else value |> Seq.map encoder |> Encode.seq
 
-
-    let tryIncludeArray name (encoder : 'Value -> Json) (value : 'Value array option) = 
+    let tryIncludeArray name (encoder : 'Value -> Json) (value : 'Value array) = 
         name,
-        match value with
-        | Some(os) -> os |> Array.map encoder |> Encode.array
-        | _ -> Encode.nil
+        if Array.isEmpty value then Encode.nil
+        else value |> Array.map encoder |> Encode.array
 
-    let tryIncludeList name (encoder : 'Value -> Json) (value : 'Value list option) = 
+    let tryIncludeList name (encoder : 'Value -> Json) (value : 'Value list) = 
         name,
-        match value with
-        | Some(os) -> os |> List.map encoder |> Encode.list
-        | _ -> Encode.nil
+        if List.isEmpty value then Encode.nil
+        else value |> List.map encoder |> Encode.list

@@ -1,9 +1,9 @@
 ﻿module Tests.Performance
 
-open ARCtrl.ISA
+open ARCtrl
 open FsSpreadsheet
 open TestingUtils
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Spreadsheet
 
 let private tests_Study = testList "Study" [
     testCase "LargeWorkbook" <| fun _ ->

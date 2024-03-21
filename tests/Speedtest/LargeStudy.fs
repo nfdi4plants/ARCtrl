@@ -1,7 +1,7 @@
 ﻿module LargeStudy
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Spreadsheet
 open FsSpreadsheet
 
 let createStudy (n:int) =

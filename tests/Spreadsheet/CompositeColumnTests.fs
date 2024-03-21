@@ -2,8 +2,8 @@
 
 open TestingUtils
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Spreadsheet
 
 open TestObjects.Spreadsheet.ArcTable
 

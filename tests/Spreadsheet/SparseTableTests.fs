@@ -1,6 +1,6 @@
 ﻿module SparseTableTests
 
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Spreadsheet
 
 open TestingUtils
 

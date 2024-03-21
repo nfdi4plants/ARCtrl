@@ -4,8 +4,8 @@ open Thoth.Json.Core
 
 
 open ARCtrl.Template.Json
-open ARCtrl.ISA.Json
-open ARCtrl.ISA
+open ARCtrl.Json
+open ARCtrl
 
 open TestingUtils
 
@@ -16,12 +16,12 @@ let private tests_Organisation = testList "Organisation" [
     testList "encode" [
         testCase "DataPLANT" <| fun _ ->
             let o = Organisation.DataPLANT
-            let actual = Organisation.encode o |> GEncode.toJsonString 4
+            let actual = Organisation.encode o |> Encode.toJsonString 4
             let expected = "\"DataPLANT\""
             Expect.equal actual expected ""
         testCase "Other" <| fun _ ->
             let o = Organisation.Other "My Custom Org"
-            let actual = Organisation.encode o |> GEncode.toJsonString 4
+            let actual = Organisation.encode o |> Encode.toJsonString 4
             let expected = "\"My Custom Org\""
             // replace line endings to normalize for all editors/environments.
             Expect.equal (fableReplaceLineEndings actual) (fableReplaceLineEndings expected) ""
@@ -41,13 +41,13 @@ let private tests_Organisation = testList "Organisation" [
     testList "roundabout" [
         testCase "DataPLANT" <| fun _ ->
             let o = Organisation.DataPLANT
-            let json = Organisation.encode o |> GEncode.toJsonString 4
+            let json = Organisation.encode o |> Encode.toJsonString 4
             let actual = GDecode.fromJsonString Organisation.decode json
             let expected = o
             Expect.equal actual expected ""
         testCase "Other" <| fun _ ->
             let o = Organisation.Other "My Custom Org"
-            let json = Organisation.encode o |> GEncode.toJsonString 4
+            let json = Organisation.encode o |> Encode.toJsonString 4
             let actual = GDecode.fromJsonString Organisation.decode json
             let expected = o
             Expect.equal actual expected ""
@@ -64,7 +64,7 @@ let tests_Template = testList "Template" [
             o.Table <- table
             o.Authors <- [|ARCtrl.ISA.Person.create(FirstName="John", LastName="Doe"); ARCtrl.ISA.Person.create(FirstName="Jane", LastName="Doe");|]
             o.EndpointRepositories <- [|ARCtrl.ISA.OntologyAnnotation.fromString "Test"; ARCtrl.ISA.OntologyAnnotation.fromString "Testing second"|]
-            let json = GEncode.toJsonString  4 (Template.encode o)
+            let json = Encode.toJsonString  4 (Template.encode o)
             let actual = GDecode.fromJsonString Template.decode json
             let expected = o
             Expect.equal actual.Id expected.Id "id"

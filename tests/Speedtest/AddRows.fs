@@ -1,6 +1,6 @@
 ﻿module AddRows
 
-open ARCtrl.ISA
+open ARCtrl
 open ArcTableAux
 
 

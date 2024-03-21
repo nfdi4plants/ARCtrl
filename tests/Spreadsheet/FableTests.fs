@@ -1,6 +1,6 @@
 ﻿module FableTests
 
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Spreadsheet
 open FsSpreadsheet
 
 open TestingUtils

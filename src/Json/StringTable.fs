@@ -1,10 +1,10 @@
-﻿namespace rec ARCtrl.ISA.Json
+﻿namespace rec ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
-open ARCtrl.ISA.Aux
+open ARCtrl.Helper
 
 type StringTableMap = System.Collections.Generic.Dictionary<string,int>
 
@@ -27,7 +27,7 @@ module StringTable =
         Decode.array Decode.string
         
     let encodeString (otm : StringTableMap) (s : string) =
-        match Dict.tryFind s otm with
+        match Dictionary.tryFind s otm with
         | Some i -> Encode.int i
         | None ->
             let i = otm.Count

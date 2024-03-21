@@ -1,8 +1,8 @@
 ﻿module DataModel.Tests
 
 open TestingUtils
-open ARCtrl.ISA
-open ARCtrl.ISA.Aux
+open ARCtrl
+open ARCtrl.Aux
 
 /// Tests to test whether the accessors, that handel different cases of registration work properly
 let registrationAccessTests = 

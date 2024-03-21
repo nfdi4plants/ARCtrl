@@ -1,8 +1,8 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.Collections.Generic
 
 module ArcTable =
@@ -144,7 +144,7 @@ module ArcTableExtensions =
 
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (ArcTable.encoder this)
+            Encode.toJsonString spaces (ArcTable.encoder this)
 
         static member toJsonString(a:ArcTable) = a.ToJsonString()
 
@@ -171,6 +171,6 @@ module ArcTableExtensions =
                     "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
                     "table", arcTable
                 ] 
-            GEncode.toJsonString spaces jObject
+            Encode.toJsonString spaces jObject
 
         static member toCompressedJsonString(a:ArcTable) = a.ToCompressedJsonString()

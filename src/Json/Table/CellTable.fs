@@ -1,10 +1,10 @@
-﻿namespace rec ARCtrl.ISA.Json
+﻿namespace rec ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
-open ARCtrl.ISA.Aux
+open ARCtrl.Aux
 
 type CellTableMap = System.Collections.Generic.Dictionary<CompositeCell,int>
 

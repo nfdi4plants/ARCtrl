@@ -549,7 +549,7 @@ module BII_S_2 =
 
 module LargeFile =
     
-    open ARCtrl.ISA
+    open ARCtrl
 
     let Workbook = new FsWorkbook()
     let RowCount = 10000

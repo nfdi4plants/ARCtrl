@@ -1,8 +1,8 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.IO
 
 module Person =   
@@ -58,23 +58,23 @@ module Person =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", Encode.string "Person"
-            GEncode.tryInclude "firstName" Encode.string (oa.FirstName)
-            GEncode.tryInclude "lastName" Encode.string (oa.LastName)
-            GEncode.tryInclude "midInitials" Encode.string (oa.MidInitials)
-            GEncode.tryInclude "email" Encode.string (oa.EMail)
-            GEncode.tryInclude "phone" Encode.string (oa.Phone)
-            GEncode.tryInclude "fax" Encode.string (oa.Fax)
-            GEncode.tryInclude "address" Encode.string (oa.Address)
-            GEncode.tryInclude "affiliation" (affiliationEncoder options) (oa.Affiliation)
-            GEncode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
-            GEncode.tryIncludeArray "comments" commentEncoder (oa.Comments)
+            Encode.tryInclude "firstName" Encode.string (oa.FirstName)
+            Encode.tryInclude "lastName" Encode.string (oa.LastName)
+            Encode.tryInclude "midInitials" Encode.string (oa.MidInitials)
+            Encode.tryInclude "email" Encode.string (oa.EMail)
+            Encode.tryInclude "phone" Encode.string (oa.Phone)
+            Encode.tryInclude "fax" Encode.string (oa.Fax)
+            Encode.tryInclude "address" Encode.string (oa.Address)
+            Encode.tryInclude "affiliation" (affiliationEncoder options) (oa.Affiliation)
+            Encode.tryIncludeArray "roles" (OntologyAnnotation.encoder options) (oa.Roles)
+            Encode.tryIncludeArray "comments" commentEncoder (oa.Comments)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Person.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let allowedFields = ["@id";"firstName";"lastName";"midInitials";"email";"phone";"fax";"address";"affiliation";"roles";"comments";"@type"; "@context"]
@@ -107,16 +107,16 @@ module Person =
 
     let toJsonString (p:Person) = 
         encoder (ConverterOptions()) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (p:Person) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Person) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

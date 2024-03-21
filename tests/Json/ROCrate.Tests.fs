@@ -1,8 +1,8 @@
 ﻿module Tests.ROCrate
 
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Json
+open ARCtrl
+open ARCtrl.Json
 
 module private JsonExtensions =
 
@@ -381,12 +381,12 @@ open TestingUtils
 let private tests_DisambiguatingDescription = testList "DisambiguatingDescription" [
     ftestCase "Full" <| fun _ ->
         let comment = Comment.create(Name="My, cool  comment wiht = lots; of special <> chars", Value="STARTING VALUE")
-        let textString = Comment.encoderDisambiguatingDescription comment |> GEncode.toJsonString 0
+        let textString = Comment.encoderDisambiguatingDescription comment |> Encode.toJsonString 0
         let actual = GDecode.fromJsonString Comment.decoderDisambiguatingDescription textString
         Expect.equal actual comment ""
     ftestCase "None" <| fun _ ->
         let comment = Comment.create()
-        let textString = Comment.encoderDisambiguatingDescription comment |> GEncode.toJsonString 0
+        let textString = Comment.encoderDisambiguatingDescription comment |> Encode.toJsonString 0
         let actual = GDecode.fromJsonString Comment.decoderDisambiguatingDescription textString
         Expect.equal actual comment ""
 ]

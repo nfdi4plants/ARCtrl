@@ -1,8 +1,8 @@
-﻿namespace ARCtrl.ISA.Json
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
 module IOType =
   let encoder (io:IOType) = Encode.string <| io.ToString()
@@ -20,6 +20,6 @@ module IOTypeExtensions =
 
         member this.ToJsonString(?spaces) : string =
             let spaces = defaultArg spaces 0
-            GEncode.toJsonString spaces (IOType.encoder this)
+            Encode.toJsonString spaces (IOType.encoder this)
 
         static member toJsonString(a:IOType) = a.ToJsonString()

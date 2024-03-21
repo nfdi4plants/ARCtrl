@@ -1,8 +1,8 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.IO
 
 module Publication =    
@@ -18,22 +18,22 @@ module Publication =
 
     let encoder (options : ConverterOptions) (oa : Publication) = 
         let commentEncoder = if options.IsJsonLD then Comment.encoderDisambiguatingDescription else Comment.encoder options
-        let authorListEncoder = if options.IsJsonLD then ROCrateHelper.Person.authorListStringEncoder else Encode.string
+        let authorListEncoder = if options.IsJsonLD then ROCrateHelper.Person.authorListStrinEncoder else Encode.string
         [
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             if options.IsJsonLD then 
                 "@type", Encode.string "Publication"
-            GEncode.tryInclude "pubMedID" Encode.string (oa.PubMedID)
-            GEncode.tryInclude "doi" Encode.string (oa.DOI)
-            GEncode.tryInclude "authorList" authorListEncoder (oa.Authors)
-            GEncode.tryInclude "title" Encode.string (oa.Title)
-            GEncode.tryInclude "status" (OntologyAnnotation.encoder options) (oa.Status)
-            GEncode.tryIncludeArray "comments" commentEncoder (oa.Comments)
+            Encode.tryInclude "pubMedID" Encode.string (oa.PubMedID)
+            Encode.tryInclude "doi" Encode.string (oa.DOI)
+            Encode.tryInclude "authorList" authorListEncoder (oa.Authors)
+            Encode.tryInclude "title" Encode.string (oa.Title)
+            Encode.tryInclude "status" (OntologyAnnotation.encoder options) (oa.Status)
+            Encode.tryIncludeArray "comments" commentEncoder (oa.Comments)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Publication.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let allowedFields = ["@id";"pubMedID";"doi";"authorList";"title";"status";"comments";"@type"; "@context"]
@@ -58,12 +58,12 @@ module Publication =
 
     let toJsonString (p:Publication) = 
         encoder (ConverterOptions()) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (p:Publication) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

@@ -1,9 +1,9 @@
 ﻿module ArcAssayTests
 
 
-open ARCtrl.ISA
+open ARCtrl
 open TestingUtils
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Spreadsheet
 
 open TestObjects.Spreadsheet
 

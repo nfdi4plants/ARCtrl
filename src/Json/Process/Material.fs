@@ -1,8 +1,8 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.IO
 
 
@@ -38,20 +38,20 @@ module MaterialAttribute =
         if options.IsJsonLD then
             match oa.CharacteristicType with
             | Some t -> OntologyAnnotation.encoder options t
-            | None -> [] |> GEncode.choose |> Encode.object
+            | None -> [] |> Encode.choose |> Encode.object
         else
             [
                 if options.SetID then 
                     "@id", Encode.string (oa |> genID)
                 else 
-                    GEncode.tryInclude "@id" Encode.string (oa.ID)
+                    Encode.tryInclude "@id" Encode.string (oa.ID)
                 if options.IsJsonLD then 
                     "@type", (Encode.list [Encode.string "MaterialAttribute"])
-                GEncode.tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa.CharacteristicType)
+                Encode.tryInclude "characteristicType" (OntologyAnnotation.encoder options) (oa.CharacteristicType)
                 if options.IsJsonLD then
                     "@context", ROCrateContext.MaterialAttribute.context_jsonvalue
             ]
-            |> GEncode.choose
+            |> Encode.choose
             |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<MaterialAttribute> =
@@ -69,16 +69,16 @@ module MaterialAttribute =
 
     let toJsonString (m:MaterialAttribute) = 
         encoder (ConverterOptions()) m
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (m:MaterialAttribute) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) m
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:MaterialAttribute) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -99,28 +99,28 @@ module MaterialAttributeValue =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "MaterialAttributeValue"])
                 "additionalType", Encode.string "MaterialAttributeValue"
             if options.IsJsonLD then
                 if oa.Category.IsSome && oa.Category.Value.CharacteristicType.IsSome then
-                    GEncode.tryInclude "category" Encode.string (oa.Category.Value.CharacteristicType.Value.Name)
+                    Encode.tryInclude "category" Encode.string (oa.Category.Value.CharacteristicType.Value.Name)
                 if oa.Category.IsSome && oa.Category.Value.CharacteristicType.IsSome then
-                    GEncode.tryInclude "categoryCode" Encode.string (oa.Category.Value.CharacteristicType.Value.TermAccessionNumber)
+                    Encode.tryInclude "categoryCode" Encode.string (oa.Category.Value.CharacteristicType.Value.TermAccessionNumber)
                 if oa.Value.IsSome then "value", Encode.string (oa.ValueText)
                 if oa.Value.IsSome && oa.Value.Value.IsAnOntology then
-                    GEncode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
-                if oa.Unit.IsSome then GEncode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
-                if oa.Unit.IsSome then GEncode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
+                    Encode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
+                if oa.Unit.IsSome then Encode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
+                if oa.Unit.IsSome then Encode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
             else
-                GEncode.tryInclude "category" (MaterialAttribute.encoder options) (oa.Category)
-                GEncode.tryInclude "value" (Value.encoder options) (oa.Value)
-                GEncode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
+                Encode.tryInclude "category" (MaterialAttribute.encoder options) (oa.Category)
+                Encode.tryInclude "value" (Value.encoder options) (oa.Value)
+                Encode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.MaterialAttributeValue.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<MaterialAttributeValue> =
@@ -140,16 +140,16 @@ module MaterialAttributeValue =
 
     let toJsonString (m:MaterialAttributeValue) = 
         encoder (ConverterOptions()) m
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (m:MaterialAttributeValue) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) m
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:MaterialAttributeValue) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -173,17 +173,17 @@ module Material =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "Material"])
-            GEncode.tryInclude "name" Encode.string (oa.Name)
-            GEncode.tryInclude "type" (MaterialType.encoder options) (oa.MaterialType)
-            GEncode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
-            GEncode.tryIncludeList "derivesFrom" (encoder options) (oa.DerivesFrom)
+            Encode.tryInclude "name" Encode.string (oa.Name)
+            Encode.tryInclude "type" (MaterialType.encoder options) (oa.MaterialType)
+            Encode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
+            Encode.tryIncludeList "derivesFrom" (encoder options) (oa.DerivesFrom)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Material.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let allowedFields = ["@id";"@type";"name";"type";"characteristics";"derivesFrom"; "@context"]
@@ -206,16 +206,16 @@ module Material =
 
     let toJsonString (m:Material) = 
         encoder (ConverterOptions()) m
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (m:Material) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) m
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Material) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

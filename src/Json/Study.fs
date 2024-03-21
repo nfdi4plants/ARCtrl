@@ -1,19 +1,19 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.IO
 
 module StudyMaterials = 
 
     let encoder (options : ConverterOptions) (oa : StudyMaterials) = 
         [
-            GEncode.tryIncludeList "sources" (Source.encoder options) (oa.Sources)
-            GEncode.tryIncludeList "samples" (Sample.encoder options) (oa.Samples)
-            GEncode.tryIncludeList "otherMaterials" (Material.encoder options) (oa.OtherMaterials)
+            Encode.tryIncludeList "sources" (Source.encoder options) (oa.Sources)
+            Encode.tryIncludeList "samples" (Sample.encoder options) (oa.Samples)
+            Encode.tryIncludeList "otherMaterials" (Material.encoder options) (oa.OtherMaterials)
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
     
     let allowedFields = ["sources";"samples";"otherMaterials"]
@@ -46,39 +46,39 @@ module Study =
             if options.SetID then 
                 "@id", Encode.string (oa |> genID)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "Study"])
                 "additionalType", Encode.string "Study"
-            GEncode.tryInclude "filename" Encode.string (oa.FileName)
-            GEncode.tryInclude "identifier" Encode.string (oa.Identifier)
-            GEncode.tryInclude "title" Encode.string (oa.Title)
-            GEncode.tryInclude "description" Encode.string (oa.Description)
-            GEncode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
-            GEncode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-            GEncode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
-            GEncode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
+            Encode.tryInclude "filename" Encode.string (oa.FileName)
+            Encode.tryInclude "identifier" Encode.string (oa.Identifier)
+            Encode.tryInclude "title" Encode.string (oa.Title)
+            Encode.tryInclude "description" Encode.string (oa.Description)
+            Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
+            Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
+            Encode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
+            Encode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
             if not options.IsJsonLD then
-                GEncode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa.StudyDesignDescriptors) 
-                GEncode.tryIncludeList "protocols" (Protocol.encoder options None None None) (oa.Protocols)
-                GEncode.tryInclude "materials" (StudyMaterials.encoder options) (oa.Materials)
-                GEncode.tryIncludeList "factors" (Factor.encoder options) (oa.Factors)
-                GEncode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)            
-                GEncode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
+                Encode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (oa.StudyDesignDescriptors) 
+                Encode.tryIncludeList "protocols" (Protocol.encoder options None None None) (oa.Protocols)
+                Encode.tryInclude "materials" (StudyMaterials.encoder options) (oa.Materials)
+                Encode.tryIncludeList "factors" (Factor.encoder options) (oa.Factors)
+                Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (oa.CharacteristicCategories)            
+                Encode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (oa.UnitCategories)
             // if options.IsJsonLD then
             //     match oa.Materials with
             //     | Some m -> 
-            //         GEncode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
-            //         GEncode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
-            //         GEncode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
+            //         Encode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
+            //         Encode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
+            //         Encode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
             //     | None -> ()
-            GEncode.tryIncludeList "processSequence" (Process.encoder options oa.Identifier None) (oa.ProcessSequence)
-            GEncode.tryIncludeList "assays" (Assay.encoder options oa.Identifier) (oa.Assays)            
-            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
+            Encode.tryIncludeList "processSequence" (Process.encoder options oa.Identifier None) (oa.ProcessSequence)
+            Encode.tryIncludeList "assays" (Assay.encoder options oa.Identifier) (oa.Assays)            
+            Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Study.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
@@ -114,13 +114,13 @@ module Study =
 
     let toJsonString (p:Study) = 
         encoder (ConverterOptions()) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     /// exports in json-ld format
     let toJsonldString (s:Study) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) s
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Study) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2

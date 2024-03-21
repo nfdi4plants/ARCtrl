@@ -2,7 +2,7 @@
 
 open TestingUtils
 
-open ARCtrl.ISA.Aux
+open ARCtrl.Aux
 open Update
 
 module TestTypes = 

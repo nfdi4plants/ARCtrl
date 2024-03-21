@@ -1,6 +1,6 @@
 ﻿module ArcTables.Tests
 
-open ARCtrl.ISA
+open ARCtrl
 
 open TestingUtils
 module TestObjects = 

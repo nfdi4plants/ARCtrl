@@ -1,8 +1,8 @@
-﻿module ARCtrl.ISA.Json.ROCrateHelper
+﻿module ARCtrl.Json.ROCrateHelper
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 open System.IO
 
 module Person =
@@ -12,7 +12,7 @@ module Person =
     /// Therefore, we try to split the string by common separators and create a minimal person object for ro-crate.
     /// </summary>
     /// <param name="authorList"></param>
-    let authorListStringEncoder (authorList: string) =
+    let authorListStrinEncoder (authorList: string) =
         let tab = "\t"
         let semi = ";"
         let comma = ","
@@ -24,10 +24,10 @@ module Person =
         let encodeSingle (name:string) =
             [
                 "@type", Encode.string "Person"
-                GEncode.tryInclude "name" Encode.string (Some name)
+                Encode.tryInclude "name" Encode.string (Some name)
                 "@context", ROCrateContext.Person.contextMinimal_jsonValue
             ]
-            |> GEncode.choose
+            |> Encode.choose
             |> Encode.object
         Encode.array (names |> Array.map encodeSingle)
 

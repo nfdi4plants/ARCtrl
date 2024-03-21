@@ -1,8 +1,8 @@
-namespace ARCtrl.ISA.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
-open ARCtrl.ISA
+open ARCtrl
 
 module ProtocolParameter =
     
@@ -17,20 +17,20 @@ module ProtocolParameter =
         if options.IsJsonLD then
             match oa.ParameterName with
             | Some n -> OntologyAnnotation.encoder options n
-            | None -> [] |> GEncode.choose |> Encode.object
+            | None -> [] |> Encode.choose |> Encode.object
         else
             [
                 if options.SetID then 
                     "@id", Encode.string (oa |> genID)
                 else 
-                    GEncode.tryInclude "@id" Encode.string (oa.ID)
+                    Encode.tryInclude "@id" Encode.string (oa.ID)
                 if options.IsJsonLD then 
                     "@type", (Encode.list [Encode.string "ProtocolParameter"])
-                GEncode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa.ParameterName)
+                Encode.tryInclude "parameterName" (OntologyAnnotation.encoder options) (oa.ParameterName)
                 if options.IsJsonLD then
                     "@context", ROCrateContext.ProtocolParameter.context_jsonvalue
             ]
-            |> GEncode.choose
+            |> Encode.choose
             |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<ProtocolParameter> =
@@ -48,16 +48,16 @@ module ProtocolParameter =
 
     let toString (p:ProtocolParameter) = 
         encoder (ConverterOptions()) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (p:ProtocolParameter) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:ProtocolParameter) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -82,13 +82,13 @@ module Component =
                     "@id", Encode.string (oa |> genID)
                 "@type", (Encode.list [Encode.string "Component"])
                 if oa.ComponentType.IsSome then
-                    GEncode.tryInclude "category" Encode.string (oa.ComponentType.Value.Name)
-                    GEncode.tryInclude "categoryCode" Encode.string (oa.ComponentType.Value.TermAccessionNumber)
+                    Encode.tryInclude "category" Encode.string (oa.ComponentType.Value.Name)
+                    Encode.tryInclude "categoryCode" Encode.string (oa.ComponentType.Value.TermAccessionNumber)
                 if oa.ComponentValue.IsSome then "value", Encode.string (oa.ValueText)
                 if oa.ComponentValue.IsSome && oa.ComponentValue.Value.IsAnOntology then
-                    GEncode.tryInclude "valueCode" Encode.string (oa.ComponentValue.Value.AsOntology()).TermAccessionNumber
-                if oa.ComponentUnit.IsSome then GEncode.tryInclude "unit" Encode.string (oa.ComponentUnit.Value.Name)
-                if oa.ComponentUnit.IsSome then GEncode.tryInclude "unitCode" Encode.string (oa.ComponentUnit.Value.TermAccessionNumber)
+                    Encode.tryInclude "valueCode" Encode.string (oa.ComponentValue.Value.AsOntology()).TermAccessionNumber
+                if oa.ComponentUnit.IsSome then Encode.tryInclude "unit" Encode.string (oa.ComponentUnit.Value.Name)
+                if oa.ComponentUnit.IsSome then Encode.tryInclude "unitCode" Encode.string (oa.ComponentUnit.Value.TermAccessionNumber)
                 "@context", ROCrateContext.Component.context_jsonvalue
             ]
         else
@@ -96,9 +96,9 @@ module Component =
                 if options.SetID then 
                     "@id", Encode.string (oa |> genID)
                 "componentName", Encode.string (Component.composeName oa.ComponentValue oa.ComponentUnit)
-                GEncode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa.ComponentType)
+                Encode.tryInclude "componentType" (OntologyAnnotation.encoder options) (oa.ComponentType)
             ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Component> =
@@ -163,16 +163,16 @@ module Component =
 
     let toJsonString (p:Component) = 
         encoder (ConverterOptions()) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (p:Component) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Component) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 
@@ -201,22 +201,22 @@ module Protocol =
             if options.SetID then 
                 "@id", Encode.string (genID studyName assayName processName oa)
             else 
-                GEncode.tryInclude "@id" Encode.string (oa.ID)
+                Encode.tryInclude "@id" Encode.string (oa.ID)
             if options.IsJsonLD then 
                 "@type", (Encode.list [Encode.string "Protocol"])
-            GEncode.tryInclude "name" Encode.string (oa.Name)
-            GEncode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa.ProtocolType)
-            GEncode.tryInclude "description" Encode.string (oa.Description)
-            GEncode.tryInclude "uri" Encode.string (oa.Uri)
-            GEncode.tryInclude "version" Encode.string (oa.Version)
+            Encode.tryInclude "name" Encode.string (oa.Name)
+            Encode.tryInclude "protocolType" (OntologyAnnotation.encoder options) (oa.ProtocolType)
+            Encode.tryInclude "description" Encode.string (oa.Description)
+            Encode.tryInclude "uri" Encode.string (oa.Uri)
+            Encode.tryInclude "version" Encode.string (oa.Version)
             if not options.IsJsonLD then 
-                GEncode.tryIncludeList "parameters" (ProtocolParameter.encoder options) (oa.Parameters)
-            GEncode.tryIncludeList "components" (Component.encoder options) (oa.Components)
-            GEncode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
+                Encode.tryIncludeList "parameters" (ProtocolParameter.encoder options) (oa.Parameters)
+            Encode.tryIncludeList "components" (Component.encoder options) (oa.Components)
+            Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
             if options.IsJsonLD then 
                 "@context", ROCrateContext.Protocol.context_jsonvalue
         ]
-        |> GEncode.choose
+        |> Encode.choose
         |> Encode.object
 
     let decoder (options : ConverterOptions) : Decoder<Protocol> =
@@ -241,16 +241,16 @@ module Protocol =
 
     let toJsonString (p:Protocol) = 
         encoder (ConverterOptions()) None None None p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
     
     /// exports in json-ld format
     let toJsonldString (p:Protocol) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None None None p
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     let toJsonldStringWithContext (a:Protocol) = 
         encoder (ConverterOptions(SetID=true,IsJsonLD=true)) None None None a
-        |> GEncode.toJsonString 2
+        |> Encode.toJsonString 2
 
     //let fromFile (path : string) = 
     //    File.ReadAllText path 

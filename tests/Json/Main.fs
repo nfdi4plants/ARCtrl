@@ -1,4 +1,4 @@
-﻿module ARCtrl.ISA.Json.Tests
+﻿module ARCtrl.Json.Tests
 
 open Fable.Pyxpecto
 
