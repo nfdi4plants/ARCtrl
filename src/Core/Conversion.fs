@@ -10,6 +10,7 @@ module Person =
     let orcidKey = "ORCID"
 
     let setOrcidFromComments (person : Person) =
+        let person = person.Copy()
         let isOrcidComment (c : Comment) = 
             c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(orcidKey))
         let orcid,comments = 
@@ -23,13 +24,16 @@ module Person =
             orcid, comments
         person.ORCID <- orcid
         person.Comments <- comments
+        person
 
     let setCommentFromORCID (person : Person) =
+        let person = person.Copy()
         match person.ORCID with
         | Some orcid -> 
-            let comment = Comment.create (Name = orcidKey, Value = orcid)
+            let comment = Comment.create (name = orcidKey, value = orcid)
             person.Comments.Add comment
         | None -> ()
+        person
 
 /// Functions for transforming base level ARC Table and ISA Json Objects
 module JsonTypes = 
@@ -170,8 +174,8 @@ module JsonTypes =
         match name with 
         | Regex.ActivePatterns.Regex pattern r -> 
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
-            let v =  (r.Groups.Item "value").Value      |> Value.fromString
-            {oa with Name = (Some v.Text)}
+            let v =  (r.Groups.Item "value").Value
+            OntologyAnnotation.create(name = v, ?tan = oa.TermAccessionNumber, ?tsr = oa.TermSourceREF)
         | _ ->
             OntologyAnnotation.create(name = name)
 
@@ -185,7 +189,9 @@ module ProcessParsing =
     let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Component oa ->
-            let cat = CompositeHeader.Component (oa.SetColumnIndex valueI)
+            let newOA = oa.Copy()
+            newOA.SetColumnIndex valueI
+            let cat = CompositeHeader.Component newOA
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeComponent cat matrix.[generalI,i]
             |> Some
@@ -195,7 +201,9 @@ module ProcessParsing =
     let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Parameter oa ->
-            let cat = CompositeHeader.Parameter (oa.SetColumnIndex valueI)
+            let cat = 
+                OntologyAnnotation.setColumnIndex valueI oa 
+                |> CompositeHeader.Parameter
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeParameterValue cat matrix.[generalI,i]
             |> Some
@@ -204,7 +212,9 @@ module ProcessParsing =
     let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Factor oa ->
-            let cat = CompositeHeader.Factor (oa.SetColumnIndex valueI)
+            let cat = 
+                OntologyAnnotation.setColumnIndex valueI oa
+                |> CompositeHeader.Factor
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeFactorValue cat matrix.[generalI,i]
             |> Some
@@ -213,7 +223,9 @@ module ProcessParsing =
     let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Characteristic oa ->
-            let cat = CompositeHeader.Characteristic (oa.SetColumnIndex valueI)
+            let cat = 
+                OntologyAnnotation.setColumnIndex valueI oa
+                |> CompositeHeader.Characteristic              
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeCharacteristicValue cat matrix.[generalI,i]
             |> Some
@@ -628,7 +640,7 @@ type ArcTable with
             |> Seq.fold (fun (p : Protocol) h -> 
                 match h with
                 | CompositeHeader.ProtocolType -> 
-                    Protocol.setProtocolType p OntologyAnnotation.empty
+                    Protocol.setProtocolType p (OntologyAnnotation())
                 | CompositeHeader.ProtocolVersion -> Protocol.setVersion p ""
                 | CompositeHeader.ProtocolUri -> Protocol.setUri p ""
                 | CompositeHeader.ProtocolDescription -> Protocol.setDescription p ""

@@ -24,9 +24,9 @@ type MaterialAttribute =
         MaterialAttribute.create()
 
     /// Create a ISAJson MaterialAttribute from ISATab string entries
-    static member fromString (term:string, source:string, accession:string, ?comments : Comment []) =
-        let oa = OntologyAnnotation.fromString (term, source, accession, ?comments = comments)
-        MaterialAttribute.make None (Option.fromValueWithDefault OntologyAnnotation.empty oa)
+    static member fromString (term:string, source:string, accession:string, ?comments : ResizeArray<Comment>) =
+        let oa = OntologyAnnotation.create (term, source, accession, ?comments = comments)
+        MaterialAttribute.make None (Option.fromValueWithDefault (OntologyAnnotation()) oa)
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
     static member toString (ma : MaterialAttribute) =

@@ -10,7 +10,7 @@ type Factor =
     {
         Name : string option
         FactorType : OntologyAnnotation option
-        Comments : Comment [] option
+        Comments : ResizeArray<Comment> option
     }
 
     static member make name factorType comments =
@@ -27,9 +27,9 @@ type Factor =
         Factor.create()
 
     /// Create a ISAJson Factor from ISATab string entries
-    static member fromString (name : string, term:string, source:string, accession:string, ?comments : Comment []) =
+    static member fromString (name : string, term:string, source:string, accession:string, ?comments : ResizeArray<Comment>) =
         let oa = OntologyAnnotation.create (term, source, accession, ?comments = comments)
-        Factor.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault OntologyAnnotation.empty oa) None
+        Factor.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (OntologyAnnotation()) oa) None
 
     /// Get ISATab string entries from an ISAJson Factor object
     static member toString (factor : Factor) =
@@ -83,12 +83,12 @@ type Factor =
         factor.Comments
 
     /// Applies function f on comments of a factor
-    static member mapComments (f : Comment [] -> Comment []) (factor : Factor) =
+    static member mapComments (f : ResizeArray<Comment> -> ResizeArray<Comment>) (factor : Factor) =
         { factor with 
             Comments = Option.map f factor.Comments}
 
     /// Replaces comments of a factor by given comment list
-    static member setComments (factor : Factor) (comments : Comment []) =
+    static member setComments (factor : Factor) (comments : ResizeArray<Comment>) =
         { factor with
             Comments = Some comments }
 
@@ -119,5 +119,5 @@ type Factor =
         f.NameText = name
 
     member this.Copy() =
-        let nextComments = this.Comments |> Option.map (Array.map (fun c -> c.Copy()))
-        Factor.make this.ID this.Name this.FactorType nextComments
+        let nextComments = this.Comments |> Option.map (ResizeArray.map (fun c -> c.Copy()))
+        Factor.make this.Name this.FactorType nextComments

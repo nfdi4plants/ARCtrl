@@ -13,6 +13,7 @@
     <Compile Include="Helper\HashCodes.fs" />
     <Compile Include="Helper\Update.fs" />
     <Compile Include="Helper\Printer.fs" />
+    <Compile Include="Helper\SemVer.fs" />
     <Compile Include="URI.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="CommentList.fs" />
@@ -52,6 +53,7 @@
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\ArcTables.fs" />
     <Compile Include="ArcTypes.fs" />
+    <Compile Include="Template.fs" />
     <Compile Include="Conversion.fs" />
     <Compile Include="IdentifierSetters.fs" />
   </ItemGroup>

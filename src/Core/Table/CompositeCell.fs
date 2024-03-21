@@ -88,16 +88,20 @@ type CompositeCell =
 
     // TODO: i would really love to have an overload here accepting string input
     static member createTerm (oa:OntologyAnnotation) = Term oa
+
     static member createTermFromString (?name: string, ?tsr: string, ?tan: string) =
         Term <| OntologyAnnotation.create(?name = name, ?tsr = tsr, ?tan = tan)
-    static member createUnitized (value: string, ?oa:OntologyAnnotation) = Unitized (value, Option.defaultValue (OntologyAnnotation.empty) oa)
+
+    static member createUnitized (value: string, ?oa:OntologyAnnotation) = Unitized (value, Option.defaultValue (OntologyAnnotation()) oa)
+
     static member createUnitizedFromString (value: string, ?name: string, ?tsr: string, ?tan: string) = 
         Unitized <| (value, OntologyAnnotation.create(?name = name, ?tsr = tsr, ?tan = tan))
+
     static member createFreeText (value: string) = FreeText value
     
-    static member emptyTerm = Term OntologyAnnotation.empty
+    static member emptyTerm = Term (OntologyAnnotation())
     static member emptyFreeText = FreeText ""
-    static member emptyUnitized = Unitized ("", OntologyAnnotation.empty)
+    static member emptyUnitized = Unitized ("", OntologyAnnotation())
 
     /// <summary>
     /// Updates current CompositeCell with information from OntologyAnnotation.

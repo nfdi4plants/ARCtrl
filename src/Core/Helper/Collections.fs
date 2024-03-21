@@ -142,3 +142,20 @@ module ResizeArray =
 
     let isEmpty (a : ResizeArray<_>) =
         a.Count = 0
+
+    /// Immutable append
+    let append (a : ResizeArray<_>) (b : ResizeArray<_>) =
+        let c = ResizeArray<_>()
+        for i in a do
+            c.Add(i)
+        for i in b do
+            c.Add(i)
+        c
+
+    /// append a single element
+    let appendSingleton (b : 'T) (a : ResizeArray<_>) =
+        let c = ResizeArray<_>()
+        for i in a do
+            c.Add(i)
+        c.Add(b)
+        c

@@ -60,17 +60,19 @@ type Component =
             let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
             let v =  (unitr.Groups.Item "value").Value      |> Value.fromString
             let u =  (unitr.Groups.Item "unit").Value
-            v, Some {oa with Name = Some u}
+            oa.Name <- Some u
+            v, Some oa
         | Regex pattern r ->
             let oa = (r.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
-            let v =  (r.Groups.Item "value").Value      |> Value.fromString
-            Value.Ontology {oa with Name = (Some  v.Text)}, None
+            let v =  (r.Groups.Item "value").Value      
+            oa.Name <- Some v
+            Value.Ontology oa, None
         | _ -> 
             Value.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : Comment []) = 
-        let cType = OntologyAnnotation.fromString (?termName = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault OntologyAnnotation.empty
+    static member fromString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : ResizeArray<Comment>) = 
+        let cType = OntologyAnnotation.create (?name = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault (OntologyAnnotation())
         match name with
         | Some n -> 
             let v,u = Component.decomposeName n
