@@ -96,7 +96,15 @@ module Encode =
         if List.isEmpty value then Encode.nil
         else value |> List.map encoder |> Encode.list
 
-
+    let tryIncludeListOpt name (encoder : 'Value -> Json) (value : 'Value list option) = 
+        name,
+        match value with
+        | Some(o) -> 
+            if List.isEmpty o then Encode.nil
+            else o |> List.map encoder |> Encode.list
+        | _ -> 
+            Encode.nil
+        
     let DefaultSpaces = 0
 
     let defaultSpaces spaces = defaultArg spaces DefaultSpaces

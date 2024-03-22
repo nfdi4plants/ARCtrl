@@ -6,7 +6,34 @@ open Thoth.Json.Core
 open ARCtrl
 open ARCtrl.Process
 
-//module Component =
+module Component =
+
+    module ISAJson =
+
+        let encoder (c : Component) = 
+            [
+                "componentName", Encode.string (Component.composeName c.ComponentValue c.ComponentUnit)
+                Encode.tryInclude "componentType" OntologyAnnotation.encoder c.ComponentType
+            ]
+            |> Encode.choose
+            |> Encode.object
+
+        let decoder: Decoder<Component> =
+            Decode.object (fun get ->
+                let name = get.Optional.Field "componentName" Decode.uri
+                let value, unit =
+                    match name with
+                    | Some n -> 
+                        let v,u = Component.decomposeName n
+                        Some v, u
+                    | None -> None, None
+                {
+                    ComponentName = None
+                    ComponentValue = value
+                    ComponentUnit = unit
+                    ComponentType = get.Optional.Field "componentType" OntologyAnnotation.decoder
+                }
+            )
     
 //    let genID (c:Component) = 
 //        let name = Component.composeName c.ComponentValue c.ComponentUnit
@@ -96,34 +123,15 @@ open ARCtrl.Process
 //                }
 //            )
 
-//    let fromJsonString (s:string) = 
-//        GDecode.fromJsonString (decoder (ConverterOptions())) s
-//    let fromJsonldString (s:string) = 
-//        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
-
-//    let toJsonString (p:Component) = 
-//        encoder (ConverterOptions()) p
-//        |> Encode.toJsonString 2
+[<AutoOpen>]
+module ComponentExtensions =
     
-//    /// exports in json-ld format
-//    let toJsonldString (p:Component) = 
-//        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) p
-//        |> Encode.toJsonString 2
+    type Component with
 
-//    let toJsonldStringWithContext (a:Component) = 
-//        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-//        |> Encode.toJsonString 2
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString Component.ISAJson.decoder s   
 
-//    //let fromFile (path : string) = 
-//    //    File.ReadAllText path 
-//    //    |> fromString
-
-//    //let toFile (path : string) (p:Component) = 
-//    //    File.WriteAllText(path,toString p)
-
-
-//module Component = 
-    
-//    module ISAJson = 
-        
-//        let encoder 
+        static member toISAJsonString(?spaces) =
+            fun (f:Component) ->
+                Component.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)

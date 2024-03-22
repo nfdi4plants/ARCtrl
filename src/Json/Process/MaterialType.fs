@@ -10,14 +10,14 @@ module MaterialType =
 
     module ISAJson = 
 
-        let encoder (options : ConverterOptions) (value : MaterialType) = 
+        let encoder (value : MaterialType) = 
             match value with
             | MaterialType.ExtractName -> 
                 Encode.string "Extract Name"
             | MaterialType.LabeledExtractName -> 
                 Encode.string "Labeled Extract Name"
 
-        let decoder (options : ConverterOptions) : Decoder<MaterialType> =
+        let decoder : Decoder<MaterialType> =
             { new Decoder<MaterialType> with
                 member this.Decode (s,json) = 
                     match Decode.string.Decode(s,json) with
@@ -27,3 +27,16 @@ module MaterialType =
                     | Error e -> Error e
         
             }
+
+[<AutoOpen>]
+module MaterialTypeExtensions =
+    
+    type MaterialType with
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString MaterialType.ISAJson.decoder s   
+
+        static member toISAJsonString(?spaces) =
+            fun (f:MaterialType) ->
+                MaterialType.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)

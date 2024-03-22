@@ -29,13 +29,13 @@ module ProtocolParameter =
 [<AutoOpen>]
 module ProtocolParameterExtensions =
     
-        type ProtocolParameter with
+    type ProtocolParameter with
     
-            static member fromISAJsonString (s:string) = 
-                Decode.fromJsonString ProtocolParameter.ISAJson.decoder s   
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString ProtocolParameter.ISAJson.decoder s   
     
-            static member toISAJsonString(?spaces) =
-                fun (v:ProtocolParameter) ->
-                    ProtocolParameter.ISAJson.encoder v
-                    |> Encode.toJsonString (Option.defaultValue 2 spaces)
+        static member toISAJsonString(?spaces) =
+            fun (v:ProtocolParameter) ->
+                ProtocolParameter.ISAJson.encoder v
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
                 

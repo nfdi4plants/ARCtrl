@@ -10,73 +10,74 @@ open System.IO
 
 module FactorValue =
     
-    let genID (fv:FactorValue) : string = 
-        match fv.ID with
-        | Some id -> URI.toString id
-        | None -> "#EmptyFactorValue"
+    //module ROCrate =
 
-    let encoder (options : ConverterOptions) (oa : FactorValue) = 
-        [
-            if options.SetID then 
-                "@id", Encode.string (oa |> genID)
-            else 
-                Encode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IsJsonLD then 
-                "@type", (Encode.list [Encode.string "FactorValue"])
-                "additionalType", Encode.string "FactorValue"
-            if options.IsJsonLD then
-                if oa.Category.IsSome then
-                    Encode.tryInclude "categoryName" Encode.string (oa.Category.Value.Name)
-                if oa.Category.IsSome && oa.Category.Value.FactorType.IsSome then
-                    Encode.tryInclude "category" Encode.string (oa.Category.Value.FactorType.Value.Name)
-                if oa.Category.IsSome && oa.Category.Value.FactorType.IsSome then
-                    Encode.tryInclude "categoryCode" Encode.string (oa.Category.Value.FactorType.Value.TermAccessionNumber)
-                if oa.Value.IsSome then "value", Encode.string (oa.ValueText)
-                if oa.Value.IsSome && oa.Value.Value.IsAnOntology then
-                    Encode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
-                if oa.Unit.IsSome then Encode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
-                if oa.Unit.IsSome then Encode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
-            else
-                Encode.tryInclude "category" (Factor.encoder options) (oa.Category)
-                Encode.tryInclude "value" (Value.encoder options) (oa.Value)
-                Encode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
-            if options.IsJsonLD then
-                "@context", ROCrateContext.FactorValue.context_jsonvalue
-        ]
-        |> Encode.choose
-        |> Encode.object
+    //    let genID (fv:FactorValue) : string = 
+    //        match fv.ID with
+    //        | Some id -> URI.toString id
+    //        | None -> "#EmptyFactorValue"
 
-    let decoder (options : ConverterOptions) : Decoder<FactorValue> =
-        Decode.object (fun get ->
-            {
-                ID = get.Optional.Field "@id" GDecode.uri
-                Category = get.Optional.Field "category" (Factor.decoder options)
-                Value = get.Optional.Field "value" (Value.decoder options)
-                Unit = get.Optional.Field "unit" (OntologyAnnotation.decoder options)
-            }
-        )
+    //    let encoder (fv : FactorValue) = 
+    //        [
+    //            "@id", Encode.string (fv |> genID)
+    //            "@type", (Encode.list [Encode.string "FactorValue"])
+    //            "additionalType", Encode.string "FactorValue"
+    //            Encode.tryInclude "categoryName" (fun f -> Encode.option Encode.string f.Name) fv.Category
+    //            Encode.tryInclude "category" (fun f -> Encode.option (fun (ft: OntologyAnnotation) -> Encode.option Encode.string ft.Name) f.FactorType) fv.Category
+    //            Encode.tryInclude "categoryCode" (fun f -> Encode.option (fun (ft: OntologyAnnotation) -> Encode.option Encode.string ft.TermAccessionNumber) f.FactorType) fv.Category
+    //            if fv.Value.IsSome then 
+    //                "value", Encode.string fv.ValueText
+    //            if fv.Value.IsSome && fv.Value.Value.IsAnOntology then
+    //                Encode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
+    //            if oa.Unit.IsSome then Encode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
+    //            if oa.Unit.IsSome then Encode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
+    //            "@context", ROCrateContext.FactorValue.context_jsonvalue
+    //        ]
+    //        |> Encode.choose
+    //        |> Encode.object
 
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-    let fromJsonldString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
+    //    let decoder (options : ConverterOptions) : Decoder<FactorValue> =
+    //        Decode.object (fun get ->
+    //            {
+    //                ID = get.Optional.Field "@id" GDecode.uri
+    //                Category = get.Optional.Field "category" (Factor.decoder options)
+    //                Value = get.Optional.Field "value" (Value.decoder options)
+    //                Unit = get.Optional.Field "unit" (OntologyAnnotation.decoder options)
+    //            }
+    //        )
 
-    let toJsonString (f:FactorValue) = 
-        encoder (ConverterOptions()) f
-        |> Encode.toJsonString 2
+    module ISAJson = 
+
+        let encoder (fv : FactorValue) = 
+            [
+                // Is this required for ISA-JSON? The FactorValue type has an @id field
+                Encode.tryInclude "@id" Encode.string fv.ID 
+                Encode.tryInclude "category" Factor.ISAJson.encoder fv.Category
+                Encode.tryInclude "value" Value.ISAJson.encoder fv.Value
+                Encode.tryInclude "unit" OntologyAnnotation.encoder fv.Unit
+            ]
+            |> Encode.choose
+            |> Encode.object
+
+        let decoder: Decoder<FactorValue> =
+            Decode.object (fun get ->
+                {
+                    ID = get.Optional.Field "@id" Decode.uri
+                    Category = get.Optional.Field "category" Factor.ISAJson.decoder
+                    Value = get.Optional.Field "value" Value.ISAJson.decoder
+                    Unit = get.Optional.Field "unit" OntologyAnnotation.decoder
+                }
+            )
+
+[<AutoOpen>]
+module FactorValueExtensions =
     
-    /// exports in json-ld format
-    let toJsonldString (f:FactorValue) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) f
-        |> Encode.toJsonString 2
+    type FactorValue with
 
-    let toJsonldStringWithContext (a:FactorValue) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) a
-        |> Encode.toJsonString 2
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString FactorValue.ISAJson.decoder s   
 
-    //let fromFile (path : string) = 
-    //    File.ReadAllText path 
-    //    |> fromString
-
-    //let toFile (path : string) (f:FactorValue) = 
-    //    File.WriteAllText(path,toString f)
+        static member toISAJsonString(?spaces) =
+            fun (f:FactorValue) ->
+                FactorValue.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)

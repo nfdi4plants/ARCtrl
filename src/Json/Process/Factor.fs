@@ -30,7 +30,6 @@ module Factor =
                 }
             )
 
-
 [<AutoOpen>]
 module FactorExtensions =
     
@@ -42,4 +41,4 @@ module FactorExtensions =
         static member toISAJsonString(?spaces) =
             fun (f:Factor) ->
                 Factor.ISAJson.encoder f
-                |> Encode.toJsonString (Option.defaultValue 2 spaces)
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)

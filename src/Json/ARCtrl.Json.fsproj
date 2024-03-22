@@ -45,9 +45,17 @@
     <Compile Include="Process\MaterialAttribute.fs" />
     <Compile Include="Process\Component.fs" />
     <Compile Include="Process\Protocol.fs" />
+    <Compile Include="Process\MaterialAttributeValue.fs" />
     <Compile Include="Process\Material.fs" />
+    <Compile Include="Process\DataFile.fs" />
     <Compile Include="Process\Data.fs" />
+    <Compile Include="Process\Source.fs" />
+    <Compile Include="Process\Sample.fs" />
+    <Compile Include="Process\ProcessParameterValue.fs" />
+    <Compile Include="Process\ProcessInput.fs" />
+    <Compile Include="Process\ProcessOutput.fs" />
     <Compile Include="Process\Process.fs" />
+    <Compile Include="Process\ProcessSequence.fs" />
     <Compile Include="Table\OATable.fs" />
 	  <Compile Include="Table\CompositeCell.fs" />
 	  <Compile Include="Table\CellTable.fs" />

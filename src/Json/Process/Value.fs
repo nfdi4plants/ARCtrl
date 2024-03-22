@@ -42,7 +42,7 @@ module ValueExtensions =
         static member toISAJsonString(?spaces) =
             fun (v:Value) ->
                 Value.ISAJson.encoder v
-                |> Encode.toJsonString (Option.defaultValue 2 spaces)
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
             
 
     //let fromFile (path : string) = 
