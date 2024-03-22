@@ -7,8 +7,6 @@ open Regex.ActivePatterns
 
 type Component = 
     {
-        // TODO: Maybe remove as field and add as member?
-        ComponentName : string option
         /// This can be the main column value of the component column. (e.g. "SCIEX instrument model" as `OntologyAnnotation`; 14;..)
         ComponentValue : Value option
         /// This can be the unit describing a non `OntologyAnnotation` value in `ComponentValue`. (e.g. "degree celcius")
@@ -17,16 +15,17 @@ type Component =
         ComponentType : OntologyAnnotation option
     }
 
-    static member make name value unit componentType =
+    member this.ComponentName = Component.composeName this.ComponentValue this.ComponentUnit
+
+    static member make value unit componentType =
         {
-            ComponentName = name
             ComponentValue = value
             ComponentUnit = unit
             ComponentType = componentType
         }
 
-    static member create (?Name,?Value,?Unit,?ComponentType) : Component =
-        Component.make Name Value Unit ComponentType
+    static member create (?value,?unit,?componentType) : Component =
+        Component.make value unit componentType
 
     static member empty =
         Component.create()
@@ -71,23 +70,19 @@ type Component =
             Value.Name (name), None       
 
     /// Create a ISAJson Component from ISATab string entries
-    static member fromString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : ResizeArray<Comment>) = 
+    static member fromISAString (?name: string, ?term:string, ?source:string, ?accession:string, ?comments : ResizeArray<Comment>) = 
         let cType = OntologyAnnotation.create (?name = term, ?tsr=source, ?tan=accession, ?comments = comments) |> Option.fromValueWithDefault (OntologyAnnotation())
         match name with
         | Some n -> 
             let v,u = Component.decomposeName n
-            Component.make (name) (Option.fromValueWithDefault (Value.Name "") v) u cType
+            Component.make (Option.fromValueWithDefault (Value.Name "") v) u cType
         | None ->
-            Component.make None None None cType
-        
-    static member fromOptions (value: Value option) (unit: OntologyAnnotation Option) (header:OntologyAnnotation option) = 
-        let name = Component.composeName value unit |> Option.fromValueWithDefault ""
-        Component.make name value unit header
+            Component.make None None cType
 
     /// Get ISATab string entries from an ISAJson Component object
-    static member toString (c : Component) =
+    static member toISAString (c : Component) =
         let oa = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
-        c.ComponentName |> Option.defaultValue "", oa
+        c.ComponentName, oa
 
     member this.NameText =
         this.ComponentType

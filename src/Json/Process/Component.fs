@@ -12,7 +12,7 @@ module Component =
 
         let encoder (c : Component) = 
             [
-                "componentName", Encode.string (Component.composeName c.ComponentValue c.ComponentUnit)
+                "componentName", Encode.string c.ComponentName // TODO: tryInclude
                 Encode.tryInclude "componentType" OntologyAnnotation.ISAJson.encoder c.ComponentType
             ]
             |> Encode.choose
@@ -28,7 +28,6 @@ module Component =
                         Some v, u
                     | None -> None, None
                 {
-                    ComponentName = None
                     ComponentValue = value
                     ComponentUnit = unit
                     ComponentType = get.Optional.Field "componentType" OntologyAnnotation.ISAJson.decoder
