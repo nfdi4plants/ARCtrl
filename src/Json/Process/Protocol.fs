@@ -13,13 +13,13 @@ module Protocol =
             [
                 Encode.tryInclude "@id" Encode.string (oa.ID)
                 Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryInclude "protocolType" OntologyAnnotation.encoder (oa.ProtocolType)
+                Encode.tryInclude "protocolType" OntologyAnnotation.ISAJson.encoder (oa.ProtocolType)
                 Encode.tryInclude "description" Encode.string (oa.Description)
                 Encode.tryInclude "uri" Encode.string (oa.Uri)
                 Encode.tryInclude "version" Encode.string (oa.Version)
                 Encode.tryIncludeListOpt "parameters" ProtocolParameter.ISAJson.encoder oa.Parameters
                 Encode.tryIncludeListOpt "components" Component.ISAJson.encoder oa.Components
-                Encode.tryIncludeListOpt "comments" Comment.encoder oa.Comments
+                Encode.tryIncludeListOpt "comments" Comment.ISAJson.encoder oa.Comments
             ]
             |> Encode.choose
             |> Encode.object
@@ -29,13 +29,13 @@ module Protocol =
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
-                    ProtocolType = get.Optional.Field "protocolType" OntologyAnnotation.decoder
+                    ProtocolType = get.Optional.Field "protocolType" OntologyAnnotation.ISAJson.decoder
                     Description = get.Optional.Field "description" Decode.string
                     Uri = get.Optional.Field "uri" Decode.uri
                     Version = get.Optional.Field "version" Decode.string
                     Parameters = get.Optional.Field "parameters" (Decode.list ProtocolParameter.ISAJson.decoder)
                     Components = get.Optional.Field "components" (Decode.list Component.ISAJson.decoder)
-                    Comments = get.Optional.Field "comments" (Decode.list Comment.decoder)
+                    Comments = get.Optional.Field "comments" (Decode.list Comment.ISAJson.decoder)
                 }
             )
 

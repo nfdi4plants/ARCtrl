@@ -13,7 +13,7 @@ module ProcessParameterValue =
             [
                 Encode.tryInclude "category" ProtocolParameter.ISAJson.encoder oa.Category
                 Encode.tryInclude "value" Value.ISAJson.encoder oa.Value
-                Encode.tryInclude "unit" OntologyAnnotation.encoder oa.Unit
+                Encode.tryInclude "unit" OntologyAnnotation.ISAJson.encoder oa.Unit
             ]
             |> Encode.choose
             |> Encode.object

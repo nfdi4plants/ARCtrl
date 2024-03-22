@@ -54,7 +54,7 @@ module FactorValue =
                 Encode.tryInclude "@id" Encode.string fv.ID 
                 Encode.tryInclude "category" Factor.ISAJson.encoder fv.Category
                 Encode.tryInclude "value" Value.ISAJson.encoder fv.Value
-                Encode.tryInclude "unit" OntologyAnnotation.encoder fv.Unit
+                Encode.tryInclude "unit" OntologyAnnotation.ISAJson.encoder fv.Unit
             ]
             |> Encode.choose
             |> Encode.object
@@ -65,7 +65,7 @@ module FactorValue =
                     ID = get.Optional.Field "@id" Decode.uri
                     Category = get.Optional.Field "category" Factor.ISAJson.decoder
                     Value = get.Optional.Field "value" Value.ISAJson.decoder
-                    Unit = get.Optional.Field "unit" OntologyAnnotation.decoder
+                    Unit = get.Optional.Field "unit" OntologyAnnotation.ISAJson.decoder
                 }
             )
 
