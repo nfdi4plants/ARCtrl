@@ -16,11 +16,11 @@ let [<Literal>] ValidAssayFileNamePattern = @"^(assays(\/|\\))?(?<identifier>" +
 let [<Literal>] ValidStudyFileNamePattern = @"^(studies(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.study.xlsx)?$"
 
 // Function to check if a string contains only valid characters
-let checkValidCharacters (identifier: string) =
+let checkValidCharacters (identifier: string) (raise : bool) =
     match identifier with
-    | Regex ValidIdentifierPattern _ -> ()
-    | _ ->  failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
-
+    | Regex ValidIdentifierPattern _ -> true
+    | _ when raise -> failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
+    | _ -> false
 
 let [<Literal>] MISSING_IDENTIFIER = "MISSING_IDENTIFIER_"
 
@@ -52,12 +52,35 @@ module Assay =
         | _ -> failwith $"Cannot parse identifier from FileName `{fileName}`"
 
     /// <summary>
+    /// On read-in the FileName can be any combination of "assays" (assay folder name), assayIdentifier and "isa.assay.xlsx" (the actual file name).
+    ///
+    /// This functions extracts assayIdentifier from any of these combinations and returns it.
+    /// </summary>
+    /// <param name="fileName">FileName as written in isa.assay.xlsx metadata sheet</param>
+    let tryIdentifierFromFileName (fileName: string) : string option =
+        match fileName with
+        | Regex ValidAssayFileNamePattern m -> 
+            let identifier = m.Groups.["identifier"].Value
+            Some identifier
+        | _ -> None
+
+    /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `assays/assayIdentifier/isa.assay.xlsx`.
     /// </summary>
     /// <param name="identifier">Any correct assay identifier</param>
     let fileNameFromIdentifier (identifier: string) : string =        
-        checkValidCharacters (identifier)
+        checkValidCharacters (identifier) true |> ignore
         ARCtrl.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `assays/assayIdentifier/isa.assay.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct assay identifier</param>
+    let tryFileNameFromIdentifier (identifier: string) : string option =        
+        if checkValidCharacters (identifier) false then
+            ARCtrl.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]
+            |> Some
+        else None
 
 
 /// Assay only contains "FileName" in isa.assay.xlsx. To unify naming in our model, on read-in we transform fileName to identifier and reverse for writing.
@@ -78,9 +101,33 @@ module Study =
         | _ -> failwith $"Cannot parse identifier from FileName `{fileName}`"
 
     /// <summary>
+    /// On read-in the FileName can be any combination of "studies" (study folder name), studyIdentifier and "isa.study.xlsx" (the actual file name).
+    ///
+    /// This functions extracts studyIdentifier from any of these combinations and returns it.
+    /// </summary>
+    /// <param name="fileName">FileName as written in isa.study.xlsx metadata sheet</param>
+    let tryIdentifierFromFileName (fileName: string) : string option =
+        match fileName with
+        | Regex ValidStudyFileNamePattern m -> 
+            let identifier = m.Groups.["identifier"].Value
+            Some identifier
+        | _ -> None
+
+
+    /// <summary>
     /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `studies/studyIdentifier/isa.study.xlsx`.
     /// </summary>
     /// <param name="identifier">Any correct study identifier</param>
     let fileNameFromIdentifier (identifier: string) : string =
-        checkValidCharacters (identifier)
+        checkValidCharacters (identifier) true |> ignore
         ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.StudyFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `studies/studyIdentifier/isa.study.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct study identifier</param>
+    let tryFileNameFromIdentifier (identifier: string) : string option =
+        if checkValidCharacters (identifier) false then
+            ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.StudyFileName|]
+            |> Some
+        else None

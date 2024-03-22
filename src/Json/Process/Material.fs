@@ -22,23 +22,25 @@ module Material =
                 "@type", (Encode.list [Encode.string "Material"])
                 Encode.tryInclude "name" Encode.string oa.Name
                 Encode.tryInclude "type" MaterialType.ROCrate.encoder oa.MaterialType
-                Encode.tryIncludeList "characteristics" MaterialAttributeValue.ROCrate.encoder oa.Characteristics
-                Encode.tryIncludeList "derivesFrom" encoder oa.DerivesFrom
+                Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder oa.Characteristics
+                Encode.tryIncludeListOpt "derivesFrom" encoder oa.DerivesFrom
                 "@context", ROCrateContext.Material.context_jsonvalue
             ]
             |> Encode.choose
             |> Encode.object
 
-        let rec decoder : Decoder<Material> =       
-            Decode.object (fun get -> 
-                {                       
-                    ID = get.Optional.Field "@id" Decode.uri
-                    Name = get.Optional.Field "name" Decode.string
-                    MaterialType = get.Optional.Field "type" MaterialType.ROCrate.decoder
-                    Characteristics = get.Optional.Field "characteristics" (Decode.list MaterialAttributeValue.ROCrate.decoder)
-                    DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list decoder)
-                }
-            )
+        let decoder : Decoder<Material> =       
+            let rec decode() =
+                Decode.object (fun get -> 
+                    {                       
+                        ID = get.Optional.Field "@id" Decode.uri
+                        Name = get.Optional.Field "name" Decode.string
+                        MaterialType = get.Optional.Field "type" MaterialType.ROCrate.decoder
+                        Characteristics = get.Optional.Field "characteristics" (Decode.list MaterialAttributeValue.ROCrate.decoder)
+                        DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list <| decode())
+                    }
+                )
+            decode()
 
     module ISAJson =
     

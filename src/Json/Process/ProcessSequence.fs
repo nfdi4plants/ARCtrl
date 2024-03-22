@@ -5,14 +5,24 @@ open Thoth.Json.Core
 open ARCtrl
 open ARCtrl.Process
 
-module ProcessSequence = 
+type ProcessSequence = 
 
-    let fromISAJsonString (s:string) = 
+    static member fromISAJsonString (s:string) = 
         Decode.fromJsonString (Decode.list Process.ISAJson.decoder) s  
 
-    let toISAJsonString (spaces) =
+    static member toISAJsonString (spaces) =
         fun (f:Process list) ->
             f
             |> List.map Process.ISAJson.encoder
+            |> Encode.list
+            |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+    static member fromROCrateJsonString (s:string) =
+        Decode.fromJsonString (Decode.list Process.ROCrate.decoder) s
+
+    static member toROCrateJsonString (?studyName : string, ?assayName : string , ?spaces) =
+        fun (f:Process list) ->
+            f
+            |> List.map (Process.ROCrate.encoder studyName assayName)
             |> Encode.list
             |> Encode.toJsonString (Encode.defaultSpaces spaces)

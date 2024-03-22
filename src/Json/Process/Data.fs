@@ -16,19 +16,19 @@ module Data =
                       | Some n -> n.Replace(" ","_")
                       | None -> "#EmptyData"
     
-        let rec encoder (oa : Data) = 
+        let encoder (oa : Data) = 
             [
                 "@id", Encode.string (oa |> genID)           
                 "@type", (Encode.list [Encode.string "Data"])
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryInclude "type" DataFile.ROCrate.encoder oa.DataType
-                Encode.tryIncludeList "comments" Comment.ROCrate.encoder oa.Comments
+                Encode.tryIncludeListOpt "comments" Comment.ROCrate.encoder oa.Comments
                 "@context", ROCrateContext.Data.context_jsonvalue
             ]
             |> Encode.choose
             |> Encode.object
 
-        let rec decoder : Decoder<Data> =
+        let decoder : Decoder<Data> =
             Decode.object (fun get ->
                 {
                     ID = get.Optional.Field "@id" Decode.uri

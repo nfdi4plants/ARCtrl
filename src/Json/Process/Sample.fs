@@ -21,8 +21,8 @@ module Sample =
                 "@id", Encode.string (oa |> genID)
                 "@type", (Encode.list [ Encode.string "Sample"])
                 Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryIncludeList "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)
-                Encode.tryIncludeList "factorValues" FactorValue.ROCrate.encoder (oa.FactorValues)
+                Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)
+                Encode.tryIncludeListOpt "factorValues" FactorValue.ROCrate.encoder (oa.FactorValues)
                 "@context", ROCrateContext.Sample.context_jsonvalue
             ]
             |> Encode.choose

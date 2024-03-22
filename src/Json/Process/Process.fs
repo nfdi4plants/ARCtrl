@@ -16,7 +16,7 @@ module Process =
                             | Some n -> "#Process_" + n.Replace(" ","_")
                             | None -> "#EmptyProcess"
 
-        let rec encoder (studyName:string Option) (assayName:string Option) (oa : Process) =            
+        let encoder (studyName:string Option) (assayName:string Option) (oa : Process) =            
             [
                 "@id", Encode.string (oa |> genID)
                 "@type", (Encode.list [Encode.string "Process"])
@@ -33,7 +33,7 @@ module Process =
             |> Encode.choose
             |> Encode.object
 
-        let rec decoder : Decoder<Process> =
+        let decoder : Decoder<Process> =
             Decode.object (fun get ->
                 {
                     ID = get.Optional.Field "@id" Decode.uri
@@ -104,7 +104,7 @@ module ProcessExtensions =
         static member fromROCrateString (s:string) =
             Decode.fromJsonString Process.ROCrate.decoder s
 
-        static member toROCrateString (studyName:string Option) (assayName:string Option) (?spaces) =
+        static member toROCrateString(?studyName:string,?assayName:string,?spaces) =
             fun (f:Process) ->
                 Process.ROCrate.encoder studyName assayName f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)

@@ -48,7 +48,7 @@ module JsonTypes =
     /// Convert a CompositeHeader and Cell tuple to a ISA Component
     let composeComponent (header : CompositeHeader) (value : CompositeCell) : Component =
         let v,u = valueOfCell value
-        Component.fromOptions (Some v) u (header.ToTerm() |> Some)
+        Component.create (v,?unit = u,componentType = header.ToTerm())
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
     let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : ProcessParameterValue =
@@ -560,7 +560,7 @@ type CompositeHeader with
 
     member this.TryComponent() =
         match this with
-        | CompositeHeader.Component oa -> Some (Component.create(ComponentType = oa))
+        | CompositeHeader.Component oa -> Some (Component.create(componentType = oa))
         | _ -> None
 
 type CompositeCell with
@@ -596,10 +596,10 @@ module CompositeRow =
                 let pp = ProtocolParameter.create(ParameterName = oa)
                 Protocol.addParameter (pp) p
             | CompositeHeader.Component oa, CompositeCell.Unitized(v,unit) -> 
-                let c = Component.create(ComponentType = oa, Value = Value.fromString v, Unit = unit)
+                let c = Component.create(componentType = oa, value = Value.fromString v, unit = unit)
                 Protocol.addComponent c p        
             | CompositeHeader.Component oa, CompositeCell.Term t -> 
-                let c = Component.create(ComponentType = oa, Value = Value.Ontology t)
+                let c = Component.create(componentType = oa, value = Value.Ontology t)
                 Protocol.addComponent c p     
             | _ -> p
         ) (Protocol.create(Name = tableName))
@@ -649,7 +649,7 @@ type ArcTable with
                     let pp = ProtocolParameter.create(ParameterName = oa)
                     Protocol.addParameter (pp) p
                 | CompositeHeader.Component oa -> 
-                    let c = Component.create(ComponentType = oa)
+                    let c = Component.create(componentType = oa)
                     Protocol.addComponent c p
                 | _ -> p
             ) (Protocol.create(Name = this.Name))
