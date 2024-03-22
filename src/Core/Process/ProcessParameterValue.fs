@@ -103,6 +103,16 @@ type ProcessParameterValue =
     static member getCategory (pv : ProcessParameterValue) =
         pv.Category
 
+    interface IPropertyValue<ProcessParameterValue> with
+        member this.GetCategory() = this.Category |> Option.bind (fun p -> p.ParameterName)
+        member this.GetAdditionalType() = "ProcessParameterValue"
+        member this.GetValue() = this.Value
+        member this.GetUnit() = this.Unit
+
+    static member createAsPV (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+        let category = category |> Option.map (fun c -> ProtocolParameter.create(ParameterName = c))
+        ProcessParameterValue.create(?Category = category, ?Value = value, ?Unit = unit)
+
     ///// Returns the value of the parameter value as string if it exists (with unit)
     //static member tryGetValueAsString (pv : ProcessParameterValue) =
     //    static member unit = pv.Unit |> Option.bind (OntologyAnnotation.tryGetNameAsString)

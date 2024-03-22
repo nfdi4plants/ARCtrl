@@ -8,7 +8,8 @@ open ARCtrl.Process
 
 module MaterialType =
 
-    module ISAJson = 
+
+    module ROCrate = 
 
         let encoder (value : MaterialType) = 
             match value with
@@ -24,9 +25,14 @@ module MaterialType =
                     | Ok "Extract Name" -> Ok MaterialType.ExtractName
                     | Ok "Labeled Extract Name" -> Ok MaterialType.LabeledExtractName
                     | Ok s -> Error (DecoderError($"Could not parse {s}No other value than \"Extract Name\" or \"Labeled Extract Name\" allowed for materialtype", ErrorReason.BadPrimitive(s,json)))
-                    | Error e -> Error e
-        
+                    | Error e -> Error e       
             }
+
+    module ISAJson = 
+
+        let encoder = ROCrate.encoder
+
+        let decoder : Decoder<MaterialType> = ROCrate.decoder
 
 [<AutoOpen>]
 module MaterialTypeExtensions =

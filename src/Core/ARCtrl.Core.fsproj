@@ -22,6 +22,7 @@
     <Compile Include="Publication.fs" />
     <Compile Include="OntologySourceReference.fs" />
     <Compile Include="Process\Value.fs" />
+    <Compile Include="Process\IPropertyValue.fs" />
     <Compile Include="Process\Factor.fs" />
     <Compile Include="Process\FactorValue.fs" />
     <Compile Include="Process\MaterialAttribute.fs" />

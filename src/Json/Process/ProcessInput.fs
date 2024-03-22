@@ -8,6 +8,26 @@ open ARCtrl.Process
 /// Functions for handling the ProcessInput Type
 module ProcessInput =
 
+    module ROCrate = 
+        let encoder (value : ProcessInput) = 
+            match value with
+            | ProcessInput.Source s-> 
+                Source.ROCrate.encoder s
+            | ProcessInput.Sample s -> 
+                Sample.ROCrate.encoder s
+            | ProcessInput.Data d -> 
+                Data.ROCrate.encoder d
+            | ProcessInput.Material m -> 
+                Material.ROCrate.encoder m
+
+        let decoder : Decoder<ProcessInput> =
+            Decode.oneOf [
+                Decode.map ProcessInput.Source Source.ROCrate.decoder
+                Decode.map ProcessInput.Sample Sample.ROCrate.decoder
+                Decode.map ProcessInput.Data Data.ROCrate.decoder
+                Decode.map ProcessInput.Material Material.ROCrate.decoder
+            ]
+
     module ISAJson =
 
         let encoder (value : ProcessInput) = 
@@ -22,22 +42,12 @@ module ProcessInput =
                 Material.ISAJson.encoder m
 
         let decoder: Decoder<ProcessInput> =
-            { new Decoder<ProcessInput> with
-                member this.Decode(s,json) = 
-                    match Source.ISAJson.decoder.Decode(s,json) with
-                    | Ok s -> Ok (ProcessInput.Source s)
-                    | Error _ -> 
-                        match Sample.ISAJson.decoder.Decode(s,json) with
-                        | Ok s -> Ok (ProcessInput.Sample s)
-                        | Error _ -> 
-                            match Data.ISAJson.decoder.Decode(s,json) with
-                            | Ok s -> Ok (ProcessInput.Data s)
-                            | Error _ -> 
-                                match Material.ISAJson.decoder.Decode(s,json) with
-                                | Ok s -> Ok (ProcessInput.Material s)
-                                | Error e -> Error e
-
-            }
+            Decode.oneOf [
+                Decode.map ProcessInput.Source Source.ISAJson.decoder
+                Decode.map ProcessInput.Sample Sample.ISAJson.decoder
+                Decode.map ProcessInput.Data Data.ISAJson.decoder
+                Decode.map ProcessInput.Material Material.ISAJson.decoder          
+            ]
 
 [<AutoOpen>]
 module ProcessInputExtensions =

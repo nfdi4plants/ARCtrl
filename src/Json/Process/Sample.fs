@@ -7,6 +7,38 @@ open ARCtrl.Process
 
 module Sample =
 
+    module ROCrate = 
+
+        let genID (s:Sample) : string = 
+            match s.ID with
+            | Some id -> id
+            | None -> match s.Name with
+                      | Some n -> "#Sample_" + n.Replace(" ","_")
+                      | None -> "#EmptySample"
+    
+        let encoder (oa : Sample) = 
+            [
+                "@id", Encode.string (oa |> genID)
+                "@type", (Encode.list [ Encode.string "Sample"])
+                Encode.tryInclude "name" Encode.string (oa.Name)
+                Encode.tryIncludeList "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)
+                Encode.tryIncludeList "factorValues" FactorValue.ROCrate.encoder (oa.FactorValues)
+                "@context", ROCrateContext.Sample.context_jsonvalue
+            ]
+            |> Encode.choose
+            |> Encode.object
+
+        let decoder : Decoder<Sample> =       
+            Decode.object (fun get ->
+                {
+                    ID = get.Optional.Field "@id" Decode.uri
+                    Name = get.Optional.Field "name" Decode.string
+                    Characteristics = get.Optional.Field "characteristics" (Decode.list MaterialAttributeValue.ROCrate.decoder)
+                    FactorValues = get.Optional.Field "factorValues" (Decode.list FactorValue.ROCrate.decoder)
+                    DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list Source.ROCrate.decoder)
+                }
+            )
+
     module ISAJson =
     
         let encoder (oa : Sample) = 
@@ -33,45 +65,6 @@ module Sample =
                 }
             )
 
-    //let genID (s:Sample) : string = 
-    //    match s.ID with
-    //    | Some id -> id
-    //    | None -> match s.Name with
-    //              | Some n -> "#Sample_" + n.Replace(" ","_")
-    //              | None -> "#EmptySample"
-    
-    //let encoder (options : ConverterOptions) (oa : Sample) = 
-    //    [
-    //        if options.SetID then 
-    //            "@id", Encode.string (oa |> genID)
-    //        else 
-    //            Encode.tryInclude "@id" Encode.string (oa.ID)
-    //        if options.IsJsonLD then 
-    //            "@type", (Encode.list [ Encode.string "Sample"])
-    //        Encode.tryInclude "name" Encode.string (oa.Name)
-    //        Encode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)
-    //        Encode.tryIncludeList "factorValues" (FactorValue.encoder options) (oa.FactorValues)
-    //        if not options.IsJsonLD then 
-    //            Encode.tryIncludeList "derivesFrom" (Source.encoder options) (oa.DerivesFrom)
-    //        if options.IsJsonLD then
-    //            "@context", ROCrateContext.Sample.context_jsonvalue
-    //    ]
-    //    |> Encode.choose
-    //    |> Encode.object
-
-    //let allowedFields = ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"; "@context"]
-
-    //let decoder (options : ConverterOptions) : Decoder<Sample> =       
-    //    GDecode.object allowedFields (fun get ->
-    //        {
-    //            ID = get.Optional.Field "@id" GDecode.uri
-    //            Name = get.Optional.Field "name" Decode.string
-    //            Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-    //            FactorValues = get.Optional.Field "factorValues" (Decode.list (FactorValue.decoder options))
-    //            DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list (Source.decoder options))
-    //        }
-    //    )
-
 [<AutoOpen>]
 module SampleExtensions =
     
@@ -83,4 +76,12 @@ module SampleExtensions =
         static member toISAJsonString(?spaces) =
             fun (f:Sample) ->
                 Sample.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromROCrateString (s:string) =
+            Decode.fromJsonString Sample.ROCrate.decoder s
+
+        static member toROCrateString(?spaces) =
+            fun (f:Sample) ->
+                Sample.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)

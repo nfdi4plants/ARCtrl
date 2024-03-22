@@ -87,6 +87,25 @@ type FactorValue =
     static member nameEqualsString (name : string) (fv : FactorValue) =
         fv.NameText = name
 
+    interface IPropertyValue<FactorValue> with
+
+        member this.GetCategory() =
+            this.Category
+            |> Option.bind (fun f -> f.FactorType)
+
+        member this.GetValue() =
+            this.Value
+
+        member this.GetUnit() =
+            this.Unit
+
+        member this.GetAdditionalType() =
+            "FactorValue"
+
+    static member createAsPV (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+        let category = category |> Option.map (fun c -> Factor.create(FactorType = c))
+        FactorValue.create(?Category = category, ?Value = value, ?Unit = unit)
+
     ///// Returns the value of the factor value as string if it exists (with unit)
     //static member tryGetValueAsString (fv : FactorValue) =
     //    let unit = fv.Unit |> Option.map (OntologyAnnotation.getNameText)

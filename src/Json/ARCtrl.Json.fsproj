@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="context\rocrate\property_value_context.fs" />
     <Compile Include="context\rocrate\isa_assay_context.fs" />
     <Compile Include="context\rocrate\isa_comment_context.fs" />
     <Compile Include="context\rocrate\isa_component_context.fs" />
@@ -38,6 +39,7 @@
     <Compile Include="Person.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="Process\Value.fs" />
+    <Compile Include="Process\PropertyValue.fs" />
     <Compile Include="Process\Factor.fs" />
     <Compile Include="Process\FactorValue.fs" />
     <Compile Include="Process\ProtocolParameter.fs" />

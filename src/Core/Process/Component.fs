@@ -15,8 +15,10 @@ type Component =
         ComponentType : OntologyAnnotation option
     }
 
-    member this.ComponentName = Component.composeName this.ComponentValue this.ComponentUnit
-
+    member this.ComponentName = 
+        this.ComponentValue
+        |> Option.map (fun v -> Component.composeName v (this.ComponentUnit))
+        
     static member make value unit componentType =
         {
             ComponentValue = value
@@ -35,15 +37,14 @@ type Component =
     /// Components do not have enough fields in ISA-JSON to include all existing ontology term information. 
     /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
     /// Without this string composition we loose the ontology information for the header value.
-    static member composeName (value : Value Option) (unit : OntologyAnnotation option) = 
+    static member composeName (value : Value) (unit : OntologyAnnotation option) = 
         match value,unit with
-        | Some (Value.Ontology oa), _ ->
+        | Value.Ontology oa, _ ->
             $"{oa.NameText} ({oa.TermAccessionShort})"
-        | Some v, None ->
+        | v, None ->
             $"{v.Text}"
-        | Some v, Some u ->
+        | v, Some u ->
             $"{v.Text} {u.NameText} ({u.TermAccessionShort})"
-        | None, _ -> ""
 
     /// This function parses the given Component header string format into the ISA-JSON Component type
     ///
@@ -113,3 +114,12 @@ type Component =
 
     member this.SetCategory(c : OntologyAnnotation) =
         {this with ComponentType = Some c}
+
+    interface IPropertyValue<Component> with
+        member this.GetCategory() = this.ComponentType
+        member this.GetAdditionalType() = "Component"
+        member this.GetValue() = this.ComponentValue
+        member this.GetUnit() = this.ComponentUnit
+
+    static member createAsPV (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+        Component.create(?componentType = category, ?value = value, ?unit = unit)

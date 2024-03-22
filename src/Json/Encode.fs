@@ -91,10 +91,10 @@ module Encode =
         if Array.isEmpty value then Encode.nil
         else value |> Array.map encoder |> Encode.array
 
-    let tryIncludeList name (encoder : 'Value -> Json) (value : 'Value list) = 
+    let tryIncludeList name (encoder : 'Value -> Json) (value : 'Value list option) = 
         name,
-        if List.isEmpty value then Encode.nil
-        else value |> List.map encoder |> Encode.list
+        if value.IsNone then Encode.nil
+        else value.Value |> List.map encoder |> Encode.list
 
     let tryIncludeListOpt name (encoder : 'Value -> Json) (value : 'Value list option) = 
         name,

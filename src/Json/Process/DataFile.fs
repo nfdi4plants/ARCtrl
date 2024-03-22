@@ -8,7 +8,7 @@ open System.IO
 
 module DataFile = 
 
-    module ISAJson =
+    module ROCrate =
 
         let encoder (value : DataFile) = 
             match value with
@@ -33,6 +33,12 @@ module DataFile =
                     | Error e -> Error e
             }
 
+    module ISAJson =
+
+        let encoder = ROCrate.encoder
+
+        let decoder = ROCrate.decoder
+
 [<AutoOpen>]
 module DataFileExtensions =
     
@@ -44,4 +50,12 @@ module DataFileExtensions =
         static member toISAJsonString(?spaces) =
             fun (f:DataFile) ->
                 DataFile.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromROCrateJsonString (s:string) =
+            Decode.fromJsonString DataFile.ROCrate.decoder s
+
+        static member toROCrateJsonString(?spaces) =    
+            fun (f:DataFile) ->
+                DataFile.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)

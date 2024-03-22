@@ -8,6 +8,14 @@ open System.IO
 
 module MaterialAttributeValue =
 
+    module ROCrate =
+
+        let encoder : MaterialAttributeValue -> Json= 
+            PropertyValue.ROCrate.encoder<MaterialAttributeValue>
+
+        let decoder : Decoder<MaterialAttributeValue> =
+            PropertyValue.ROCrate.decoder<MaterialAttributeValue> (MaterialAttributeValue.createAsPV)
+
     module ISAJson =
       
         let encoder (oa : MaterialAttributeValue) = 
@@ -30,50 +38,6 @@ module MaterialAttributeValue =
                 }
             )
 
-        //let genID (m:MaterialAttributeValue) : string = 
-        //    match m.ID with
-        //    | Some id -> URI.toString id
-        //    | None -> "#EmptyMaterialAttributeValue" 
-
-        //let encoder (options : ConverterOptions) (oa : MaterialAttributeValue) = 
-        //    [
-        //        if options.SetID then 
-        //            "@id", Encode.string (oa |> genID)
-        //        else 
-        //            Encode.tryInclude "@id" Encode.string (oa.ID)
-        //        if options.IsJsonLD then 
-        //            "@type", (Encode.list [Encode.string "MaterialAttributeValue"])
-        //            "additionalType", Encode.string "MaterialAttributeValue"
-        //        if options.IsJsonLD then
-        //            if oa.Category.IsSome && oa.Category.Value.CharacteristicType.IsSome then
-        //                Encode.tryInclude "category" Encode.string (oa.Category.Value.CharacteristicType.Value.Name)
-        //            if oa.Category.IsSome && oa.Category.Value.CharacteristicType.IsSome then
-        //                Encode.tryInclude "categoryCode" Encode.string (oa.Category.Value.CharacteristicType.Value.TermAccessionNumber)
-        //            if oa.Value.IsSome then "value", Encode.string (oa.ValueText)
-        //            if oa.Value.IsSome && oa.Value.Value.IsAnOntology then
-        //                Encode.tryInclude "valueCode" Encode.string (oa.Value.Value.AsOntology()).TermAccessionNumber
-        //            if oa.Unit.IsSome then Encode.tryInclude "unit" Encode.string (oa.Unit.Value.Name)
-        //            if oa.Unit.IsSome then Encode.tryInclude "unitCode" Encode.string (oa.Unit.Value.TermAccessionNumber)
-        //        else
-        //            Encode.tryInclude "category" (MaterialAttribute.encoder options) (oa.Category)
-        //            Encode.tryInclude "value" (Value.encoder options) (oa.Value)
-        //            Encode.tryInclude "unit" (OntologyAnnotation.encoder options) (oa.Unit)
-        //        if options.IsJsonLD then 
-        //            "@context", ROCrateContext.MaterialAttributeValue.context_jsonvalue
-        //    ]
-        //    |> Encode.choose
-        //    |> Encode.object
-
-        //let decoder (options : ConverterOptions) : Decoder<MaterialAttributeValue> =
-        //    Decode.object (fun get ->
-        //        {
-        //            ID = get.Optional.Field "@id" GDecode.uri
-        //            Category = get.Optional.Field "category" (MaterialAttribute.decoder options)
-        //            Value = get.Optional.Field "value" (Value.decoder options)
-        //            Unit = get.Optional.Field "unit" (OntologyAnnotation.decoder options)
-        //        }
-        //    )
-
 [<AutoOpen>]
 module MaterialAttributeValueExtensions =
     
@@ -85,4 +49,12 @@ module MaterialAttributeValueExtensions =
         static member toISAJsonString(?spaces) =
             fun (f:MaterialAttributeValue) ->
                 MaterialAttributeValue.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromROCrateJsonString (s:string) = 
+            Decode.fromJsonString MaterialAttributeValue.ROCrate.decoder s
+
+        static member toROCrateJsonString(?spaces) =
+            fun (f:MaterialAttributeValue) ->
+                MaterialAttributeValue.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)

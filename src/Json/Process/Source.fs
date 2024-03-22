@@ -7,6 +7,37 @@ open ARCtrl.Process
 
 module Source =
     
+    module ROCrate = 
+
+        let genID (s:Source) : string = 
+            match s.ID with
+            | Some id -> URI.toString id
+            | None -> match s.Name with
+                      | Some n -> "#Source_" + n.Replace(" ","_")
+                      | None -> "#EmptySource"
+    
+        let rec encoder (oa : Source) = 
+            [
+                "@id", Encode.string (oa |> genID)
+                "@type", (Encode.list [ Encode.string "Source"])
+                Encode.tryInclude "name" Encode.string (oa.Name)
+                Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)      
+                "@context", ROCrateContext.Source.context_jsonvalue
+                ]
+            |> Encode.choose
+            |> Encode.object
+
+        let rec decoder : Decoder<Source> =     
+            Decode.object (fun get ->
+           
+                {
+                    ID = get.Optional.Field "@id" Decode.uri
+                    Name = get.Optional.Field "name" Decode.string
+                    Characteristics = get.Optional.Field "characteristics" (Decode.list MaterialAttributeValue.ROCrate.decoder)
+                } 
+            
+            )
+
     module ISAJson = 
     
         let rec encoder (oa : Source) = 
@@ -29,42 +60,6 @@ module Source =
                 } 
             )
 
-    //let genID (s:Source) : string = 
-    //    match s.ID with
-    //    | Some id -> URI.toString id
-    //    | None -> match s.Name with
-    //              | Some n -> "#Source_" + n.Replace(" ","_")
-    //              | None -> "#EmptySource"
-    
-    //let rec encoder (options : ConverterOptions) (oa : Source) = 
-    //    [
-    //        if options.SetID then 
-    //            "@id", Encode.string (oa |> genID)
-    //        else 
-    //            Encode.tryInclude "@id" Encode.string (oa.ID)
-    //        if options.IsJsonLD then 
-    //            "@type", (Encode.list [ Encode.string "Source"])
-    //        Encode.tryInclude "name" Encode.string (oa.Name)
-    //        Encode.tryIncludeList "characteristics" (MaterialAttributeValue.encoder options) (oa.Characteristics)      
-    //        if options.IsJsonLD then
-    //            "@context", ROCrateContext.Source.context_jsonvalue
-    //        ]
-    //    |> Encode.choose
-    //    |> Encode.object
-
-    //let allowedFields = ["@id";"name";"characteristics";"@type"; "@context"]
-
-    //let rec decoder (options : ConverterOptions) : Decoder<Source> =     
-    //    GDecode.object allowedFields (fun get ->
-            
-    //            {
-    //                ID = get.Optional.Field "@id" GDecode.uri
-    //                Name = get.Optional.Field "name" Decode.string
-    //                Characteristics = get.Optional.Field "characteristics" (Decode.list (MaterialAttributeValue.decoder options))
-    //            } 
-            
-    //    )
-
 [<AutoOpen>]
 module SourceExtensions =
     
@@ -76,4 +71,12 @@ module SourceExtensions =
         static member toISAJsonString(?spaces) =
             fun (f:Source) ->
                 Source.ISAJson.encoder f
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromROCrateString (s:string) = 
+            Decode.fromJsonString Source.ROCrate.decoder s
+
+        static member toROCrateString(?spaces) =
+            fun (f:Source) ->
+                Source.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
