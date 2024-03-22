@@ -10,18 +10,81 @@ open System.IO
 
 module Study =
     
-    //module ROCrate = 
+    let encoder (study:ArcStudy) = 
+        Encode.object [ 
+            "Identifier", Encode.string study.Identifier
+            Encode.tryInclude "Title" Encode.string study.Title
+            Encode.tryInclude "Description" Encode.string study.Description
+            Encode.tryInclude "SubmissionDate" Encode.string study.SubmissionDate
+            Encode.tryInclude "PublicReleaseDate" Encode.string study.PublicReleaseDate
+            Encode.tryIncludeSeq "Publications" Publication.encoder study.Publications
+            Encode.tryIncludeSeq "Contacts" Person.encoder study.Contacts
+            Encode.tryIncludeSeq "StudyDesignDescriptors" OntologyAnnotation.encoder study.StudyDesignDescriptors
+            Encode.tryIncludeSeq "Tables" ArcTable.encoder study.Tables
+            Encode.tryIncludeSeq "RegisteredAssayIdentifiers" Encode.string study.RegisteredAssayIdentifiers
+            Encode.tryIncludeSeq "Comments" Comment.encoder study.Comments
+        ]
+  
+    let decoder : Decoder<ArcStudy> =
+        Decode.object (fun get ->
+            ArcStudy(
+                get.Required.Field "Identifier" Decode.string,
+                ?title = get.Optional.Field "Title" Decode.string,
+                ?description = get.Optional.Field "Description" Decode.string,
+                ?submissionDate = get.Optional.Field "SubmissionDate" Decode.string,
+                ?publicReleaseDate = get.Optional.Field "PublicReleaseDate" Decode.string,
+                ?publications = get.Optional.Field "Publications" (Decode.resizeArray Publication.decoder),
+                ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
+                ?studyDesignDescriptors = get.Optional.Field "StudyDesignDescriptors" (Decode.resizeArray OntologyAnnotation.decoder),
+                ?tables = get.Optional.Field "Tables" (Decode.resizeArray ArcTable.decoder) ,
+                ?registeredAssayIdentifiers = get.Optional.Field "RegisteredAssayIdentifiers" (Decode.resizeArray Decode.string),
+                ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
+            ) 
+    )
 
-    //    let genID (s:Study) : string = 
-    //        match s.ID with
-    //        | Some id -> URI.toString id
-    //        | None -> match s.FileName with
-    //                  | Some n -> n.Replace(" ","_")//.Remove(0,1 + (max (n.LastIndexOf('/')) (n.LastIndexOf('\\'))))
-    //                  | None -> match s.Identifier with
-    //                            | Some id -> "#Study_" + id.Replace(" ","_")
-    //                            | None -> match s.Title with
-    //                                      | Some t -> "#Study_" + t.Replace(" ","_")
-    //                                      | None -> "#EmptyStudy"
+    open OATable
+    open CellTable
+
+    let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (study:ArcStudy) =
+        Encode.object [ 
+            "Identifier", Encode.string study.Identifier
+            Encode.tryInclude "Title" Encode.string study.Title
+            Encode.tryInclude "Description" Encode.string study.Description
+            Encode.tryInclude "SubmissionDate" Encode.string study.SubmissionDate
+            Encode.tryInclude "PublicReleaseDate" Encode.string study.PublicReleaseDate
+            Encode.tryIncludeSeq "Publications" Publication.encoder study.Publications
+            Encode.tryIncludeSeq "Contacts" Person.encoder study.Contacts
+            Encode.tryIncludeSeq "StudyDesignDescriptors" OntologyAnnotation.encoder study.StudyDesignDescriptors
+            Encode.tryIncludeSeq "Tables" (ArcTable.encoderCompressed stringTable oaTable cellTable) study.Tables
+            Encode.tryIncludeSeq "RegisteredAssayIdentifiers" Encode.string study.RegisteredAssayIdentifiers
+            Encode.tryIncludeSeq "Comments" Comment.encoder study.Comments
+        ]
+
+    let decoderCompressed (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray) : Decoder<ArcStudy> =
+        Decode.object (fun get ->
+            ArcStudy(
+                get.Required.Field "Identifier" Decode.string,
+                ?title = get.Optional.Field "Title" Decode.string,
+                ?description = get.Optional.Field "Description" Decode.string,
+                ?submissionDate = get.Optional.Field "SubmissionDate" Decode.string,
+                ?publicReleaseDate = get.Optional.Field "PublicReleaseDate" Decode.string,
+                ?publications = get.Optional.Field "Publications" (Decode.resizeArray Publication.decoder),
+                ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
+                ?studyDesignDescriptors = get.Optional.Field "StudyDesignDescriptors" (Decode.resizeArray OntologyAnnotation.decoder),
+                ?tables = get.Optional.Field "Tables" (Decode.resizeArray <| ArcTable.decoderCompressed stringTable oaTable cellTable),
+                ?registeredAssayIdentifiers = get.Optional.Field "RegisteredAssayIdentifiers" (Decode.resizeArray Decode.string),
+                ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
+            ) 
+        )
+
+    module ROCrate = 
+
+        let genID (a:ArcStudy) : string = 
+            match a.Identifier with
+            | "" -> "#EmptyStudy"
+            | i -> 
+                let identifier = i.Replace(" ","_")
+                $"#study/{identifier}"
     
     //    let encoder (options : ConverterOptions) (s : Study) = 
     //        [
@@ -122,7 +185,6 @@ module Study =
 
         let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
         
-        //TO-DO: Return Assays?
         let decoder : Decoder<ArcStudy*ArcAssay list> =
             Decode.objectNoAdditionalProperties allowedFields (fun get ->
                 let identifier = 

@@ -6,18 +6,51 @@ open ARCtrl
 
 module Investigation =
     
-    
-    let genID (i:Investigation) : string = 
-        "./"
-        // match i.ID with
-        // | Some id -> URI.toString id
-        // | None -> match i.FileName with
-        //           | Some n -> "#Study_" + n.Replace(" ","_")
-        //           | None -> match i.Identifier with
-        //                     | Some id -> "#Study_" + id.Replace(" ","_")
-        //                     | None -> match i.Title with
-        //                               | Some t -> "#Study_" + t.Replace(" ","_")
-        //                               | None -> "#EmptyStudy"
+    let encoder (inv : ArcInvestigation) = 
+        Encode.object [ 
+            "Identifier", Encode.string inv.Identifier
+            Encode.tryInclude "Title" Encode.string (inv.Title)
+            Encode.tryInclude "Description" Encode.string (inv.Description)
+            Encode.tryInclude "SubmissionDate" Encode.string (inv.SubmissionDate)
+            Encode.tryInclude "PublicReleaseDate" Encode.string (inv.PublicReleaseDate)
+            Encode.tryIncludeSeq "OntologySourceReferences" OntologySourceReference.encoder (inv.OntologySourceReferences)
+            //if inv.Title.IsSome then
+            //    "Title", Encode.string inv.Title.Value
+            //if inv.Description.IsSome then
+            //    "Description", Encode.string inv.Description.Value
+            //if inv.SubmissionDate.IsSome then
+            //    "SubmissionDate", Encode.string inv.SubmissionDate.Value
+            //if inv.PublicReleaseDate.IsSome then
+            //    "PublicReleaseDate", Encode.string inv.PublicReleaseDate.Value
+            //if inv.OntologySourceReferences.Length <> 0 then
+            //    "OntologySourceReferences", EncoderOntologySourceReferences inv.OntologySourceReferences
+            if inv.Publications.Length <> 0 then
+                "Publications", EncoderPublications inv.Publications
+            if inv.Contacts.Length <> 0 then
+                "Contacts", EncoderPersons inv.Contacts
+            if inv.Assays.Count <> 0 then
+                "Assays", Encode.seq (Seq.map ArcAssay.encoder inv.Assays) 
+            if inv.Studies.Count <> 0 then
+                "Studies", Encode.seq (Seq.map ArcStudy.encoder inv.Studies)
+            if inv.RegisteredStudyIdentifiers.Count <> 0 then
+                "RegisteredStudyIdentifiers", Encode.seq (Seq.map Encode.string inv.RegisteredStudyIdentifiers)
+            if inv.Comments.Length <> 0 then
+                "Comments", EncoderComments inv.Comments
+            // remarks are ignored for whatever reason
+        ]
+
+    module ROCrate = 
+        let genID (i:ArcInvestigation) : string = 
+            "./"
+            // match i.ID with
+            // | Some id -> URI.toString id
+            // | None -> match i.FileName with
+            //           | Some n -> "#Study_" + n.Replace(" ","_")
+            //           | None -> match i.Identifier with
+            //                     | Some id -> "#Study_" + id.Replace(" ","_")
+            //                     | None -> match i.Title with
+            //                               | Some t -> "#Study_" + t.Replace(" ","_")
+            //                               | None -> "#EmptyStudy"
 
     let encoder (options : ConverterOptions) (oa : Investigation) = 
         [

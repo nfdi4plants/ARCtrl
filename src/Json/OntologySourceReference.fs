@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.JSON
+﻿namespace ARCtrl.Json
 
 open Thoth.Json.Core
 open ARCtrl
