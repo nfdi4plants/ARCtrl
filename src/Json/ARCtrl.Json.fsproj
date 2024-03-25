@@ -67,6 +67,7 @@
 	  <Compile Include="Table\CompositeHeader.fs" />
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\Compression.fs" />
+    <Compile Include="Table\Templates.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />

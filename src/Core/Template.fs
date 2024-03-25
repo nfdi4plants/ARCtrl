@@ -19,16 +19,16 @@ type Organisation =
     member this.IsOfficial() = this = DataPLANT
 
 [<AttachMembers>]
-type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?organisation: Organisation, ?version: string, ?authors: Person [], 
-    ?repos: OntologyAnnotation [], ?tags: OntologyAnnotation [], ?lastUpdated: System.DateTime) =
+type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?organisation: Organisation, ?version: string, ?authors: ResizeArray<Person>, 
+    ?repos: ResizeArray<OntologyAnnotation>, ?tags: ResizeArray<OntologyAnnotation>, ?lastUpdated: System.DateTime) =
 
     let name = defaultArg name ""
     let description = defaultArg description ""
     let organisation = defaultArg organisation (Other "Custom Organisation")
     let version = defaultArg version "0.0.0"
-    let authors = defaultArg authors [||]
-    let repos = defaultArg repos [||]
-    let tags = defaultArg tags [||]
+    let authors = defaultArg authors <| ResizeArray()
+    let repos = defaultArg repos <| ResizeArray()
+    let tags = defaultArg tags <| ResizeArray()
     let lastUpdated = defaultArg lastUpdated (System.DateTime.Now.ToUniversalTime())
 
     member val Id : System.Guid = id with get, set
@@ -37,9 +37,9 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?or
     member val Description : string = description with get, set
     member val Organisation : Organisation = organisation with get, set
     member val Version : string = version with get, set
-    member val Authors : Person [] = authors with get, set
-    member val EndpointRepositories : OntologyAnnotation [] = repos with get, set
-    member val Tags : OntologyAnnotation [] = tags with get, set
+    member val Authors : ResizeArray<Person> = authors with get, set
+    member val EndpointRepositories : ResizeArray<OntologyAnnotation> = repos with get, set
+    member val Tags : ResizeArray<OntologyAnnotation> = tags with get, set
     member val LastUpdated : System.DateTime = lastUpdated with get, set
 
     static member make id table name description organisation version authors repos tags lastUpdated =
