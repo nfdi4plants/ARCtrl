@@ -33,6 +33,7 @@ module Assay =
             ) 
         )
 
+    open StringTable
     open OATable
     open CellTable
 
@@ -156,6 +157,41 @@ module Assay =
 
 [<AutoOpen>]
 module AssayExtensions =
-    
-    type ArcAssay with 
-        static member x = 1
+
+    open System.Collections.Generic
+
+    type ArcAssay with
+       
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString Assay.decoder s
+
+        static member toJsonString(?spaces) = 
+            fun (obj:ArcAssay) ->
+                Assay.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromCompressedJsonString (s: string) =
+            try Decode.fromJsonString (Compression.decode Assay.decoderCompressed) s with
+            | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
+
+        static member toCompressedJsonString(?spaces) =
+            fun (obj:ArcAssay) ->
+                let spaces = defaultArg spaces 0
+                Encode.toJsonString spaces (Compression.encode Assay.encoderCompressed obj)
+
+        //static member fromROCrateJsonString (s:string) = 
+        //    Decode.fromJsonString Assay.ROCrate.decoder s
+
+        ///// exports in json-ld format
+        //static member toROCrateJsonString(?spaces) =
+        //    fun (obj:ArcAssay) ->
+        //        Assay.ROCrate.encoder obj
+        //        |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member toISAJsonString(?spaces) =
+            fun (obj:ArcAssay) ->
+                Assay.ISAJson.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString Assay.ISAJson.decoder s

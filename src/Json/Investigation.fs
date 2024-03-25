@@ -3,41 +3,83 @@ namespace ARCtrl.Json
 open Thoth.Json.Core
 
 open ARCtrl
+open ARCtrl.Helper
 
 module Investigation =
     
     let encoder (inv : ArcInvestigation) = 
         Encode.object [ 
             "Identifier", Encode.string inv.Identifier
-            Encode.tryInclude "Title" Encode.string (inv.Title)
-            Encode.tryInclude "Description" Encode.string (inv.Description)
-            Encode.tryInclude "SubmissionDate" Encode.string (inv.SubmissionDate)
-            Encode.tryInclude "PublicReleaseDate" Encode.string (inv.PublicReleaseDate)
-            Encode.tryIncludeSeq "OntologySourceReferences" OntologySourceReference.encoder (inv.OntologySourceReferences)
-            //if inv.Title.IsSome then
-            //    "Title", Encode.string inv.Title.Value
-            //if inv.Description.IsSome then
-            //    "Description", Encode.string inv.Description.Value
-            //if inv.SubmissionDate.IsSome then
-            //    "SubmissionDate", Encode.string inv.SubmissionDate.Value
-            //if inv.PublicReleaseDate.IsSome then
-            //    "PublicReleaseDate", Encode.string inv.PublicReleaseDate.Value
-            //if inv.OntologySourceReferences.Length <> 0 then
-            //    "OntologySourceReferences", EncoderOntologySourceReferences inv.OntologySourceReferences
-            if inv.Publications.Length <> 0 then
-                "Publications", EncoderPublications inv.Publications
-            if inv.Contacts.Length <> 0 then
-                "Contacts", EncoderPersons inv.Contacts
-            if inv.Assays.Count <> 0 then
-                "Assays", Encode.seq (Seq.map ArcAssay.encoder inv.Assays) 
-            if inv.Studies.Count <> 0 then
-                "Studies", Encode.seq (Seq.map ArcStudy.encoder inv.Studies)
-            if inv.RegisteredStudyIdentifiers.Count <> 0 then
-                "RegisteredStudyIdentifiers", Encode.seq (Seq.map Encode.string inv.RegisteredStudyIdentifiers)
-            if inv.Comments.Length <> 0 then
-                "Comments", EncoderComments inv.Comments
+            Encode.tryInclude "Title" Encode.string inv.Title
+            Encode.tryInclude "Description" Encode.string inv.Description
+            Encode.tryInclude "SubmissionDate" Encode.string inv.SubmissionDate
+            Encode.tryInclude "PublicReleaseDate" Encode.string inv.PublicReleaseDate
+            Encode.tryIncludeSeq "OntologySourceReferences" OntologySourceReference.encoder inv.OntologySourceReferences
+            Encode.tryIncludeSeq "Publications" Publication.encoder inv.Publications
+            Encode.tryIncludeSeq "Contacts" Person.encoder inv.Contacts
+            Encode.tryIncludeSeq "Assays" Assay.encoder inv.Assays
+            Encode.tryIncludeSeq "Studies" Study.encoder inv.Studies
+            Encode.tryIncludeSeq "RegisteredStudyIdentifiers" Encode.string inv.RegisteredStudyIdentifiers
+            Encode.tryIncludeSeq "Comments" Comment.encoder inv.Comments
             // remarks are ignored for whatever reason
         ]
+
+    let decoder : Decoder<ArcInvestigation> =
+        Decode.object (fun get ->
+            ArcInvestigation(
+                get.Required.Field("Identifier") Decode.string,
+                ?title = get.Optional.Field "Title" Decode.string,
+                ?description = get.Optional.Field "Description" Decode.string,
+                ?submissionDate = get.Optional.Field "SubmissionDate" Decode.string,
+                ?publicReleaseDate = get.Optional.Field "PublicReleaseDate" Decode.string,
+                ?ontologySourceReferences = get.Optional.Field "OntologySourceReferences" (Decode.resizeArray OntologySourceReference.decoder),
+                ?publications = get.Optional.Field "Publications" (Decode.resizeArray Publication.decoder),
+                ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
+                ?assays = get.Optional.Field "Assays" (Decode.resizeArray Assay.decoder),
+                ?studies = get.Optional.Field "Studies" (Decode.resizeArray Study.decoder),
+                ?registeredStudyIdentifiers = get.Optional.Field "RegisteredStudyIdentifiers" (Decode.resizeArray Decode.string),
+                ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
+            ) 
+        )
+
+    open OATable
+    open CellTable
+    open StringTable
+
+    let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (inv : ArcInvestigation) = 
+        Encode.object [ 
+            "Identifier", Encode.string inv.Identifier
+            Encode.tryInclude "Title" Encode.string inv.Title
+            Encode.tryInclude "Description" Encode.string inv.Description
+            Encode.tryInclude "SubmissionDate" Encode.string inv.SubmissionDate
+            Encode.tryInclude "PublicReleaseDate" Encode.string inv.PublicReleaseDate
+            Encode.tryIncludeSeq "OntologySourceReferences" OntologySourceReference.encoder inv.OntologySourceReferences
+            Encode.tryIncludeSeq "Publications" Publication.encoder inv.Publications
+            Encode.tryIncludeSeq "Contacts" Person.encoder inv.Contacts
+            Encode.tryIncludeSeq "Assays" (Assay.encoderCompressed stringTable oaTable cellTable) inv.Assays
+            Encode.tryIncludeSeq "Studies" (Study.encoderCompressed stringTable oaTable cellTable) inv.Studies
+            Encode.tryIncludeSeq "RegisteredStudyIdentifiers" Encode.string inv.RegisteredStudyIdentifiers
+            Encode.tryIncludeSeq "Comments" Comment.encoder inv.Comments
+            // remarks are ignored for whatever reason
+        ]
+
+    let decoderCompressed (stringTable) (oaTable) (cellTable) : Decoder<ArcInvestigation> =
+        Decode.object (fun get ->
+            ArcInvestigation(
+                get.Required.Field("Identifier") Decode.string,
+                ?title = get.Optional.Field "Title" Decode.string,
+                ?description = get.Optional.Field "Description" Decode.string,
+                ?submissionDate = get.Optional.Field "SubmissionDate" Decode.string,
+                ?publicReleaseDate = get.Optional.Field "PublicReleaseDate" Decode.string,
+                ?ontologySourceReferences = get.Optional.Field "OntologySourceReferences" (Decode.resizeArray OntologySourceReference.decoder),
+                ?publications = get.Optional.Field "Publications" (Decode.resizeArray Publication.decoder),
+                ?contacts = get.Optional.Field "Contacts" (Decode.resizeArray Person.decoder),
+                ?assays = get.Optional.Field "Assays" (Decode.resizeArray <| Assay.decoderCompressed stringTable oaTable cellTable),
+                ?studies = get.Optional.Field "Studies" (Decode.resizeArray <| Study.decoderCompressed stringTable oaTable cellTable),
+                ?registeredStudyIdentifiers = get.Optional.Field "RegisteredStudyIdentifiers" (Decode.resizeArray Decode.string),
+                ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
+            ) 
+        )
 
     module ROCrate = 
         let genID (i:ArcInvestigation) : string = 
@@ -52,84 +94,129 @@ module Investigation =
             //                               | Some t -> "#Study_" + t.Replace(" ","_")
             //                               | None -> "#EmptyStudy"
 
-    let encoder (options : ConverterOptions) (oa : Investigation) = 
-        [
-            if options.SetID then 
-                "@id", Encode.string (oa |> genID)
-            else 
-                Encode.tryInclude "@id" Encode.string (oa.ID)
-            if options.IsJsonLD then 
-                "@type", Encode.string "Investigation"
-                "additionalType", Encode.string "Investigation"
-            Encode.tryInclude "filename" Encode.string (oa.FileName)
-            Encode.tryInclude "identifier" Encode.string (oa.Identifier)
-            Encode.tryInclude "title" Encode.string (oa.Title)
-            Encode.tryInclude "description" Encode.string (oa.Description)
-            Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
-            Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-            Encode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
-            Encode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
-            Encode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
-            Encode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
-            Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
-            if options.IsJsonLD then
-                "@context", ROCrateContext.Investigation.context_jsonvalue
-        ]
-        |> Encode.choose
-        |> Encode.object
+        //let encoder (options : ConverterOptions) (oa : Investigation) = 
+        //    [
+        //        if options.SetID then 
+        //            "@id", Encode.string (oa |> genID)
+        //        else 
+        //            Encode.tryInclude "@id" Encode.string (oa.ID)
+        //        if options.IsJsonLD then 
+        //            "@type", Encode.string "Investigation"
+        //            "additionalType", Encode.string "Investigation"
+        //        Encode.tryInclude "filename" Encode.string (oa.FileName)
+        //        Encode.tryInclude "identifier" Encode.string (oa.Identifier)
+        //        Encode.tryInclude "title" Encode.string (oa.Title)
+        //        Encode.tryInclude "description" Encode.string (oa.Description)
+        //        Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
+        //        Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
+        //        Encode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
+        //        Encode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
+        //        Encode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
+        //        Encode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
+        //        Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
+        //        if options.IsJsonLD then
+        //            "@context", ROCrateContext.Investigation.context_jsonvalue
+        //    ]
+        //    |> Encode.choose
+        //    |> Encode.object
 
-    let encodeRoCrate (options : ConverterOptions) (oa : Investigation) = 
-        [
-            Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
-            Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
-            Encode.tryInclude "about" (encoder options) (Some oa)
-            "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
-            if options.IsJsonLD then
-                "@context", ROCrateContext.ROCrate.context_jsonvalue
+        //let encodeRoCrate (options : ConverterOptions) (oa : Investigation) = 
+        //    [
+        //        Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
+        //        Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
+        //        Encode.tryInclude "about" (encoder options) (Some oa)
+        //        "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
+        //        if options.IsJsonLD then
+        //            "@context", ROCrateContext.ROCrate.context_jsonvalue
+        //        ]
+        //    |> Encode.choose
+        //    |> Encode.object
+
+    module ISAJson =
+
+        let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type";"@context"]
+
+        let encoder (inv: ArcInvestigation) = 
+            [
+                "filename", Encode.string ArcInvestigation.FileName
+                "identifier", Encode.string (inv.Identifier)
+                Encode.tryInclude "title" Encode.string (inv.Title)
+                Encode.tryInclude "description" Encode.string (inv.Description)
+                Encode.tryInclude "submissionDate" Encode.string (inv.SubmissionDate)
+                Encode.tryInclude "publicReleaseDate" Encode.string (inv.PublicReleaseDate)
+                Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ISAJson.encoder inv.OntologySourceReferences
+                Encode.tryIncludeSeq "publications" Publication.ISAJson.encoder inv.Publications
+                Encode.tryIncludeSeq "people" Person.ISAJson.encoder inv.Contacts
+                Encode.tryIncludeSeq "studies" Study.ISAJson.encoder inv.Studies
+                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder inv.Comments
             ]
-        |> Encode.choose
-        |> Encode.object
+            |> Encode.choose
+            |> Encode.object
 
+        let decoder : Decoder<ArcInvestigation> =
+            Decode.objectNoAdditionalProperties allowedFields (fun get ->
+                let identifer = 
+                    match get.Optional.Field("identifier") Decode.string with
+                    | Some i -> i
+                    | None -> Identifier.createMissingIdentifier()
+                let studiesRaw, assaysRaw =
+                    get.Optional.Field "studies" (Decode.list Study.ISAJson.decoder)
+                    |> Option.defaultValue []
+                    |> List.unzip
+                let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray 
+                let studies = ResizeArray(studiesRaw)
+                let studyIdentifiers = studiesRaw |> Seq.map (fun a -> a.Identifier) |> ResizeArray
+                ArcInvestigation(
+                    identifer,
+                    ?title = get.Optional.Field "title" Decode.string,
+                    ?description = get.Optional.Field "description" Decode.string,
+                    ?submissionDate = get.Optional.Field "submissionDate" Decode.string,
+                    ?publicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string,
+                    ?ontologySourceReferences = get.Optional.Field "ontologySourceReferences" (Decode.resizeArray OntologySourceReference.ISAJson.decoder),
+                    ?publications = get.Optional.Field "publications" (Decode.resizeArray Publication.ISAJson.decoder),
+                    ?contacts = get.Optional.Field "people" (Decode.resizeArray Person.ISAJson.decoder),
+                    assays = assays,
+                    studies = studies,
+                    registeredStudyIdentifiers = studyIdentifiers,
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ISAJson.decoder)
+                )
+            )
 
-    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type";"@context"]
+[<AutoOpen>]
+module InvestigationExtensions =
 
-    let decoder (options : ConverterOptions) : Decoder<Investigation> =
-        GDecode.object allowedFields (fun get ->
-            {
-                ID = get.Optional.Field "@id" Decode.string
-                FileName = get.Optional.Field "filename" Decode.string
-                Identifier = get.Optional.Field "identifier" Decode.string
-                Title = get.Optional.Field "title" Decode.string
-                Description = get.Optional.Field "description" Decode.string
-                SubmissionDate = get.Optional.Field "submissionDate" Decode.string
-                PublicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string
-                OntologySourceReferences = get.Optional.Field "ontologySourceReferences" (Decode.list (OntologySourceReference.decoder options))
-                Publications = get.Optional.Field "publications" (Decode.list (Publication.decoder options))
-                Contacts = get.Optional.Field "people" (Decode.list (Person.decoder options))
-                Studies = get.Optional.Field "studies" (Decode.list (Study.decoder options))
-                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
-                Remarks = []
-            }
-        )
+    type ArcInvestigation with
+       
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString Investigation.decoder s
 
-    let fromJsonString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions())) s
-    let fromJsonldString (s:string) = 
-        GDecode.fromJsonString (decoder (ConverterOptions(IsJsonLD=true))) s
+        static member toJsonString(?spaces) = 
+            fun (obj:ArcInvestigation) ->
+                Investigation.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
 
-    let toJsonString (p:Investigation) = 
-        encoder (ConverterOptions()) p
-        |> Encode.toJsonString 2
+        static member fromCompressedJsonString (s: string) =
+            try Decode.fromJsonString (Compression.decode Investigation.decoderCompressed) s with
+            | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
 
-    /// exports in json-ld format
-    let toJsonldString (i:Investigation) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) i
-        |> Encode.toJsonString 2
+        static member toCompressedJsonString(?spaces) =
+            fun (obj:ArcInvestigation) ->
+                let spaces = defaultArg spaces 0
+                Encode.toJsonString spaces (Compression.encode Investigation.encoderCompressed obj)
 
-    let toJsonldStringWithContext (i:Investigation) = 
-        encoder (ConverterOptions(SetID=true,IsJsonLD=true)) i
-        |> Encode.toJsonString 2
+        //static member fromROCrateJsonString (s:string) = 
+        //    Decode.fromJsonString Investigation.ROCrate.decoder s
 
-    let toRoCrateString (i:Investigation) = 
-        encodeRoCrate (ConverterOptions(SetID=true,IsJsonLD=true)) i
-        |> Encode.toJsonString 2
+        ///// exports in json-ld format
+        //static member toROCrateJsonString(?spaces) =
+        //    fun (obj:ArcInvestigation) ->
+        //        Investigation.ROCrate.encoder obj
+        //        |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member toISAJsonString(?spaces) =
+            fun (obj:ArcInvestigation) ->
+                Investigation.ISAJson.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString Investigation.ISAJson.decoder s

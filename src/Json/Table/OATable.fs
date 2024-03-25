@@ -4,6 +4,7 @@ open Thoth.Json.Core
 
 open ARCtrl
 open ARCtrl.Helper
+open StringTable
 
 module OATable =
 

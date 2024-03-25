@@ -2,7 +2,7 @@ namespace ARCtrl.Json
 
 open Thoth.Json.Core
 open ARCtrl
-open System.IO
+open StringTable
 
 module AnnotationValue =
 

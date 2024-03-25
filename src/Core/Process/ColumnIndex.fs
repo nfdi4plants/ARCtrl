@@ -162,7 +162,7 @@ module ColumnIndexExtensions =
 
         /// Create a ISAJson Factor from ISATab string entries
         static member fromStringWithColumnIndex (name:string) (term:string) (source:string) (accession:string) valueIndex =
-            Component.fromString(name,term,source,accession,ResizeArray [|createOrderComment valueIndex|])
+            Component.fromISAString(name,term,source,accession,ResizeArray [|createOrderComment valueIndex|])
 
         static member getColumnIndex(f) = tryGetComponentIndex f |> Option.get
 

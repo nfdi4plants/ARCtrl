@@ -6,7 +6,6 @@ open ARCtrl
 open ARCtrl.Process
 open ARCtrl.Helper
 open Conversion
-open System.IO
 
 module Study =
     
@@ -44,6 +43,7 @@ module Study =
 
     open OATable
     open CellTable
+    open StringTable
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (study:ArcStudy) =
         Encode.object [ 
@@ -213,3 +213,45 @@ module Study =
                     ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ISAJson.decoder)
                 ), assays |> Option.defaultValue []
             )
+
+
+[<AutoOpen>]
+module StudyExtensions =
+
+    open System.Collections.Generic
+
+    type ArcStudy with
+       
+        static member fromJsonString (s:string)  = 
+            Decode.fromJsonString Study.decoder s
+
+        static member toJsonString(?spaces) = 
+            fun (obj:ArcStudy) ->
+                Study.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromCompressedJsonString (s: string) =
+            try Decode.fromJsonString (Compression.decode Study.decoderCompressed) s with
+            | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
+
+        static member toCompressedJsonString(?spaces) =
+            fun (obj:ArcStudy) ->
+                let spaces = defaultArg spaces 0
+                Encode.toJsonString spaces (Compression.encode Study.encoderCompressed obj)
+
+        //static member fromROCrateJsonString (s:string) = 
+        //    Decode.fromJsonString Study.ROCrate.decoder s
+
+        ///// exports in json-ld format
+        //static member toROCrateJsonString(?spaces) =
+        //    fun (obj:ArcStudy) ->
+        //        Study.ROCrate.encoder obj
+        //        |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member toISAJsonString(?spaces) =
+            fun (obj:ArcStudy) ->
+                Study.ISAJson.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString Study.ISAJson.decoder s

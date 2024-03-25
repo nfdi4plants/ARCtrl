@@ -182,9 +182,7 @@ module JsonTypes =
 
 /// Functions for parsing ArcTables to ISA json Processes and vice versa
 module ProcessParsing = 
-
-    
-
+ 
     /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
     let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with

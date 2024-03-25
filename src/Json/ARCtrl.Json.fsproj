@@ -66,12 +66,10 @@
 	  <Compile Include="Table\IOType.fs" />
 	  <Compile Include="Table\CompositeHeader.fs" />
     <Compile Include="Table\ArcTable.fs" />
+    <Compile Include="Table\Compression.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
-    <Compile Include="ArcAssay.fs" />
-    <Compile Include="ArcStudy.fs" />
-    <Compile Include="ArcInvestigation.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NJsonSchema" Version="10.8.0" />

@@ -6,11 +6,11 @@ open ARCtrl
 
 open ARCtrl.Helper
 
-type StringTableMap = System.Collections.Generic.Dictionary<string,int>
-
-type StringTableArray = array<string>
-
 module StringTable =
+
+    type StringTableMap = System.Collections.Generic.Dictionary<string,int>
+
+    type StringTableArray = array<string>
 
     let arrayFromMap (otm : StringTableMap) : StringTableArray =
         let a = Array.zeroCreate<string> otm.Count

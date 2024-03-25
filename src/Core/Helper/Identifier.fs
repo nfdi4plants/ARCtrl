@@ -16,11 +16,16 @@ let [<Literal>] ValidAssayFileNamePattern = @"^(assays(\/|\\))?(?<identifier>" +
 let [<Literal>] ValidStudyFileNamePattern = @"^(studies(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.study.xlsx)?$"
 
 // Function to check if a string contains only valid characters
-let checkValidCharacters (identifier: string) (raise : bool) =
+let tryCheckValidCharacters (identifier: string) =
     match identifier with
     | Regex ValidIdentifierPattern _ -> true
-    | _ when raise -> failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
     | _ -> false
+
+// Function to check if a string contains only valid characters
+let checkValidCharacters (identifier: string) =
+    match tryCheckValidCharacters identifier with
+    | true -> ()
+    | false -> failwith $"New identifier \"{identifier}\"contains forbidden characters! Allowed characters are: letters, digits, underscore (_), dash (-) and whitespace ( )."
 
 let [<Literal>] MISSING_IDENTIFIER = "MISSING_IDENTIFIER_"
 
@@ -69,7 +74,7 @@ module Assay =
     /// </summary>
     /// <param name="identifier">Any correct assay identifier</param>
     let fileNameFromIdentifier (identifier: string) : string =        
-        checkValidCharacters (identifier) true |> ignore
+        checkValidCharacters (identifier)
         ARCtrl.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]
 
     /// <summary>
@@ -77,7 +82,7 @@ module Assay =
     /// </summary>
     /// <param name="identifier">Any correct assay identifier</param>
     let tryFileNameFromIdentifier (identifier: string) : string option =        
-        if checkValidCharacters (identifier) false then
+        if tryCheckValidCharacters (identifier) then
             ARCtrl.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.AssayFileName|]
             |> Some
         else None
@@ -119,7 +124,7 @@ module Study =
     /// </summary>
     /// <param name="identifier">Any correct study identifier</param>
     let fileNameFromIdentifier (identifier: string) : string =
-        checkValidCharacters (identifier) true |> ignore
+        checkValidCharacters (identifier)
         ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.StudyFileName|]
 
     /// <summary>
@@ -127,7 +132,7 @@ module Study =
     /// </summary>
     /// <param name="identifier">Any correct study identifier</param>
     let tryFileNameFromIdentifier (identifier: string) : string option =
-        if checkValidCharacters (identifier) false then
+        if tryCheckValidCharacters (identifier) then
             ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.StudyFileName|]
             |> Some
         else None

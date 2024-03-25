@@ -105,6 +105,7 @@ module ArcTable =
         }
         
     open OATable
+    open StringTable
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (table: ArcTable) =
         Encode.object [

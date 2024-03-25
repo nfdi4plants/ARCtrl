@@ -3,6 +3,7 @@
 open Thoth.Json.Core
 
 open ARCtrl
+open StringTable
 
 open ARCtrl.Helper
 
