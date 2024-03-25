@@ -8,7 +8,6 @@ module PropertyValue =
     Encode.object [
       "sdo", Encode.string "http://schema.org/"
       "additionalType", Encode.string "sdo:additionalType"
-      "ProcessParameterValue", Encode.string "sdo:PropertyValue"
 
       "category", Encode.string "sdo:name"
       "categoryCode", Encode.string "sdo:propertyID"

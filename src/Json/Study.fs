@@ -86,71 +86,60 @@ module Study =
                 let identifier = i.Replace(" ","_")
                 $"#study/{identifier}"
     
-    //    let encoder (options : ConverterOptions) (s : Study) = 
-    //        [
-    //            if options.SetID then 
-    //                "@id", Encode.string (s |> genID)
-    //            else 
-    //                Encode.tryInclude "@id" Encode.string (s.ID)
-    //            if options.IsJsonLD then 
-    //                "@type", (Encode.list [Encode.string "Study"])
-    //                "additionalType", Encode.string "Study"
-    //            Encode.tryInclude "filename" Encode.string (s.FileName)
-    //            Encode.tryInclude "identifier" Encode.string (s.Identifier)
-    //            Encode.tryInclude "title" Encode.string (s.Title)
-    //            Encode.tryInclude "description" Encode.string (s.Description)
-    //            Encode.tryInclude "submissionDate" Encode.string (s.SubmissionDate)
-    //            Encode.tryInclude "publicReleaseDate" Encode.string (s.PublicReleaseDate)
-    //            Encode.tryIncludeList "publications" (Publication.encoder options) (s.Publications)
-    //            Encode.tryIncludeList "people" (Person.encoder options) (s.Contacts)
-    //            if not options.IsJsonLD then
-    //                Encode.tryIncludeList "studyDesignDescriptors" (OntologyAnnotation.encoder options) (s.StudyDesignDescriptors) 
-    //                Encode.tryIncludeList "protocols" (Protocol.encoder options None None None) (s.Protocols)
-    //                Encode.tryInclude "materials" (StudyMaterials.encoder options) (s.Materials)
-    //                Encode.tryIncludeList "factors" (Factor.encoder options) (s.Factors)
-    //                Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.encoder options) (s.CharacteristicCategories)            
-    //                Encode.tryIncludeList "unitCategories" (OntologyAnnotation.encoder options) (s.UnitCategories)
-    //            // if options.IsJsonLD then
-    //            //     match s.Materials with
-    //            //     | Some m -> 
-    //            //         Encode.tryIncludeList "samples" (Sample.encoder options) (m.Samples)
-    //            //         Encode.tryIncludeList "sources" (Source.encoder options) (m.Sources)
-    //            //         Encode.tryIncludeList "materials" (Material.encoder options) (m.OtherMaterials)
-    //            //     | None -> ()
-    //            Encode.tryIncludeList "processSequence" (Process.encoder options s.Identifier None) (s.ProcessSequence)
-    //            Encode.tryIncludeList "assays" (Assay.encoder options s.Identifier) (s.Assays)            
-    //            Encode.tryIncludeList "comments" (Comment.encoder options) (s.Comments)
-    //            if options.IsJsonLD then 
-    //                "@context", ROCrateContext.Study.context_jsonvalue
-    //        ]
-    //        |> Encode.choose
-    //        |> Encode.object
+        let encoder (s : ArcStudy) = 
+            let fileName = Identifier.Study.tryFileNameFromIdentifier s.Identifier
+            let processes = s.GetProcesses()
+            [
+                "@id", Encode.string (s |> genID)               
+                "@type", (Encode.list [Encode.string "Study"])
+                "additionalType", Encode.string "Study"
+                "identifier", Encode.string (s.Identifier)
+                Encode.tryInclude "filename" Encode.string fileName
+                Encode.tryInclude "title" Encode.string (s.Title)
+                Encode.tryInclude "description" Encode.string (s.Description)
+                //Encode.tryIncludeSeq "studyDesignDescriptors" OntologyAnnotation.ROCrate.encodeDefinedTerm (s.StudyDesignDescriptors)
+                Encode.tryInclude "submissionDate" Encode.string (s.SubmissionDate)
+                Encode.tryInclude "publicReleaseDate" Encode.string (s.PublicReleaseDate)
+                Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder s.Publications
+                Encode.tryIncludeSeq "people" Person.ROCrate.encoder s.Contacts
+                Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder (Some s.Identifier) None) processes
+                Encode.tryIncludeSeq "assays" (Assay.ROCrate.encoder (Some s.Identifier)) s.RegisteredAssays           
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder s.Comments
+                "@context", ROCrateContext.Study.context_jsonvalue
+            ]
+            |> Encode.choose
+            |> Encode.object
 
-    //    let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
-
-    //    let decoder (options : ConverterOptions) : Decoder<Study> =
-    //        GDecode.object allowedFields (fun get ->
-    //            {
-    //                ID = get.Optional.Field "@id" GDecode.uri
-    //                FileName = get.Optional.Field "filename" Decode.string
-    //                Identifier = get.Optional.Field "identifier" Decode.string
-    //                Title = get.Optional.Field "title" Decode.string
-    //                Description = get.Optional.Field "description" Decode.string
-    //                SubmissionDate = get.Optional.Field "submissionDate" Decode.string
-    //                PublicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string
-    //                Publications = get.Optional.Field "publications" (Decode.list (Publication.decoder options))
-    //                Contacts = get.Optional.Field "people" (Decode.list (Person.decoder options))
-    //                StudyDesignDescriptors = get.Optional.Field "studyDesignDescriptors" (Decode.list (OntologyAnnotation.decoder options))
-    //                Protocols = get.Optional.Field "protocols" (Decode.list (Protocol.decoder options))
-    //                Materials = get.Optional.Field "materials" (StudyMaterials.decoder options)
-    //                Assays = get.Optional.Field "assays" (Decode.list (Assay.decoder options))
-    //                Factors = get.Optional.Field "factors" (Decode.list (Factor.decoder options))
-    //                CharacteristicCategories = get.Optional.Field "characteristicCategories" (Decode.list (MaterialAttribute.decoder options))
-    //                UnitCategories = get.Optional.Field "unitCategories" (Decode.list (OntologyAnnotation.decoder options))
-    //                ProcessSequence = get.Optional.Field "processSequence" (Decode.list (Process.decoder options))
-    //                Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
-    //            }
-    //        )
+        let decoder : Decoder<ArcStudy*ResizeArray<ArcAssay>> =
+            Decode.object (fun get ->             
+                let identifier = 
+                    get.Optional.Field "filename" Decode.string
+                    |> Option.bind Identifier.Study.tryIdentifierFromFileName
+                    |> Option.defaultValue (Identifier.createMissingIdentifier())
+                let assays = 
+                    get.Optional.Field "assays" (Decode.resizeArray Assay.ROCrate.decoder)
+                    |> Option.defaultValue (ResizeArray [])
+                let assayIdentifiers = 
+                    assays
+                    |> ResizeArray.map (fun a -> a.Identifier)
+                let tables = 
+                    get.Optional.Field "tables" (Decode.list Process.ROCrate.decoder)
+                    |> Option.map (fun ps -> ArcTables.fromProcesses(ps).Tables)
+                ArcStudy(
+                    identifier,
+                    ?title = get.Optional.Field "title" Decode.string,
+                    ?description = get.Optional.Field "description" Decode.string,
+                    ?submissionDate = get.Optional.Field "submissionDate" Decode.string,
+                    ?publicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string,
+                    ?publications = get.Optional.Field "publications" (Decode.resizeArray Publication.ROCrate.decoder),
+                    ?contacts = get.Optional.Field "people" (Decode.resizeArray Person.ROCrate.decoder),
+                    //?studyDesignDescriptors = get.Optional.Field "studyDesignDescriptors" (Decode.resizeArray OntologyAnnotation.ROCrate.decoderDefinedTerm),
+                    ?tables = tables,
+                    registeredAssayIdentifiers = assayIdentifiers,
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
+                ),
+                assays
+            )
 
     module ISAJson =
 

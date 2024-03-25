@@ -94,43 +94,68 @@ module Investigation =
             //                               | Some t -> "#Study_" + t.Replace(" ","_")
             //                               | None -> "#EmptyStudy"
 
-        //let encoder (options : ConverterOptions) (oa : Investigation) = 
-        //    [
-        //        if options.SetID then 
-        //            "@id", Encode.string (oa |> genID)
-        //        else 
-        //            Encode.tryInclude "@id" Encode.string (oa.ID)
-        //        if options.IsJsonLD then 
-        //            "@type", Encode.string "Investigation"
-        //            "additionalType", Encode.string "Investigation"
-        //        Encode.tryInclude "filename" Encode.string (oa.FileName)
-        //        Encode.tryInclude "identifier" Encode.string (oa.Identifier)
-        //        Encode.tryInclude "title" Encode.string (oa.Title)
-        //        Encode.tryInclude "description" Encode.string (oa.Description)
-        //        Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
-        //        Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-        //        Encode.tryIncludeList "ontologySourceReferences" (OntologySourceReference.encoder options) (oa.OntologySourceReferences)
-        //        Encode.tryIncludeList "publications" (Publication.encoder options) (oa.Publications)
-        //        Encode.tryIncludeList "people" (Person.encoder options) (oa.Contacts)
-        //        Encode.tryIncludeList "studies" (Study.encoder options) (oa.Studies)
-        //        Encode.tryIncludeList "comments" (Comment.encoder options) (oa.Comments)
-        //        if options.IsJsonLD then
-        //            "@context", ROCrateContext.Investigation.context_jsonvalue
-        //    ]
-        //    |> Encode.choose
-        //    |> Encode.object
+        let encoder (oa : ArcInvestigation) = 
+            [
+                "@id", Encode.string (oa |> genID)
+                "@type", Encode.string "Investigation"
+                "additionalType", Encode.string "Investigation"
+                "identifier", Encode.string oa.Identifier
+                "filename", Encode.string ArcInvestigation.FileName
+                Encode.tryInclude "title" Encode.string (oa.Title)
+                Encode.tryInclude "description" Encode.string (oa.Description)
+                Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
+                Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
+                Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ROCrate.encoder (oa.OntologySourceReferences)
+                Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder (oa.Publications)
+                Encode.tryIncludeSeq "people" Person.ROCrate.encoder (oa.Contacts)
+                Encode.tryIncludeSeq "studies" Study.ROCrate.encoder (oa.Studies)
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder (oa.Comments)
+                "@context", ROCrateContext.Investigation.context_jsonvalue
+            ]
+            |> Encode.choose
+            |> Encode.object
 
-        //let encodeRoCrate (options : ConverterOptions) (oa : Investigation) = 
-        //    [
-        //        Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
-        //        Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
-        //        Encode.tryInclude "about" (encoder options) (Some oa)
-        //        "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
-        //        if options.IsJsonLD then
-        //            "@context", ROCrateContext.ROCrate.context_jsonvalue
-        //        ]
-        //    |> Encode.choose
-        //    |> Encode.object
+
+        let decoder : Decoder<ArcInvestigation> =
+            Decode.object (fun get ->
+                let identifier = 
+                    match get.Optional.Field("identifier") Decode.string with
+                    | Some i -> i
+                    | None -> Identifier.createMissingIdentifier()
+                let studiesRaw, assaysRaw =
+                    get.Optional.Field "studies" (Decode.list Study.ROCrate.decoder)
+                    |> Option.defaultValue []
+                    |> List.unzip
+                let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray 
+                let studies = ResizeArray(studiesRaw)
+                let studyIdentifiers = studiesRaw |> Seq.map (fun a -> a.Identifier) |> ResizeArray
+
+                ArcInvestigation(
+                    identifier,
+                    ?title = get.Optional.Field "title" Decode.string,
+                    ?description = get.Optional.Field "description" Decode.string,
+                    ?submissionDate = get.Optional.Field "submissionDate" Decode.string,
+                    ?publicReleaseDate = get.Optional.Field "publicReleaseDate" Decode.string,
+                    ?ontologySourceReferences = get.Optional.Field "ontologySourceReferences" (Decode.resizeArray OntologySourceReference.ROCrate.decoder),
+                    ?publications = get.Optional.Field "publications" (Decode.resizeArray Publication.ROCrate.decoder),
+                    ?contacts = get.Optional.Field "people" (Decode.resizeArray Person.ROCrate.decoder),
+                    assays = assays,
+                    studies = studies,
+                    registeredStudyIdentifiers = studyIdentifiers,
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
+                )
+            )
+
+        let encodeRoCrate (oa : ArcInvestigation) = 
+            [
+                Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
+                Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
+                Encode.tryInclude "about" encoder (Some oa)
+                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
+                "@context", ROCrateContext.ROCrate.context_jsonvalue
+                ]
+            |> Encode.choose
+            |> Encode.object
 
     module ISAJson =
 

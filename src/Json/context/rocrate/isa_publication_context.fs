@@ -31,22 +31,3 @@ module Publication =
       "authorList", Encode.string "sdo:author"
       "comments", Encode.string "sdo:disambiguatingDescription"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-    "Publication": "sdo:ScholarlyArticle",
-    
-    "pubMedID": "sdo:url",
-    "doi": "sdo:sameAs",
-    "title": "sdo:headline",
-    "status": "sdo:creativeWorkStatus",
-    "authorList": "sdo:author",
-    "comments": "sdo:disambiguatingDescription"
-  }
-}
-    """
