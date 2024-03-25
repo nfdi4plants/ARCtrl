@@ -39,7 +39,14 @@ module Protocol =
             |> Encode.object
 
         let decoder : Decoder<Protocol> =
+            
             Decode.object (fun get ->
+                let components = 
+                    get.Optional.Field "components" (Decode.list Component.ROCrate.decoder) |> Option.defaultValue List.empty
+                    |> List.append (get.Optional.Field "reagents" (Decode.list Component.ROCrate.decoder) |> Option.defaultValue List.empty)
+                    |> List.append (get.Optional.Field "computationalTools" (Decode.list Component.ROCrate.decoder) |> Option.defaultValue List.empty)
+                    |> Helper.Option.fromValueWithDefault []
+
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
@@ -48,7 +55,7 @@ module Protocol =
                     Uri = get.Optional.Field "uri" Decode.uri
                     Parameters = None
                     Version = get.Optional.Field "version" Decode.string
-                    Components = get.Optional.Field "components" (Decode.list Component.ROCrate.decoder)
+                    Components = components
                     Comments = get.Optional.Field "comments" (Decode.list Comment.ROCrate.decoder)
                 }
             )

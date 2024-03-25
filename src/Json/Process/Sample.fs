@@ -17,24 +17,58 @@ module Sample =
                       | None -> "#EmptySample"
     
         let encoder (oa : Sample) = 
+
+            let additionalProperties = 
+                oa.Characteristics |> Option.defaultValue [] |> List.map MaterialAttributeValue.ROCrate.encoder
+                |> List.append (oa.FactorValues |> Option.defaultValue [] |> List.map FactorValue.ROCrate.encoder)
             [
                 "@id", Encode.string (oa |> genID)
                 "@type", (Encode.list [ Encode.string "Sample"])
                 Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)
-                Encode.tryIncludeListOpt "factorValues" FactorValue.ROCrate.encoder (oa.FactorValues)
+                Encode.tryIncludeList "additionalProperties" id additionalProperties
                 "@context", ROCrateContext.Sample.context_jsonvalue
             ]
             |> Encode.choose
             |> Encode.object
 
-        let decoder : Decoder<Sample> =       
+        let additionalPropertyDecoder = 
+            {new Decoder<MaterialAttributeValue option * FactorValue option> with
+                member this.Decode(s,json) = 
+                    let additionalType =
+                        if s.hasProperty "additionalType" json then
+                            match Decode.string.Decode(s,s.getProperty("additionalType",json)) with
+                            | Ok s -> s
+                            | _ -> ""
+                        else ""
+                    if additionalType = "FactorValue" then
+                        match FactorValue.ROCrate.decoder.Decode(s,json) with
+                        | Ok fv -> Ok (None, Some fv)
+                        | Error e -> Error e
+                    else 
+                        match MaterialAttributeValue.ROCrate.decoder.Decode(s,json) with
+                        | Ok ma -> Ok (Some ma, None)
+                        | Error e -> Error e                   
+            }
+
+        let decoder : Decoder<Sample> =         
+            
             Decode.object (fun get ->
+                let additionalProperties = get.Optional.Field "additionalProperties" (Decode.list additionalPropertyDecoder)
+                let characteristics,factors = 
+                    match additionalProperties with
+                    | None -> None, None
+                    | Some additionalProperties -> 
+                        additionalProperties
+                        |> List.choose fst
+                        |> Helper.Option.fromValueWithDefault [],
+                        additionalProperties 
+                        |> List.choose snd
+                        |> Helper.Option.fromValueWithDefault []
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
-                    Characteristics = get.Optional.Field "characteristics" (Decode.list MaterialAttributeValue.ROCrate.decoder)
-                    FactorValues = get.Optional.Field "factorValues" (Decode.list FactorValue.ROCrate.decoder)
+                    Characteristics = characteristics
+                    FactorValues = factors
                     DerivesFrom = get.Optional.Field "derivesFrom" (Decode.list Source.ROCrate.decoder)
                 }
             )
