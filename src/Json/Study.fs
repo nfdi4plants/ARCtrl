@@ -228,14 +228,14 @@ module StudyExtensions =
                 let spaces = defaultArg spaces 0
                 Encode.toJsonString spaces (Compression.encode Study.encoderCompressed obj)
 
-        //static member fromROCrateJsonString (s:string) = 
-        //    Decode.fromJsonString Study.ROCrate.decoder s
+        static member fromROCrateJsonString (s:string) = 
+            Decode.fromJsonString Study.ROCrate.decoder s
 
-        ///// exports in json-ld format
-        //static member toROCrateJsonString(?spaces) =
-        //    fun (obj:ArcStudy) ->
-        //        Study.ROCrate.encoder obj
-        //        |> Encode.toJsonString (Encode.defaultSpaces spaces)
+        /// exports in json-ld format
+        static member toROCrateJsonString(?spaces) =
+            fun (obj:ArcStudy) ->
+                Study.ROCrate.encoder obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         static member toISAJsonString(?spaces) =
             fun (obj:ArcStudy) ->

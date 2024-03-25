@@ -71,6 +71,7 @@
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
+    <Compile Include="ARC.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NJsonSchema" Version="10.8.0" />
