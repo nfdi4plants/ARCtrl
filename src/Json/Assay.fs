@@ -181,14 +181,14 @@ module AssayExtensions =
                 let spaces = defaultArg spaces 0
                 Encode.toJsonString spaces (Compression.encode Assay.encoderCompressed obj)
 
-        //static member fromROCrateJsonString (s:string) = 
-        //    Decode.fromJsonString Assay.ROCrate.decoder s
+        static member fromROCrateJsonString (s:string) = 
+            Decode.fromJsonString Assay.ROCrate.decoder s
 
-        ///// exports in json-ld format
-        //static member toROCrateJsonString(?spaces) =
-        //    fun (obj:ArcAssay) ->
-        //        Assay.ROCrate.encoder obj
-        //        |> Encode.toJsonString (Encode.defaultSpaces spaces)
+        /// exports in json-ld format
+        static member toROCrateJsonString(studyName, ?spaces) =
+            fun (obj: ArcAssay) ->
+                Assay.ROCrate.encoder studyName obj
+                |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         static member toISAJsonString(?spaces) =
             fun (obj:ArcAssay) ->

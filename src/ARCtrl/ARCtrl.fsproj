@@ -28,6 +28,7 @@
     <Compile Include="Templates\Template.Spreadsheet.fs" />
     <Compile Include="Templates\Template.Web.fs" />
     <Compile Include="ARC.fs" />
+    <Compile Include="Json.fs" />
     <None Include="README.md" />
   </ItemGroup>
 	<ItemGroup>
@@ -49,7 +50,5 @@
       <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
     </PythonDependencies>
   </PropertyGroup>
-	<ItemGroup>
-		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-	</ItemGroup>
+	<ItemGroup />
 </Project>
