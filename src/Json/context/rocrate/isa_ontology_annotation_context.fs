@@ -26,20 +26,3 @@ module OntologyAnnotation =
       "termAccession", Encode.string "sdo:termCode"
       "comments", Encode.string "sdo:disambiguatingDescription"
     ]
-
-  let context_str =
-    """
-{
-  "@context": {
-    "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-    "OntologyAnnotation": "sdo:DefinedTerm",
-    
-    "annotationValue": "sdo:name",
-    "termSource": "sdo:inDefinedTermSet",
-    "termAccession": "sdo:termCode",
-    "comments": "sdo:disambiguatingDescription"
-  }
-}
-    """

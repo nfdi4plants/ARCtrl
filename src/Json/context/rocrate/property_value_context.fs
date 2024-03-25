@@ -16,4 +16,5 @@ module PropertyValue =
       "valueCode", Encode.string "sdo:valueReference"
       "unit", Encode.string "sdo:unitText"
       "unitCode", Encode.string "sdo:unitCode"
+      "comments", Encode.string "sdo:disambiguatingDescription"
     ]

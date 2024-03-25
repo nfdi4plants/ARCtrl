@@ -77,7 +77,7 @@ module OntologyAnnotation =
                     | Some n -> "#UserTerm_" + n .Replace(" ","_")
                     | None -> "#DummyOntologyAnnotation"
 
-        let encoder (oa : OntologyAnnotation) = 
+        let encoderDefinedTerm (oa : OntologyAnnotation) = 
             [
                 "@id", Encode.string (oa |> genID)
                 "@type", Encode.string "OntologyAnnotation"
@@ -90,14 +90,37 @@ module OntologyAnnotation =
             |> Encode.choose
             |> Encode.object
 
-        let decoder : Decoder<OntologyAnnotation> =
+        let decoderDefinedTerm : Decoder<OntologyAnnotation> =
             Decode.object (fun get ->
                 OntologyAnnotation.create(
                     ?name = get.Optional.Field "annotationValue" AnnotationValue.decoder,
                     ?tsr = get.Optional.Field "termSource" Decode.string,
                     ?tan = get.Optional.Field "termAccession" Decode.string,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.decoder)               
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription )               
                 )
+            )
+
+        let encoderPropertyValue (oa : OntologyAnnotation) = 
+            [
+                "@id", Encode.string (oa |> genID)
+                "@type", Encode.string "PropertyValue"
+
+                Encode.tryInclude "category" Encode.string oa.Name
+                Encode.tryInclude "categoryCode" Encode.string oa.TermAccessionNumber
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription (oa.Comments)
+                "@context", ROCrateContext.PropertyValue.context_jsonvalue
+            ]
+            |> Encode.choose
+            |> Encode.object
+
+        let decoderPropertyValue : Decoder<OntologyAnnotation> =
+            Decode.object (fun get ->
+                OntologyAnnotation.create(
+                    ?name = get.Optional.Field "category" Decode.string,
+                    ?tan = get.Optional.Field "categoryCode" Decode.string,
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription)               
+                )
+
             )
 
     module ISAJson =
@@ -119,12 +142,12 @@ module OntologyAnnotationExtensions =
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
 
         static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString OntologyAnnotation.ROCrate.decoder s
+            Decode.fromJsonString OntologyAnnotation.ROCrate.decoderDefinedTerm s
 
         /// exports in json-ld format
         static member toROCrateJsonString(?spaces) =
             fun (obj:OntologyAnnotation) ->
-                OntologyAnnotation.ROCrate.encoder obj
+                OntologyAnnotation.ROCrate.encoderDefinedTerm obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         static member toISAJsonString(?spaces) =

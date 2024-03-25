@@ -27,7 +27,7 @@ module Protocol =
                 "@id", Encode.string (genID studyName assayName processName oa)
                 "@type", (Encode.list [Encode.string "Protocol"])
                 Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryInclude "protocolType" OntologyAnnotation.ROCrate.encoder (oa.ProtocolType)
+                Encode.tryInclude "protocolType" OntologyAnnotation.ROCrate.encoderDefinedTerm (oa.ProtocolType)
                 Encode.tryInclude "description" Encode.string (oa.Description)
                 Encode.tryInclude "uri" Encode.string (oa.Uri)
                 Encode.tryInclude "version" Encode.string (oa.Version)
@@ -43,7 +43,7 @@ module Protocol =
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
-                    ProtocolType = get.Optional.Field "protocolType" OntologyAnnotation.ROCrate.decoder
+                    ProtocolType = get.Optional.Field "protocolType" OntologyAnnotation.ROCrate.decoderDefinedTerm
                     Description = get.Optional.Field "description" Decode.string
                     Uri = get.Optional.Field "uri" Decode.uri
                     Parameters = None

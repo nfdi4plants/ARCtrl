@@ -77,7 +77,7 @@ module Component =
             let terms : string [] = if terms = "" then Array.create l "" else terms.Split(separator)
             let sources : string [] = if source = "" then Array.create l "" else source.Split(separator)
             let accessions : string [] = if accessions = "" then Array.create l "" else accessions.Split(separator)
-            Array.map4 (fun a b c d -> Component.fromString(a,b,c,d)) names terms sources accessions
+            Array.map4 (fun a b c d -> Component.fromISAString(a,b,c,d)) names terms sources accessions
             |> List.ofArray
 
     /// Returns the aggregated ISATAb Component Name, Ontology Annotation value, Accession number and ontology source from a list of ISAJson Component objects
@@ -86,7 +86,7 @@ module Component =
         if cs = [] then {|NameAgg = ""; TermNameAgg = "";  TermAccessionNumberAgg = "";  TermSourceREFAgg = ""; |}
         else
             cs
-            |> List.map Component.toString
+            |> List.map Component.toISAString
             |> List.fold (fun (nameAgg,termAgg,tsrAgg,tanAgg) (name,term) ->     
                 if first then 
                     first <- false

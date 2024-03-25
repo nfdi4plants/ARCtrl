@@ -70,45 +70,47 @@ module Assay =
                 let identifier = i.Replace(" ","_")
                 $"#assay/{identifier}"
 
-        //let encoder (studyName:string Option) (a : ArcAssay) = 
-        //    let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
-        //    let processes = a.GetProcesses()
-        //    let dataFiles = ProcessSequence.getData processes
+        let encoder (studyName:string Option) (a : ArcAssay) = 
+            let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
+            let processes = a.GetProcesses()
+            let dataFiles = ProcessSequence.getData processes
 
-        //    [
-        //        "@id", Encode.string (a |> genID)
-        //        "@type", (Encode.list [ Encode.string "Assay"])
-        //        "additionalType", Encode.string "Assay"
-        //        "filename", Encode.string fileName
-        //        Encode.tryInclude "measurementType" OntologyAnnotation.ROCrate.encoder a.MeasurementType
-        //        Encode.tryInclude "technologyType" OntologyAnnotation.ROCrate.encoder a.TechnologyType
-        //        Encode.tryInclude "technologyPlatform" Encode.string a.TechnologyPlatform
-        //        Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder dataFiles
-        //        Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder studyName (Some a.Identifier)) processes
-        //        Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder a.Comments
-        //        "@context", ROCrateContext.Assay.context_jsonvalue
-        //    ]
-        //    |> Encode.choose
-        //    |> Encode.object
+            [
+                "@id", Encode.string (a |> genID)
+                "@type", (Encode.list [ Encode.string "Assay"])
+                "additionalType", Encode.string "Assay"
+                "identifier", Encode.string a.Identifier
+                "filename", Encode.string fileName
+                Encode.tryInclude "measurementType" OntologyAnnotation.ROCrate.encoderPropertyValue a.MeasurementType
+                Encode.tryInclude "technologyType" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyType
+                Encode.tryInclude "technologyPlatform" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyPlatform
+                Encode.tryIncludeSeq "performers" Person.ROCrate.encoder a.Performers
+                Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder dataFiles
+                Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder studyName (Some a.Identifier)) processes
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder a.Comments
+                "@context", ROCrateContext.Assay.context_jsonvalue
+            ]
+            |> Encode.choose
+            |> Encode.object
 
-        //let allowedFields = ["@id";"filename";"measurementType";"technologyType";"technologyPlatform";"dataFiles";"materials";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
-
-        //let decoder (options : ConverterOptions) : Decoder<Assay> =
-        //    GDecode.object allowedFields (fun get ->
-        //        {
-        //            ID = get.Optional.Field "@id" GDecode.uri
-        //            FileName = get.Optional.Field "filename" Decode.string
-        //            MeasurementType = get.Optional.Field "measurementType" (OntologyAnnotation.decoder options)
-        //            TechnologyType = get.Optional.Field "technologyType" (OntologyAnnotation.decoder options)
-        //            TechnologyPlatform = get.Optional.Field "technologyPlatform" Decode.string
-        //            DataFiles = get.Optional.Field "dataFiles" (Decode.list (Data.decoder options))
-        //            Materials = get.Optional.Field "materials" (AssayMaterials.decoder options)
-        //            CharacteristicCategories = get.Optional.Field "characteristicCategories" (Decode.list (MaterialAttribute.decoder options))
-        //            UnitCategories = get.Optional.Field "unitCategories" (Decode.list (OntologyAnnotation.decoder options))
-        //            ProcessSequence = get.Optional.Field "processSequence" (Decode.list (Process.decoder options))
-        //            Comments = get.Optional.Field "comments" (Decode.list (Comment.decoder options))
-        //        }
-        //    )
+        let decoder : Decoder<ArcAssay> =
+            Decode.object (fun get ->               
+                let identifier = 
+                    get.Optional.Field "identifier" Decode.string
+                    |> Option.defaultValue (Identifier.createMissingIdentifier())
+                let tables = 
+                    get.Optional.Field "processSequence" (Decode.list Process.ROCrate.decoder)
+                    |> Option.map (ArcTables.fromProcesses >> (fun a -> a.Tables))
+                ArcAssay(
+                    identifier,
+                    ?measurementType = get.Optional.Field "measurementType" OntologyAnnotation.ROCrate.decoderPropertyValue,
+                    ?technologyType = get.Optional.Field "technologyType" OntologyAnnotation.ROCrate.decoderDefinedTerm,
+                    ?technologyPlatform = get.Optional.Field "technologyPlatform" OntologyAnnotation.ROCrate.decoderDefinedTerm,
+                    ?tables = tables,
+                    ?performers = get.Optional.Field "performers" (Decode.resizeArray Person.ROCrate.decoder),
+                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoder)
+                )
+            )
             
     module ISAJson = 
 

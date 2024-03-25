@@ -83,7 +83,7 @@ type Component =
     /// Get ISATab string entries from an ISAJson Component object
     static member toISAString (c : Component) =
         let oa = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
-        c.ComponentName, oa
+        c.ComponentName |> Option.defaultValue "", oa
 
     member this.NameText =
         this.ComponentType
