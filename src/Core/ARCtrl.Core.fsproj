@@ -55,6 +55,7 @@
     <Compile Include="Table\ArcTables.fs" />
     <Compile Include="ArcTypes.fs" />
     <Compile Include="Template.fs" />
+    <Compile Include="Templates.fs" />
     <Compile Include="Conversion.fs" />
     <Compile Include="IdentifierSetters.fs" />
   </ItemGroup>

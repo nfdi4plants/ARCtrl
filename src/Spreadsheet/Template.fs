@@ -1,7 +1,7 @@
-﻿module ARCtrl.Template.Spreadsheet
+﻿namespace ARCtrl.Spreadsheet
 
 open FsSpreadsheet
-open ARCtrl.Aux
+open ARCtrl.Helper
 open ARCtrl.Spreadsheet
 open ARCtrl
 open System.Collections.Generic
@@ -155,7 +155,7 @@ module Metadata =
                         | v when v = obsoleteErLabel -> k,erLabel
                         | v when v = obsoleteTagsLabel -> k,tagsLabel
 
-                        | v when v = Authors.obsoleteORCIDLabel -> k,$"Comment[{Person.orcidKey}]"
+                        | v when v = Authors.obsoleteORCIDLabel -> k,$"Comment[{ARCtrl.Process.Conversion.Person.orcidKey}]"
 
                         | v when v = "Authors Last Name"                    -> k,"Author Last Name"
                         | v when v = "Authors First Name"                   -> k,"Author First Name"
@@ -208,13 +208,13 @@ module Metadata =
                 yield! TemplateInfo.toRows template
 
                 yield  SparseRow.fromValues [erLabel]
-                yield! ER.toRows (None) (template.EndpointRepositories |> Array.toList)
+                yield! ER.toRows (None) (template.EndpointRepositories |> Seq.toList)
 
                 yield  SparseRow.fromValues [tagsLabel]
-                yield! Tags.toRows (None) (template.Tags |> Array.toList)
+                yield! Tags.toRows (None) (template.Tags |> Seq.toList)
 
                 yield  SparseRow.fromValues [authorsLabel]
-                yield! Contacts.toRows (Some authorsLabelPrefix) (List.ofArray template.Authors)
+                yield! Contacts.toRows (Some authorsLabelPrefix) (List.ofSeq template.Authors)
             }
 
     
@@ -235,9 +235,9 @@ module Template =
                 (templateInfo.Description)
                 (Organisation.ofString templateInfo.Organisation) 
                 (templateInfo.Version)
-                (Array.ofList authors)
-                (Array.ofList ers)
-                (Array.ofList tags)  
+                (ResizeArray authors)
+                (ResizeArray ers)
+                (ResizeArray tags)  
                 (lastUpdated)
 
     let toMetadataSheet (template : Template) : FsWorksheet =

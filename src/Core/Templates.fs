@@ -1,6 +1,7 @@
-﻿namespace ARCtrl.Template
+﻿namespace ARCtrl
 
 open ARCtrl
+open ARCtrl.Helper
 open Fable.Core
 
 /// This module contains unchecked helper functions for templates
@@ -12,13 +13,13 @@ module TemplatesAux =
         let comparer = if matchAll then (&&) else (||)
         comparer
 
-    let filterOnTags (tagGetter: Template -> OntologyAnnotation []) (queryTags: OntologyAnnotation []) (comparer: bool -> bool -> bool) (templates: Template []) =
+    let filterOnTags (tagGetter: Template -> OntologyAnnotation ResizeArray) (queryTags: OntologyAnnotation ResizeArray) (comparer: bool -> bool -> bool) (templates: Template ResizeArray) =
         templates 
-        |> Array.filter(fun t ->
+        |> ResizeArray.filter(fun t ->
             let templateTags = tagGetter t
             let mutable isValid = None
             for qt in queryTags do
-                let contains = templateTags |> Array.contains qt
+                let contains = templateTags |> Seq.contains qt
                 match isValid, contains with
                 | None, any -> isValid <- Some any
                 | Some maybe, any -> isValid <- Some (comparer maybe any)
@@ -28,15 +29,15 @@ module TemplatesAux =
 [<AttachMembers>]
 type Templates =
 
-    static member getDistinctTags (templates: Template []) =
-        templates |> Array.collect (fun t -> t.Tags) |> Array.distinct
+    static member getDistinctTags (templates: Template ResizeArray) =
+        templates |> ResizeArray.collect (fun t -> t.Tags) |> ResizeArray.distinct
 
     /// <summary>
     /// Returns all **distinct** `template.Tags` and `template.EndpointRepositories`
     /// </summary>
     /// <param name="templates"></param>
-    static member getDistinctEndpointRepositories (templates: Template []) =
-        templates |> Array.collect (fun t -> t.EndpointRepositories) |> Array.distinct
+    static member getDistinctEndpointRepositories (templates: Template ResizeArray) =
+        templates |> ResizeArray.collect (fun t -> t.EndpointRepositories) |> ResizeArray.distinct
 
     /// <summary>
     /// Returns all **distinct** `template.Tags` and `template.EndpointRepositories`
@@ -56,8 +57,8 @@ type Templates =
     /// </summary>
     /// <param name="queryTags">The ontology annotation to filter by.</param>
     /// <param name="matchAll">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
-    static member filterByTags(queryTags: OntologyAnnotation [], ?matchAll: bool) = 
-        fun (templates: Template []) ->
+    static member filterByTags(queryTags: OntologyAnnotation ResizeArray, ?matchAll: bool) = 
+        fun (templates: Template ResizeArray) ->
             let comparer = TemplatesAux.getComparer matchAll
             TemplatesAux.filterOnTags (fun t -> t.Tags) queryTags comparer templates
 
@@ -66,8 +67,8 @@ type Templates =
     /// </summary>
     /// <param name="queryTags">The ontology annotation to filter by.</param>
     /// <param name="matchAll">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
-    static member filterByEndpointRepositories(queryTags: OntologyAnnotation [], ?matchAll: bool) = 
-        fun (templates: Template []) ->
+    static member filterByEndpointRepositories(queryTags: OntologyAnnotation ResizeArray, ?matchAll: bool) = 
+        fun (templates: Template ResizeArray) ->
             let comparer = TemplatesAux.getComparer matchAll
             TemplatesAux.filterOnTags (fun t -> t.EndpointRepositories) queryTags comparer templates
 
@@ -76,16 +77,16 @@ type Templates =
     /// </summary>
     /// <param name="queryTags">The ontology annotation to filter by.</param>
     /// <param name="matchAll">Default: false. If true all `queryTags` must be contained in template, if false only 1 tags must be contained in template.</param>
-    static member filterByOntologyAnnotation(queryTags: OntologyAnnotation [], ?matchAll: bool) = 
-        fun (templates: Template []) ->
+    static member filterByOntologyAnnotation(queryTags: OntologyAnnotation ResizeArray, ?matchAll: bool) = 
+        fun (templates: Template ResizeArray) ->
             let comparer = TemplatesAux.getComparer matchAll
-            TemplatesAux.filterOnTags (fun t -> Array.append t.Tags t.EndpointRepositories) queryTags comparer templates
+            TemplatesAux.filterOnTags (fun t -> ResizeArray.append t.Tags t.EndpointRepositories) queryTags comparer templates
 
     /// <summary>
     /// Filters templates by template.Organisation = `Organisation.DataPLANT`/`"DataPLANT"`.
     /// </summary>
     /// <param name="templates"></param>
-    static member filterByDataPLANT (templates: Template []) =
+    static member filterByDataPLANT (templates: Template ResizeArray) =
         templates
-        |> Array.filter (fun t -> t.Organisation.IsOfficial())
+        |> ResizeArray.filter (fun t -> t.Organisation.IsOfficial())
         

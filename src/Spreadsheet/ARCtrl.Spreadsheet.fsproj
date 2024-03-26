@@ -26,12 +26,16 @@
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcInvestigation.fs" />
+    <Compile Include="Template.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FsSpreadsheet" Version="5.1.3" />
   </ItemGroup>
   <ItemGroup>
   	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Remove="Template.fs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
