@@ -52,9 +52,9 @@ type Component =
     /// This function allows us, to add the same information as `Parameter`, `Characteristics`.., to `Component`. 
     /// Without this string composition we loose the ontology information for the header value.
     static member decomposeName (name : string) = 
-        let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
-        let unitPattern = """(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
-
+        let pattern = """^(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""
+        let emptyOAPattern = """^(?<value>[^\(\)]+) \(\)"""
+        let unitPattern = """^(?<value>[\d\.]+) (?<unit>.+) \((?<ontology>[^(]*:[^)]*)\)"""
         match name with
         | Regex unitPattern unitr ->
             let oa = (unitr.Groups.Item "ontology").Value   |> OntologyAnnotation.fromTermAnnotation 
@@ -67,6 +67,10 @@ type Component =
             let v =  (r.Groups.Item "value").Value      
             oa.Name <- Some v
             Value.Ontology oa, None
+        | Regex emptyOAPattern r ->
+            let oa =  OntologyAnnotation((r.Groups.Item "value").Value)
+            let v = Value.Ontology oa
+            v, None
         | _ -> 
             Value.Name (name), None       
 

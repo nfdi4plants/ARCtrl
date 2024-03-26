@@ -121,6 +121,20 @@ let componentCastingTests =
             Expect.equal actualU expectedU "Unit was not correctly decomposed"
 
         )
+        testCase "DecomposeNameWithBrackets" (fun () -> 
+            
+            let n = "Test (This component is very important)"
+
+            let actualV, actualU = Component.decomposeName n
+
+            let expectedV = Value.Name "Test (This component is very important)"
+
+            let expectedU = None
+
+            Expect.equal actualV expectedV "Name was not correctly decomposed"
+            Expect.equal actualU expectedU "Unit was not correctly decomposed"
+
+        )
         testCase "DecomposeNameOntology" (fun () -> 
             
             let n = "Test (OBO:123)"
@@ -128,6 +142,19 @@ let componentCastingTests =
             let actualV, actualU = Component.decomposeName n
 
             let expectedV = OntologyAnnotation("Test", "OBO", "OBO:123") |> Value.Ontology
+
+            let expectedU = None
+
+            Expect.equal actualV expectedV "Name was not correctly decomposed"
+            Expect.equal actualU expectedU "Unit was not correctly decomposed"
+        )
+        testCase "DecomposeNameOntologyEmpty" (fun () -> 
+            
+            let n = "Test ()"
+
+            let actualV, actualU = Component.decomposeName n
+
+            let expectedV = OntologyAnnotation("Test") |> Value.Ontology
 
             let expectedU = None
 
