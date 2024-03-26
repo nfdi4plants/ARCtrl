@@ -1,6 +1,5 @@
 ﻿module ARCtrl.Template.Web
 
-open ARCtrl.Template
 open ARCtrl
 open Fable.Core
 

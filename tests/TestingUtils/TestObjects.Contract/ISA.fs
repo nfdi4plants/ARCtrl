@@ -5,6 +5,7 @@ open ARCtrl.Contract
 open ARCtrl
 open ARCtrl
 open ARCtrl.Spreadsheet
+open ARCtrl.Helper
 
 open TestObjects.Spreadsheet
 

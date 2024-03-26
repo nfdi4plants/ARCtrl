@@ -564,11 +564,11 @@ module LargeFile =
       for i in 0 .. (RowCount-1) do
         CompositeCell.FreeText $"Output {i}"
     |])
-    table.AddColumn(CompositeHeader.Component <| OntologyAnnotation.fromString("instrument model", "MS", "MS:1"),[|
+    table.AddColumn(CompositeHeader.Component <| OntologyAnnotation("instrument model", "MS", "MS:1"),[|
       for _ in 0 .. (RowCount-1) do
         CompositeCell.createTermFromString("SCIEX instrument model", "MS", "MS:2")
     |])
-    table.AddColumn(CompositeHeader.Factor <| OntologyAnnotation.fromString("temperatures", "UO", "UO:1"),[|
+    table.AddColumn(CompositeHeader.Factor <| OntologyAnnotation("temperatures", "UO", "UO:1"),[|
       for i in 0 .. (RowCount-1) do
         let t = i/1000 |> string 
         CompositeCell.createUnitizedFromString(t, "degree Celsius", "UO", "UO:2")
@@ -578,6 +578,6 @@ module LargeFile =
         CompositeCell.FreeText "My Awesome Protocol"
     |])
 
-    let fsws_large = ARCtrl.ISA.Spreadsheet.ArcTable.toFsWorksheet table
+    let fsws_large = Spreadsheet.ArcTable.toFsWorksheet table
     Workbook.AddWorksheet(fsws_large)
     Workbook.AddWorksheet studyMetadataEmpty

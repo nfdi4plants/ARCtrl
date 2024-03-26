@@ -4,7 +4,7 @@ open Thoth.Json.Core
 open ARCtrl.Json
 open Fable.Core
 
-module private JsonHelper =
+module JsonHelper =
 
     [<AttachMembers>]
     type AssayJson() =

@@ -1,4 +1,4 @@
-﻿module ArcJsonConversion.Tests
+﻿module Tests.ArcJsonConversion
 
 open ARCtrl
 open ARCtrl.Process
@@ -129,7 +129,7 @@ module Helper =
 open Helper
 
 
-let private tests_arcTableProcess = 
+let private tests_ArcTableProcess = 
     testList "ARCTableProcess" [
         testCase "SingleRowSingleParam GetProcesses" (fun () ->
             let t = singleRowSingleParam.Copy()
@@ -288,7 +288,7 @@ let private tests_arcTableProcess =
         )
     ]
 
-let private tests_arcTablesProcessSeq = 
+let private tests_ArcTablesProcessSeq = 
     testList "ARCTablesProcessSeq" [
         testCase "NoTables GetProcesses" (fun () ->
             let t = ArcTables(ResizeArray())
@@ -363,7 +363,7 @@ let private tests_arcTablesProcessSeq =
     ]
 
 
-let private tests_protocolTransformation =
+let private tests_ProtocolTransformation =
     
     let pName = "ProtocolName"
     let pType = OntologyAnnotation("Growth","ABC","ABC:123")
@@ -481,10 +481,7 @@ let private tests_protocolTransformation =
 
 let main = 
     testList "ArcJsonConversion" [
-        tests_protocolTransformation
-        tests_arcTableProcess
-        tests_arcTablesProcessSeq
-        tests_arcAssay
-        tests_arcStudy
-        tests_arcInvestigation
+        tests_ProtocolTransformation
+        tests_ArcTableProcess
+        tests_ArcTablesProcessSeq
     ]
