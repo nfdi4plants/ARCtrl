@@ -1,4 +1,4 @@
-﻿module Tests.ArcJsonConversion
+﻿module ArcJsonConversion.Tests
 
 open ARCtrl
 open ARCtrl.Process

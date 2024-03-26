@@ -245,7 +245,7 @@ let private tests_ArcTableAux =
                 Expect.isNone hasDuplicate "Some/None"
             )
             testCase "No duplicate, parameter" (fun () ->
-                let header = CompositeHeader.Component (OntologyAnnotation())
+                let header = CompositeHeader.Parameter (OntologyAnnotation())
                 let hasDuplicate = headers |> ArcTableAux.tryFindDuplicateUnique header
                 Expect.isNone hasDuplicate "Some/None"
             )
@@ -1062,7 +1062,7 @@ let private tests_AddColumns =
                 let column_0 = CompositeColumn.create(CompositeHeader.Input IOType.Source)
                 let column_1 = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
                 let column_2 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
-                let column_3 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
+                let column_3 = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()))
                 let columns = [|
                     column_0
                     column_1
@@ -1126,7 +1126,7 @@ let private tests_AddColumns =
                 let column_0 = CompositeColumn.create(CompositeHeader.Input IOType.Source)
                 let column_1 = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
                 let column_2 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
-                let column_3 = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
+                let column_3 = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()))
                 let columns = [|
                     column_0
                     column_1
@@ -1148,7 +1148,7 @@ let private tests_AddColumns =
             let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source)
             let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample)
             let column_component = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
-            let column_param = CompositeColumn.create(CompositeHeader.Component (OntologyAnnotation()))
+            let column_param = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()))
             /// Valid TestTable with 5 columns, no cells: Input [Source] - >Output [Sample] -> Component [instrument model] -> Parameter [empty] -> Parameter [empty]
             let create_testTable() = 
                 let t = ArcTable.init(TableName)
@@ -2122,9 +2122,9 @@ let private tests_Join = testList "Join" [
             // test headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
-            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty]"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
-            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty] 2"
             // test rows
             Expect.equal table.RowCount 0 "rowcount"
         testCase "Add to duplicate" <| fun _ ->
@@ -2140,12 +2140,12 @@ let private tests_Join = testList "Join" [
             // headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Source) "Header input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
-            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty]"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
-            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 2"
-            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 3"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty] 3"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model] 2"
-            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 4"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty] 4"
             // rows should be untouched
             Expect.equal table.RowCount 5 "rows should be untouched"
         testCase "Join replace input" <| fun _ ->
@@ -2160,9 +2160,9 @@ let private tests_Join = testList "Join" [
             // test headers
             Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.ImageFile) "Here should be new image input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
-            Expect.equal table.Headers.[2] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty]"
+            Expect.equal table.Headers.[2] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
-            Expect.equal table.Headers.[4] (CompositeHeader.Component (OntologyAnnotation())) "Header parameter [empty] 2"
+            Expect.equal table.Headers.[4] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty] 2"
             Expect.equal (table.TryGetCellAt(0,4).Value) (CompositeCell.createFreeText "Source_4") "Input cell should be unchanged, only header should be changed"
     ]
     testList "TableJoinOption.WithUnits" [ 

@@ -29,6 +29,14 @@ type Comment(?name, ?value) =
     member this.Copy() =
         Comment.make this.Name this.Value
 
+    override this.Equals(obj) =
+        match obj with
+        | :? Comment as c -> c.Name = this.Name && c.Value = this.Value
+        | _ -> false
+
+    override this.GetHashCode() =
+        this.Name.GetHashCode() + this.Value.GetHashCode()
+
 
 [<AttachMembers>]
 type Remark = 

@@ -62,30 +62,30 @@ let private tests_compositeHeader =
                 let actual = CompositeHeader.getUITooltip(U2.Case2 case)
                 Expect.isTrue (actual.Length > 0) $"{case}"
         testCase "GetExplanation" <| fun _ ->
-            let header = CompositeHeader.Component OntologyAnnotation.empty
+            let header = CompositeHeader.Component (OntologyAnnotation())
             let actual = header.GetUITooltip()
             Expect.isTrue (actual.Length > 0) ""
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 
-                let header = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species", "MS", "MS:0000042")
+                let header = CompositeHeader.Characteristic <| OntologyAnnotation("species", "MS", "MS:0000042")
                 let actual = header.ToString()
                 let expected = "Characteristic [species]"
                 Expect.equal actual expected ""
             )
             testCase "Parameter" (fun () -> 
-                let header = CompositeHeader.Parameter <| OntologyAnnotation.fromString("centrifugation time", "MS", "MS:0000042")
+                let header = CompositeHeader.Parameter <| OntologyAnnotation("centrifugation time", "MS", "MS:0000042")
                 let actual = header.ToString()
                 let expected = "Parameter [centrifugation time]"
                 Expect.equal actual expected ""
             )
             testCase "Factor" (fun () -> 
-                let header = CompositeHeader.Factor <| OntologyAnnotation.fromString("growth temperature", "MS", "MS:0000042")
+                let header = CompositeHeader.Factor <| OntologyAnnotation("growth temperature", "MS", "MS:0000042")
                 let actual = header.ToString()
                 let expected = "Factor [growth temperature]"
                 Expect.equal actual expected ""
             )
             testCase "Component" (fun () -> 
-                let header = CompositeHeader.Component <| OntologyAnnotation.fromString("instrument model", "MS", "MS:0000042")
+                let header = CompositeHeader.Component <| OntologyAnnotation("instrument model", "MS", "MS:0000042")
                 let actual = header.ToString()
                 let expected = "Component [instrument model]"
                 Expect.equal actual expected ""
@@ -114,55 +114,55 @@ let private tests_compositeHeader =
                 testCase "Characteristic" (fun () ->
                     let headerString = "Characteristic [species]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species")
+                    let expected = CompositeHeader.Characteristic <| OntologyAnnotation("species")
                     Expect.equal actual expected ""
                 )
                 testCase "Characteristics" (fun () ->
                     let headerString = "Characteristics [species]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species")
+                    let expected = CompositeHeader.Characteristic <| OntologyAnnotation("species")
                     Expect.equal actual expected ""
                 )
                 testCase "Characteristics Value" (fun () ->
                     let headerString = "Characteristics Value [species]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Characteristic <| OntologyAnnotation.fromString("species")
+                    let expected = CompositeHeader.Characteristic <| OntologyAnnotation("species")
                     Expect.equal actual expected ""
                 )
                 testCase "Parameter" (fun () ->
                     let headerString = "Parameter [centrifugation time]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Parameter <| OntologyAnnotation.fromString("centrifugation time")
+                    let expected = CompositeHeader.Parameter <| OntologyAnnotation("centrifugation time")
                     Expect.equal actual expected ""
                 )
                 testCase "Parameter Value" (fun () ->
                     let headerString = "Parameter Value [centrifugation time]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Parameter <| OntologyAnnotation.fromString("centrifugation time")
+                    let expected = CompositeHeader.Parameter <| OntologyAnnotation("centrifugation time")
                     Expect.equal actual expected ""
                 )
                 testCase "Factor" (fun () ->
                     let headerString = "Factor [temperature]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Factor <| OntologyAnnotation.fromString("temperature")
+                    let expected = CompositeHeader.Factor <| OntologyAnnotation("temperature")
                     Expect.equal actual expected ""
                 )
                 testCase "Factor Value" (fun () ->
                     let headerString = "Factor Value [temperature]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Factor <| OntologyAnnotation.fromString("temperature")
+                    let expected = CompositeHeader.Factor <| OntologyAnnotation("temperature")
                     Expect.equal actual expected ""
                 )
                 testCase "Component" (fun () ->
                     let headerString = "Component [temperature]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Component <| OntologyAnnotation.fromString("temperature")
+                    let expected = CompositeHeader.Component <| OntologyAnnotation("temperature")
                     Expect.equal actual expected ""
                 )
                 testCase "Parameter [Concentration of [nutrient] before start of the experiment]" <| fun _ ->
                     let headerString = "Parameter [Concentration of [nutrient] before start of the experiment]"
                     let actual = CompositeHeader.OfHeaderString headerString
-                    let expected = CompositeHeader.Parameter <| OntologyAnnotation.fromString("Concentration of [nutrient] before start of the experiment")
+                    let expected = CompositeHeader.Parameter <| OntologyAnnotation("Concentration of [nutrient] before start of the experiment")
                     Expect.equal actual expected ""
             ]
             testList "IoColumns" [
@@ -300,18 +300,18 @@ let tests_ToTerm = testList "ToTerm" [
                 | CompositeHeader.Component oa | CompositeHeader.Factor oa | CompositeHeader.Parameter oa | CompositeHeader.Characteristic oa ->
                     Expect.equal (ch.ToTerm()) oa (sprintf "[TERM] ToTerm does not return correct oa: %A" ch)
                 | featuredColumn when ch.IsFeaturedColumn -> 
-                    let expected = OntologyAnnotation.fromString(featuredColumn.ToString(), tan=featuredColumn.GetFeaturedColumnAccession)
+                    let expected = OntologyAnnotation(featuredColumn.ToString(), tan=featuredColumn.GetFeaturedColumnAccession)
                     Expect.equal (ch.ToTerm()) expected (sprintf "[FEATURED COLUM] ToTerm does not return correct oa: %A" ch)
                 | _ -> failwith "Test"
             else
-                let expected = OntologyAnnotation.fromString (ch.ToString())
+                let expected = OntologyAnnotation(ch.ToString())
                 Expect.equal (ch.ToTerm()) expected (sprintf "[Others] ToTerm does not return correct oa: %A" ch)
     let allHeaders = 
         [
-            CompositeHeader.Component OntologyAnnotation.empty
-            CompositeHeader.Characteristic OntologyAnnotation.empty
-            CompositeHeader.Factor OntologyAnnotation.empty
-            CompositeHeader.Parameter OntologyAnnotation.empty
+            CompositeHeader.Component (OntologyAnnotation())
+            CompositeHeader.Characteristic (OntologyAnnotation())
+            CompositeHeader.Factor (OntologyAnnotation())
+            CompositeHeader.Parameter (OntologyAnnotation())
             CompositeHeader.ProtocolType
             CompositeHeader.ProtocolDescription
             CompositeHeader.ProtocolUri
@@ -331,36 +331,36 @@ let tests_ToTerm = testList "ToTerm" [
 
 let tests_GetHashCode = testList "GetHashCode" [
     testCase "SimpleParamEqual" (fun () ->
-        let oa1 = OntologyAnnotation.fromString("MyTerm",tan = "LOL:123")
+        let oa1 = OntologyAnnotation("MyTerm",tan = "LOL:123")
         let p1 = CompositeHeader.Parameter(oa1)
-        let oa2 = OntologyAnnotation.fromString("MyTerm",tan = "LOL:123")
+        let oa2 = OntologyAnnotation("MyTerm",tan = "LOL:123")
         let p2 = CompositeHeader.Parameter(oa2)
         let h1 = p1.GetHashCode()
         let h2 = p2.GetHashCode()
         Expect.equal h1 h2 "Same Param Headers should have equal hash"    
     )
     testCase "SimpleParamUnequal" (fun () ->
-        let oa1 = OntologyAnnotation.fromString("MyTerm",tan = "LOL:123")
+        let oa1 = OntologyAnnotation("MyTerm",tan = "LOL:123")
         let p1 = CompositeHeader.Parameter(oa1)
-        let oa2 = OntologyAnnotation.fromString("YourTerm",tan = "ROFL:321")
+        let oa2 = OntologyAnnotation("YourTerm",tan = "ROFL:321")
         let p2 = CompositeHeader.Parameter(oa2)
         let h1 = p1.GetHashCode()
         let h2 = p2.GetHashCode()
         Expect.notEqual h1 h2 "Different Param Headers should have unequal hash"    
     )
     testCase "EmptyParam" (fun () ->
-        let oa1 = OntologyAnnotation.empty
+        let oa1 = (OntologyAnnotation())
         let p1 = CompositeHeader.Parameter(oa1)
-        let oa2 = OntologyAnnotation.empty
+        let oa2 = (OntologyAnnotation())
         let p2 = CompositeHeader.Parameter(oa2)
         let h1 = p1.GetHashCode()
         let h2 = p2.GetHashCode()
         Expect.equal h1 h2 "Empty Param Headers should be equal"    
     )
     testCase "EmptyParamAndFactor" (fun () ->
-        let oa1 = OntologyAnnotation.empty
+        let oa1 = (OntologyAnnotation())
         let p1 = CompositeHeader.Parameter(oa1)
-        let oa2 = OntologyAnnotation.empty
+        let oa2 = (OntologyAnnotation())
         let f2 = CompositeHeader.Factor(oa2)
         let h1 = p1.GetHashCode()
         let h2 = f2.GetHashCode()

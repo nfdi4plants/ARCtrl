@@ -2,7 +2,8 @@
 
 open TestingUtils
 open ARCtrl
-open ARCtrl.Aux
+open ARCtrl.Process
+open ARCtrl.Helper
 
 /// Tests to test whether the accessors, that handel different cases of registration work properly
 let registrationAccessTests = 
@@ -75,7 +76,7 @@ let componentCastingTests =
     testList "ComponentCastingTests" [
         testCase "ComposeNameText" (fun () -> 
             
-            let v = Value.Name "Test" |> Some
+            let v = Value.Name "Test"
             let u = None
             let expected = "Test"
 
@@ -86,7 +87,7 @@ let componentCastingTests =
         )
         testCase "ComposeNameOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
+            let v = OntologyAnnotation("Test", "OBO", "OBO:123") |> Value.Ontology
             let u = None
             let expected = "Test (OBO:123)"
 
@@ -97,8 +98,8 @@ let componentCastingTests =
         )
         testCase "ComposeNameUnit" (fun () -> 
             
-            let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
+            let v = Value.Int 10
+            let u = OntologyAnnotation("degree Celsius", "UO", "UO:123") |> Some
             let expected = "10 degree Celsius (UO:123)"
 
             let actual = Component.composeName v u
@@ -126,7 +127,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology
+            let expectedV = OntologyAnnotation("Test", "OBO", "OBO:123") |> Value.Ontology
 
             let expectedU = None
 
@@ -139,7 +140,7 @@ let componentCastingTests =
 
             let actualV, actualU = Component.decomposeName n
 
-            let expectedV = OntologyAnnotation.fromString ("Test This Stuff", "OBO", "OBO:123") |> Value.Ontology
+            let expectedV = OntologyAnnotation("Test This Stuff", "OBO", "OBO:123") |> Value.Ontology
 
             let expectedU = None
 
@@ -156,7 +157,7 @@ let componentCastingTests =
 
             let expectedV = Value.Int 10
 
-            let expectedU = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
+            let expectedU = OntologyAnnotation("degree Celsius", "UO", "UO:123") |> Some
 
             Expect.equal actualV expectedV "Name was not correctly decomposed"
             Expect.equal actualU expectedU "Unit was not correctly decomposed"
@@ -166,9 +167,9 @@ let componentCastingTests =
             
             let v = Value.Name "Text" |> Some
 
-            let expected = Component.make (Some "Text") v None None
+            let expected = Component.make v None None
 
-            let actual = Component.fromString ("Text")
+            let actual = Component.fromISAString ("Text")
 
             Expect.equal actual expected "Component was not correctly composed"
         )
@@ -176,22 +177,22 @@ let componentCastingTests =
             
             let v = Value.Name "Text" |> Some
 
-            let header = OntologyAnnotation.fromString ("TestCategory", "CO", "CO:567") |> Some 
+            let header = OntologyAnnotation("TestCategory", "CO", "CO:567") |> Some 
 
-            let expected = Component.make (Some "Text") v None header
+            let expected = Component.make v None header
 
-            let actual = Component.fromString ("Text", "TestCategory", "CO", "CO:567")
+            let actual = Component.fromISAString ("Text", "TestCategory", "CO", "CO:567")
 
             Expect.equal actual expected "Component was not correctly composed"
 
         )
         testCase "FromStringOntology" (fun () -> 
             
-            let v = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
+            let v = OntologyAnnotation("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
 
-            let expected = Component.make (Some "Test (OBO:123)") v None None
+            let expected = Component.make v None None
 
-            let actual = Component.fromString ("Test (OBO:123)")
+            let actual = Component.fromISAString("Test (OBO:123)")
 
             Expect.equal actual expected "Component was not correctly composed"
 
@@ -199,55 +200,10 @@ let componentCastingTests =
         testCase "FromStringUnit" (fun () -> 
           
             let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
-            let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
+            let u = OntologyAnnotation("degree Celsius", "UO", "UO:123") |> Some
+            let expected = Component.make  v u None
 
-            let actual = Component.fromString ("10 degree Celsius (UO:123)")
-
-            Expect.equal actual expected "Component was not correctly composed"
-
-        )
-        testCase "FromOptionsText" (fun () -> 
-            
-            let v = Value.Name "Text" |> Some
-
-            let expected = Component.make (Some "Text") v None None
-
-            let actual = Component.fromOptions v None None
-
-            Expect.equal actual expected "Component was not correctly composed"
-        )
-        testCase "FromOptionsTextWithCategory" (fun () -> 
-            
-            let v = Value.Name "Text" |> Some
-
-            let header = OntologyAnnotation.fromString ("TestCategory", "CO", "CO:567") |> Some 
-
-            let expected = Component.make (Some "Text") v None header
-
-            let actual = Component.fromOptions v None header
-
-            Expect.equal actual expected "Component was not correctly composed"
-
-        )
-        testCase "FromOptionsOntology" (fun () -> 
-            
-            let v = OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology |> Some 
-
-            let expected = Component.make (Some "Test (OBO:123)") v None None
-
-            let actual = Component.fromOptions v None None
-
-            Expect.equal actual expected "Component was not correctly composed"
-
-        )
-        testCase "FromOptionsUnit" (fun () -> 
-          
-            let v = Value.Int 10 |> Some
-            let u = OntologyAnnotation.fromString ("degree Celsius", "UO", "UO:123") |> Some
-            let expected = Component.make (Some "10 degree Celsius (UO:123)") v u None
-
-            let actual = Component.fromOptions v u None
+            let actual = Component.fromISAString("10 degree Celsius (UO:123)")
 
             Expect.equal actual expected "Component was not correctly composed"
 
@@ -262,22 +218,22 @@ let ontologyAnnotationTests =
         let other = "Unparseable"
         testList "GetHashCode" [
             testCase "Empty" (fun () ->
-                let oa1 = OntologyAnnotation.fromString()
-                let oa2 = OntologyAnnotation.fromString()
+                let oa1 = OntologyAnnotation()
+                let oa2 = OntologyAnnotation()
                 let h1 = oa1.GetHashCode()
                 let h2 = oa2.GetHashCode()
                 Expect.equal h1 h2 "Hashes should be equal"    
             )
             testCase "Equal" (fun () ->
-                let oa1 = OntologyAnnotation.fromString("MyOntology",tsr = "EFO",tan = uri)
-                let oa2 = OntologyAnnotation.fromString("MyOntology",tsr = "EFO",tan = uri)
+                let oa1 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
+                let oa2 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
                 let h1 = oa1.GetHashCode()
                 let h2 = oa2.GetHashCode()
                 Expect.equal h1 h2 "Hashes should be equal"
             )
             testCase "Different" (fun () ->
-                let oa1 = OntologyAnnotation.fromString("MyOntology",tsr = "EFO",tan = uri)
-                let oa2 = OntologyAnnotation.fromString("YourOntology",tsr = "NCBI",tan = "http://purl.obolibrary.org/obo/NCBI_0000123")
+                let oa1 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
+                let oa2 = OntologyAnnotation("YourOntology",tsr = "NCBI",tan = "http://purl.obolibrary.org/obo/NCBI_0000123")
                 let h1 = oa1.GetHashCode()
                 let h2 = oa2.GetHashCode()
                 Expect.notEqual h1 h2 "Hashes should not be equal"
@@ -286,32 +242,32 @@ let ontologyAnnotationTests =
         testList "fromString" [
             
             testCase "FromShort" (fun () ->
-                let oa = OntologyAnnotation.fromString(tan = short)
-                Expect.equal oa.TermAccessionString short "TAN incorrect"
+                let oa = OntologyAnnotation(tan = short)
+                Expect.equal oa.TermAccessionNumber.Value short "TAN incorrect"
                 Expect.equal oa.TermAccessionShort short "short TAN incorrect"
                 Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
             )
             testCase "FromUri" (fun () ->          
-                let oa = OntologyAnnotation.fromString(tan = uri)
-                Expect.equal oa.TermAccessionString uri "TAN incorrect"
+                let oa = OntologyAnnotation(tan = uri)
+                Expect.equal oa.TermAccessionNumber.Value uri "TAN incorrect"
                 Expect.equal oa.TermAccessionShort short "short TAN incorrect"
                 Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
             )
             testCase "FromOtherParseable" (fun () ->          
-                let oa = OntologyAnnotation.fromString(tan = otherParseable)
-                Expect.equal oa.TermAccessionString otherParseable "TAN incorrect"
+                let oa = OntologyAnnotation(tan = otherParseable)
+                Expect.equal oa.TermAccessionNumber.Value otherParseable "TAN incorrect"
                 Expect.equal oa.TermAccessionShort short "short TAN incorrect"
                 Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
             )
             testCase "FromOther" (fun () ->          
-                let oa = OntologyAnnotation.fromString(tan = other)
-                Expect.equal oa.TermAccessionString other "TAN incorrect"
+                let oa = OntologyAnnotation(tan = other)
+                Expect.equal oa.TermAccessionNumber.Value other "TAN incorrect"
             )
             testCase "FromOtherWithTSR" (fun () ->          
                 let tsr = "ABC"
-                let oa = OntologyAnnotation.fromString(tsr = tsr,tan = other)
-                Expect.equal oa.TermAccessionString other "TAN incorrect"
-                Expect.equal oa.TermSourceREFString tsr "TSR incorrect"
+                let oa = OntologyAnnotation(tsr = tsr,tan = other)
+                Expect.equal oa.TermAccessionNumber.Value other "TAN incorrect"
+                Expect.equal oa.TermSourceREF.Value tsr "TSR incorrect"
             )
         ]
     ]
@@ -358,7 +314,7 @@ let valueTests =
         testCase "ToStringOntology" (fun () -> 
             
             let expected = "Test"
-            let actual = Value.getText (OntologyAnnotation.fromString ("Test", "OBO", "OBO:123") |> Value.Ontology)
+            let actual = Value.getText (OntologyAnnotation("Test", "OBO", "OBO:123") |> Value.Ontology)
             Expect.equal actual expected "Value was not correctly composed"
         )
     ]

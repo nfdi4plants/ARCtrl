@@ -7,7 +7,7 @@ open TestingUtils
 let private tests_Validate = 
     testList "Validate" [
         testCase "Valid header with empty cells" (fun () ->
-            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation.empty)
+            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
             let header1 : CompositeHeader = CompositeHeader.Input IOType.Source
             let header2 : CompositeHeader = CompositeHeader.ProtocolType
             let cells : CompositeCell [] = [||]
@@ -19,7 +19,7 @@ let private tests_Validate =
             Expect.isTrue c3 "header2"
         )
         testCase "Valid term with term cells" (fun () ->
-            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation.empty)
+            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
             let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyTerm)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true)
@@ -28,7 +28,7 @@ let private tests_Validate =
             Expect.isTrue column ""
         )
         testCase "Valid term with unit cells" (fun () ->
-            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation.empty)
+            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
             let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyUnitized)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true)
@@ -37,7 +37,7 @@ let private tests_Validate =
             Expect.isTrue column ""
         )
         testCase "Invalid term with freetext cells" (fun () ->
-            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation.empty)
+            let header : CompositeHeader = CompositeHeader.Characteristic (OntologyAnnotation())
             let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyFreeText)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore

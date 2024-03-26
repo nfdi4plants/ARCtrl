@@ -81,6 +81,7 @@ module Expect =
     let wantSome actual message = Expect.wantSome actual message 
 
     let isEmpty actual message = Expect.isEmpty actual message 
+    let isNotEmpty actual message = Expect.isEmpty actual message 
     let hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
 
     let isTrue actual message = Expect.isTrue actual message 
@@ -126,13 +127,13 @@ module Expect =
       match firstDiff actual expected with
       | _,None,None -> ()
       | i,Some a, Some e ->
-        failwithf "%s. Sequence does not match at position %i. Expected item: %A, but got %A."
+        failwithf "%s. Sequence does not match at position %i. Expected item: %O, but got %O."
           message i e a
       | i,None,Some e ->
-        failwithf "%s. Sequence actual shorter than expected, at pos %i for expected item %A."
+        failwithf "%s. Sequence actual shorter than expected, at pos %i for expected item %O."
           message i e
       | i,Some a,None ->
-        failwithf "%s. Sequence actual longer than expected, at pos %i found item %A."
+        failwithf "%s. Sequence actual longer than expected, at pos %i found item %O."
           message i a
 
     

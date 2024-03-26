@@ -2,7 +2,7 @@
 
 open TestingUtils
 
-open ARCtrl.Aux
+open ARCtrl.Helper
 open Update
 
 module TestTypes = 

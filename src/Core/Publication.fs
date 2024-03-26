@@ -66,3 +66,21 @@ type Publication(?pubMedID, ?doi, ?authors, ?title, ?status, ?comments) =
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         Publication.make this.PubMedID this.DOI this.Authors this.Title this.Status nextComments
+
+    override this.GetHashCode() =
+        [|
+            HashCodes.boxHashOption this.DOI
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Authors
+            HashCodes.boxHashOption this.PubMedID
+            HashCodes.boxHashOption this.Status
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
+    override this.Equals(obj) =
+        match obj with
+        | :? Publication as p -> 
+            this.GetHashCode() = p.GetHashCode()
+        | _ -> false

@@ -383,12 +383,12 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.Description expected.Description "Description"
         Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
         Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
-        Expect.equal actual.Publications expected.Publications "Publications"
-        Expect.equal actual.Contacts expected.Contacts "Contacts"
-        Expect.equal actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
-        TestingUtils.Expect.sequenceEqual actual.Tables expected.Tables "Tables" 
-        TestingUtils.Expect.sequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
-        Expect.equal actual.Comments expected.Comments "Comments"
+        Expect.sequenceEqual actual.Publications expected.Publications "Publications"
+        Expect.sequenceEqual actual.Contacts expected.Contacts "Contacts"
+        Expect.sequenceEqual actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
+        Expect.sequenceEqual actual.Tables expected.Tables "Tables" 
+        Expect.sequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.sequenceEqual actual.Comments expected.Comments "Comments"
     testCase "replace existing, all replaced" <| fun _ ->
         let actual = createFullStudy()
         let next = 
@@ -412,12 +412,12 @@ let tests_UpdateBy = testList "UpdateReferenceByStudyFile" [
         Expect.equal actual.Description next.Description "Description"
         Expect.equal actual.SubmissionDate next.SubmissionDate "SubmissionDate"
         Expect.equal actual.PublicReleaseDate next.PublicReleaseDate "PublicReleaseDate"
-        Expect.equal actual.Publications next.Publications "Publications"
-        Expect.equal actual.Contacts next.Contacts "Contacts"
-        Expect.equal actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
-        TestingUtils.Expect.sequenceEqual actual.Tables next.Tables "Tables" 
-        TestingUtils.Expect.sequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
-        Expect.equal actual.Comments next.Comments "Comments"
+        Expect.sequenceEqual actual.Publications next.Publications "Publications"
+        Expect.sequenceEqual actual.Contacts next.Contacts "Contacts"
+        Expect.sequenceEqual actual.StudyDesignDescriptors next.StudyDesignDescriptors "StudyDesignDescriptors"
+        Expect.sequenceEqual actual.Tables next.Tables "Tables" 
+        Expect.sequenceEqual actual.RegisteredAssayIdentifiers next.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+        Expect.sequenceEqual actual.Comments next.Comments "Comments"
     testCase "full replace, empty" <| fun _ ->
         let actual = createFullStudy()
         let next = 

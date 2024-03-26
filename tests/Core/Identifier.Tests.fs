@@ -4,7 +4,7 @@ open ARCtrl
 
 open TestingUtils
 
-open ARCtrl.Identifier
+open ARCtrl.Helper.Identifier
 
 let private tests_checkValidCharacters = testList "checkValidCharacters" [
     // Function to test the checkValidCharacters function with a given identifier

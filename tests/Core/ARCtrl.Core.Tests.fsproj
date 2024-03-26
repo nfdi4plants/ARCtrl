@@ -6,7 +6,6 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Library.fs" />
     <Compile Include="Regex.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />

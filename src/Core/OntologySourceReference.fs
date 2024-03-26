@@ -58,3 +58,19 @@ type OntologySourceReference(?description, ?file, ?name, ?version, ?comments) =
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         OntologySourceReference.make this.Description this.File this.Name this.Version nextComments
+
+    override this.GetHashCode() : int = 
+        [|
+            HashCodes.boxHashOption this.Description
+            HashCodes.boxHashOption this.File
+            HashCodes.boxHashOption this.Name
+            HashCodes.boxHashOption this.Version
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
+    override this.Equals(obj) =
+        match obj with
+        | :? OntologySourceReference as t -> this.GetHashCode() = t.GetHashCode()
+        | _ -> false

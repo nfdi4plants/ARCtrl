@@ -1,6 +1,6 @@
 ﻿module Regex.Tests
 
-open ARCtrl
+open ARCtrl.Helper
 
 open TestingUtils
 
