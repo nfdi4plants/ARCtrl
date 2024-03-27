@@ -3,91 +3,11 @@
 open Thoth.Json.Core
 
 
-open ARCtrl.Template.Json
 open ARCtrl.Json
 open ARCtrl
 
 open TestingUtils
 
-let private fableReplaceLineEndings(str: string) =
-    str.Replace("\r\n","\n").Replace("\n\r","\n")
-
-let private tests_Organisation = testList "Organisation" [
-    testList "encode" [
-        testCase "DataPLANT" <| fun _ ->
-            let o = Organisation.DataPLANT
-            let actual = Organisation.encode o |> Encode.toJsonString 4
-            let expected = "\"DataPLANT\""
-            Expect.equal actual expected ""
-        testCase "Other" <| fun _ ->
-            let o = Organisation.Other "My Custom Org"
-            let actual = Organisation.encode o |> Encode.toJsonString 4
-            let expected = "\"My Custom Org\""
-            // replace line endings to normalize for all editors/environments.
-            Expect.equal (fableReplaceLineEndings actual) (fableReplaceLineEndings expected) ""
-    ]
-    testList "decode" [
-        testCase "DataPLANT" <| fun _ ->
-            let json = "\"DataPLANT\""
-            let actual = GDecode.fromJsonString Organisation.decode json
-            let expected =  Organisation.DataPLANT
-            Expect.equal actual expected ""
-        testCase "Other" <| fun _ ->
-            let json = "\"My Custom Org\""
-            let actual = GDecode.fromJsonString Organisation.decode json
-            let expected =  Other "My Custom Org"
-            Expect.equal actual expected ""
-    ]
-    testList "roundabout" [
-        testCase "DataPLANT" <| fun _ ->
-            let o = Organisation.DataPLANT
-            let json = Organisation.encode o |> Encode.toJsonString 4
-            let actual = GDecode.fromJsonString Organisation.decode json
-            let expected = o
-            Expect.equal actual expected ""
-        testCase "Other" <| fun _ ->
-            let o = Organisation.Other "My Custom Org"
-            let json = Organisation.encode o |> Encode.toJsonString 4
-            let actual = GDecode.fromJsonString Organisation.decode json
-            let expected = o
-            Expect.equal actual expected ""
-    ]
-]
-
-let tests_Template = testList "Template" [
-    testList "roundabout" [
-        testCase "complete" <| fun _ ->
-            let table = ArcTable.init("My Table")
-            table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
-            table.AddColumn(CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
-            let o = Template.init("MyTemplate")
-            o.Table <- table
-            o.Authors <- [|ARCtrl.ISA.Person.create(FirstName="John", LastName="Doe"); ARCtrl.ISA.Person.create(FirstName="Jane", LastName="Doe");|]
-            o.EndpointRepositories <- [|ARCtrl.ISA.OntologyAnnotation.fromString "Test"; ARCtrl.ISA.OntologyAnnotation.fromString "Testing second"|]
-            let json = Encode.toJsonString  4 (Template.encode o)
-            let actual = GDecode.fromJsonString Template.decode json
-            let expected = o
-            Expect.equal actual.Id expected.Id "id"
-            Expect.equal actual.Authors expected.Authors "Authors"
-            Expect.equal actual.EndpointRepositories expected.EndpointRepositories "EndpointRepositories"
-            Expect.equal actual.LastUpdated expected.LastUpdated "LastUpdated"
-            Expect.equal actual.Name expected.Name "Name"
-            Expect.equal actual.Organisation expected.Organisation "Organisation"
-            Expect.equal actual.SemVer expected.SemVer "SemVer"
-            //printfn "ACTUAL: %A" actualValue.Table
-            //printfn "EXPECTED: %A" expected.Table
-                
-            Expect.equal actual.Table.Name expected.Table.Name "Name should be equal"
-            Expect.sequenceEqual actual.Table.Headers expected.Table.Headers "Headers should be equal"
-            Expect.sequenceEqual actual.Table.Values expected.Table.Values "Headers should be equal"
-
-            Expect.equal actual.Table.RowCount expected.Table.RowCount "RowCount should be equal"
-            Expect.equal actual.Table.ColumnCount expected.Table.ColumnCount "ColumnCount should be equal"
-
-            Expect.equal actual.Table expected.Table "Table"
-            Expect.equal actual expected "template"
-    ]
-]
 
 let tests_Spreadsheet =  testList "Template_Spreadsheet" [
     testList "metadata" [
@@ -195,12 +115,6 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
             Expect.arcTableEqual template.Table expectedTable "Table"
 
     ]
-]
-
-let private tests_json = testList "Json" [
-    tests_Organisation
-    tests_Template
-    tests_Spreadsheet
 ]
 
 let private tests_equality = testList "equality" [

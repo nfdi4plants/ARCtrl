@@ -41,6 +41,6 @@ let private tests_extended = testList "extended" [
     ]
 ]
 
-let Main = testList "CompositeHeader" [
+let main = testList "CompositeHeader" [
     tests_extended
 ]

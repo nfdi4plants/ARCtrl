@@ -3,19 +3,20 @@
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "Json" [
-    Tests.Decoder.Main
-    Tests.OntologyAnnotation.Main
-    Tests.CompositeCell.Main
-    Tests.IOType.Main
-    Tests.CompositeHeader.Main
-    Tests.ArcTable.Main
-    Tests.Assay.Main
-    Tests.Study.Main
-    Tests.Investigation.Main
-    //Tests.ArcTypes.Main
+    Tests.Decoder.main
+    Tests.OntologyAnnotation.main
+    Tests.CompositeCell.main
+    Tests.IOType.main
+    Tests.CompositeHeader.main
+    Tests.ArcTable.main
+    Tests.Assay.main
+    Tests.Study.main
+    Tests.Investigation.main
+    Tests.Template.main
+    //Tests.ArcTypes.main
     //Json.Tests.main
     //JsonSchema.Tests.main
-    //Tests.ROCrate.Main
+    //Tests.ROCrate.main
 ]
 
 [<EntryPoint>]

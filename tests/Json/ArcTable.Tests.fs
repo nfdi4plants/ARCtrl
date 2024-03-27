@@ -83,7 +83,7 @@ let private tests = testList "extended" [
     ]
 ]
 
-let Main = testList "ArcTable" [
+let main = testList "ArcTable" [
     tests
     tests_core
     tests_coreEmpty

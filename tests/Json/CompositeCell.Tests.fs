@@ -61,6 +61,6 @@ let tests_extended = testList "extended" [
     ]
 ]
 
-let Main = testList "CompositeCell" [
+let main = testList "CompositeCell" [
     tests_extended
 ]

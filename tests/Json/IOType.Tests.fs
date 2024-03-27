@@ -31,6 +31,6 @@ let tests_extended = testList "extended" [
   ]
 ]
 
-let Main = testList "IOType" [
+let main = testList "IOType" [
     tests_extended
 ]

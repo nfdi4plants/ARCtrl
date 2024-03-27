@@ -52,7 +52,7 @@ let private tests_NoAdditionalProperties = testList "NoAdditionalProperties" [
         Expect.equal person2 person ""
 ]
 
-let Main = testList "Decoder" [
+let main = testList "Decoder" [
     tests_NoAdditionalProperties
 ]
 

@@ -87,7 +87,7 @@ let private test_roCrate =
         ArcAssay.fromROCrateJsonString
 
 
-let Main = testList "Assay" [
+let main = testList "Assay" [
     test_coreEmpty
     test_compressedEmpty
     test_isaEmpty

@@ -38,7 +38,7 @@ let private tests_roCrate =
         OntologyAnnotation.fromROCrateJsonString
     
 
-let Main = testList "OntologyAnnotation" [
+let main = testList "OntologyAnnotation" [
     tests_core
     tests_isa
     tests_roCrate        

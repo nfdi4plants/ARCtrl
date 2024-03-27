@@ -110,7 +110,7 @@ let tests_detailed = testList "Detailed" [
         Helper.compareFields expected actual
 ]
 
-let Main = testList "Study" [
+let main = testList "Study" [
     test_coreEmpty
     test_core
     test_compressedEmpty

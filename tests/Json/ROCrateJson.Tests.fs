@@ -391,7 +391,7 @@ let private tests_investigation = testList "Investigation" [
         Expect.pass()
 ]
 
-let Main = testList "ROCrate" [
+let main = testList "ROCrate" [
     tests_DisambiguatingDescription
     tests_investigation
 ]

@@ -117,7 +117,7 @@ let private test_isa =
 //        ArcInvestigation.toROCrateJsonString
 //        ArcInvestigation.fromROCrateJsonString
 
-let Main = testList "Investigation" [
+let main = testList "Investigation" [
     test_coreEmpty
     test_core
     test_compressedEmpty

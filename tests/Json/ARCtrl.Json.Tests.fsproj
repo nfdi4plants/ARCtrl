@@ -23,6 +23,7 @@
     <Compile Include="Assay.Tests..fs" />
     <Compile Include="Study.Tests.fs" />
     <Compile Include="Investigation.Tests.fs" />
+    <Compile Include="Template.Tests.fs" />
     <Compile Include="ROCrateJson.Tests.fs" />
     <Compile Include="ISAJson\ISAJson.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
