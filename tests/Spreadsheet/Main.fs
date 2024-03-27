@@ -12,6 +12,7 @@ let all = testSequenced <| testList "ISA.Spreadsheet" [
     ArcStudyTests.main
     SparseTableTests.main
     IdentifierTests.main
+    TemplateTests.main
 ]
 
 [<EntryPoint>]
