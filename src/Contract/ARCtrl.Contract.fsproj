@@ -7,13 +7,17 @@
   <ItemGroup>
     <None Include="README.md" />
     <Compile Include="Contract.fs" />
+    <Compile Include="ArcAssay.fs" />
+    <Compile Include="ArcStudy.fs" />
+    <Compile Include="ArcInvestigation.fs" />
+    <Compile Include="Git.fs" />
+    <Compile Include="ARC.fs" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
+    <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil, Kevin Schneider, Oliver Maus</Authors>
