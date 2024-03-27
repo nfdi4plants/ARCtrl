@@ -8,7 +8,7 @@ open ARCtrl.Helper
 module Investigation =
     
     let encoder (inv : ArcInvestigation) = 
-        Encode.object [ 
+        [ 
             "Identifier", Encode.string inv.Identifier
             Encode.tryInclude "Title" Encode.string inv.Title
             Encode.tryInclude "Description" Encode.string inv.Description
@@ -23,6 +23,8 @@ module Investigation =
             Encode.tryIncludeSeq "Comments" Comment.encoder inv.Comments
             // remarks are ignored for whatever reason
         ]
+        |> Encode.choose
+        |> Encode.object
 
     let decoder : Decoder<ArcInvestigation> =
         Decode.object (fun get ->
@@ -47,7 +49,7 @@ module Investigation =
     open StringTable
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (inv : ArcInvestigation) = 
-        Encode.object [ 
+        [ 
             "Identifier", Encode.string inv.Identifier
             Encode.tryInclude "Title" Encode.string inv.Title
             Encode.tryInclude "Description" Encode.string inv.Description
@@ -62,6 +64,8 @@ module Investigation =
             Encode.tryIncludeSeq "Comments" Comment.encoder inv.Comments
             // remarks are ignored for whatever reason
         ]
+        |> Encode.choose
+        |> Encode.object
 
     let decoderCompressed (stringTable) (oaTable) (cellTable) : Decoder<ArcInvestigation> =
         Decode.object (fun get ->
@@ -101,15 +105,15 @@ module Investigation =
                 "additionalType", Encode.string "Investigation"
                 "identifier", Encode.string oa.Identifier
                 "filename", Encode.string ArcInvestigation.FileName
-                Encode.tryInclude "title" Encode.string (oa.Title)
-                Encode.tryInclude "description" Encode.string (oa.Description)
-                Encode.tryInclude "submissionDate" Encode.string (oa.SubmissionDate)
-                Encode.tryInclude "publicReleaseDate" Encode.string (oa.PublicReleaseDate)
-                Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ROCrate.encoder (oa.OntologySourceReferences)
-                Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder (oa.Publications)
-                Encode.tryIncludeSeq "people" Person.ROCrate.encoder (oa.Contacts)
-                Encode.tryIncludeSeq "studies" Study.ROCrate.encoder (oa.Studies)
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder (oa.Comments)
+                Encode.tryInclude "title" Encode.string oa.Title
+                Encode.tryInclude "description" Encode.string oa.Description
+                Encode.tryInclude "submissionDate" Encode.string oa.SubmissionDate
+                Encode.tryInclude "publicReleaseDate" Encode.string oa.PublicReleaseDate
+                Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ROCrate.encoder oa.OntologySourceReferences
+                Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder oa.Publications
+                Encode.tryIncludeSeq "people" Person.ROCrate.encoder oa.Contacts
+                Encode.tryIncludeSeq "studies" (Study.ROCrate.encoder None) oa.Studies
+                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder oa.Comments
                 "@context", ROCrateContext.Investigation.context_jsonvalue
             ]
             |> Encode.choose
@@ -172,7 +176,7 @@ module Investigation =
                 Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ISAJson.encoder inv.OntologySourceReferences
                 Encode.tryIncludeSeq "publications" Publication.ISAJson.encoder inv.Publications
                 Encode.tryIncludeSeq "people" Person.ISAJson.encoder inv.Contacts
-                Encode.tryIncludeSeq "studies" Study.ISAJson.encoder inv.Studies
+                Encode.tryIncludeSeq "studies" (Study.ISAJson.encoder None) inv.Studies 
                 Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder inv.Comments
             ]
             |> Encode.choose

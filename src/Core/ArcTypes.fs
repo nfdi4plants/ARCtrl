@@ -1112,27 +1112,30 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             )
 
     // - Assay API - CRUD //
-    member this.AddAssay(assay: ArcAssay) =
+    member this.AddAssay(assay: ArcAssay, ?registerIn: ResizeArray<ArcStudy>) =
         ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assay.Identifier (this.Assays |> Seq.map (fun x -> x.Identifier))
         assay.Investigation <- Some(this)
         this.Assays.Add(assay)
+        if registerIn.IsSome then
+            for study in registerIn.Value do
+                study.RegisterAssay(assay.Identifier)
 
-    static member addAssay(assay: ArcAssay) =
+    static member addAssay(assay: ArcAssay, ?registerIn: ResizeArray<ArcStudy>) =
         fun (inv:ArcInvestigation) ->
             let newInvestigation = inv.Copy()
-            newInvestigation.AddAssay(assay)
+            newInvestigation.AddAssay(assay, ?registerIn=registerIn)
             newInvestigation
 
     // - Assay API - CRUD //
-    member this.InitAssay(assayIdentifier: string) =
+    member this.InitAssay(assayIdentifier: string, ?registerIn: ResizeArray<ArcStudy>) =
         let assay = ArcAssay(assayIdentifier)
-        this.AddAssay(assay)
+        this.AddAssay(assay, ?registerIn=registerIn)
         assay
 
-    static member initAssay(assayIdentifier: string) =
+    static member initAssay(assayIdentifier: string, ?registerIn: ResizeArray<ArcStudy>) =
         fun (inv:ArcInvestigation) ->
             let newInvestigation = inv.Copy()
-            newInvestigation.InitAssay(assayIdentifier)
+            newInvestigation.InitAssay(assayIdentifier, ?registerIn=registerIn)
 
     // - Assay API - CRUD //
     /// <summary>

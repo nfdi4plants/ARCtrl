@@ -8,6 +8,28 @@ open ColumnIndex
 module Person = 
 
     let orcidKey = "ORCID"
+    let AssayIdentifierPrefix = "performer (ARC:00000168)"
+    let createAssayIdentifierKey = sprintf "%s %s" AssayIdentifierPrefix// TODO: Replace with ISA ontology term for assay
+
+    let setSourceAssayComment (person : Person) (assayIdentifier: string) =
+        let k = createAssayIdentifierKey assayIdentifier
+        let comment = Comment(k, assayIdentifier)
+        person.Comments.Add(comment)
+
+    let getSourceAssayIdentifiersFromComments (person : Person) =
+        person.Comments 
+        |> Seq.choose (fun c -> 
+            let isAssaySource = 
+                c.Name 
+                |> Option.map (fun n -> 
+                    n.StartsWith AssayIdentifierPrefix
+                )
+                |> Option.defaultValue false
+            if isAssaySource then c.Value else None
+        )
+
+    let removeSourceAssayComments (person: Person) : ResizeArray<Comment> =
+        person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix)
 
     let setOrcidFromComments (person : Person) =
         let person = person.Copy()

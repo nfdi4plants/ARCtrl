@@ -10,6 +10,8 @@ let all = testSequenced <| testList "Json" [
     Tests.CompositeHeader.Main
     Tests.ArcTable.Main
     Tests.Assay.Main
+    Tests.Study.Main
+    Tests.Investigation.Main
     //Tests.ArcTypes.Main
     //Json.Tests.main
     //JsonSchema.Tests.main

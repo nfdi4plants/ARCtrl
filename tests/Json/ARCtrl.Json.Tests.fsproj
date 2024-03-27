@@ -22,8 +22,8 @@
     <Compile Include="ArcTable.Tests.fs" />
     <Compile Include="Assay.Tests..fs" />
     <Compile Include="Study.Tests.fs" />
+    <Compile Include="Investigation.Tests.fs" />
     <Compile Include="ROCrateJson.Tests.fs" />
-    <Compile Include="ArcTypes.Tests.fs" />
     <Compile Include="ISAJson\ISAJson.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Main.fs" />

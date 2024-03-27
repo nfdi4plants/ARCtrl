@@ -31,7 +31,6 @@ let private tests_core =
     createBaseJsonTests
         "core"
         create_filled
-        json
         ArcTable.toJsonString
         ArcTable.fromJsonString
 
@@ -40,7 +39,6 @@ let private tests_coreEmpty =
     createBaseJsonTests
         "core"
         create_empty
-        json
         ArcTable.toJsonString
         ArcTable.fromJsonString
 
@@ -49,7 +47,6 @@ let private tests_compressedEmpty =
     createBaseJsonTests
         "core"
         create_empty
-        json
         ArcTable.toCompressedJsonString
         ArcTable.fromCompressedJsonString
         
@@ -58,7 +55,6 @@ let private tests_compressedFilled =
     createBaseJsonTests
         "core"
         create_filled
-        json
         ArcTable.toCompressedJsonString
         ArcTable.fromCompressedJsonString
 

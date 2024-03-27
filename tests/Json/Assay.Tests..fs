@@ -24,7 +24,6 @@ let private test_coreEmpty =
     createBaseJsonTests
         "core-empty"
         create_empty
-        json
         ArcAssay.toJsonString
         ArcAssay.fromJsonString
 
@@ -33,7 +32,6 @@ let private test_compressedEmpty =
     createBaseJsonTests
         "compressed-empty"
         create_empty
-        json
         ArcAssay.toCompressedJsonString
         ArcAssay.fromCompressedJsonString
 
@@ -42,7 +40,6 @@ let private test_isaEmpty =
     createBaseJsonTests
         "isa-empty"
         create_empty
-        json
         ArcAssay.toISAJsonString
         ArcAssay.fromISAJsonString
 
@@ -51,7 +48,6 @@ let private test_roCrateEmpty =
     createBaseJsonTests
         "ROCrate-empty"
         create_empty
-        json
         (fun () -> ArcAssay.toROCrateJsonString None)
         ArcAssay.fromROCrateJsonString
 
@@ -60,7 +56,6 @@ let private test_core =
     createBaseJsonTests
         "core"
         create_filled
-        json
         ArcAssay.toJsonString
         ArcAssay.fromJsonString
 
@@ -69,7 +64,6 @@ let private test_compressed =
     createBaseJsonTests
         "compressed"
         create_filled
-        json
         ArcAssay.toCompressedJsonString
         ArcAssay.fromCompressedJsonString
 
@@ -81,7 +75,6 @@ let private test_isa =
             let a = create_filled() 
             a.Performers <- ResizeArray() // ISA-JSON Assay does not contain persons
             a)
-        json
         ArcAssay.toISAJsonString
         ArcAssay.fromISAJsonString
 
@@ -90,7 +83,6 @@ let private test_roCrate =
     createBaseJsonTests
         "ROCrate"
         create_filled
-        json
         (fun () -> ArcAssay.toROCrateJsonString None)
         ArcAssay.fromROCrateJsonString
 

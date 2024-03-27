@@ -24,9 +24,9 @@ module JsonHelper =
         member this.fromCompressedJsonString (s: string) = ArcStudy.fromCompressedJsonString s
         member this.toCompressedJsonString (?spaces) = ArcStudy.toCompressedJsonString(?spaces=spaces)
         member this.fromISAJsonString (s: string) = ArcStudy.fromISAJsonString s
-        member this.toISAJsonString (?spaces) = ArcStudy.toISAJsonString(?spaces=spaces)
+        member this.toISAJsonString (?assays,?spaces) = ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces)
         member this.fromROCrateJsonString (s: string) = ArcStudy.fromROCrateJsonString s
-        member this.toROCrateJsonString(?spaces) = ArcStudy.toROCrateJsonString(?spaces=spaces)
+        member this.toROCrateJsonString(?assays,?spaces) = ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces)
 
     [<AttachMembers>]
     type InvestigationJson() =
