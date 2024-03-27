@@ -75,7 +75,7 @@ let testMetaDataFunctions =
                 |> ArcStudy.fromMetadataSheet
                 |> fun (s,a) -> ArcStudy.toMetadataSheet s (Some a)
 
-            Expect.workSheetEqual o Study.BII_S_1.studyMetadata "Written Empty study metadata does not match read study metadata"
+            Expect.workSheetEqual o Study.BII_S_1.studyMetadata "Written study metadata does not match read study metadata"
         )
 
         testCase "OutputSheetNamesDifferentEmptyObsoleteSheetName" (fun () ->
