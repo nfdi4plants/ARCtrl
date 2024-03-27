@@ -3,6 +3,7 @@
 
 open ARCtrl
 open ARCtrl.Json
+open ARCtrl.Process
 
 module private JsonExtensions =
 
@@ -42,15 +43,14 @@ module private Objects =
     
 
     let comment = 
-        Comment.make (Some "MyComment") (Some "Key") (Some "Value")
+        Comment.make (Some "Key") (Some "Value")
 
     let publicationStatus = 
         OntologyAnnotation.make 
-            None
             (Some "published")
             (Some "pso")
             (Some "http://purl.org/spar/pso/published")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let publication =
         Publication.make
@@ -59,19 +59,17 @@ module private Objects =
             (Some "Lukas Weil, Other Gzuy") // (Some "Lukas Weil, Other Gzúy")
             (Some "Fair is great")
             (Some publicationStatus)
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let role = 
         OntologyAnnotation.make 
-            None
             (Some "software developer role")
             (Some "swo")
             (Some "http://www.ebi.ac.uk/swo/SWO_0000392")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let person =
         Person.make
-            None
             None
             (Some "Weil")
             (Some "Lukas")
@@ -81,19 +79,18 @@ module private Objects =
             (Some "9876 543210")
             (Some "fantasyStreet 23, 123 Town")
             (Some "Universiteee")
-            (Some [|role|])
-            (Some [|comment|])
+            (ResizeArray [|role|])
+            (ResizeArray [|comment|])
 
     let characteristic = 
         MaterialAttribute.make 
             (Some "Characteristic/Organism")
             (Some (
                 OntologyAnnotation.make
-                    None
                     (Some "organism")
                     (Some "obi")
                     (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-                    (Some [|comment|])
+                    (ResizeArray [|comment|])
             ))
 
     let characteristicValue = 
@@ -102,50 +99,45 @@ module private Objects =
             (Some characteristic)
             (Some (
                 OntologyAnnotation.make
-                    None
                     (Some "Arabidopsis thaliana")
                     (Some "obi")
                     (Some "http://purl.obolibrary.org/obo/OBI_0100026")
-                    (Some [|comment|])
+                    (ResizeArray [|comment|])
                 |> Value.Ontology
             ))
             None
 
     let studyDesignDescriptor = 
         OntologyAnnotation.make
-            None
             (Some "Time Series Analysis")
             (Some "ncit")
             (Some "http://purl.obolibrary.org/obo/NCIT_C18235")               
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let protocolType = 
         OntologyAnnotation.make
-            None
             (Some "growth protocol")
             (Some "dfbo")
             (Some "http://purl.obolibrary.org/obo/DFBO_1000162")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let parameter = 
         ProtocolParameter.make
             None
             (Some (
                 OntologyAnnotation.make
-                    None
                     (Some "temperature unit")
                     (Some "uo")
                     (Some "http://purl.obolibrary.org/obo/UO_0000005")
-                    (Some [|comment|])
+                    (ResizeArray [|comment|])
             ))
 
     let parameterUnit =              
         OntologyAnnotation.make
-            None
             (Some "degree celsius")
             (Some "uo")
             (Some "http://purl.obolibrary.org/obo/UO_0000027")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let parameterValue = 
         ProcessParameterValue.make
@@ -155,24 +147,21 @@ module private Objects =
 
     let protocolComponent =
         Component.make
-            (Some "PCR instrument")
             (Some (
                 OntologyAnnotation.make
-                    None
                     (Some "real-time PCR machine")
                     (Some "obi")
                     (Some "http://purl.obolibrary.org/obo/OBI_0001110")
-                    (Some [|comment|])
+                    (ResizeArray [|comment|])
                 |> Value.Ontology
             ))
             None
             (Some (
                 OntologyAnnotation.make
-                    None
                     (Some "PCR instrument")
                     (Some "obi")
                     (Some "http://purl.obolibrary.org/obo/OBI_0000989")
-                    (Some [|comment|])
+                    (ResizeArray [|comment|])
             ))
     
     let protocol = 
@@ -189,25 +178,22 @@ module private Objects =
 
     let factor = 
         Factor.make 
-                None
-                (Some "Time")
-                (Some (
-                    OntologyAnnotation.make
-                        (Some "OntologyTerm/Time")
-                        (Some "time")
-                        (Some "pato")
-                        (Some "http://purl.obolibrary.org/obo/PATO_0000165")
-                        (Some [|comment|])
-                ))
-                (Some [|comment|])
+            (Some "Time")
+            (Some (
+                OntologyAnnotation.make
+                    (Some "time")
+                    (Some "pato")
+                    (Some "http://purl.obolibrary.org/obo/PATO_0000165")
+                    (ResizeArray [|comment|])
+            ))
+            (ResizeArray [|comment|] |> Some)
 
     let factorUnit = 
         OntologyAnnotation.make
-            None
             (Some "hour")
             (Some "uo")
             (Some "http://purl.obolibrary.org/obo/UO_0000032")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
         
 
     let factorValue = 
@@ -254,11 +240,11 @@ module private Objects =
             (Some [characteristicValue])
             (Some [material])
 
-    let studyMaterials = 
-        StudyMaterials.make
-            (Some [source])
-            (Some [sample])
-            (Some [material;derivedMaterial])
+    //let studyMaterials = 
+    //    StudyMaterials
+    //        (Some [source])
+    //        (Some [sample])
+    //        (Some [material;derivedMaterial])
 
     let studyProcess = 
         Process.make
@@ -294,79 +280,83 @@ module private Objects =
         (Some "https://raw.githubusercontent.com/nfdi4plants/nfdi4plants_ontology/main/dpbo.obo")
         (Some "DPBO")
         (Some "2024-02-20")
-        (Some [|comment;|])
+        (ResizeArray [|comment;|])
 
     let measurementType = 
         OntologyAnnotation.make
-            None
             (Some "LC/MS Label-Free Quantification")
             (Some "ncit")
             (Some "http://purl.obolibrary.org/obo/NCIT_C161813")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
     let technologyType = 
         OntologyAnnotation.make
-            None
             (Some "Time-of-Flight")
             (Some "ncit")
             (Some "http://purl.obolibrary.org/obo/NCIT_C70698")
-            (Some [|comment|])
+            (ResizeArray [|comment|])
 
-    let assayMaterials =
-        AssayMaterials.make
-            (Some [sample])
-            (Some [material;derivedMaterial])
+    let technologyPlatform = 
+        OntologyAnnotation.make
+            (Some "SCIEX instrument model")
+            (Some "MS")
+            (Some "http://purl.obolibrary.org/obo/MS_1000121")
+            (ResizeArray [|comment|])
+
+    //let assayMaterials =
+    //    AssayMaterials.make
+    //        (Some [sample])
+    //        (Some [material;derivedMaterial])
+
+    open ARCtrl.Process.Conversion
+
+    let remark = Remark.make 0 "hallo"
+
+    let assayIdentifier = "My Cool Assay"
+    let studyIdentifier = "My Awesome Study"
 
     let assay = 
-        Assay.make
-            None
-            (Some "MyAssay/isa.assay.xlsx")
+        ArcAssay.make
+            assayIdentifier
             (Some measurementType)
             (Some technologyType)
-            (Some "Mass spectrometry platform")
-            (Some [data])
-            (Some assayMaterials)                   
-            (Some [characteristic])
-            (Some [parameterUnit;factorUnit])
-            (Some [assayProcess])
-            (Some [comment])
+            (Some technologyPlatform)
+            (ArcTables.fromProcesses >> (fun a -> a.Tables) <| [assayProcess])
+            (ResizeArray [person])
+            (ResizeArray [comment])
 
     let study = 
-        Study.make 
-            None
-            (Some "MyStudy/isa.study.xlsx")
-            (Some "MyStudy")
-            (Some "bla bla bla")
-            (Some "bla bla bla\nblabbbbblaaa")
+        ArcStudy.make 
+            studyIdentifier
+            (Some "My Awesome Study Title")
+            (Some "Study descriptem ipsum dolor set met tantium.")
             (Some (JsonExtensions.DateTime.fromInts 2020 10 5 3 3))
-            (Some (JsonExtensions.Date.fromInts 2020 10 20))                   
-            (Some [publication])
-            (Some [person])
-            (Some [studyDesignDescriptor])
-            (Some [protocol])
-            (Some studyMaterials)
-            (Some [studyProcess])
-            (Some [assay])
-            (Some [factor])
-            (Some [characteristic])
-            (Some [parameterUnit;factorUnit])
-            (Some [comment])
+            (Some (JsonExtensions.Date.fromInts 2020 10 20))
+            (ResizeArray [publication])
+            (ResizeArray [person])
+            (ResizeArray [studyDesignDescriptor])
+            (ArcTables.fromProcesses >> (fun a -> a.Tables) <| [studyProcess])
+            (ResizeArray [assayIdentifier])
+            (ResizeArray [comment])
 
     let investigation = 
-        Investigation.make 
-            None
-            (Some "isa.investigation.xlsx")
-            (Some "MyInvestigation")
-            (Some "bla bla bla")
-            (Some "bla bla bla\nblabbbbblaaa")
+        ArcInvestigation.make
+            "My Fancy Investigation"
+            //by chatgpt
+            (Some "Unveiling the Enigmatic: A Deep Dive into the Intricacies of the ISA Paradigm")
+            //by chatgpt
+            (Some "Cryptic networks of influence, clandestine operations, and the delicate balance between security and privacy form the tapestry of the modern Intelligence, Surveillance, and Analysis (ISA) landscape. This investigation delves into the multifaceted world of ISA, navigating through its intricate web of technologies, methodologies, and ethical dilemmas. From the shadows of espionage to the forefront of data analytics, this exploration unveils the hidden mechanisms driving contemporary intelligence operations. Through a comprehensive analysis, we seek to illuminate the complexities, challenges, and implications inherent in the ISA paradigm, shedding light on its pivotal role in shaping global security and governance")
             (Some (JsonExtensions.DateTime.fromInts 2020 3 15 18 23))
             (Some (JsonExtensions.Date.fromInts 2020 4 3))                   
-            (Some [ontologySourceReference])
-            (Some [publication])
-            (Some [person])
-            (Some [study])
-            (Some [comment])
-            ([Remark.make 0 "hallo"])
+            (ResizeArray [ontologySourceReference])
+            (ResizeArray [publication])
+            (ResizeArray [person])
+            (ResizeArray [assay])
+            (ResizeArray [study])
+            (ResizeArray [studyIdentifier])
+            (ResizeArray [comment])
+            (ResizeArray [remark])
+
 
 open Objects
 open Fable.Pyxpecto
@@ -380,20 +370,22 @@ open TestingUtils
 
 let private tests_DisambiguatingDescription = testList "DisambiguatingDescription" [
     ftestCase "Full" <| fun _ ->
-        let comment = Comment.create(Name="My, cool  comment wiht = lots; of special <> chars", Value="STARTING VALUE")
-        let textString = Comment.encoderDisambiguatingDescription comment |> Encode.toJsonString 0
-        let actual = GDecode.fromJsonString Comment.decoderDisambiguatingDescription textString
+        let comment = Comment.create(name="My, cool  comment wiht = lots; of special <> chars", value="STARTING VALUE")
+        let textString = Comment.ROCrate.encoderDisambiguatingDescription comment |> Encode.toJsonString 0
+        let actual = Decode.fromJsonString Comment.ROCrate.decoderDisambiguatingDescription textString
         Expect.equal actual comment ""
     ftestCase "None" <| fun _ ->
         let comment = Comment.create()
-        let textString = Comment.encoderDisambiguatingDescription comment |> Encode.toJsonString 0
-        let actual = GDecode.fromJsonString Comment.decoderDisambiguatingDescription textString
+        let textString = Comment.ROCrate.encoderDisambiguatingDescription comment |> Encode.toJsonString 0
+        let actual = Decode.fromJsonString Comment.ROCrate.decoderDisambiguatingDescription textString
         Expect.equal actual comment ""
 ]
 
+open ARCtrl.Json
+
 let private tests_investigation = testList "Investigation" [
     ftestCase "Investigation" <| fun _ ->
-        let s = Investigation.toRoCrateString investigation
+        let s = ArcInvestigation.toROCrateJsonString () investigation
         let p = @"C:\Users\Kevin\source\repos\ARCtrl\ro-crate-test.json"
         System.IO.File.WriteAllText(p, s)
         Expect.pass()

@@ -107,8 +107,9 @@ module JsonTypes =
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple
     let decomposeComponent (c : Component) : CompositeHeader*CompositeCell =
-        CompositeHeader.Component (c.ComponentType.Value),
-        cellOfValue c.ComponentValue c.ComponentUnit 
+        let header = CompositeHeader.Component (c.ComponentType.Value)
+        let bodyCell = cellOfValue c.ComponentValue c.ComponentUnit 
+        header, bodyCell
 
     /// Convert an ISA ProcessParameterValue to a CompositeHeader and Cell tuple
     let decomposeParameterValue (ppv : ProcessParameterValue) : CompositeHeader*CompositeCell =
@@ -569,14 +570,8 @@ type CompositeCell with
     /// <param name="value"></param>
     /// <param name="unit"></param>
     static member fromValue(value : Value, ?unit : OntologyAnnotation) =
-        match value,unit with
-        | Value.Ontology t, None -> CompositeCell.Term t
-        | Value.Int i, None -> CompositeCell.FreeText (string i)
-        | Value.Int i, Some u -> CompositeCell.Unitized(string i, u)
-        | Value.Float f, None -> CompositeCell.FreeText (string f)
-        | Value.Float f, Some u -> CompositeCell.Unitized(string f, u)
-        | Value.Name s, None -> CompositeCell.FreeText s
-        | _ -> failwith "could not convert value to cell, invalid combination of value and unit"
+        JsonTypes.cellOfValue (Some value) unit
+
 
 module CompositeRow =
 
@@ -693,7 +688,7 @@ type ArcTables with
         |> Seq.toList
         |> List.collect (fun t -> t.GetProcesses())
 
-        /// Create a collection of tables from a list of processes.
+    /// Create a collection of tables from a list of processes.
     ///
     /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
     ///

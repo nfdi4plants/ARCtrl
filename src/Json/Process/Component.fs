@@ -20,7 +20,7 @@ module Component =
 
         let encoder (c : Component) = 
             [
-                Encode.tryInclude "componentName"Encode.string c.ComponentName
+                Encode.tryInclude "componentName" Encode.string c.ComponentName
                 Encode.tryInclude "componentType" OntologyAnnotation.ISAJson.encoder c.ComponentType
             ]
             |> Encode.choose

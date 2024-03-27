@@ -10,7 +10,7 @@ open Conversion
 module Assay = 
     
     let encoder (assay:ArcAssay) = 
-        Encode.object [ 
+        [ 
             "Identifier", Encode.string assay.Identifier
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
@@ -19,6 +19,8 @@ module Assay =
             Encode.tryIncludeSeq "Performers" Person.encoder assay.Performers 
             Encode.tryIncludeSeq "Comments" Comment.encoder assay.Comments 
         ]
+        |> Encode.choose
+        |> Encode.object
   
     let decoder: Decoder<ArcAssay> =
         Decode.object (fun get ->
@@ -38,24 +40,26 @@ module Assay =
     open CellTable
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (assay:ArcAssay) =
-        Encode.object [ 
+        [ 
             "Identifier", Encode.string assay.Identifier
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
             Encode.tryIncludeSeq "Tables" (ArcTable.encoderCompressed stringTable oaTable cellTable) assay.Tables
             Encode.tryIncludeSeq "Performers" Person.encoder assay.Performers 
-            Encode.tryIncludeSeq "Performers" Comment.encoder assay.Comments 
+            Encode.tryIncludeSeq "Comments" Comment.encoder assay.Comments 
         ]
+        |> Encode.choose
+        |> Encode.object
 
     let decoderCompressed (stringTable : StringTableArray) (oaTable : OATableArray) (cellTable : CellTableArray): Decoder<ArcAssay> =
         Decode.object (fun get ->
             ArcAssay.create(
-                get.Required.Field("Identifier") Decode.string,
+                get.Required.Field "Identifier" Decode.string,
                 ?measurementType = get.Optional.Field "MeasurementType" OntologyAnnotation.decoder,
                 ?technologyType = get.Optional.Field "TechnologyType" OntologyAnnotation.decoder,
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
-                ?tables = get.Optional.Field("Tables") (Decode.resizeArray (ArcTable.decoderCompressed stringTable oaTable cellTable)),
+                ?tables = get.Optional.Field "Tables" (Decode.resizeArray (ArcTable.decoderCompressed stringTable oaTable cellTable)),
                 ?performers = get.Optional.Field "Performers" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 
@@ -128,7 +132,7 @@ module Assay =
                 Encode.tryIncludeList "dataFiles" Data.ISAJson.encoder dataFiles
                 Encode.tryInclude "materials" AssayMaterials.ISAJson.encoder (Option.fromValueWithDefault [] processes)
                 Encode.tryIncludeList "characteristicCategories" MaterialAttribute.ISAJson.encoder characteristics
-                Encode.tryIncludeList "unitCategories" OntologyAnnotation.ISAJson.encoder  units
+                Encode.tryIncludeList "unitCategories" OntologyAnnotation.ISAJson.encoder units
                 Encode.tryIncludeList "processSequence" Process.ISAJson.encoder processes
                 Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder a.Comments
             ]

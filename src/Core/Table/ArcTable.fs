@@ -17,22 +17,26 @@ type TableJoinOptions =
 [<AttachMembers>]
 type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
 
+    let valid = SanityChecks.validate headers values true
     let mutable name = name
     let mutable headers = headers
     let mutable values = values
     member this.Headers
         with get() = headers
-        and set(newHeaders) = headers <- newHeaders
+        and set(newHeaders) = 
+            SanityChecks.validate newHeaders values true |> ignore
+            headers <- newHeaders
     /// column * row index
     member this.Values
         with get() = values
-        and set(newValues) = values <- newValues
+        and set(newValues) = 
+            SanityChecks.validate headers newValues true |> ignore
+            values <- newValues
     member this.Name  
         with get() = name
         and internal set (newName) = name <- newName
 
-    static member create(name, headers, values) =
-        ArcTable(name, headers, values)
+    static member create(name, headers, values) = ArcTable(name, headers, values)
 
     /// Create ArcTable with empty 'ValueHeader' and 'Values' 
     static member init(name: string) = 
@@ -50,11 +54,8 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     ///
     /// Set `raiseException` = `true` to raise exception.
     member this.Validate(?raiseException: bool) = 
-        let mutable isValid: bool = true
-        for columnIndex in 0 .. (this.ColumnCount - 1) do
-            let column : CompositeColumn = this.GetColumn(columnIndex)
-            isValid <- column.Validate(?raiseException=raiseException)
-        isValid
+        let raiseException = defaultArg raiseException true
+        SanityChecks.validate this.Headers this.Values raiseException
 
     /// Will return true or false if table is valid. 
     ///
@@ -62,7 +63,6 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     static member validate(?raiseException: bool) =
         fun (table:ArcTable) ->
             table.Validate(?raiseException=raiseException)
-
 
     member this.ColumnCount 
         with get() = ArcTableAux.getColumnCount this.Headers
@@ -79,7 +79,6 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             ResizeArray(this.Headers), 
             Dictionary(this.Values)
         )
-
 
     /// Returns a cell at given position if it exists, else returns None.
     member this.TryGetCellAt (column: int,row: int) = ArcTableAux.Unchecked.tryGetCellAt (column,row) this.Values
@@ -282,7 +281,7 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
 
     // - Column API - //
     // GetColumnAt?
-    member this.GetColumn(columnIndex:int) =
+    member this.GetColumn(columnIndex:int) : CompositeColumn =
         SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
         let h = this.Headers.[columnIndex]
         let cells = [|

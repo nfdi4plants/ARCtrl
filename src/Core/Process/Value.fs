@@ -21,7 +21,7 @@ type Value =
             
             match System.Double.TryParse(value,NumberStyles.Any,CultureInfo.InvariantCulture) with
             | (true, f) -> Value.Float f
-            | _ -> Value.Name value
+            | _ -> Value.Ontology <| OntologyAnnotation.create value
 
     static member fromOptions (value : string Option) (termSource: string Option) (termAccesssion: string Option) =
         match value, termSource, termAccesssion with

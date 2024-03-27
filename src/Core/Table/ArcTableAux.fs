@@ -107,6 +107,19 @@ module SanityChecks =
         | _ ->
             ()
 
+    let validate (headers: ResizeArray<CompositeHeader>) (values: Dictionary<int*int,CompositeCell>) (raiseException: bool) =
+        let mutable isValid = true
+        let mutable en = values.GetEnumerator()
+        while isValid && en.MoveNext() do
+            let (ci,_),cell = en.Current.Key,en.Current.Value
+            let header = headers.[ci]
+            let headerIsFreetext = not header.IsTermColumn
+            let cellIsNotFreetext = not cell.isFreeText
+            if headerIsFreetext && cellIsNotFreetext then 
+                (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`."
+                isValid <- false
+        isValid
+
 module Unchecked =
         
     let tryGetCellAt (column: int,row: int) (cells:System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
