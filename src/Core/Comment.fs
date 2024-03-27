@@ -3,6 +3,7 @@ namespace ARCtrl
 type EMail = string
 
 open Fable.Core
+open ARCtrl.Helper
 
 [<AttachMembers>]
 type Comment(?name, ?value) =
@@ -34,8 +35,13 @@ type Comment(?name, ?value) =
         | :? Comment as c -> c.Name = this.Name && c.Value = this.Value
         | _ -> false
 
-    override this.GetHashCode() =
-        this.Name.GetHashCode() + this.Value.GetHashCode()
+    override this.GetHashCode() =        
+        [|
+            HashCodes.boxHashOption this.Name
+            HashCodes.boxHashOption this.Value
+        |]
+        |> HashCodes.boxHashArray
+        |> fun x -> x :?> int
 
 
 [<AttachMembers>]

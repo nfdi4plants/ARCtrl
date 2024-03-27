@@ -64,8 +64,8 @@ let tests_Template = testList "Template" [
             let actual = Template.fromJsonString json
             let expected = o
             Expect.equal actual.Id expected.Id "id"
-            Expect.equal actual.Authors expected.Authors "Authors"
-            Expect.equal actual.EndpointRepositories expected.EndpointRepositories "EndpointRepositories"
+            Expect.sequenceEqual actual.Authors expected.Authors "Authors"
+            Expect.sequenceEqual actual.EndpointRepositories expected.EndpointRepositories "EndpointRepositories"
             Expect.equal actual.LastUpdated expected.LastUpdated "LastUpdated"
             Expect.equal actual.Name expected.Name "Name"
             Expect.equal actual.Organisation expected.Organisation "Organisation"

@@ -96,7 +96,7 @@ module Templates =
         |> Encode.array
 
     let decoder =
-        Decode.array Template.decoder
+        Decode.dict Template.decoder
         
     let fromJsonString (jsonString: string) =
         try Decode.fromJsonString decoder jsonString with

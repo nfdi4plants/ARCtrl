@@ -1,6 +1,7 @@
 ﻿namespace ARCtrl
 
 open Fable.Core
+open ARCtrl.Helper
 
 [<AttachMembers>]
 type Organisation =
@@ -65,31 +66,27 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?or
     member this.ReferenceEquals (other: Template) = System.Object.ReferenceEquals(this,other)
 
     member this.StructurallyEquals (other: Template) =
-        (this.Id = other.Id)
-        && (this.Table = other.Table)
-        && (this.Name = other.Name)
-        && (this.Organisation = other.Organisation)
-        && (this.Version = other.Version)
-        && (this.Authors = other.Authors)
-        && (this.EndpointRepositories = other.EndpointRepositories)
-        && (this.Tags = other.Tags)
-        && (this.LastUpdated = other.LastUpdated)
+        this.GetHashCode() = other.GetHashCode()
 
     // custom check
     override this.Equals other =
         match other with
-        | :? Template as template -> 
+        | :? Template as template ->
             this.StructurallyEquals(template)
-        | _ -> false
+        | _ -> 
+            false
 
     override this.GetHashCode() =
-        this.Id.GetHashCode()
-        + this.Table.GetHashCode()
-        + this.Name.GetHashCode()
-        + this.Organisation.GetHashCode()
-        + this.Version.GetHashCode()
-        + this.Authors.GetHashCode()
-        + this.EndpointRepositories.GetHashCode()
-        + this.Tags.GetHashCode()
-        + this.LastUpdated.GetHashCode()
-        
+        [|
+            box this.Id
+            box this.Table
+            box this.Name
+            box this.Organisation
+            box this.Version
+            HashCodes.boxHashSeq this.Authors
+            HashCodes.boxHashSeq this.EndpointRepositories
+            HashCodes.boxHashSeq this.Tags
+            box this.LastUpdated         
+        |]
+        |> HashCodes.boxHashArray 
+        |> fun x -> x :?> int
