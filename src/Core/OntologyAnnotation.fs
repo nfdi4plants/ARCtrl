@@ -113,6 +113,25 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
         member this.PrintCompact() =
             "OA " + this.NameText
 
+    override this.ToString() =
+        let sb = System.Text.StringBuilder()
+        sb.Append("{") |> ignore
+        [
+            if this.Name.IsSome then
+                sprintf "Name = %s" this.Name.Value
+            if this.TermSourceREF.IsSome then
+                sprintf "TSR = %s" this.TermSourceREF.Value
+            if this.TermAccessionNumber.IsSome then
+                sprintf "TAN = %s" this.TermAccessionNumber.Value
+            if this.Comments.Count <> 0 then
+                sprintf "Comments = %A" this.Comments
+        ] 
+        |> String.concat "; "
+        |> sb.Append
+        |> ignore
+        sb.Append("}") |> ignore
+        sb.ToString()
+
     override this.Equals other =
         match other with
         | :? OntologyAnnotation as oa -> (this :> System.IEquatable<_>).Equals oa
