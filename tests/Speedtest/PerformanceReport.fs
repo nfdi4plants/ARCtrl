@@ -127,16 +127,18 @@ let table_fillMissingCells =
         "Table_fillMissingCells"
         "For a table 6 columns and 20000 rows, where each row has one missing value, fill those values with default values."
         (fun () -> ArcTableAux.Unchecked.fillMissingCells headers values |> ignore)
-       
+   
+let table = TestObjects.Spreadsheet.Study.LargeFile.createTable()
+
 let table_toJson =
-    let t = TestObjects.Spreadsheet.Study.LargeFile.table
+    let t = table
     PerformanceTest.create
         "Table_ToJson"
         "Serialize a table with 5 columns and 10000 rows to json."
         (fun _ -> t.ToJsonString() |> ignore)
 
 let table_toCompressedJson =
-    let t = TestObjects.Spreadsheet.Study.LargeFile.table
+    let t = table
     PerformanceTest.create
         "Table_ToCompressedJson"
         "Serialize a table with 5 columns and 10000 rows to compressed json."
@@ -170,7 +172,7 @@ let assay_toJson =
         (fun _ -> ArcAssay.toJsonString() a |> ignore)
 
 let study_fromWorkbook =
-    let fswb = TestObjects.Spreadsheet.Study.LargeFile.Workbook
+    let fswb = TestObjects.Spreadsheet.Study.LargeFile.createWorkbook (Some table)
     PerformanceTest.create
         "Study_FromWorkbook"
         "Parse a workbook with one study with 10000 rows and 6 columns to an ArcStudy"

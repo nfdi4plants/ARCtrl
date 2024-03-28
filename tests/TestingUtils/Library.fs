@@ -29,10 +29,10 @@ module Utils =
         |> Array.sortBy fst
 
     let firstDiff s1 s2 =
-      let s1 = Seq.append (Seq.map Some s1) (Seq.initInfinite (fun _ -> None))
-      let s2 = Seq.append (Seq.map Some s2) (Seq.initInfinite (fun _ -> None))
-      Seq.mapi2 (fun i s p -> i,s,p) s1 s2
-      |> Seq.find (function |_,Some s,Some p when s=p -> false |_-> true)
+        let s1 = Seq.append (Seq.map Some s1) (Seq.initInfinite (fun _ -> None))
+        let s2 = Seq.append (Seq.map Some s2) (Seq.initInfinite (fun _ -> None))
+        Seq.mapi2 (fun i s p -> i,s,p) s1 s2
+        |> Seq.find (function |_,Some s,Some p when s=p -> false |_-> true)
 
 
 module Result =
@@ -168,6 +168,10 @@ module Expect =
         if actual.Name <> expected.Name then
             failwithf $"{message}. Worksheet names do not match. Expected {expected.Name} but got {actual.Name}"
         sequenceEqual (f actual) (f expected) $"{message}. Worksheet does not match"
+
+    let workBookEqual (actual : FsWorkbook) (expected : FsWorkbook) message = 
+        Seq.iter2 (fun a e -> workSheetEqual a e message) (actual.GetWorksheets()) (expected.GetWorksheets())
+
 
     let columnsEqual (actual : FsCell seq seq) (expected : FsCell seq seq) message =     
         let f (cols : FsCell seq seq) = 

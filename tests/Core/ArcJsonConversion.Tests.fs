@@ -280,6 +280,23 @@ let private tests_ArcTableProcess =
             Expect.isNone p.ExecutesProtocol "Process should have no protocol"
         )
 
+        // Currently only checks for function failing which it did in python
+        testCase "MixedColumns GetProcesses" (fun () ->
+            let table =
+                TestObjects.Spreadsheet.ArcTable.initWorksheet "SheetName"
+                    [
+                        TestObjects.Spreadsheet.ArcTable.Protocol.REF.appendLolColumn 4          
+                        TestObjects.Spreadsheet.ArcTable.Protocol.Type.appendCollectionColumn 2
+                        TestObjects.Spreadsheet.ArcTable.Parameter.appendMixedTemperatureColumn 2 2
+                        TestObjects.Spreadsheet.ArcTable.Parameter.appendInstrumentColumn 2 
+                        TestObjects.Spreadsheet.ArcTable.Characteristic.appendOrganismColumn 3
+                        TestObjects.Spreadsheet.ArcTable.Factor.appendTimeColumn 0
+                    ]
+                |> Spreadsheet.ArcTable.tryFromFsWorksheet
+            table.Value.GetProcesses() |> ignore
+            Expect.isTrue true ""
+        )
+
         testCase "EmptyTable GetAndFromProcesses" (fun () ->
             let t = ArcTable.init tableName1
             let processes = t.GetProcesses()

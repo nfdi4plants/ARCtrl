@@ -500,33 +500,47 @@ module LargeFile =
     
     open ARCtrl
 
-    let Workbook = new FsWorkbook()
-    let RowCount = 10000
+    let createTable() =
     
-    let table = ArcTable.init("Large Table")
+        let RowCount = 10000
 
-    table.AddColumn(CompositeHeader.Input IOType.Source,[|
-      for i in 0 .. (RowCount-1) do
-        CompositeCell.FreeText $"Input {i}"
-    |])
-    table.AddColumn(CompositeHeader.Output IOType.Sample,[|
-      for i in 0 .. (RowCount-1) do
-        CompositeCell.FreeText $"Output {i}"
-    |])
-    table.AddColumn(CompositeHeader.Component <| OntologyAnnotation("instrument model", "MS", "MS:1"),[|
-      for _ in 0 .. (RowCount-1) do
-        CompositeCell.createTermFromString("SCIEX instrument model", "MS", "MS:2")
-    |])
-    table.AddColumn(CompositeHeader.Factor <| OntologyAnnotation("temperatures", "UO", "UO:1"),[|
-      for i in 0 .. (RowCount-1) do
-        let t = i/1000 |> string 
-        CompositeCell.createUnitizedFromString(t, "degree Celsius", "UO", "UO:2")
-    |])
-    table.AddColumn(CompositeHeader.ProtocolREF,[|
-      for i in 0 .. (RowCount-1) do
-        CompositeCell.FreeText "My Awesome Protocol"
-    |])
+        let table = ArcTable.init("Large Table")
 
-    let fsws_large = Spreadsheet.ArcTable.toFsWorksheet table
-    Workbook.AddWorksheet(fsws_large)
-    Workbook.AddWorksheet studyMetadataEmpty
+        table.AddColumn(CompositeHeader.Input IOType.Source,[|
+          for i in 0 .. (RowCount-1) do
+            CompositeCell.FreeText $"Input {i}"
+        |])
+        table.AddColumn(CompositeHeader.Output IOType.Sample,[|
+          for i in 0 .. (RowCount-1) do
+            CompositeCell.FreeText $"Output {i}"
+        |])
+        table.AddColumn(CompositeHeader.Component <| OntologyAnnotation("instrument model", "MS", "MS:1"),[|
+          for _ in 0 .. (RowCount-1) do
+            CompositeCell.createTermFromString("SCIEX instrument model", "MS", "MS:2")
+        |])
+        table.AddColumn(CompositeHeader.Factor <| OntologyAnnotation("temperatures", "UO", "UO:1"),[|
+          for i in 0 .. (RowCount-1) do
+            let t = i/1000 |> string 
+            CompositeCell.createUnitizedFromString(t, "degree Celsius", "UO", "UO:2")
+        |])
+        table.AddColumn(CompositeHeader.ProtocolREF,[|
+          for i in 0 .. (RowCount-1) do
+            CompositeCell.FreeText "My Awesome Protocol"
+        |])
+
+        table
+
+    let createWorkbook (table : ArcTable option) =
+
+        let Workbook = new FsWorkbook()
+        
+        let table = 
+            match table with
+            | Some t -> t
+            | None -> createTable()
+
+        let fsws_large = Spreadsheet.ArcTable.toFsWorksheet table
+        Workbook.AddWorksheet(fsws_large)
+        Workbook.AddWorksheet studyMetadataEmpty
+
+        Workbook

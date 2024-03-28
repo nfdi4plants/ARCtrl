@@ -2,6 +2,7 @@
 
 
 open TestingUtils
+open ARCtrl
 open ARCtrl.Spreadsheet
 
 open TestObjects.Spreadsheet
@@ -89,7 +90,32 @@ let testMetaDataFunctions =
         )
     ]
 
+open TestObjects.Contract.ISA.SimpleISA
+
+let testFullStudyFile = 
+    testList "FullStudyFileTests" [
+ 
+        testCase "WriterSuccess" (fun () ->
+            let writingSuccess = 
+                try 
+                    let study,assays = ArcStudy.fromFsWorkbook Study.bII_S_1WB
+                    ArcStudy.toFsWorkbook(study,assays) |> ignore
+                    Result.Ok "DidRun"
+                with
+                | err -> Result.Error(sprintf "Writing the test file failed: %s" err.Message)
+
+            Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+        ptestCase "InputMatchesOutput" (fun () ->
+            let study, assays = ArcStudy.fromFsWorkbook Study.bII_S_1WB
+            let o = ArcStudy.toFsWorkbook(study,assays)
+
+            Expect.workBookEqual o Study.bII_S_1WB "Written study file does not match read study file"
+        )
+    ]
+
 let main = 
     testList "StudyFile" [
         testMetaDataFunctions
+        testFullStudyFile
     ]

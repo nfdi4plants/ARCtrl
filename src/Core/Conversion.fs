@@ -490,20 +490,20 @@ module ProcessParsing =
         processes
         |> List.groupBy (fun x -> 
             if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
-                (x.Name.Value |> Process.decomposeName |> fst), x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value, x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
             else
-                Identifier.createMissingIdentifier(), x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
         )
         |> fun l ->
             l
-            |> List.mapi (fun i ((n,protocol,_),processes) -> 
+            |> List.mapi (fun i ((n,_,_),processes) -> 
                 let pVs = processes.[0].ParameterValues
                 let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let n = if l.Length > 1 then Process.composeName n i else n
-                Process.create(Name = n,?ExecutesProtocol = protocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
+                Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
             )
 
 
