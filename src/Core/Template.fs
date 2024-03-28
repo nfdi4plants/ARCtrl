@@ -78,15 +78,15 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?or
 
     override this.GetHashCode() =
         [|
-            box this.Id
-            box this.Table
+            box (this.Id.ToString())
+            box (this.Table.GetHashCode())
             box this.Name
-            box this.Organisation
+            box (this.Organisation.GetHashCode())
             box this.Version
             HashCodes.boxHashSeq this.Authors
             HashCodes.boxHashSeq this.EndpointRepositories
             HashCodes.boxHashSeq this.Tags
-            box this.LastUpdated         
+            box (HashCodes.hashDateTime this.LastUpdated)
         |]
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int

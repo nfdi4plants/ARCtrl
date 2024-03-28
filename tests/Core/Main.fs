@@ -15,6 +15,7 @@ let all = testSequenced <| testList "ISA" [
     ArcAssay.Tests.main
     ArcStudy.Tests.main
     ArcInvestigation.Tests.main
+    Template.Tests.main
     ArcJsonConversion.Tests.main
     Identifier.Tests.main
     Fable.Tests.main
