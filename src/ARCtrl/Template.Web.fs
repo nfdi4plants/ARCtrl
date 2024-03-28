@@ -19,7 +19,7 @@ let getTemplates(url: string option) =
 /// This class is used to make async functions more accessible from JavaScript.
 /// </summary>
 [<AttachMembers>]
-type JsWeb =
+type WebController =
     static member getTemplates(url: string option) =
         async {
             let! templates = getTemplates(url)
