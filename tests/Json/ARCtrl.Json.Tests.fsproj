@@ -15,17 +15,21 @@
     <Compile Include="Validation\ValidationResult.fs" />
     <Compile Include="Validation\Fable.fs" />
     <Compile Include="Validation\JsonSchemaValidation.fs" />
+    <Compile Include="Comment.Tests.fs" />
     <Compile Include="OntologyAnnotation.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="IOType.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
     <Compile Include="ArcTable.Tests.fs" />
+    <Compile Include="Person.Tests.fs" />
+    <Compile Include="Publication.Tests.fs" />
     <Compile Include="Assay.Tests..fs" />
     <Compile Include="Study.Tests.fs" />
     <Compile Include="Investigation.Tests.fs" />
+    <Compile Include="Process\ProcessInput.Tests.fs" />
+    <Compile Include="Process\Protocol.Tests.fs" />
+    <Compile Include="Process\Process.Tests.fs" />
     <Compile Include="Template.Tests.fs" />
-    <Compile Include="ROCrateJson.Tests.fs" />
-    <Compile Include="ISAJson\ISAJson.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
@@ -40,5 +44,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.402" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ISAJson\" />
   </ItemGroup>
 </Project>

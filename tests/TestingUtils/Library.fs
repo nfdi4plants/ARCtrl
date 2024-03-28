@@ -73,6 +73,29 @@ module Expect =
     let inline equal actual expected message = Expect.equal actual expected message
     let notEqual actual expected message = Expect.notEqual actual expected message
 
+    /// <summary>
+    /// This function only verifies non-whitespace characters
+    /// </summary>
+    let stringEqual actual expected message =
+        let pattern = @"\s+"
+        let regex = System.Text.RegularExpressions.Regex(pattern, Text.RegularExpressions.RegexOptions.Singleline)
+        let actual = regex.Replace(actual, "")
+        let expected = regex.Replace(expected, "")
+        let mutable isSame = true
+        Seq.iter2 
+            (fun s1 s2 -> 
+                if isSame && s1 = s2 then 
+                    ()
+                elif isSame && s1 <> s2 then
+                    isSame <- false
+                    printf "%s" (string s1)
+                else
+                    printf "%s" (string s1)
+            ) 
+            actual 
+            expected
+        equal actual expected message
+
     let isNull actual message = Expect.isNull actual message 
     let isNotNull actual message = Expect.isNotNull actual message 
 

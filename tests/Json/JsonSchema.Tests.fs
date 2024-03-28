@@ -1,4 +1,4 @@
-﻿module JsonSchema.Tests
+﻿module Tests.SchemaValidation
 
 open TestingUtils
 

@@ -169,28 +169,36 @@ module Study =
         /// <param name="s"></param>
         /// <param name="assays"></param>
         let encoder (assays: ArcAssay list option) (s : ArcStudy) = 
-            let fileName = Identifier.Assay.fileNameFromIdentifier s.Identifier
-            let assays = Helper.getAssayInformation assays s
-            for assay in assays do
-                for person in assay.Performers do
-                    Process.Conversion.Person.setSourceAssayComment person assay.Identifier
-                    s.Contacts.Add(person)
-                assay.Performers <- ResizeArray()
-            let processes = s.GetProcesses()
+            let study = s.Copy(true)
+            let fileName = Identifier.Assay.fileNameFromIdentifier study.Identifier
+            let assaysRaw = Helper.getAssayInformation assays study
+            let assays = 
+                let n = ResizeArray()
+                for a in assaysRaw do 
+                    let assay = a.Copy()
+                    // Move persons to study
+                    for person in assay.Performers do
+                        // set source assay identifier as comment
+                        let person = Process.Conversion.Person.setSourceAssayComment person assay.Identifier
+                        study.Contacts.Add(person)
+                    assay.Performers <- ResizeArray()
+                    n.Add(assay)
+                n
+            let processes = study.GetProcesses()
             let protocols = ProcessSequence.getProtocols processes
             let factors = ProcessSequence.getFactors processes
             let characteristics = ProcessSequence.getCharacteristics processes
             let units = ProcessSequence.getUnits processes
             [
                 "filename", Encode.string fileName
-                "identifier", Encode.string s.Identifier
-                Encode.tryInclude "title" Encode.string (s.Title)
-                Encode.tryInclude "description" Encode.string (s.Description)
-                Encode.tryInclude "submissionDate" Encode.string (s.SubmissionDate)
-                Encode.tryInclude "publicReleaseDate" Encode.string (s.PublicReleaseDate)
-                Encode.tryIncludeSeq "publications" Publication.ISAJson.encoder s.Publications
-                Encode.tryIncludeSeq "people" Person.ISAJson.encoder s.Contacts
-                Encode.tryIncludeSeq "studyDesignDescriptors" OntologyAnnotation.ISAJson.encoder (s.StudyDesignDescriptors) 
+                "identifier", Encode.string study.Identifier
+                Encode.tryInclude "title" Encode.string study.Title
+                Encode.tryInclude "description" Encode.string study.Description
+                Encode.tryInclude "submissionDate" Encode.string study.SubmissionDate
+                Encode.tryInclude "publicReleaseDate" Encode.string study.PublicReleaseDate
+                Encode.tryIncludeSeq "publications" Publication.ISAJson.encoder study.Publications
+                Encode.tryIncludeSeq "people" Person.ISAJson.encoder study.Contacts
+                Encode.tryIncludeSeq "studyDesignDescriptors" OntologyAnnotation.ISAJson.encoder study.StudyDesignDescriptors
                 Encode.tryIncludeList "protocols" Protocol.ISAJson.encoder protocols
                 Encode.tryInclude "materials" StudyMaterials.ISAJson.encoder (Option.fromValueWithDefault [] processes)
                 Encode.tryIncludeList "factors" Factor.ISAJson.encoder factors
@@ -198,7 +206,7 @@ module Study =
                 Encode.tryIncludeList "unitCategories" OntologyAnnotation.ISAJson.encoder units
                 Encode.tryIncludeList "processSequence" Process.ISAJson.encoder processes
                 Encode.tryIncludeSeq "assays" Assay.ISAJson.encoder assays
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder s.Comments
+                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder study.Comments
             ]
             |> Encode.choose
             |> Encode.object
@@ -214,7 +222,6 @@ module Study =
                         |> Option.bind Identifier.Study.tryIdentifierFromFileName
                         |> Option.defaultValue (Identifier.createMissingIdentifier())
                     )
-                        
                 let tables = 
                     get.Optional.Field "processSequence" (Decode.list Process.ISAJson.decoder)
                     |> Option.map (ArcTables.fromProcesses >> (fun a -> a.Tables))
@@ -225,13 +232,18 @@ module Study =
                 let persons = ResizeArray()
                 if personsRaw.IsSome then
                     for person in personsRaw.Value do
+                        // Try to find if any person, written by ARCtrl, was originally part of ArcAssay
                         let sourceAssays = Process.Conversion.Person.getSourceAssayIdentifiersFromComments person
+                        // For every found assay identifier ...
                         for assayIdentifier in sourceAssays do
-                            match assays.Value |> Seq.tryFind (fun a -> a.Identifier = assayIdentifier) with
-                            | Some assay -> assay.Performers.Add person
-                            | None -> ()
-                        if Seq.isEmpty sourceAssays then persons.Add person 
-                        else person.Comments <- Process.Conversion.Person.removeSourceAssayComments person
+                            // ... we add the person to ArcAssay.Perfomers if identifiers match.
+                            for assay in assays.Value do
+                                if assay.Identifier = assayIdentifier then 
+                                    assay.Performers.Add person
+                        // After completing the backtracking to source assays we remove all comments on the person, which start with the defined AssayIdentifierPrefix
+                        person.Comments <- Process.Conversion.Person.removeSourceAssayComments person
+                        // If no source assay identifiers are found, we assume the person was orginally part of the study and we add the person to the future study.contacts array
+                        if Seq.isEmpty sourceAssays then persons.Add person
                 let assayIdentifiers = 
                     assays
                     |> Option.map (List.map (fun a -> a.Identifier) >> ResizeArray)

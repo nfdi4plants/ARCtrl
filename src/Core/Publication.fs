@@ -84,3 +84,37 @@ type Publication(?pubMedID, ?doi, ?authors, ?title, ?status, ?comments) =
         | :? Publication as p -> 
             this.GetHashCode() = p.GetHashCode()
         | _ -> false
+
+    //let mutable _pubMedID : URI option = pubMedID
+    //let mutable _doi : string option = doi
+    //let mutable _authors : string option = authors
+    //let mutable _title : string option = title
+    //let mutable _status : OntologyAnnotation option = status
+    //let mutable _comments : ResizeArray<Comment> = Option.defaultValue (ResizeArray()) comments
+
+    override this.ToString() =
+        let sb = System.Text.StringBuilder()
+        sb.Append("Publication {\n\t") |> ignore
+        [
+            "PubMedID", this.PubMedID
+            "DOI", this.DOI
+            "Authors", this.Authors
+            "Title", this.Title
+            "Status", 
+                this.Status
+                |> Option.map (sprintf "%A")
+            "Comments", 
+                if Seq.length this.Comments > 0 then 
+                    this.Comments
+                    |> sprintf "%A"
+                    |> Some
+                else
+                    None
+        ] 
+        |> List.choose (fun (s,opt) -> opt |> Option.map (fun o -> s,o))
+        |> List.map (fun (s,v) -> sprintf "%s = %A" s v)
+        |> String.concat ",\n\t"
+        |> sb.Append
+        |> ignore
+        sb.Append("\n}") |> ignore
+        sb.ToString()

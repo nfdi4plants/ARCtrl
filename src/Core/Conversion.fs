@@ -11,11 +11,17 @@ module Person =
     let AssayIdentifierPrefix = "performer (ARC:00000168)"
     let createAssayIdentifierKey = sprintf "%s %s" AssayIdentifierPrefix// TODO: Replace with ISA ontology term for assay
 
-    let setSourceAssayComment (person : Person) (assayIdentifier: string) =
+    let setSourceAssayComment (person : Person) (assayIdentifier: string): Person =
+        let person = person.Copy()
         let k = createAssayIdentifierKey assayIdentifier
         let comment = Comment(k, assayIdentifier)
         person.Comments.Add(comment)
+        person
 
+    /// <summary>
+    /// This functions helps encoding/decoding ISA-JSON. It returns a sequence of ArcAssay-Identifiers.
+    /// </summary>
+    /// <param name="person"></param>
     let getSourceAssayIdentifiersFromComments (person : Person) =
         person.Comments 
         |> Seq.choose (fun c -> 
@@ -29,14 +35,13 @@ module Person =
         )
 
     let removeSourceAssayComments (person: Person) : ResizeArray<Comment> =
-        person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix)
+        person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix |> not)
 
     let setOrcidFromComments (person : Person) =
         let person = person.Copy()
         let isOrcidComment (c : Comment) = 
             c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(orcidKey))
         let orcid,comments = 
-
             let orcid = 
                 person.Comments
                 |> Seq.tryPick (fun c -> if isOrcidComment c then c.Value else None)
@@ -718,11 +723,16 @@ type ArcTables with
     static member fromProcesses (ps : Process list) : ArcTables = 
         ps
         |> ProcessParsing.groupProcesses
+        //|> fun x -> printfn "fromProcesses 1"; x
         |> List.map (fun (name,ps) ->
+            //printfn "fromProcesses-%s 0" name
             ps
             |> List.collect (fun p -> ProcessParsing.processToRows p)
+            //|> fun x -> printfn "fromProcesses-%s 1" name; x
             |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
+            //|> fun x -> printfn "fromProcesses-%s 2" name; x
             |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
+            //|> fun x -> printfn "fromProcesses-%s 3" name; x
         )
         |> ResizeArray
         |> ArcTables

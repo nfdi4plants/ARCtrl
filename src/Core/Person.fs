@@ -179,3 +179,40 @@ type Person(?orcid, ?lastName, ?firstName, ?midInitials, ?email, ?phone, ?fax, ?
 
     override this.Equals(obj) : bool =
         HashCodes.hash this = HashCodes.hash obj
+
+    // Use this for better print debugging and better unit test output
+    override this.ToString() =
+        let sb = System.Text.StringBuilder()
+        sb.Append("Person {\n\t") |> ignore
+        [
+            "FirstName", this.FirstName
+            "LastName", this.LastName
+            "MidInitials", this.MidInitials
+            "EMail", this.EMail
+            "Phone", this.Phone
+            "Address", this.Address
+            "Affiliation", this.Affiliation
+            "Fax", this.Fax
+            "ORCID", this.ORCID
+            "Roles", 
+                if Seq.length this.Roles > 0 then 
+                    this.Roles
+                    |> sprintf "%A"
+                    |> Some
+                else
+                    None
+            "Comments", 
+                if Seq.length this.Comments > 0 then 
+                    this.Comments
+                    |> sprintf "%A"
+                    |> Some
+                else
+                    None
+        ] 
+        |> List.choose (fun (s,opt) -> opt |> Option.map (fun o -> s,o))
+        |> List.map (fun (s,v) -> sprintf "%s = %A" s v)
+        |> String.concat ",\n\t"
+        |> sb.Append
+        |> ignore
+        sb.Append("\n}") |> ignore
+        sb.ToString()

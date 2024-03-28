@@ -54,7 +54,7 @@ module Comment =
 
         let decoderDisambiguatingDescription : Decoder<Comment> = 
             Decode.string 
-            |> Decode.map (Decode.fromJsonString decoder)
+            |> Decode.map (fun s -> s.Trim() |> Decode.fromJsonString decoder)
 
     module ISAJson =
 

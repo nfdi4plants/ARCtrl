@@ -115,7 +115,6 @@ module Person =
                     ?roles=get.Optional.Field "roles" (Decode.resizeArray OntologyAnnotation.decoder),
                     ?comments=get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription)
                 )
-                |> Person.setOrcidFromComments
             )
 
         /// <summary>
@@ -131,7 +130,7 @@ module Person =
                 if authorList.Contains(tab) then tab
                 elif authorList.Contains(semi) then semi
                 else comma
-            let names = authorList.Split([|separator|], System.StringSplitOptions.None)
+            let names = authorList.Split([|separator|], System.StringSplitOptions.None) |> Array.map (fun s -> s.Trim())
             let encodeSingle (name:string) =
                 [
                     "@type", Encode.string "Person"

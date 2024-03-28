@@ -43,6 +43,21 @@ type Comment(?name, ?value) =
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
 
+    override this.ToString() =
+        let sb = System.Text.StringBuilder()
+        sb.Append("Comment {") |> ignore
+        [
+            "Name", this.Name
+            "Value", this.Value
+        ] 
+        |> List.choose (fun (s,opt) -> opt |> Option.map (fun o -> s,o))
+        |> List.map (fun (s,v) -> sprintf "%s = %A" s v)
+        |> String.concat ", "
+        |> sb.Append
+        |> ignore
+        sb.Append("}") |> ignore
+        sb.ToString()
+
 
 [<AttachMembers>]
 type Remark = 

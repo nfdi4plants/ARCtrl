@@ -135,7 +135,6 @@ let data =
     """
     {
       "@id": "#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt",
-      "comments": [],
       "name": "JIC64_Nitrogen_0.07_External_1_3.txt",
       "type": "Raw Data File"
     }
@@ -191,7 +190,6 @@ let material =
     """
     {
         "@id": "#material/extract-G-0.1-aliquot1",
-        "characteristics": [],
         "name": "extract-G-0.1-aliquot1",
         "type": "Extract Name"
     }

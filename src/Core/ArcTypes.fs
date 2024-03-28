@@ -918,7 +918,8 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// This copy does only contain the identifiers of the registered ArcAssays and not the actual objects.
     ///
     /// In order to copy the ArcAssays as well, use the Copy() method of the ArcInvestigation.
-    member this.Copy() : ArcStudy =
+    member this.Copy(?copyInvestigationRef: bool) : ArcStudy =
+        let copyInvestigationRef = defaultArg copyInvestigationRef false
         let nextTables = ResizeArray()
         let nextAssayIdentifiers = ResizeArray(this.RegisteredAssayIdentifiers)
         for table in this.Tables do
@@ -928,18 +929,21 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
         let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
         let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> ResizeArray.map (fun c -> c.Copy())
-        ArcStudy.make
-            this.Identifier
-            this.Title
-            this.Description
-            this.SubmissionDate
-            this.PublicReleaseDate
-            nextPublications
-            nextContacts
-            nextStudyDesignDescriptors
-            nextTables
-            nextAssayIdentifiers
-            nextComments
+        let study =
+            ArcStudy.make
+                this.Identifier
+                this.Title
+                this.Description
+                this.SubmissionDate
+                this.PublicReleaseDate
+                nextPublications
+                nextContacts
+                nextStudyDesignDescriptors
+                nextTables
+                nextAssayIdentifiers
+                nextComments
+        if copyInvestigationRef then study.Investigation <- this.Investigation
+        study
 
     /// <summary>
     /// Updates given study from an investigation file against a study from a study file. Identifier will never be updated. 

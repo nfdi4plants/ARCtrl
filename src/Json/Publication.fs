@@ -80,7 +80,7 @@ module Publication =
                 Encode.tryInclude "authorList" Encode.string oa.Authors
                 Encode.tryInclude "title" Encode.string (oa.Title)
                 Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
-                Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
+                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder oa.Comments
             ]
             |> Encode.choose
             |> Encode.object

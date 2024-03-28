@@ -118,11 +118,11 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
         sb.Append("{") |> ignore
         [
             if this.Name.IsSome then
-                sprintf "Name = %s" this.Name.Value
+                sprintf "Name = %A" this.Name.Value
             if this.TermSourceREF.IsSome then
-                sprintf "TSR = %s" this.TermSourceREF.Value
+                sprintf "TSR = %A" this.TermSourceREF.Value
             if this.TermAccessionNumber.IsSome then
-                sprintf "TAN = %s" this.TermAccessionNumber.Value
+                sprintf "TAN = %A" this.TermAccessionNumber.Value
             if this.Comments.Count <> 0 then
                 sprintf "Comments = %A" this.Comments
         ] 

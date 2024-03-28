@@ -2,39 +2,38 @@
 
 let person = 
     """
-    {
-  "phone": "",
+{
   "firstName": "Juan",
-  "address": "Oxford Road, Manchester M13 9PT, UK",
   "lastName": "Castrillo",
   "midInitials": "I",
-  "@id": "#person/Castrillo",
-  "fax": "",
   "email": "lol@lal.das",
-  "comments": [
-    {
-      "value": "",
-      "name": "Investigation Person REF"
-    }
-  ],
+  "phone": "",
+  "fax": "",
+  "address": "Oxford Road, Manchester M13 9PT, UK",
+  "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester",
   "roles": [
     {
       "annotationValue": "author"
     }
   ],
-  "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+  "comments": [
+    {
+      "name": "Investigation Person REF",
+      "value": ""
+    }
+  ]
 }
     """
 
 let personWithORCID = 
     """
-    {
+{
   "firstName": "Juan",
   "lastName": "Castrillo",
   "comments": [
     {
-      "value": "0000-0002-1825-0097",
-      "name": "ORCID"
+      "name": "ORCID",
+      "value": "0000-0002-1825-0097"
     }
   ]
   }

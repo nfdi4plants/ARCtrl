@@ -3,50 +3,37 @@
 let protocol =
 
     """
-    {
+{
     "@id": "#protocols/peptide_digestion",
     "name": "peptide_digestion",
-
     "protocolType": {
-        "@id": "protein_digestion",
         "annotationValue": "Protein Digestion",
         "termSource": "NCIT",
-        "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70845",
-        "comments": []
+        "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70845"
     },
     "description": "The isolated proteins get solubilized. Given protease is added and the solution is heated to a given temperature. After a given amount of time, the digestion is stopped by adding a denaturation agent.",
     "uri": "http://madeUpProtocolWebsize.org/protein_digestion",
     "version": "1.0.0",
     "parameters": [
         {
-            "@id": "protease",
             "parameterName": {
-                "@id": "protease",
                 "annotationValue": "Peptidase",
                 "termSource": "MS",
-                "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
-                "comments": []
+                "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965"
             }
         },
         {
-            "@id": "temperature",
             "parameterName": {
-                "@id": "temperature",
                 "annotationValue": "temperature",
                 "termSource": "Ontobee",
-                "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029",
-                "comments": []
-
+                "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029"
             }
         },
         {
-            "@id": "time",
             "parameterName": {
-                "@id": "time",
                 "annotationValue": "time",
                 "termSource": "EFO",
-                "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721",
-                "comments": []
+                "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721"
             }
         }
     ],
@@ -54,27 +41,21 @@ let protocol =
         {
             "componentName": "digestion_stopper",
             "componentType": {
-                "@id": "formic_acid",
                 "annotationValue": "Formic Acid",
                 "termSource": "NCIT",
-                "termAccession": "http://purl.obolibrary.org/obo/NCIT_C83719",
-                "comments": []
+                "termAccession": "http://purl.obolibrary.org/obo/NCIT_C83719"
             }
         },
         {
             "componentName": "heater",
             "componentType": {
-                "@id": "heater",
                 "annotationValue": "Heater Device",
                 "termSource": "NCIT",
-                "termAccession": "http://purl.obolibrary.org/obo/NCIT_C49986",
-                "comments": []
+                "termAccession": "http://purl.obolibrary.org/obo/NCIT_C49986"
             }
         }
         
-    ],
-    "comments": []
-
+    ]
 }
     """
 

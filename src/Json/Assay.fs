@@ -142,7 +142,7 @@ module Assay =
         let allowedFields = ["@id";"filename";"measurementType";"technologyType";"technologyPlatform";"dataFiles";"materials";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
 
         let decoder : Decoder<ArcAssay> =
-            Decode.objectNoAdditionalProperties allowedFields (fun get ->               
+            Decode.objectNoAdditionalProperties allowedFields (fun get -> 
                 let identifier = 
                     get.Optional.Field "filename" Decode.string
                     |> Option.bind Identifier.Assay.tryIdentifierFromFileName
