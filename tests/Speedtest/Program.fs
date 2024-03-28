@@ -1,6 +1,5 @@
 ﻿
 open ARCtrl
-open ARCtrl
 open ARCtrl.Json
 
 
@@ -55,15 +54,12 @@ let main argv =
                 for j = 0 to cells.Length - 1 do
                     t.Values.[(j,i)] <- cells.[j]
             a
-        let toAssay(a : ArcAssay) = 
-            a.ToAssay()
-        let toJson(a : Assay) =
-            Assay.toJsonString a
+        let toJson(a : ArcAssay) = 
+            ArcAssay.toISAJsonString() a
         let toFS(a : string) =
             System.IO.File.WriteAllText((__SOURCE_DIRECTORY__ + "/big.json"), a)
 
         createAssay()
-        |> toAssay
         |> toJson
         |> toFS
         1

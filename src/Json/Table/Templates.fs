@@ -47,7 +47,7 @@ module Template =
                 ?repos = get.Optional.Field "endpoint_repositories" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?tags = get.Optional.Field "tags" (Decode.resizeArray OntologyAnnotation.decoder),
                 #if FABLE_COMPILER_PYTHON
-                ?lastUpdated = get.Required.Field "last_updated" Decode.datetimeLocal // Currently not supported in Thoth.Json.Core for python
+                lastUpdated = get.Required.Field "last_updated" Decode.datetimeLocal // Currently not supported in Thoth.Json.Core for python
                 #else
                 lastUpdated = get.Required.Field "last_updated" Decode.datetimeUtc
                 #endif
@@ -81,7 +81,7 @@ module Template =
                 ?repos = get.Optional.Field "endpoint_repositories" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?tags = get.Optional.Field "tags" (Decode.resizeArray OntologyAnnotation.decoder),
                 #if FABLE_COMPILER_PYTHON
-                ?lastUpdated = get.Required.Field "last_updated" Decode.datetimeLocal // Currently not supported in Thoth.Json.Core for python
+                lastUpdated = get.Required.Field "last_updated" Decode.datetimeLocal // Currently not supported in Thoth.Json.Core for python
                 #else
                 lastUpdated = get.Required.Field "last_updated" Decode.datetimeUtc
                 #endif

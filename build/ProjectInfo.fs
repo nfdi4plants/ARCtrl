@@ -7,9 +7,9 @@ let project = "ARCtrl"
 /// Dotnet and JS test paths
 let testProjects = 
     [
-        "tests/ISA/ISA.Tests"
-        "tests/ISA/ISA.Json.Tests"
-        "tests/ISA/ISA.Spreadsheet.Tests"
+        "tests/Core"
+        "tests/Json"
+        "tests/Spreadsheet"
         "tests/FileSystem"
         "tests/ARCtrl"
     ]

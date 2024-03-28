@@ -1,4 +1,4 @@
-﻿module ARCtrl.ISA.XLSX.Tests
+﻿module Spreadsheet.Tests
 
 open Fable.Pyxpecto
 
