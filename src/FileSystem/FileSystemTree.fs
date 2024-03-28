@@ -182,3 +182,56 @@ type FileSystemTree =
             Folder (name, children |> Array.map (fun c -> c.Copy()))
         | File(name) -> 
             File name
+
+
+
+
+    static member createGitKeepFile() = 
+        FileSystemTree.createFile ARCtrl.Path.GitKeepFileName
+
+    static member createReadmeFile() = 
+        FileSystemTree.createFile ARCtrl.Path.READMEFileName
+
+    static member createEmptyFolder (name : string) = 
+        FileSystemTree.createFolder(name, [|FileSystemTree.createGitKeepFile()|])
+
+    static member createAssayFolder(assayName : string) = 
+        let dataset = FileSystemTree.createEmptyFolder ARCtrl.Path.AssayDatasetFolderName
+        let protocols = FileSystemTree.createEmptyFolder ARCtrl.Path.AssayProtocolsFolderName
+        let readme = FileSystemTree.createReadmeFile()
+        let assayFile = FileSystemTree.createFile ARCtrl.Path.AssayFileName
+        FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
+
+    static member createStudyFolder(studyName : string) = 
+        let resources = FileSystemTree.createEmptyFolder ARCtrl.Path.StudiesResourcesFolderName
+        let protocols = FileSystemTree.createEmptyFolder ARCtrl.Path.StudiesProtocolsFolderName
+        let readme = FileSystemTree.createReadmeFile()
+        let studyFile = FileSystemTree.createFile ARCtrl.Path.StudyFileName
+        FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
+
+    static member createInvestigationFile() = 
+        FileSystemTree.createFile ARCtrl.Path.InvestigationFileName
+
+    static member createAssaysFolder(assays : FileSystemTree array) =
+        FileSystemTree.createFolder(
+            ARCtrl.Path.AssaysFolderName, 
+            Array.append [|FileSystemTree.createGitKeepFile()|] assays
+        )
+
+    static member createStudiesFolder(studies : FileSystemTree array) =
+        FileSystemTree.createFolder(
+            ARCtrl.Path.StudiesFolderName,
+            Array.append [|FileSystemTree.createGitKeepFile()|] studies
+        )
+
+    static member createWorkflowsFolder(workflows : FileSystemTree array) =
+        FileSystemTree.createFolder(
+            ARCtrl.Path.WorkflowsFolderName, 
+            Array.append [|FileSystemTree.createGitKeepFile()|] workflows
+        )
+
+    static member createRunsFolder(runs : FileSystemTree array) = 
+        FileSystemTree.createFolder(
+            ARCtrl.Path.RunsFolderName, 
+            Array.append [|FileSystemTree.createGitKeepFile()|] runs
+        )

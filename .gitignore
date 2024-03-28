@@ -363,3 +363,4 @@ tmp/
 /tests/**/py
 /tests/UI/cypress/screenshots/Tests/Dictionary.cy.js
 /tests/ISA/ISA.Tests/py
+/ro-crate-test.json

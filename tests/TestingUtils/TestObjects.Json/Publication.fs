@@ -22,7 +22,6 @@ let publicationLD =
   "@type": "Publication",
   "@context": {
     "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
 
     "Publication": "sdo:ScholarlyArticle",
     
@@ -40,7 +39,6 @@ let publicationLD =
     "@type": "OntologyAnnotation",
     "@context": {
       "sdo": "http://schema.org/",
-      "arc": "http://purl.org/nfdi4plants/ontology/",
 
       "OntologyAnnotation": "sdo:DefinedTerm",
       

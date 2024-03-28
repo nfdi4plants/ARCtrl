@@ -2,12 +2,12 @@ module ARCtrl.Tests
 
 
 open ARCtrl
-open ARCtrl.ISA
 open TestObjects.Contract.ISA
 open TestObjects.Spreadsheet
 open TestingUtils
 open ARCtrl.Contract
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl.Spreadsheet
+open ARCtrl.Helper
 open FsSpreadsheet
 
 let private tests_model = testList "model" [
@@ -389,7 +389,7 @@ let private tests_updateFileSystem = testList "update_Filesystem" [
         let paths = arc.FileSystem.Tree.ToFilePaths()
         let expected_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|]
         Expect.sequenceEqual paths expected_paths "paths"
-        let i = ARCtrl.ISA.ArcInvestigation.init("My Investigation") 
+        let i = ArcInvestigation.init("My Investigation") 
         let a = i.InitAssay("My Assay")
         ()
         arc.ISA <- Some i

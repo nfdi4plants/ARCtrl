@@ -6,7 +6,6 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-    <Compile Include="Path.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
   <ItemGroup>

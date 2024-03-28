@@ -3,7 +3,7 @@
 open TestingUtils
 
 open ARCtrl
-open ARCtrl.ISA
+open ARCtrl
 open ARCtrl.Contract
 open FsSpreadsheet
 

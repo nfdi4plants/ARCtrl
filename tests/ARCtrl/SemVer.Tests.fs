@@ -1,7 +1,7 @@
 ﻿module ARCtrl.SemVer.Tests
 
 open TestingUtils
-
+open ARCtrl.Helper.SemVer
 open ARCtrl
 
 

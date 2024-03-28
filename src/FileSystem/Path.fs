@@ -6,6 +6,29 @@ let [<Literal>] PathSeperator = '/'
 let [<Literal>] PathSeperatorWindows = '\\'
 let seperators = [|PathSeperator; PathSeperatorWindows|]
 
+
+
+// Files
+let [<Literal>] AssayFileName = "isa.assay.xlsx"
+let [<Literal>] StudyFileName = "isa.study.xlsx"
+let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
+let [<Literal>] GitKeepFileName = ".gitkeep" 
+let [<Literal>] READMEFileName = "README.md"
+
+// Folder
+let [<Literal>] AssaysFolderName = "assays"
+let [<Literal>] StudiesFolderName = "studies"
+let [<Literal>] WorkflowsFolderName = "workflows"
+let [<Literal>] RunsFolderName = "runs"
+let [<Literal>] AssayProtocolsFolderName = "protocols"
+let [<Literal>] AssayDatasetFolderName = "dataset"
+let [<Literal>] StudiesProtocolsFolderName = "protocols"
+let [<Literal>] StudiesResourcesFolderName = "resources"
+
+
+
+//let assaySubFolderNames = [|assayDatasetFolderName;assayProtocolsFolderName|]
+
 let split(path: string) = 
     path.Split(seperators, enum<StringSplitOptions>(3))
 
@@ -34,3 +57,10 @@ let getFileName (path: string) : string =
 /// <param name="fileName">The name of the file the path should point to.</param>
 /// <param name="path">The path to a file.</param>
 let isFile (fileName: string) (path: string) = (getFileName path) = fileName
+
+
+let getAssayFolderPath (assayIdentifier: string) =
+    combine AssaysFolderName assayIdentifier
+
+let getStudyFolderPath (studyIdentifier: string) =
+    combine StudiesFolderName studyIdentifier 

@@ -1,8 +1,8 @@
 ﻿module PerformanceReport
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Json
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Json
+open ARCtrl.Spreadsheet
 open Fable.Core
 
 #if FABLE_COMPILER_JAVASCRIPT
@@ -146,10 +146,10 @@ let assay_toJson =
     let a = ArcAssay.init("MyAssay")
     let t = a.InitTable("MyTable")
     t.AddColumn(CompositeHeader.Input IOType.Source)
-    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter1")))
-    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter")))
-    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter")))
-    t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter1")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+    t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation("MyCharacteristic")))
     t.AddColumn(CompositeHeader.Output IOType.Sample)
     let rowCount = 10000
     for i = 0 to rowCount - 1 do
@@ -167,7 +167,7 @@ let assay_toJson =
     PerformanceTest.create
         "Assay_toJson"
         "Parse an assay with one table with 10000 rows and 6 columns to json"
-        (fun _ -> ArcAssay.toJsonString a |> ignore)
+        (fun _ -> ArcAssay.toJsonString() a |> ignore)
 
 let study_fromWorkbook =
     let fswb = TestObjects.Spreadsheet.Study.LargeFile.Workbook

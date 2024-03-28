@@ -1,0 +1,96 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="context\rocrate\property_value_context.fs" />
+    <Compile Include="context\rocrate\isa_assay_context.fs" />
+    <Compile Include="context\rocrate\isa_comment_context.fs" />
+    <Compile Include="context\rocrate\isa_component_context.fs" />
+    <Compile Include="context\rocrate\isa_data_context.fs" />
+    <Compile Include="context\rocrate\isa_factor_context.fs" />
+    <Compile Include="context\rocrate\isa_factor_value_context.fs" />
+    <Compile Include="context\rocrate\isa_investigation_context.fs" />
+    <Compile Include="context\rocrate\isa_material_attribute_context.fs" />
+    <Compile Include="context\rocrate\isa_material_attribute_value_context.fs" />
+    <Compile Include="context\rocrate\isa_material_context.fs" />
+    <Compile Include="context\rocrate\isa_ontology_annotation_context.fs" />
+    <Compile Include="context\rocrate\isa_ontology_source_reference_context.fs" />
+    <Compile Include="context\rocrate\isa_organization_context.fs" />
+    <Compile Include="context\rocrate\isa_person_context.fs" />
+    <Compile Include="context\rocrate\isa_process_context.fs" />
+    <Compile Include="context\rocrate\isa_process_parameter_value_context.fs" />
+    <Compile Include="context\rocrate\isa_protocol_context.fs" />
+    <Compile Include="context\rocrate\isa_protocol_parameter_context.fs" />
+    <Compile Include="context\rocrate\isa_publication_context.fs" />
+    <Compile Include="context\rocrate\isa_sample_context.fs" />
+    <Compile Include="context\rocrate\isa_source_context.fs" />
+    <Compile Include="context\rocrate\isa_study_context.fs" />
+    <Compile Include="context\rocrate\rocrate_context.fs" />
+    <Compile Include="ConverterOptions.fs" />
+    <Compile Include="Decode.fs" />
+    <Compile Include="Encode.fs" />
+    <Compile Include="StringTable.fs" />
+    <Compile Include="Comment.fs" />
+    <Compile Include="OntologyAnnotation.fs" />
+    <Compile Include="OntologySourceReference.fs" />
+    <Compile Include="Person.fs" />
+    <Compile Include="Publication.fs" />
+    <Compile Include="Process\Value.fs" />
+    <Compile Include="Process\PropertyValue.fs" />
+    <Compile Include="Process\Factor.fs" />
+    <Compile Include="Process\FactorValue.fs" />
+    <Compile Include="Process\ProtocolParameter.fs" />
+    <Compile Include="Process\MaterialType.fs" />
+    <Compile Include="Process\MaterialAttribute.fs" />
+    <Compile Include="Process\Component.fs" />
+    <Compile Include="Process\Protocol.fs" />
+    <Compile Include="Process\MaterialAttributeValue.fs" />
+    <Compile Include="Process\Material.fs" />
+    <Compile Include="Process\DataFile.fs" />
+    <Compile Include="Process\Data.fs" />
+    <Compile Include="Process\Source.fs" />
+    <Compile Include="Process\Sample.fs" />
+    <Compile Include="Process\ProcessParameterValue.fs" />
+    <Compile Include="Process\ProcessInput.fs" />
+    <Compile Include="Process\ProcessOutput.fs" />
+    <Compile Include="Process\Process.fs" />
+    <Compile Include="Process\ProcessSequence.fs" />
+    <Compile Include="Process\AssayMaterials.fs" />
+    <Compile Include="Process\StudyMaterials.fs" />
+    <Compile Include="Table\OATable.fs" />
+	  <Compile Include="Table\CompositeCell.fs" />
+	  <Compile Include="Table\CellTable.fs" />
+	  <Compile Include="Table\IOType.fs" />
+	  <Compile Include="Table\CompositeHeader.fs" />
+    <Compile Include="Table\ArcTable.fs" />
+    <Compile Include="Table\Compression.fs" />
+    <Compile Include="Table\Templates.fs" />
+    <Compile Include="Assay.fs" />
+    <Compile Include="Study.fs" />
+    <Compile Include="Investigation.fs" />
+    <Compile Include="ARC.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NJsonSchema" Version="10.8.0" />
+    <PackageReference Include="Thoth.Json.Core" Version="0.2.1" />
+    <PackageReference Include="Thoth.Json.Newtonsoft" Version="0.1.0" />
+    <PackageReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="Thoth.Json.Python" Version="0.1.0" />
+    <PackageReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="Thoth.Json.JavaScript" Version="0.1.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
+    <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Json</PackageTags>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+</Project>

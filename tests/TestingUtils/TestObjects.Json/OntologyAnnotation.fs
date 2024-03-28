@@ -21,7 +21,6 @@ let peptidaseLD =
         "@type": "OntologyAnnotation",
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
 
             "OntologyAnnotation": "sdo:DefinedTerm",
             
@@ -39,7 +38,6 @@ let peptidaseLD =
                 "@type": "Comment",
                 "@context": {
                     "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
                     
                     "Comment": "sdo:Comment",
                     "name": "sdo:name",
@@ -70,7 +68,6 @@ let peptidaseWithDefaultLD =
         "@type": "OntologyAnnotation",
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
 
             "OntologyAnnotation": "sdo:DefinedTerm",
             
@@ -88,7 +85,6 @@ let peptidaseWithDefaultLD =
                 "@type": "Comment",
                 "@context": {
                     "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
                     
                     "Comment": "sdo:Comment",
                     "name": "sdo:name",
