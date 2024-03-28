@@ -45,7 +45,4 @@
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.402" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ISAJson\" />
-  </ItemGroup>
 </Project>
