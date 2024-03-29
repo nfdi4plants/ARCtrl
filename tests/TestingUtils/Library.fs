@@ -145,6 +145,11 @@ module Expect =
             failwithf $"{message}. Expected {elapsed1.TotalMilliseconds}ms to be faster than {elapsed2.TotalMilliseconds}ms"
         ()
 
+    let dateTimeEqual (actual : DateTime) (expected : DateTime) message = 
+        let actual = actual.ToString("yyyy-MM-dd HH:mm:ss")
+        let expected = expected.ToString("yyyy-MM-dd HH:mm:ss")
+        equal actual expected message
+
     /// Expects the `actual` sequence to equal the `expected` one.
     let sequenceEqual actual expected message =
       match firstDiff actual expected with

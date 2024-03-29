@@ -31,7 +31,7 @@ module Template =
             Encode.tryIncludeSeq "authors" Person.encoder template.Authors 
             Encode.tryIncludeSeq "endpoint_repositories" OntologyAnnotation.encoder template.EndpointRepositories 
             Encode.tryIncludeSeq "tags" OntologyAnnotation.encoder template.Tags 
-            "last_updated", Encode.datetime template.LastUpdated
+            "last_updated", Encode.dateTime template.LastUpdated
         ]
 
     let decoder : Decoder<Template> =
@@ -46,11 +46,7 @@ module Template =
                 ?authors = get.Optional.Field "authors" (Decode.resizeArray Person.decoder),
                 ?repos = get.Optional.Field "endpoint_repositories" (Decode.resizeArray OntologyAnnotation.decoder),
                 ?tags = get.Optional.Field "tags" (Decode.resizeArray OntologyAnnotation.decoder),
-                #if FABLE_COMPILER_PYTHON
-                lastUpdated = get.Required.Field "last_updated" Decode.datetimeLocal // Currently not supported in Thoth.Json.Core for python
-                #else
-                lastUpdated = get.Required.Field "last_updated" Decode.datetimeUtc
-                #endif
+                lastUpdated = get.Required.Field "last_updated" Decode.datetime
             )
         )
 

@@ -30,7 +30,7 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?or
     let authors = defaultArg authors <| ResizeArray()
     let repos = defaultArg repos <| ResizeArray()
     let tags = defaultArg tags <| ResizeArray()
-    let lastUpdated = defaultArg lastUpdated (System.DateTime.Now.ToUniversalTime())
+    let lastUpdated = defaultArg lastUpdated (System.DateTime.Now)
 
     member val Id : System.Guid = id with get, set
     member val Table : ArcTable = table with get, set

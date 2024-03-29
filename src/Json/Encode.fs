@@ -67,3 +67,7 @@ module Encode =
     let DefaultSpaces = 0
 
     let defaultSpaces spaces = defaultArg spaces DefaultSpaces
+
+    let dateTime(d : System.DateTime) =         
+        d.ToString("O", System.Globalization.CultureInfo.InvariantCulture).Split('+').[0]
+        |> Encode.string

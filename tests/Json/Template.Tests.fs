@@ -50,7 +50,7 @@ let tests_Organisation = testList "Organisation" [
     ]
 ]
 
-let tests_Template = testList "Template" [
+let tests_Template = 
     testList "roundabout" [
         testCase "complete" <| fun _ ->
             let table = ArcTable.init("My Table")
@@ -66,7 +66,7 @@ let tests_Template = testList "Template" [
             Expect.equal actual.Id expected.Id "id"
             Expect.sequenceEqual actual.Authors expected.Authors "Authors"
             Expect.sequenceEqual actual.EndpointRepositories expected.EndpointRepositories "EndpointRepositories"
-            Expect.equal actual.LastUpdated expected.LastUpdated "LastUpdated"
+            Expect.dateTimeEqual actual.LastUpdated expected.LastUpdated "LastUpdated"
             Expect.equal actual.Name expected.Name "Name"
             Expect.equal actual.Organisation expected.Organisation "Organisation"
             Expect.equal actual.SemVer expected.SemVer "SemVer"
@@ -83,9 +83,9 @@ let tests_Template = testList "Template" [
             Expect.equal actual.Table expected.Table "Table"
             Expect.equal actual expected "template"
     ]
-]
 
-let main = testList "Json" [
+
+let main = testList "Template" [
     tests_Organisation
     tests_Template
 ]
