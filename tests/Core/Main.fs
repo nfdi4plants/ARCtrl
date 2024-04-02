@@ -2,8 +2,7 @@
 
 open Fable.Pyxpecto
 
-let all = testSequenced <| testList "ISA" [
-    Update.Tests.main
+let all = testSequenced <| testList "Core" [
     DataModel.Tests.main
     Regex.Tests.main
     Person.Tests.main

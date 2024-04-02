@@ -1,7 +1,6 @@
 namespace ARCtrl
 
 open ARCtrl.Helper
-open Update
 open Fable.Core
 
 [<AttachMembers>]
@@ -157,18 +156,6 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
                 true
             else 
                 false
-
-    /// Updates all ontology annotations for which the predicate returns true with the given ontology annotations values
-    static member updateBy (predicate : OntologyAnnotation -> bool) (updateOption : UpdateOptions) (design : OntologyAnnotation) (annotations : OntologyAnnotation list) =
-        if List.exists predicate annotations then
-            annotations
-            |> List.map (fun d -> if predicate d then updateOption.updateRecordType d design else d)
-        else 
-            annotations
-
-    /// If an ontology annotation with the same annotation value as the given annotation value exists in the list, updates it with the given ontology annotation
-    static member updateByName (updateOption:UpdateOptions) (design : OntologyAnnotation) (annotations : OntologyAnnotation list) =
-        OntologyAnnotation.updateBy (fun f -> f.Name = design.Name) updateOption design annotations
    
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())

@@ -20,7 +20,6 @@
     <Compile Include="ArcJsonConversion.Tests.fs" />
     <Compile Include="Identifier.Tests.fs" />
     <Compile Include="DataModel.Tests.fs" />
-    <Compile Include="Update.Tests.fs" />
     <Compile Include="Fable.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

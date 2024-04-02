@@ -2,7 +2,6 @@ namespace ARCtrl.Process
 
 open ARCtrl
 open ARCtrl.Helper
-open Update
 
 type Protocol =
     {       
@@ -48,17 +47,6 @@ type Protocol =
     /// Adds the given protocol to the protocols  
     static member add (protocols : Protocol list) (protocol : Protocol) =
         List.append protocols [protocol]
-
-    /// Updates all protocols for which the predicate returns true with the given protocol values
-    static member updateBy (predicate : Protocol -> bool) (updateOption : UpdateOptions) (protocol : Protocol) (protocols : Protocol list) =
-        if List.exists predicate protocols then
-            List.map (fun p -> if predicate p then updateOption.updateRecordType p protocol else p) protocols
-        else 
-            protocols
-
-    /// Updates all protocols with the same name as the given protocol with its values
-    static member updateByName (updateOption:UpdateOptions) (protocol : Protocol) (protocols : Protocol list) =
-        Protocol.updateBy (fun p -> p.Name = protocol.Name) updateOption protocol protocols
 
     /// If a protocol with the given name exists in the list, removes it
     static member removeByName (name : string) (protocols : Protocol list) = 

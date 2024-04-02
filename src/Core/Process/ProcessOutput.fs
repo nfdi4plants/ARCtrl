@@ -2,7 +2,6 @@
 
 open ARCtrl
 open ARCtrl.Helper
-open Update
 
 [<RequireQualifiedAccess>]
 type ProcessOutput =

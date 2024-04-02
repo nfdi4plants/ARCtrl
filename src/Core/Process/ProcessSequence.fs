@@ -1,7 +1,6 @@
 ﻿module ARCtrl.Process.ProcessSequence
 
 open ARCtrl.Helper
-open Update
 
 /// Returns the names of the protocols the given processes impelement
 let getProtocolNames (processSequence : Process list) =
@@ -170,6 +169,3 @@ let getMaterials (processSequence : Process list) =
     |> List.collect Process.getMaterials
     |> List.distinct
 
-let updateProtocols (protocols : Protocol list) (processSequence : Process list) =
-    processSequence
-    |> List.map (Process.updateProtocol protocols)

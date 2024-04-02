@@ -2,7 +2,6 @@ namespace ARCtrl.Process
 
 open ARCtrl
 open ARCtrl.Helper
-open Update
 open Fable.Core
 
 [<AttachMembers>]
@@ -62,17 +61,6 @@ type Factor =
     /// adds the given factor to the factors  
     static member add (factors:Factor list) (factor : Factor) =
         List.append factors [factor]
-
-    /// Updates all factors for which the predicate returns true with the given factor values
-    static member updateBy (predicate : Factor -> bool) (updateOption : UpdateOptions) (factor : Factor) (factors : Factor list) =
-        if List.exists predicate factors then
-            List.map (fun f -> if predicate f then updateOption.updateRecordType f factor else f) factors
-        else 
-            factors
-
-    /// Updates all factors with the same name as the given factor with its values
-    static member updateByName (updateOption : UpdateOptions) (factor : Factor) (factors : Factor list) =
-        Factor.updateBy (fun f -> f.Name = factor.Name) updateOption factor factors
 
     /// If a factor with the given name exists in the list, removes it
     static member removeByName (name : string) (factors : Factor list) = 

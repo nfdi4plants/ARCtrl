@@ -1,9 +1,6 @@
 ﻿namespace ARCtrl.Process
 
 open ARCtrl
-open ARCtrl.Helper
-open Update
- 
 open ARCtrl.Helper 
 
 [<RequireQualifiedAccess>]

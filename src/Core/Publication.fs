@@ -1,7 +1,6 @@
 namespace ARCtrl
 
 open ARCtrl.Helper
-open Update
 open Fable.Core
 
 [<AttachMembers>]
@@ -46,22 +45,6 @@ type Publication(?pubMedID, ?doi, ?authors, ?title, ?status, ?comments) =
 
     static member empty() =
         Publication.create()
-
-    /// Updates all publications for which the predicate returns true with the given publication values
-    static member updateBy (predicate : Publication -> bool) (updateOption : UpdateOptions) (publication : Publication) (publications : Publication list) =
-        if List.exists predicate publications then
-            publications
-            |> List.map (fun p -> if predicate p then updateOption.updateRecordType p publication else p) 
-        else 
-            publications
-
-    /// Updates all protocols with the same DOI as the given publication with its values
-    static member updateByDOI (updateOption : UpdateOptions) (publication : Publication) (publications : Publication list) =
-        Publication.updateBy (fun p -> p.DOI = publication.DOI) updateOption publication publications
-
-    /// Updates all protocols with the same pubMedID as the given publication with its values
-    static member updateByPubMedID (updateOption : UpdateOptions) (publication : Publication) (publications : Publication list) =
-        Publication.updateBy (fun p -> p.PubMedID = publication.PubMedID) updateOption publication publications
 
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())

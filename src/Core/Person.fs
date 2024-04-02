@@ -1,7 +1,6 @@
 namespace ARCtrl
 
 open ARCtrl.Helper
-open Update
 open Fable.Core
 
 [<AttachMembers>]
@@ -117,19 +116,6 @@ type Person(?orcid, ?lastName, ?firstName, ?midInitials, ?email, ?phone, ?fax, ?
     /// adds the given person to the persons  
     static member add (persons : Person list) (person : Person) =
         List.append persons [person]
-
-    /// Updates all persons for which the predicate returns true with the given person values
-    static member updateBy (predicate : Person -> bool) (updateOption:UpdateOptions) (person : Person) (persons : Person []) =
-        if Array.exists predicate persons 
-        then
-            persons
-            |> Array.map (fun p -> if predicate p then updateOption.updateRecordType p person else p) 
-        else 
-            persons
-
-    /// Updates all persons with the same FirstName, MidInitials and LastName as the given person with its values
-    static member updateByFullName (updateOption:UpdateOptions) (person : Person) (persons : Person []) =
-        Person.updateBy (fun p -> p.FirstName = person.FirstName && p.MidInitials = person.MidInitials && p.LastName = person.LastName) updateOption person persons
     
     /// If a person with the given FirstName, MidInitials and LastName exists in the list, removes it
     static member removeByFullName (firstName : string) (midInitials : string) (lastName : string) (persons : Person []) =

@@ -1,7 +1,6 @@
 ﻿namespace ARCtrl
 
 open ARCtrl.Helper
-open Update
 open Fable.Core
 
 [<AttachMembers>]
@@ -42,18 +41,6 @@ type OntologySourceReference(?description, ?file, ?name, ?version, ?comments) =
 
     static member empty =
         OntologySourceReference.create()
-
-    /// Updates all ontology source references for which the predicate returns true with the given ontology source reference values
-    static member updateBy (predicate : OntologySourceReference -> bool) (updateOption : UpdateOptions) (ontologySourceReference : OntologySourceReference) (ontologies : OntologySourceReference list) =
-        if List.exists predicate ontologies then
-            ontologies
-            |> List.map (fun t -> if predicate t then updateOption.updateRecordType t ontologySourceReference else t) 
-        else 
-            ontologies
-
-    /// If an ontology source reference with the same name as the given name exists in the investigation, updates it with the given ontology source reference
-    static member updateByName (updateOption:UpdateOptions) (ontologySourceReference : OntologySourceReference) (ontologies:OntologySourceReference list) =
-        OntologySourceReference.updateBy (fun t -> t.Name = ontologySourceReference.Name) updateOption ontologySourceReference ontologies
 
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())

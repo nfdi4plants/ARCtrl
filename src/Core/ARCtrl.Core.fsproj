@@ -8,10 +8,8 @@
     <Compile Include="Helper\Url.fs" />
     <Compile Include="Helper\Regex.fs" />
     <Compile Include="Helper\Identifier.fs" />
-    <Compile Include="Helper\Fable.fs" />
     <Compile Include="Helper\Collections.fs" />
     <Compile Include="Helper\HashCodes.fs" />
-    <Compile Include="Helper\Update.fs" />
     <Compile Include="Helper\Printer.fs" />
     <Compile Include="Helper\SemVer.fs" />
     <Compile Include="URI.fs" />
@@ -41,11 +39,6 @@
     <Compile Include="Process\ProcessParameterValue.fs" />
     <Compile Include="Process\Process.fs" />
     <Compile Include="Process\ProcessSequence.fs" />
-    <Compile Include="Process\AssayMaterials.fs" />
-    <Compile Include="Process\Assay.fs" />
-    <Compile Include="Process\StudyMaterials.fs" />
-    <Compile Include="Process\Study.fs" />
-    <Compile Include="Process\Investigation.fs" />
     <Compile Include="Process\ColumnIndex.fs" />
     <Compile Include="Table\CompositeHeader.fs" />
     <Compile Include="Table\CompositeCell.fs" />

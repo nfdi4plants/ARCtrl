@@ -228,12 +228,3 @@ type Process =
         @
         (p.Outputs |> Option.defaultValue [] |> List.choose ProcessOutput.tryMaterial)
         |> List.distinct
-
-    static member updateProtocol (referenceProtocols : Protocol list) (p : Process) =
-        match p.ExecutesProtocol with
-        | Some protocol when protocol.Name.IsSome ->
-            match referenceProtocols |> List.tryFind (fun prot -> prot.Name.Value = (protocol.Name |> Option.defaultValue "")) with
-            | Some refProtocol ->
-                {p with ExecutesProtocol = Some (Update.UpdateByExistingAppendLists.updateRecordType protocol refProtocol)}
-            | _ -> p
-        | _ -> p

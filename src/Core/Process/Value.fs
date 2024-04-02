@@ -18,8 +18,13 @@ type Value =
         match System.Int32.TryParse value  with
         | (true, i) -> Value.Int i
         | _ -> 
-            
-            match System.Double.TryParse(value,NumberStyles.Any,CultureInfo.InvariantCulture) with
+            let parser =
+                #if FABLE_COMPILER
+                fun (v: string) -> System.Double.TryParse(v)
+                #else
+                fun (v: string) -> System.Double.TryParse(v,NumberStyles.Any,CultureInfo.InvariantCulture) // this throws warnings in fable as options are ignored
+                #endif
+            match parser value with
             | (true, f) -> Value.Float f
             | _ -> Value.Ontology <| OntologyAnnotation.create value
 
