@@ -60,6 +60,11 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Spreadsheet.Tests", 
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.FileSystem.Tests", "tests\FileSystem\ARCtrl.FileSystem.Tests.fsproj", "{704935A5-68F2-4070-8A55-AFF8F66ACAD6}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Python", "Python", "{501F6D1E-6300-4CA4-8E61-3523BCF4D533}"
+	ProjectSection(SolutionItems) = preProject
+		tests\Python\test_index.py = tests\Python\test_index.py
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -146,6 +151,7 @@ Global
 		{9E1FF103-B5BD-44B6-B839-0E1FED2C49EC} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{03F4E6D0-CFE7-44A6-994B-778B3DF6532C} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{704935A5-68F2-4070-8A55-AFF8F66ACAD6} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{501F6D1E-6300-4CA4-8E61-3523BCF4D533} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}

@@ -36,6 +36,15 @@ module RunTests =
             run node $"{path}/js/Main.js" ""
     }
 
+    let runTestsPyNative = BuildTask.create "runTestsPyNative" [clean; build] {
+        Trace.traceImportant "Start native Python tests"
+        for path in ProjectInfo.pyTestProjects do
+            // transpile library for native access
+            run dotnet $"fable src/ARCtrl -o {path}/ARCtrl --lang python" ""
+            GenerateIndexPy.ARCtrl_generate($"{path}/ARCtrl")
+            run python $"-m pytest {path}" "" 
+    }
+
     let runTestsPy = BuildTask.create "runTestsPy" [clean; build] {
         for path in ProjectInfo.testProjects do
             //transpile py files from fsharp code
@@ -50,6 +59,6 @@ module RunTests =
         |> Seq.iter dotnetRun
     }
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsDotnet] { 
+let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative; RunTests.runTestsDotnet] { 
     ()
 }

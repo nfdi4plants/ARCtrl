@@ -25,21 +25,20 @@ let classes =
         "__future__", "annotations"
         "collections.abc", "Callable"
         "typing", "Any"
-        ".ISA.ISA.JsonTypes.comment", "Comment"
-        ".ISA.ISA.JsonTypes.ontology_annotation","OntologyAnnotation"; 
-        ".ISA.ISA.JsonTypes.person", "Person";
-        ".ISA.ISA.JsonTypes.publication", "Publication";
-        ".ISA.ISA.ArcTypes.composite_header", "IOType"
-        ".ISA.ISA.ArcTypes.composite_header", "CompositeHeader"; 
-        ".ISA.ISA.ArcTypes.composite_cell", "CompositeCell"
-        ".ISA.ISA.ArcTypes.composite_column", "CompositeColumn"
-        ".ISA.ISA.ArcTypes.arc_table", "ArcTable"
-        ".ISA.ISA.ArcTypes.arc_types", "ArcAssay"; 
-        ".ISA.ISA.ArcTypes.arc_types", "ArcStudy"; 
-        ".ISA.ISA.ArcTypes.arc_types", "ArcInvestigation"; 
-        ".Templates.template", "Template"
-        ".Templates.templates", "Templates"
-        ".Templates.template", "Organisation"
+        ".Core.comment", "Comment"
+        ".Core.ontology_annotation","OntologyAnnotation"; 
+        ".Core.person", "Person";
+        ".Core.publication", "Publication";
+        ".Core.Table.composite_header", "IOType"
+        ".Core.Table.composite_header", "CompositeHeader"; 
+        ".Core.Table.composite_cell", "CompositeCell"
+        ".Core.Table.composite_column", "CompositeColumn"
+        ".Core.Table.arc_table", "ArcTable"
+        ".Core.arc_types", "ArcAssay"; 
+        ".Core.arc_types", "ArcStudy"; 
+        ".Core.arc_types", "ArcInvestigation"; 
+        ".Core.template", "Template"
+        ".json", "JsonController"
         ".arc","ARC"
     |]
 

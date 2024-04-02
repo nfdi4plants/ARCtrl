@@ -20,6 +20,12 @@ let jsTestProjects =
         "tests/JavaScript"
     ]
 
+/// Native JS test paths
+let pyTestProjects =
+    [
+        "tests/Python"
+    ]
+
 let solutionFile  = $"{project}.sln"
 
 let configuration = "Release"
