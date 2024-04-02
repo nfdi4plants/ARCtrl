@@ -13,29 +13,33 @@ module private Helper =
 open Helper
 
 let private tests_core =
-    //let json = """{"annotationValue":"Peptidase","termSource":"MS","termAccession":"http://purl.obolibrary.org/obo/NCIT_C16965","comments":[{"name":"comment","value":"This is a comment"}]}"""
     createBaseJsonTests
         "core"
         create_oa
         OntologyAnnotation.toJsonString
         OntologyAnnotation.fromJsonString
+        None
 
 let private tests_isa =
-    //let json = """{"annotationValue":"Peptidase","termSource":"MS","termAccession":"http://purl.obolibrary.org/obo/NCIT_C16965","comments":[{"name":"comment","value":"This is a comment"}]}"""
     createBaseJsonTests
         "isa"
         create_oa
        
         OntologyAnnotation.toISAJsonString
         OntologyAnnotation.fromISAJsonString
-    
+        #if !FABLE_COMPILER_PYTHON
+        (Some Validation.validateOntologyAnnotation)
+        #else
+        None
+        #endif
+
 let private tests_roCrate =
-    //let json = """{"@id":"http://purl.obolibrary.org/obo/NCIT_C16965","@type":"OntologyAnnotation","annotationValue":"Peptidase","termSource":"MS","termAccession":"http://purl.obolibrary.org/obo/NCIT_C16965","comments":["{\"@id\":\"#Comment_comment_This_is_a_comment\",\"@type\":\"Comment\",\"name\":\"comment\",\"value\":\"This is a comment\",\"@context\":{\"sdo\":\"http://schema.org/\",\"Comment\":\"sdo:Comment\",\"name\":\"sdo:name\",\"value\":\"sdo:text\"}}"],"@context":{"sdo":"http://schema.org/","OntologyAnnotation":"sdo:DefinedTerm","annotationValue":"sdo:name","termSource":"sdo:inDefinedTermSet","termAccession":"sdo:termCode","comments":"sdo:disambiguatingDescription"}}"""
     createBaseJsonTests
         "isa"
         create_oa
         OntologyAnnotation.toROCrateJsonString
         OntologyAnnotation.fromROCrateJsonString
+        None
     
 let main = testList "OntologyAnnotation" [
     tests_core

@@ -33,6 +33,7 @@ let private tests_core =
         create_filled
         ArcTable.toJsonString
         ArcTable.fromJsonString
+        None
 
 let private tests_coreEmpty = 
     let json = """{"name":"New Table"}""" 
@@ -41,6 +42,7 @@ let private tests_coreEmpty =
         create_empty
         ArcTable.toJsonString
         ArcTable.fromJsonString
+        None
 
 let private tests_compressedEmpty = 
     let json = """{"cellTable":[],"oaTable":[],"stringTable":["New Table"],"table":{"n":0}}""" 
@@ -49,6 +51,7 @@ let private tests_compressedEmpty =
         create_empty
         ArcTable.toCompressedJsonString
         ArcTable.fromCompressedJsonString
+        None
         
 let private tests_compressedFilled = 
     let json = """{"cellTable":[{"t":2,"v":[1]},{"t":2,"v":[3]},{"t":4,"v":[0]},{"t":2,"v":[5]},{"t":2,"v":[6]}],"oaTable":[{"a":7}],"stringTable":["New Table","Input 1","FreeText","Input 2","Term","Output 1","Output 2","SCIEX instrument model"],"table":{"n":0,"h":[{"headertype":"Input","values":["Source Name"]},{"headertype":"Component","values":[{"annotationValue":"instrument model","termSource":"MS","termAccession":"MS:424242"}]},{"headertype":"Output","values":["Sample Name"]}],"c":[[0,1],[2,2],[3,4]]}}"""
@@ -57,6 +60,7 @@ let private tests_compressedFilled =
         create_filled
         ArcTable.toCompressedJsonString
         ArcTable.fromCompressedJsonString
+        None
 
 let private tests = testList "extended" [
     testList "compressed" [

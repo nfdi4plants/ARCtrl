@@ -29,10 +29,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{64B34A6E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JavaScript", "JavaScript", "{913222CA-261F-49CB-A823-CC7C335F964A}"
 	ProjectSection(SolutionItems) = preProject
-		tests\JavaScript\CompositeCell.js = tests\JavaScript\CompositeCell.js
-		tests\JavaScript\CompositeHeader.js = tests\JavaScript\CompositeHeader.js
+		tests\JavaScript\ARCtrl.Index.js = tests\JavaScript\ARCtrl.Index.js
+		tests\JavaScript\ISA.CompositeCell.js = tests\JavaScript\ISA.CompositeCell.js
+		tests\JavaScript\ISA.CompositeHeader.js = tests\JavaScript\ISA.CompositeHeader.js
+		tests\JavaScript\ISA.Person.js = tests\JavaScript\ISA.Person.js
 		tests\JavaScript\Main.js = tests\JavaScript\Main.js
-		tests\JavaScript\Person.js = tests\JavaScript\Person.js
 		tests\JavaScript\Template.Web.js = tests\JavaScript\Template.Web.js
 	EndProjectSection
 EndProject

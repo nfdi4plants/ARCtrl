@@ -81,8 +81,12 @@ module JSchema =
 #endif
 
 
-#if !FABLE_COMPILER_PYTHON
+
 module Validation =
+
+    type ValidateFunction = string -> Async<ValidationResult>
+
+#if !FABLE_COMPILER_PYTHON
 
     let validate (schemaURL : string) (objectString : string) = 
         async {

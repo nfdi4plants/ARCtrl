@@ -28,6 +28,7 @@ let private tests_isa = testList "ISA" [
         create
         Person.toISAJsonString
         Person.fromISAJsonString
+        None
     testCase "ReaderSuccess" (fun () -> 
         let readingSuccess = 
             try 
@@ -94,6 +95,7 @@ let private tests_rocrate =
         create
         Person.toROCrateJsonString
         Person.fromROCrateJsonString
+        None
 
 let tests = testList "core" [
      createBaseJsonTests 
@@ -101,6 +103,7 @@ let tests = testList "core" [
         create
         Person.toJsonString
         Person.fromJsonString
+        None
 ]
 
 let main = testList "Person" [

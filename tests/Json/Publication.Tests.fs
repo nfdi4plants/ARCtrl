@@ -34,6 +34,7 @@ let tests_isa = testList "isa" [
         create
         Publication.toISAJsonString
         Publication.fromISAJsonString
+        None
         
     testCase "ReaderSuccess" <| fun () -> 
         let readingSuccess = 
@@ -82,6 +83,7 @@ let tests_rocrate = testList "rocrate" [
         create
         Publication.toROCrateJsonString
         Publication.fromROCrateJsonString
+        None
 ]
 
 let tests = 
@@ -90,6 +92,7 @@ let tests =
         create
         Publication.toJsonString
         Publication.fromJsonString
+        None
 
 let main = testList "Publication" [
     tests

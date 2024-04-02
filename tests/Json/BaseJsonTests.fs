@@ -2,21 +2,22 @@
 module BaseJsonTests
 
 open TestingUtils
+open ARCtrl.Json
 
-let createBaseJsonTests (name:string) (createObj: unit -> 'A) (toJson: unit -> 'A -> string) (fromJson: string -> 'A) =
+
+
+let createBaseJsonTests (name:string) (createObj: unit -> 'A) (toJson: unit -> 'A -> string) (fromJson: string -> 'A) (schemaValidation : Validation.ValidateFunction option) =
     testList $"baseTests - {name}" [
-        //testCase "write" (fun () -> 
-        //    let obj = createObj()
-        //    let actual = toJson () obj
-        //    let expected = jsonString
-        //    Expect.equal actual expected ""
-        //)
-        //testCase "read" (fun () -> 
-        //    let json = jsonString
-        //    let expected = createObj()
-        //    let actual = fromJson json
-        //    Expect.equal actual expected ""
-        //)
+
+        if schemaValidation.IsSome then
+            testAsync "WriterSchemaCorrectness" {
+                let obj = createObj()
+                let json = toJson () obj
+                let! validation = schemaValidation.Value json
+                let errorList = validation.GetErrors() |> Array.fold (fun acc x -> acc + x + "\n") ""
+                Expect.isTrue validation.Success $"Object did not match schema: {errorList}"
+            }
+
         testCase "roundabout" <| fun _ ->
             let obj = createObj()
             let json = toJson () obj

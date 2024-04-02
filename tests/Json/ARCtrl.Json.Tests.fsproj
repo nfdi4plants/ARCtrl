@@ -7,7 +7,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="JsonExtensions.fs" />
-    <Compile Include="BaseJsonTests.fs" />
     <Compile Include="Decoder.Tests.fs" />
     <EmbeddedResource Include="Validation\JsonValidation.js">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -15,6 +14,7 @@
     <Compile Include="Validation\ValidationResult.fs" />
     <Compile Include="Validation\Fable.fs" />
     <Compile Include="Validation\JsonSchemaValidation.fs" />
+    <Compile Include="BaseJsonTests.fs" />
     <Compile Include="Comment.Tests.fs" />
     <Compile Include="OntologyAnnotation.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
