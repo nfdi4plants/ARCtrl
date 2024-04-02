@@ -33,19 +33,8 @@ module RunTests =
             run dotnet $"fable {path} -o {path}/js" ""
             // run mocha in target path to execute tests
             // "--timeout 20000" is used, because json schema validation takes a bit of time.
-            run npx $"mocha {path}/js --timeout 20000" ""
+            run node $"{path}/js/Main.js" ""
     }
-
-    /// <summary>
-    /// Until we reach full Py compatibility we use these paths to check only compatible projects
-    /// </summary>
-    let testProjectsPy = 
-        [
-            //"tests/ISA/ISA.Tests"
-            //"tests/ISA/ISA.Json.Tests"
-            //"tests/ISA/ISA.Spreadsheet.Tests"
-            "tests/ARCtrl"
-        ]
 
     let runTestsPy = BuildTask.create "runTestsPy" [clean; build] {
         for path in ProjectInfo.testProjects do
