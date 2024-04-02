@@ -20,7 +20,11 @@ module Helper =
                 (Some "My Title")
                 (Some "My Description")
                 (Some "2024-03-15")
+                #if !FABLE_COMPILER
                 (Some "2024-04-20T20:20:39")
+                #else
+                (Some "2024-04-20")
+                #endif
                 (ResizeArray [OntologySourceReference.create("Description", "path/to/file", "OSR Name")])
                 (ResizeArray [Publication.create(doi="any-nice-doi-42")])
                 (ResizeArray [Person.create(firstName="Kevin", lastName="Frey")])

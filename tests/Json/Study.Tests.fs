@@ -12,7 +12,11 @@ module Helper =
         "My Study",
         "My Title",
         "My Description",
+        #if !FABLE_COMPILER
         "2024-03-15T20:20:39",
+        #else
+        "2024-03-15",
+        #endif        
         "2024-04-20",
         ResizeArray [|Publication.create(doi="any-nice-doi-42")|],
         ResizeArray [|Person.create(firstName="Kevin", lastName="Frey", phone="023382093810")|], 
