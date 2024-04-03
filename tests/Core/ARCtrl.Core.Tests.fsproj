@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Regex.Tests.fs" />
+    <Compile Include="Person.Tests.fs" />
+    <Compile Include="CompositeCell.Tests.fs" />
+    <Compile Include="CompositeHeader.Tests.fs" />
+    <Compile Include="CompositeColumn.Tests.fs" />
+    <Compile Include="ArcTable.Tests.fs" />
+    <Compile Include="ArcTables.Tests.fs" />
+    <Compile Include="ArcAssay.Tests.fs" />
+    <Compile Include="ArcStudy.Tests.fs" />
+    <Compile Include="ArcInvestigation.Tests.fs" />
+    <Compile Include="Template.Tests.fs" />
+    <Compile Include="ArcJsonConversion.Tests.fs" />
+    <Compile Include="Identifier.Tests.fs" />
+    <Compile Include="DataModel.Tests.fs" />
+    <Compile Include="Fable.Tests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+	<ItemGroup>
+    <PackageReference Include="Fable.Pyxpecto" Version="1.0.1" />
+		<PackageReference Include="Fable.Core" Version="4.2.0" />
+	</ItemGroup>
+	<ItemGroup>
+	  <ProjectReference Include="..\..\src\Core\ARCtrl.Core.fsproj" />
+	  <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
+	</ItemGroup>
+	<ItemGroup>
+	  <PackageReference Update="FSharp.Core" Version="7.0.402" />
+	</ItemGroup>
+</Project>

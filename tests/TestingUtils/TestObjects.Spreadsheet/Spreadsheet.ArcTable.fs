@@ -1,8 +1,8 @@
 ﻿module TestObjects.Spreadsheet.ArcTable
 
 open FsSpreadsheet
-open ARCtrl.ISA
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Spreadsheet
 
 type FsTable with
     member this.IsEmpty(c : FsCellsCollection) =
@@ -16,16 +16,16 @@ module Parameter =
 
     let temperatureHeader = 
         CompositeHeader.Parameter 
-            (OntologyAnnotation.fromString("temperature","PATO","PATO:0000146"))
+            (OntologyAnnotation("temperature","PATO","PATO:0000146"))
     let temperatureValue = 
         CompositeCell.createUnitized
             ("5",
-            OntologyAnnotation.fromString("degree celsius","UO","UO:0000027"))
+            OntologyAnnotation("degree celsius","UO","UO:0000027"))
 
     let temperatureValue2 = 
         CompositeCell.createUnitized
             ("10",
-            OntologyAnnotation.fromString("degree celsius","UO","UO:0000027"))
+            OntologyAnnotation("degree celsius","UO","UO:0000027"))
 
     let temperatureHeaderV1 = "Parameter [temperature]"
     let temperatureHeaderV2 = "Unit"
@@ -73,7 +73,7 @@ module Parameter =
 
     let instrumentHeader = 
         CompositeHeader.Parameter 
-            (OntologyAnnotation.fromString("instrument model","MS","MS:1000031"))
+            (OntologyAnnotation("instrument model","MS","MS:1000031"))
     let instrumentValue = 
         CompositeCell.createTermFromString
             ("Thermo Fisher Scientific instrument model","MS","http://purl.obolibrary.org/obo/MS_1000483")
@@ -102,7 +102,7 @@ module Characteristic =
 
     let organismHeader = 
         CompositeHeader.Characteristic 
-            (OntologyAnnotation.fromString("organism","OBI","OBI:0100026"))
+            (OntologyAnnotation("organism","OBI","OBI:0100026"))
     let organismValue = 
         CompositeCell.createTermFromString
             ("Arabidopsis thaliana","NCBITaxon","http://purl.obolibrary.org/obo/NCBITaxon_3702")
@@ -129,11 +129,11 @@ module Factor =
 
     let timeHeader = 
         CompositeHeader.Factor 
-            (OntologyAnnotation.fromString("time","PATO","PATO:0000165"))
+            (OntologyAnnotation("time","PATO","PATO:0000165"))
     let timeValue = 
         CompositeCell.createUnitized
             ("10",
-            OntologyAnnotation.fromString("hour","UO","UO:0000032"))
+            OntologyAnnotation("hour","UO","UO:0000032"))
 
     let timeHeaderV1 = "Factor [time]"
     let timeHeaderV2 = "Unit"
@@ -260,7 +260,7 @@ module Protocol =
 
         let instrumentHeader = 
             CompositeHeader.Component 
-                (OntologyAnnotation.fromString("instrument model","MS","MS:1000031"))
+                (OntologyAnnotation("instrument model","MS","MS:1000031"))
         let instrumentValue = 
             CompositeCell.createTermFromString
                 ("Thermo Fisher Scientific instrument model","MS","http://purl.obolibrary.org/obo/MS_1000483")

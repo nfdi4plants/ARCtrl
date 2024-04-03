@@ -1,0 +1,48 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0</TargetFramework>
+    <GenerateProgramFile>false</GenerateProgramFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="JsonExtensions.fs" />
+    <Compile Include="Decoder.Tests.fs" />
+    <EmbeddedResource Include="Validation\JsonValidation.js">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <Compile Include="Validation\ValidationResult.fs" />
+    <Compile Include="Validation\Fable.fs" />
+    <Compile Include="Validation\JsonSchemaValidation.fs" />
+    <Compile Include="BaseJsonTests.fs" />
+    <Compile Include="Comment.Tests.fs" />
+    <Compile Include="OntologyAnnotation.Tests.fs" />
+    <Compile Include="CompositeCell.Tests.fs" />
+    <Compile Include="IOType.Tests.fs" />
+    <Compile Include="CompositeHeader.Tests.fs" />
+    <Compile Include="ArcTable.Tests.fs" />
+    <Compile Include="Person.Tests.fs" />
+    <Compile Include="Publication.Tests.fs" />
+    <Compile Include="Assay.Tests..fs" />
+    <Compile Include="Study.Tests.fs" />
+    <Compile Include="Investigation.Tests.fs" />
+    <Compile Include="Process\ProcessInput.Tests.fs" />
+    <Compile Include="Process\Protocol.Tests.fs" />
+    <Compile Include="Process\Process.Tests.fs" />
+    <Compile Include="Template.Tests.fs" />
+    <Compile Include="JsonSchema.Tests.fs" />
+    <Compile Include="Main.fs" />
+  </ItemGroup>
+  <PropertyGroup>
+    <NpmDependencies>
+      <NpmPackage Name="jsonschema" Version="gte 1.1.0 lt 2.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Json\ARCtrl.Json.fsproj" />
+    <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.402" />
+  </ItemGroup>
+</Project>

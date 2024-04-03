@@ -4,13 +4,13 @@ let publication =
 
     """
     {
-  "doi": "doi:10.1186/jbiol54",
   "pubMedID": "17439666",
+  "doi": "doi:10.1186/jbiol54",
+  "authorList": "Castrillo JI, Zeef LA, Hoyle DC, Zhang N, Hayes A, Gardner DC, Cornell MJ, Petty J, Hakes L, Wardleworth L, Rash B, Brown M, Dunn WB, Broadhurst D, O'Donoghue K, Hester SS, Dunkley TP, Hart SR, Swainston N, Li P, Gaskell SJ, Paton NW, Lilley KS, Kell DB, Oliver SG.",
+  "title": "Growth control of the eukaryote cell: a systems biology study in yeast.",
   "status": {
     "annotationValue": "indexed in Pubmed"
-  },
-  "title": "Growth control of the eukaryote cell: a systems biology study in yeast.",
-  "authorList": "Castrillo JI, Zeef LA, Hoyle DC, Zhang N, Hayes A, Gardner DC, Cornell MJ, Petty J, Hakes L, Wardleworth L, Rash B, Brown M, Dunn WB, Broadhurst D, O'Donoghue K, Hester SS, Dunkley TP, Hart SR, Swainston N, Li P, Gaskell SJ, Paton NW, Lilley KS, Kell DB, Oliver SG."
+  }
 }
     """
 
@@ -22,7 +22,6 @@ let publicationLD =
   "@type": "Publication",
   "@context": {
     "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
 
     "Publication": "sdo:ScholarlyArticle",
     
@@ -40,7 +39,6 @@ let publicationLD =
     "@type": "OntologyAnnotation",
     "@context": {
       "sdo": "http://schema.org/",
-      "arc": "http://purl.org/nfdi4plants/ontology/",
 
       "OntologyAnnotation": "sdo:DefinedTerm",
       

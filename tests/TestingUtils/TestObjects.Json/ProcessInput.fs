@@ -12,36 +12,18 @@ let sampleSimpleLD =
     """
         {
             "@id": "#sample/sample-P-0.1-aliquot7",
-            "@type": ["Sample","ArcSample"],
+            "@type": ["Sample"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Sample": "sdo:Thing",
-                "ArcSample": "arc:ARC#ARC_00000070",
+                "Sample": "bio:Sample",
 
-                "name": "arc:name",
-                "characteristics": "arc:ARC#ARC_00000080",
-                "factorValues": "arc:ARC#ARC_00000083",
-                "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty",
+                "factorValues": "bio:additionalProperty"
             },
-            "name": "sample-P-0.1-aliquot7",
-            "derivesFrom": [ { 
-                "@id": "#source/source-culture8", 
-                "@type": ["Source","ArcSource"],
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "Source": "sdo:Thing",
-                    "ArcSource": "arc:ARC#ARC_00000071",
-
-                    "identifier": "sdo:identifier",
-
-                    "name": "arc:ARC#ARC_00000019",
-                    "characteristics": "arc:ARC#ARC_00000080"
-                } 
-            } ]
+            "name": "sample-P-0.1-aliquot7"
         }
     """
 let sampleSimpleWithoutID = 
@@ -55,36 +37,18 @@ let sampleSimpleWithDefaultLD =
     """
         {
             "@id": "#Sample_sample-P-0.1-aliquot7",
-            "@type": ["Sample","ArcSample"],
+            "@type": ["Sample"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Sample": "sdo:Thing",
-                "ArcSample": "arc:ARC#ARC_00000070",
+                "Sample": "bio:Sample",
 
-                "name": "arc:name",
-                "characteristics": "arc:ARC#ARC_00000080",
-                "factorValues": "arc:ARC#ARC_00000083",
-                "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty",
+                "factorValues": "bio:additionalProperty"
             },
-            "name": "sample-P-0.1-aliquot7",
-            "derivesFrom": [ { 
-                "@id": "#source/source-culture8", 
-                "@type": ["Source","ArcSource"] ,
-                "@context": {
-                    "sdo": "http://schema.org/",
-                    "arc": "http://purl.org/nfdi4plants/ontology/",
-
-                    "Source": "sdo:Thing",
-                    "ArcSource": "arc:ARC#ARC_00000071",
-
-                    "identifier": "sdo:identifier",
-
-                    "name": "arc:ARC#ARC_00000019",
-                    "characteristics": "arc:ARC#ARC_00000080"
-                }
-            } ]
+            "name": "sample-P-0.1-aliquot7"
         }
     """
 
@@ -130,18 +94,15 @@ let sourceLD =
     """
         { 
             "@id": "#source/source-culture8",
-            "@type": ["Source", "ArcSource"],
+            "@type": ["Source"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Source": "sdo:Thing",
-                "ArcSource": "arc:ARC#ARC_00000071",
+                "Source": "bio:Sample",
 
-                "identifier": "sdo:identifier",
-
-                "name": "arc:ARC#ARC_00000019",
-                "characteristics": "arc:ARC#ARC_00000080"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty"
             },
             "name": "source-culture8"
         }
@@ -156,18 +117,15 @@ let sourceWithDefaultLD =
     """
         { 
             "@id": "#Source_source-culture8",
-            "@type": ["Source","ArcSource"],
+            "@type": ["Source"],
             "@context": {
                 "sdo": "http://schema.org/",
-                "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-                "Source": "sdo:Thing",
-                "ArcSource": "arc:ARC#ARC_00000071",
+                "Source": "bio:Sample",
 
-                "identifier": "sdo:identifier",
-
-                "name": "arc:ARC#ARC_00000019",
-                "characteristics": "arc:ARC#ARC_00000080"
+                "name": "sdo:name",
+                "characteristics": "bio:additionalProperty"
             },
             "name": "source-culture8"
         }
@@ -177,7 +135,6 @@ let data =
     """
     {
       "@id": "#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt",
-      "comments": [],
       "name": "JIC64_Nitrogen_0.07_External_1_3.txt",
       "type": "Raw Data File"
     }
@@ -186,18 +143,15 @@ let dataLD =
     """
     {
         "@id": "#data/rawspectraldatafile-JIC64_Nitrogen_0.07_External_1_3.txt",
-        "@type": ["Data","ArcData"],
+        "@type": ["Data"],
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
 
             "Data": "sdo:MediaObject",
-            "ArcData": "arc:ARC#ARC_00000076",
 
-            "type": "arc:ARC#ARC_00000107",
-
+            "type": "sdo:disambiguatingDescription",
             "name": "sdo:name",
-            "comments": "sdo:disambiguatingDescription"
+            "comments": "sdo:comment"
         },
         "comments": [],
         "name": "JIC64_Nitrogen_0.07_External_1_3.txt",
@@ -216,18 +170,15 @@ let dataWithDefaultLD =
     """
     {
         "@id": "JIC64_Nitrogen_0.07_External_1_3.txt",
-        "@type": ["Data","ArcData"],
+        "@type": ["Data"],
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
 
             "Data": "sdo:MediaObject",
-            "ArcData": "arc:ARC#ARC_00000076",
 
-            "type": "arc:ARC#ARC_00000107",
-
+            "type": "sdo:disambiguatingDescription",
             "name": "sdo:name",
-            "comments": "sdo:disambiguatingDescription"
+            "comments": "sdo:comment"
         },
         "comments": [],
         "name": "JIC64_Nitrogen_0.07_External_1_3.txt",
@@ -239,7 +190,6 @@ let material =
     """
     {
         "@id": "#material/extract-G-0.1-aliquot1",
-        "characteristics": [],
         "name": "extract-G-0.1-aliquot1",
         "type": "Extract Name"
     }
@@ -249,18 +199,16 @@ let materialLD =
     """
     {
         "@id": "#material/extract-G-0.1-aliquot1",
-        "@type": ["Material","ArcMaterial"],
+        "@type": ["Material"],
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-            "ArcMaterial": "arc:ARC#ARC_00000108",
-            "Material": "sdo:Thing",
+                "Material": "bio:Sample",
 
-            "type": "arc:ARC#ARC_00000085",
-            "name": "arc:ARC#ARC_00000019",
-            "characteristics": "arc:ARC#ARC_00000080",
-            "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "type": "sdo:disambiguatingDescription",
+                "characteristics": "bio:additionalProperty"
         },
         "characteristics": [],
         "name": "extract-G-0.1-aliquot1",
@@ -281,18 +229,16 @@ let materialWithDefaultLD =
     """
     {
         "@id": "#Material_extract-G-0.1-aliquot1",
-        "@type": ["Material","ArcMaterial"],
+        "@type": ["Material"],
         "@context": {
             "sdo": "http://schema.org/",
-            "arc": "http://purl.org/nfdi4plants/ontology/",
+                "bio": "https://bioschemas.org/",
 
-            "ArcMaterial": "arc:ARC#ARC_00000108",
-            "Material": "sdo:Thing",
+                "Material": "bio:Sample",
 
-            "type": "arc:ARC#ARC_00000085",
-            "name": "arc:ARC#ARC_00000019",
-            "characteristics": "arc:ARC#ARC_00000080",
-            "derivesFrom": "arc:ARC#ARC_00000082"
+                "name": "sdo:name",
+                "type": "sdo:disambiguatingDescription",
+                "characteristics": "bio:additionalProperty"
         },
         "characteristics": [],
         "name": "extract-G-0.1-aliquot1",

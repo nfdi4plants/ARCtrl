@@ -191,18 +191,12 @@ module BII_S_1 =
         row20.[1].Value <- "STUDY FACTORS"
         let row21 = ws.Row(21)
         row21.[1].Value <- "Study Factor Name"
-        row21.[2].Value <- "limiting nutrient"
-        row21.[3].Value <- "rate"
         let row22 = ws.Row(22)
         row22.[1].Value <- "Study Factor Type"
-        row22.[2].Value <- "chemical compound"
-        row22.[3].Value <- "rate"
         let row23 = ws.Row(23)
         row23.[1].Value <- "Study Factor Type Term Accession Number"
-        row23.[3].Value <- "http://purl.obolibrary.org/obo/PATO_0000161"
         let row24 = ws.Row(24)
         row24.[1].Value <- "Study Factor Type Term Source REF"
-        row24.[3].Value <- "PATO"
         let row25 = ws.Row(25)
         row25.[1].Value <- "STUDY ASSAYS"
         let row26 = ws.Row(26)
@@ -247,47 +241,24 @@ module BII_S_1 =
         row34.[1].Value <- "STUDY PROTOCOLS"
         let row35 = ws.Row(35)
         row35.[1].Value <- "Study Protocol Name"
-        row35.[2].Value <- "growth protocol"
-        row35.[3].Value <- "mRNA extraction"
-        row35.[4].Value <- "protein extraction"
-        row35.[5].Value <- "biotin labeling"
-        row35.[6].Value <- "ITRAQ labeling"
-        row35.[7].Value <- "EukGE-WS4"
-        row35.[8].Value <- "metabolite extraction"
         let row36 = ws.Row(36)
         row36.[1].Value <- "Study Protocol Type"
-        row36.[2].Value <- "growth"
-        row36.[3].Value <- "mRNA extraction"
-        row36.[4].Value <- "protein extraction"
-        row36.[5].Value <- "labeling"
-        row36.[6].Value <- "labeling"
-        row36.[7].Value <- "hybridization"
-        row36.[8].Value <- "extraction"
         let row37 = ws.Row(37)
         row37.[1].Value <- "Study Protocol Type Term Accession Number"
-        row37.[8].Value <- "http://purl.obolibrary.org/obo/OBI_0302884"
         let row38 = ws.Row(38)
         row38.[1].Value <- "Study Protocol Type Term Source REF"
-        row38.[8].Value <- "OBI"
         let row39 = ws.Row(39)
         row39.[1].Value <- "Study Protocol Description"
-        row39.[2].Value <- "1. Biomass samples (45 ml) were taken via the sample port of the Applikon fermenters. The cells were pelleted by centrifugation for 5 min at 5000 rpm. The supernatant was removed and the RNA pellet resuspended in the residual medium to form a slurry. This was added in a dropwise manner directly into a 5 ml Teflon flask (B. Braun Biotech, Germany) containing liquid nitrogen and a 7 mm-diameter tungsten carbide ball. After allowing evaporation of the liquid nitrogen the flask was reassembled and the cells disrupted by agitation at 1500 rpm for 2 min in a Microdismembranator U (B. Braun Biotech, Germany) 2. The frozen powder was then dissolved in 1 ml of TriZol reagent (Sigma-Aldrich, UK), vortexed for 1 min, and then kept at room temperature for a further 5min. 3. Chloroform extraction was performed by addition of 0.2 ml chloroform, shaking vigorously or 15 s, then 5min incubation at room temperature. 4. Following centrifugation at 12,000 rpm for 5 min, the RNA (contained in the aqueous phase) was precipitated with 0.5 vol of 2-propanol at room temperature for 15 min. 5. After further centrifugation (12,000 rpm for 10 min at 4 C) the RNA pellet was washed twice with 70 % (v/v) ethanol, briefly air-dried, and redissolved in 0.5 ml diethyl pyrocarbonate (DEPC)-treated water. 6. The single-stranded RNA was precipitated once more by addition of 0.5 ml of LiCl buffer (4 M LiCl, 20 mM Tris-HCl, pH 7.5, 10 mM EDTA), thus removing tRNA and DNA from the sample. 7. After precipitation (20 C for 1h) and centrifugation (12,000 rpm, 30 min, 4 C), the RNA was washed twice in 70 % (v/v) ethanol prior to being dissolved in a minimal volume of DEPC-treated water. 8. Total RNA quality was checked using the RNA 6000 Nano Assay, and analysed on an Agilent 2100 Bioanalyser (Agilent Technologies). RNA was quantified using the Nanodrop ultra low volume spectrophotometer (Nanodrop Technologies)."
-        row39.[3].Value <- "1. Biomass samples (45 ml) were taken via the sample port of the Applikon fermenters. The cells were pelleted by centrifugation for 5 min at 5000 rpm. The supernatant was removed and the RNA pellet resuspended in the residual medium to form a slurry. This was added in a dropwise manner directly into a 5 ml Teflon flask (B. Braun Biotech, Germany) containing liquid nitrogen and a 7 mm-diameter tungsten carbide ball. After allowing evaporation of the liquid nitrogen the flask was reassembled and the cells disrupted by agitation at 1500 rpm for 2 min in a Microdismembranator U (B. Braun Biotech, Germany) 2. The frozen powder was then dissolved in 1 ml of TriZol reagent (Sigma-Aldrich, UK), vortexed for 1 min, and then kept at room temperature for a further 5min. 3. Chloroform extraction was performed by addition of 0.2 ml chloroform, shaking vigorouslyor 15 s, then 5min incubation at room temperature. 4. Following centrifugation at 12,000 rpm for 5 min, the RNA (contained in the aqueous phase) was precipitated with 0.5 vol of 2-propanol at room temperature for 15 min. 5. After further centrifugation (12,000 rpm for 10 min at 4 C) the RNA pellet was washed twice with 70 % (v/v) ethanol, briefly air-dried, and redissolved in 0.5 ml diethyl pyrocarbonate (DEPC)-treated water. 6. The single-stranded RNA was precipitated once more by addition of 0.5 ml of LiCl bffer (4 M LiCl, 20 mM Tris-HCl, pH 7.5, 10 mM EDTA), thus removing tRNA and DNA from the sample. 7. After precipitation (20 C for 1 h) and centrifugation (12,000 rpm, 30 min, 4 C), the RNA was washed twice in 70 % (v/v) ethanol prior to being dissolved in a minimal volume of DEPC-treated water. 8. Total RNA quality was checked using the RNA 6000 Nano Assay, and analysed on an Agilent 2100 Bioanalyser (Agilent Technologies). RNA was quantified using the Nanodrop ultra low volume spectrophotometer (Nanodrop Technologies)."
-        row39.[5].Value <- "This was done using Enzo BioArrayTM HighYieldTM RNA transcript labelling kit (T7) with 5 ul cDNA. The resultant cRNA was again purified using the GeneChip Sample Clean Up Module. The column was eluted in the first instance using 10 l RNase-free water, and for a second time using 11 ul RNase-free water. cRNA was quantified using the Nanodrop spectrophotometer. A total of 15 ug of cRNA (required for hybridisation) was fragmented. Fragmentation was carried out by using 2 ul of fragmentation buffer for every 8 ul cRNA."
-        row39.[7].Value <- "For each target, a hybridisation cocktail was made using the standard array recipe as described in the GeneChip Expression Analysis technical manual. GeneChip control oligonucleotide and 20x eukaryotic hybridisation controls were used. Hybridisation buffer was made as detailed in the GeneChip manual and the BSA and herring sperm DNA was purchased from Invitrogen. The cocktail was heated to 99 C for 5 min, transferred to 45 C for 5 min and then spun for 5 min to remove any insoluble material. Affymetrix Yeast Yg_s98 S. cerevisiae arrays were pre-hybridised with 200 ul 1x hybridisation buffer and incubated at 45 C for 10 min. 200 ul of the hybridisation cocktail was loaded onto the arrays. The probe array was incubated in a rotisserie at 45 C, rotating at 60 rpm. Following hybridisation, for 16 hr, chips were loaded onto a Fluidics station for washing and staining using the EukGe WS2v4 programme controlled using Microarray Suite 5 software."
         let row40 = ws.Row(40)
         row40.[1].Value <- "Study Protocol URI"
         let row41 = ws.Row(41)
         row41.[1].Value <- "Study Protocol Version"
         let row42 = ws.Row(42)
         row42.[1].Value <- "Study Protocol Parameters Name"
-        row42.[8].Value <- "sample volume;standard volume"
         let row43 = ws.Row(43)
         row43.[1].Value <- "Study Protocol Parameters Term Accession Number"
-        row43.[8].Value <- ";"
         let row44 = ws.Row(44)
         row44.[1].Value <- "Study Protocol Parameters Term Source REF"
-        row44.[8].Value <- ";"
         let row45 = ws.Row(45)
         row45.[1].Value <- "Study Protocol Components Name"
         let row46 = ws.Row(46)
@@ -414,22 +385,12 @@ module BII_S_2 =
         row23.[1].Value <- "STUDY FACTORS"
         let row24 = ws.Row(24)
         row24.[1].Value <- "Study Factor Name"
-        row24.[2].Value <- "compound"
-        row24.[3].Value <- "exposure time"
-        row24.[4].Value <- "dose"
         let row25 = ws.Row(25)
         row25.[1].Value <- "Study Factor Type"
-        row25.[2].Value <- "compound"
-        row25.[3].Value <- "time"
-        row25.[4].Value <- "dose"
         let row26 = ws.Row(26)
         row26.[1].Value <- "Study Factor Type Term Accession Number"
-        row26.[3].Value <- "http://www.ebi.ac.uk/efo/EFO_0000721"
-        row26.[4].Value <- "http://www.ebi.ac.uk/efo/EFO_0000428"
         let row27 = ws.Row(27)
         row27.[1].Value <- "Study Factor Type Term Source REF"
-        row27.[3].Value <- "EFO"
-        row27.[4].Value <- "EFO"
         let row28 = ws.Row(28)
         row28.[1].Value <- "STUDY ASSAYS"
         let row29 = ws.Row(29)
@@ -460,26 +421,14 @@ module BII_S_2 =
         row37.[1].Value <- "STUDY PROTOCOLS"
         let row38 = ws.Row(38)
         row38.[1].Value <- "Study Protocol Name"
-        row38.[2].Value <- "EukGE-WS4"
-        row38.[3].Value <- "growth"
-        row38.[4].Value <- "mRNA extraction"
-        row38.[5].Value <- "biotin labeling"
         let row39 = ws.Row(39)
         row39.[1].Value <- "Study Protocol Type"
-        row39.[2].Value <- "hybridization"
-        row39.[3].Value <- "growth"
-        row39.[4].Value <- "mRNA extraction"
-        row39.[5].Value <- "labeling"
         let row40 = ws.Row(40)
         row40.[1].Value <- "Study Protocol Type Term Accession Number"
         let row41 = ws.Row(41)
         row41.[1].Value <- "Study Protocol Type Term Source REF"
         let row42 = ws.Row(42)
         row42.[1].Value <- "Study Protocol Description"
-        row42.[2].Value <- "For each target, a hybridisation cocktail was made using the standard array recipe as described in the GeneChip Expression Analysis technical manual. GeneChip control oligonucleotide and 20x eukaryotic hybridisation controls were used. Hybridisation buffer was made as detailed in the GeneChip manual and the BSA and herring sperm DNA was purchased from Invitrogen. The cocktail was heated to 99 C for 5mins, transferred to 45 C for 5 min and then spun for 5 min to remove any insoluble material. Affymetrix Yeast Yg_s98 S. cerevisiae arrays were pre-hybridised with 200 l 1x hybridisation buffer and incubated at 45 C for 10 min. 200 l of the hybridisation cocktail was loaded onto the arrays. The probe array was incubated in a rotisserie at 45 C, rotating at 60 rpm. Following hybridisation, for 16hr, chips were loaded onto a Fluidics station for washing and staining using the EukGe WS2v4 programme controlled using Microarray Suite 5 software."
-        row42.[3].Value <- "The culture was grown in YMB minimum media + 2% glucose + supplement to early exponential growth (OD ~0.32)"
-        row42.[4].Value <- "1. Biomass samples (45ml) were taken via the sample port of the Applikon fermenters. The cells were pelleted by centrifugation for 5min at 5000 rpm. The supernatant was removed and the RNA pellet resuspended in the residual medium to form a slurry. This was added in a dropwise manner directly into a 5ml Teflon flask (B. Braun Biotech, Germany) containing liquid nitrogen and a 7 mm-diameter tungsten carbide ball. After allowing evaporation of the liquid nitrogen the flask was reassembled and the cells disrupted by agitation at 1500 rpm for 2 min in a Microdismembranator U (B. Braun Biotech, Germany) 2. The frozen powder was then dissolved in 1 ml of TriZol reagent (Sigma-Aldrich, UK), vortexed for 1 min, and then kept at room temperature for a further 5 min. 3. Chloroform extraction was performed by addition of 0.2 ml chloroform, shaking vigorouslyor 15 s, then 5 min incubation at room temperature. 4. Following centrifugation at 12,000 rpm for 5 min, the RNA (contained in the aqueous phase) was precipitated with 0.5 vol of 2-propanol at room temperature for 15 min. 5. After further centrifugation (12,000 rpm for 10 min at 4 C) the RNA pellet was washed twice with 70 % (v/v) ethanol, briefly air-dried, and redissolved in 0.5 ml diethyl pyrocarbonate (DEPC)-treated water. 6. The single-stranded RNA was precipitated once more by addition of 0.5 ml of LiCl bffer (4 M LiCl, 20 mM Tris-HCl, pH 7.5, 10 mM EDTA), thus removing tRNA and DNA from the sample. 7. After precipitation (20 C for 1h) and centrifugation (12,000 rpm, 30 min, 4 C), the RNA was washed twice in 70 % (v/v) ethanol prior to being dissolved in a minimal volume of DEPC-treated water. 8. Total RNA quality was checked using the RNA 6000 Nano Assay, and analysed on an Agilent 2100 Bioanalyser (Agilent Technologies). RNA was quantified using the Nanodrop ultra low volume spectrophotometer (Nanodrop Technologies)."
-        row42.[5].Value <- "This was done using Enzo BioArrayTM HighYieldTM RNA transcript labelling kit (T7) with 5 ul cDNA. The resultant cRNA was again purified using the GeneChip Sample Clean Up Module. The column was eluted in the first instance using 10 l RNase-free water, and for a second time using 11 l RNase-free water. cRNA was quantified using the Nanodrop spectrophotometer. A total of 15 ug of cRNA (required for hybridisation) was fragmented. Fragmentation was carried out by using 2 ul of fragmentation buffer for every 8 ul cRNA."
         let row43 = ws.Row(43)
         row43.[1].Value <- "Study Protocol URI"
         let row44 = ws.Row(44)
@@ -549,35 +498,49 @@ module BII_S_2 =
 
 module LargeFile =
     
-    open ARCtrl.ISA
+    open ARCtrl
 
-    let Workbook = new FsWorkbook()
-    let RowCount = 10000
+    let createTable() =
     
-    let table = ArcTable.init("Large Table")
+        let RowCount = 10000
 
-    table.AddColumn(CompositeHeader.Input IOType.Source,[|
-      for i in 0 .. (RowCount-1) do
-        CompositeCell.FreeText $"Input {i}"
-    |])
-    table.AddColumn(CompositeHeader.Output IOType.Sample,[|
-      for i in 0 .. (RowCount-1) do
-        CompositeCell.FreeText $"Output {i}"
-    |])
-    table.AddColumn(CompositeHeader.Component <| OntologyAnnotation.fromString("instrument model", "MS", "MS:1"),[|
-      for _ in 0 .. (RowCount-1) do
-        CompositeCell.createTermFromString("SCIEX instrument model", "MS", "MS:2")
-    |])
-    table.AddColumn(CompositeHeader.Factor <| OntologyAnnotation.fromString("temperatures", "UO", "UO:1"),[|
-      for i in 0 .. (RowCount-1) do
-        let t = i/1000 |> string 
-        CompositeCell.createUnitizedFromString(t, "degree Celsius", "UO", "UO:2")
-    |])
-    table.AddColumn(CompositeHeader.ProtocolREF,[|
-      for i in 0 .. (RowCount-1) do
-        CompositeCell.FreeText "My Awesome Protocol"
-    |])
+        let table = ArcTable.init("Large Table")
 
-    let fsws_large = ARCtrl.ISA.Spreadsheet.ArcTable.toFsWorksheet table
-    Workbook.AddWorksheet(fsws_large)
-    Workbook.AddWorksheet studyMetadataEmpty
+        table.AddColumn(CompositeHeader.Input IOType.Source,[|
+          for i in 0 .. (RowCount-1) do
+            CompositeCell.FreeText $"Input {i}"
+        |])
+        table.AddColumn(CompositeHeader.Output IOType.Sample,[|
+          for i in 0 .. (RowCount-1) do
+            CompositeCell.FreeText $"Output {i}"
+        |])
+        table.AddColumn(CompositeHeader.Component <| OntologyAnnotation("instrument model", "MS", "MS:1"),[|
+          for _ in 0 .. (RowCount-1) do
+            CompositeCell.createTermFromString("SCIEX instrument model", "MS", "MS:2")
+        |])
+        table.AddColumn(CompositeHeader.Factor <| OntologyAnnotation("temperatures", "UO", "UO:1"),[|
+          for i in 0 .. (RowCount-1) do
+            let t = i/1000 |> string 
+            CompositeCell.createUnitizedFromString(t, "degree Celsius", "UO", "UO:2")
+        |])
+        table.AddColumn(CompositeHeader.ProtocolREF,[|
+          for i in 0 .. (RowCount-1) do
+            CompositeCell.FreeText "My Awesome Protocol"
+        |])
+
+        table
+
+    let createWorkbook (table : ArcTable option) =
+
+        let Workbook = new FsWorkbook()
+        
+        let table = 
+            match table with
+            | Some t -> t
+            | None -> createTable()
+
+        let fsws_large = Spreadsheet.ArcTable.toFsWorksheet table
+        Workbook.AddWorksheet(fsws_large)
+        Workbook.AddWorksheet studyMetadataEmpty
+
+        Workbook

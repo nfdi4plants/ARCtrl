@@ -1,8 +1,8 @@
 ﻿module PerformanceReport
 
-open ARCtrl.ISA
-open ARCtrl.ISA.Json
-open ARCtrl.ISA.Spreadsheet
+open ARCtrl
+open ARCtrl.Json
+open ARCtrl.Spreadsheet
 open Fable.Core
 
 #if FABLE_COMPILER_JAVASCRIPT
@@ -127,16 +127,18 @@ let table_fillMissingCells =
         "Table_fillMissingCells"
         "For a table 6 columns and 20000 rows, where each row has one missing value, fill those values with default values."
         (fun () -> ArcTableAux.Unchecked.fillMissingCells headers values |> ignore)
-       
+   
+let table = TestObjects.Spreadsheet.Study.LargeFile.createTable()
+
 let table_toJson =
-    let t = TestObjects.Spreadsheet.Study.LargeFile.table
+    let t = table
     PerformanceTest.create
         "Table_ToJson"
         "Serialize a table with 5 columns and 10000 rows to json."
         (fun _ -> t.ToJsonString() |> ignore)
 
 let table_toCompressedJson =
-    let t = TestObjects.Spreadsheet.Study.LargeFile.table
+    let t = table
     PerformanceTest.create
         "Table_ToCompressedJson"
         "Serialize a table with 5 columns and 10000 rows to compressed json."
@@ -146,10 +148,10 @@ let assay_toJson =
     let a = ArcAssay.init("MyAssay")
     let t = a.InitTable("MyTable")
     t.AddColumn(CompositeHeader.Input IOType.Source)
-    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter1")))
-    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter")))
-    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter")))
-    t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter1")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+    t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter")))
+    t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation("MyCharacteristic")))
     t.AddColumn(CompositeHeader.Output IOType.Sample)
     let rowCount = 10000
     for i = 0 to rowCount - 1 do
@@ -167,10 +169,10 @@ let assay_toJson =
     PerformanceTest.create
         "Assay_toJson"
         "Parse an assay with one table with 10000 rows and 6 columns to json"
-        (fun _ -> ArcAssay.toJsonString a |> ignore)
+        (fun _ -> ArcAssay.toJsonString() a |> ignore)
 
 let study_fromWorkbook =
-    let fswb = TestObjects.Spreadsheet.Study.LargeFile.Workbook
+    let fswb = TestObjects.Spreadsheet.Study.LargeFile.createWorkbook (Some table)
     PerformanceTest.create
         "Study_FromWorkbook"
         "Parse a workbook with one study with 10000 rows and 6 columns to an ArcStudy"

@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0</TargetFrameworks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Helper\Url.fs" />
+    <Compile Include="Helper\Regex.fs" />
+    <Compile Include="Helper\Identifier.fs" />
+    <Compile Include="Helper\Collections.fs" />
+    <Compile Include="Helper\HashCodes.fs" />
+    <Compile Include="Helper\Printer.fs" />
+    <Compile Include="Helper\SemVer.fs" />
+    <Compile Include="URI.fs" />
+    <Compile Include="Comment.fs" />
+    <Compile Include="CommentList.fs" />
+    <Compile Include="OntologyAnnotation.fs" />
+    <Compile Include="Person.fs" />
+    <Compile Include="Publication.fs" />
+    <Compile Include="OntologySourceReference.fs" />
+    <Compile Include="Process\Value.fs" />
+    <Compile Include="Process\IPropertyValue.fs" />
+    <Compile Include="Process\Factor.fs" />
+    <Compile Include="Process\FactorValue.fs" />
+    <Compile Include="Process\MaterialAttribute.fs" />
+    <Compile Include="Process\MaterialAttributeValue.fs" />
+    <Compile Include="Process\MaterialType.fs" />
+    <Compile Include="Process\Material.fs" />
+    <Compile Include="Process\Source.fs" />
+    <Compile Include="Process\Sample.fs" />
+    <Compile Include="Process\DataFile.fs" />
+    <Compile Include="Process\Data.fs" />
+    <Compile Include="Process\Component.fs" />
+    <Compile Include="Process\ProtocolParameter.fs" />
+    <Compile Include="Process\Protocol.fs" />
+    <Compile Include="Process\ProcessInput.fs" />
+    <Compile Include="Process\ProcessOutput.fs" />
+    <Compile Include="Process\ProcessParameterValue.fs" />
+    <Compile Include="Process\Process.fs" />
+    <Compile Include="Process\ProcessSequence.fs" />
+    <Compile Include="Process\ColumnIndex.fs" />
+    <Compile Include="Table\CompositeHeader.fs" />
+    <Compile Include="Table\CompositeCell.fs" />
+    <Compile Include="Table\CompositeColumn.fs" />
+    <Compile Include="Table\ArcTableAux.fs" />
+    <Compile Include="Table\ArcTable.fs" />
+    <Compile Include="Table\ArcTables.fs" />
+    <Compile Include="ArcTypes.fs" />
+    <Compile Include="Template.fs" />
+    <Compile Include="Templates.fs" />
+    <Compile Include="Conversion.fs" />
+    <Compile Include="IdentifierSetters.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
+    <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
+  </ItemGroup>
+  <PropertyGroup>
+    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Muas</Authors>
+    <Description>ARC and ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in the dotnet environment.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Json</PackageTags>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+</Project>

@@ -33,19 +33,17 @@ module RunTests =
             run dotnet $"fable {path} -o {path}/js" ""
             // run mocha in target path to execute tests
             // "--timeout 20000" is used, because json schema validation takes a bit of time.
-            run npx $"mocha {path}/js --timeout 20000" ""
+            run node $"{path}/js/Main.js" ""
     }
 
-    /// <summary>
-    /// Until we reach full Py compatibility we use these paths to check only compatible projects
-    /// </summary>
-    let testProjectsPy = 
-        [
-            //"tests/ISA/ISA.Tests"
-            //"tests/ISA/ISA.Json.Tests"
-            //"tests/ISA/ISA.Spreadsheet.Tests"
-            "tests/ARCtrl"
-        ]
+    let runTestsPyNative = BuildTask.create "runTestsPyNative" [clean; build] {
+        Trace.traceImportant "Start native Python tests"
+        for path in ProjectInfo.pyTestProjects do
+            // transpile library for native access
+            run dotnet $"fable src/ARCtrl -o {path}/ARCtrl --lang python" ""
+            GenerateIndexPy.ARCtrl_generate($"{path}/ARCtrl")
+            run python $"-m pytest {path}" "" 
+    }
 
     let runTestsPy = BuildTask.create "runTestsPy" [clean; build] {
         for path in ProjectInfo.testProjects do
@@ -61,6 +59,6 @@ module RunTests =
         |> Seq.iter dotnetRun
     }
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsDotnet] { 
+let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative; RunTests.runTestsDotnet] { 
     ()
 }

@@ -1,7 +1,7 @@
 ﻿namespace TestingUtils
 
 open FsSpreadsheet
-open ARCtrl.ISA
+open ARCtrl
 open ARCtrl.FileSystem
 
 open Fable.Pyxpecto
@@ -29,10 +29,10 @@ module Utils =
         |> Array.sortBy fst
 
     let firstDiff s1 s2 =
-      let s1 = Seq.append (Seq.map Some s1) (Seq.initInfinite (fun _ -> None))
-      let s2 = Seq.append (Seq.map Some s2) (Seq.initInfinite (fun _ -> None))
-      Seq.mapi2 (fun i s p -> i,s,p) s1 s2
-      |> Seq.find (function |_,Some s,Some p when s=p -> false |_-> true)
+        let s1 = Seq.append (Seq.map Some s1) (Seq.initInfinite (fun _ -> None))
+        let s2 = Seq.append (Seq.map Some s2) (Seq.initInfinite (fun _ -> None))
+        Seq.mapi2 (fun i s p -> i,s,p) s1 s2
+        |> Seq.find (function |_,Some s,Some p when s=p -> false |_-> true)
 
 
 module Result =
@@ -44,6 +44,29 @@ module Result =
 
 open System
 open Fable.Core
+
+module Fable =
+    
+    module JS =
+
+        [<Emit("process.stdout.write($0)")>]
+        let print (s:string) : unit = nativeOnly
+
+    module Py =
+
+        [<Emit("print($0, end = \"\")")>]
+        let print (s:string) : unit = nativeOnly
+
+    let fprint(s: string) =
+        #if FABLE_COMPILER_JAVASCRIPT
+        JS.print(s)
+        #endif
+        #if FABLE_COMPILER_PYTHON
+        Py.print(s)
+        #endif
+        #if !FABLE_COMPILER
+        printf "%s" s
+        #endif
 
 [<AttachMembers>]
 type Stopwatch() =
@@ -73,6 +96,29 @@ module Expect =
     let inline equal actual expected message = Expect.equal actual expected message
     let notEqual actual expected message = Expect.notEqual actual expected message
 
+    /// <summary>
+    /// This function only verifies non-whitespace characters
+    /// </summary>
+    let stringEqual actual expected message =
+        let pattern = @"\s+"
+        let regex = System.Text.RegularExpressions.Regex(pattern, Text.RegularExpressions.RegexOptions.Singleline)
+        let actual = regex.Replace(actual, "")
+        let expected = regex.Replace(expected, "")
+        let mutable isSame = true
+        Seq.iter2 
+            (fun s1 s2 -> 
+                if isSame && s1 = s2 then 
+                    ()
+                elif isSame && s1 <> s2 then
+                    isSame <- false
+                    Fable.fprint (sprintf "%s" (string s1))
+                else
+                    Fable.fprint (sprintf "%s" (string s1))
+            ) 
+            actual 
+            expected
+        equal actual expected message
+
     let isNull actual message = Expect.isNull actual message 
     let isNotNull actual message = Expect.isNotNull actual message 
 
@@ -81,6 +127,7 @@ module Expect =
     let wantSome actual message = Expect.wantSome actual message 
 
     let isEmpty actual message = Expect.isEmpty actual message 
+    let isNotEmpty actual message = Expect.isEmpty actual message 
     let hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
 
     let isTrue actual message = Expect.isTrue actual message 
@@ -121,18 +168,23 @@ module Expect =
             failwithf $"{message}. Expected {elapsed1.TotalMilliseconds}ms to be faster than {elapsed2.TotalMilliseconds}ms"
         ()
 
+    let dateTimeEqual (actual : DateTime) (expected : DateTime) message = 
+        let actual = actual.ToString("yyyy-MM-dd HH:mm:ss")
+        let expected = expected.ToString("yyyy-MM-dd HH:mm:ss")
+        equal actual expected message
+
     /// Expects the `actual` sequence to equal the `expected` one.
     let sequenceEqual actual expected message =
       match firstDiff actual expected with
       | _,None,None -> ()
       | i,Some a, Some e ->
-        failwithf "%s. Sequence does not match at position %i. Expected item: %A, but got %A."
+        failwithf "%s. Sequence does not match at position %i. Expected item: %O, but got %O."
           message i e a
       | i,None,Some e ->
-        failwithf "%s. Sequence actual shorter than expected, at pos %i for expected item %A."
+        failwithf "%s. Sequence actual shorter than expected, at pos %i for expected item %O."
           message i e
       | i,Some a,None ->
-        failwithf "%s. Sequence actual longer than expected, at pos %i found item %A."
+        failwithf "%s. Sequence actual longer than expected, at pos %i found item %O."
           message i a
 
     
@@ -144,6 +196,10 @@ module Expect =
         if actual.Name <> expected.Name then
             failwithf $"{message}. Worksheet names do not match. Expected {expected.Name} but got {actual.Name}"
         sequenceEqual (f actual) (f expected) $"{message}. Worksheet does not match"
+
+    let workBookEqual (actual : FsWorkbook) (expected : FsWorkbook) message = 
+        Seq.iter2 (fun a e -> workSheetEqual a e message) (actual.GetWorksheets()) (expected.GetWorksheets())
+
 
     let columnsEqual (actual : FsCell seq seq) (expected : FsCell seq seq) message =     
         let f (cols : FsCell seq seq) = 

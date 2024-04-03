@@ -94,7 +94,8 @@ let ARCtrl_generate(rootPath: string) =
         "Template"
         "Templates"
         "Organisation"
-        "JsWeb"
+        "WebController"
         "ARC"
+        "JsonController"
     |]
     generateIndexfile(rootPath, "index.js", whiteList)

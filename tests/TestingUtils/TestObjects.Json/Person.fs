@@ -2,39 +2,38 @@
 
 let person = 
     """
-    {
-  "phone": "",
+{
   "firstName": "Juan",
-  "address": "Oxford Road, Manchester M13 9PT, UK",
   "lastName": "Castrillo",
   "midInitials": "I",
-  "@id": "#person/Castrillo",
-  "fax": "",
   "email": "lol@lal.das",
-  "comments": [
-    {
-      "value": "",
-      "name": "Investigation Person REF"
-    }
-  ],
+  "phone": "",
+  "fax": "",
+  "address": "Oxford Road, Manchester M13 9PT, UK",
+  "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester",
   "roles": [
     {
       "annotationValue": "author"
     }
   ],
-  "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+  "comments": [
+    {
+      "name": "Investigation Person REF",
+      "value": ""
+    }
+  ]
 }
     """
 
 let personWithORCID = 
     """
-    {
+{
   "firstName": "Juan",
   "lastName": "Castrillo",
   "comments": [
     {
-      "value": "0000-0002-1825-0097",
-      "name": "ORCID"
+      "name": "ORCID",
+      "value": "0000-0002-1825-0097"
     }
   ]
   }
@@ -52,7 +51,6 @@ let personLD =
   "@type": "Person",
   "@context": {
     "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
 
     "Person": "sdo:Person",
     
@@ -75,7 +73,6 @@ let personLD =
       "@type": "Comment",
       "@context": {
         "sdo": "http://schema.org/",
-        "arc": "http://purl.org/nfdi4plants/ontology/",
         
         "Comment": "sdo:Comment",
         "name": "sdo:name",
@@ -91,7 +88,6 @@ let personLD =
       "@type": "OntologyAnnotation",
       "@context": {
         "sdo": "http://schema.org/",
-        "arc": "http://purl.org/nfdi4plants/ontology/",
 
         "OntologyAnnotation": "sdo:DefinedTerm",
         
@@ -103,7 +99,15 @@ let personLD =
       "annotationValue": "author"
     }
   ],
-  "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+  "affiliation": {
+    "@type": "Organization",
+    "@id": "#Organization_Faculty_of_Life_Sciences,_Michael_Smith_Building,_University_of_Manchester",
+    "name": "Faculty of Life Sciences, Michael Smith Building, University of Manchester",
+    "@context": {
+      "sdo": "http://schema.org/",
+      "Organization": "sdo:Organization",
+      "name": "sdo:name"
+    }
 }
     """
 
@@ -139,7 +143,6 @@ let personWithDefaultLD =
   "@type": "Person",
   "@context": {
     "sdo": "http://schema.org/",
-    "arc": "http://purl.org/nfdi4plants/ontology/",
 
     "Person": "sdo:Person",
     
@@ -167,7 +170,6 @@ let personWithDefaultLD =
       "@type": "Comment",
       "@context": {
         "sdo": "http://schema.org/",
-        "arc": "http://purl.org/nfdi4plants/ontology/",
         
         "Comment": "sdo:Comment",
         "name": "sdo:name",
@@ -183,7 +185,6 @@ let personWithDefaultLD =
       "@type": "OntologyAnnotation",
       "@context": {
         "sdo": "http://schema.org/",
-        "arc": "http://purl.org/nfdi4plants/ontology/",
 
         "OntologyAnnotation": "sdo:DefinedTerm",
         
@@ -195,7 +196,15 @@ let personWithDefaultLD =
       "annotationValue": "author"
     }
   ],
-  "affiliation": "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+  "affiliation": {
+    "@type": "Organization",
+    "@id": "#Organization_Faculty_of_Life_Sciences,_Michael_Smith_Building,_University_of_Manchester",
+    "name": "Faculty of Life Sciences, Michael Smith Building, University of Manchester",
+    "@context": {
+      "sdo": "http://schema.org/",
+      "Organization": "sdo:Organization",
+      "name": "sdo:name"
+    }
 }
     """
 

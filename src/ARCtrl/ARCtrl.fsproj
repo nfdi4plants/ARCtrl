@@ -18,21 +18,12 @@
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Path.fs" />
-    <Compile Include="FileSystemTree.fs" />
-    <Compile Include="SemVer.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
     <Compile Include="WebRequest\WebRequest.Py.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
-    <Compile Include="Contracts\Contracts.ArcTypes.fs" />
-    <Compile Include="Contracts\Contracts.Git.fs" />
-    <Compile Include="Contracts\Contracts.ARCtrl.fs" />
-    <Compile Include="Templates\Template.fs" />
-    <Compile Include="Templates\Templates.fs" />
-    <Compile Include="Templates\Template.Json.fs" />
-    <Compile Include="Templates\Template.Spreadsheet.fs" />
-    <Compile Include="Templates\Template.Web.fs" />
+    <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
+    <Compile Include="Json.fs" />
     <None Include="README.md" />
   </ItemGroup>
 	<ItemGroup>
@@ -43,9 +34,8 @@
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
-    <ProjectReference Include="..\ISA\ISA\ARCtrl.ISA.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Json\ARCtrl.ISA.Json.fsproj" />
-    <ProjectReference Include="..\ISA\ISA.Spreadsheet\ARCtrl.ISA.Spreadsheet.fsproj" />
+    <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
+    <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <NpmDependencies>
@@ -55,7 +45,5 @@
       <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
     </PythonDependencies>
   </PropertyGroup>
-	<ItemGroup>
-		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-	</ItemGroup>
+	<ItemGroup />
 </Project>

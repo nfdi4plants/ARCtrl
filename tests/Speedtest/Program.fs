@@ -1,7 +1,6 @@
 ﻿
 open ARCtrl
-open ARCtrl.ISA
-open ARCtrl.ISA.Json
+open ARCtrl.Json
 
 
 [<EntryPoint>]
@@ -35,10 +34,10 @@ let main argv =
             let a = ArcAssay.init("MyAssay")
             let t = a.InitTable("MyTable")
             t.AddColumn(CompositeHeader.Input IOType.Source)
-            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter1")))
-            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter2")))
-            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation.fromString("MyParameter3")))
-            t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation.fromString("MyCharacteristic")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter1")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter2")))
+            t.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("MyParameter3")))
+            t.AddColumn(CompositeHeader.Characteristic (OntologyAnnotation("MyCharacteristic")))
             t.AddColumn(CompositeHeader.Output IOType.Sample)
             let rowCount = 10000
             printfn "rowCount: %d" rowCount
@@ -55,15 +54,12 @@ let main argv =
                 for j = 0 to cells.Length - 1 do
                     t.Values.[(j,i)] <- cells.[j]
             a
-        let toAssay(a : ArcAssay) = 
-            a.ToAssay()
-        let toJson(a : Assay) =
-            Assay.toJsonString a
+        let toJson(a : ArcAssay) = 
+            ArcAssay.toISAJsonString() a
         let toFS(a : string) =
             System.IO.File.WriteAllText((__SOURCE_DIRECTORY__ + "/big.json"), a)
 
         createAssay()
-        |> toAssay
         |> toJson
         |> toFS
         1

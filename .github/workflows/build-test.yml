@@ -35,9 +35,6 @@ jobs:
     - name: install node modules
       working-directory: ./
       run: npm install --ignore-scripts
-    - name: install node modules ISA
-      working-directory: ./src/ISA
-      run: npm install
 
     # SETUP PYTHON
     - name: Setup Python
