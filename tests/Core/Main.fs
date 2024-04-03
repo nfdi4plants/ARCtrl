@@ -4,6 +4,7 @@ open Fable.Pyxpecto
 
 let all = testSequenced <| testList "Core" [
     DataModel.Tests.main
+    OntologyAnnotation.Tests.main
     Regex.Tests.main
     Person.Tests.main
     CompositeHeader.Tests.main

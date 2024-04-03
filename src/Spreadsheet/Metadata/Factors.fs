@@ -51,7 +51,7 @@ module Factors =
         factors
         |> List.iteri (fun i f ->
             let i = i + 1
-            let ft = f.FactorType |> Option.defaultValue (OntologyAnnotation()) |> fun f -> OntologyAnnotation.toString(f,true)
+            let ft = f.FactorType |> Option.defaultValue (OntologyAnnotation()) |> fun f -> OntologyAnnotation.toStringObject(f,true)
             do matrix.Matrix.Add ((nameLabel,i),                    (Option.defaultValue "" f.Name))
             do matrix.Matrix.Add ((factorTypeLabel,i),              ft.TermName)
             do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i), ft.TermAccessionNumber)

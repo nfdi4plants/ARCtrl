@@ -59,7 +59,7 @@ module Publications =
         publications
         |> List.iteri (fun i p ->
             let i = i + 1
-            let s = Option.defaultValue (OntologyAnnotation()) p.Status |> fun s -> OntologyAnnotation.toString (s,true)
+            let s = Option.defaultValue (OntologyAnnotation()) p.Status |> fun s -> OntologyAnnotation.toStringObject (s,true)
             do matrix.Matrix.Add ((pubMedIDLabel,i),                    (Option.defaultValue "" p.PubMedID))
             do matrix.Matrix.Add ((doiLabel,i),                         (Option.defaultValue "" p.DOI))
             do matrix.Matrix.Add ((authorListLabel,i),                  (Option.defaultValue "" p.Authors))

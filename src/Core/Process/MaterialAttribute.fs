@@ -29,7 +29,7 @@ type MaterialAttribute =
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
     static member toString (ma : MaterialAttribute) =
-        ma.CharacteristicType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}  
+        ma.CharacteristicType |> Option.map OntologyAnnotation.toStringObject |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}  
 
     /// Returns the name of the characteristic as string
     member this.NameText =

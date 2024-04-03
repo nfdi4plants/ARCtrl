@@ -84,7 +84,7 @@ module Protocols =
         protocols
         |> List.iteri (fun i p ->
             let i = i + 1
-            let pt = p.ProtocolType |> Option.defaultValue (OntologyAnnotation()) |> fun pt -> OntologyAnnotation.toString(pt,true)
+            let pt = p.ProtocolType |> Option.defaultValue (OntologyAnnotation()) |> fun pt -> OntologyAnnotation.toStringObject(pt,true)
             let pAgg = p.Parameters |> Option.defaultValue [] |> ProtocolParameter.toAggregatedStrings ';' 
             let cAgg = p.Components |> Option.defaultValue [] |> Component.toAggregatedStrings ';' 
 

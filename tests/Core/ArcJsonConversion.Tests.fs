@@ -141,7 +141,6 @@ let private tests_ArcTableProcess =
             let p = processes.[0]
             Expect.isSome p.ParameterValues "Process should have parameter values"
             Expect.equal p.ParameterValues.Value.Length 1 "Process should have 1 parameter values"
-            Expect.isTrue(p.ParameterValues.Value.[0] = expectedPPV) "Param value does not match"
             Expect.equal p.ParameterValues.Value.[0] expectedPPV "Param value does not match"
             Expect.isSome p.Inputs "Process should have inputs"
             Expect.equal p.Inputs.Value.Length 1 "Process should have 1 input"

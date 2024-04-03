@@ -72,8 +72,8 @@ module Assays =
             let processedFileName =
                 if a.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then Identifier.removeMissingIdentifier(a.Identifier) else Identifier.Assay.fileNameFromIdentifier(a.Identifier)
             let i = i + 1
-            let mt = Option.defaultValue (OntologyAnnotation()) a.MeasurementType |> fun mt -> OntologyAnnotation.toString(mt,true)
-            let tt = Option.defaultValue (OntologyAnnotation()) a.TechnologyType |> fun tt -> OntologyAnnotation.toString(tt,true)
+            let mt = Option.defaultValue (OntologyAnnotation()) a.MeasurementType |> fun mt -> OntologyAnnotation.toStringObject(mt,true)
+            let tt = Option.defaultValue (OntologyAnnotation()) a.TechnologyType |> fun tt -> OntologyAnnotation.toStringObject(tt,true)
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       mt.TermName)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    mt.TermAccessionNumber)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          mt.TermSourceREF)

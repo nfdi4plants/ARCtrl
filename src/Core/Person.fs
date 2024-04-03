@@ -128,8 +128,6 @@ type Person(?orcid, ?lastName, ?firstName, ?midInitials, ?email, ?phone, ?fax, ?
                 |> not
         ) persons
 
-
-
     member this.Copy() : Person =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         let nextRoles = this.Roles |> ResizeArray.map (fun c -> c.Copy())
