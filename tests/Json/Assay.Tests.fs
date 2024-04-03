@@ -17,6 +17,17 @@ module Helper =
             ResizeArray [|Comment.create("Hello", "World")|]
         )
 
+    let compare =
+        fun (a1: ArcAssay) (a2: ArcAssay) ->
+            Expect.equal a1.Identifier a2.Identifier "Identifier"
+            Expect.equal a1.MeasurementType a2.MeasurementType "MeasurementType"
+            Expect.equal a1.TechnologyType a2.TechnologyType "TechnologyType"
+            Expect.equal a1.TechnologyPlatform a2.TechnologyPlatform "TechnologyPlatform"
+            Expect.sequenceEqual a1.Tables a2.Tables "Tables"
+            Expect.sequenceEqual a1.Performers a2.Performers "Performers"
+            Expect.sequenceEqual a1.Comments a2.Comments "Comments"
+        |> Some
+
 open Helper
 
 let private test_coreEmpty =
@@ -26,6 +37,7 @@ let private test_coreEmpty =
         ArcAssay.toJsonString
         ArcAssay.fromJsonString
         None
+        compare
 
 let private test_compressedEmpty =
     createBaseJsonTests
@@ -34,6 +46,7 @@ let private test_compressedEmpty =
         ArcAssay.toCompressedJsonString
         ArcAssay.fromCompressedJsonString
         None
+        compare
 
 let private test_isaEmpty =
     createBaseJsonTests
@@ -46,6 +59,7 @@ let private test_isaEmpty =
         #else
         None
         #endif
+        compare
 
 let private test_roCrateEmpty =
     createBaseJsonTests
@@ -54,6 +68,7 @@ let private test_roCrateEmpty =
         (fun () -> ArcAssay.toROCrateJsonString None)
         ArcAssay.fromROCrateJsonString
         None
+        compare
 
 let private test_core =
     createBaseJsonTests
@@ -62,6 +77,7 @@ let private test_core =
         ArcAssay.toJsonString
         ArcAssay.fromJsonString
         None
+        compare
 
 let private test_compressed =
     createBaseJsonTests
@@ -70,6 +86,7 @@ let private test_compressed =
         ArcAssay.toCompressedJsonString
         ArcAssay.fromCompressedJsonString
         None
+        compare
 
 open TestObjects.Json
 
@@ -87,6 +104,7 @@ let private test_isa =
         #else
         None
         #endif
+        compare
 
 let private test_roCrate = testList "ROCrate" [
     // Wait for some issues to be resolved: https://github.com/nfdi4plants/isa-ro-crate-profile/issues
@@ -101,6 +119,7 @@ let private test_roCrate = testList "ROCrate" [
         (fun () -> ArcAssay.toROCrateJsonString None)
         ArcAssay.fromROCrateJsonString
         None
+        compare
 ]
 
 let main = testList "Assay" [

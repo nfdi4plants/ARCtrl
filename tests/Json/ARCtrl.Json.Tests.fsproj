@@ -23,7 +23,7 @@
     <Compile Include="ArcTable.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="Publication.Tests.fs" />
-    <Compile Include="Assay.Tests..fs" />
+    <Compile Include="Assay.Tests.fs" />
     <Compile Include="Study.Tests.fs" />
     <Compile Include="Investigation.Tests.fs" />
     <Compile Include="Process\ProcessInput.Tests.fs" />

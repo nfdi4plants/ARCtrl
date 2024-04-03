@@ -134,11 +134,18 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     override this.GetHashCode() = 
         [|
             HashCodes.boxHashOption this.Name
-            HashCodes.boxHashOption this.TermSourceREF
-            if this.TANInfo.IsSome then
-                HashCodes.hash this.TANInfo
-            else
-                HashCodes.boxHashOption this.TermAccessionNumber
+            match this.TermSourceREF, this.TANInfo with
+            | None, Some taninfo -> // if we get taninfo we assume tsr to be inferrable by taninfo
+                HashCodes.hash {|tsr = taninfo.IDSpace; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+            | Some tsr, Some taninfo -> // if we get taninfo + tsr we do NOT override tsr
+                HashCodes.hash {|tsr = tsr; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+            | Some tsr, None ->
+                let tan = this.TermAccessionNumber |> Option.defaultValue ""
+                HashCodes.hash {|tsr = tsr; tan = tan|}
+            | None, None ->
+                let tan = this.TermAccessionNumber |> Option.defaultValue ""
+                let tsr = this.TermAccessionNumber |> Option.defaultValue ""
+                HashCodes.hash {|tsr = tsr; tan = tan|}
             //HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray
