@@ -33,13 +33,24 @@ let private tests_isa =
         None
         #endif
 
-let private tests_roCrate =
+let private tests_roCrate = testList "ROCrate" [
+    testCase "Write-PropertyValue" <| fun _ -> 
+        let oa = create_oa()
+        let actual = OntologyAnnotation.ROCrate.encoderPropertyValue oa |> Encode.toJsonString 0
+        let expected = TestObjects.Json.ROCrate.propertyValue
+        Expect.stringEqual actual expected ""
+    testCase "Write-DefinedTerm" <| fun _ -> 
+        let oa = create_oa()
+        let actual = OntologyAnnotation.ROCrate.encoderDefinedTerm oa |> Encode.toJsonString 0
+        let expected = TestObjects.Json.ROCrate.definedTerm
+        Expect.stringEqual actual expected ""
     createBaseJsonTests
-        "isa"
+        ""
         create_oa
         OntologyAnnotation.toROCrateJsonString
         OntologyAnnotation.fromROCrateJsonString
         None
+]
     
 let main = testList "OntologyAnnotation" [
     tests_core

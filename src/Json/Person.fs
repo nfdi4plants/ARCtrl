@@ -92,7 +92,7 @@ module Person =
                 Encode.tryInclude "fax" Encode.string oa.Fax
                 Encode.tryInclude "address" Encode.string oa.Address
                 Encode.tryInclude "affiliation" Affiliation.encoder oa.Affiliation
-                Encode.tryIncludeSeq "roles" OntologyAnnotation.encoder oa.Roles
+                Encode.tryIncludeSeq "roles" OntologyAnnotation.ROCrate.encoderDefinedTerm oa.Roles
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
                 "@context", ROCrateContext.Person.context_jsonvalue
             ]
@@ -112,7 +112,7 @@ module Person =
                     ?fax=get.Optional.Field "fax" Decode.string,
                     ?address=get.Optional.Field "address" Decode.string,
                     ?affiliation=get.Optional.Field "affiliation" Affiliation.decoder,
-                    ?roles=get.Optional.Field "roles" (Decode.resizeArray OntologyAnnotation.decoder),
+                    ?roles=get.Optional.Field "roles" (Decode.resizeArray OntologyAnnotation.ROCrate.decoderDefinedTerm),
                     ?comments=get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription)
                 )
             )

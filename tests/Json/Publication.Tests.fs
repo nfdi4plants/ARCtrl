@@ -78,6 +78,11 @@ let tests_rocrate = testList "rocrate" [
         let json = Publication.toROCrateJsonString () o
         let oNew = Publication.fromROCrateJsonString json
         compareObj o oNew
+    testCase "Write" <| fun _ ->
+        let publication = create()
+        let actual = Publication.toROCrateJsonString () publication
+        let expected = TestObjects.Json.ROCrate.publication
+        Expect.stringEqual actual expected ""
     createBaseJsonTests
         ""
         create

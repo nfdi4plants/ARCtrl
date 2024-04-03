@@ -89,13 +89,19 @@ let private tests_isa = testList "ISA" [
     )
 ]
 
-let private tests_rocrate = 
+let private tests_rocrate = testList "ROCrate" [
+    testCase "Write" <| fun _ ->
+        let person = create()
+        let actual = Person.toROCrateJsonString () person
+        let expected = TestObjects.Json.ROCrate.person
+        Expect.stringEqual actual expected ""
     createBaseJsonTests 
-        "rocrate"
+        ""
         create
         Person.toROCrateJsonString
         Person.fromROCrateJsonString
         None
+]
 
 let tests = testList "core" [
      createBaseJsonTests 

@@ -88,13 +88,20 @@ let private test_isa =
         None
         #endif
 
-let private test_roCrate =
+let private test_roCrate = testList "ROCrate" [
+    // Wait for some issues to be resolved: https://github.com/nfdi4plants/isa-ro-crate-profile/issues
+    // Mainly: #12, #9, #10, #13
+    ptestCase "Write" <| fun _ ->
+        let a = create_filled()
+        let json = ArcAssay.toROCrateJsonString None a
+        printfn "%s" json
     createBaseJsonTests
-        "ROCrate"
+        ""
         create_filled
         (fun () -> ArcAssay.toROCrateJsonString None)
         ArcAssay.fromROCrateJsonString
         None
+]
 
 let main = testList "Assay" [
     test_coreEmpty

@@ -52,7 +52,7 @@ module Publication =
                 Encode.tryInclude "doi" Encode.string (oa.DOI)
                 Encode.tryInclude "authorList" Person.ROCrate.encodeAuthorListString oa.Authors
                 Encode.tryInclude "title" Encode.string (oa.Title)
-                Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
+                Encode.tryInclude "status" OntologyAnnotation.ROCrate.encoderDefinedTerm oa.Status
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
                 "@context", ROCrateContext.Publication.context_jsonvalue
             ]
@@ -66,7 +66,7 @@ module Publication =
                     ?doi= get.Optional.Field "doi" Decode.string,
                     ?authors = get.Optional.Field "authorList" Person.ROCrate.decodeAuthorListString,
                     ?title = get.Optional.Field "title" Decode.string,
-                    ?status = get.Optional.Field "status" OntologyAnnotation.decoder,
+                    ?status = get.Optional.Field "status" OntologyAnnotation.ROCrate.decoderDefinedTerm,
                     ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ROCrate.decoderDisambiguatingDescription)
                 )           
             )
