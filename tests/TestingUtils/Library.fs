@@ -45,6 +45,29 @@ module Result =
 open System
 open Fable.Core
 
+module Fable =
+    
+    module JS =
+
+        [<Emit("process.stdout.write($0)")>]
+        let print (s:string) : unit = nativeOnly
+
+    module Py =
+
+        [<Emit("print($0, end = \"\")")>]
+        let print (s:string) : unit = nativeOnly
+
+    let fprint(s: string) =
+        #if FABLE_COMPILER_JAVASCRIPT
+        JS.print(s)
+        #endif
+        #if FABLE_COMPILER_PYTHON
+        Py.print(s)
+        #endif
+        #if !FABLE_COMPILER
+        printf "%s" s
+        #endif
+
 [<AttachMembers>]
 type Stopwatch() =
     member val StartTime: DateTime option = None with get, set
@@ -88,9 +111,9 @@ module Expect =
                     ()
                 elif isSame && s1 <> s2 then
                     isSame <- false
-                    printf "%s" (string s1)
+                    Fable.fprint (sprintf "%s" (string s1))
                 else
-                    printf "%s" (string s1)
+                    Fable.fprint (sprintf "%s" (string s1))
             ) 
             actual 
             expected
