@@ -37,7 +37,7 @@ module OntologyAnnotationSection =
         designs
         |> List.iteri (fun i d ->
             let i = i + 1
-            let oa = OntologyAnnotation.toString(d,true)
+            let oa = OntologyAnnotation.toStringObject(d,true)
             do matrix.Matrix.Add ((label,i),                      oa.TermName)
             do matrix.Matrix.Add ((labelTAN,i),   oa.TermAccessionNumber)
             do matrix.Matrix.Add ((labelTSR,i),         oa.TermSourceREF)

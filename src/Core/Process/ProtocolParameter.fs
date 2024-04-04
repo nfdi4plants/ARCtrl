@@ -30,8 +30,8 @@ type ProtocolParameter =
         ProtocolParameter.make None (Option.fromValueWithDefault (OntologyAnnotation()) oa)
 
     /// Get ISATab string entries from an ISAJson ProtocolParameter object (name,source,accession)
-    static member toString (pp : ProtocolParameter) =
-        pp.ParameterName |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}       
+    static member toStringObject (pp : ProtocolParameter) =
+        pp.ParameterName |> Option.map OntologyAnnotation.toStringObject |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}       
 
     /// Returns the name of the parameter as string
     member this.NameText =

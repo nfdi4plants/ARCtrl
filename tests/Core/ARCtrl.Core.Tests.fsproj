@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Regex.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
+    <Compile Include="OntologyAnnotation.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
     <Compile Include="CompositeColumn.Tests.fs" />

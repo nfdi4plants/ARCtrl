@@ -31,8 +31,8 @@ type Factor =
         Factor.make (Option.fromValueWithDefault "" name) (Option.fromValueWithDefault (OntologyAnnotation()) oa) None
 
     /// Get ISATab string entries from an ISAJson Factor object
-    static member toString (factor : Factor) =
-        factor.FactorType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
+    static member toStringObject (factor : Factor) =
+        factor.FactorType |> Option.map OntologyAnnotation.toStringObject |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
 
     member this.NameText =
         this.Name

@@ -86,7 +86,7 @@ module Component =
         if cs = [] then {|NameAgg = ""; TermNameAgg = "";  TermAccessionNumberAgg = "";  TermSourceREFAgg = ""; |}
         else
             cs
-            |> List.map Component.toISAString
+            |> List.map Component.toStringObject
             |> List.fold (fun (nameAgg,termAgg,tsrAgg,tanAgg) (name,term) ->     
                 if first then 
                     first <- false
@@ -112,7 +112,7 @@ module ProtocolParameter =
         if oas = [] then {|TermNameAgg = ""; TermAccessionNumberAgg = ""; TermSourceREFAgg = ""|}
         else
             oas
-            |> List.map ProtocolParameter.toString
+            |> List.map ProtocolParameter.toStringObject
             |> List.fold (fun (nameAgg,tsrAgg,tanAgg) term -> 
                 if first then 
                     first <- false

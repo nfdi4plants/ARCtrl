@@ -89,8 +89,7 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     ///
     /// `asOntobeePurlUrl`: option to return term accession in Ontobee purl-url format (`http://purl.obolibrary.org/obo/MS_1000121`)
     /// </summary>
-    ///// TODO: Not sure if still needed ~Kevin F. 2024.03.20
-    static member toString (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
+    static member toStringObject (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
         let asOntobeePurlUrlIfShort = Option.defaultValue false asOntobeePurlUrlIfShort
         {|
             TermName = oa.Name |> Option.defaultValue ""
@@ -131,31 +130,32 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
         sb.Append("}") |> ignore
         sb.ToString()
 
-    override this.Equals other =
-        match other with
-        | :? OntologyAnnotation as oa -> (this :> System.IEquatable<_>).Equals oa
-        | :? string as s ->           
-            this.NameText = s
-            || 
-            this.TermAccessionShort = s
-            ||
-            this.TermAccessionOntobeeUrl = s
-        | _ -> false
+    override this.GetHashCode() = 
+        [|
+            HashCodes.boxHashOption this.Name
+            match this.TermSourceREF, this.TANInfo with
+            | None, Some taninfo -> // if we get taninfo we assume tsr to be inferrable by taninfo
+                //HashCodes.hash {|tsr = taninfo.IDSpace; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+                HashCodes.boxHashArray [|taninfo.IDSpace; taninfo.IDSpace + ":" + taninfo.LocalID|]
+            | Some tsr, Some taninfo -> // if we get taninfo + tsr we do NOT override tsr
+                //HashCodes.hash {|tsr = tsr; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+                HashCodes.boxHashArray [|tsr; taninfo.IDSpace + ":" + taninfo.LocalID|]
+            | Some tsr, None ->
+                let tan = this.TermAccessionNumber |> Option.defaultValue ""
+                //HashCodes.hash {|tsr = tsr; tan = tan|}
+                HashCodes.boxHashArray [|tsr; tan|]
+            | None, None ->
+                let tan = this.TermAccessionNumber |> Option.defaultValue ""
+                let tsr = this.TermAccessionNumber |> Option.defaultValue ""
+                //HashCodes.hash {|tsr = tsr; tan = tan|}
+                HashCodes.boxHashArray [|tsr; tan|]
+            //HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray
+        |> fun x -> x :?> int
 
-    override this.GetHashCode () = (this.NameText+this.TermAccessionShort).GetHashCode()
-
-    interface System.IEquatable<OntologyAnnotation> with
-        member this.Equals other =
-            if this.TermAccessionNumber.IsSome && other.TermAccessionNumber.IsSome then
-                other.TermAccessionShort = this.TermAccessionShort
-                ||
-                other.TermAccessionOntobeeUrl = this.TermAccessionOntobeeUrl
-            elif this.Name.IsSome && other.Name.IsSome then
-                other.NameText = this.NameText
-            elif this.TermAccessionNumber.IsNone && other.TermAccessionNumber.IsNone && this.Name.IsNone && other.Name.IsNone then
-                true
-            else 
-                false
+    override this.Equals(obj) : bool =
+        HashCodes.hash this = HashCodes.hash obj
    
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())

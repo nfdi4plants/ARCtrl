@@ -18,13 +18,15 @@ module Helper =
             ResizeArray [Comment("ByeBye", "World"); Comment("Hello", "Space")]
         )
 
-    let compareObj (actual:Publication) (expected:Publication) =
-        Expect.equal actual.PubMedID expected.PubMedID "PubMedID"
-        Expect.equal actual.DOI expected.DOI "DOI"
-        Expect.equal actual.Authors expected.Authors "Authors"
-        Expect.equal actual.Title expected.Title "Title"
-        Expect.equal actual.Status expected.Status "Status"
-        Expect.sequenceEqual actual.Comments expected.Comments "Comments"
+    let compareFields =
+        fun (actual:Publication) (expected:Publication) ->
+            Expect.equal actual.PubMedID expected.PubMedID "PubMedID"
+            Expect.equal actual.DOI expected.DOI "DOI"
+            Expect.equal actual.Authors expected.Authors "Authors"
+            Expect.equal actual.Title expected.Title "Title"
+            Expect.equal actual.Status expected.Status "Status"
+            Expect.sequenceEqual actual.Comments expected.Comments "Comments"
+        |> Some 
 
 open Helper
 
@@ -35,7 +37,8 @@ let tests_isa = testList "isa" [
         Publication.toISAJsonString
         Publication.fromISAJsonString
         None
-        
+        compareFields
+
     testCase "ReaderSuccess" <| fun () -> 
         let readingSuccess = 
             try 
@@ -73,11 +76,6 @@ let tests_isa = testList "isa" [
 ]
 
 let tests_rocrate = testList "rocrate" [
-    testCase "compare single fields" <| fun _ ->
-        let o = create()
-        let json = Publication.toROCrateJsonString () o
-        let oNew = Publication.fromROCrateJsonString json
-        compareObj o oNew
     // pending until: https://github.com/nfdi4plants/ARCtrl/issues/334
     #if FABLE_COMPILER_PYTHON
     ptestCase "Write" <| fun _ ->
@@ -94,6 +92,7 @@ let tests_rocrate = testList "rocrate" [
         Publication.toROCrateJsonString
         Publication.fromROCrateJsonString
         None
+        compareFields
 ]
 
 let tests = 
@@ -103,6 +102,7 @@ let tests =
         Publication.toJsonString
         Publication.fromJsonString
         None
+        compareFields
 
 let main = testList "Publication" [
     tests

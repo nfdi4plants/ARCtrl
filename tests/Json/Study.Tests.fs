@@ -26,18 +26,20 @@ module Helper =
         ResizeArray [|Comment.create("Hello", "World")|]
     )
 
-    let compareFields (expected: ArcStudy) (actual: ArcStudy) =
-        Expect.equal actual.Identifier expected.Identifier "Identifier"
-        Expect.equal actual.Title expected.Title "Title"
-        Expect.equal actual.Description expected.Description "Description"
-        Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
-        Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
-        Expect.sequenceEqual actual.Publications expected.Publications "Publications"
-        Expect.sequenceEqual actual.Contacts expected.Contacts "Contacts"
-        Expect.sequenceEqual actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
-        Expect.sequenceEqual actual.Tables expected.Tables "Tables"
-        Expect.sequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
-        Expect.sequenceEqual actual.Comments expected.Comments "RegisteredAssayIdentifiers"
+    let compareFields =
+        fun (actual: ArcStudy) (expected: ArcStudy) ->
+            Expect.equal actual.Identifier expected.Identifier "Identifier"
+            Expect.equal actual.Title expected.Title "Title"
+            Expect.equal actual.Description expected.Description "Description"
+            Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
+            Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
+            Expect.sequenceEqual actual.Publications expected.Publications "Publications"
+            Expect.sequenceEqual actual.Contacts expected.Contacts "Contacts"
+            Expect.sequenceEqual actual.StudyDesignDescriptors expected.StudyDesignDescriptors "StudyDesignDescriptors"
+            Expect.sequenceEqual actual.Tables expected.Tables "Tables"
+            Expect.sequenceEqual actual.RegisteredAssayIdentifiers expected.RegisteredAssayIdentifiers "RegisteredAssayIdentifiers"
+            Expect.sequenceEqual actual.Comments expected.Comments "RegisteredAssayIdentifiers"
+        |> Some
 
 open Helper
 
@@ -49,6 +51,7 @@ let private test_coreEmpty =
         ArcStudy.toJsonString
         ArcStudy.fromJsonString
         None
+        compareFields
 
 let private test_compressedEmpty =
     createBaseJsonTests
@@ -57,6 +60,7 @@ let private test_compressedEmpty =
         ArcStudy.toCompressedJsonString
         ArcStudy.fromCompressedJsonString
         None
+        compareFields
 
 let private test_isaEmpty =
     createBaseJsonTests
@@ -69,6 +73,7 @@ let private test_isaEmpty =
         #else
         None
         #endif
+        compareFields
 
 let private test_roCrateEmpty =
 
@@ -78,6 +83,7 @@ let private test_roCrateEmpty =
         (fun () (s) -> ArcStudy.toROCrateJsonString [] s)
         (ArcStudy.fromROCrateJsonString >> fun (s,_) -> s)
         None
+        compareFields
 
 let private test_core =
     createBaseJsonTests
@@ -86,6 +92,7 @@ let private test_core =
         ArcStudy.toJsonString
         ArcStudy.fromJsonString
         None
+        compareFields
 
 let private test_compressed =
     createBaseJsonTests
@@ -94,6 +101,7 @@ let private test_compressed =
         ArcStudy.toCompressedJsonString
         ArcStudy.fromCompressedJsonString
         None
+        compareFields
 
 let private test_isa =
     createBaseJsonTests
@@ -106,6 +114,7 @@ let private test_isa =
         #else
         None
         #endif
+        compareFields
 
 let private test_roCrate =
     createBaseJsonTests
@@ -114,14 +123,7 @@ let private test_roCrate =
         ArcStudy.toROCrateJsonString
         (ArcStudy.fromROCrateJsonString >> fun (s,_) -> s)
         None
-
-let tests_detailed = testList "Detailed" [
-    testCase "ROCrate" <| fun _ ->
-        let expected = create_filled()
-        let json = ArcStudy.toROCrateJsonString () expected
-        let actual, _ = ArcStudy.fromROCrateJsonString json
-        Helper.compareFields expected actual
-]
+        compareFields
 
 let main = testList "Study" [
     test_coreEmpty
@@ -132,5 +134,4 @@ let main = testList "Study" [
     test_isa
     test_roCrateEmpty
     test_roCrate
-    tests_detailed
 ]

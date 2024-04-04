@@ -19,12 +19,12 @@ let private tests_core =
         OntologyAnnotation.toJsonString
         OntologyAnnotation.fromJsonString
         None
+        None
 
 let private tests_isa =
     createBaseJsonTests
         "isa"
         create_oa
-       
         OntologyAnnotation.toISAJsonString
         OntologyAnnotation.fromISAJsonString
         #if !FABLE_COMPILER_PYTHON
@@ -32,6 +32,7 @@ let private tests_isa =
         #else
         None
         #endif
+        None
 
 let private tests_roCrate = testList "ROCrate" [
     testCase "Write-PropertyValue" <| fun _ -> 
@@ -49,6 +50,7 @@ let private tests_roCrate = testList "ROCrate" [
         create_oa
         OntologyAnnotation.toROCrateJsonString
         OntologyAnnotation.fromROCrateJsonString
+        None
         None
 ]
     

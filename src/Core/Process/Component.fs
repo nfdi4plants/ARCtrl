@@ -85,8 +85,8 @@ type Component =
             Component.make None None cType
 
     /// Get ISATab string entries from an ISAJson Component object
-    static member toISAString (c : Component) =
-        let oa = c.ComponentType |> Option.map OntologyAnnotation.toString |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
+    static member toStringObject (c : Component) =
+        let oa = c.ComponentType |> Option.map OntologyAnnotation.toStringObject |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}
         c.ComponentName |> Option.defaultValue "", oa
 
     member this.NameText =

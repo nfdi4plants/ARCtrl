@@ -237,68 +237,6 @@ let componentCastingTests =
         )
     ]
 
-let ontologyAnnotationTests = 
-    testList "ontologyAnnotationTests" [
-        let short = "EFO:0000721"
-        let uri = "http://purl.obolibrary.org/obo/EFO_0000721" 
-        let otherParseable = "http://www.ebi.ac.uk/efo/EFO_0000721"
-        let other = "Unparseable"
-        testList "GetHashCode" [
-            testCase "Empty" (fun () ->
-                let oa1 = OntologyAnnotation()
-                let oa2 = OntologyAnnotation()
-                let h1 = oa1.GetHashCode()
-                let h2 = oa2.GetHashCode()
-                Expect.equal h1 h2 "Hashes should be equal"    
-            )
-            testCase "Equal" (fun () ->
-                let oa1 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
-                let oa2 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
-                let h1 = oa1.GetHashCode()
-                let h2 = oa2.GetHashCode()
-                Expect.equal h1 h2 "Hashes should be equal"
-            )
-            testCase "Different" (fun () ->
-                let oa1 = OntologyAnnotation("MyOntology",tsr = "EFO",tan = uri)
-                let oa2 = OntologyAnnotation("YourOntology",tsr = "NCBI",tan = "http://purl.obolibrary.org/obo/NCBI_0000123")
-                let h1 = oa1.GetHashCode()
-                let h2 = oa2.GetHashCode()
-                Expect.notEqual h1 h2 "Hashes should not be equal"
-            )
-        ]
-        testList "fromString" [
-            
-            testCase "FromShort" (fun () ->
-                let oa = OntologyAnnotation(tan = short)
-                Expect.equal oa.TermAccessionNumber.Value short "TAN incorrect"
-                Expect.equal oa.TermAccessionShort short "short TAN incorrect"
-                Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
-            )
-            testCase "FromUri" (fun () ->          
-                let oa = OntologyAnnotation(tan = uri)
-                Expect.equal oa.TermAccessionNumber.Value uri "TAN incorrect"
-                Expect.equal oa.TermAccessionShort short "short TAN incorrect"
-                Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
-            )
-            testCase "FromOtherParseable" (fun () ->          
-                let oa = OntologyAnnotation(tan = otherParseable)
-                Expect.equal oa.TermAccessionNumber.Value otherParseable "TAN incorrect"
-                Expect.equal oa.TermAccessionShort short "short TAN incorrect"
-                Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
-            )
-            testCase "FromOther" (fun () ->          
-                let oa = OntologyAnnotation(tan = other)
-                Expect.equal oa.TermAccessionNumber.Value other "TAN incorrect"
-            )
-            testCase "FromOtherWithTSR" (fun () ->          
-                let tsr = "ABC"
-                let oa = OntologyAnnotation(tsr = tsr,tan = other)
-                Expect.equal oa.TermAccessionNumber.Value other "TAN incorrect"
-                Expect.equal oa.TermSourceREF.Value tsr "TSR incorrect"
-            )
-        ]
-    ]
-
 let valueTests = 
 
     testList "ValueTests" [
@@ -351,7 +289,6 @@ let valueTests =
 
 let main =
     testList "DataModelTests" [
-        ontologyAnnotationTests
         componentCastingTests
         valueTests
     ]

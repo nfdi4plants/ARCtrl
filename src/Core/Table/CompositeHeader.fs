@@ -526,5 +526,4 @@ type CompositeHeader =
 
     static member freeText(s:string) = FreeText s
 
-#else
 #endif

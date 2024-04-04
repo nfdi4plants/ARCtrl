@@ -37,20 +37,22 @@ module Helper =
         inv.AddAssay(assay2, inv.Studies)
         inv
 
-    let compareFields (expected: ArcInvestigation) (actual: ArcInvestigation) =
-        Expect.equal actual.Identifier expected.Identifier "Identifier"
-        Expect.equal actual.Title expected.Title "Title"
-        Expect.equal actual.Description expected.Description "Description"
-        Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
-        Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
-        Expect.sequenceEqual actual.OntologySourceReferences expected.OntologySourceReferences "OntologySourceReferences"
-        Expect.sequenceEqual actual.Publications expected.Publications "Publications"
-        Expect.sequenceEqual actual.Contacts expected.Contacts "Contacts"
-        Expect.sequenceEqual actual.Assays expected.Assays "Assays"
-        Expect.sequenceEqual actual.Studies expected.Studies "Studies"
-        Expect.sequenceEqual actual.RegisteredStudyIdentifiers expected.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
-        Expect.sequenceEqual actual.Comments expected.Comments "Comments"
-        Expect.sequenceEqual actual.Remarks expected.Remarks "Remarks"
+    let compareFields =
+        fun (actual: ArcInvestigation) (expected: ArcInvestigation) ->  
+            Expect.equal actual.Identifier expected.Identifier "Identifier"
+            Expect.equal actual.Title expected.Title "Title"
+            Expect.equal actual.Description expected.Description "Description"
+            Expect.equal actual.SubmissionDate expected.SubmissionDate "SubmissionDate"
+            Expect.equal actual.PublicReleaseDate expected.PublicReleaseDate "PublicReleaseDate"
+            Expect.sequenceEqual actual.OntologySourceReferences expected.OntologySourceReferences "OntologySourceReferences"
+            Expect.sequenceEqual actual.Publications expected.Publications "Publications"
+            Expect.sequenceEqual actual.Contacts expected.Contacts "Contacts"
+            Expect.sequenceEqual actual.Assays expected.Assays "Assays"
+            Expect.sequenceEqual actual.Studies expected.Studies "Studies"
+            Expect.sequenceEqual actual.RegisteredStudyIdentifiers expected.RegisteredStudyIdentifiers "RegisteredStudyIdentifiers"
+            Expect.sequenceEqual actual.Comments expected.Comments "Comments"
+            Expect.sequenceEqual actual.Remarks expected.Remarks "Remarks"
+        |> Some
     
 open Helper
 
@@ -61,6 +63,7 @@ let private test_coreEmpty =
         ArcInvestigation.toJsonString
         ArcInvestigation.fromJsonString
         None
+        compareFields
 
 let private test_compressedEmpty =
     createBaseJsonTests
@@ -69,6 +72,7 @@ let private test_compressedEmpty =
         ArcInvestigation.toCompressedJsonString
         ArcInvestigation.fromCompressedJsonString
         None
+        compareFields
 
 let private test_isaEmpty =
     createBaseJsonTests
@@ -81,6 +85,7 @@ let private test_isaEmpty =
         #else
         None
         #endif
+        compareFields
 
 let private test_roCrateEmpty =
     createBaseJsonTests
@@ -89,7 +94,7 @@ let private test_roCrateEmpty =
         ArcInvestigation.toROCrateJsonString
         ArcInvestigation.fromROCrateJsonString
         None
-
+        compareFields
 
 let private test_core =
     createBaseJsonTests
@@ -98,6 +103,7 @@ let private test_core =
         ArcInvestigation.toJsonString
         ArcInvestigation.fromJsonString
         None
+        compareFields
 
 let private test_compressed =
 
@@ -107,6 +113,7 @@ let private test_compressed =
         ArcInvestigation.toCompressedJsonString
         ArcInvestigation.fromCompressedJsonString
         None
+        compareFields
 
 let private test_isa =
 
@@ -120,6 +127,7 @@ let private test_isa =
         #else
         None
         #endif
+        compareFields
 
 let private test_roCrate =
     createBaseJsonTests
@@ -128,6 +136,7 @@ let private test_roCrate =
         ArcInvestigation.toROCrateJsonString
         ArcInvestigation.fromROCrateJsonString
         None
+        compareFields
 
 let main = testList "Investigation" [
     test_coreEmpty
