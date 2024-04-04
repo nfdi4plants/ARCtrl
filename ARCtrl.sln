@@ -30,12 +30,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{64B34A6E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "JavaScript", "JavaScript", "{913222CA-261F-49CB-A823-CC7C335F964A}"
 	ProjectSection(SolutionItems) = preProject
-		tests\JavaScript\ARCtrl.Index.js = tests\JavaScript\ARCtrl.Index.js
-		tests\JavaScript\ISA.CompositeCell.js = tests\JavaScript\ISA.CompositeCell.js
-		tests\JavaScript\ISA.CompositeHeader.js = tests\JavaScript\ISA.CompositeHeader.js
-		tests\JavaScript\ISA.Person.js = tests\JavaScript\ISA.Person.js
+		tests\JavaScript\CompositeCell.js = tests\JavaScript\CompositeCell.js
+		tests\JavaScript\CompositeHeader.js = tests\JavaScript\CompositeHeader.js
+		tests\JavaScript\JsonController.js = tests\JavaScript\JsonController.js
 		tests\JavaScript\Main.js = tests\JavaScript\Main.js
+		tests\JavaScript\Person.js = tests\JavaScript\Person.js
 		tests\JavaScript\Template.Web.js = tests\JavaScript\Template.Web.js
+		tests\JavaScript\XlsxController.js = tests\JavaScript\XlsxController.js
 	EndProjectSection
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl", "src\ARCtrl\ARCtrl.fsproj", "{9BE5D83D-EA90-4382-A132-174FD158227F}"
@@ -65,6 +66,8 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Python", "Python", "{501F6D1E-6300-4CA4-8E61-3523BCF4D533}"
 	ProjectSection(SolutionItems) = preProject
 		tests\Python\test_index.py = tests\Python\test_index.py
+		tests\Python\test_JsonController.py = tests\Python\test_JsonController.py
+		tests\Python\test_XlsxController.py = tests\Python\test_XlsxController.py
 	EndProjectSection
 EndProject
 Global

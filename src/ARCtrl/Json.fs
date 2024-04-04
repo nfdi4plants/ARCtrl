@@ -7,47 +7,57 @@ open Fable.Core
 module JsonHelper =
 
     [<AttachMembers>]
+    type OntologyAnnotationJson() =
+        member _.fromJsonString (s: string) = OntologyAnnotation.fromJsonString s
+        member _.fromISAJsonString (s: string) = OntologyAnnotation.fromISAJsonString s
+        member _.fromROCrateJsonString (s: string) = OntologyAnnotation.fromROCrateJsonString s
+        member _.toJsonString (oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toJsonString(?spaces=spaces) oa
+        member _.toISAJsonString (oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toISAJsonString(?spaces=spaces) oa
+        member _.toROCrateJsonString(oa: OntologyAnnotation, ?spaces) = OntologyAnnotation.toROCrateJsonString(?spaces=spaces) oa
+
+    [<AttachMembers>]
     type AssayJson() =
-        member this.fromJsonString (s: string) = ArcAssay.fromJsonString s
-        member this.toJsonString (?spaces) = ArcAssay.toJsonString(?spaces=spaces)
-        member this.fromCompressedJsonString (s: string) = ArcAssay.fromCompressedJsonString s
-        member this.toCompressedJsonString (?spaces) = ArcAssay.toCompressedJsonString(?spaces=spaces)
-        member this.fromISAJsonString (s: string) = ArcAssay.fromISAJsonString s
-        member this.toISAJsonString (?spaces) = ArcAssay.toISAJsonString(?spaces=spaces)
-        member this.fromROCrateJsonString (s: string) = ArcAssay.fromROCrateJsonString s
-        member this.toROCrateJsonString(studyName, ?spaces) = ArcAssay.toROCrateJsonString(studyName, ?spaces=spaces)
+        member _.fromJsonString (s: string) = ArcAssay.fromJsonString s
+        member _.fromCompressedJsonString (s: string) = ArcAssay.fromCompressedJsonString s
+        member _.fromISAJsonString (s: string) = ArcAssay.fromISAJsonString s
+        member _.fromROCrateJsonString (s: string) = ArcAssay.fromROCrateJsonString s
+        member _.toJsonString (assay: ArcAssay, ?spaces) = ArcAssay.toJsonString(?spaces=spaces) assay
+        member _.toCompressedJsonString (assay: ArcAssay,?spaces) = ArcAssay.toCompressedJsonString(?spaces=spaces) assay
+        member _.toISAJsonString (assay: ArcAssay, ?spaces) = ArcAssay.toISAJsonString(?spaces=spaces) assay
+        member _.toROCrateJsonString(assay: ArcAssay, studyName, ?spaces) = ArcAssay.toROCrateJsonString(studyName, ?spaces=spaces) assay
 
     [<AttachMembers>]
     type StudyJson() =
-        member this.fromJsonString (s: string) = ArcStudy.fromJsonString s
-        member this.toJsonString (?spaces) = ArcStudy.toJsonString(?spaces=spaces)
-        member this.fromCompressedJsonString (s: string) = ArcStudy.fromCompressedJsonString s
-        member this.toCompressedJsonString (?spaces) = ArcStudy.toCompressedJsonString(?spaces=spaces)
-        member this.fromISAJsonString (s: string) = ArcStudy.fromISAJsonString s
-        member this.toISAJsonString (?assays,?spaces) = ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces)
-        member this.fromROCrateJsonString (s: string) = ArcStudy.fromROCrateJsonString s
-        member this.toROCrateJsonString(?assays,?spaces) = ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces)
+        member _.fromJsonString (s: string) = ArcStudy.fromJsonString s
+        member _.fromCompressedJsonString (s: string) = ArcStudy.fromCompressedJsonString s
+        member _.fromISAJsonString (s: string) = ArcStudy.fromISAJsonString s
+        member _.fromROCrateJsonString (s: string) = ArcStudy.fromROCrateJsonString s
+        member _.toJsonString (study: ArcStudy, ?spaces) = ArcStudy.toJsonString(?spaces=spaces) study
+        member _.toCompressedJsonString (study: ArcStudy, ?spaces) = ArcStudy.toCompressedJsonString(?spaces=spaces) study
+        member _.toISAJsonString (study: ArcStudy, ?assays,?spaces) = ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces) study
+        member _.toROCrateJsonString(study: ArcStudy, ?assays,?spaces) = ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces) study
 
     [<AttachMembers>]
     type InvestigationJson() =
-        member this.fromJsonString (s: string) = ArcInvestigation.fromJsonString s
-        member this.toJsonString (?spaces) = ArcInvestigation.toJsonString(?spaces=spaces)
-        member this.fromCompressedJsonString (s: string) = ArcInvestigation.fromCompressedJsonString s
-        member this.toCompressedJsonString (?spaces) = ArcInvestigation.toCompressedJsonString(?spaces=spaces)
-        member this.fromISAJsonString (s: string) = ArcInvestigation.fromISAJsonString s
-        member this.toISAJsonString (?spaces) = ArcInvestigation.toISAJsonString(?spaces=spaces)
-        member this.fromROCrateJsonString (s: string) = ArcInvestigation.fromROCrateJsonString s
-        member this.toROCrateJsonString(?spaces) = ArcInvestigation.toROCrateJsonString(?spaces=spaces)
+        member _.fromJsonString (s: string) = ArcInvestigation.fromJsonString s
+        member _.fromCompressedJsonString (s: string) = ArcInvestigation.fromCompressedJsonString s
+        member _.fromISAJsonString (s: string) = ArcInvestigation.fromISAJsonString s
+        member _.fromROCrateJsonString (s: string) = ArcInvestigation.fromROCrateJsonString s
+        member _.toJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toJsonString(?spaces=spaces) investigation
+        member _.toCompressedJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toCompressedJsonString(?spaces=spaces) investigation
+        member _.toISAJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toISAJsonString(?spaces=spaces) investigation
+        member _.toROCrateJsonString(investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toROCrateJsonString(?spaces=spaces) investigation
 
     [<AttachMembers>]
     type ARCJson() =
-        member this.fromROCrateJsonString (s: string) = ARC.fromROCrateJsonString s
-        member this.toROCrateJsonString(?spaces) = ARC.toROCrateJsonString(?spaces=spaces)
+        member _.fromROCrateJsonString (s: string) = ARC.fromROCrateJsonString s
+        member _.toROCrateJsonString(?spaces) = ARC.toROCrateJsonString(?spaces=spaces)
 
 open JsonHelper
 
 [<AttachMembers>]
 type JsonController =
+    static member OntologyAnnotation = OntologyAnnotationJson()
     static member Assay = AssayJson()
     static member Study = StudyJson()
     static member Investigation = InvestigationJson()
