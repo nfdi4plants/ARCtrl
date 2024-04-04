@@ -39,6 +39,7 @@ let classes =
         ".Core.arc_types", "ArcInvestigation"; 
         ".Core.template", "Template"
         ".json", "JsonController"
+        ".xlsx", "XlsxController"
         ".arc","ARC"
     |]
 

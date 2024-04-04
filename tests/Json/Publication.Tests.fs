@@ -76,12 +76,7 @@ let tests_isa = testList "isa" [
 ]
 
 let tests_rocrate = testList "rocrate" [
-    // pending until: https://github.com/nfdi4plants/ARCtrl/issues/334
-    #if FABLE_COMPILER_PYTHON
-    ptestCase "Write" <| fun _ ->
-    #else
     testCase "Write" <| fun _ ->
-    #endif
         let publication = create()
         let actual = Publication.toROCrateJsonString () publication
         let expected = TestObjects.Json.ROCrate.publication

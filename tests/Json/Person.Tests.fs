@@ -91,12 +91,7 @@ let private tests_isa = testList "ISA" [
 ]
 
 let private tests_rocrate = testList "ROCrate" [
-    // pending until: https://github.com/nfdi4plants/ARCtrl/issues/334
-    #if FABLE_COMPILER_PYTHON
-    ptestCase "Write" <| fun _ ->
-    #else
     testCase "Write" <| fun _ ->
-    #endif
         let person = create()
         let actual = Person.toROCrateJsonString () person
         let expected = TestObjects.Json.ROCrate.person
