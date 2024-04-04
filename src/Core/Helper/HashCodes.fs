@@ -27,14 +27,15 @@ let hashDateTime (dt : System.DateTime) : int =
     
 
 let hash obj =
-    #if FABLE_COMPILER_PYTHON
-        if pyHasCustomHash obj then
-            pyCustomHash obj
-        else
-            obj.GetHashCode()
-    #else
-        obj.GetHashCode()
-    #endif
+    //#if FABLE_COMPILER_PYTHON
+    //    if pyHasCustomHash obj then
+    //        pyCustomHash obj
+    //    else
+    //        obj.GetHashCode()
+    //#else
+    //    obj.GetHashCode()
+    //#endif
+    obj.GetHashCode()
 
 let boxHashOption (a: 'a option) : obj =
     if a.IsSome then a.Value.GetHashCode() else (0).GetHashCode()

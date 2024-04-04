@@ -1,7 +1,7 @@
 import { equal, deepEqual, notEqual } from 'assert';
 import { CompositeCell } from "./ARCtrl/index.js"
 import { OntologyAnnotation } from './ARCtrl/index.js';
-import { assertEqual } from './ARCtrl/fable_modules/fable-library-js.4.15.0/Util.js';
+import { assertEqual } from './ARCtrl/fable_modules/fable-library-js.4.16.0/Util.js';
 
 describe('CompositeCell', function () {
     it('Primary Constructor', function() {

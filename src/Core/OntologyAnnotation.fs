@@ -136,16 +136,20 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
             HashCodes.boxHashOption this.Name
             match this.TermSourceREF, this.TANInfo with
             | None, Some taninfo -> // if we get taninfo we assume tsr to be inferrable by taninfo
-                HashCodes.hash {|tsr = taninfo.IDSpace; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+                //HashCodes.hash {|tsr = taninfo.IDSpace; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+                HashCodes.boxHashArray [|taninfo.IDSpace; taninfo.IDSpace + ":" + taninfo.LocalID|]
             | Some tsr, Some taninfo -> // if we get taninfo + tsr we do NOT override tsr
-                HashCodes.hash {|tsr = tsr; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+                //HashCodes.hash {|tsr = tsr; tan = taninfo.IDSpace + ":" + taninfo.LocalID|}
+                HashCodes.boxHashArray [|tsr; taninfo.IDSpace + ":" + taninfo.LocalID|]
             | Some tsr, None ->
                 let tan = this.TermAccessionNumber |> Option.defaultValue ""
-                HashCodes.hash {|tsr = tsr; tan = tan|}
+                //HashCodes.hash {|tsr = tsr; tan = tan|}
+                HashCodes.boxHashArray [|tsr; tan|]
             | None, None ->
                 let tan = this.TermAccessionNumber |> Option.defaultValue ""
                 let tsr = this.TermAccessionNumber |> Option.defaultValue ""
-                HashCodes.hash {|tsr = tsr; tan = tan|}
+                //HashCodes.hash {|tsr = tsr; tan = tan|}
+                HashCodes.boxHashArray [|tsr; tan|]
             //HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray
