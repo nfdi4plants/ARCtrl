@@ -28,7 +28,7 @@ type MaterialAttribute =
         MaterialAttribute.make None (Option.fromValueWithDefault (OntologyAnnotation()) oa)
 
     /// Get ISATab string entries from an ISAJson MaterialAttribute object
-    static member toString (ma : MaterialAttribute) =
+    static member toStringObject (ma : MaterialAttribute) =
         ma.CharacteristicType |> Option.map OntologyAnnotation.toStringObject |> Option.defaultValue {|TermName = ""; TermAccessionNumber = ""; TermSourceREF = ""|}  
 
     /// Returns the name of the characteristic as string

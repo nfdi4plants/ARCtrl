@@ -89,7 +89,6 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     ///
     /// `asOntobeePurlUrl`: option to return term accession in Ontobee purl-url format (`http://purl.obolibrary.org/obo/MS_1000121`)
     /// </summary>
-    ///// TODO: Not sure if still needed ~Kevin F. 2024.03.20
     static member toStringObject (oa : OntologyAnnotation, ?asOntobeePurlUrlIfShort: bool) =
         let asOntobeePurlUrlIfShort = Option.defaultValue false asOntobeePurlUrlIfShort
         {|
