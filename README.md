@@ -52,17 +52,20 @@ Currently we provide some documentation in form of markdown files in the `/docs`
 
 #### Local Setup
 
+On windows you can use the `setup.cmd` to run the following steps automatically!
+
 1. Setup dotnet tools
 
    `dotnet tool restore`
 
+
 2. Install NPM dependencies
    
-   `npm install`
+    `npm install`
 
 3. Setup python environment
     
-   `py -m venv .venv`
+    `py -m venv .venv`
 
 4. Install [Poetry](https://python-poetry.org/) and dependencies
 
