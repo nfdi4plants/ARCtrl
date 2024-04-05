@@ -1,6 +1,6 @@
 import os
 from arctrl.arc import ARC
-from Contract import fulfill_write_contract, fulfill_read_contract
+from scripts_python.Contracts import fulfill_write_contract, fulfill_read_contract
 # Create
 
 arc = ARC()

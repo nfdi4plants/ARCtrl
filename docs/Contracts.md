@@ -5,8 +5,9 @@
 - [READ](#read-contracts)
 
 **Code can be found here**
-- [F#](/docs/scripts_fsharp/Contracts.fsx)
-- [JavaScript](/docs/scripts_js/Contracts.js)
+- [F#](./scripts_fsharp/Contracts.fsx)
+- [JavaScript](./scripts_js/Contracts.js)
+- [Python](./scripts_python/Contracts.js)
 
 
 Contracts in ARCtrl are used to delegate *IO operations* to the api consumer to allow interoperability with any environment (.NET, Node, Browser..). Contracts use *Data Transfer Object"s* (DTOs) instead of the ARCtrl types to provide a higher interoperability.
@@ -57,7 +58,6 @@ class Contract(Record):
     DTO: DTO | None
 ```
 
-
 Handling contracts can be generalized in a few functions.
 
 ## WRITE contracts
@@ -69,149 +69,6 @@ Next we need to know how to handle our DTO. In .NET this is implemented as Discr
 
 In both languages we must specify how spreadsheet objects and plain text objects are correctly handled.
 
-```fsharp
-// FSharp
-#r "nuget: FsSpreadsheet.Net"
-#r "nuget: ARCtrl"
-
-open ARCtrl
-open ARCtrl.Contract
-open FsSpreadsheet
-open FsSpreadsheet.Net
-
-/// From ARCtrl.NET
-/// https://github.com/nfdi4plants/ARCtrl.NET/blob/f3eda8e96a3a7791288c1b5975050742c1d803d9/src/ARCtrl.NET/Contract.fs#L24
-let fulfillWriteContract basePath (c : Contract) =
-    let ensureDirectory (filePath : string) =
-        let file = new System.IO.FileInfo(filePath);
-        file.Directory.Create()
-    match c.DTO with
-    | Some (DTO.Spreadsheet wb) ->
-        let path = System.IO.Path.Combine(basePath, c.Path)
-        ensureDirectory path
-        FsWorkbook.toXlsxFile path (wb :?> FsWorkbook)
-    | Some (DTO.Text t) ->
-        let path = System.IO.Path.Combine(basePath, c.Path)
-        ensureDirectory path
-        System.IO.File.WriteAllText(path,t)
-    | None ->
-        let path = System.IO.Path.Combine(basePath, c.Path)
-        ensureDirectory path
-        System.IO.File.Create(path).Close()
-    | _ ->
-        printfn "Contract %s is not an ISA contract" c.Path
-```
-
-```js
-import {Xlsx} from "fsspreadsheet";
-import fs from "fs";
-import path from "path";
-
-export async function fulfillWriteContract (basePath, contract) {
-    function ensureDirectory (filePath) {
-        let dirPath = path.dirname(filePath)
-        if (!fs.existsSync(dirPath)){
-            fs.mkdirSync(dirPath, { recursive: true });
-        }
-    }
-    const p = path.join(basePath,contract.Path)
-    if (contract.Operation = "CREATE") {
-        if (contract.DTO == undefined) {
-            ensureDirectory(p)
-            fs.writeFileSync(p, "")
-        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Study" || contract.DTOType == "ISA_Investigation") {
-            ensureDirectory(p)
-            await Xlsx.toFile(p, contract.DTO)
-            console.log("ISA", p)
-        } else if (contract.DTOType == "PlainText") {
-            ensureDirectory(p)
-            fs.writeFileSync(p, contract.DTO)
-        } else {
-            console.log("Warning: The given contract is not a correct ARC write contract: ", contract)
-        }
-    }
-}
-```
-```python
-import {Xlsx} from "fsspreadsheet";
-import fs from "fs";
-import path from "path";
-
-export async function fulfillWriteContract (basePath, contract) {
-    function ensureDirectory (filePath) {
-        let dirPath = path.dirname(filePath)
-        if (!fs.existsSync(dirPath)){
-            fs.mkdirSync(dirPath, { recursive: true });
-        }
-    }
-    const p = path.join(basePath,contract.Path)
-    if (contract.Operation = "CREATE") {
-        if (contract.DTO == undefined) {
-            ensureDirectory(p)
-            fs.writeFileSync(p, "")
-        } else if (contract.DTOType == "ISA_Assay" || contract.DTOType == "ISA_Study" || contract.DTOType == "ISA_Investigation") {
-            ensureDirectory(p)
-            await Xlsx.toFile(p, contract.DTO)
-            console.log("ISA", p)
-        } else if (contract.DTOType == "PlainText") {
-            ensureDirectory(p)
-            fs.writeFileSync(p, contract.DTO)
-        } else {
-            console.log("Warning: The given contract is not a correct ARC write contract: ", contract)
-        }
-    }
-}
-```
-
-
-
 ## READ contracts
 
 READ contracts follow the same logic, with one difference. ARCtrl will give you READ contracts with None/Null values for the `DTO` field. But with the given `Path` and `DTOType` we can correctly read in the required DTO and set it on the contract. Afterwards, we return it to the correct follow-up api call in ARCtrl (this step is shown in [ARC docs](./ARC.md)).
-
-```fsharp
-// from ARCtrl.NET
-// https://github.com/nfdi4plants/ARCtrl.NET/blob/ba3d2fabe007d9ca2c8e07b62d02ddc5264306d0/src/ARCtrl.NET/Contract.fs#L7
-let fulfillReadContract basePath (c : Contract) =
-    match c.DTOType with
-    | Some DTOType.ISA_Assay 
-    | Some DTOType.ISA_Investigation 
-    | Some DTOType.ISA_Study ->
-        let path = System.IO.Path.Combine(basePath, c.Path)
-        let wb = FsWorkbook.fromXlsxFile path |> box |> DTO.Spreadsheet
-        {c with DTO = Some wb}
-    | Some DTOType.PlainText ->
-        let path: string = System.IO.Path.Combine(basePath, c.Path)
-        let text = System.IO.File.ReadAllText(path) |> DTO.Text
-        {c with DTO = Some text}
-    | _ -> 
-        printfn "Contract %s is not an ISA contract" c.Path 
-        c
-```
-
-```js
-export async function fulfillReadContract (basePath, contract) {
-  async function fulfill() {
-      const normalizedPath = normalizePathSeparators(path.join(basePath, contract.Path))
-      switch (contract.DTOType) {
-          case "ISA_Assay":
-          case "ISA_Study":
-          case "ISA_Investigation":
-              let fswb = await Xlsx.fromXlsxFile(normalizedPath)
-              return fswb
-              break;
-          case "PlainText":
-              let content = fs.readFile(normalizedPath)
-              return content
-              break;
-          default:
-              console.log(`Handling of ${contract.DTOType} in a READ contract is not yet implemented`)
-      }
-  }
-  if (contract.Operation == "READ") {
-      return await fulfill()
-  } else {
-      console.error(`Error (fulfillReadContract): "${contract}" is not a READ contract`)
-  }
-}
-```
