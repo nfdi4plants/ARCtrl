@@ -1,12 +1,6 @@
-import {Xlsx} from "fsspreadsheet";
+import {Xlsx} from "@fslab/fsspreadsheet";
 import fs from "fs";
 import path from "path";
-
-export function normalizePathSeparators (str) {
-  const normalizedPath = path.normalize(str)
-  return normalizedPath.replace(/\\/g, '/');
-}
-
 
 // Write
 

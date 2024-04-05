@@ -1,5 +1,5 @@
 #r "nuget: FsSpreadsheet.Net"
-#r "nuget: ARCtrl"
+#r "nuget: ARCtrl, 2.0.0-alpha.2"
 #load "Contracts.fsx"
 
 // # Create

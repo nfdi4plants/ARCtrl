@@ -5,11 +5,10 @@ from Contract import fulfill_write_contract, fulfill_read_contract
 
 arc = ARC()
 
-
 # Write
 arc_root_path = "C:/Users/Kevin/Desktop/NewTestARCJS"
 
-async def write(arc_path, arc):
+async def write(arc_path, arc: ARC):
     contracts = arc.GetWriteContracts()
     for contract in contracts:
         # from Contracts.js docs
@@ -18,7 +17,7 @@ async def write(arc_path, arc):
 # Read
 
 # Setup
-def normalize_path_separators(path_str):
+def normalize_path_separators(path_str: str):
     normalized_path = os.path.normpath(path_str)
     return normalized_path.replace('\\', '/')
 

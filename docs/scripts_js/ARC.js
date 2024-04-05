@@ -1,6 +1,5 @@
 import {ARC} from "@nfdi4plants/arctrl";
 import {fulfillWriteContract, fulfillReadContract, normalizePathSeparators} from "./Contracts.js";
-import {ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString} from "@nfdi4plants/arctrl/ISA/ISA.Json/ArcTypes/ArcInvestigation.js"
 import fs from "fs";
 import path from "path";
 
@@ -69,7 +68,5 @@ async function read(basePath) {
 // Execution
 
 await read(arcRootPath).then(arc => {
-  // let json = ArcInvestigation_toJsonString(arc.ISA)
-  // console.log(json)
   console.log(arc)
 })

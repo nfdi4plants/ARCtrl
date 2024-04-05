@@ -31,7 +31,7 @@ def fulfill_read_contract (basePath : str, contract : Contract) :
     if contract.Operation == "READ" :
         normalizedPath = os.path.normpath(Path.joinpath(basePath, contract.Path))
         if contract.DTOType == "ISA_Assay" or contract.DTOType == "ISA_Assay" or contract.DTOType == "ISA_Investigation" :        
-            fswb = Xlsx.fromXlsxFile(normalizedPath)
+            fswb = Xlsx.from_xlsx_file(normalizedPath)
             contract.DTO = fswb
         elif contract.DTOType ==  "PlainText" :
             content = Path.read_text(normalizedPath)

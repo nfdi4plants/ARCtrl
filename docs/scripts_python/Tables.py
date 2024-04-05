@@ -10,10 +10,10 @@ my_study = my_investigation.InitStudy("BestStudy")
 growth = my_study.InitTable("Growth")
 
 # Create ontology annotation for "species"
-oa_species = OntologyAnnotation.from_string("species", "GO", "GO:0123456")
+oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
 
 # Create ontology annotation for "chlamy"
-oa_chlamy = OntologyAnnotation.from_string("Chlamy", "NCBI", "NCBI:0123456")
+oa_chlamy = OntologyAnnotation("Chlamy", "NCBI", "NCBI:0123456")
 
 # Add first column to table.
 # This will create an input column with one row cell.
