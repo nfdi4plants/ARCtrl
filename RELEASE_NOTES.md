@@ -1,3 +1,103 @@
+### 2.0.0+66beafa (Released 2024-4-5)
+* Additions:
+    * [[#66beafa](https://github.com/nfdi4plants/ARCtrl/commit/66beafac306e18d56ef2c5edc969e7eb10b4ea2f)] update prerelease mechanism
+    * [[#3a5c89a](https://github.com/nfdi4plants/ARCtrl/commit/3a5c89a543820daa5b8625e81378aed0a417f3e3)] Merge pull request #337 from nfdi4plants/ToStringOverrides
+    * [[#98c5228](https://github.com/nfdi4plants/ARCtrl/commit/98c5228627ceb3718915d1577fa1486e05912c87)] Add ToString overrides for study/investigation
+    * [[#9ebd796](https://github.com/nfdi4plants/ARCtrl/commit/9ebd796e21612839c4ed8af361a3bcd14acf7177)] Merge pull request #336 from nfdi4plants/xlsxcontroller
+    * [[#6b52004](https://github.com/nfdi4plants/ARCtrl/commit/6b520046a71d462b934c869333a4f77c61dfb59e)] Finalize io controller types for fable :sparkles:
+    * [[#0ff28ab](https://github.com/nfdi4plants/ARCtrl/commit/0ff28abb3b1ac4ca51a93e909d3580d8d7a82874)] rmv old code :fire:
+    * [[#a08d8fd](https://github.com/nfdi4plants/ARCtrl/commit/a08d8fdd1d6e497f93fdb638d4711646df5d8eb0)] Merge pull request #335 from nfdi4plants/oa_equality
+    * [[#754cac7](https://github.com/nfdi4plants/ARCtrl/commit/754cac745bf9417d3fbce127960a9966122f2ea7)] Rename to toStringObject
+    * [[#98efaa0](https://github.com/nfdi4plants/ARCtrl/commit/98efaa00137025540a81f4baa896e32ac8480792)] add README.md reference to setup.cmd
+    * [[#d893131](https://github.com/nfdi4plants/ARCtrl/commit/d8931310f6c415f7420aa04d3936db275f034fed)] Simplify OntologyAnnotation hashcode and equality :white_check_mark:
+    * [[#7d6c107](https://github.com/nfdi4plants/ARCtrl/commit/7d6c107728970f12bc0e843ec936379ec091bce2)] Add setup script for windows :construction_worker:
+    * [[#fbe7265](https://github.com/nfdi4plants/ARCtrl/commit/fbe7265522774dbf573d253f4768b5f25143c87b)] Merge pull request #330 from nfdi4plants/arctrl_rework
+    * [[#232dae3](https://github.com/nfdi4plants/ARCtrl/commit/232dae337336ab5a7d66a2a80c6e7865f1fc3d6c)] set test with umlauten pending for python
+    * [[#c15a2e5](https://github.com/nfdi4plants/ARCtrl/commit/c15a2e5198af1476e5d18d8cf5188585806b1592)] Add ro-crate write tests :white_check_mark:
+    * [[#7340910](https://github.com/nfdi4plants/ARCtrl/commit/73409107e1eb2aa81bc46101935b4048b330c89b)] add some more schema validation tests
+    * [[#fc8f63e](https://github.com/nfdi4plants/ARCtrl/commit/fc8f63e7cc7cc622a123d2d57fc86c4ffbae7c32)] add native python tests :white_check_mark:
+    * [[#e3512c7](https://github.com/nfdi4plants/ARCtrl/commit/e3512c743f1fad144c04a97e12d279071e365104)] Make js native tests pass :heavy_check_mark:
+    * [[#8d50567](https://github.com/nfdi4plants/ARCtrl/commit/8d50567789556b5d6f2473b92f65b7e245992bcf)] update github CI
+    * [[#18012b3](https://github.com/nfdi4plants/ARCtrl/commit/18012b3f2d78288d3069cbbfc2544bdca122b378)] rmv leftover folder :fire:
+    * [[#89f976c](https://github.com/nfdi4plants/ARCtrl/commit/89f976c884cbd734e55cbc132402cefcf3ac2d3b)] Finish json (for now :construction:)
+    * [[#5803eb7](https://github.com/nfdi4plants/ARCtrl/commit/5803eb726a7ced573978ecb20db2e743d9536b45)] start reworking tests for js and py
+    * [[#766d46a](https://github.com/nfdi4plants/ARCtrl/commit/766d46a3db5274596571cc8a087edbc3720e5142)] move ARCtrl contract tests to Contract test project
+    * [[#3f35262](https://github.com/nfdi4plants/ARCtrl/commit/3f3526271126d2ddce812633404c3b39c56697e8)] move template json tests to json test project
+    * [[#4fc4a07](https://github.com/nfdi4plants/ARCtrl/commit/4fc4a071f0b435c51efde7a90c5cfe4dbf730c73)] more work on json :construction:
+    * [[#cb5da3a](https://github.com/nfdi4plants/ARCtrl/commit/cb5da3a39c543c752dca92dceaf0f4f7eeed5030)] reduce test spreadsheet metadata matching reduction of parser logic
+    * [[#c885111](https://github.com/nfdi4plants/ARCtrl/commit/c885111fa53bc611fca22e4c7116526ecdfce76e)] More work on json tests :construction:
+    * [[#adac51c](https://github.com/nfdi4plants/ARCtrl/commit/adac51c05d2919293229e0e758c646ccefbb2f13)] Add custom ToString for OntologyAnnotation :art:
+    * [[#c193629](https://github.com/nfdi4plants/ARCtrl/commit/c193629dfff93e42f00c71c02a40ec1595f897fe)] Start working on tests :construction:
+    * [[#5f6c65b](https://github.com/nfdi4plants/ARCtrl/commit/5f6c65be8b50804b2f62b93545c82966719326ea)] distribute template across appropriate projects
+    * [[#8af7487](https://github.com/nfdi4plants/ARCtrl/commit/8af7487057b7451c0e5bc2de5dac9b792dbc4213)] Add fable json import type #324 #285
+    * [[#e3437b2](https://github.com/nfdi4plants/ARCtrl/commit/e3437b282dcdc226402920e62d5e4c96166969e7)] add ARC RO-Crate serialization
+    * [[#4cd6d63](https://github.com/nfdi4plants/ARCtrl/commit/4cd6d638780acc49e4808eb955f94460095f8050)] finish investigation ro-crate
+    * [[#39fe3cf](https://github.com/nfdi4plants/ARCtrl/commit/39fe3cfd2a3e105733dd486c6b988960df6e47bc)] finish moving template json :sparkles:
+    * [[#c25748a](https://github.com/nfdi4plants/ARCtrl/commit/c25748a16ea1a7dbc44548cffee6dd787fe8d0d9)] Finish compressed json logic :sparkles:
+    * [[#04b097b](https://github.com/nfdi4plants/ARCtrl/commit/04b097b675e921841ed26c3a121a8fae60006f49)] Start moving Arc Json logic :construction:
+    * [[#e710c5a](https://github.com/nfdi4plants/ARCtrl/commit/e710c5af2f9ff336174dcdbb2a9ef09fa940e9ff)] rework ARCAssay and ArcStudy ISAJson serialization
+    * [[#437bca3](https://github.com/nfdi4plants/ARCtrl/commit/437bca3f5df1bb9913ae2b829485065c8f363c52)] rework ROCrate process serialization
+    * [[#19b849a](https://github.com/nfdi4plants/ARCtrl/commit/19b849a5c276ce6dd4821de2c289fb82f0aefd68)] Start with component logic rework :construction:
+    * [[#f24259e](https://github.com/nfdi4plants/ARCtrl/commit/f24259e8424df783d163fb279730d914f8472673)] finish up ISA-JSON conversion for process types :sparkles:
+    * [[#a51bfcc](https://github.com/nfdi4plants/ARCtrl/commit/a51bfcc49e3ad66e1abdab7cf92ad5ab0abdd37f)] Finish json table logic :sparkles:
+    * [[#6b670d9](https://github.com/nfdi4plants/ARCtrl/commit/6b670d952cd0711eae4efc6e2f57ef688c0c9b4f)] Finish json for shared types :sparkles:
+    * [[#a29a7f9](https://github.com/nfdi4plants/ARCtrl/commit/a29a7f9fc48bc1b3ad5c627add21a63598982f47)] start reworking arctrl.json process serialization
+    * [[#5150773](https://github.com/nfdi4plants/ARCtrl/commit/5150773b8c311f281b385ad589a9611762415b86)] Start workin on new Json API layer :construction:
+    * [[#f65d414](https://github.com/nfdi4plants/ARCtrl/commit/f65d4141afdfff9ca7d0f07486734df9c5a6afc4)] start reworking ARCtrl.json project
+    * [[#b568074](https://github.com/nfdi4plants/ARCtrl/commit/b568074b6fa381221f9646e8763e52e4a7473208)] rework ARCtrl.Spreadsheet according to datamodel changes
+    * [[#2cb9db8](https://github.com/nfdi4plants/ARCtrl/commit/2cb9db8e84e42866330f98d35f4f149b2c50fd3a)] rework ARCtrl.Core types to improve transpiled javascript
+    * [[#b282dc3](https://github.com/nfdi4plants/ARCtrl/commit/b282dc3ed6c097adce071a85bde4163ba589170c)] restructure ARCtrl.Core (former ARCtrl.ISA) project
+    * [[#90520bd](https://github.com/nfdi4plants/ARCtrl/commit/90520bd64f8e0d5513cfca3d692dd439259529a4)] restructure project
+    * [[#ceefce8](https://github.com/nfdi4plants/ARCtrl/commit/ceefce8a3765a4e6a183452169c69c03b2045895)] move all filesystem information into filesystem project
+    * [[#4b2b78f](https://github.com/nfdi4plants/ARCtrl/commit/4b2b78fc8b3ea20faf432f9de5f1d9bf0069bd4b)] move UIHelper function into compositecell
+    * [[#dd69b1f](https://github.com/nfdi4plants/ARCtrl/commit/dd69b1fb2d8a207f128a0b96fd12e849bc2452e3)] add addtionalType to ProcessParameterValue
+    * [[#3bf2a83](https://github.com/nfdi4plants/ARCtrl/commit/3bf2a837e6a363d698052c7d93e5045354f73c90)] WIP :construction:
+    * [[#f7beae7](https://github.com/nfdi4plants/ARCtrl/commit/f7beae760ef8e3309ac29a03908072ab60bbf84c)] Updated tests for jsonld readers. Investigation test still wip.
+    * [[#d8c4d0a](https://github.com/nfdi4plants/ARCtrl/commit/d8c4d0aa3a4e87a9bb5d07617b10e212b7d3150b)] adapted json export tests for new ro-crate export (Investigation still open)
+    * [[#d1cbba9](https://github.com/nfdi4plants/ARCtrl/commit/d1cbba9570855cd25eea2ac0901683892b0b33b9)] new ro-crate export and context files
+    * [[#280d3b8](https://github.com/nfdi4plants/ARCtrl/commit/280d3b834cc8acca8deaf744c719a91de4ab2ab2)] WIP :construction:
+    * [[#9983642](https://github.com/nfdi4plants/ARCtrl/commit/9983642fe231eedfa939e58fa973a80afaa02025)] WIP :construction:
+    * [[#e7b0015](https://github.com/nfdi4plants/ARCtrl/commit/e7b00158f5e10c0ece2d654e61ab929219db9fc7)] Updated tests for jsonld readers. Investigation test still wip.
+    * [[#1cc83f8](https://github.com/nfdi4plants/ARCtrl/commit/1cc83f805a039a7f51de26f62da80c94aaad702b)] adapted json export tests for new ro-crate export (Investigation still open)
+    * [[#9b0d7b7](https://github.com/nfdi4plants/ARCtrl/commit/9b0d7b7040e23c49e55f5e10b4e0ab2cd16d6914)] new ro-crate export and context files
+    * [[#0fb24ee](https://github.com/nfdi4plants/ARCtrl/commit/0fb24ee8c7ab2f9730059a99c7be6605bbc2f59c)] Merge pull request #325 from nfdi4plants/performanceReport
+    * [[#faaba01](https://github.com/nfdi4plants/ARCtrl/commit/faaba01fb783797cbb459e541577cbe35636a883)] several minor adjustments according to change request
+    * [[#9c32a3d](https://github.com/nfdi4plants/ARCtrl/commit/9c32a3df12f9439217090ad1568d8479ae5170d0)] update readme with performance report and python links
+    * [[#9e79685](https://github.com/nfdi4plants/ARCtrl/commit/9e796856e9b374bc13154457b74639e7a3cf2953)] move performance report into speedtest project
+    * [[#27aac66](https://github.com/nfdi4plants/ARCtrl/commit/27aac66eea741cf2554198d063e217d333366068)] move performance report build targets and create first reports
+    * [[#41fef58](https://github.com/nfdi4plants/ARCtrl/commit/41fef587314b4c4c1ca2fd4a73e9b0d2fa45985e)] first draft of performanceReport target
+    * [[#d64e708](https://github.com/nfdi4plants/ARCtrl/commit/d64e7087e962f1ca910fbf96d6e080d4f3da3e3e)] Merge pull request #323 from nfdi4plants/update_js_docs
+    * [[#1cd68ea](https://github.com/nfdi4plants/ARCtrl/commit/1cd68ea2650a4687ce378915e15cdf7405ab9834)] Update
+    * [[#60d575e](https://github.com/nfdi4plants/ARCtrl/commit/60d575e78d6a8c8e85fbf601fe700f5e59a1dfab)] Merge pull request #320 from nfdi4plants/python_integration
+    * [[#0aefdb2](https://github.com/nfdi4plants/ARCtrl/commit/0aefdb2341ebf3bba8560714194e6182a81256d0)] update documentation and add python docs
+    * [[#abd3d89](https://github.com/nfdi4plants/ARCtrl/commit/abd3d890fb58a0962d4e7d841df7440d9a4bed90)] Merge pull request #317 from nfdi4plants/python_integration
+    * [[#b6e2eca](https://github.com/nfdi4plants/ARCtrl/commit/b6e2ecab5a0a3630e1dd24ae36d34be79ad21d6d)] small change to semver in npm
+* Deletions:
+    * [[#f055617](https://github.com/nfdi4plants/ARCtrl/commit/f05561709a0a8d1da752d54d5a997db225a3384e)] remove erroneous exe output type from testingutils
+* Bugfixes:
+    * [[#e444944](https://github.com/nfdi4plants/ARCtrl/commit/e444944b371d6472971589f2980b0fd487f3652c)] fix non utf8 json output #334
+    * [[#025734d](https://github.com/nfdi4plants/ARCtrl/commit/025734d63e0319d74dbd4edbe6433e61e9dd3fca)] rmv code circumventing fable python bug :fire:
+    * [[#9f570b3](https://github.com/nfdi4plants/ARCtrl/commit/9f570b3d6616273f34e16eb2346959c5ac78280e)] fix OntologyAnnotation Hashcodes :bug:
+    * [[#b84919f](https://github.com/nfdi4plants/ARCtrl/commit/b84919ff37c1e8f31f648579ac7f5f4c28a5cfd7)] Fix json tests :heavy_check_mark:
+    * [[#d68348e](https://github.com/nfdi4plants/ARCtrl/commit/d68348ed5d5356cc1f1eddd3f680854ef5065135)] hotfix js schema validation in tests
+    * [[#2a999e8](https://github.com/nfdi4plants/ARCtrl/commit/2a999e89a1444e355cc333b14256e126c14f6fa4)] Fix all warnings by burning unused fable reflection helpers :fire:
+    * [[#562ce65](https://github.com/nfdi4plants/ARCtrl/commit/562ce659e61703bdfbbbbe7147336c3623425152)] Fix test tasks still using mocha
+    * [[#b15a377](https://github.com/nfdi4plants/ARCtrl/commit/b15a377fc4fb4fe9fe90768be7d089b121418b03)] fix json parsing DateTime issues
+    * [[#d5eae8d](https://github.com/nfdi4plants/ARCtrl/commit/d5eae8d8081fb4d8bf1a8c0f4bc6efcaaa52cc67)] several python test fixes
+    * [[#451ef11](https://github.com/nfdi4plants/ARCtrl/commit/451ef1104a0882de4f49ef4ff118d66bfb895d7e)] move and fix template hashcode and equality tests
+    * [[#9da88fe](https://github.com/nfdi4plants/ARCtrl/commit/9da88feffa8a7b736d5f171e1b003ef7f0e31fa8)] Template fixes against json and core tests
+    * [[#97c433e](https://github.com/nfdi4plants/ARCtrl/commit/97c433e021baa3665dc2cbb655731d5850d0029d)] move and fix spreadsheet Template tests
+    * [[#fbaa958](https://github.com/nfdi4plants/ARCtrl/commit/fbaa958b364970968bafca9c6bb9beed469f28a6)] fix component name conversion
+    * [[#6c9123e](https://github.com/nfdi4plants/ARCtrl/commit/6c9123ed0821f43eef51fb6ec7ad6d36985456b5)] fix arctrl.core tests and equality of reworked objects
+    * [[#da18342](https://github.com/nfdi4plants/ARCtrl/commit/da183420961acc63543d02fd732d1b2875095765)] fix rocrate sample and protocol handling
+    * [[#4b5af05](https://github.com/nfdi4plants/ARCtrl/commit/4b5af05e08e1e4e96249b1b3f87fea6ca02d4f8b)] fix rocrate assay serialization
+    * [[#cd69fc3](https://github.com/nfdi4plants/ARCtrl/commit/cd69fc3a5c83174b1f716eba486ce1361ec1d773)] fix wrong encoder/decoder calls :sparkles:
+    * [[#e053cd9](https://github.com/nfdi4plants/ARCtrl/commit/e053cd9a7a6a7717d991e8975ff9d120f446920a)] fix arctrl.core tests
+    * [[#996ae0e](https://github.com/nfdi4plants/ARCtrl/commit/996ae0e9819e3a93edbd4f4e7cc256d08bce6836)] fix multiple issues with ro-crate json encoding :bug:
+    * [[#5b0adba](https://github.com/nfdi4plants/ARCtrl/commit/5b0adbac1bd278b72ca374057dd0066238bd3d0d)] Added fromJsonldString for all ISA-JSON types. Also fixed some bugs.
+    * [[#2c74476](https://github.com/nfdi4plants/ARCtrl/commit/2c74476bad430d8e4865744b8149a707737d3c1e)] fix build chain for linux
+    * [[#295af00](https://github.com/nfdi4plants/ARCtrl/commit/295af00f9f513d6c779e42137ce141d69deb4220)] fix tests :bug:
+
 ### 1.2.0+19d850e (Released 2024-3-8)
 * Additions:
     * Added Python compatability

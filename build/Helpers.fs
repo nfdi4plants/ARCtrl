@@ -26,3 +26,36 @@ let runOrDefault defaultTarget args =
     with e ->
         printfn "%A" e
         1
+
+type PreReleaseFlag = 
+    | Alpha
+    | Beta
+    | ReleaseCandidate
+
+    static member fromInput (input: string) =
+        match input with
+        | "a" -> Alpha
+        | "b" -> Beta
+        | "rc" -> ReleaseCandidate
+        | _ -> failwith "Invalid input"
+
+    static member toNugetTag (semVer : SemVerInfo) (flag: PreReleaseFlag) (number : int) =
+        let suffix = 
+            match flag with
+            | Alpha -> $"alpha.{number}"
+            | Beta -> $"beta.{number}"
+            | ReleaseCandidate -> $"rc.{number}"
+        sprintf "%i.%i.%i-%s" semVer.Major semVer.Minor semVer.Patch suffix
+
+
+    static member toNPMTag (semVer : SemVerInfo) (flag: PreReleaseFlag) (number : int) =
+        PreReleaseFlag.toNugetTag semVer flag number
+
+    static member toPyPITag (semVer : SemVerInfo) (tag: PreReleaseFlag) (number : int) =
+        let suffix = 
+            match tag with
+            | Alpha -> $"a{number}"
+            | Beta -> $"b{number}"
+            | ReleaseCandidate -> $"rc{number}"
+        sprintf "%i.%i.%i%s" semVer.Major semVer.Minor semVer.Patch suffix
+
