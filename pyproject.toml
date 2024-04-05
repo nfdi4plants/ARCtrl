@@ -5,6 +5,8 @@ description = "Library for management of Annotated Research Contexts (ARCs) usin
 authors = ["Heinrich Lukas Weil <weil@rptu.de>", "Kevin Frey <freymaurer@gmx.de>"]
 maintainers = ["Florian Wetzels"]
 readme = "README.md"
+repository = "https://github.com/nfdi4plants/ARCtrl"
+keywords = ["arc", "annotated research context", "isa", "research data", "multi platform"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
