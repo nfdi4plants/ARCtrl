@@ -13,8 +13,6 @@
   </ItemGroup>
 	<ItemGroup>
 		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-	</ItemGroup>
-  <ItemGroup>
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
     <ItemGroup>

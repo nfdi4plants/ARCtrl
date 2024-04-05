@@ -15,9 +15,6 @@
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
   <ItemGroup>
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="WebRequest\WebRequest.Node.fs" />
     <Compile Include="WebRequest\WebRequest.Py.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
@@ -37,6 +34,10 @@
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
     <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
     <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <PropertyGroup>
     <NpmDependencies>
