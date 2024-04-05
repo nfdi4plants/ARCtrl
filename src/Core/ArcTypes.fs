@@ -998,6 +998,34 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     /// <param name="other">The other ArcStudy to test for reference.</param>
     member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
 
+    // Use this for better print debugging and better unit test output
+    override this.ToString() =
+        sprintf 
+            """ArcStudy {
+    Identifier = %A,
+    Title = %A,
+    Description = %A,
+    SubmissionDate = %A,
+    PublicReleaseDate = %A,
+    Publications = %A,
+    Contacts = %A,
+    StudyDesignDescriptors = %A,
+    Tables = %A,
+    RegisteredAssayIdentifiers = %A,
+    Comments = %A,
+}"""
+            this.Identifier
+            this.Title
+            this.Description
+            this.SubmissionDate
+            this.PublicReleaseDate
+            this.Publications
+            this.Contacts
+            this.StudyDesignDescriptors
+            this.Tables
+            this.RegisteredAssayIdentifiers
+            this.Comments
+
     // custom check
     override this.Equals other =
         match other with
@@ -1744,7 +1772,39 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     /// If true, updating one will update the other due to mutability.
     /// </summary>
     /// <param name="other">The other ArcInvestigation to test for reference.</param>
-    member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
+    member this.ReferenceEquals (other: ArcInvestigation) = System.Object.ReferenceEquals(this,other)
+
+    // Use this for better print debugging and better unit test output
+    override this.ToString() =
+        sprintf 
+            """ArcStudy {
+    Identifier = %A,
+    Title = %A,
+    Description = %A,
+    SubmissionDate = %A,
+    PublicReleaseDate = %A,
+    OntologySourceReferences = %A,
+    Publications = %A,
+    Contacts = %A,
+    Assays = %A,
+    Studies = %A,
+    RegisteredStudyIdentifiers = %A,
+    Comments = %A,
+    Remarks = %A,
+}"""
+            this.Identifier
+            this.Title
+            this.Description
+            this.SubmissionDate
+            this.PublicReleaseDate
+            this.OntologySourceReferences
+            this.Publications
+            this.Contacts
+            this.Assays
+            this.Studies
+            this.RegisteredStudyIdentifiers
+            this.Comments
+            this.Remarks
 
     // custom check
     override this.Equals other =
