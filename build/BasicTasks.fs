@@ -4,6 +4,7 @@ open BlackFox.Fake
 open Fake.IO
 open Fake.DotNet
 open Fake.IO.Globbing.Operators
+open Helpers
 
 open ProjectInfo
 
@@ -134,11 +135,15 @@ module Helper =
         |> Proc.Parallel.run
         |> ignore
 
+
+
 let setPrereleaseTag = BuildTask.create "SetPrereleaseTag" [] {
-    printfn "Please enter pre-release package suffix"
-    let suffix = System.Console.ReadLine()
-    prereleaseSuffix <- suffix
-    prereleaseTag <- (sprintf "%i.%i.%i-%s" release.SemVer.Major release.SemVer.Minor release.SemVer.Patch suffix)
+    printfn "Please enter pre-release package suffix option: (a/b/rc)"
+    let suffixTag = System.Console.ReadLine() |> PreReleaseFlag.fromInput
+    printfn "Plrease enter pre-release package version number"
+    let suffixNumber = System.Console.ReadLine() |> int
+    prereleaseSuffix <- suffixTag
+    prereleaseSuffixNumber <- suffixNumber
     isPrerelease <- true
 }
 

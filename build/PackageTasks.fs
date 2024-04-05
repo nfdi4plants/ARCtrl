@@ -3,6 +3,8 @@
 open MessagePrompts
 open BasicTasks
 open TestTasks
+open ProjectInfo
+open Helpers
 
 open BlackFox.Fake
 open Fake.Core
@@ -41,7 +43,8 @@ let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
 }
 
 let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleaseTag; clean; build; runTests] {
-    BundleDotNet.bundle ProjectInfo.prereleaseTag (Some ProjectInfo.prereleaseTag)
+    let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+    BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
 }
 
 module BundleJs =
@@ -69,7 +72,8 @@ let packJS = BuildTask.create "PackJS" [clean; build; runTests] {
 }
 
 let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; runTests] {
-    BundleJs.bundle ProjectInfo.prereleaseTag
+    let prereleaseTag = PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+    BundleJs.bundle prereleaseTag
 }
 
 module BundlePy =
@@ -98,13 +102,12 @@ let packPy = BuildTask.create "PackPy" [clean; build; runTests] {
 
 }
 
-//let packPyPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; runTests] {
-//    if promptYesNo (sprintf "[NPM] package tag will be %s OK?" ProjectInfo.prereleaseTag ) then
-//        BundleJs.bundle ProjectInfo.prereleaseTag
-//    else failwith "aborted"
-//    }
+let packPyPrerelease = BuildTask.create "PackPyPrerelease" [setPrereleaseTag; clean; build; runTests] {
+    let prereleaseTag = PreReleaseFlag.toPyPITag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+    BundlePy.bundle prereleaseTag
+    }
 
 
 let pack = BuildTask.createEmpty "Pack" [packDotNet; packJS; packPy]
 
-let packPrerelease = BuildTask.createEmpty "PackPrerelease" [packDotNetPrerelease;packJSPrerelease]
+let packPrerelease = BuildTask.createEmpty "PackPrerelease" [packDotNetPrerelease;packJSPrerelease;packPyPrerelease]

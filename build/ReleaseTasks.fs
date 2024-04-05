@@ -5,6 +5,7 @@ open ProjectInfo
 open BasicTasks
 open TestTasks
 open PackageTasks
+open Helpers 
 
 open BlackFox.Fake
 open Fake.Core
@@ -23,6 +24,8 @@ let createTag = BuildTask.create "CreateTag" [clean; build; runTests; packDotNet
 }
 
 let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseTag; clean; build; runTests; packDotNetPrerelease] {
+    let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+
     if promptYesNo (sprintf "tagging branch with %s OK?" prereleaseTag ) then 
         Git.Branches.tag "" prereleaseTag
         Git.Branches.pushTag "" projectRepo prereleaseTag
@@ -46,6 +49,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
 let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; runTests; packDotNetPrerelease] {
     let targets = (!! (sprintf "%s/*.*pkg" netPkgDir ))
     for target in targets do printfn "%A" target
+    let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
     let msg = sprintf "[NUGET] release package with version %s?" prereleaseTag 
     if promptYesNo msg then
         let source = "https://api.nuget.org/v3/index.json"
@@ -77,6 +81,7 @@ let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
     printfn "%A" target
+    let prereleaseTag = PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
     let msg = sprintf "[NPM] release package with version %s?" prereleaseTag 
     if promptYesNo msg then
         let apikey =  Environment.environVarOrNone "NPM_KEY"    
@@ -88,7 +93,7 @@ let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build
     else failwith "aborted"
 }
 
-let publishPyPi = BuildTask.create "PublishPyPi" [packPy] {
+let publishPyPi = BuildTask.create "PublishPyPi" [clean; build; runTests; packPy] {
     let msg = sprintf "[PyPi] release package with version %s?" stableVersionTag
     if promptYesNo msg then
         let apikey = Environment.environVarOrNone "PYPI_KEY"
@@ -97,5 +102,18 @@ let publishPyPi = BuildTask.create "PublishPyPi" [packPy] {
             run python $"-m poetry config pypi-token.pypi {key}" ProjectInfo.pyPkgDir
         | None -> ()
         run python "-m poetry publish" ProjectInfo.pyPkgDir
+    else failwith "aborted"
+}
+
+let publishPyPiPrerelease = BuildTask.create "PublishPyPiPrerelease" [clean; build; runTests; packPyPrerelease] {
+    let prereleaseTag = PreReleaseFlag.toPyPITag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+    let msg = sprintf "[PyPi] release package with version %s?" prereleaseTag
+    if promptYesNo msg then
+        let apikey = Environment.environVarOrNone "PYPI_KEY"
+        match apikey with
+        | Some key -> 
+            run python $"-m poetry config pypi-token.pypi {key}" ProjectInfo.pyPkgDir
+        | None -> ()
+        run python "-m poetry publish --build" ProjectInfo.pyPkgDir
     else failwith "aborted"
 }

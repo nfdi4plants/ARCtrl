@@ -1,6 +1,7 @@
 ﻿module ProjectInfo
 
 open Fake.Core
+open Helpers
 
 let project = "ARCtrl"
 
@@ -50,8 +51,8 @@ let stableVersion = SemVer.parse release.NugetVersion
 
 let stableVersionTag = (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
 
-let mutable prereleaseSuffix = ""
+let mutable prereleaseSuffix = PreReleaseFlag.Alpha
 
-let mutable prereleaseTag = ""
+let mutable prereleaseSuffixNumber = 0
 
 let mutable isPrerelease = false
