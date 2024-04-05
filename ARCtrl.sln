@@ -67,6 +67,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Python", "Python", "{501F6D
 	ProjectSection(SolutionItems) = preProject
 		tests\Python\test_index.py = tests\Python\test_index.py
 		tests\Python\test_JsonController.py = tests\Python\test_JsonController.py
+		tests\Python\test_OntologyAnnotation.py = tests\Python\test_OntologyAnnotation.py
 		tests\Python\test_XlsxController.py = tests\Python\test_XlsxController.py
 	EndProjectSection
 EndProject
