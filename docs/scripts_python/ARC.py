@@ -1,25 +1,27 @@
 import os
 from arctrl.arc import ARC
-from scripts_python.Contracts import fulfill_write_contract, fulfill_read_contract
+from Contracts import fulfill_write_contract, fulfill_read_contract
 # Create
 
 arc = ARC()
 
 # Write
-arc_root_path = "C:/Users/Kevin/Desktop/NewTestARCJS"
+arc_root_path = "./docs/scripts_python/testArc"
 
-async def write(arc_path, arc: ARC):
+def write(arc_path, arc: ARC):
     contracts = arc.GetWriteContracts()
     for contract in contracts:
         # from Contracts.js docs
-        await fulfill_write_contract(arc_path, contract)
+        fulfill_write_contract(arc_path, contract)
+
+# write(arc_root_path, arc)
 
 # Read
 
 # Setup
 def normalize_path_separators(path_str: str):
     normalized_path = os.path.normpath(path_str)
-    return normalized_path.replace('\\', '/')
+    return normalized_path.replace('//', '/')
 
 def get_all_file_paths(base_path):
     files_list = []
@@ -41,9 +43,10 @@ def read(base_path):
     all_file_paths = get_all_file_paths(base_path)
     arc = ARC.from_file_paths(all_file_paths)
     read_contracts = arc.GetReadContracts()
-    print(read_contracts)
-    fcontracts = (fulfill_read_contract(base_path, contract) for contract in read_contracts)
-    for contract, content in zip(read_contracts, fcontracts):
-        contract.DTO = content
-    arc.SetISAFromContracts(fcontracts)
+    fcontracts = [fulfill_read_contract(base_path, contract) for contract in read_contracts]
+    arc.SetISAFromContracts(read_contracts)
     return arc
+
+# arc = read(arc_root_path)
+
+# print(arc)

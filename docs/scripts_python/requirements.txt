@@ -1,2 +1,2 @@
-fsspreadsheet
+fsspreadsheet==6.1.1
 arctrl==2.0.0a2
