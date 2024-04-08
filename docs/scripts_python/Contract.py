@@ -15,7 +15,7 @@ def fulfill_write_contract (basePath : str, contract : Contract) :
         if contract.DTO == None :
             ensure_directory(p)
             Path.write_text(p, "")
-        if contract.DTOType.name in ["ISA_Assay", "ISA_Study", "ISA_Investigation"] :    
+        elif contract.DTOType.name in ["ISA_Assay", "ISA_Study", "ISA_Investigation"] :    
             ensure_directory(p)
             Xlsx.to_file(p, contract.DTO)
         elif contract.DTOType == "PlainText" :
