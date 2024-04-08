@@ -15,7 +15,7 @@ def fulfill_write_contract (basePath : str, contract : Contract) :
         if contract.DTO == None :
             ensure_directory(p)
             Path.write_text(p, "")
-        elif contract.DTOType == "ISA_Assay" or contract.DTOType == "ISA_Assay" or contract.DTOType == "ISA_Investigation" :
+        if contract.DTOType.name in ["ISA_Assay", "ISA_Study", "ISA_Investigation"] :    
             ensure_directory(p)
             Xlsx.to_file(p, contract.DTO)
         elif contract.DTOType == "PlainText" :
@@ -29,8 +29,8 @@ def fulfill_write_contract (basePath : str, contract : Contract) :
 
 def fulfill_read_contract (basePath : str, contract : Contract) :
     if contract.Operation == "READ" :
-        normalizedPath = os.path.normpath(Path.joinpath(basePath, contract.Path))
-        if contract.DTOType == "ISA_Assay" or contract.DTOType == "ISA_Assay" or contract.DTOType == "ISA_Investigation" :        
+        normalizedPath = os.path.normpath(Path(basePath).joinpath(contract.Path))
+        if contract.DTOType.name in ["ISA_Assay", "ISA_Study", "ISA_Investigation"] :        
             fswb = Xlsx.fromXlsxFile(normalizedPath)
             contract.DTO = fswb
         elif contract.DTOType ==  "PlainText" :
