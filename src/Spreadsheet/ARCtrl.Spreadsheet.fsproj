@@ -29,7 +29,7 @@
     <Compile Include="Template.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="5.1.3" />
+    <PackageReference Include="FsSpreadsheet" Version="6.1.2" />
   </ItemGroup>
   <ItemGroup>
   	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />

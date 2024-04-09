@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Logging.fs" />
+    <Compile Include="Path.fs" />
+    <Compile Include="Contract.fs" />
+    <Compile Include="GitHelper.fs" />
+    <Compile Include="Workflow.fs" />
+    <Compile Include="Run.fs" />
+    <Compile Include="Assay.fs" />
+    <Compile Include="Study.fs" />
+    <Compile Include="Investigation.fs" />
+    <Compile Include="Arc.fs" />
+    <Compile Include="Converter.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<PackageReference Include="FsSpreadsheet.Net" Version="6.1.2" />
+    <PackageReference Include="JsonDSL" Version="0.0.5" />
+    <PackageReference Include="LitXml" Version="0.1.0" />
+    <PackageReference Include="NLog" Version="5.1.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ARCtrl\ARCtrl.fsproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+  	<Authors>nfdi4plants, Lukas Weil</Authors>
+  	<Description>Library for easy handling of ARC folders and files with file access in .NET.</Description>
+  	<PackageLicenseExpression>MIT</PackageLicenseExpression>
+  	<!--<PackageProjectUrl>https://fslab.org/docs-template/</PackageProjectUrl>-->
+  	<PackageTags>F# FSharp dotnet .Net bioinformatics biology datascience metadata investigation study assay ISA XLSX ARC IO ARCtrl</PackageTags>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl.NET</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl.NET</RepositoryUrl>
+  	<RepositoryType>git</RepositoryType>
+ </PropertyGroup>
+</Project>
