@@ -4,7 +4,6 @@
 - [API Design](#api-design)
 - [Top level overview](#top-level-overview)
 - [Stack](#stack)
-- [Libraries](#libraries)
 - [Design choices](#design-choices)
   - [Parsing priorities in unitized cvParam columns from table files](#parsing-priorities-in-unitized-cvparam-columns-from-table-files)
   - [Fable compatibility as top priority](#fable-compatibility-as-top-priority)

@@ -1,14 +1,9 @@
 # ArcInvestigation
 
 **Table of contents**
+- [ArcInvestigation](#arcinvestigation)
 - [Fields](#fields)
 - [Comments](#comments)
-- [IO](#io)
-  - [Xlsx](#xlsx)
-    - [Write](#write-xlsx)
-  - [Json](#json)
-    - [Write](#write-json)
-    - [Read](#read-json)
 
 **Code can be found here**
 - [F#](./scripts_fsharp/ArcInvestigation.fsx)

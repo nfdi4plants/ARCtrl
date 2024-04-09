@@ -1,7 +1,9 @@
 # Getting Started
 
-- [Setup - .NET](#setup---net)
-- [Setup - JavaScript](#setup---javascript)
+- [Getting Started](#getting-started)
+  - [Setup - .NET](#setup---net)
+  - [Setup - JavaScript](#setup---javascript)
+  - [Setup - Python](#setup---python)
 
 ## Setup - .NET
 
