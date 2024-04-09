@@ -4,7 +4,6 @@
 - [API Design](#api-design)
 - [Top level overview](#top-level-overview)
 - [Stack](#stack)
-- [Libraries](#libraries)
 - [Design choices](#design-choices)
   - [Parsing priorities in unitized cvParam columns from table files](#parsing-priorities-in-unitized-cvparam-columns-from-table-files)
   - [Fable compatibility as top priority](#fable-compatibility-as-top-priority)
@@ -198,19 +197,22 @@ Besides the data transfer object, the contract also contains the path where the 
 
   participant Filesystem
   participant Client
-  participant ARCAPI
-  
-  Note over Client,ARCAPI: API.getReadContracts
-  Client->>ARCAPI: filepaths
-  ARCAPI->>Client: contracts
-  
+  participant ARCtrl
+
+  Note over Client,ARCtrl: ARC.fromFilePaths
+  Client->>ARCtrl: filepaths
+  ARCtrl->>Client: ARC
+
+  Note over Client,ARCtrl: ARC.GetReadContracts
+  ARCtrl->>Client: contracts
+
   Note over Client,Filesystem: File.read
   Client->>Filesystem: filepath
   Filesystem->>Client: DTO
-  
-  Note over Client,ARCAPI: API.createARCfromContracts
-  Client->>ARCAPI: fullfilled Contracts
-  ARCAPI->>Client: ARC datamodel
+
+  Note over Client,ARCtrl: ARC.SetISAFromContracts
+  Client->>ARCtrl: fullfilled Contracts
+  ARCtrl->>Client: ARC datamodel
   ```
   
   Fullfilling a READ contract means to read the file in the specified path   and filling the contract with the resulting DTO.

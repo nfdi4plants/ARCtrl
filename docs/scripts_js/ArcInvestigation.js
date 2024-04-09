@@ -1,16 +1,13 @@
-import { ArcInvestigation, Comment$ as Comment} from "@nfdi4plants/arctrl"
+import { ArcInvestigation, Comment$ as Comment, XlsxController, JsonController} from "@nfdi4plants/arctrl"
 // Import Spreadsheet to XLSX reader/writer
 import {Xlsx} from "@fslab/fsspreadsheet";
-// Import ARCtrl Investigation to Spreadsheet transformation
-import {toFsWorkbook, fromFsWorkbook} from "@nfdi4plants/arctrl/ISA/ISA.Spreadsheet/ArcInvestigation.js"
-import {ArcInvestigation_toJsonString, ArcInvestigation_fromJsonString} from "@nfdi4plants/arctrl/ISA/ISA.Json/ArcTypes/ArcInvestigation.js"
 
 // # Comments
 
 const investigation_comments = ArcInvestigation.init("My Investigation")
 
-const newComment = Comment.create("The Id", "The Name", "The Value")
-const newComment2 = Comment.create("My other ID", "My other Name", "My other Value")
+const newComment = new Comment("The Name", "The Value")
+const newComment2 = new Comment("My other Name", "My other Value")
 
 investigation_comments.Comments.push(newComment)
 investigation_comments.Comments.push(newComment2)
@@ -21,7 +18,9 @@ console.log(investigation_comments)
 
 // ## XLSX - Write
 
-let fswb = toFsWorkbook(investigation_comments)
+let fswb = XlsxController.Investigation.toFsWorkbook(investigation_comments)
+
+console.log(fswb)
 
 // Xlsx.toFile("test.isa.investigation.xlsx", fswb)
 
@@ -29,7 +28,7 @@ let fswb = toFsWorkbook(investigation_comments)
 
 const investigation = ArcInvestigation.init("My Investigation")
 
-const json = ArcInvestigation_toJsonString(investigation)
+const json = JsonController.Investigation.toJsonString(investigation)
 
 console.log(json)
 
@@ -37,6 +36,6 @@ console.log(json)
 
 const jsonString = json
 
-const investigation_2 = ArcInvestigation_fromJsonString(jsonString)
+const investigation_2 = JsonController.Investigation.fromJsonString(jsonString)
 
 console.log(investigation_2.Equals(investigation))

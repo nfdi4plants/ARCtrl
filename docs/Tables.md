@@ -3,6 +3,7 @@
 🔗 The script files for this documentation can be found here:
 - [JavaScript](./scripts_js/Tables.js)
 - [F#](./scripts_fsharp/Tables.fsx)
+- [Python](./scripts_python/Tables.py)
 
 The Tables shown in xlsx files in ISA files are modelled in ARCtrl as `ArcTable` object. These objects are assigned as `ArcTables` interface in both `ArcAssay` and `ArcStudy`.
 

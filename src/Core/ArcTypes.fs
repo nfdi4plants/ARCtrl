@@ -1777,7 +1777,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     // Use this for better print debugging and better unit test output
     override this.ToString() =
         sprintf 
-            """ArcStudy {
+            """ArcInvestigation {
     Identifier = %A,
     Title = %A,
     Description = %A,

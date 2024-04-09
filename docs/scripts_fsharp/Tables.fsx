@@ -1,7 +1,7 @@
 #r "nuget: FsSpreadsheet.Net"
-#r "nuget: ARCtrl"
+#r "nuget: ARCtrl, 2.0.0-alpha.2"
 
-open ARCtrl.ISA
+open ARCtrl
 
 // create investigation
 let myInvestigation = ArcInvestigation("BestInvestigation") 
@@ -12,12 +12,12 @@ let growth = myStudy.InitTable("Growth")
 
 // create ontology annotation for "species"
 let oa_species =
-    OntologyAnnotation.fromString(
+    OntologyAnnotation(
         "species", "GO", "GO:0123456"
     )
 // create ontology annotation for "chlamy"
 let oa_chlamy = 
-    OntologyAnnotation.fromString(
+    OntologyAnnotation(
         "Chlamy", "NCBI", "NCBI:0123456"
     )
 
