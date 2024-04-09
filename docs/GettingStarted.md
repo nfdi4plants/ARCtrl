@@ -93,8 +93,8 @@ You can now reference ARCtrl in any `.py` file and run it with `py path/to/Any.p
 Verify correct setup by creating `ARCTest.py` file with the content from below in the same folder, which contains your `requirements.txt`. Then run `py ./ArcTest.py`. This will print `<class 'arctrl.arc.ARC'>` into the console.
 
 ```python
-// ARCTest.py
+# ARCTest.py
 from arctrl.arctrl import ARC;
 
-print(ARC) // <class 'arctrl.arc.ARC'>
+print(ARC) # <class 'arctrl.arc.ARC'>
 ```
