@@ -9,12 +9,12 @@ const growth = myStudy.InitTable("Growth")
 
 // create ontology annotation for "species"
 const oa_species =
-  OntologyAnnotation.fromString(
+  new OntologyAnnotation(
     "species", "GO", "GO:0123456"
   )
 // create ontology annotation for "chlamy"
 const oa_chlamy =
-  OntologyAnnotation.fromString(
+  new OntologyAnnotation(
     "Chlamy", "NCBI", "NCBI:0123456"
   );
 
@@ -23,7 +23,7 @@ const oa_chlamy =
 // in xlsx this will be exactly 1 column.
 // Syntax on CompositeHeader, IOType and even CompositeCell will soon improve!
 growth.AddColumn(
-  CompositeHeader.input(IOType.source),
+  CompositeHeader.input(IOType.source()),
   [CompositeCell.createFreeText("Input1")]
 );
 

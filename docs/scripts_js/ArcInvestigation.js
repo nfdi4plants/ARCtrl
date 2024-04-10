@@ -1,6 +1,4 @@
 import { ArcInvestigation, Comment$ as Comment, XlsxController, JsonController} from "@nfdi4plants/arctrl"
-// Import Spreadsheet to XLSX reader/writer
-import {Xlsx} from "@fslab/fsspreadsheet";
 
 // # Comments
 
