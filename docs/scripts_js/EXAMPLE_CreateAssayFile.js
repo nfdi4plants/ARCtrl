@@ -33,7 +33,7 @@ const myAssay = arctrl.ArcAssay.init("MyAssay");
 const growth = arctrl.ArcTable.init("Growth");
 
 // Add input column with one value to table
-growth.AddColumn(arctrl.CompositeHeader.input(arctrl.IOType.source), [arctrl.CompositeCell.createFreeText("Input1")]);
+growth.AddColumn(arctrl.CompositeHeader.input(arctrl.IOType.source()), [arctrl.CompositeCell.createFreeText("Input1")]);
 
 // Add characteristic column with one value
 const oa_species = arctrl.OntologyAnnotation.fromString("species", "GO", "GO:0123456");
