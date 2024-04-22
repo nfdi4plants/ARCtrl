@@ -55,13 +55,14 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
         $"{Url.OntobeeOboPurl}{termSourceRef}_{localTAN}"
 
     /// Will always be created without `OntologyAnnotion.Name`
-    static member fromTermAnnotation (tan : string) =
+    static member fromTermAnnotation (tan : string, ?name) =
+        let name = Option.defaultValue "" name
         tan
         |> Regex.tryParseTermAnnotation
         |> Option.get 
         |> fun r ->
             let accession = r.IDSpace + ":" + r.LocalID
-            OntologyAnnotation.create ("", r.IDSpace, accession)
+            OntologyAnnotation.create (name, r.IDSpace, accession)
 
     /// Parses any value in `TermAccessionString` to term accession format "termsourceref:localtan". Exmp.: "MS:000001".
     ///

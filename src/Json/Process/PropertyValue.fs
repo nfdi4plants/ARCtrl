@@ -57,17 +57,21 @@ module PropertyValue =
                 let category =
                     let name = get.Optional.Field "category" Decode.string
                     let code = get.Optional.Field "categoryCode" Decode.string
-                    if name.IsNone && code.IsNone then None
-                    else Some(OntologyAnnotation.create(?name = name, ?tan = code))
+                    match name, code with
+                    | None, None -> None
+                    | _, None -> Some(OntologyAnnotation.create(?name = name))
+                    | _, Some code -> Some(OntologyAnnotation.fromTermAnnotation(code, ?name = name))
                 let value = 
-                    let value = get.Optional.Field "value" Decode.string
+                    let value = get.Optional.Field "value" AnnotationValue.decoder
                     let code = get.Optional.Field "valueCode" Decode.string
                     if value.IsNone && code.IsNone then None
                     else Value.fromOptions value None code
                 let unit = 
                     let name = get.Optional.Field "unit" Decode.string
                     let code = get.Optional.Field "unitCode" Decode.string
-                    if name.IsNone && code.IsNone then None
-                    else Some(OntologyAnnotation.create(?name = name, ?tan = code))
+                    match name, code with
+                    | None, None -> None
+                    | _, None -> Some(OntologyAnnotation.create(?name = name))
+                    | _, Some code -> Some(OntologyAnnotation.fromTermAnnotation(code, ?name = name))
                 create category value unit 
             )
