@@ -68,32 +68,36 @@ module JsonTypes =
     /// Convert a CompositeCell to a ISA Value and Unit tuple.
     let valueOfCell (value : CompositeCell) =
         match value with
-        | CompositeCell.FreeText (text) -> Value.fromString text, None
-        | CompositeCell.Term (term) -> Value.Ontology term, None
-        | CompositeCell.Unitized (text,unit) -> Value.fromString text, Some unit
+        | CompositeCell.FreeText ("") -> None, None
+        | CompositeCell.FreeText (text) -> Some (Value.fromString text), None        
+        | CompositeCell.Term (term) when term.isEmpty() -> None, None
+        | CompositeCell.Term (term) -> Some (Value.Ontology term), None
+        | CompositeCell.Unitized (text,unit) -> 
+            (if text = "" then None else Value.fromString text |> Some), 
+            if unit.isEmpty() then None else unit |> Some
 
     /// Convert a CompositeHeader and Cell tuple to a ISA Component
     let composeComponent (header : CompositeHeader) (value : CompositeCell) : Component =
         let v,u = valueOfCell value
-        Component.create (v,?unit = u,componentType = header.ToTerm())
+        Component.create (?value = v,?unit = u,componentType = header.ToTerm())
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
     let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : ProcessParameterValue =
         let v,u = valueOfCell value
         let p = ProtocolParameter.create(ParameterName = header.ToTerm())
-        ProcessParameterValue.create(p,v,?Unit = u)
+        ProcessParameterValue.create(p,?Value = v,?Unit = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA FactorValue
     let composeFactorValue (header : CompositeHeader) (value : CompositeCell) : FactorValue =
         let v,u = valueOfCell value
         let f = Factor.create(Name = header.ToString(),FactorType = header.ToTerm())
-        FactorValue.create(Category = f,Value = v,?Unit = u)
+        FactorValue.create(Category = f,?Value = v,?Unit = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA MaterialAttributeValue
     let composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : MaterialAttributeValue =
         let v,u = valueOfCell value
         let c = MaterialAttribute.create(CharacteristicType = header.ToTerm())
-        MaterialAttributeValue.create(Category = c,Value = v,?Unit = u)
+        MaterialAttributeValue.create(Category = c,?Value = v,?Unit = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
     let composeProcessInput (header : CompositeHeader) (value : CompositeCell) : ProcessInput =
@@ -124,12 +128,13 @@ module JsonTypes =
         let value = value |> Option.defaultValue (Value.Name "")
         match value,unit with
         | Value.Ontology oa, None -> CompositeCell.Term oa
-        | Value.Name text, None -> CompositeCell.FreeText text
+        | Value.Name "", None -> CompositeCell.Term (OntologyAnnotation())
+        | Value.Name text, None -> CompositeCell.Term (OntologyAnnotation(text))
         | Value.Name name, Some u -> CompositeCell.Unitized (name,u)
         | Value.Float f, Some u -> CompositeCell.Unitized (f.ToString(),u)
-        | Value.Float f, None -> CompositeCell.FreeText (f.ToString())
+        | Value.Float f, None -> CompositeCell.Unitized (f.ToString(),OntologyAnnotation())
         | Value.Int i, Some u -> CompositeCell.Unitized (i.ToString(),u)
-        | Value.Int i, None -> CompositeCell.FreeText (i.ToString())
+        | Value.Int i, None -> CompositeCell.Unitized (i.ToString(),OntologyAnnotation())
         | _ -> failwithf "Could not parse value %O with unit %O" value unit
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple

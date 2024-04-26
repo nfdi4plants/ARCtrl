@@ -302,7 +302,7 @@ let private tests_ArcTableProcess =
             let table = ArcTable.fromProcesses tableName1 processes
             Expect.arcTableEqual table t "Table should be equal"
         )
-        ftestCase "ParamValueUnitizedNoValue" (fun () ->
+        ptestCase "ParamValueUnitizedNoValueNoInputOutput" (fun () ->
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let unit = oa_degreeCel
@@ -321,13 +321,38 @@ let private tests_ArcTableProcess =
             Expect.equal resultUnit unit "Unit should match"
 
             let t' = ArcTable.fromProcesses tableName1 processes
-            Expect.arcTableEqual t t' "Table should be equal"
+            Expect.arcTableEqual t' t "Table should be equal"
         )
-        ftestCase "ParamValueUnitizedEmpty" (fun () ->
+        testCase "ParamValueUnitizedNoValue" (fun () ->
+            let t = ArcTable.init tableName1
+            let header = CompositeHeader.Parameter oa_temperature
+            let unit = oa_degreeCel
+            let cell = CompositeCell.createUnitized ("",unit)
+            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,[|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+
+            let processes = t.GetProcesses()
+            Expect.equal 1 processes.Length "Should have 1 process"
+            let p = processes.[0]
+            Expect.equal 1 p.ParameterValues.Value.Length "Should have 1 parameter value"
+            let pv = p.ParameterValues.Value.[0]
+            Expect.isNone pv.Value "Should have no value"
+            let resultCategory = Expect.wantSome pv.Category "Should have category"
+            Expect.equal resultCategory (ProtocolParameter.create(ParameterName = oa_temperature)) "Category should match"
+            let resultUnit = Expect.wantSome pv.Unit "Should have unit"
+            Expect.equal resultUnit unit "Unit should match"
+
+            let t' = ArcTable.fromProcesses tableName1 processes
+            Expect.arcTableEqual t' t "Table should be equal"
+        )
+        ptestCase "ParamValueUnitizedEmpty" (fun () ->
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("")
+            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
             t.AddColumn(header,[|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -340,13 +365,15 @@ let private tests_ArcTableProcess =
             Expect.isNone pv.Unit "Should have no unit"
 
             let t' = ArcTable.fromProcesses tableName1 processes
-            Expect.arcTableEqual t t' "Table should be equal"
+            Expect.arcTableEqual t' t "Table should be equal"
         )
-        ftestCase "ParamValueUnitizedNoUnit" (fun () ->
+        testCase "ParamValueUnitizedNoUnit" (fun () ->
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("5")
+            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
             t.AddColumn(header,[|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
 
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
@@ -360,7 +387,28 @@ let private tests_ArcTableProcess =
             Expect.isNone pv.Unit "Should have no unit"
 
             let t' = ArcTable.fromProcesses tableName1 processes
-            Expect.arcTableEqual t t' "Table should be equal"
+            Expect.arcTableEqual t' t "Table should be equal"
+        )
+        testCase "ParamValueTermEmpty" (fun () ->
+            let t = ArcTable.init tableName1
+            let header = CompositeHeader.Parameter oa_species
+            let cell = CompositeCell.createTerm (OntologyAnnotation.create())
+            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(header,[|cell|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+
+            let processes = t.GetProcesses()
+            Expect.equal 1 processes.Length "Should have 1 process"
+            let p = processes.[0]
+            Expect.equal 1 p.ParameterValues.Value.Length "Should have 1 parameter value"
+            let pv = p.ParameterValues.Value.[0]
+            Expect.isNone pv.Value "Should have no value"
+            let resultCategory = Expect.wantSome pv.Category "Should have category"
+            Expect.equal resultCategory (ProtocolParameter.create(ParameterName = oa_species)) "Category should match"
+            Expect.isNone pv.Unit "Should have no unit"
+
+            let t' = ArcTable.fromProcesses tableName1 processes
+            Expect.arcTableEqual t' t "Table should be equal"
         )
     ]
 

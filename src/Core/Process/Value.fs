@@ -26,7 +26,7 @@ type Value =
                 #endif
             match parser value with
             | (true, f) -> Value.Float f
-            | _ -> Value.Ontology <| OntologyAnnotation.create value
+            | _ -> Value.Name value
 
     static member fromOptions (value : string Option) (termSource: string Option) (termAccesssion: string Option) =
         match value, termSource, termAccesssion with

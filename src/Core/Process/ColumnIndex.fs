@@ -13,9 +13,12 @@ let createOrderComment (index : int) =
     Comment.create(orderName,(string index))
 
 let tryGetIndex (comments : ResizeArray<Comment>) =
-    comments 
-    |> CommentArray.tryItem orderName 
-    |> Option.bind tryInt
+    match comments |> CommentArray.tryItem orderName with
+    | Some ci -> 
+        let i = comments |> Seq.findIndex (fun c -> c.Name = Some orderName)
+        comments.RemoveAt(i)
+        tryInt ci
+    | _ -> None
 
 let setOntologyAnnotationIndexInplace i (oa : OntologyAnnotation) =
     oa.Comments.Add(createOrderComment i)

@@ -8,7 +8,7 @@ open TestObjects.Json
 
 let private tests_roCrate =
     testList "RO-Crate" [
-        ftestCase "ReadWriteIntegerValue" (fun () -> 
+        testCase "ReadWriteIntegerValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
             let value = Value.Int 25
             let unit = OntologyAnnotation("degree Celsius","UO","http://purl.obolibrary.org/obo/UO_0000185")
@@ -19,7 +19,29 @@ let private tests_roCrate =
 
             Expect.equal ppv ppv2 "RO-Crate roundtrip failed"
         )
-        ftestCase "ReadWriteUnitNoValue" (fun () -> 
+        testCase "ReadWriteUnitEmptyUnit" (fun () -> 
+            let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
+            let unit = OntologyAnnotation("","","")
+            let value = Value.Int 25
+            let ppv = ProcessParameterValue.create(pp,value,unit)
+
+            let roCrate = ProcessParameterValue.toROCrateJsonString() ppv
+            let ppv2 = ProcessParameterValue.fromROCrateJsonString roCrate
+
+            Expect.equal ppv ppv2 "RO-Crate roundtrip failed"
+        )
+        testCase "ReadWriteUnitEmptyValue" (fun () -> 
+            let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
+            let unit = OntologyAnnotation("degree Celsius","UO","http://purl.obolibrary.org/obo/UO_0000185")
+            let value = Value.Name ""
+            let ppv = ProcessParameterValue.create(pp,value,unit)
+
+            let roCrate = ProcessParameterValue.toROCrateJsonString() ppv
+            let ppv2 = ProcessParameterValue.fromROCrateJsonString roCrate
+
+            Expect.equal ppv ppv2 "RO-Crate roundtrip failed"
+        )
+        testCase "ReadWriteUnitNoValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
             let unit = OntologyAnnotation("degree Celsius","UO","http://purl.obolibrary.org/obo/UO_0000185")
             let ppv = ProcessParameterValue.create(pp,Unit = unit)
@@ -29,7 +51,7 @@ let private tests_roCrate =
 
             Expect.equal ppv ppv2 "RO-Crate roundtrip failed"
         )
-        ftestCase "ReadWriteNoUnitNoValue" (fun () -> 
+        testCase "ReadWriteNoUnitNoValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("temperature","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
             let ppv = ProcessParameterValue.create(pp)
 
@@ -38,7 +60,7 @@ let private tests_roCrate =
 
             Expect.equal ppv ppv2 "RO-Crate roundtrip failed"
         )
-        ftestCase "ReadWriteOntologyValue" (fun () -> 
+        testCase "ReadWriteOntologyValue" (fun () -> 
             let pp = ProtocolParameter.create(ParameterName = OntologyAnnotation("organism","NCIT","http://purl.obolibrary.org/obo/NCIT_0000029"))
             let value = Value.Ontology (OntologyAnnotation(
                 "chlamydomonas reinhardtii",
@@ -52,7 +74,7 @@ let private tests_roCrate =
 
             Expect.equal ppv ppv2 "RO-Crate roundtrip failed"
         )
-        ftestCase "ReadWriteEmpty" (fun () -> 
+        testCase "ReadWriteEmpty" (fun () -> 
             let ppv = ProcessParameterValue.create()
 
             let roCrate = ProcessParameterValue.toROCrateJsonString() ppv

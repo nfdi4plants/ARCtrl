@@ -54,15 +54,12 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     static member createUriAnnotation (termSourceRef : string) (localTAN : string) =
         $"{Url.OntobeeOboPurl}{termSourceRef}_{localTAN}"
 
-    /// Will always be created without `OntologyAnnotion.Name`
     static member fromTermAnnotation (tan : string, ?name) =
-        let name = Option.defaultValue "" name
-        tan
-        |> Regex.tryParseTermAnnotation
-        |> Option.get 
-        |> fun r ->
+        match Regex.tryParseTermAnnotation tan with
+        | Some r ->
             let accession = r.IDSpace + ":" + r.LocalID
-            OntologyAnnotation.create (name, r.IDSpace, accession)
+            OntologyAnnotation.create (?name = name, tsr = r.IDSpace, tan = accession)
+        | None -> OntologyAnnotation.create (?name = name, tan = tan)
 
     /// Parses any value in `TermAccessionString` to term accession format "termsourceref:localtan". Exmp.: "MS:000001".
     ///
@@ -130,6 +127,9 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
         |> ignore
         sb.Append("}") |> ignore
         sb.ToString()
+
+    member this.isEmpty() = 
+           this.Name.IsNone && this.TermSourceREF.IsNone && this.TermAccessionNumber.IsNone && this.Comments.Count = 0
 
     override this.GetHashCode() = 
         [|
