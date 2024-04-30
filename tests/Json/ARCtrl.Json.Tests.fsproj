@@ -26,6 +26,7 @@
     <Compile Include="Assay.Tests.fs" />
     <Compile Include="Study.Tests.fs" />
     <Compile Include="Investigation.Tests.fs" />
+    <Compile Include="Process\ProcessParameterValue.fs" />
     <Compile Include="Process\ProcessInput.Tests.fs" />
     <Compile Include="Process\Protocol.Tests.fs" />
     <Compile Include="Process\Process.Tests.fs" />
