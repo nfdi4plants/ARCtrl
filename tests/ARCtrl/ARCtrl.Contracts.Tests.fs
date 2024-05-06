@@ -43,14 +43,17 @@ let tests_gitContracts = testList "gitContracts" [
         let dtoType = Expect.wantSome contracts.[1].DTOType "Should have a DTO type"
         Expect.equal dtoType DTOType.PlainText "Should be a plain text"
         Expect.equal contracts.[1].Path ".gitattributes" "Should have a path"
-        Expect.isNone contracts.[1].DTO "Should not have no DTO"
+        let dto = Expect.wantSome contracts.[1].DTO "Gitattributes contract should have a DTO"
+        Expect.isTrue dto.isText "Should be text"
+        let text = dto.AsText()
+        Expect.equal text "**/dataset/**" "Should have the correct text"
 
     testCase "init_Branch" <| fun _ ->
         let arc = ARC()
         let branchName = "myBranch"
         let contracts = arc.GetGitInitContracts(branch = branchName)
         Expect.equal contracts.Length 2 "Should be two contracts"
-        let dto = contracts.[0].DTO.Value
+        let dto = Expect.wantSome contracts.[0].DTO "Should have a DTO"
         let cli = dto.AsCLITool()
         Expect.sequenceEqual cli.Arguments [|"init";"-b";branchName|] "Should have new branchname"
 
@@ -59,7 +62,7 @@ let tests_gitContracts = testList "gitContracts" [
         let remote = @"www.fantasyGit.net/MyAccount/MyRepo"
         let contracts = arc.GetGitInitContracts(repositoryAddress = remote)
         Expect.equal contracts.Length 3 "Should be three contracts"
-        let dto = contracts.[2].DTO.Value
+        let dto = Expect.wantSome contracts.[2].DTO "Should have a DTO"
         let cli = dto.AsCLITool()
         Expect.sequenceEqual cli.Arguments [|"remote";"add";"origin";remote|] "Should correctly set new remote"
 
@@ -68,7 +71,7 @@ let tests_gitContracts = testList "gitContracts" [
         let contracts = arc.GetGitInitContracts(defaultGitignore = true)
         Expect.equal contracts.Length 3 "Should be three contracts"
         Expect.equal contracts.[2].Operation Operation.CREATE "Should be an create operation"
-        let dto = contracts.[2].DTO.Value
+        let dto = Expect.wantSome contracts.[2].DTO "Should have a DTO"
         Expect.isTrue dto.isText "Should be text"
         Expect.equal contracts.[2].Path ".gitignore" "Should be a gitignore"
     testCase "clone_AllOptions" <| fun _ ->

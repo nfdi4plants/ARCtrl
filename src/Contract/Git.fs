@@ -15,7 +15,7 @@ let createGitContract(arguments) = Contract.createExecute(gitWithArgs(arguments)
 
 let gitignoreContract = Contract.createCreate(gitignoreFileName,DTOType.PlainText,DTO.Text ARCtrl.FileSystem.DefaultGitignore.dgi)
 
-let gitattributesContract = Contract.createCreate(gitattributesFileName,DTOType.PlainText)
+let gitattributesContract = Contract.createCreate(gitattributesFileName,DTOType.PlainText, DTO.Text ARCtrl.FileSystem.DefaultGitattributes.dga)
 
 type Init = 
 
