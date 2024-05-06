@@ -26,7 +26,7 @@
   </ItemGroup>
 <ItemGroup>
   <PackageReference Include="Fable.Node" Version="1.2.0" />
-  <PackageReference Include="Fable.Pyxpecto" Version="1.0.1" />
+  <PackageReference Include="Fable.Pyxpecto" Version="1.1.0" />
 	<PackageReference Include="Fable.Core" Version="4.2.0" />
 </ItemGroup>
 <ItemGroup>

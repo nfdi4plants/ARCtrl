@@ -115,9 +115,7 @@ module JsonTypes =
         match header with
         | CompositeHeader.Output IOType.Sample -> ProcessOutput.createSample(value.ToString())
         | CompositeHeader.Output IOType.Material -> ProcessOutput.createMaterial(value.ToString())
-        | CompositeHeader.Output IOType.Data -> ProcessOutput.createImageFile(value.ToString())
         | CompositeHeader.Output IOType.Data -> ProcessOutput.createRawData(value.ToString())
-        | CompositeHeader.Output IOType.Data -> ProcessOutput.createDerivedData(value.ToString())
         | _ ->
             failwithf "Could not parse output header %O" header
 
