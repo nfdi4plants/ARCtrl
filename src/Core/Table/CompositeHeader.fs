@@ -9,9 +9,7 @@ open ARCtrl.Helper
 type IOType =
     | Source
     | Sample
-    | RawDataFile
-    | DerivedDataFile
-    | ImageFile
+    | Data
     | Material
     | FreeText of string
 
@@ -21,9 +19,7 @@ type IOType =
     static member All = [|
         Source
         Sample
-        RawDataFile
-        DerivedDataFile
-        ImageFile
+        Data
         Material
     |]
 
@@ -52,21 +48,8 @@ type IOType =
         | FreeText s1, FreeText s2 when s1 = s2 -> FreeText (s1)
         | FreeText s1, FreeText s2 -> failwith $"FreeText IO column names {s1} and {s2} do differ"
         | FreeText s, _ -> failwith $"FreeText IO column and {other} can not be merged"
-        | ImageFile, Source -> ImageFile
-        | ImageFile, RawDataFile -> ImageFile
-        | ImageFile, DerivedDataFile -> ImageFile
-        | ImageFile, ImageFile -> ImageFile
-        | ImageFile, _ -> failwith $"ImageFile IO column and {other} can not be merged"
-        | DerivedDataFile, Source -> DerivedDataFile
-        | DerivedDataFile, RawDataFile -> DerivedDataFile
-        | DerivedDataFile, DerivedDataFile -> DerivedDataFile
-        | DerivedDataFile, ImageFile -> ImageFile
-        | DerivedDataFile, _ -> failwith $"DerivedDataFile IO column and {other} can not be merged"
-        | RawDataFile, Source -> RawDataFile
-        | RawDataFile, RawDataFile -> RawDataFile
-        | RawDataFile, DerivedDataFile -> DerivedDataFile
-        | RawDataFile, ImageFile -> ImageFile
-        | RawDataFile, _ -> failwith $"RawDataFile IO column and {other} can not be merged"
+        | Data, Source -> Data
+        | Data, _ -> failwith $"Data IO column and {other} can not be merged"
         | Sample, Source -> Sample
         | Sample, Sample -> Sample
         | Sample, _ -> failwith $"Sample IO column and {other} can not be merged"
@@ -79,13 +62,11 @@ type IOType =
 
     override this.ToString() =
         match this with
-        | Source            -> "Source Name" 
-        | Sample            -> "Sample Name" 
-        | RawDataFile       -> "Raw Data File"
-        | DerivedDataFile   -> "Derived Data File"
-        | ImageFile         -> "Image File"
-        | Material          -> "Material" 
-        | FreeText s        -> s
+        | Source     -> "Source Name" 
+        | Sample     -> "Sample Name" 
+        | Data       -> "Data"
+        | Material   -> "Material" 
+        | FreeText s -> s
 
     /// Used to match only(!) IOType string to IOType (without Input/Output). This matching is case sensitive.
     ///
@@ -96,9 +77,10 @@ type IOType =
         match str with
         | "Source" | "Source Name"                  -> Source
         | "Sample" | "Sample Name"                  -> Sample
-        | "RawDataFile" | "Raw Data File"           -> RawDataFile
-        | "DerivedDataFile" | "Derived Data File"   -> DerivedDataFile
-        | "ImageFile" | "Image File"                -> ImageFile
+        | "RawDataFile" | "Raw Data File"           
+        | "DerivedDataFile" | "Derived Data File"  
+        | "ImageFile" | "Image File"                
+        | "Data"                                    -> Data
         | "Material"                                -> Material
         | _                                         -> FreeText str // use str to not store `str.ToLower()`
 
@@ -118,29 +100,24 @@ type IOType =
             "The source value must be a unique identifier for an organism or a sample." 
         | U2.Case1 Sample | U2.Case2 "Sample" -> 
             "The Sample Name column describes specifc laboratory samples with a unique identifier." 
-        | U2.Case1 RawDataFile | U2.Case2 "RawDataFile" -> 
+        | U2.Case1 Data | U2.Case2 "RawDataFile" -> 
             "The Raw Data File column defines untransformed and unprocessed data files."
-        | U2.Case1 DerivedDataFile | U2.Case2 "DerivedDataFile" -> 
+        | U2.Case1 Data | U2.Case2 "DerivedDataFile" -> 
             "The Derived Data File column defines transformed and/or processed data files."
-        | U2.Case1 ImageFile | U2.Case2 "ImageFile" -> 
+        | U2.Case1 Data | U2.Case2 "ImageFile" -> 
             "Placeholder"
         | U2.Case1 Material | U2.Case2 "Material" -> 
             "Placeholder" 
         | U2.Case1 (FreeText _) | U2.Case2 "FreeText" -> 
             "Placeholder"
         | _ -> failwith $"Unable to parse combination to existing IOType: `{iotype}`"
-
 #if FABLE_COMPILER
 
     static member source() = IOType.Source
 
     static member sample() = IOType.Sample
 
-    static member rawDataFile() = IOType.RawDataFile
-
-    static member derivedDataFile() = IOType.DerivedDataFile
-
-    static member imageFile() = IOType.ImageFile
+    static member data() = IOType.Data
 
     static member material() = IOType.Material
 

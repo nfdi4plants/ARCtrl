@@ -236,7 +236,7 @@ let private ioTable =
                     Parameter.appendTemperatureColumn       1
                     Characteristic.appendOrganismColumn     1
                     Factor.appendTimeColumn                 1
-                    Output.appendRawDataColumn              1
+                    Output.appendDataColumn                 1
                 ]
         testCase "Read" (fun () -> 
                     
@@ -256,7 +256,7 @@ let private ioTable =
                     Parameter.temperatureHeader 
                     Characteristic.organismHeader 
                     Factor.timeHeader 
-                    Output.rawDataHeader 
+                    Output.dataHeader 
                 ]
             Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
             let expectedCells = 
@@ -266,7 +266,7 @@ let private ioTable =
                     Parameter.temperatureValue 
                     Characteristic.organismValue 
                     Factor.timeValue 
-                    Output.rawDataValue 
+                    Output.dataValue 
                 ]
             Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
@@ -317,11 +317,11 @@ let private deprecatedColumnTable =
 
             let expectedCells = 
                 [
-                        Input.sampleValue
+                        Input.sourceValue
                         Protocol.REF.lolValue
                         Protocol.Type.collectionValue
                         Parameter.temperatureValue
-                        Output.rawDataValue
+                        Output.sampleValue
                 ]
             Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
@@ -338,7 +338,7 @@ let private writeOrder =
                     [
                         Parameter.appendTemperatureColumn       1
                         Characteristic.appendOrganismColumn     1
-                        Output.appendRawDataColumn              1
+                        Output.appendDataColumn                 1
                         Protocol.REF.appendLolColumn            1          
                         Input.appendSampleColumn                1
                         Factor.appendTimeColumn                 1
@@ -355,7 +355,7 @@ let private writeOrder =
                         Parameter.appendTemperatureColumn       1
                         Characteristic.appendOrganismColumn     1
                         Factor.appendTimeColumn                 1
-                        Output.appendRawDataColumn              1
+                        Output.appendDataColumn                 1
                     ]
                 
             Expect.workSheetEqual mixedOut orderedWs "Columns were not ordered correctly"

@@ -427,9 +427,9 @@ let private ``payload_file_filters`` =
 
         let assay = ArcAssay("registered_assay")
         let assayTable = assay.InitTable("MyAssayTable")
-        assayTable.AppendColumn(CompositeHeader.Input (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_assay_input.txt"|])
+        assayTable.AppendColumn(CompositeHeader.Input (IOType.Data), [|CompositeCell.createFreeText "registered_assay_input.txt"|])
         assayTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "assay_protocol.rtf"|])
-        assayTable.AppendColumn(CompositeHeader.Output (IOType.DerivedDataFile), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
+        assayTable.AppendColumn(CompositeHeader.Output (IOType.Data), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
 
         let study = ArcStudy("registered_study")
         inv.AddRegisteredStudy(study)
@@ -437,7 +437,7 @@ let private ``payload_file_filters`` =
         studyTable.AppendColumn(CompositeHeader.Input (IOType.Sample), [|CompositeCell.createFreeText "some_study_input_material"|])
         studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
         studyTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "study_protocol.pdf"|])
-        studyTable.AppendColumn(CompositeHeader.Output (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_study_output.txt"|])
+        studyTable.AppendColumn(CompositeHeader.Output (IOType.Data), [|CompositeCell.createFreeText "registered_study_output.txt"|])
         study.AddRegisteredAssay(assay)
 
 

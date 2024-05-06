@@ -60,9 +60,9 @@ module Helper =
     let singleRowDataInputWithCharacteristic = 
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "RData" 1)
+            CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "RData" 1)
             CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_chlamy 1)
-            CompositeColumn.create(CompositeHeader.Output IOType.DerivedDataFile, createCells_FreeText "DData" 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Data, createCells_FreeText "DData" 1)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)
@@ -71,9 +71,9 @@ module Helper =
     let singleRowDataOutputWithFactor = 
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "RData" 1)
+            CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "RData" 1)
             CompositeColumn.create(CompositeHeader.Factor oa_temperature, createCells_DegreeCelsius 1)
-            CompositeColumn.create(CompositeHeader.Output IOType.DerivedDataFile, createCells_FreeText "DData" 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Data, createCells_FreeText "DData" 1)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)

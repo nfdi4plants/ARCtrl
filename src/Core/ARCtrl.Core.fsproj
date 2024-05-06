@@ -46,6 +46,7 @@
     <Compile Include="Table\ArcTableAux.fs" />
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\ArcTables.fs" />
+    <Compile Include="Table\DataMap.fs" />
     <Compile Include="ArcTypes.fs" />
     <Compile Include="Template.fs" />
     <Compile Include="Templates.fs" />
@@ -59,6 +60,9 @@
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>

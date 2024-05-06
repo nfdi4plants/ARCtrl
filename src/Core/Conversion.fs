@@ -105,9 +105,7 @@ module JsonTypes =
         | CompositeHeader.Input IOType.Source -> ProcessInput.createSource(value.ToString())
         | CompositeHeader.Input IOType.Sample -> ProcessInput.createSample(value.ToString())
         | CompositeHeader.Input IOType.Material -> ProcessInput.createMaterial(value.ToString())
-        | CompositeHeader.Input IOType.ImageFile -> ProcessInput.createImageFile(value.ToString())
-        | CompositeHeader.Input IOType.RawDataFile ->  ProcessInput.createRawData(value.ToString())
-        | CompositeHeader.Input IOType.DerivedDataFile -> ProcessInput.createDerivedData(value.ToString())
+        | CompositeHeader.Input IOType.Data -> ProcessInput.createRawData(value.ToString())
         | _ ->
             failwithf "Could not parse input header %O" header
 
@@ -117,9 +115,9 @@ module JsonTypes =
         match header with
         | CompositeHeader.Output IOType.Sample -> ProcessOutput.createSample(value.ToString())
         | CompositeHeader.Output IOType.Material -> ProcessOutput.createMaterial(value.ToString())
-        | CompositeHeader.Output IOType.ImageFile -> ProcessOutput.createImageFile(value.ToString())
-        | CompositeHeader.Output IOType.RawDataFile -> ProcessOutput.createRawData(value.ToString())
-        | CompositeHeader.Output IOType.DerivedDataFile -> ProcessOutput.createDerivedData(value.ToString())
+        | CompositeHeader.Output IOType.Data -> ProcessOutput.createImageFile(value.ToString())
+        | CompositeHeader.Output IOType.Data -> ProcessOutput.createRawData(value.ToString())
+        | CompositeHeader.Output IOType.Data -> ProcessOutput.createDerivedData(value.ToString())
         | _ ->
             failwithf "Could not parse output header %O" header
 
@@ -167,9 +165,9 @@ module JsonTypes =
         | ProcessInput.Data d -> 
             let dataType = d.DataType.Value
             match dataType with
-            | DataFile.ImageFile -> CompositeHeader.Input IOType.ImageFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
-            | DataFile.RawDataFile -> CompositeHeader.Input IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
-            | DataFile.DerivedDataFile -> CompositeHeader.Input IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.ImageFile -> CompositeHeader.Input IOType.Data, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.RawDataFile -> CompositeHeader.Input IOType.Data, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.DerivedDataFile -> CompositeHeader.Input IOType.Data, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
 
     /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
     let decomposeProcessOutput (po : ProcessOutput) : CompositeHeader*CompositeCell =
@@ -179,9 +177,9 @@ module JsonTypes =
         | ProcessOutput.Data d -> 
             let dataType = d.DataType.Value
             match dataType with
-            | DataFile.ImageFile -> CompositeHeader.Output IOType.ImageFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
-            | DataFile.RawDataFile -> CompositeHeader.Output IOType.RawDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
-            | DataFile.DerivedDataFile -> CompositeHeader.Output IOType.DerivedDataFile, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.ImageFile -> CompositeHeader.Output IOType.Data, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.RawDataFile -> CompositeHeader.Output IOType.Data, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
+            | DataFile.DerivedDataFile -> CompositeHeader.Output IOType.Data, CompositeCell.FreeText (d.Name |> Option.defaultValue "")
 
             
     /// This function creates a string containing the name and the ontology short-string of the given ontology annotation term

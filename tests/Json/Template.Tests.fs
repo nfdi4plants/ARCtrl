@@ -55,7 +55,7 @@ let tests_Template =
         testCase "complete" <| fun _ ->
             let table = ArcTable.init("My Table")
             table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
-            table.AddColumn(CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
+            table.AddColumn(CompositeHeader.Output IOType.Data, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
             let o = Template.init("MyTemplate")
             o.Table <- table
             o.Authors <- ResizeArray [|ARCtrl.Person.create(firstName="John", lastName="Doe"); ARCtrl.Person.create(firstName="Jane", lastName="Doe");|]

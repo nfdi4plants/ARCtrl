@@ -158,6 +158,12 @@ module Factor =
             t.Cell(FsAddress(i, colCount + 4),c).SetValueAs timeValueV4
 
 module Input = 
+
+    let sourceValue = 
+        CompositeCell.FreeText "MySource"
+
+    let sourceValueV1 = "MySource"
+
     let sampleHeader = 
         CompositeHeader.Input IOType.Sample
 
@@ -182,19 +188,34 @@ module Input =
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs deprecatedSourceHeaderV1
         for i = 2 to l + 1 do  
-            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sourceValueV1
 
 
 module Output = 
-    let rawDataHeader = 
-        CompositeHeader.Output IOType.RawDataFile
+    let dataHeader = 
+        CompositeHeader.Output IOType.Data
 
-    let rawDataValue = 
-        CompositeCell.FreeText "MyRawData"
+    let dataValue = 
+        CompositeCell.FreeText "MyData"
 
     let rawDataHeaderV1 = "Output [Raw Data File]"
     
     let rawDataValueV1 = "MyRawData"  
+
+    let dataHeaderV1 = "Output [Data]"
+
+    let dataValueV1 = "MyData"
+
+    let sampleValue = 
+        CompositeCell.FreeText "MySample"
+
+    let sampleValueV1 = "MySample"
+
+    let appendDataColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs dataHeader
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs dataValue
 
     let appendRawDataColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
@@ -210,7 +231,7 @@ module Output =
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs deprecatedSampleHeaderV1
         for i = 2 to l + 1 do  
-            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs rawDataValueV1
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
 
 module Protocol =
     module REF = 
