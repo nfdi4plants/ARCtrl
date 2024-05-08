@@ -22,6 +22,8 @@ module Data =
                 "@type", (Encode.list [Encode.string "Data"])
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryInclude "type" DataFile.ROCrate.encoder oa.DataType
+                Encode.tryInclude "encodingFormat" Encode.string oa.Format
+                Encode.tryInclude "usageInfo" Encode.string oa.SelectorFormat
                 Encode.tryIncludeListOpt "comments" Comment.ROCrate.encoder oa.Comments
                 "@context", ROCrateContext.Data.context_jsonvalue
             ]
@@ -34,6 +36,8 @@ module Data =
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
                     DataType = get.Optional.Field "type" DataFile.ROCrate.decoder
+                    Format = get.Optional.Field "encodingFormat" Decode.string
+                    SelectorFormat = get.Optional.Field "usageInfo" Decode.uri
                     Comments = get.Optional.Field "comments" (Decode.list Comment.ROCrate.decoder)
                 }
             
@@ -60,6 +64,8 @@ module Data =
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
                     DataType = get.Optional.Field "type" DataFile.ISAJson.decoder
+                    Format = None
+                    SelectorFormat = None
                     Comments = get.Optional.Field "comments" (Decode.list Comment.ISAJson.decoder)
                 }
             )

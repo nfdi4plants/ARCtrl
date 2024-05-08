@@ -114,7 +114,12 @@ module SanityChecks =
             let (ci,_),cell = en.Current.Key,en.Current.Value
             let header = headers.[ci]
             let headerIsFreetext = not header.IsTermColumn
+            let headerIsData = header.IsDataColumn
             let cellIsNotFreetext = not cell.isFreeText
+            let cellIsNotData = not cell.isData
+            if headerIsData && (cellIsNotData && cellIsNotFreetext) then 
+                (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`. Data header should contain either Data or Freetext cells."
+                isValid <- false
             if headerIsFreetext && cellIsNotFreetext then 
                 (if raiseException then failwith else printfn "%s") $"Invalid combination of header `{header}` and cell `{cell}`."
                 isValid <- false

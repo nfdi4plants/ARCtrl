@@ -22,7 +22,7 @@ let fixDeprecatedIOHeader (col : FsColumn) =
         col
 
 let fromFsColumns (columns : list<FsColumn>) : CompositeColumn =
-    let header = 
+    let header, cellParser = 
         columns
         |> List.map (fun c -> c.[1])
         |> CompositeHeader.fromFsCells
@@ -32,7 +32,7 @@ let fromFsColumns (columns : list<FsColumn>) : CompositeColumn =
         for i = 2 to l do
             columns
             |> List.map (fun c -> c.[i])
-            |> CompositeCell.fromFsCells
+            |> cellParser
         |]                 
     CompositeColumn.create(header,cells)
 

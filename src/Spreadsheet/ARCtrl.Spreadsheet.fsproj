@@ -19,8 +19,8 @@
     <Compile Include="Metadata\Assays.fs" />
     <Compile Include="Metadata\Study.fs" />
     <Compile Include="Metadata\OntologySourceReference.fs" />
-    <Compile Include="AnnotationTable\CompositeHeader.fs" />
     <Compile Include="AnnotationTable\CompositeCell.fs" />
+    <Compile Include="AnnotationTable\CompositeHeader.fs" />
     <Compile Include="AnnotationTable\CompositeColumn.fs" />
     <Compile Include="AnnotationTable\ArcTable.fs" />
     <Compile Include="ArcAssay.fs" />

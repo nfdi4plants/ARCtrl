@@ -287,6 +287,11 @@ type CompositeHeader =
         | ProtocolType -> true 
         | anythingElse -> false
 
+    member this.IsDataColumn =
+        match this with 
+        | Input IOType.Data | Output IOType.Data -> true 
+        | anythingElse -> false
+
     /// <summary>
     /// Is true if the Building Block type is a FeaturedColumn. 
     ///

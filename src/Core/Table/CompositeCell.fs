@@ -15,10 +15,12 @@ type CompositeCell =
     ///
     /// https://isa-specs.readthedocs.io/en/latest/isatab.html#unit
     | Unitized of string*OntologyAnnotation
+    | Data of Data
 
     member this.isUnitized = match this with | Unitized _ -> true | _ -> false
     member this.isTerm = match this with | Term _ -> true | _ -> false
     member this.isFreeText = match this with | FreeText _ -> true | _ -> false
+    member this.isData = match this with | Data _ -> true | _ -> false
 
     /// <summary>
     /// This returns the default empty cell from an existing CompositeCell.
@@ -28,6 +30,7 @@ type CompositeCell =
         | CompositeCell.Term _ -> CompositeCell.emptyTerm
         | CompositeCell.Unitized _ -> CompositeCell.emptyUnitized
         | CompositeCell.FreeText _ -> CompositeCell.emptyFreeText
+        | CompositeCell.Data _ -> CompositeCell.emptyData
 
     /// <summary>
     /// This function returns an array of all values as string
@@ -44,6 +47,7 @@ type CompositeCell =
         | FreeText s -> [|s|]
         | Term oa -> [| oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
         | Unitized (v,oa) -> [| v; oa.NameText; defaultArg oa.TermSourceREF ""; defaultArg oa.TermAccessionNumber ""|]
+        | Data d -> [| defaultArg d.Name ""; defaultArg d.Format ""; defaultArg d.SelectorFormat ""|]
 
     /// FreeText string will be converted to unit term name.
     ///
@@ -53,6 +57,7 @@ type CompositeCell =
         | Unitized _ -> this
         | FreeText text -> CompositeCell.Unitized ("", OntologyAnnotation.create(text))
         | Term term -> CompositeCell.Unitized ("", term)
+        | Data d -> failwith "Data cell cannot be converted to Unitized cell."
 
     /// FreeText string will be converted to term name.
     ///
@@ -62,6 +67,7 @@ type CompositeCell =
         | Term _ -> this
         | Unitized (_,unit) -> CompositeCell.Term unit
         | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(text))
+        | Data d -> failwith "Data cell cannot be converted to Term cell."
 
     /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
     member this.ToFreeTextCell() =
@@ -69,6 +75,7 @@ type CompositeCell =
         | FreeText _ -> this
         | Term term -> FreeText(term.NameText)
         | Unitized (v,unit) -> FreeText(unit.NameText)
+        | Data d -> FreeText (Option.defaultValue "" d.Name)
 
     // Suggest this syntax for easy "of-something" access
     member this.AsUnitized  =
@@ -99,9 +106,15 @@ type CompositeCell =
 
     static member createFreeText (value: string) = FreeText value
     
+    static member createData (d:Data) = Data d
+
+    static member createDataFromString (value : string, ?format : string, ?selectorFormat : string) =
+        Data(Data.create(Name = value, ?Format = format, ?SelectorFormat = selectorFormat))
+
     static member emptyTerm = Term (OntologyAnnotation())
     static member emptyFreeText = FreeText ""
     static member emptyUnitized = Unitized ("", OntologyAnnotation())
+    static member emptyData = Data(Data.create())
 
     /// <summary>
     /// Updates current CompositeCell with information from OntologyAnnotation.
@@ -115,6 +128,7 @@ type CompositeCell =
         | CompositeCell.Term _ -> CompositeCell.createTerm oa
         | CompositeCell.Unitized (v,_) -> CompositeCell.createUnitized (v,oa)
         | CompositeCell.FreeText _ -> CompositeCell.createFreeText oa.NameText
+        | CompositeCell.Data d -> failwith "Data cell cannot be updated with OntologyAnnotation."
 
     /// <summary>
     /// Updates current CompositeCell with information from OntologyAnnotation.
@@ -132,6 +146,7 @@ type CompositeCell =
         | Term oa -> $"{oa.NameText}"
         | FreeText s -> s
         | Unitized (v,oa) -> $"{v} {oa.NameText}"
+        | Data d -> $"{d.NameText}"
 
 #if FABLE_COMPILER
     //[<CompiledName("Term")>]
@@ -143,5 +158,7 @@ type CompositeCell =
     //[<CompiledName("Unitized")>]
     static member unitized (v:string, oa:OntologyAnnotation) = CompositeCell.Unitized(v, oa)
 
+    //[<CompiledName("Data")>]
+    static member data (d:Process.Data) = CompositeCell.Data(d)
 #else
 #endif

@@ -61,14 +61,21 @@ let classifyColumnOrder (column : CompositeColumn) =
 [<Literal>]
 let annotationTablePrefix = "annotationTable"
 
+let helperColumnStrings = 
+    [
+        "Term Source REF"
+        "Term Accession Number"
+        "Unit"
+        "Data Format"
+        "Data Selector Format"
+    ]
+
 let groupColumnsByHeader (columns : list<FsColumn>) = 
     columns
     |> Aux.List.groupWhen (fun c -> 
         let v = c.[1].ValueAsString()
-        Regex.tryParseReferenceColumnHeader v
-        |> Option.isNone
-        &&
-        (v.StartsWith "Unit" |> not)
+        List.exists (fun s -> v.StartsWith s) helperColumnStrings
+        |> not
     )
 
 /// Returns the annotation table of the worksheet if it exists, else returns None

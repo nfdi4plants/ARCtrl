@@ -1,6 +1,7 @@
-namespace ARCtrl.Process
+namespace ARCtrl
 
 open ARCtrl
+open ARCtrl.Process
 open ARCtrl.Helper 
 
 type Data = 
@@ -8,24 +9,28 @@ type Data =
         ID : URI option
         Name : string option
         DataType : DataFile option
+        Format : string option
+        SelectorFormat : URI option
         Comments : Comment list option
     }
 
-    static member make id name dataType comments =
+    static member make id name dataType format selectorFormat comments =
         {
             ID      = id
             Name    = name
             DataType = dataType
+            Format  = format
+            SelectorFormat = selectorFormat
             Comments = comments         
         }
 
-    static member create (?Id,?Name,?DataType,?Comments) = 
-        Data.make Id Name DataType Comments
+    static member create (?Id,?Name,?DataType,?Format,?SelectorFormat,?Comments) = 
+        Data.make Id Name DataType Format SelectorFormat Comments
 
     static member empty =
         Data.create()
 
-    member this.NameAsString =
+    member this.NameText =
         this.Name
         |> Option.defaultValue ""
 
@@ -35,5 +40,5 @@ type Data =
         member this.PrintCompact() =
             match this.DataType with
             | Some t ->
-                sprintf "%s [%s]" this.NameAsString t.AsString 
-            | None -> sprintf "%s" this.NameAsString
+                sprintf "%s [%s]" this.NameText t.AsString 
+            | None -> sprintf "%s" this.NameText

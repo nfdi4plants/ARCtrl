@@ -196,7 +196,7 @@ module Output =
         CompositeHeader.Output IOType.Data
 
     let dataValue = 
-        CompositeCell.FreeText "MyData"
+        CompositeCell.Data (Data.create (Name = "MyData"))
 
     let rawDataHeaderV1 = "Output [Raw Data File]"
     
