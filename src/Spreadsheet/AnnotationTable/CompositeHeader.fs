@@ -74,8 +74,8 @@ module ActivePattern =
         | InputColumnHeader ioType :: cols -> 
             match IOType.ofString ioType with
             | IOType.Data ->
-                let format = List.tryFindIndex ((=) "Data Format") cols
-                let selectorFormat = List.tryFindIndex ((=) "Data Selector Format") cols
+                let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
+                let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
                 (CompositeHeader.Input (IOType.Data), CompositeCell.dataFromFsCells format selectorFormat)
                 |> Some
             | ioType ->
@@ -89,8 +89,8 @@ module ActivePattern =
         | OutputColumnHeader ioType :: cols -> 
             match IOType.ofString ioType with
             | IOType.Data ->
-                let format = List.tryFindIndex ((=) "Data Format") cols
-                let selectorFormat = List.tryFindIndex ((=) "Data Selector Format") cols
+                let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
+                let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
                 (CompositeHeader.Output (IOType.Data), CompositeCell.dataFromFsCells format selectorFormat)
                 |> Some
             | ioType ->
@@ -141,7 +141,9 @@ let fromFsCells (cells : list<FsCell>) : CompositeHeader*(FsCell list -> Composi
   
 
 let toFsCells (hasUnit : bool) (header : CompositeHeader) : list<FsCell> = 
-    if header.IsSingleColumn then
+    if header.IsDataColumn then
+        [FsCell(header.ToString()); FsCell "Data Format"; FsCell "Data Selector Format"]
+    elif header.IsSingleColumn then
         [FsCell(header.ToString())]
     elif header.IsTermColumn then
         [

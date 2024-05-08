@@ -47,3 +47,7 @@ let toFsCells isTerm hasUnit (cell : CompositeCell) : list<FsCell> =
     | CompositeCell.Term v -> [FsCell(v.NameText); FsCell(Option.defaultValue "" v.TermSourceREF); FsCell(v.TermAccessionOntobeeUrl)]
 
     | CompositeCell.Unitized (v,unit) -> [FsCell(v); FsCell(unit.NameText); FsCell(Option.defaultValue "" unit.TermSourceREF); FsCell(unit.TermAccessionOntobeeUrl)]
+    | CompositeCell.Data d -> 
+        let format = d.Format |> Option.defaultValue "" |> FsCell
+        let selectorFormat = d.SelectorFormat |> Option.defaultValue "" |> FsCell
+        [FsCell(d.Name |> Option.defaultValue ""); format; selectorFormat]

@@ -86,12 +86,17 @@ type CompositeCell =
     member this.AsTerm =
         match this with
         | Term c -> c
-        | _ -> failwith "Not a Swate TermCell."
+        | _ -> failwith "Not a Term Cell."
 
     member this.AsFreeText =
         match this with
         | FreeText c -> c
-        | _ -> failwith "Not a Swate TermCell."
+        | _ -> failwith "Not a FreeText Cell."
+
+    member this.AsData =
+        match this with
+        | Data d -> d
+        | _ -> failwith "Not a Data Cell."
 
     // TODO: i would really love to have an overload here accepting string input
     static member createTerm (oa:OntologyAnnotation) = Term oa
