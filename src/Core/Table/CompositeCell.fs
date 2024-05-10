@@ -164,6 +164,6 @@ type CompositeCell =
     static member unitized (v:string, oa:OntologyAnnotation) = CompositeCell.Unitized(v, oa)
 
     //[<CompiledName("Data")>]
-    static member data (d:Process.Data) = CompositeCell.Data(d)
+    static member data (d:Data) = CompositeCell.Data(d)
 #else
 #endif

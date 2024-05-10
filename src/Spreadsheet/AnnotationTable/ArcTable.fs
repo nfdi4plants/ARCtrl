@@ -74,7 +74,8 @@ let groupColumnsByHeader (columns : list<FsColumn>) =
     columns
     |> Aux.List.groupWhen (fun c -> 
         let v = c.[1].ValueAsString()
-        List.exists (fun s -> v.StartsWith s) helperColumnStrings
+        helperColumnStrings
+        |> List.exists (fun s -> v.StartsWith s) 
         |> not
     )
 
