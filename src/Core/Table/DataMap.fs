@@ -72,7 +72,8 @@ type DataMap(headers: ResizeArray<CompositeHeader>, values: System.Collections.G
 
     static member init() = DataMap(ResizeArray(),Dictionary())
 
-    member this.AddColumns(columns : CompositeColumn [], ?skipFillMissing : bool) = 
+    member this.AddColumns(columns : CompositeColumn [], ?skipFillMissing : bool) =
+        columns |> Array.iter (fun c -> c.Validate(true) |> ignore)
         table.AddColumns(columns, ?skipFillMissing = skipFillMissing)
         DataMapAux.validate table.Headers table.Values true |> ignore
 
@@ -109,6 +110,12 @@ type DataMap(headers: ResizeArray<CompositeHeader>, values: System.Collections.G
 
     member this.AddDescriptionColumn(cells : CompositeCell []) =
         table.AddColumn(DataMapAux.descriptionHeader, cells)
+
+       
+    member this.GetRow(row: int, ?SkipValidation) = table.GetRow(row,?SkipValidation = SkipValidation)
+
+    static member getRow(row: int, ?SkipValidation) = 
+        fun (dm : DataMap) -> dm.GetRow(row,?SkipValidation = SkipValidation)
 
     member this.Copy() =
         DataMap(

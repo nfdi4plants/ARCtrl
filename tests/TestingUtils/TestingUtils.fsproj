@@ -17,6 +17,7 @@
     <Compile Include="TestObjects.Json\Publication.fs" />
     <Compile Include="TestObjects.Json\Validation.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.ArcTable.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.DataMap.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Assay.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Study.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.InvestigationFile.fs" />
