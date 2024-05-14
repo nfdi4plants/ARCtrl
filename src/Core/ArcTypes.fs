@@ -492,6 +492,20 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             this.StructurallyEquals(assay)
         | _ -> false
 
+    // Hashcode without Datamap
+    member this.GetLightHashCode() = 
+        [|
+            box this.Identifier
+            HashCodes.boxHashOption this.MeasurementType
+            HashCodes.boxHashOption this.TechnologyType
+            HashCodes.boxHashOption this.TechnologyPlatform
+            HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.Performers
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
     override this.GetHashCode() = 
         [|
             box this.Identifier

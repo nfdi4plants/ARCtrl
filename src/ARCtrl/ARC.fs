@@ -262,7 +262,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             assay.DataMap <- datamap
             assay.Tables <- updatedTables.Tables
         )
-        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetHashCode())
+        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetLightHashCode())
         investigation.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
         investigation.StaticHash <- investigation.GetLightHashCode()
         this.ISA <- Some investigation
@@ -303,7 +303,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             )
             inv.Assays
             |> Seq.iter (fun a ->
-                a.StaticHash <- a.GetHashCode()
+                a.StaticHash <- a.GetLightHashCode()
                 workbooks.Add (
                     Identifier.Assay.fileNameFromIdentifier a.Identifier,
                     (DTOType.ISA_Assay, Spreadsheet.ArcAssay.toFsWorkbook a))     
@@ -373,7 +373,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                 
                 // Get Assay contracts
                 for a in inv.Assays do
-                    let hash = a.GetHashCode()
+                    let hash = a.GetLightHashCode()
                     if a.StaticHash = 0 then 
                         yield! a.ToCreateContract(WithFolder = true)
                     elif a.StaticHash <> hash then 

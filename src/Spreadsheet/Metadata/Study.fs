@@ -121,6 +121,7 @@ module Studies =
             (ResizeArray contacts)
             (ResizeArray designDescriptors)  
             (ResizeArray())
+            None
             (ResizeArray(assayIdentifiers))
             (ResizeArray studyInfo.Comments)
         |> fun arcstudy -> 

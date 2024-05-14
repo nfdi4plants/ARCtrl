@@ -47,9 +47,12 @@ module DatamapContractExtensions =
         static member tryFromReadContractForAssay (assayIdentifier : string) (c:Contract) =
             let path = Identifier.Assay.datamapFileNameFromIdentifier assayIdentifier
             match c with
-            | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
-                fsworkbook :?> FsWorkbook
-                |> DataMap.fromFsWorkbook
+            | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path ->
+                let dm = 
+                    fsworkbook :?> FsWorkbook
+                    |> DataMap.fromFsWorkbook                
+                dm.StaticHash <- dm.GetHashCode()
+                dm
                 |> Some 
             | _ -> None
 
@@ -81,7 +84,9 @@ module DatamapContractExtensions =
             let path = Identifier.Study.datamapFileNameFromIdentifier studyIdentifier
             match c with
             | {Path = p; Operation = READ; DTOType = Some DTOType.ISA_Datamap; DTO = Some (DTO.Spreadsheet fsworkbook)} when p = path->
-                fsworkbook :?> FsWorkbook
-                |> DataMap.fromFsWorkbook
-                |> Some 
+                let dm = 
+                    fsworkbook :?> FsWorkbook
+                    |> DataMap.fromFsWorkbook                
+                dm.StaticHash <- dm.GetHashCode()
+                Some (dm)
             | _ -> None
