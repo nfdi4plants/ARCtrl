@@ -195,19 +195,29 @@ type FileSystemTree =
     static member createEmptyFolder (name : string) = 
         FileSystemTree.createFolder(name, [|FileSystemTree.createGitKeepFile()|])
 
-    static member createAssayFolder(assayName : string) = 
+    static member createAssayFolder(assayName : string, ?hasDataMap) = 
+        let hasDataMap = defaultArg hasDataMap false
         let dataset = FileSystemTree.createEmptyFolder ARCtrl.Path.AssayDatasetFolderName
         let protocols = FileSystemTree.createEmptyFolder ARCtrl.Path.AssayProtocolsFolderName
         let readme = FileSystemTree.createReadmeFile()
         let assayFile = FileSystemTree.createFile ARCtrl.Path.AssayFileName
-        FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
+        if hasDataMap then
+            let dataMapFile = FileSystemTree.createFile ARCtrl.Path.DataMapFileName
+            FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme; dataMapFile|])
+        else
+            FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
 
-    static member createStudyFolder(studyName : string) = 
+    static member createStudyFolder(studyName : string, ?hasDataMap) = 
+        let hasDataMap = defaultArg hasDataMap false
         let resources = FileSystemTree.createEmptyFolder ARCtrl.Path.StudiesResourcesFolderName
         let protocols = FileSystemTree.createEmptyFolder ARCtrl.Path.StudiesProtocolsFolderName
         let readme = FileSystemTree.createReadmeFile()
         let studyFile = FileSystemTree.createFile ARCtrl.Path.StudyFileName
-        FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
+        if hasDataMap then
+            let dataMapFile = FileSystemTree.createFile ARCtrl.Path.DataMapFileName
+            FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme; dataMapFile|])
+        else
+            FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
 
     static member createInvestigationFile() = 
         FileSystemTree.createFile ARCtrl.Path.InvestigationFileName

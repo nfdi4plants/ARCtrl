@@ -101,7 +101,7 @@ module ArcTypesAux =
 
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
     
     let performers = defaultArg performers <| ResizeArray()
@@ -111,6 +111,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
+    let mutable dataMap : DataMap option = datamap
     let mutable performers = performers
     let mutable comments  = comments
     let mutable staticHash : int = 0
@@ -122,13 +123,14 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
+    member this.DataMap with get() = dataMap and set(n) = dataMap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
-        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?performers = performers, ?comments = comments)
+    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
 
     static member make 
         (identifier : string)
@@ -136,9 +138,10 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : OntologyAnnotation option)
         (tables : ResizeArray<ArcTable>)
+        (datamap : DataMap option)
         (performers : ResizeArray<Person>)
         (comments : ResizeArray<Comment>) = 
-        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, performers = performers, comments = comments)
+        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
 
     static member FileName = ARCtrl.Path.AssayFileName
     member this.StudiesRegisteredIn
@@ -380,6 +383,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             let copy = table.Copy()
             nextTables.Add(copy)
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
         ArcAssay.make
             this.Identifier
@@ -387,6 +391,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             this.TechnologyType
             this.TechnologyPlatform
             nextTables
+            nextDataMap
             nextPerformers
             nextComments
 
@@ -455,7 +460,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         if assay.Tables.Count <> 0 || updateAlways then          
             this.Tables <- assay.Tables
         if assay.Comments.Count <> 0 || updateAlways then          
-            this.Comments <- assay.Comments  
+            this.Comments <- assay.Comments 
+        this.DataMap <- assay.DataMap
         if assay.Performers.Count <> 0 || updateAlways then          
             this.Performers <- assay.Performers  
 
@@ -464,11 +470,12 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         let mst = this.MeasurementType = other.MeasurementType
         let tt = this.TechnologyType = other.TechnologyType
         let tp = this.TechnologyPlatform = other.TechnologyPlatform
+        let dm = this.DataMap = other.DataMap
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; mst; tt; tp; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; mst; tt; tp; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
@@ -491,6 +498,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
+            HashCodes.boxHashOption this.DataMap
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
@@ -499,7 +507,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         |> fun x -> x :?> int
 
 [<AttachMembers>]
-type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers: ResizeArray<string>, ?comments) = 
+type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?datamap, ?registeredAssayIdentifiers: ResizeArray<string>, ?comments) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let publications = defaultArg publications <| ResizeArray()
@@ -517,6 +525,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     let mutable publications : ResizeArray<Publication> = publications
     let mutable contacts : ResizeArray<Person> = contacts
     let mutable studyDesignDescriptors : ResizeArray<OntologyAnnotation> = studyDesignDescriptors
+    let mutable datamap : DataMap option = datamap
     let mutable registeredAssayIdentifiers : ResizeArray<string> = registeredAssayIdentifiers
     let mutable comments : ResizeArray<Comment> = comments
     let mutable staticHash : int = 0
@@ -532,17 +541,18 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     member this.Publications with get() = publications and set(n) = publications <- n
     member this.Contacts with get() = contacts and set(n) = contacts <- n
     member this.StudyDesignDescriptors with get() = studyDesignDescriptors and set(n) = studyDesignDescriptors <- n
+    member this.DataMap with get() = datamap and set(n) = datamap <- n
     member this.RegisteredAssayIdentifiers with get() = registeredAssayIdentifiers and set(n) = registeredAssayIdentifiers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init(identifier : string) = ArcStudy identifier
 
-    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?registeredAssayIdentifiers, ?comments) = 
-        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, ?publications = publications, ?contacts = contacts, ?studyDesignDescriptors = studyDesignDescriptors, ?tables = tables, ?registeredAssayIdentifiers = registeredAssayIdentifiers, ?comments = comments)
+    static member create(identifier : string, ?title, ?description, ?submissionDate, ?publicReleaseDate, ?publications, ?contacts, ?studyDesignDescriptors, ?tables, ?datamap, ?registeredAssayIdentifiers, ?comments) = 
+        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, ?publications = publications, ?contacts = contacts, ?studyDesignDescriptors = studyDesignDescriptors, ?tables = tables, ?datamap = datamap, ?registeredAssayIdentifiers = registeredAssayIdentifiers, ?comments = comments)
 
-    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables registeredAssayIdentifiers comments = 
-        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, publications = publications, contacts = contacts, studyDesignDescriptors = studyDesignDescriptors, tables = tables, registeredAssayIdentifiers = registeredAssayIdentifiers, comments = comments)
+    static member make identifier title description submissionDate publicReleaseDate publications contacts studyDesignDescriptors tables datamap registeredAssayIdentifiers comments = 
+        ArcStudy(identifier, ?title = title, ?description = description, ?submissionDate =  submissionDate, ?publicReleaseDate = publicReleaseDate, publications = publications, contacts = contacts, studyDesignDescriptors = studyDesignDescriptors, tables = tables, ?datamap = datamap, registeredAssayIdentifiers = registeredAssayIdentifiers, comments = comments)
 
     /// <summary>
     /// Returns true if all fields are None/ empty sequences **except** Identifier.
@@ -929,6 +939,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
         let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
         let nextStudyDesignDescriptors = this.StudyDesignDescriptors |> ResizeArray.map (fun c -> c.Copy())
+        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
         let study =
             ArcStudy.make
                 this.Identifier
@@ -940,6 +951,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
                 nextContacts
                 nextStudyDesignDescriptors
                 nextTables
+                nextDataMap
                 nextAssayIdentifiers
                 nextComments
         if copyInvestigationRef then study.Investigation <- this.Investigation
@@ -970,6 +982,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         if study.Tables.Count <> 0 || updateAlways then
             let tables = ArcTables.updateReferenceTablesBySheets(ArcTables(this.Tables),ArcTables(study.Tables),?keepUnusedRefTables = keepUnusedRefTables)
             this.Tables <- tables.Tables
+        this.DataMap <- study.DataMap
         if study.RegisteredAssayIdentifiers.Count <> 0 || updateAlways then
             this.RegisteredAssayIdentifiers <- study.RegisteredAssayIdentifiers
         if study.Comments.Count <> 0 || updateAlways then
@@ -981,6 +994,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let d = this.Description = other.Description
         let sd = this.SubmissionDate = other.SubmissionDate
         let prd = this.PublicReleaseDate = other.PublicReleaseDate 
+        let dm = this.DataMap = other.DataMap
         let pub = Seq.compare this.Publications other.Publications
         let con = Seq.compare this.Contacts other.Contacts
         let sdd = Seq.compare this.StudyDesignDescriptors other.StudyDesignDescriptors
@@ -988,7 +1002,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         let reg_tables = Seq.compare this.RegisteredAssayIdentifiers other.RegisteredAssayIdentifiers
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; sd; prd; pub; con; sdd; tables; reg_tables; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; sd; prd; dm; pub; con; sdd; tables; reg_tables; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcStudy and the input ArcStudy refer to the same object.
@@ -1040,6 +1054,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.SubmissionDate
             HashCodes.boxHashOption this.PublicReleaseDate
+            HashCodes.boxHashOption this.DataMap
             HashCodes.boxHashSeq this.Publications
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashSeq this.StudyDesignDescriptors

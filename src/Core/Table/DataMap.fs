@@ -3,7 +3,10 @@
 open System.Collections.Generic
 open ARCtrl.Helper 
 open ARCtrl
+open Fable.Core
 
+
+[<AttachMembers>]
 module DataMapAux = 
     
     [<Literal>]
@@ -66,9 +69,11 @@ type DataMap(headers: ResizeArray<CompositeHeader>, values: System.Collections.G
     let _ = DataMapAux.validate headers values true
 
     let table = ArcTable(DataMapAux.dataMapName, headers, values)
+    let mutable staticHash = 0
 
     member this.Headers = table.Headers
     member this.Values = table.Values
+    member this.StaticHash with get() = staticHash and set(value) = staticHash <- value
 
     static member init() = DataMap(ResizeArray(),Dictionary())
 
@@ -122,3 +127,12 @@ type DataMap(headers: ResizeArray<CompositeHeader>, values: System.Collections.G
             ResizeArray(this.Headers), 
             Dictionary(this.Values)
         )
+
+    override this.Equals(obj) = 
+        match obj with
+        | :? DataMap as dm -> 
+            this.Table.Equals(dm.Table)
+        | _ -> false
+
+    override this.GetHashCode() = 
+        this.Table.GetHashCode()

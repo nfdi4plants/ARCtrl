@@ -7,6 +7,7 @@
   <ItemGroup>
     <None Include="README.md" />
     <Compile Include="Contract.fs" />
+    <Compile Include="Datamap.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcInvestigation.fs" />
@@ -19,7 +20,6 @@
     <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <PropertyGroup>

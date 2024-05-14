@@ -8,6 +8,11 @@ open FsSpreadsheet
 module XlsxHelper =
 
     [<AttachMembers>]
+    type DatamapXlsx() =
+        member _.fromFsWorkbook (fswb: FsWorkbook) = DataMap.fromFsWorkbook fswb
+        member _.toFsWorkbook (datamap: DataMap) = DataMap.toFsWorkbook datamap
+
+    [<AttachMembers>]
     type AssayXlsx() =
         member _.fromFsWorkbook (fswb: FsWorkbook) = ArcAssay.fromFsWorkbook fswb
         member _.toFsWorkbook (assay: ArcAssay) = ArcAssay.toFsWorkbook assay
@@ -28,6 +33,7 @@ open XlsxHelper
 
 [<AttachMembers>]
 type XlsxController =
+    static member Datamap = DatamapXlsx()
     static member Assay = AssayXlsx()
     static member Study = StudyXlsx()
     static member Investigation = InvestigationXlsx()
