@@ -130,6 +130,7 @@ let private test_create =
                     contacts
                     studyDesignDescriptors
                     tables
+                    None
                     assay_identifiers
                     comments
 
@@ -452,6 +453,7 @@ let private tests_GetHashCode = testList "GetHashCode" [
             (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
             (ResizeArray [|OntologyAnnotation(); OntologyAnnotation(); OntologyAnnotation("Name", "tsr", "Tan")|])
             (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+            None
             (ResizeArray(["Registered Assay1"; "Registered Assay2"]))
             (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
     testCase "passing" <| fun _ ->

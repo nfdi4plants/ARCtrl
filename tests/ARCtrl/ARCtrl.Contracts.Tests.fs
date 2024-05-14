@@ -20,6 +20,58 @@ let tests_tryFromContract = testList "tryFromContract" [
         |]
         let investigation = contracts |> Array.choose ArcInvestigation.tryFromReadContract
         Expect.hasLength investigation 1 ""
+    testCase "DataMap" <| fun _ ->
+        let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
+        let assayName = "myAssay"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"assays/{assayName}/isa.datamap.xlsx", 
+                DTOType.ISA_Datamap, 
+                DTO.Spreadsheet fswb
+            )
+        |]
+        let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
+        Expect.isSome datamap "Datamap should have been parsed"
+    testCase "DataMap_WrongIdentifier" <| fun _ ->
+        let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
+        let assayName = "myAssay"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"assays/{assayName}/isa.datamap.xlsx", 
+                DTOType.ISA_Datamap, 
+                DTO.Spreadsheet fswb
+            )
+        |]
+        let datamap = ARCAux.getAssayDataMapFromContracts "wrongAssay" contracts
+        Expect.isNone datamap "Datamap should not have been parsed"
+    testCase "DataMap_WrongType" <| fun _ ->
+        let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
+        let assayName = "myAssay"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"assays/{assayName}/isa.datamap.xlsx", 
+                DTOType.ISA_Assay, 
+                DTO.Spreadsheet fswb
+            )
+        |]
+        let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
+        Expect.isNone datamap "Datamap should not have been parsed"
+    testCase "DataMap_WrongPath" <| fun _ ->
+        let fswb = TestObjects.Contract.ISA.SimpleISA.Assay.proteomeDatamapWB
+        let assayName = "myAssay"
+        let contracts = [|
+            Contract.create(
+                READ, 
+                $"studies/{assayName}/isa.datamap.xlsx", 
+                DTOType.ISA_Datamap, 
+                DTO.Spreadsheet fswb
+            )
+        |]
+        let datamap = ARCAux.getAssayDataMapFromContracts assayName contracts
+        Expect.isNone datamap "Datamap should not have been parsed"
 ]
 
 let tests_gitContracts = testList "gitContracts" [

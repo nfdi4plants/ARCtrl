@@ -22,8 +22,8 @@ module Helper =
         ResizeArray [|Person.create(firstName="Kevin", lastName="Frey", phone="023382093810")|], 
         ResizeArray [|OntologyAnnotation(); OntologyAnnotation()|],
         ResizeArray [ArcTable.Helper.create_filled(); ArcTable.init("Table 2")],
-        ResizeArray ["Assay 1"; "Assay 2"],
-        ResizeArray [|Comment.create("Hello", "World")|]
+        registeredAssayIdentifiers = ResizeArray ["Assay 1"; "Assay 2"],
+        comments = ResizeArray [|Comment.create("Hello", "World")|]
     )
 
     let compareFields =

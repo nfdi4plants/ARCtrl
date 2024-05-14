@@ -13,8 +13,8 @@ module Helper =
             OntologyAnnotation("TT", "MS", "MS:696969"), 
             OntologyAnnotation("TP", "MS", "MS:123456", ResizeArray [Comment.create("Hello","Space")]), 
             ResizeArray([Tests.ArcTable.Helper.create_filled(); ArcTable.init("My Second Table")]),
-            ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|],
-            ResizeArray [|Comment.create("Hello", "World")|]
+            performers = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|],
+            comments = ResizeArray [|Comment.create("Hello", "World")|]
         )
 
     let compare =
