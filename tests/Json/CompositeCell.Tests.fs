@@ -15,6 +15,9 @@ let tests_extended = testList "extended" [
     let cell_term_empty_jsonString = sprintf """{"%s":"Term","values":[{}]}""" CompositeCell.CellType
     let cell_unitized_jsonString = sprintf """{"%s":"Unitized","values":["42",{"annotationValue":"My Name","termSource":"MY","termAccession":"MY:1"}]}""" CompositeCell.CellType
     let cell_unitized_empty_jsonString = sprintf """{"%s":"Unitized","values":["",{}]}""" CompositeCell.CellType
+    let cell_data_empty_jsonString = sprintf """{"%s":"Data","values":[{}]}""" CompositeCell.CellType
+    let cell_data_jsonString = sprintf """{"%s":"Data","values":[{"@id":"MyID","name":"MyName","dataType":"Raw Data File","format":"text/csv","selectorFormat":"MySelector","comments":[{"key":"MyKey","value":"MyValue"}]}]}""" CompositeCell.CellType
+
     testList "encoder (toJsonString)" [
         testCase "FreeText" <| fun _ -> 
             let actual = CompositeCell.encoder cell_freetext |> Encode.toJsonString  0
@@ -35,6 +38,14 @@ let tests_extended = testList "extended" [
         testCase "Unitized empty" <| fun _ -> 
             let actual = CompositeCell.encoder cell_unitized_empty |> Encode.toJsonString  0
             let expected = cell_unitized_empty_jsonString
+            Expect.equal actual expected ""
+        testCase "Data" <| fun _ -> 
+            let actual = CompositeCell.encoder (CompositeCell.Data(Data("MyID","MyName",Process.DataFile.RawDataFile,"text/csv","MySelector",ResizeArray [Comment.create("MyKey","MyValue")])) ) |> Encode.toJsonString  0
+            let expected = cell_data_jsonString
+            Expect.equal actual expected ""
+        testCase "Data empty" <| fun _ ->
+            let actual = CompositeCell.encoder (CompositeCell.Data(Data())) |> Encode.toJsonString  0
+            let expected = cell_data_empty_jsonString
             Expect.equal actual expected ""
     ]
     testList "decoder (fromJsonString)" [ 
@@ -57,6 +68,14 @@ let tests_extended = testList "extended" [
         testCase "Unitized empty" <| fun _ -> 
             let actual = Decode.fromJsonString CompositeCell.decoder cell_unitized_empty_jsonString
             let expected = cell_unitized_empty
+            Expect.equal actual expected ""
+        testCase "Data" <| fun _ ->
+            let actual = Decode.fromJsonString CompositeCell.decoder cell_data_jsonString
+            let expected = CompositeCell.Data(Data("MyID","MyName",Process.DataFile.RawDataFile,"text/csv","MySelector",ResizeArray [Comment.create("MyKey","MyValue")]))
+            Expect.equal actual expected ""
+        testCase "Data empty" <| fun _ ->
+            let actual = Decode.fromJsonString CompositeCell.decoder cell_data_empty_jsonString
+            let expected = CompositeCell.Data(Data())
             Expect.equal actual expected ""
     ]
 ]

@@ -17,6 +17,7 @@
     <Compile Include="BaseJsonTests.fs" />
     <Compile Include="Comment.Tests.fs" />
     <Compile Include="OntologyAnnotation.Tests.fs" />
+    <Compile Include="Data.Tests.fs" />
     <Compile Include="CompositeCell.Tests.fs" />
     <Compile Include="IOType.Tests.fs" />
     <Compile Include="CompositeHeader.Tests.fs" />
