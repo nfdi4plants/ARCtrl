@@ -16,7 +16,7 @@ let tests_extended = testList "extended" [
     let cell_unitized_jsonString = sprintf """{"%s":"Unitized","values":["42",{"annotationValue":"My Name","termSource":"MY","termAccession":"MY:1"}]}""" CompositeCell.CellType
     let cell_unitized_empty_jsonString = sprintf """{"%s":"Unitized","values":["",{}]}""" CompositeCell.CellType
     let cell_data_empty_jsonString = sprintf """{"%s":"Data","values":[{}]}""" CompositeCell.CellType
-    let cell_data_jsonString = sprintf """{"%s":"Data","values":[{"@id":"MyID","name":"MyName","dataType":"Raw Data File","format":"text/csv","selectorFormat":"MySelector","comments":[{"key":"MyKey","value":"MyValue"}]}]}""" CompositeCell.CellType
+    let cell_data_jsonString = sprintf """{"%s":"Data","values":[{"@id":"MyID","name":"MyName","dataType":"Raw Data File","format":"text/csv","selectorFormat":"MySelector","comments":[{"name":"MyKey","value":"MyValue"}]}]}""" CompositeCell.CellType
 
     testList "encoder (toJsonString)" [
         testCase "FreeText" <| fun _ -> 
