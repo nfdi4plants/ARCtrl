@@ -346,6 +346,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let defaultGitignore = defaultArg defaultGitignore false
         [|
             Contract.Git.Init.createInitContract(?branch = branch)
+            Contract.Git.gitattributesContract
             if defaultGitignore then Contract.Git.gitignoreContract
             if repositoryAddress.IsSome then Contract.Git.Init.createAddRemoteContract repositoryAddress.Value
         |]
@@ -462,6 +463,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         
     static member DefaultContracts = Map<string,Contract> [|
         ARCtrl.Contract.Git.gitignoreFileName, ARCtrl.Contract.Git.gitignoreContract
+        ARCtrl.Contract.Git.gitattributesFileName, ARCtrl.Contract.Git.gitattributesContract
     |]
 
     static member fromROCrateJsonString (s:string) = 

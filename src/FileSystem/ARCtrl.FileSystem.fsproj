@@ -8,11 +8,11 @@
     <Compile Include="Path.fs" />
     <Compile Include="Commit.fs" />
     <Compile Include="DefaultGitignore.fs" />
+    <Compile Include="DefaultGitattributes.fs" />
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="FileSystem.fs" />
   </ItemGroup>
 	<ItemGroup>
-		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
     <ItemGroup>
