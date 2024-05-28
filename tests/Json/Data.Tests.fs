@@ -18,6 +18,11 @@ let isa_tests = testList "ISAJson" [
         let json = Data.ISAJson.encoder d |> Encode.toJsonString 2
         let d2 = Decode.fromJsonString Data.ISAJson.decoder json
         Expect.equal d2 d "Different after write and read"
+    ptestCase "AllFieldsLossless" <| fun _ ->
+        let d = Data("MyID","MyName",DataFile.RawDataFile,"text/csv","MySelector",ResizeArray [Comment.create("MyKey","MyValue")])
+        let json = Data.ISAJson.encoder d |> Encode.toJsonString 2
+        let d2 = Decode.fromJsonString Data.ISAJson.decoder json
+        Expect.equal d2 d "Different after write and read"
     #if !FABLE_COMPILER_PYTHON
     testAsync "WriterSchemaCorrectness" {
         let d = Data("MyID","MyName",DataFile.RawDataFile, "text/csv", "MySelector", ResizeArray [Comment.create("MyKey","MyValue")])
