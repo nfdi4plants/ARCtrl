@@ -75,6 +75,7 @@ module JsonTypes =
         | CompositeCell.Unitized (text,unit) -> 
             (if text = "" then None else Value.fromString text |> Some), 
             if unit.isEmpty() then None else unit |> Some
+        | CompositeCell.Data (data) -> failwith "Data cell should not be parsed to isa value"
 
     /// Convert a CompositeHeader and Cell tuple to a ISA Component
     let composeComponent (header : CompositeHeader) (value : CompositeCell) : Component =
