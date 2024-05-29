@@ -19,20 +19,23 @@
     <Compile Include="Metadata\Assays.fs" />
     <Compile Include="Metadata\Study.fs" />
     <Compile Include="Metadata\OntologySourceReference.fs" />
-    <Compile Include="AnnotationTable\CompositeHeader.fs" />
     <Compile Include="AnnotationTable\CompositeCell.fs" />
+    <Compile Include="AnnotationTable\CompositeHeader.fs" />
     <Compile Include="AnnotationTable\CompositeColumn.fs" />
     <Compile Include="AnnotationTable\ArcTable.fs" />
+    <Compile Include="DataMapTable\DataMapHeader.fs" />
+    <Compile Include="DataMapTable\DataMapColumn.fs" />
+    <Compile Include="DataMapTable\DataMapTable.fs" />
+    <Compile Include="DataMap.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcInvestigation.fs" />
     <Compile Include="Template.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="5.1.3" />
+    <PackageReference Include="FsSpreadsheet" Version="6.1.2" />
   </ItemGroup>
   <ItemGroup>
-  	<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
@@ -41,6 +44,9 @@
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil</Authors>

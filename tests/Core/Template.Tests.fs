@@ -11,7 +11,7 @@ open TestingUtils
 let create_TestTemplate() =
     let table = ArcTable.init("My Table")
     table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Source {i}")|])
-    table.AddColumn(CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
+    table.AddColumn(CompositeHeader.Output IOType.Data, [|for i in 0 .. 9 do yield CompositeCell.createFreeText($"Output {i}")|])
     let guid = System.Guid(String.init 32 (fun _ -> "d"))
     Template.make 
         guid 

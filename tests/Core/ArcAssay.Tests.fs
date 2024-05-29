@@ -76,7 +76,7 @@ let private test_create =
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = ResizeArray [|Person(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray [|Comment.create("Comment Name")|]
-            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
             Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
@@ -92,7 +92,7 @@ let private test_create =
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = ResizeArray [|Person.create(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray [|Comment.create("Comment Name")|]
-            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
             Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
@@ -108,7 +108,7 @@ let private test_create =
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = ResizeArray[|Person.create(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray[|Comment.create("Comment Name")|]
-            let actual = ArcAssay.create(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers, comments)
+            let actual = ArcAssay.create(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
             Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
@@ -142,6 +142,7 @@ let private test_create =
                     technologyType
                     technologyPlatform
                     tables
+                    None
                     performers
                     comments
 
@@ -507,8 +508,8 @@ let private tests_UpdateBy = testList "UpdateBy" [
             OntologyAnnotation("MyTechnologyType"),
             OntologyAnnotation("MyTechnologyPlatform"),
             ResizeArray([ArcTable.init("MyTable")]),
-            ResizeArray [|Person(firstName="Kevin", lastName="Frey")|],
-            ResizeArray [|Comment(name="CommentName", value="CommentValue")|]
+            performers = ResizeArray [|Person(firstName="Kevin", lastName="Frey")|],
+            comments = ResizeArray [|Comment(name="CommentName", value="CommentValue")|]
         )
     testCase "UpdateBy, full replace" <| fun _ ->
         let actual = create_testAssay()
@@ -611,6 +612,7 @@ let private tests_GetHashCode = testList "GetHashCode" [
             (OntologyAnnotation "tt" |> Some)
             (OntologyAnnotation "tp" |> Some)
             (ResizeArray([ArcTable.init("My Table"); ArcTable.Tests.create_testTable()]))
+            None
             (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
             (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
     testCase "passing" <| fun _ ->

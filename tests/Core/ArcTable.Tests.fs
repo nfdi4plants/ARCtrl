@@ -87,7 +87,7 @@ let private tests_GetHashCode = testList "GetHashCode" [
             Expect.equal hash1 hash2 "HashCode"
     testCase "equal, table-order does not matter" <| fun _ ->
         let column_inputHeader, column_inputValues = CompositeHeader.Input IOType.Source, [|for i in 0 .. 20 do yield (0,i), sprintf "Source_%i" i |> CompositeCell.createFreeText|]
-        let column_outputHeader, column_outputValues = CompositeHeader.Output IOType.RawDataFile, [|for i in 0 .. 20 do yield (1,i), sprintf "File_%i" i |> CompositeCell.createFreeText|]
+        let column_outputHeader, column_outputValues = CompositeHeader.Output IOType.Data, [|for i in 0 .. 20 do yield (1,i), sprintf "File_%i" i |> CompositeCell.createFreeText|]
         let createTable(reverse:bool) =
             let t = ArcTable.init("MyTable")
             let shuffled = if reverse then [|yield! column_outputValues; yield! column_inputValues|] else [|yield! column_inputValues; yield! column_outputValues|]
@@ -142,7 +142,7 @@ let private tests_SanityChecks = testList "SanityChecks" [
             CompositeHeader.Component (OntologyAnnotation())
             CompositeHeader.ProtocolREF
             CompositeHeader.ProtocolType
-            CompositeHeader.Output IOType.DerivedDataFile
+            CompositeHeader.Output IOType.Data
         ]
         testCase "valid headers" (fun () ->
             let columns = headers_valid |> Seq.map (fun x -> CompositeColumn.create(x))
@@ -237,7 +237,7 @@ let private tests_ArcTableAux =
                 CompositeHeader.Component (OntologyAnnotation())
                 CompositeHeader.ProtocolREF
                 CompositeHeader.ProtocolType
-                CompositeHeader.Output IOType.DerivedDataFile
+                CompositeHeader.Output IOType.Data
             ]
             testCase "No duplicate, component" (fun () ->
                 let header = CompositeHeader.Component (OntologyAnnotation())
@@ -329,12 +329,12 @@ let private tests_UpdateHeader =
         )
         testCase "set unique at different index" (fun () ->
             let testTable = create_testTable()
-            let table() = testTable.UpdateHeader(2, CompositeHeader.Input IOType.DerivedDataFile)
+            let table() = testTable.UpdateHeader(2, CompositeHeader.Input IOType.Data)
             Expect.throws (table >> ignore) ""
         )
         testCase "set unique at same index" (fun () ->
             let table = create_testTable()
-            let newHeader = CompositeHeader.Input IOType.DerivedDataFile
+            let newHeader = CompositeHeader.Input IOType.Data
             table.UpdateHeader(0, newHeader)
             Expect.equal table.RowCount 5 "RowCount"
             Expect.equal table.ColumnCount 5 "ColumnCount"
@@ -518,7 +518,7 @@ let private tests_UpdateColumn =
         )
         testCase "set unique duplicate, different index" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Input IOType.RawDataFile
+            let h = CompositeHeader.Input IOType.Data
             let cells = createCells_FreeText "NEWSOURCE" 5
             let column = CompositeColumn.create(h, cells)
             let eval() = table.UpdateColumn(1, h, cells)
@@ -526,7 +526,7 @@ let private tests_UpdateColumn =
         )
         testCase "set unique duplicate, same index" (fun () ->
             let table = create_testTable()
-            let h = CompositeHeader.Input IOType.RawDataFile
+            let h = CompositeHeader.Input IOType.Data
             let cells = createCells_FreeText "NEWSOURCE" 5
             table.UpdateColumn(0, h, cells)
             Expect.equal table.RowCount 5 "RowCount"
@@ -1429,7 +1429,7 @@ let private tests_AddColumns =
             )
             testCase "multiple columns, same rowCount, duplicate replace" (fun () ->
                 let testTable = create_testTable()
-                let newInputCol = CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "NEW" 5)
+                let newInputCol = CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "NEW" 5)
                 let columns = [|
                     column_param
                     newInputCol
@@ -1455,7 +1455,7 @@ let private tests_AddColumns =
             )
             testCase "multiple columns, same rowCount, duplicate replace, insert at" (fun () ->
                 let testTable = create_testTable()
-                let newInputCol = CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "NEW" 5)
+                let newInputCol = CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "NEW" 5)
                 let columns = [|
                     column_param
                     newInputCol
@@ -1481,7 +1481,7 @@ let private tests_AddColumns =
             )
             testCase "multiple columns, same rowCount, duplicate replace, insert at2" (fun () ->
                 let testTable = create_testTable()
-                let newInputCol = CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "NEW" 5)
+                let newInputCol = CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "NEW" 5)
                 let columns = [|
                     column_param
                     newInputCol
@@ -1563,7 +1563,7 @@ let private tests_AddColumns =
             )
             testCase "multiple columns, more rowCount, duplicate replace" (fun () ->
                 let testTable = create_testTable()
-                let newInput = CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "NEW" 8)
+                let newInput = CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "NEW" 8)
                 let newColumn = CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_Term 8)
                 let columns = [|
                     newColumn
@@ -1592,7 +1592,7 @@ let private tests_AddColumns =
             )
             testCase "multiple columns, different rowCount, duplicate replace" (fun () ->
                 let testTable = create_testTable()
-                let newInput = CompositeColumn.create(CompositeHeader.Input IOType.RawDataFile, createCells_FreeText "NEW" 2)
+                let newInput = CompositeColumn.create(CompositeHeader.Input IOType.Data, createCells_FreeText "NEW" 2)
                 let newColumn = CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_Term 8)
                 let columns = [|
                     newColumn
@@ -2152,13 +2152,13 @@ let private tests_Join = testList "Join" [
             let table = create_testTable()
             let joinTable = ArcTable.create(
                 "jointable",
-                ResizeArray([CompositeHeader.Input IOType.ImageFile]),
+                ResizeArray([CompositeHeader.Input IOType.Data]),
                 System.Collections.Generic.Dictionary()
             )
             table.Join(joinTable,-1,TableJoinOptions.Headers,true)
             Expect.equal table.ColumnCount 5 "columnCount"
             // test headers
-            Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.ImageFile) "Here should be new image input"
+            Expect.equal table.Headers.[0] (CompositeHeader.Input IOType.Data) "Here should be new image input"
             Expect.equal table.Headers.[1] (CompositeHeader.Output IOType.Sample) "Header output"
             Expect.equal table.Headers.[2] (CompositeHeader.Parameter (OntologyAnnotation())) "Header parameter [empty]"
             Expect.equal table.Headers.[3] (CompositeHeader.Component oa_instrumentModel) "Header component [instrument model]"
@@ -2221,7 +2221,7 @@ let private tests_Join = testList "Join" [
 let private tests_IterColumns = testList "IterColumns" [
     testCase "Replace input column header" <| fun _ ->
         let table = create_testTable()
-        let expected = CompositeHeader.Input IOType.RawDataFile
+        let expected = CompositeHeader.Input IOType.Data
         table.IteriColumns (fun i c ->
             if c.Header.isInput then
                 table.UpdateHeader(i,expected)

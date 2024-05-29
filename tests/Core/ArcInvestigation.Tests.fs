@@ -627,7 +627,7 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.DerivedDataFile, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Data, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             Expect.throws (fun () -> i.UpdateIOTypeByEntityID()) "Update should fail as sample and data can not be updated against each other."
@@ -680,7 +680,7 @@ let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
             |]
             t2.AddColumns [|
-                CompositeColumn.create (CompositeHeader.Input IOType.DerivedDataFile, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
+                CompositeColumn.create (CompositeHeader.Input IOType.Data, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample %i" i)))
                 CompositeColumn.create (CompositeHeader.Output IOType.Sample, Array.init 3 (fun i -> CompositeCell.createFreeText (sprintf "Sample_Alt %i" i)))
             |]
             Expect.throws (fun () -> i.UpdateIOTypeByEntityID()) "Update should fail as sample and data can not be updated against each other."

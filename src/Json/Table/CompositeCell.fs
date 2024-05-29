@@ -15,11 +15,13 @@ module CompositeCell =
 
     let encoder (cc: CompositeCell) =
         let oaToJsonString (oa:OntologyAnnotation) = OntologyAnnotation.encoder oa
+
         let t, v =
             match cc with
             | CompositeCell.FreeText s-> "FreeText", [Encode.string s]
             | CompositeCell.Term t -> "Term", [oaToJsonString t]
             | CompositeCell.Unitized (v, unit) -> "Unitized", [Encode.string v; oaToJsonString unit]
+            | CompositeCell.Data d -> "Data", [Data.encoder d]
         Encode.object [
             CellType, Encode.string t
             CellValues, v |> Encode.list
@@ -38,6 +40,9 @@ module CompositeCell =
                 let v = get.Required.Field (CellValues) (Decode.index 0 Decode.string)
                 let oa = get.Required.Field (CellValues) (Decode.index 1 OntologyAnnotation.decoder)
                 CompositeCell.Unitized (v, oa)
+            | "Data" -> 
+                let d = get.Required.Field (CellValues) (Decode.index 0 Data.decoder)
+                CompositeCell.Data d
             | anyelse -> failwithf "Error reading CompositeCell from json string: %A" anyelse 
         ) 
 
@@ -50,6 +55,7 @@ module CompositeCell =
             | CompositeCell.FreeText s -> "FreeText", [StringTable.encodeString stringTable s]
             | CompositeCell.Term t -> "Term", [OATable.encodeOA oaTable t]
             | CompositeCell.Unitized (v, unit) -> "Unitized", [StringTable.encodeString stringTable v; OATable.encodeOA oaTable unit]
+            | CompositeCell.Data d -> "Data", [Data.compressedEncoder stringTable d]
         Encode.object [
             CompressedCellType, StringTable.encodeString stringTable t
             CompressedCellValues, v |> Encode.list
@@ -69,6 +75,9 @@ module CompositeCell =
                 let v = get.Required.Field (CompressedCellValues) (Decode.index 0 <| (StringTable.decodeString stringTable) )
                 let oa = get.Required.Field (CompressedCellValues) (Decode.index 1 <| OATable.decodeOA oaTable )
                 CompositeCell.Unitized (v, oa)
+            | "Data" ->
+                let d = get.Required.Field (CompressedCellValues) (Decode.index 0 <| Data.compressedDecoder stringTable)
+                CompositeCell.Data d
             | anyelse -> failwithf "Error reading CompositeCell from json string: %A" anyelse 
         ) 
 

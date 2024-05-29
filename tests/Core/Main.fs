@@ -8,6 +8,7 @@ let all = testSequenced <| testList "Core" [
     Regex.Tests.main
     Person.Tests.main
     CompositeHeader.Tests.main
+    Data.Tests.main
     CompositeCell.Tests.main
     CompositeColumn.Tests.main
     ArcTables.Tests.main

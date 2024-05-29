@@ -158,6 +158,18 @@ module Factor =
             t.Cell(FsAddress(i, colCount + 4),c).SetValueAs timeValueV4
 
 module Input = 
+
+    let sourceValue = 
+        CompositeCell.FreeText "MySource"
+
+    let sourceValueV1 = "MySource"
+
+    let dataHeader = 
+        CompositeHeader.Input IOType.Data
+
+    let dataValue =
+        CompositeCell.Data (Data.create(Name = "MyInputData", Format = "text/csv", SelectorFormat = "https://datatracker.ietf.org/doc/html/rfc7111"))
+
     let sampleHeader = 
         CompositeHeader.Input IOType.Sample
 
@@ -174,6 +186,28 @@ module Input =
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
 
+    let dataHeaderV1 = "Input [Data]"
+    
+    let dataValueV1 = "MyInputData"  
+
+    let dataHeaderV2 = "Data Format"
+
+    let dataValueV2 = "text/csv"
+
+    let dataHeaderV3 = "Data Selector Format"
+
+    let dataValueV3 = "https://datatracker.ietf.org/doc/html/rfc7111"
+
+    let appenddataColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs dataHeaderV1
+        t.Cell(FsAddress(1, colCount + 2),c).SetValueAs dataHeaderV2
+        t.Cell(FsAddress(1, colCount + 3),c).SetValueAs dataHeaderV3
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs dataValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs dataValueV2
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs dataValueV3
+
     let deprecatedSourceHeader = CompositeHeader.Input IOType.Source
 
     let deprecatedSourceHeaderV1 = "Source Name"
@@ -182,19 +216,60 @@ module Input =
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs deprecatedSourceHeaderV1
         for i = 2 to l + 1 do  
-            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sourceValueV1
 
 
 module Output = 
-    let rawDataHeader = 
-        CompositeHeader.Output IOType.RawDataFile
+    let simpleDataHeader = 
+        CompositeHeader.Output IOType.Data
 
-    let rawDataValue = 
-        CompositeCell.FreeText "MyRawData"
+    let simpleDataValue = 
+        CompositeCell.Data (Data.create (Name = "MyData"))
+
+    let fullDataHeader = 
+        CompositeHeader.Output IOType.Data
+
+    let fullDataValue =
+        CompositeCell.Data (Data.create(Name = "MyData", Format = "text/csv", SelectorFormat = "https://datatracker.ietf.org/doc/html/rfc7111"))
+
 
     let rawDataHeaderV1 = "Output [Raw Data File]"
     
     let rawDataValueV1 = "MyRawData"  
+
+    let dataHeaderV1 = "Output [Data]"
+
+    let dataValueV1 = "MyData"
+
+    let dataHeaderV2 = "Data Format"
+
+    let dataValueV2 = "text/csv"
+
+    let dataHeaderV3 = "Data Selector Format"
+
+    let dataValueV3 = "https://datatracker.ietf.org/doc/html/rfc7111"
+
+
+    let sampleValue = 
+        CompositeCell.FreeText "MySample"
+
+    let sampleValueV1 = "MySample"
+
+    let appendSimpleDataColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs dataHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs dataValueV1
+
+    let appendFullDataColumn l (c : FsCellsCollection) (t : FsTable) =
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs dataHeaderV1
+        t.Cell(FsAddress(1, colCount + 2),c).SetValueAs dataHeaderV2
+        t.Cell(FsAddress(1, colCount + 3),c).SetValueAs dataHeaderV3
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs dataValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs dataValueV2
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs dataValueV3
 
     let appendRawDataColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
@@ -210,7 +285,7 @@ module Output =
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs deprecatedSampleHeaderV1
         for i = 2 to l + 1 do  
-            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs rawDataValueV1
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
 
 module Protocol =
     module REF = 

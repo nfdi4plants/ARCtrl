@@ -91,10 +91,24 @@ let private tests = testList "extended" [
     ]
 ]
 
+let private tests_dataColumns = 
+    testList "dataColumns" [
+        testCase "dataColumns" <| fun _ ->
+            let testTable = ArcTable.init("Test") 
+            testTable.AddColumn (CompositeHeader.Input IOType.Data, [|CompositeCell.Data (Data(name="MyInputDataFile.csv"))|])
+            testTable.AddColumn (CompositeHeader.Output IOType.Data, [|CompositeCell.Data (Data(name="MyData.csv#row=1",format="text/csv",selectorFormat = "MySelector"))|])
+
+            let encoded = testTable.ToJsonString()
+            let decoded = ArcTable.fromJsonString encoded
+            Expect.arcTableEqual decoded testTable "decompressed table should be equal to original table"
+    ]
+    
+
 let main = testList "ArcTable" [
     tests
     tests_core
     tests_coreEmpty
     tests_compressedEmpty
     tests_compressedFilled
+    tests_dataColumns
 ]

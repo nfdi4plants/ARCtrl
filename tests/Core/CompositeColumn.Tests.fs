@@ -53,7 +53,7 @@ let private tests_Validate =
             Expect.throws eval ""
         )
         testCase "Invalid io column with term cells" (fun () ->
-            let header : CompositeHeader = CompositeHeader.Input IOType.ImageFile
+            let header : CompositeHeader = CompositeHeader.Input IOType.Data
             let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyTerm)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore
@@ -61,7 +61,7 @@ let private tests_Validate =
             Expect.throws eval ""
         )
         testCase "Invalid io column with unit cells" (fun () ->
-            let header : CompositeHeader = CompositeHeader.Input IOType.ImageFile
+            let header : CompositeHeader = CompositeHeader.Input IOType.Data
             let cells : CompositeCell [] = Array.init 2 (fun _ -> CompositeCell.emptyUnitized)
             let column = CompositeColumn.create(header, cells).Validate()
             let eval() = CompositeColumn.create(header, cells).Validate(true) |> ignore

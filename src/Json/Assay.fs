@@ -189,7 +189,7 @@ module AssayExtensions =
             Decode.fromJsonString Assay.ROCrate.decoder s
 
         /// exports in json-ld format
-        static member toROCrateJsonString(studyName, ?spaces) =
+        static member toROCrateJsonString(?studyName, ?spaces) =
             fun (obj: ArcAssay) ->
                 Assay.ROCrate.encoder studyName obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)

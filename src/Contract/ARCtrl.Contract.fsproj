@@ -7,6 +7,7 @@
   <ItemGroup>
     <None Include="README.md" />
     <Compile Include="Contract.fs" />
+    <Compile Include="Datamap.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
     <Compile Include="ArcInvestigation.fs" />
@@ -19,8 +20,10 @@
     <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil, Kevin Schneider, Oliver Maus</Authors>

@@ -17,6 +17,7 @@
     <Compile Include="TestObjects.Json\Publication.fs" />
     <Compile Include="TestObjects.Json\Validation.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.ArcTable.fs" />
+    <Compile Include="TestObjects.Spreadsheet\Spreadsheet.DataMap.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Assay.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Study.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.InvestigationFile.fs" />
@@ -26,7 +27,7 @@
   </ItemGroup>
 <ItemGroup>
   <PackageReference Include="Fable.Node" Version="1.2.0" />
-  <PackageReference Include="Fable.Pyxpecto" Version="1.0.1" />
+  <PackageReference Include="Fable.Pyxpecto" Version="1.1.0" />
 	<PackageReference Include="Fable.Core" Version="4.2.0" />
 </ItemGroup>
 <ItemGroup>

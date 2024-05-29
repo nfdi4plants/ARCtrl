@@ -8,7 +8,7 @@ function tests_IOType() {
         it('cases', function () {
             let cases = IOType.Cases
             //console.log(cases)
-            equal(cases.length, 7);
+            equal(cases.length, 5);
         });
         it('Create non Freetext', function () {
             for (let mycase of IOType.Cases) {
@@ -22,25 +22,19 @@ function tests_IOType() {
                         equal(iotype.asInput, "Input [Sample Name]");
                         break;
                     case 2:
-                        equal(iotype.asInput, "Input [Raw Data File]");
+                        equal(iotype.asInput, "Input [Data]");
                         break;
                     case 3:
-                        equal(iotype.asInput, "Input [Derived Data File]");
-                        break;
-                    case 4:
-                        equal(iotype.asInput, "Input [Image File]");
-                        break;
-                    case 5:
                         equal(iotype.asInput, "Input [Material]");
                         break;
-                    case 6:
+                    case 4:
                         equal(iotype.asInput, "Input [undefined]");
                         break;
                 }
             }
         });
         it('Create FreeText', function () {
-            let freetext = new IOType(6, ["My FreeTextValue"])
+            let freetext = new IOType(4, ["My FreeTextValue"])
             let asinput = freetext.asInput
             equal(asinput, "Input [My FreeTextValue]")
         });
@@ -53,26 +47,17 @@ function tests_IOType() {
             let sa2 = new IOType(1, [])
             assertEqual(sa1, sa2);
 
-            let ra1 = IOType.rawDataFile()
+            let ra1 = IOType.data()
             let ra2 = new IOType(2, [])
             assertEqual(ra1, ra2);
 
-            let da1 = IOType.derivedDataFile()
-            let da2 = new IOType(3, [])
-            assertEqual(da1, da2);
-
-            let im1 = IOType.imageFile()
-            let im2 = new IOType(4, [])
-            //let imb = equals(im1, im2);
-            assertEqual(im1, im2);
-
             let ma1 = IOType.material()
-            let ma2 = new IOType(5, [])
+            let ma2 = new IOType(3, [])
             assertEqual(ma1, ma2);
 
             let ft = "My FreeTextValue"
             let ft1 = IOType.freeText(ft)
-            let ft2 = new IOType(6, [ft])
+            let ft2 = new IOType(4, [ft])
             assertEqual(ft1, ft2);
 
         });
@@ -82,7 +67,7 @@ function tests_IOType() {
 describe('CompositeHeader', function () {
     tests_IOType();
     it("Input", function () {
-        let iotype = new IOType(6, ["My FreeTextValue"])
+        let iotype = new IOType(4, ["My FreeTextValue"])
         let header = new CompositeHeader(11, [iotype])
         let actual = header.toString()
         equal(actual, "Input [My FreeTextValue]")

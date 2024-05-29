@@ -26,9 +26,17 @@ type CompositeColumn = {
         // no cell values will be handled later and is no error case
         | _, emptyCell when cells.Length = 0 -> 
             true
+        | isData when header.IsDataColumn && (cells.[0].isData || cells.[0].isFreeText) -> 
+            true
+        | isData when header.IsDataColumn -> 
+            if raiseExeption then 
+                let exampleCells = cells.[0]
+                let msg = $"Invalid combination of header `{header}` and cells `{exampleCells}`, Data header should have either Data or Freetext cells"
+                failwith msg
+            false
         | isTerm when header.IsTermColumn && (cells.[0].isTerm || cells.[0].isUnitized) -> 
             true
-        | isNotTerm when not header.IsTermColumn && cells.[0].isFreeText -> 
+        | isNotTerm when (not header.IsTermColumn) && cells.[0].isFreeText -> 
             true
         | h, c -> 
             if raiseExeption then 

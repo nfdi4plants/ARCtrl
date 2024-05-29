@@ -7,7 +7,9 @@ let all = testSequenced <| testList "ISA.Spreadsheet" [
     RegexTests.main
     ArcInvestigationTests.main
     CompositeColumnTests.main
+    CompositeHeaderTests.main
     ArcTableTests.main
+    DataMapTests.main
     ArcAssayTests.main
     ArcStudyTests.main
     SparseTableTests.main

@@ -16,6 +16,8 @@
     <Compile Include="Comment.fs" />
     <Compile Include="CommentList.fs" />
     <Compile Include="OntologyAnnotation.fs" />
+    <Compile Include="DataFile.fs" />
+    <Compile Include="Data.fs" />
     <Compile Include="Person.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="OntologySourceReference.fs" />
@@ -29,8 +31,6 @@
     <Compile Include="Process\Material.fs" />
     <Compile Include="Process\Source.fs" />
     <Compile Include="Process\Sample.fs" />
-    <Compile Include="Process\DataFile.fs" />
-    <Compile Include="Process\Data.fs" />
     <Compile Include="Process\Component.fs" />
     <Compile Include="Process\ProtocolParameter.fs" />
     <Compile Include="Process\Protocol.fs" />
@@ -46,6 +46,7 @@
     <Compile Include="Table\ArcTableAux.fs" />
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\ArcTables.fs" />
+    <Compile Include="Table\DataMap.fs" />
     <Compile Include="ArcTypes.fs" />
     <Compile Include="Template.fs" />
     <Compile Include="Templates.fs" />
@@ -57,8 +58,10 @@
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>

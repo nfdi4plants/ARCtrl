@@ -60,7 +60,7 @@ let private simpleISAContracts =
     |]
 
 let private tests_read_contracts = testList "read_contracts" [
-    ptestCase "simpleISA" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
+    testCase "simpleISA" (fun () -> 
         let arc = ARC()
         arc.SetISAFromContracts simpleISAContracts
         Expect.isSome arc.ISA "isa should be filled out"
@@ -70,7 +70,9 @@ let private tests_read_contracts = testList "read_contracts" [
         Expect.equal inv.Studies.Count 2 "should have read two studies"
         let study1 = inv.Studies.[0]
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
-        Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
+
+        Expect.equal study1.TableCount 2 "study 1 should have the 2 tables. Top level Metadata tables are ignored."
+        //Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
         
         Expect.equal study1.RegisteredAssays.Count 3 "study 1 should have read three assays"
         let assay1 = study1.RegisteredAssays.[0]
@@ -78,7 +80,7 @@ let private tests_read_contracts = testList "read_contracts" [
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
     
     )
-    ptestCase "StudyAssayOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
+    testCase "StudyAssayOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC()
         arc.SetISAFromContracts([|
             SimpleISA.Investigation.investigationReadContract
@@ -94,7 +96,8 @@ let private tests_read_contracts = testList "read_contracts" [
         Expect.equal inv.VacantStudyIdentifiers.Count 1 "should have one vacant study identifier"
         let study1 = inv.Studies.[0]
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
-        Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
+        Expect.equal study1.TableCount 2 "study 1 should have the 2 tables. Top level Metadata tables are ignored."
+        //Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
         
         Expect.equal study1.RegisteredAssays.Count 1 "study 1 should have read one assay"
         Expect.equal study1.RegisteredAssayIdentifierCount 3 "study 1 should have read three registered assay identifiers"
@@ -148,6 +151,23 @@ let private tests_read_contracts = testList "read_contracts" [
             (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description))
             "Description value was not taken correctly"
     )
+    testCase "SimpleISA_WithDataset" (fun _ ->
+        let contracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
+
+        let arc = ARC()
+        arc.SetISAFromContracts contracts
+
+        let inv = Expect.wantSome arc.ISA "Arc should have investigation"
+        let a1 = inv.GetAssay(SimpleISA.Assay.proteomeIdentifer)
+        let datamap = Expect.wantSome a1.DataMap "Proteome Assay was supposed to have datamap"
+        
+        Expect.equal 2 datamap.Table.RowCount "Datamap was not read correctly"
+
+        let a2 = inv.GetAssay(SimpleISA.Assay.metabolomeIdentifer)
+        Expect.isNone a2.DataMap "Metabolome Assay was not supposed to have datamap"
+    
+    )
+
 ]
 
 let private tests_writeContracts = testList "write_contracts" [
@@ -193,6 +213,33 @@ let private tests_writeContracts = testList "write_contracts" [
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx") "assay file missing"
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
 
+    )
+    testCase "assayWithDatamap" (fun _ ->
+        let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+        let a = inv.InitAssay("MyAssay")
+        let dm = DataMap.init()
+        a.DataMap <- Some dm
+        let arc = ARC(isa = inv)
+        let contracts = arc.GetWriteContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 10 $"Should contain more contracts as base folders but contained: {contractPathsString}"
+
+        // Base 
+        Expect.exists contracts (fun c -> c.Path = "workflows/.gitkeep") "Contract for workflows folder missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/.gitkeep") "Contract for runs folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/.gitkeep") "Contract for assays folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/.gitkeep") "Contract for studies folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation existing but has wrong DTO type"
+
+        // Assay folder
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/README.md") "assay readme missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/protocols/.gitkeep") "assay protocols folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/dataset/.gitkeep") "assay dataset folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx") "assay file missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file existing but has wrong DTO type"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.datamap.xlsx") "assay datamap file missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.datamap.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Datamap) "assay datamap file existing but has wrong DTO type"
     )
     testCase "sameAssayAndStudyName" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
@@ -315,6 +362,29 @@ let private tests_updateContracts = testList "update_contracts" [
         let nextContracts = arc.GetUpdateContracts()
         Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
     )
+    testCase "simpleISA_Datamap_NoChanges" (fun _ ->
+        let arc = ARC()
+        let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
+        arc.SetISAFromContracts readContracts
+        let contracts = arc.GetUpdateContracts()
+        Expect.equal contracts.Length 0 "Should contain no contracts as there are no changes"
+    )
+    testCase "simpleISA_Datamap_Changed" (fun _ ->
+        let arc = ARC()
+        let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
+        arc.SetISAFromContracts readContracts
+        let isa = arc.ISA.Value
+
+        let dm = Expect.wantSome (isa.GetAssay(SimpleISA.Assay.proteomeIdentifer).DataMap) "Assay should have datamap"       
+        dm.Values.[(0,1)] <- CompositeCell.createDataFromString("Hello")
+
+        let contracts = arc.GetUpdateContracts()
+        Expect.equal contracts.Length 1 $"Should contain only assay datamap change contract"
+        let expectedPath = Identifier.Assay.datamapFileNameFromIdentifier SimpleISA.Assay.proteomeIdentifer
+        Expect.equal contracts.[0].Path expectedPath "Should be the assay datamap file"
+        let nextContracts = arc.GetUpdateContracts()
+        Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
+    )
     testCase "simpleISA_StudyChange" (fun _ ->
         let arc = ARC()
         arc.SetISAFromContracts simpleISAContracts
@@ -427,9 +497,9 @@ let private ``payload_file_filters`` =
 
         let assay = ArcAssay("registered_assay")
         let assayTable = assay.InitTable("MyAssayTable")
-        assayTable.AppendColumn(CompositeHeader.Input (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_assay_input.txt"|])
+        assayTable.AppendColumn(CompositeHeader.Input (IOType.Data), [|CompositeCell.createFreeText "registered_assay_input.txt"|])
         assayTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "assay_protocol.rtf"|])
-        assayTable.AppendColumn(CompositeHeader.Output (IOType.DerivedDataFile), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
+        assayTable.AppendColumn(CompositeHeader.Output (IOType.Data), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
 
         let study = ArcStudy("registered_study")
         inv.AddRegisteredStudy(study)
@@ -437,7 +507,7 @@ let private ``payload_file_filters`` =
         studyTable.AppendColumn(CompositeHeader.Input (IOType.Sample), [|CompositeCell.createFreeText "some_study_input_material"|])
         studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
         studyTable.AppendColumn(CompositeHeader.ProtocolREF, [|CompositeCell.createFreeText "study_protocol.pdf"|])
-        studyTable.AppendColumn(CompositeHeader.Output (IOType.RawDataFile), [|CompositeCell.createFreeText "registered_study_output.txt"|])
+        studyTable.AppendColumn(CompositeHeader.Output (IOType.Data), [|CompositeCell.createFreeText "registered_study_output.txt"|])
         study.AddRegisteredAssay(assay)
 
 

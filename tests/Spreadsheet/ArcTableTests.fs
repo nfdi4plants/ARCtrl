@@ -236,7 +236,7 @@ let private ioTable =
                     Parameter.appendTemperatureColumn       1
                     Characteristic.appendOrganismColumn     1
                     Factor.appendTimeColumn                 1
-                    Output.appendRawDataColumn              1
+                    Output.appendSimpleDataColumn           1
                 ]
         testCase "Read" (fun () -> 
                     
@@ -256,7 +256,7 @@ let private ioTable =
                     Parameter.temperatureHeader 
                     Characteristic.organismHeader 
                     Factor.timeHeader 
-                    Output.rawDataHeader 
+                    Output.simpleDataHeader 
                 ]
             Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
             let expectedCells = 
@@ -266,7 +266,7 @@ let private ioTable =
                     Parameter.temperatureValue 
                     Characteristic.organismValue 
                     Factor.timeValue 
-                    Output.rawDataValue 
+                    Output.simpleDataValue 
                 ]
             Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
@@ -280,7 +280,54 @@ let private ioTable =
         )
     ]
 
+let private fullDataTable = 
+    testList "fullDataTable" [
+        let wsName = "MyWorksheet"
+        let ws = 
+            initWorksheet wsName
+                [
+                    Input.appenddataColumn                1
+                    Protocol.REF.appendLolColumn          1          
+                    Parameter.appendTemperatureColumn     1
+                    Output.appendFullDataColumn           1
+                ]
+        testCase "Read" (fun () -> 
+                    
+            let table = ArcTable.tryFromFsWorksheet ws        
+        
+            Expect.isSome table "Table was not created"
+            let table = table.Value
 
+            Expect.equal table.Name wsName "Name did not match"
+            Expect.equal table.ColumnCount 4 "Wrong number of columns"
+            Expect.equal table.RowCount 1 "Wrong number of rows"
+
+            let expectedHeaders = 
+                [
+                    Input.dataHeader 
+                    Protocol.REF.lolHeader        
+                    Parameter.temperatureHeader 
+                    Output.fullDataHeader 
+                ]
+            Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
+            let expectedCells = 
+                [
+                    Input.dataValue 
+                    Protocol.REF.lolValue        
+                    Parameter.temperatureValue 
+                    Output.fullDataValue 
+                ]
+            Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+        )
+        testCase "Write" (fun () -> 
+            
+            let table = ArcTable.tryFromFsWorksheet ws        
+            Expect.isSome table "Table was not created"
+            let out = ArcTable.toFsWorksheet table.Value
+            Expect.workSheetEqual out ws "Worksheet was not correctly written"
+           
+        )
+    ]
 
 let private deprecatedColumnTable = 
     testList "deprecatedIOColumnTable" [
@@ -317,11 +364,11 @@ let private deprecatedColumnTable =
 
             let expectedCells = 
                 [
-                        Input.sampleValue
+                        Input.sourceValue
                         Protocol.REF.lolValue
                         Protocol.Type.collectionValue
                         Parameter.temperatureValue
-                        Output.rawDataValue
+                        Output.sampleValue
                 ]
             Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
         )
@@ -338,7 +385,7 @@ let private writeOrder =
                     [
                         Parameter.appendTemperatureColumn       1
                         Characteristic.appendOrganismColumn     1
-                        Output.appendRawDataColumn              1
+                        Output.appendSimpleDataColumn           1
                         Protocol.REF.appendLolColumn            1          
                         Input.appendSampleColumn                1
                         Factor.appendTimeColumn                 1
@@ -355,7 +402,7 @@ let private writeOrder =
                         Parameter.appendTemperatureColumn       1
                         Characteristic.appendOrganismColumn     1
                         Factor.appendTimeColumn                 1
-                        Output.appendRawDataColumn              1
+                        Output.appendSimpleDataColumn           1
                     ]
                 
             Expect.workSheetEqual mixedOut orderedWs "Columns were not ordered correctly"
@@ -386,6 +433,7 @@ let main =
         mixedTable
         ioTable
         valuelessTable
+        fullDataTable
         deprecatedColumnTable
         writeOrder
         emptyTable

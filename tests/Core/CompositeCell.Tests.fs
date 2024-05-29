@@ -107,7 +107,18 @@ let private tests_create =
             let expected = CompositeCell.Unitized("42", oa)
             Expect.equal newCell expected ""
         )
-    ]
+        testCase "createData" (fun () ->
+            let d = Data(name = "MyData#row=1", format = "text/csv", selectorFormat = "MySelector")
+            let newCell : CompositeCell = CompositeCell.createData(d)
+            let expected = CompositeCell.Data d
+            Expect.equal newCell expected ""
+        )
+        testCase "createDataFromString" (fun () ->
+            let newCell : CompositeCell = CompositeCell.createDataFromString("MyData#row=1", "text/csv", "MySelector")
+            let expected = CompositeCell.Data <| Data(name = "MyData#row=1", format = "text/csv", selectorFormat = "MySelector")
+            Expect.equal newCell expected ""
+        )
+     ]
 
 let private tests_ToString = testList "ToString" [
     testCase "FreeText" <| fun _ ->
@@ -125,6 +136,12 @@ let private tests_ToString = testList "ToString" [
         let actual = cc.ToString()
         let expected = "20 degree celcius"
         Expect.equal actual expected ""
+    testCase "Data" <| fun _ ->
+        let d = Data(name = "MyData#row=1", format = "text/csv", selectorFormat = "MySelector")
+        let cc = CompositeCell.createData d
+        let actual = cc.ToString()
+        let expected = "MyData#row=1"
+        Expect.equal actual expected ""
 ]
 
 let private tests_GetContent = testList "GetContent" [
@@ -140,6 +157,11 @@ let private tests_GetContent = testList "GetContent" [
         let cell = CompositeCell.createUnitized ("12", OntologyAnnotation("My Unit Name"))
         let actual = cell.GetContent()
         Expect.equal actual [|"12"; "My Unit Name"; ""; ""|] ""
+    testCase "Data" <| fun _ ->
+        let d = Data(name = "MyData#row=1", format = "text/csv", selectorFormat = "MySelector")
+        let cell = CompositeCell.createData d
+        let actual = cell.GetContent()
+        Expect.equal actual [|"MyData#row=1"; "text/csv"; "MySelector"|] ""
     testCase "Matching" <| fun _ ->
         let matchContent (content: string []) =
             match content with
@@ -187,6 +209,11 @@ let private tests_GetHashCode = testList "GetHashCode" [
             Expect.isTrue true " "
         testCase "FreeText" <| fun _ ->
             let cc = CompositeCell.createFreeText("TestTerm")
+            cc.GetHashCode() |> ignore
+            Expect.isTrue true " "
+        testCase "Data" <| fun _ ->
+            let d = Data(name = "MyData#row=1", format = "text/csv", selectorFormat = "MySelector")
+            let cc = CompositeCell.createData d
             cc.GetHashCode() |> ignore
             Expect.isTrue true " "
     ]

@@ -35,6 +35,7 @@ module Assays =
             (Option.fromValueWithDefault (OntologyAnnotation()) technologyType) 
             (technologyPlatform |> Option.map JsonTypes.decomposeTechnologyPlatform)
             (ResizeArray())             
+            None
             (ResizeArray())      
             (comments)
         

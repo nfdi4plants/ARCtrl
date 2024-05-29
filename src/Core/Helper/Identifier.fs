@@ -88,6 +88,24 @@ module Assay =
         else None
 
 
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `assays/assayIdentifier/isa.datamap.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct assay identifier</param>
+    let datamapFileNameFromIdentifier (identifier: string) : string =        
+        checkValidCharacters (identifier)
+        ARCtrl.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.DataMapFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `assays/assayIdentifier/isa.datamap.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct assay identifier</param>
+    let tryDatamapFileNameFromIdentifier (identifier: string) : string option =        
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.Path.combineMany [|ARCtrl.Path.AssaysFolderName; identifier; ARCtrl.Path.DataMapFileName|]
+            |> Some
+        else None
+
 /// Assay only contains "FileName" in isa.assay.xlsx. To unify naming in our model, on read-in we transform fileName to identifier and reverse for writing.
 [<RequireQualifiedAccess>]
 module Study =
@@ -134,5 +152,23 @@ module Study =
     let tryFileNameFromIdentifier (identifier: string) : string option =
         if tryCheckValidCharacters (identifier) then
             ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.StudyFileName|]
+            |> Some
+        else None
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `studies/studyIdentifier/isa.investigation.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct study identifier</param>
+    let datamapFileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.DataMapFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `studies/studyIdentifier/isa.investigation.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct study identifier</param>
+    let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.Path.combineMany [|ARCtrl.Path.StudiesFolderName; identifier; ARCtrl.Path.DataMapFileName|]
             |> Some
         else None

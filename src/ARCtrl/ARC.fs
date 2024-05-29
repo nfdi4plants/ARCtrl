@@ -15,11 +15,18 @@ module ARCAux =
         contracts 
         |> Array.choose ArcAssay.tryFromReadContract
         
+    let getAssayDataMapFromContracts (assayIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (DataMap.tryFromReadContractForAssay assayIdentifier)
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
         |> Array.choose ArcStudy.tryFromReadContract
+
+    let getStudyDataMapFromContracts (studyIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (DataMap.tryFromReadContractForStudy studyIdentifier)
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 
@@ -27,16 +34,22 @@ module ARCAux =
         |> Array.exactlyOne 
 
     let updateFSByISA (isa : ArcInvestigation option) (fs : FileSystem) = 
-        let (studyNames,assayNames) = 
+        let (studies,assays) = 
             match isa with
             | Some inv ->         
-                inv.StudyIdentifiers |> Seq.toArray, inv.AssayIdentifiers |> Seq.toArray
+                inv.Studies |> Seq.toArray, inv.Assays |> Seq.toArray
             | None -> ([||],[||])
-        let assays = FileSystemTree.createAssaysFolder (assayNames |> Array.map FileSystemTree.createAssayFolder)
-        let studies = FileSystemTree.createStudiesFolder (studyNames |> Array.map FileSystemTree.createStudyFolder)
+        let assaysFolder = 
+            assays
+            |> Array.map (fun a -> FileSystemTree.createAssayFolder(a.Identifier,a.DataMap.IsSome))
+            |> FileSystemTree.createAssaysFolder
+        let studiesFolder = 
+            studies
+            |> Array.map (fun s -> FileSystemTree.createStudyFolder(s.Identifier,s.DataMap.IsSome))
+            |> FileSystemTree.createStudiesFolder
         let investigation = FileSystemTree.createInvestigationFile()
         let tree = 
-            FileSystemTree.createRootFolder [|investigation;assays;studies|]
+            FileSystemTree.createRootFolder [|investigation;assaysFolder;studiesFolder|]
             |> FileSystem.create
         fs.Union(tree)
 
@@ -219,7 +232,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                 investigation.DeleteStudy(si)
         )
 
-        studies |> Array.iter (fun study ->
+        studies |> Array.iter (fun study ->            
             /// Try find registered study in parsed READ contracts
             let registeredStudyOpt = investigation.Studies |> Seq.tryFind (fun s -> s.Identifier = study.Identifier)
             match registeredStudyOpt with
@@ -227,6 +240,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
                 investigation.AddStudy(study)
+            let datamap = ARCAux.getAssayDataMapFromContracts study.Identifier contracts
+            study.DataMap <- datamap
             study.StaticHash <- study.GetLightHashCode()
         )
         assays |> Array.iter (fun assay ->
@@ -243,9 +258,11 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                 |> Array.fold (fun tables study -> 
                     ArcTables.updateReferenceTablesBySheets(ArcTables(study.Tables),tables,false)
                 ) (ArcTables(assay.Tables))
+            let datamap = ARCAux.getAssayDataMapFromContracts assay.Identifier contracts
+            assay.DataMap <- datamap
             assay.Tables <- updatedTables.Tables
         )
-        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetHashCode())
+        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetLightHashCode())
         investigation.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
         investigation.StaticHash <- investigation.GetLightHashCode()
         this.ISA <- Some investigation
@@ -275,13 +292,28 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
                 )
+                if s.DataMap.IsSome then 
+                    let dm = s.DataMap.Value
+                    dm.StaticHash <- dm.GetHashCode()
+                    workbooks.Add (
+                        Identifier.Study.datamapFileNameFromIdentifier s.Identifier,
+                        (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
+                    )
+                
             )
             inv.Assays
             |> Seq.iter (fun a ->
-                a.StaticHash <- a.GetHashCode()
+                a.StaticHash <- a.GetLightHashCode()
                 workbooks.Add (
                     Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Assay, Spreadsheet.ArcAssay.toFsWorkbook a))                
+                    (DTOType.ISA_Assay, Spreadsheet.ArcAssay.toFsWorkbook a))     
+                if a.DataMap.IsSome then 
+                    let dm = a.DataMap.Value
+                    dm.StaticHash <- dm.GetHashCode()
+                    workbooks.Add (
+                        Identifier.Assay.datamapFileNameFromIdentifier a.Identifier,
+                        (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
+                    )
             )
             
         | None -> 
@@ -329,15 +361,33 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     elif s.StaticHash <> hash then 
                         yield s.ToUpdateContract()
                     s.StaticHash <- hash
+
+                    match s.DataMap with
+                    | Some dm when dm.StaticHash = 0 -> 
+                        yield dm.ToCreateContractForStudy(s.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | Some dm when dm.StaticHash <> dm.GetHashCode() ->
+                        yield dm.ToUpdateContractForStudy(s.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | _ -> ()
                 
                 // Get Assay contracts
                 for a in inv.Assays do
-                    let hash = a.GetHashCode()
+                    let hash = a.GetLightHashCode()
                     if a.StaticHash = 0 then 
                         yield! a.ToCreateContract(WithFolder = true)
                     elif a.StaticHash <> hash then 
                         yield a.ToUpdateContract()
                     a.StaticHash <- hash
+
+                    match a.DataMap with
+                    | Some dm when dm.StaticHash = 0 -> 
+                        yield dm.ToCreateContractForAssay(a.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | Some dm when dm.StaticHash <> dm.GetHashCode() ->
+                        yield dm.ToUpdateContractForAssay(a.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | _ -> ()
             |]
             
 

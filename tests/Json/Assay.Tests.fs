@@ -13,8 +13,8 @@ module Helper =
             OntologyAnnotation("TT", "MS", "MS:696969"), 
             OntologyAnnotation("TP", "MS", "MS:123456", ResizeArray [Comment.create("Hello","Space")]), 
             ResizeArray([Tests.ArcTable.Helper.create_filled(); ArcTable.init("My Second Table")]),
-            ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|],
-            ResizeArray [|Comment.create("Hello", "World")|]
+            performers = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|],
+            comments = ResizeArray [|Comment.create("Hello", "World")|]
         )
 
     let compare =
@@ -65,7 +65,7 @@ let private test_roCrateEmpty =
     createBaseJsonTests
         "ROCrate-empty"
         create_empty
-        (fun () -> ArcAssay.toROCrateJsonString None)
+        (fun () -> ArcAssay.toROCrateJsonString())
         ArcAssay.fromROCrateJsonString
         None
         compare
@@ -111,12 +111,12 @@ let private test_roCrate = testList "ROCrate" [
     // Mainly: #12, #9, #10, #13
     ptestCase "Write" <| fun _ ->
         let a = create_filled()
-        let json = ArcAssay.toROCrateJsonString None a
+        let json = ArcAssay.toROCrateJsonString() a
         printfn "%s" json
     createBaseJsonTests
         ""
         create_filled
-        (fun () -> ArcAssay.toROCrateJsonString None)
+        (fun () -> ArcAssay.toROCrateJsonString())
         ArcAssay.fromROCrateJsonString
         None
         compare

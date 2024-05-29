@@ -13,6 +13,7 @@ module SimpleISA =
     
     module Assay = 
 
+        let proteomeIdentifer = Assay.Proteome.assayIdentifier
         let proteomeMetadataWorksheet = Assay.Proteome.assayMetadata
         let proteomeWsName = "Measurement"
         let proteomeTable =
@@ -37,6 +38,31 @@ module SimpleISA =
                 dtoType = DTOType.ISA_Assay,
                 dto = DTO.Spreadsheet proteomeWB)
 
+        let proteomeDatamapTable =
+            DataMap.initWorksheet "Proteome"
+                [
+                    DataMap.Data.appendDataColumn 2
+                    DataMap.Explication.appendMeanColumn 2
+                    DataMap.Unit.appendPPMColumn 2
+                    DataMap.ObjectType.appendFloatColumn 2
+                    DataMap.Description.appendDescriptionColumn 2
+                    DataMap.GeneratedBy.appendGeneratedByColumn 2
+                ]
+
+        let proteomeDatamapWB = 
+            let wb = new FsWorkbook()
+            wb.AddWorksheet(proteomeDatamapTable)
+            wb
+
+        let proteomeDatamapContract = 
+            Contract.create(
+                Operation.READ, 
+                path = Identifier.Assay.datamapFileNameFromIdentifier Assay.Proteome.assayIdentifier,
+                dtoType = DTOType.ISA_Datamap,
+                dto = DTO.Spreadsheet proteomeDatamapWB)
+
+
+        let metabolomeIdentifer = Assay.Metabolome.assayIdentifier
         let metabolomeMetadataWorksheet = Assay.Metabolome.assayMetadata
 
         let metabolomeWB = 
@@ -124,7 +150,6 @@ module SimpleISA =
                 path = Path.InvestigationFileName,
                 dtoType = DTOType.ISA_Investigation,
                 dto = DTO.Spreadsheet Investigation.BII_I_1.fullInvestigation)
-
 
 module UpdateAssayWithStudyProtocol = 
     
