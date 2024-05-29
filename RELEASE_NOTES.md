@@ -1,17 +1,33 @@
-### 2.0.0+66beafa (Released 2024-4-5)
+### 2.0.0+ecd9a17 (Released 2024-5-29)
 * Additions:
+    * [[#d986c1a](https://github.com/nfdi4plants/ARCtrl/commit/d986c1ad2e263dfdb72267df36161f52084addc8)] add some additonal info to pyproject.toml
+    * [[#99d94a5](https://github.com/nfdi4plants/ARCtrl/commit/99d94a5ef020f155f0c3d8a0fad466dc3fba90e8)] reinclude inclusion of source files in fable folders
+    * [[#d37a71e](https://github.com/nfdi4plants/ARCtrl/commit/d37a71e44128e910dfd8c6e03d1905b7bbe9d35d)] Update scripts
+    * [[#e9c0a2e](https://github.com/nfdi4plants/ARCtrl/commit/e9c0a2e280dcf6ccce0d4008b89ffcee7d12d772)] Rename one file and rmv most code from md files for maintainability :fire:
+    * [[#4a2666f](https://github.com/nfdi4plants/ARCtrl/commit/4a2666f7673a0a5e95a13f1f9c29a4474a14b107)] Update GettingStarted.md
+    * [[#0fab876](https://github.com/nfdi4plants/ARCtrl/commit/0fab876dba13de32cca3eb44fdea20647ca089c5)] Finalize docs :book:
+    * [[#5194df1](https://github.com/nfdi4plants/ARCtrl/commit/5194df1bf2c1c5a45d63033123aeea5c89cca7c4)] Update EXAMPLE_CreateAssayFile.js
+    * [[#56ebceb](https://github.com/nfdi4plants/ARCtrl/commit/56ebcebf44984ffbf58a31be3fddccb37fe956fb)] Update js docs : book:
+    * [[#a9b4fa1](https://github.com/nfdi4plants/ARCtrl/commit/a9b4fa1ecba3a229f88cf09b0797defbfe1787ee)] added tests to tab-json conversion and parsing
+    * [[#3916bc4](https://github.com/nfdi4plants/ARCtrl/commit/3916bc45d8807392791edf8aa80046d15f30207d)] replace "Raw Data File", "Derived Data File" and "Image File" column headers with "Data" #93
+    * [[#32e1885](https://github.com/nfdi4plants/ARCtrl/commit/32e18858d961571110963c0aab600827c5fea86f)] add tests for backwards compatability of data headers
+    * [[#a55279a](https://github.com/nfdi4plants/ARCtrl/commit/a55279ac54c1752ed6bb893817dc3e1f31d6af96)] add datamap spreadsheet parsing
+    * [[#239457a](https://github.com/nfdi4plants/ARCtrl/commit/239457a206a04776fc8eb9fe49d029e8ed2b0f01)] add datamap spreadsheet parser tests
+    * [[#b54b5a5](https://github.com/nfdi4plants/ARCtrl/commit/b54b5a554377c452d69f195faa7e5fe3574fc9b4)] add datamap contract handling
+    * [[#db9fbf8](https://github.com/nfdi4plants/ARCtrl/commit/db9fbf8a8f19120c246e4c1d8abee1cc8e2d4ab7)] add datamap contract handling
+    * [[#890dfd6](https://github.com/nfdi4plants/ARCtrl/commit/890dfd642a4e9589fa7aaed53938953b168fe7de)] add datamap contract handling tests
+    * [[#08fcb3b](https://github.com/nfdi4plants/ARCtrl/commit/08fcb3b32c287e0f1fb9d4876905a15382758e7d)] update Data and CompositeCell json parsing
+    * [[#8c67c36](https://github.com/nfdi4plants/ARCtrl/commit/8c67c36863569e401ac561651f16aaa9ec635ea3)] add json parser and tests for updated data objects
+    * [[#e5e666e](https://github.com/nfdi4plants/ARCtrl/commit/e5e666eaff8fc3309adf8ae653bb95738489cc2a)] move data file outside of process folder
+    * [[#ecd9a17](https://github.com/nfdi4plants/ARCtrl/commit/ecd9a1737934392178b57d25143c205e0cbf0920)] add pending test for losless data parsing in isa json
     * [[#66beafa](https://github.com/nfdi4plants/ARCtrl/commit/66beafac306e18d56ef2c5edc969e7eb10b4ea2f)] update prerelease mechanism
-    * [[#3a5c89a](https://github.com/nfdi4plants/ARCtrl/commit/3a5c89a543820daa5b8625e81378aed0a417f3e3)] Merge pull request #337 from nfdi4plants/ToStringOverrides
     * [[#98c5228](https://github.com/nfdi4plants/ARCtrl/commit/98c5228627ceb3718915d1577fa1486e05912c87)] Add ToString overrides for study/investigation
-    * [[#9ebd796](https://github.com/nfdi4plants/ARCtrl/commit/9ebd796e21612839c4ed8af361a3bcd14acf7177)] Merge pull request #336 from nfdi4plants/xlsxcontroller
     * [[#6b52004](https://github.com/nfdi4plants/ARCtrl/commit/6b520046a71d462b934c869333a4f77c61dfb59e)] Finalize io controller types for fable :sparkles:
     * [[#0ff28ab](https://github.com/nfdi4plants/ARCtrl/commit/0ff28abb3b1ac4ca51a93e909d3580d8d7a82874)] rmv old code :fire:
-    * [[#a08d8fd](https://github.com/nfdi4plants/ARCtrl/commit/a08d8fdd1d6e497f93fdb638d4711646df5d8eb0)] Merge pull request #335 from nfdi4plants/oa_equality
     * [[#754cac7](https://github.com/nfdi4plants/ARCtrl/commit/754cac745bf9417d3fbce127960a9966122f2ea7)] Rename to toStringObject
     * [[#98efaa0](https://github.com/nfdi4plants/ARCtrl/commit/98efaa00137025540a81f4baa896e32ac8480792)] add README.md reference to setup.cmd
     * [[#d893131](https://github.com/nfdi4plants/ARCtrl/commit/d8931310f6c415f7420aa04d3936db275f034fed)] Simplify OntologyAnnotation hashcode and equality :white_check_mark:
     * [[#7d6c107](https://github.com/nfdi4plants/ARCtrl/commit/7d6c107728970f12bc0e843ec936379ec091bce2)] Add setup script for windows :construction_worker:
-    * [[#fbe7265](https://github.com/nfdi4plants/ARCtrl/commit/fbe7265522774dbf573d253f4768b5f25143c87b)] Merge pull request #330 from nfdi4plants/arctrl_rework
     * [[#232dae3](https://github.com/nfdi4plants/ARCtrl/commit/232dae337336ab5a7d66a2a80c6e7865f1fc3d6c)] set test with umlauten pending for python
     * [[#c15a2e5](https://github.com/nfdi4plants/ARCtrl/commit/c15a2e5198af1476e5d18d8cf5188585806b1592)] Add ro-crate write tests :white_check_mark:
     * [[#7340910](https://github.com/nfdi4plants/ARCtrl/commit/73409107e1eb2aa81bc46101935b4048b330c89b)] add some more schema validation tests
@@ -75,6 +91,14 @@
 * Deletions:
     * [[#f055617](https://github.com/nfdi4plants/ARCtrl/commit/f05561709a0a8d1da752d54d5a997db225a3384e)] remove erroneous exe output type from testingutils
 * Bugfixes:
+    * [[#e2cb695](https://github.com/nfdi4plants/ARCtrl/commit/e2cb695115ddd5a93e0871638d4649fe326adef7)] Fix python docs for contract logic :bug: #342
+    * [[#d2d7c53](https://github.com/nfdi4plants/ARCtrl/commit/d2d7c5337f80f7289d0f64b7f2a9c37a496b1299)] test and fix ro-crate propertyValue parsing
+    * [[#8c82636](https://github.com/nfdi4plants/ARCtrl/commit/8c82636ba0e10b7934ca354c22cf3651574d1ad6)] add tests and fix empty cell parsing behaviour
+    * [[#30a9bf4](https://github.com/nfdi4plants/ARCtrl/commit/30a9bf4b01e23580a26538c492f450ec91f9947a)] Merge pull request #353 from nfdi4plants/jsonLD-fix
+    * [[#eebaf4d](https://github.com/nfdi4plants/ARCtrl/commit/eebaf4d5b84166a1356d66d17b8936ddbf617129)] rework and fix Spreadsheet reader according to data node changes
+    * [[#b856188](https://github.com/nfdi4plants/ARCtrl/commit/b856188e0214d6a30451fb5f5d8b16173917a066)] adjust and fix spreadsheet writing for data node changes
+    * [[#bc7d952](https://github.com/nfdi4plants/ARCtrl/commit/bc7d9521a25497c5731e4c8fd2dc6b9b0e99d810)] small fixes for Fable compatability
+    * [[#4b53ff2](https://github.com/nfdi4plants/ARCtrl/commit/4b53ff212e6cc015b745d409f1c7baad53c2d7b0)] fix data json parser test
     * [[#e444944](https://github.com/nfdi4plants/ARCtrl/commit/e444944b371d6472971589f2980b0fd487f3652c)] fix non utf8 json output #334
     * [[#025734d](https://github.com/nfdi4plants/ARCtrl/commit/025734d63e0319d74dbd4edbe6433e61e9dd3fca)] rmv code circumventing fable python bug :fire:
     * [[#9f570b3](https://github.com/nfdi4plants/ARCtrl/commit/9f570b3d6616273f34e16eb2346959c5ac78280e)] fix OntologyAnnotation Hashcodes :bug:
