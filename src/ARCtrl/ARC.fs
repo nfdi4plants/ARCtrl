@@ -88,7 +88,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
     member this.RemoveAssay(assayIdentifier: string) =
         let isa = 
             match this.ISA with
-            | Some i -> i
+            | Some i when i.AssayIdentifiers |> Seq.contains assayIdentifier -> i
+            | Some _ -> failwith "ARC does not contain assay with given name"
             | None -> failwith "Cannot remove assay from null ISA value."
         let assay = isa.GetAssay(assayIdentifier)
         let studies = assay.StudiesRegisteredIn
@@ -102,6 +103,25 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             isa.ToUpdateContract()
             for s in studies do
                 s.ToUpdateContract()
+        ]
+        |> ResizeArray
+
+    member this.RenameAssay(oldAssayIdentifier: string, newAssayIdentifier: string) =
+        let isa = 
+            match this.ISA with
+            | Some i when i.AssayIdentifiers |> Seq.contains oldAssayIdentifier -> i
+            | Some _ -> failwith "ARC does not contain assay with given name"
+            | None -> failwith "Cannot rename assay in null ISA value."
+
+        isa.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldAssayFolderPath = Path.getAssayFolderPath(oldAssayIdentifier)
+        let newAssayFolderPath = Path.getAssayFolderPath(newAssayIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldAssayFolderPath,newAssayFolderPath))
+        this.SetFilePaths(renamedPaths)
+        [
+            yield Contract.createRename(oldAssayFolderPath,newAssayFolderPath)
+            yield! this.GetUpdateContracts()
         ]
         |> ResizeArray
 

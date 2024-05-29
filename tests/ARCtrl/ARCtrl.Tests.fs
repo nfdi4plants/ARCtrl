@@ -685,6 +685,40 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         Expect.equal actual.[3].Operation UPDATE "study 2 contract cmd"
 ]
 
+let tests_RenameAssay = testList "RenameAssay" [
+    testCase "not existing" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitAssay("OtherAssayName") |> ignore
+        let arc = ARC(isa = i)
+        
+        let assayMoveF = 
+            fun () -> arc.RenameAssay("MyOldAssay","MyNewAssay") |> ignore
+
+        Expect.throws assayMoveF "Should fail as arc does not contan assay with given name"
+    testCase "Basic" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitAssay("MyOldAssay") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        Expect.hasLength contracts 2 "Contract count is wrong"
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "assays/MyOldAssay" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "assays/MyNewAssay"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        let updateContract = contracts.[1]
+        Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal updateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
+        let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
+        Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
+        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedAssay = ARCtrl.Spreadsheet.ArcAssay.fromFsWorkbook wb
+        Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
+]
+
+
 let main = testList "ARCtrl" [
     tests_model
     tests_updateFileSystem
@@ -692,5 +726,6 @@ let main = testList "ARCtrl" [
     tests_writeContracts
     tests_updateContracts
     tests_RemoveAssay
+    tests_RenameAssay
     payload_file_filters
 ]
