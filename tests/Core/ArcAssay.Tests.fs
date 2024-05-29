@@ -153,6 +153,13 @@ let private test_create =
             Expect.equal actual.Tables tables "Tables"
             Expect.equal actual.Performers performers "Performers"
             Expect.equal actual.Comments comments "Comments"
+        testCase "createDuplicateTablesNames" <| fun _ ->
+            let table1 = ArcTable.init("Table 1")
+            let table2 = ArcTable.init("Table 1")
+            let tables = ResizeArray([table1; table2])
+            let createAssay =
+                fun () -> ArcAssay.create("MyAssay", tables = tables) |> ignore
+            Expect.throws createAssay "throws, duplicate table names"
     ]
 
 let private tests_AddTable = 
