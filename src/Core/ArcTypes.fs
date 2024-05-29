@@ -1532,6 +1532,34 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             copy.RemoveStudy(studyIdentifier)
             copy
 
+    /// <summary>
+    /// Renames a study in the whole investigation
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the study to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the study should be renamed to</param>
+    member this.RenameStudy(oldIdentifier: string, newIdentifier: string) =        
+        this.Studies 
+        |> Seq.iter (fun s -> 
+            if s.Identifier = oldIdentifier then 
+                s.Identifier <- newIdentifier
+        )
+        this.RegisteredStudyIdentifiers
+        |> Seq.iteri (fun i si -> 
+            if si = oldIdentifier then
+                this.RegisteredStudyIdentifiers.[i] <- newIdentifier
+        )
+
+    /// <summary>
+    /// Renames a study in the whole investigation
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the study to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the study should be renamed to</param>
+    static member renameStudy(oldIdentifier: string, newIdentifier: string) =       
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RenameStudy(oldIdentifier,newIdentifier)
+            newInv
+
     // - Study API - CRUD //
     member this.SetStudyAt(index: int, study: ArcStudy) =
         ArcTypesAux.SanityChecks.validateUniqueStudyIdentifier study (this.Studies |> Seq.removeAt index)

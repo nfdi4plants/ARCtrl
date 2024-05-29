@@ -141,6 +141,25 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         ]
         |> ResizeArray
 
+    member this.RenameStudy(oldStudyIdentifier: string, newStudyIdentifier: string) =
+        let isa = 
+            match this.ISA with
+            | Some i when i.StudyIdentifiers |> Seq.contains oldStudyIdentifier -> i
+            | Some _ -> failwith "ARC does not contain study with given name"
+            | None -> failwith "Cannot rename study in null ISA value."
+
+        isa.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldStudyFolderPath = Path.getStudyFolderPath(oldStudyIdentifier)
+        let newStudyFolderPath = Path.getStudyFolderPath(newStudyIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldStudyFolderPath,newStudyFolderPath))
+        this.SetFilePaths(renamedPaths)
+        [
+            yield Contract.createRename(oldStudyFolderPath,newStudyFolderPath)
+            yield! this.GetUpdateContracts()
+        ]
+        |> ResizeArray
+
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
 
