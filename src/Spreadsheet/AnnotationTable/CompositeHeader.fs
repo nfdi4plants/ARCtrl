@@ -98,6 +98,12 @@ module ActivePattern =
                 |> Some
         | _ -> None
 
+    let (|Comment|_|) (cells : FsCell list) =
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+        match cellValues with
+        | [Comment key] -> Some (CompositeHeader.Comment key, CompositeCell.freeTextFromFsCells)
+        | _ -> None
+
     let (|ProtocolType|_|) (cells : FsCell list) =
         let parser s = if s = "Protocol Type" then Some s else None
         let header _ = CompositeHeader.ProtocolType
@@ -136,6 +142,7 @@ let fromFsCells (cells : list<FsCell>) : CompositeHeader*(FsCell list -> Composi
     | Output o -> o
     | ProtocolType pt -> pt
     | ProtocolHeader ph -> ph 
+    | Comment c -> c
     | FreeText ft -> ft
     | _ -> failwithf "Could not parse header group %O" cells
   

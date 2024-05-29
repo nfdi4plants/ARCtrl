@@ -410,6 +410,24 @@ let private tests_ArcTableProcess =
             let t' = ArcTable.fromProcesses tableName1 processes
             Expect.arcTableEqual t' t "Table should be equal"
         )
+        testCase "SingleRowIOAndComment GetAndFromProcesses" (fun () ->
+            let t = ArcTable.init(tableName1)
+            let commentKey = "MyCommentKey"
+            let commentValue = "MyCommentValue"
+            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
+            t.AddColumn(CompositeHeader.Comment(commentKey), [|CompositeCell.createFreeText commentValue|])
+            t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
+            let processes = t.GetProcesses()
+            Expect.hasLength processes 1 ""
+            let comments = Expect.wantSome processes.[0].Comments ""
+            Expect.hasLength comments 1 ""
+            let comment = comments.[0]
+            Expect.equal comment (Comment(commentKey,commentValue)) ""
+            let table = ArcTable.fromProcesses tableName1 processes
+            let expectedTable = t
+            Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+
     ]
 
 let private tests_ArcTablesProcessSeq = 

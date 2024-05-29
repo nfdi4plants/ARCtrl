@@ -317,6 +317,14 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    let tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Comment c ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                Comment(c,matrix.[generalI,i].AsFreeText)
+            |> Some
+        | _ -> None
+
     /// Given the header sequence of an ArcTable, returns a function for parsing each row of the table to a process
     let getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
     
@@ -365,6 +373,11 @@ module ProcessParsing =
         let protocolVersionGetter =
             headers
             |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolVersionGetter generalI header)
+
+        let commentGetters = 
+            headers
+            |> Seq.choose (fun (generalI,header) -> tryGetCommentGetter generalI header)
+            |> Seq.toList
 
         // This is a little more complex, as data and material objects can't contain characteristics. So in the case where the input of the table is a data object but characteristics exist. An additional sample object with the same name is created to contain the characteristics.
         let inputGetter =
@@ -418,6 +431,8 @@ module ProcessParsing =
             let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] 
             let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
 
+            let comments = commentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault []
+
             let protocol : Protocol option = 
                 Protocol.make 
                     None
@@ -462,7 +477,7 @@ module ProcessParsing =
                 None          
                 (Some inputs)
                 (Some outputs)
-                None
+                comments
 
     /// Groups processes by their name, or by the name of the protocol they execute
     ///
@@ -492,20 +507,20 @@ module ProcessParsing =
         processes
         |> List.groupBy (fun x -> 
             if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
-                (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
             else
-                Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
         )
         |> fun l ->
             l
-            |> List.mapi (fun i ((n,_,_),processes) -> 
+            |> List.mapi (fun i ((n,_,_,_),processes) -> 
                 let pVs = processes.[0].ParameterValues
                 let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let n = if l.Length > 1 then Process.composeName n i else n
-                Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
+                Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs,?Comments = processes.[0].Comments)
             )
 
 
@@ -530,6 +545,13 @@ module ProcessParsing =
                     if prot.Version.IsSome then CompositeHeader.ProtocolVersion, CompositeCell.FreeText prot.Version.Value
                 ]
             | None -> []
+        let comments = 
+            p.Comments 
+            |> Option.defaultValue [] 
+            |> List.map (fun c -> 
+                CompositeHeader.Comment (Option.defaultValue "" c.Name),
+                CompositeCell.FreeText (Option.defaultValue "" c.Value)
+            )
         // zip the inputs and outpus so they are aligned as rows
         p.Outputs |> Option.defaultValue []
         |> List.zip (p.Inputs |> Option.defaultValue [])
@@ -565,6 +587,7 @@ module ProcessParsing =
                 yield JsonTypes.decomposeProcessInput inputForType
                 yield! protVals
                 yield! vals
+                yield! comments
                 yield JsonTypes.decomposeProcessOutput outputForType
             ]
         )

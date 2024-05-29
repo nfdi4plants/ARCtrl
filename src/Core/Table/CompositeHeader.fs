@@ -151,6 +151,7 @@ type CompositeHeader =
     | Output of IOType
     // single - fallback
     | FreeText of string
+    | Comment of string
 
     with 
 
@@ -179,7 +180,7 @@ type CompositeHeader =
         // iotype as input
         | 11 | 12 -> 2
         // string as input
-        | 13 -> 3
+        | 13 | 14 -> 3
         | anyElse -> failwithf "Cannot assign input `Tag` (%i) to `CompositeHeader`" anyElse
 
     override this.ToString() =
@@ -197,6 +198,7 @@ type CompositeHeader =
         | Date                  -> "Date"
         | Input io              -> io.asInput
         | Output io             -> io.asOutput
+        | Comment key           -> $"Comment [{key}]"
         | FreeText str          -> str
 
     /// If the column is a term column, returns the term as `OntologyAnnotation`. Otherwise returns an `OntologyAnnotation` with only the name.
@@ -215,6 +217,7 @@ type CompositeHeader =
         | Date                  -> OntologyAnnotation.create (this.ToString())  // use owl ontology in the future
         | Input _               -> OntologyAnnotation.create (this.ToString())  // use owl ontology in the future
         | Output _              -> OntologyAnnotation.create (this.ToString())  // use owl ontology in the future
+        | Comment _            -> OntologyAnnotation.create (this.ToString())  // use owl ontology in the future    
         | FreeText _            -> OntologyAnnotation.create (this.ToString())  // use owl ontology in the future
         // owl ontology: https://github.com/nfdi4plants/ARC_ontology/blob/main/ARC_v2.0.owl
 
@@ -231,6 +234,8 @@ type CompositeHeader =
         | Regex.ActivePatterns.Regex Regex.Pattern.OutputPattern r ->
             let iotype = r.Groups.[Regex.Pattern.MatchGroups.iotype].Value
             Output <| IOType.ofString (iotype)
+        | Regex.ActivePatterns.Regex Regex.Pattern.CommentPattern r ->
+            Comment r.Groups.[Regex.Pattern.MatchGroups.commentKey].Value
         // Is term column
         | Regex.ActivePatterns.TermColumn r ->
             match r.TermColumnType with
@@ -332,6 +337,7 @@ type CompositeHeader =
         match this with 
         | FreeText _
         | Input _ | Output _ 
+        | Comment _ 
         | ProtocolREF | ProtocolDescription | ProtocolUri | ProtocolVersion | Performer | Date -> true 
         | anythingElse -> false
 
@@ -414,6 +420,11 @@ type CompositeHeader =
         | Date -> true
         | anythingElse -> false
 
+    member this.isComment =
+        match this with
+        | Comment _ -> true
+        | anythingElse -> false
+
     member this.isFreeText =
         match this with
         | FreeText _ -> true
@@ -475,6 +486,8 @@ type CompositeHeader =
             "Only one output column per table. E.g. experimental samples or files."
         | U2.Case1 (FreeText _) | U2.Case2 "FreeText" ->
             "Placeholder"
+        | U2.Case1 (Comment _) | U2.Case2 "Comment" ->
+            "Comment"
         | _ -> failwith $"Unable to parse combination to existing CompositeHeader: `{header}`"
 
 #if FABLE_COMPILER
