@@ -145,8 +145,12 @@ open Fable.Core
 /// This type only includes mutable options and only static members, the MUST be referenced and used in all record types implementing `ResizeArray<ArcTable>`
 [<AttachMembers>]
 type ArcTables(initTables:ResizeArray<ArcTable>) = 
-
-    let mutable tables = initTables
+  
+    let mutable tables = 
+        initTables
+        |> Seq.map (fun t -> t.Name)
+        |> ArcTablesAux.SanityChecks.validateNamesUnique
+        initTables
     member this.Tables 
         with get() = tables
         and set(newTables) = tables <- newTables

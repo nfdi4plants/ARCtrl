@@ -357,10 +357,24 @@ let updateReferenceWithSheet =
         )
     ]
 
+let tests_constructor = 
+
+    testList "Constructor" [
+        
+        testCase "DuplicateNames" (fun () ->
+            let table1 = ArcTable.init("Table 1")
+            let table2 = ArcTable.init("Table 1")
+            let createTables = 
+                fun () -> ArcTables(ResizeArray [table1;table2]) |> ignore
+            Expect.throws createTables "Should throw an exception"  
+        )
+    ]
+
 let main = 
     testList "ArcTablesTests" [
         tests_Item
         tests_IEnumberable
         tests_member
-        updateReferenceWithSheet        
+        updateReferenceWithSheet
+        tests_constructor
     ]
