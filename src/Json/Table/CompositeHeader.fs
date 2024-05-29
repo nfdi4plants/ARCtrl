@@ -38,7 +38,7 @@ module CompositeHeader =
       let headerType = get.Required.Field HeaderType Decode.string
       let oa() = get.Required.Field HeaderValues (Decode.index 0 OntologyAnnotation.decoder)
       let io() = get.Required.Field HeaderValues (Decode.index 0 IOType.decoder)
-      let c() = get.Required.Field HeaderValues Decode.string
+      let c() = get.Required.Field HeaderValues (Decode.index 0 Decode.string)
       match headerType with
       | "Characteristic" -> oa() |> CompositeHeader.Characteristic
       | "Parameter" -> oa() |> CompositeHeader.Parameter

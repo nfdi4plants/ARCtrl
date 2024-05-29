@@ -287,6 +287,40 @@ module Output =
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs sampleValueV1
 
+module Comment = 
+    
+    let simpleCommentHeader = 
+        CompositeHeader.Comment "CommentKey"
+
+    let simpleCommentValue = 
+        CompositeCell.FreeText "CommentValue"
+
+    let simpleDataHeaderV1 = "Comment [CommentKey]"
+
+    let simpleDataValueV1 = "CommentValue"
+
+    let appendSimpleCommentColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs simpleDataHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs simpleDataValueV1
+
+    let niceCommentHeader = 
+        CompositeHeader.Comment "NiceComment"
+
+    let niceCommentValue =
+        CompositeCell.FreeText "NiceCommentValue"
+
+    let niceCommentHeaderV1 = "Comment [NiceComment]"
+
+    let niceCommentValueV1 = "NiceCommentValue"
+
+    let appendNiceCommentColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs niceCommentHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs niceCommentValueV1
+
 module Protocol =
     module REF = 
 
