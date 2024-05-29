@@ -88,7 +88,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
     member this.RemoveAssay(assayIdentifier: string) =
         let isa = 
             match this.ISA with
-            | Some i -> i
+            | Some i when i.AssayIdentifiers |> Seq.contains assayIdentifier -> i
+            | Some _ -> failwith "ARC does not contain assay with given name"
             | None -> failwith "Cannot remove assay from null ISA value."
         let assay = isa.GetAssay(assayIdentifier)
         let studies = assay.StudiesRegisteredIn
@@ -105,6 +106,25 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         ]
         |> ResizeArray
 
+    member this.RenameAssay(oldAssayIdentifier: string, newAssayIdentifier: string) =
+        let isa = 
+            match this.ISA with
+            | Some i when i.AssayIdentifiers |> Seq.contains oldAssayIdentifier -> i
+            | Some _ -> failwith "ARC does not contain assay with given name"
+            | None -> failwith "Cannot rename assay in null ISA value."
+
+        isa.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldAssayFolderPath = Path.getAssayFolderPath(oldAssayIdentifier)
+        let newAssayFolderPath = Path.getAssayFolderPath(newAssayIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldAssayFolderPath,newAssayFolderPath))
+        this.SetFilePaths(renamedPaths)
+        [
+            yield Contract.createRename(oldAssayFolderPath,newAssayFolderPath)
+            yield! this.GetUpdateContracts()
+        ]
+        |> ResizeArray
+
     member this.RemoveStudy(studyIdentifier: string) =
         let isa = 
             match this.ISA with
@@ -118,6 +138,25 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         [
             Contract.createDelete(studyFolderPath) // isa.GetStudy(studyIdentifier).ToDeleteContract()
             isa.ToUpdateContract()
+        ]
+        |> ResizeArray
+
+    member this.RenameStudy(oldStudyIdentifier: string, newStudyIdentifier: string) =
+        let isa = 
+            match this.ISA with
+            | Some i when i.StudyIdentifiers |> Seq.contains oldStudyIdentifier -> i
+            | Some _ -> failwith "ARC does not contain study with given name"
+            | None -> failwith "Cannot rename study in null ISA value."
+
+        isa.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        let oldStudyFolderPath = Path.getStudyFolderPath(oldStudyIdentifier)
+        let newStudyFolderPath = Path.getStudyFolderPath(newStudyIdentifier)
+        let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldStudyFolderPath,newStudyFolderPath))
+        this.SetFilePaths(renamedPaths)
+        [
+            yield Contract.createRename(oldStudyFolderPath,newStudyFolderPath)
+            yield! this.GetUpdateContracts()
         ]
         |> ResizeArray
 

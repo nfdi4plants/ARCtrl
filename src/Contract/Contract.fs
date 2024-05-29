@@ -62,6 +62,7 @@ type Operation =
     | [<CompiledName("DELETE")>] DELETE
     | [<CompiledName("READ")>] READ
     | [<CompiledName("EXECUTE")>] EXECUTE
+    | [<CompiledName("RENAME")>] RENAME
 
 [<AttachMembers>]
 type Contract = 
@@ -79,12 +80,14 @@ type Contract =
     [<NamedParams(fromIndex=2)>]
     #endif    
     static member create(op, path, ?dtoType, ?dto) = {Operation= op; Path = path; DTOType = dtoType; DTO = dto}
+
     /// <summary>Create a CREATE contract with all necessary information.</summary>
     /// <param name="path">The path relative from ARC root, at which the new file should be created.</param>
     /// <param name="dtoType">The file type.</param>
     /// <param name="dto">The file data.</param>
     /// <returns>Returns a CREATE contract.</returns>
     static member createCreate(path, dtoType: DTOType, ?dto: DTO) = {Operation= Operation.CREATE; Path = path; DTOType = Some dtoType; DTO = dto}
+
     /// <summary>Create a UPDATE contract with all necessary information.
     /// 
     /// Update contracts will overwrite in case of a string as DTO and will specifically update relevant changes only for spreadsheet files.
@@ -98,6 +101,7 @@ type Contract =
     /// <param name="path">The path relative from ARC root, at which the file should be deleted.</param>
     /// <returns>Returns a DELETE contract.</returns>
     static member createDelete(path) = {Operation= Operation.DELETE; Path = path; DTOType = None; DTO = None}
+
     /// <summary>Create a READ contract with all necessary information.
     /// 
     /// Created without DTO, any api user should update the READ contract with the io read result for further api use.
@@ -107,6 +111,7 @@ type Contract =
     /// <param name="dtoType">The file type.</param>
     /// <returns>Returns a READ contract.</returns>
     static member createRead(path, dtoType: DTOType) = {Operation= Operation.READ; Path = path; DTOType = Some dtoType; DTO = None}
+
     /// <summary>Create a EXECUTE contract with all necessary information.
     /// 
     /// This contract type is used to communicate cli tool execution.
@@ -117,3 +122,14 @@ type Contract =
     static member createExecute(dto: CLITool, ?path: string) = 
         let path = Option.defaultValue "" path
         {Operation= Operation.EXECUTE; Path = path; DTOType = Some DTOType.CLI; DTO = Some <| DTO.CLITool dto}
+
+    /// <summary>Create a RENAME contract with all necessary information.
+    ///
+    /// This contract type is used to communicate file renaming.
+    /// 
+    /// **Note:** The path is the old path, the DTO is the new path.
+    /// </summary>
+    /// <param name="oldPath">The old path relative from ARC root.</param>
+    /// <param name="newPath">The new path relative from ARC root.</param>
+    /// <returns>Returns a RENAME contract.</returns>
+    static member createRename(oldPath, newPath) = {Operation= Operation.RENAME; Path = oldPath; DTOType = None; DTO = Some <| DTO.Text newPath}

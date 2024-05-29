@@ -1279,6 +1279,32 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             newInv.RemoveAssay(assayIdentifier)
             newInv
 
+    /// <summary>
+    /// Renames an assay in the whole investigation  
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the assay to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the assay should be renamed to</param>
+    member this.RenameAssay(oldIdentifier: string, newIdentifier: string) =        
+        this.Assays 
+        |> Seq.iter (fun a -> 
+            if a.Identifier = oldIdentifier then 
+                a.Identifier <- newIdentifier
+        )
+        this.Studies
+        |> Seq.iter (fun s ->
+            s.RegisteredAssayIdentifiers
+            |> Seq.iteri (fun i ai -> 
+                if ai = oldIdentifier then
+                    s.RegisteredAssayIdentifiers[i] <- newIdentifier
+            )       
+        )
+
+    static member renameAssay(oldIdentifier: string, newIdentifier: string) =       
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RenameAssay(oldIdentifier,newIdentifier)
+            newInv
+
     // - Assay API - CRUD //
     member this.SetAssayAt(index: int, assay: ArcAssay) =
         ArcTypesAux.SanityChecks.validateUniqueAssayIdentifier assay.Identifier (this.Assays |> Seq.removeAt index |> Seq.map (fun a -> a.Identifier))
@@ -1505,6 +1531,34 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let copy = inv.Copy()
             copy.RemoveStudy(studyIdentifier)
             copy
+
+    /// <summary>
+    /// Renames a study in the whole investigation
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the study to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the study should be renamed to</param>
+    member this.RenameStudy(oldIdentifier: string, newIdentifier: string) =        
+        this.Studies 
+        |> Seq.iter (fun s -> 
+            if s.Identifier = oldIdentifier then 
+                s.Identifier <- newIdentifier
+        )
+        this.RegisteredStudyIdentifiers
+        |> Seq.iteri (fun i si -> 
+            if si = oldIdentifier then
+                this.RegisteredStudyIdentifiers.[i] <- newIdentifier
+        )
+
+    /// <summary>
+    /// Renames a study in the whole investigation
+    /// </summary>
+    /// <param name="oldIdentifier">Identifier of the study to be renamed</param>
+    /// <param name="newIdentifier">Identifier to which the study should be renamed to</param>
+    static member renameStudy(oldIdentifier: string, newIdentifier: string) =       
+        fun (inv: ArcInvestigation) ->
+            let newInv = inv.Copy()
+            newInv.RenameStudy(oldIdentifier,newIdentifier)
+            newInv
 
     // - Study API - CRUD //
     member this.SetStudyAt(index: int, study: ArcStudy) =
