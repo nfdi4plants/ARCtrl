@@ -77,6 +77,11 @@ describe('CompositeHeader', function () {
         let actual = header.toString()
         equal(actual, "My FreeTextValue")
     });
+    it("Comment", function () {
+        let header = new CompositeHeader(14, ["My Comment"])
+        let actual = header.toString()
+        equal(actual, "Comment [My Comment]")
+    });
     it("Term", function () {
         let oa = new OntologyAnnotation("My OA Name")
         let header = new CompositeHeader(0, [oa])
@@ -107,7 +112,7 @@ describe('CompositeHeader', function () {
                     break;
                 case 3:
                     let header4 = new CompositeHeader(tag, [stringExample])
-                    equal(header4.isFreeText, true);
+                    equal(header4.isFreeText || header4.isComment, true);
                     break;
             }
         }
