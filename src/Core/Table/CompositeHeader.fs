@@ -521,4 +521,6 @@ type CompositeHeader =
 
     static member freeText(s:string) = FreeText s
 
+    static member comment(s:string) = Comment s
+
 #endif
