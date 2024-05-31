@@ -14,6 +14,7 @@ module CompositeHeader =
     let t, v = 
       match ch with
       | CompositeHeader.FreeText s -> s, []
+      | CompositeHeader.Comment c -> "Comment", [Encode.string c]
       | CompositeHeader.Parameter oa -> "Parameter", [oaToJsonString oa]
       | CompositeHeader.Factor oa -> "Factor", [oaToJsonString oa]
       | CompositeHeader.Characteristic oa -> "Characteristic", [oaToJsonString oa]
@@ -37,6 +38,7 @@ module CompositeHeader =
       let headerType = get.Required.Field HeaderType Decode.string
       let oa() = get.Required.Field HeaderValues (Decode.index 0 OntologyAnnotation.decoder)
       let io() = get.Required.Field HeaderValues (Decode.index 0 IOType.decoder)
+      let c() = get.Required.Field HeaderValues (Decode.index 0 Decode.string)
       match headerType with
       | "Characteristic" -> oa() |> CompositeHeader.Characteristic
       | "Parameter" -> oa() |> CompositeHeader.Parameter
@@ -51,6 +53,7 @@ module CompositeHeader =
       | "ProtocolVersion" -> CompositeHeader.ProtocolVersion
       | "Performer" -> CompositeHeader.Performer
       | "Date" -> CompositeHeader.Date
+      | "Comment" -> c() |> CompositeHeader.Comment
       | anyelse -> CompositeHeader.FreeText anyelse
     ) 
 

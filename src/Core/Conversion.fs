@@ -213,7 +213,12 @@ module JsonTypes =
 /// Functions for parsing ArcTables to ISA json Processes and vice versa
 module ProcessParsing = 
  
-    /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
+    // Explanation of the Getter logic:
+    // The getter logic is used to treat every value of the table only once
+    // First, the headers are checked for what getter applies to the respective column. E.g. a ProtocolType getter will only return a function for parsing protocolType cells if the header depicts a protocolType.
+    // The appropriate getters are then applied in the context of the processGetter, parsing the cells of the matrix
+
+    /// If the given headers depict a component, returns a function for parsing the values of the matrix to the values of this component
     let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Component oa ->
@@ -225,7 +230,7 @@ module ProcessParsing =
             |> Some
         | _ -> None    
             
-    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    /// If the given headers depict a parameter, returns a function for parsing the values of the matrix to the values of this type
     let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Parameter oa ->
@@ -237,6 +242,7 @@ module ProcessParsing =
             |> Some
         | _ -> None 
 
+    /// If the given headers depict a factor, returns a function for parsing the values of the matrix to the values of this type
     let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Factor oa ->
@@ -248,6 +254,7 @@ module ProcessParsing =
             |> Some
         | _ -> None 
 
+    /// If the given headers depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
     let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Characteristic oa ->
@@ -259,7 +266,7 @@ module ProcessParsing =
             |> Some
         | _ -> None 
 
-    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    /// If the given headers depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolType ->
@@ -269,6 +276,7 @@ module ProcessParsing =
         | _ -> None 
 
 
+    /// If the given headers depict a protocolREF, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolREF ->
@@ -277,6 +285,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict a protocolDescription, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolDescription ->
@@ -284,7 +293,8 @@ module ProcessParsing =
                 matrix.[generalI,i].AsFreeText
             |> Some
         | _ -> None
-
+   
+    /// If the given headers depict a protocolURI, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolUri ->
@@ -293,6 +303,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict a protocolVersion, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolVersion ->
@@ -301,6 +312,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict an input, returns a function for parsing the values of the matrix to the values of this type
     let tryGetInputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Input io ->
@@ -309,11 +321,21 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict an output, returns a function for parsing the values of the matrix to the values of this type
     let tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Output io ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 JsonTypes.composeProcessOutput header matrix.[generalI,i]
+            |> Some
+        | _ -> None
+
+    /// If the given headers depict a comment, returns a function for parsing the values of the matrix to the values of this type
+    let tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Comment c ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                Comment(c,matrix.[generalI,i].AsFreeText)
             |> Some
         | _ -> None
 
@@ -365,6 +387,11 @@ module ProcessParsing =
         let protocolVersionGetter =
             headers
             |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolVersionGetter generalI header)
+
+        let commentGetters = 
+            headers
+            |> Seq.choose (fun (generalI,header) -> tryGetCommentGetter generalI header)
+            |> Seq.toList
 
         // This is a little more complex, as data and material objects can't contain characteristics. So in the case where the input of the table is a data object but characteristics exist. An additional sample object with the same name is created to contain the characteristics.
         let inputGetter =
@@ -418,6 +445,8 @@ module ProcessParsing =
             let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] 
             let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
 
+            let comments = commentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault []
+
             let protocol : Protocol option = 
                 Protocol.make 
                     None
@@ -462,7 +491,7 @@ module ProcessParsing =
                 None          
                 (Some inputs)
                 (Some outputs)
-                None
+                comments
 
     /// Groups processes by their name, or by the name of the protocol they execute
     ///
@@ -492,20 +521,20 @@ module ProcessParsing =
         processes
         |> List.groupBy (fun x -> 
             if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
-                (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
             elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
             else
-                Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq
+                Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
         )
         |> fun l ->
             l
-            |> List.mapi (fun i ((n,_,_),processes) -> 
+            |> List.mapi (fun i ((n,_,_,_),processes) -> 
                 let pVs = processes.[0].ParameterValues
                 let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
                 let n = if l.Length > 1 then Process.composeName n i else n
-                Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs)
+                Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs,?Comments = processes.[0].Comments)
             )
 
 
@@ -530,6 +559,13 @@ module ProcessParsing =
                     if prot.Version.IsSome then CompositeHeader.ProtocolVersion, CompositeCell.FreeText prot.Version.Value
                 ]
             | None -> []
+        let comments = 
+            p.Comments 
+            |> Option.defaultValue [] 
+            |> List.map (fun c -> 
+                CompositeHeader.Comment (Option.defaultValue "" c.Name),
+                CompositeCell.FreeText (Option.defaultValue "" c.Value)
+            )
         // zip the inputs and outpus so they are aligned as rows
         p.Outputs |> Option.defaultValue []
         |> List.zip (p.Inputs |> Option.defaultValue [])
@@ -565,6 +601,7 @@ module ProcessParsing =
                 yield JsonTypes.decomposeProcessInput inputForType
                 yield! protVals
                 yield! vals
+                yield! comments
                 yield JsonTypes.decomposeProcessOutput outputForType
             ]
         )

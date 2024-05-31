@@ -93,7 +93,7 @@ let private tests = testList "extended" [
 
 let private tests_dataColumns = 
     testList "dataColumns" [
-        testCase "dataColumns" <| fun _ ->
+        testCase "basic WriteRead" <| fun _ ->
             let testTable = ArcTable.init("Test") 
             testTable.AddColumn (CompositeHeader.Input IOType.Data, [|CompositeCell.Data (Data(name="MyInputDataFile.csv"))|])
             testTable.AddColumn (CompositeHeader.Output IOType.Data, [|CompositeCell.Data (Data(name="MyData.csv#row=1",format="text/csv",selectorFormat = "MySelector"))|])
@@ -102,7 +102,27 @@ let private tests_dataColumns =
             let decoded = ArcTable.fromJsonString encoded
             Expect.arcTableEqual decoded testTable "decompressed table should be equal to original table"
     ]
-    
+ 
+let private tests_commentColumns = 
+    testList "commentColumns" [
+        testCase "basic WriteRead" <| fun _ ->
+            let testTable = ArcTable.init("Test") 
+            testTable.AddColumn (CompositeHeader.Input IOType.Source, [|CompositeCell.FreeText "Source"|])
+            testTable.AddColumn (CompositeHeader.Comment "CommentKey", [|CompositeCell.FreeText "CommentValue"|])
+            testTable.AddColumn (CompositeHeader.Output IOType.Sample, [|CompositeCell.FreeText "Sample"|])
+            let encoded = testTable.ToJsonString()
+            let decoded = ArcTable.fromJsonString encoded
+            Expect.arcTableEqual decoded testTable "decoded table should be equal to original table"
+        testCase "compressed WriteRead" <| fun _ ->
+            let testTable = ArcTable.init("Test") 
+            testTable.AddColumn (CompositeHeader.Input IOType.Source, [|CompositeCell.FreeText "Source"|])
+            testTable.AddColumn (CompositeHeader.Comment "CommentKey", [|CompositeCell.FreeText "CommentValue"|])
+            testTable.AddColumn (CompositeHeader.Output IOType.Sample, [|CompositeCell.FreeText "Sample"|])
+            let encoded = testTable.ToCompressedJsonString()
+            let decoded = ArcTable.fromCompressedJsonString encoded
+            Expect.arcTableEqual decoded testTable "decoded table should be equal to original table"
+    ] 
+
 
 let main = testList "ArcTable" [
     tests
@@ -111,4 +131,5 @@ let main = testList "ArcTable" [
     tests_compressedEmpty
     tests_compressedFilled
     tests_dataColumns
+    tests_commentColumns
 ]

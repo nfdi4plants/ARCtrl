@@ -51,7 +51,7 @@ let private tests_compositeHeader =
     testList "CompositeHeader" [
         testCase "Cases" <| fun _ ->
             let count = CompositeHeader.Cases.Length
-            Expect.equal count 14 "count"
+            Expect.equal count 15 "count"
         testCase "getExplanation" <| fun _ ->
             let cases = CompositeHeader.Cases |> Array.map snd
             for case in cases do
@@ -318,6 +318,7 @@ let tests_ToTerm = testList "ToTerm" [
             CompositeHeader.Input IOType.Source
             CompositeHeader.Output IOType.Sample
             CompositeHeader.FreeText "Hello World"
+            CompositeHeader.Comment "MyComment"
         ]
         |> List.distinct
     testCase "Ensure all headers listed" <| fun _ ->

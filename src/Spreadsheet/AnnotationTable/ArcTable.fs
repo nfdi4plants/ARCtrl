@@ -50,6 +50,7 @@ let classifyHeaderOrder (header : CompositeHeader) =
     | CompositeHeader.Characteristic    _
     | CompositeHeader.Factor            _
     | CompositeHeader.Parameter         _ 
+    | CompositeHeader.Comment           _
     | CompositeHeader.FreeText          _ -> ColumnOrder.ParamsClass
 
     | CompositeHeader.Output            _ -> ColumnOrder.OutputClass

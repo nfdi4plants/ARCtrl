@@ -329,6 +329,54 @@ let private fullDataTable =
         )
     ]
 
+let private commentTable = 
+    testList "commentTable" [
+        let wsName = "MyWorksheet"
+        let ws = 
+                initWorksheet wsName
+                    [
+                        Factor.appendTimeColumn           1
+                        Comment.appendSimpleCommentColumn 1
+                        Comment.appendNiceCommentColumn   1
+                        
+                    ]
+        testCase "Read" (fun () -> 
+                    
+            let table = ArcTable.tryFromFsWorksheet ws        
+        
+            Expect.isSome table "Table was not created"
+            let table = table.Value
+
+            Expect.equal table.Name wsName "Name did not match"
+            Expect.equal table.ColumnCount 3 "Wrong number of columns"
+            Expect.equal table.RowCount 1 "Wrong number of rows"
+
+            let expectedHeaders = 
+                [                      
+                        Factor.timeHeader
+                        Comment.simpleCommentHeader
+                        Comment.niceCommentHeader
+                ]
+            Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
+
+            let expectedCells = 
+                [                        
+                        Factor.timeValue
+                        Comment.simpleCommentValue
+                        Comment.niceCommentValue
+                ]
+            Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+        )
+        testCase "Write" (fun () -> 
+            
+            let table = ArcTable.tryFromFsWorksheet ws        
+            Expect.isSome table "Table was not created"
+            let out = ArcTable.toFsWorksheet table.Value
+            Expect.workSheetEqual out ws "Worksheet was not correctly written"
+           
+        )
+    ]
+
 let private deprecatedColumnTable = 
     testList "deprecatedIOColumnTable" [
         let wsName = "MyWorksheet"
@@ -434,6 +482,7 @@ let main =
         ioTable
         valuelessTable
         fullDataTable
+        commentTable
         deprecatedColumnTable
         writeOrder
         emptyTable
