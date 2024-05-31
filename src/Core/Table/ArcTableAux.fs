@@ -152,7 +152,9 @@ module Unchecked =
             setCellAt(toCol,toRow,c) cells
             |> ignore
         | None -> ()
+
     let removeHeader (index:int) (headers:ResizeArray<CompositeHeader>) = headers.RemoveAt (index)
+
     /// Remove cells of one Column, change index of cells with higher index to index - 1
     let removeColumnCells (index:int) (cells:Dictionary<int*int,CompositeCell>) = 
         for KeyValue((c,r),_) in cells do
@@ -162,6 +164,7 @@ module Unchecked =
                 |> ignore
             else
                 ()
+
     /// Remove cells of one Column, change index of cells with higher index to index - 1
     let removeColumnCells_withIndexChange (index:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) = 
         // Cannot loop over collection and change keys of existing.
@@ -176,6 +179,7 @@ module Unchecked =
                     moveCellTo(col,row,col-1,row) cells
                 else
                     ()
+
     let removeRowCells (rowIndex:int) (cells:Dictionary<int*int,CompositeCell>) = 
         for KeyValue((c,r),_) in cells do
             // Remove cells of column
@@ -184,6 +188,7 @@ module Unchecked =
                 |> ignore
             else
                 ()
+
     /// Remove cells of one Row, change index of cells with higher index to index - 1
     let removeRowCells_withIndexChange (rowIndex:int) (columnCount:int) (rowCount:int) (cells:Dictionary<int*int,CompositeCell>) = 
         // Cannot loop over collection and change keys of existing.
@@ -371,6 +376,43 @@ module Unchecked =
     /// Returns true, if two composite headers share the same main header string
     let compositeHeaderMainColumnEqual (ch1 : CompositeHeader) (ch2 : CompositeHeader) = 
         ch1.ToString() = ch2.ToString()
+
+    /// Moves a column from one position to another
+    ///
+    /// This function moves the column from `fromCol` to `toCol` and shifts all columns in between accordingly
+    let moveColumnTo (rowCount : int) (fromCol:int) (toCol:int) (headers : ResizeArray<CompositeHeader>) (values:Dictionary<int*int,CompositeCell>) =       
+        // Shift describes the moving of all the cells that are between fromCol and toCol
+        let shift, shiftStart, shiftEnd = 
+            if fromCol < toCol then
+                -1, fromCol + 1, toCol               
+            else
+                1, fromCol - 1, toCol
+
+        // Remember the header of interest (at fromCol)
+        let header = headers.[fromCol]
+        // Shift all headers  between fromCol and toCol
+        if shiftStart < shiftEnd then           
+            for c = shiftStart to shiftEnd do
+                headers.[c + shift] <- headers.[c]
+        else 
+            for c = shiftStart downto shiftEnd do
+                headers.[c + shift] <- headers.[c]
+        // Set the column of interest to the new position
+        headers.[toCol] <- header
+
+        // Iterate rowWise
+        for r = 0 to rowCount - 1 do
+            // Remember the cell of interest (at fromCol)
+            let cell = values.[fromCol,r]
+            // Shift all cells between fromCol and toCol
+            if shiftStart < shiftEnd then
+                for c = shiftStart to shiftEnd do
+                    values.[(c + shift,r)] <- values.[(c,r)]
+            else
+                for c = shiftStart downto shiftEnd do
+                    values.[(c + shift,r)] <- values.[(c,r)]
+            // Set the cell of interest to the new position
+            values.[(toCol,r)] <- cell
 
     /// From a list of rows consisting of headers and values, creates a list of combined headers and the values as a sparse matrix
     ///

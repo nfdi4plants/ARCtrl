@@ -26,10 +26,10 @@ let private tableValues_printable (table:ArcTable) =
 let private createCells_FreeText pretext (count) = Array.init count (fun i -> CompositeCell.createFreeText  $"{pretext}_{i}") 
 let private createCells_Term (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_SCIEXInstrumentModel)
 let private createCells_Unitized (count) = Array.init count (fun i -> CompositeCell.createUnitized (string i,OntologyAnnotation()))
-let private column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
-let private column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
-let private column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
-let private column_param = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()), createCells_Unitized 5)
+let column_input = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 5)
+let column_output = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 5)
+let column_component = CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Term 5)
+let column_param = CompositeColumn.create(CompositeHeader.Parameter (OntologyAnnotation()), createCells_Unitized 5)
 /// Valid TestTable with 5 columns, 5 rows: 
 ///
 /// Input [Source] -> 5 cells: [Source_1; Source_2..]
@@ -1698,6 +1698,75 @@ let private tests_RemoveColumns =
             Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "table.ColumnCount-1,table.RowCount-1"
         )
     ]
+let private tests_MoveColumn = 
+    testList "MoveColumn" [
+        testCase "CheckBoundaries" (fun () ->
+            let table = create_testTable()
+            let startTooLow() = table.MoveColumn(-1, 1)
+            let startTooHigh() = table.MoveColumn(table.ColumnCount, 1)
+            let endTooLow() = table.MoveColumn(1, -1)
+            let endTooHigh() = table.MoveColumn(1, table.ColumnCount)
+            Expect.throws startTooLow "Should fail for start Index -1"
+            Expect.throws startTooHigh "Should fail for start Index ColumnCount"
+            Expect.throws endTooLow "Should fail for end Index -1"
+            Expect.throws endTooHigh "Should fail for end Index ColumnCount"
+        )
+        testCase "DoesNothingForSameIndex" (fun () ->
+            let table = create_testTable()
+            table.MoveColumn(1, 1)
+            let expected = create_testTable()
+            Expect.arcTableEqual table expected "Table should not have changed"
+        )
+        testCase "MoveStartToEnd" (fun () ->
+            let table = create_testTable()
+            table.MoveColumn(0, 4)
+            let expected = 
+                let t = ArcTable.init(TableName)
+                let columns = [|
+                    column_output
+                    column_param
+                    column_component
+                    column_param
+                    column_input
+                |]
+                t.AddColumns(columns)
+                t
+            Expect.arcTableEqual table expected "Table should have moved column 0 to 4"
+        )
+        testCase "MoveEndToStart" (fun () ->
+            let table = create_testTable()
+            table.MoveColumn(4, 0)
+            let expected = 
+                let t = ArcTable.init(TableName)
+                let columns = [|
+                    column_param
+                    column_input
+                    column_output
+                    column_param
+                    column_component
+                |]
+                t.AddColumns(columns)
+                t
+            Expect.arcTableEqual table expected "Table should have moved column 4 to 0"
+        )
+        testCase "MoveOneAheadInMiddle" (fun () ->
+            let table = create_testTable()
+            table.MoveColumn(1, 2)
+            let expected = 
+                let t = ArcTable.init(TableName)
+                let columns = [|
+                    column_input
+                    column_param
+                    column_output
+                    column_component
+                    column_param
+                |]
+                t.AddColumns(columns)
+                t
+            Expect.arcTableEqual table expected "Table should have moved column 1 to 2"
+        )
+    ]
+
 
 let private tests_RemoveRow = 
     testList "RemoveRow" [
@@ -2285,6 +2354,7 @@ let main =
         tests_AddColumns
         tests_RemoveColumn
         tests_RemoveColumns
+        tests_MoveColumn
         tests_RemoveRow
         tests_RemoveRows
         tests_AddRow

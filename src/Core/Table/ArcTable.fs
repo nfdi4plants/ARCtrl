@@ -350,6 +350,22 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.GetOutputColumn()
 
+    member this.MoveColumn(startCol : int, endCol : int) =
+        if startCol = endCol then
+            ()
+        elif startCol < 0 || startCol >= this.ColumnCount then
+            failwithf "Cannt move column. Invalid start column index: %i" startCol
+        elif endCol < 0 || endCol >= this.ColumnCount then
+            failwithf "Cannt move column. Invalid end column index: %i" endCol
+        else
+            ArcTableAux.Unchecked.moveColumnTo this.RowCount startCol endCol this.Headers this.Values
+
+    static member moveColumn(startCol : int, endCol : int) =
+        fun (table:ArcTable) ->
+            let newTable = table.Copy()
+            newTable.MoveColumn(startCol, endCol)
+            newTable
+
     // - Row API - //
     member this.AddRow (?cells: CompositeCell [], ?index: int) : unit = 
         let index = defaultArg index this.RowCount
