@@ -387,6 +387,79 @@ let tests_GetHashCode = testList "GetHashCode" [
 ]
 
 
+let tests_comparison = testList "Comparison" [
+    testCase "canCreateSet" (fun () ->
+        [
+            CompositeHeader.Component (OntologyAnnotation(name = "MyComponent"))
+            CompositeHeader.Characteristic (OntologyAnnotation(name = "MyCharacteristic"))
+            CompositeHeader.Factor (OntologyAnnotation(name = "MyFactor"))
+            CompositeHeader.Parameter (OntologyAnnotation(name = "MyParameter"))
+            CompositeHeader.ProtocolType
+            CompositeHeader.ProtocolDescription
+            CompositeHeader.ProtocolUri
+            CompositeHeader.ProtocolVersion
+            CompositeHeader.ProtocolREF
+            CompositeHeader.Performer
+            CompositeHeader.Date
+            CompositeHeader.Input IOType.Source
+            CompositeHeader.Output IOType.Sample
+            CompositeHeader.FreeText "Hello World"
+            CompositeHeader.Comment "MyComment"       
+        ]
+        |> set
+        |> ignore
+    )
+    testCase "createSet_duplicatesDropped" (fun () ->
+        let headers = [
+            // 2
+            CompositeHeader.Characteristic (OntologyAnnotation(name = "MyCharacteristic"))
+            CompositeHeader.Characteristic (OntologyAnnotation(name = "MyCharacteristic"))
+            CompositeHeader.Characteristic (OntologyAnnotation(name = "OtherCharacteristic"))
+            
+            // 1
+            CompositeHeader.ProtocolDescription
+            CompositeHeader.ProtocolDescription
+
+            // 3
+            CompositeHeader.Input IOType.Source
+            CompositeHeader.Input IOType.Source
+            CompositeHeader.Input IOType.Data
+            CompositeHeader.Output IOType.Source
+
+            // 3
+            CompositeHeader.FreeText "Hello World"
+            CompositeHeader.FreeText "Hello World"
+            CompositeHeader.FreeText "Bye World"
+            CompositeHeader.Comment "Hello World"
+        ]
+        let actual = headers |> set
+
+        Expect.hasLength actual 9 ""       
+    )
+    testCase "compareFreetext" (fun () ->
+        let h1 = CompositeHeader.FreeText "1"
+        let h2 = CompositeHeader.FreeText "2"
+            
+        let isSmaller = h1 < h2
+        Expect.isTrue isSmaller "FreeText 1 should be smaller than FreeText 2"         
+    )
+    testCase "compareFreetext_same" (fun () ->
+        let h1 = CompositeHeader.FreeText "1"
+        let h2 = CompositeHeader.FreeText "1"
+            
+        let isEqual = h1 = h2
+        Expect.isTrue isEqual "FreeText 1 should be equal to FreeText 1"         
+    )
+    testCase "compareCommentAndFreetext" (fun () ->
+        let h1 = CompositeHeader.FreeText "2"
+        let h2 = CompositeHeader.Comment "1"
+
+        let isSmaller = h1 < h2
+
+        Expect.isTrue isSmaller "FreeText 2 should be smaller than Comment 1"
+    )
+]
+
 let main = 
     testList "CompositeHeader" [
         tests_iotype
@@ -394,4 +467,5 @@ let main =
         tests_compositeHeader
         tests_ToTerm
         tests_GetHashCode
+        tests_comparison
     ]

@@ -154,6 +154,21 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
     override this.Equals(obj) : bool =
         HashCodes.hash this = HashCodes.hash obj
    
+    interface System.IComparable with
+        member this.CompareTo(obj) =
+            match obj with
+            | :? OntologyAnnotation as oa -> 
+                #if FABLE_COMPILER
+                let hash = this.GetHashCode()
+                let otherHash = oa.GetHashCode()
+                if hash = otherHash then 0
+                else if hash < otherHash then -1
+                else 1                
+                #else
+                this.GetHashCode().CompareTo(oa.GetHashCode())
+                #endif
+            | _ -> 1
+
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         OntologyAnnotation.make this.Name this.TermSourceREF this.TermAccessionNumber nextComments

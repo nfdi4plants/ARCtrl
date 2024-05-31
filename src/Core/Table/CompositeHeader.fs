@@ -131,6 +131,7 @@ type IOType =
 /// </summary>
 [<AttachMembers>]
 [<RequireQualifiedAccess>]
+[<StructuralComparison; StructuralEquality>]
 type CompositeHeader = 
     // term
     | Component         of OntologyAnnotation
