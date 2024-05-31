@@ -213,7 +213,12 @@ module JsonTypes =
 /// Functions for parsing ArcTables to ISA json Processes and vice versa
 module ProcessParsing = 
  
-    /// If the headers of a node depict a component, returns a function for parsing the values of the matrix to the values of this component
+    // Explanation of the Getter logic:
+    // The getter logic is used to treat every value of the table only once
+    // First, the headers are checked for what getter applies to the respective column. E.g. a ProtocolType getter will only return a function for parsing protocolType cells if the header depicts a protocolType.
+    // The appropriate getters are then applied in the context of the processGetter, parsing the cells of the matrix
+
+    /// If the given headers depict a component, returns a function for parsing the values of the matrix to the values of this component
     let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Component oa ->
@@ -225,7 +230,7 @@ module ProcessParsing =
             |> Some
         | _ -> None    
             
-    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    /// If the given headers depict a parameter, returns a function for parsing the values of the matrix to the values of this type
     let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Parameter oa ->
@@ -237,6 +242,7 @@ module ProcessParsing =
             |> Some
         | _ -> None 
 
+    /// If the given headers depict a factor, returns a function for parsing the values of the matrix to the values of this type
     let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Factor oa ->
@@ -248,6 +254,7 @@ module ProcessParsing =
             |> Some
         | _ -> None 
 
+    /// If the given headers depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
     let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Characteristic oa ->
@@ -259,7 +266,7 @@ module ProcessParsing =
             |> Some
         | _ -> None 
 
-    /// If the headers of a node depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
+    /// If the given headers depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolType ->
@@ -269,6 +276,7 @@ module ProcessParsing =
         | _ -> None 
 
 
+    /// If the given headers depict a protocolREF, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolREF ->
@@ -277,6 +285,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict a protocolDescription, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolDescription ->
@@ -284,7 +293,8 @@ module ProcessParsing =
                 matrix.[generalI,i].AsFreeText
             |> Some
         | _ -> None
-
+   
+    /// If the given headers depict a protocolURI, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolUri ->
@@ -293,6 +303,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict a protocolVersion, returns a function for parsing the values of the matrix to the values of this type
     let tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolVersion ->
@@ -301,6 +312,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict an input, returns a function for parsing the values of the matrix to the values of this type
     let tryGetInputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Input io ->
@@ -309,6 +321,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict an output, returns a function for parsing the values of the matrix to the values of this type
     let tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Output io ->
@@ -317,6 +330,7 @@ module ProcessParsing =
             |> Some
         | _ -> None
 
+    /// If the given headers depict a comment, returns a function for parsing the values of the matrix to the values of this type
     let tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Comment c ->
