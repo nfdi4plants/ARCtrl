@@ -675,12 +675,22 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
 
     /// Pretty printer 
     override this.ToString() =
+        let rowCount = this.RowCount
         [
             $"Table: {this.Name}"
             "-------------"
             this.Headers |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
-            for rowI = 0 to this.RowCount-1 do
-                this.GetRow(rowI) |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
+            if rowCount > 50 then
+                for rowI = 0 to 19 do
+                    this.GetRow(rowI) |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
+                "..."
+                for rowI = rowCount-20 to rowCount-1 do
+                    this.GetRow(rowI) |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
+            elif rowCount = 0 then
+                "No rows"
+            else
+                for rowI = 0 to rowCount-1 do
+                    this.GetRow(rowI) |> Seq.map (fun x -> x.ToString()) |> String.concat "\t|\t"
         ]
         |> String.concat "\n"
 
