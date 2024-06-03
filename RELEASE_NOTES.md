@@ -1,5 +1,16 @@
-### 2.0.0+ecd9a17 (Released 2024-5-29)
+### 2.0.0+be3f8a2 (Released 2024-6-3)
 * Additions:
+    * [[#8c192dd](https://github.com/nfdi4plants/ARCtrl/commit/8c192dde7df77bc8d9597d550cbc6734545124e0)] small change in ArcTable.ToString function to make it more robust
+    * [[#4173454](https://github.com/nfdi4plants/ARCtrl/commit/4173454f557263df30b8359810a2a13b54d8fd4b)] small speed improvement to ArcTable move column
+    * [[#fceee84](https://github.com/nfdi4plants/ARCtrl/commit/fceee84badd6bd2bd5c87d64336c2c4aeac15a3a)] add column move function to ArcTable
+    * [[#3620782](https://github.com/nfdi4plants/ARCtrl/commit/362078266da41eb936f8e60a561a963096170d25)] added comparison for ontologyannotation and compositeHeader
+    * [[#0ce1c7c](https://github.com/nfdi4plants/ARCtrl/commit/0ce1c7ced4eed0a1a0d3e48bfc66345b1b38d437)] added fable helper function for comment header creation
+    * [[#a5f299b](https://github.com/nfdi4plants/ARCtrl/commit/a5f299b2e247845b8b43f15e461860c5634e466c)] add some more comments to isa processType conversion
+    * [[#8ef35c2](https://github.com/nfdi4plants/ARCtrl/commit/8ef35c2c37b2d7311e58a8da26e96272f08267c9)] add comment column json and spreadsheet parser
+    * [[#ead29a5](https://github.com/nfdi4plants/ARCtrl/commit/ead29a5b9c6a871b8b3d6e4c3f5e77bcdf7f6c8d)] add comment column header and process converter
+    * [[#0b73da2](https://github.com/nfdi4plants/ARCtrl/commit/0b73da2a4243f1ad361ee950ea85e544d7c13c8b)] add study rename logic
+    * [[#57f3a2e](https://github.com/nfdi4plants/ARCtrl/commit/57f3a2e6842b1d0a8c6cadab118e45557d47ed9a)] add rename contract and assay rename logic
+    * [[#f565309](https://github.com/nfdi4plants/ARCtrl/commit/f56530900bb487f71b25e226a7a76959e21ba1eb)] make ArcTables construction fail for duplicate table names #332
     * [[#d986c1a](https://github.com/nfdi4plants/ARCtrl/commit/d986c1ad2e263dfdb72267df36161f52084addc8)] add some additonal info to pyproject.toml
     * [[#99d94a5](https://github.com/nfdi4plants/ARCtrl/commit/99d94a5ef020f155f0c3d8a0fad466dc3fba90e8)] reinclude inclusion of source files in fable folders
     * [[#d37a71e](https://github.com/nfdi4plants/ARCtrl/commit/d37a71e44128e910dfd8c6e03d1905b7bbe9d35d)] Update scripts
@@ -91,6 +102,8 @@
 * Deletions:
     * [[#f055617](https://github.com/nfdi4plants/ARCtrl/commit/f05561709a0a8d1da752d54d5a997db225a3384e)] remove erroneous exe output type from testingutils
 * Bugfixes:
+    * [[#3f164c3](https://github.com/nfdi4plants/ARCtrl/commit/3f164c3eb87aa68ecc6ad5cb50dade9f0c769752)] small fix for jsnativetests for comment column addition
+    * [[#6ef030d](https://github.com/nfdi4plants/ARCtrl/commit/6ef030da7ab86ace826706731848db7098ff2ed5)] Merge pull request #358 from nfdi4plants/fixes
     * [[#e2cb695](https://github.com/nfdi4plants/ARCtrl/commit/e2cb695115ddd5a93e0871638d4649fe326adef7)] Fix python docs for contract logic :bug: #342
     * [[#d2d7c53](https://github.com/nfdi4plants/ARCtrl/commit/d2d7c5337f80f7289d0f64b7f2a9c37a496b1299)] test and fix ro-crate propertyValue parsing
     * [[#8c82636](https://github.com/nfdi4plants/ARCtrl/commit/8c82636ba0e10b7934ca354c22cf3651574d1ad6)] add tests and fix empty cell parsing behaviour
