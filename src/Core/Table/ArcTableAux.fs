@@ -391,26 +391,18 @@ module Unchecked =
         // Remember the header of interest (at fromCol)
         let header = headers.[fromCol]
         // Shift all headers  between fromCol and toCol
-        if shiftStart < shiftEnd then           
-            for c = shiftStart to shiftEnd do
-                headers.[c + shift] <- headers.[c]
-        else 
-            for c = shiftStart downto shiftEnd do
-                headers.[c + shift] <- headers.[c]
+        for c in [shiftStart .. (-shift) .. shiftEnd] do
+            headers.[c + shift] <- headers.[c]
         // Set the column of interest to the new position
         headers.[toCol] <- header
-
+        
         // Iterate rowWise
         for r = 0 to rowCount - 1 do
             // Remember the cell of interest (at fromCol)
             let cell = values.[fromCol,r]
             // Shift all cells between fromCol and toCol
-            if shiftStart < shiftEnd then
-                for c = shiftStart to shiftEnd do
-                    values.[(c + shift,r)] <- values.[(c,r)]
-            else
-                for c = shiftStart downto shiftEnd do
-                    values.[(c + shift,r)] <- values.[(c,r)]
+            for c in [shiftStart .. (-shift) .. shiftEnd] do
+                values.[(c + shift,r)] <- values.[(c,r)]
             // Set the cell of interest to the new position
             values.[(toCol,r)] <- cell
 
