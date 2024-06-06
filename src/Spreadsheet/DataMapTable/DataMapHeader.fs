@@ -8,9 +8,25 @@ module ActivePattern =
 
     open Regex.ActivePatterns
 
-    let (|Term|_|) (categoryString : string) (categoryHeader : CompositeHeader) (cells : FsCell list) : (CompositeHeader*(FsCell list -> CompositeCell)) option =
+    let ontologyAnnotationFromFsCells (tsrCol : int option) (tanCol : int option) (cells : list<FsCell>) : OntologyAnnotation =
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+        let tsr = Option.map (fun i -> cellValues.[i]) tsrCol
+        let tan = Option.map (fun i -> cellValues.[i]) tanCol
+        OntologyAnnotation(cellValues.[0],?tsr = tsr, ?tan = tan)
+
+    let freeTextFromFsCells (cells : list<FsCell>) : string =
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+        cellValues.[0]
+
+    let dataFromFsCells (format : int option) (selectorFormat : int option) (cells : list<FsCell>) : Data =
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+        let format = Option.map (fun i -> cellValues.[i]) format
+        let selectorFormat = Option.map (fun i -> cellValues.[i]) selectorFormat
+        Data(name = cellValues.[0],?format = format, ?selectorFormat = selectorFormat)
+
+    let (|Term|_|) (categoryString : string) (cells : FsCell list) : ((FsCell list -> OntologyAnnotation)) option =
         let (|AC|_|) s =
-            if s = categoryString then Some categoryHeader else None
+            if s = categoryString then Some 1 else None
         let (|TSRColumnHeaderRaw|_|) (s : string) =
             if s.StartsWith("Term Source REF") then Some s else None
         let (|TANColumnHeaderRaw|_|) (s : string) =
@@ -18,105 +34,154 @@ module ActivePattern =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | [AC header] -> 
-            (header, CompositeCell.termFromFsCells None None)
+            (ontologyAnnotationFromFsCells None None)
             |> Some
         | [AC header; TSRColumnHeaderRaw _; TANColumnHeaderRaw _] ->
-            (header, CompositeCell.termFromFsCells (Some 1) (Some 2))
+            (ontologyAnnotationFromFsCells (Some 1) (Some 2))
             |> Some
         | [AC header; TANColumnHeaderRaw _; TSRColumnHeaderRaw _] ->
-            (header, CompositeCell.termFromFsCells (Some 2) (Some 1))
+            (ontologyAnnotationFromFsCells (Some 2) (Some 1))
             |> Some
         | _ -> None
 
     let (|Explication|_|) (cells : FsCell list) =
         match cells with
-        | Term DataMapAux.explicationShortHand DataMapAux.explicationHeader r ->
-            Some r
+        | Term DataMapAux.explicationShortHand r ->
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                dc.Explication <- Some (r cells)
+                dc
+            )
+            |> Some
         | _ -> None
 
     let (|Unit|_|) (cells : FsCell list) =
         match cells with
-        | Term DataMapAux.unitShortHand DataMapAux.unitHeader r ->
-            Some r
+        | Term DataMapAux.unitShortHand r ->
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                dc.Unit <- Some (r cells)
+                dc
+            )
+            |> Some
         | _ -> None
 
     let (|ObjectType|_|) (cells : FsCell list) =
         match cells with
-        | Term DataMapAux.objectTypeShortHand DataMapAux.objectTypeHeader r ->
-            Some r
+        | Term DataMapAux.objectTypeShortHand r ->
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                dc.ObjectType <- Some (r cells)
+                dc
+            )
+            |> Some
         | _ -> None
 
     let (|Description|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [DataMapAux.descriptionShortHand] -> Some(DataMapAux.descriptionHeader, CompositeCell.freeTextFromFsCells)
+        | [DataMapAux.descriptionShortHand] -> 
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                dc.Description <- Some (freeTextFromFsCells cells)
+                dc
+            )
+            |> Some
         | _ -> None
 
     let (|GeneratedBy|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [DataMapAux.generatedByShortHand] -> Some(DataMapAux.generatedByHeader, CompositeCell.freeTextFromFsCells)
+        | [DataMapAux.generatedByShortHand] -> 
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                dc.GeneratedBy <- Some (freeTextFromFsCells cells)
+                dc
+            )
+            |> Some
         | _ -> None
 
     let (|Data|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
         | DataMapAux.dataShortHand :: cols -> 
-            
-            let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
-            let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
-            (CompositeHeader.Input (IOType.Data), CompositeCell.dataFromFsCells format selectorFormat)
+            (fun (dc : DataContext) (cells : FsCell list) ->
+                let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
+                let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
+                let d = dataFromFsCells format selectorFormat cells
+                dc.FilePath <- d.FilePath
+                dc.Selector <- d.Selector
+                dc.Format <- d.Format
+                dc.SelectorFormat <- d.SelectorFormat
+                dc
+            )
             |> Some
-
+               
         | _ -> None
 
-    let (|FreeText|_|) (cells : FsCell list) =
+    let (|Comment|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [text] -> 
-            (CompositeHeader.FreeText text, CompositeCell.freeTextFromFsCells)
-            |> Some
+        | [Comment key] -> 
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+                let comment = cellValues.[0]
+                dc.Comments.Add(Comment.create(key,comment))
+                dc
+            )
+            |> Some   
+        | _ -> None
+
+    let (|Freetext|_|) (cells : FsCell list) =
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+        match cellValues with
+        | [key] -> 
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+                let comment = cellValues.[0]
+                dc.Comments.Add(Comment.create(key,comment))
+                dc
+            )
+            |> Some   
         | _ -> None
 
 open ActivePattern
 
-let fromFsCells (cells : list<FsCell>) : CompositeHeader*(FsCell list -> CompositeCell) =
+let fromFsCells (cells : FsCell list) : DataContext -> FsCell list -> DataContext =
     match cells with
-    | Data d -> d
-    | Explication e -> e
-    | Unit u -> u
-    | ObjectType ot -> ot
-    | Description d -> d
-    | GeneratedBy gb -> gb
-    | FreeText ft -> ft
-    | _ -> failwithf "Could not parse header group %O" cells
+    | Explication r -> r
+    | Unit r -> r
+    | ObjectType r -> r
+    | Description r -> r
+    | GeneratedBy r -> r
+    | Data r -> r
+    | Comment r -> r
+    | Freetext r -> r
+    | _ -> failwithf "Could not parse data map column: %s" (cells |> List.map (fun c -> c.ValueAsString()) |> String.concat ", ")
 
-let toFsCells (header : CompositeHeader) : list<FsCell> = 
-    match header with
-    | CompositeHeader.Input IOType.Data ->      
-        [
+let toFsCells (commentKeys : string list) : list<FsCell> = 
+    [
+        yield! [
             FsCell("Data")
             FsCell("Data Format")
             FsCell("Data Selector Format")
-        ]                 
-    | h when h = DataMapAux.explicationHeader -> 
-        [
+        ]  
+        yield! [
             FsCell(DataMapAux.explicationShortHand)
             FsCell("Term Source REF")
             FsCell("Term Accession Number")
         ]
-    | h when h = DataMapAux.unitHeader -> 
-        [
+        yield![
             FsCell(DataMapAux.unitShortHand)
             FsCell("Term Source REF")
             FsCell("Term Accession Number")
         ]
-    | h when h = DataMapAux.objectTypeHeader -> 
-        [
+        yield![
             FsCell(DataMapAux.objectTypeShortHand)
             FsCell("Term Source REF")
             FsCell("Term Accession Number")
         ]
-    | CompositeHeader.FreeText text -> 
-        [FsCell(text)]
-    | _ -> failwithf "Could not parse DataMap header %O." header
+        yield! [
+            FsCell(DataMapAux.descriptionShortHand)
+        ]
+        yield! [
+            FsCell(DataMapAux.generatedByShortHand)
+        ]
+        for ck in commentKeys do
+            yield FsCell(ck)
+    ]

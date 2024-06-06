@@ -4,15 +4,6 @@ open ARCtrl
 open ARCtrl.Helper
 open FsSpreadsheet
 
-//let fromFsCells (cells : list<FsCell>) : CompositeCell =
-//    let cellValues = cells |> List.map (fun c -> c.ValueAsString())
-//    match cellValues with
-//    | [v] -> CompositeCell.createFreeText v
-//    | [v1;v2;v3] -> CompositeCell.createTermFromString(v1,v2,v3)
-//    | [v1;v2;v3;v4] -> CompositeCell.createUnitizedFromString(v1,v2,v3,v4)
-//    | _ -> 
-//        failwithf "Dafuq"
-
 let termFromFsCells (tsrCol : int option) (tanCol : int option ) (cells : list<FsCell>) : CompositeCell= 
     let cellValues = cells |> List.map (fun c -> c.ValueAsString())
     let tan = Option.map (fun i -> cellValues.[i]) tanCol

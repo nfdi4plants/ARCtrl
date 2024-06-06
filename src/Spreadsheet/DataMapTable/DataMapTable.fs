@@ -30,24 +30,24 @@ let tryDataMapTable (sheet : FsWorksheet) =
     |> Seq.tryFind (fun t -> t.Name.StartsWith datamapTablePrefix)
 
 /// Groups and parses a collection of single columns into the according ISA composite columns
-let composeColumns (columns : seq<FsColumn>) : CompositeColumn [] =
+let composeColumns (columns : seq<FsColumn>) : ResizeArray<DataContext> =
+    let l = (columns |> Seq.item 0).MaxRowIndex
+    let dc = ResizeArray([| for i = 0 to l - 1 do yield DataContext()|])
     columns
     |> Seq.toList
     |> groupColumnsByHeader
-    |> List.map DataMapColumn.fromFsColumns
-    |> List.toArray
-
+    |> List.iter (DataMapColumn.setFromFsColumns dc >> ignore)
+    dc
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
     try
         match tryDataMapTable sheet with
         | Some (t: FsTable) -> 
-            let compositeColumns = 
+            let dataContexts = 
                 t.GetColumns(sheet.CellCollection)
                 |> composeColumns
-            DataMap.init()
-            |> DataMap.addColumns(compositeColumns,skipFillMissing = true)
+            DataMap(dataContexts)
             |> Some
         | None ->
             None
@@ -60,14 +60,11 @@ let toFsWorksheet (table : DataMap) =
     let ws = FsWorksheet("isa_datamap")
 
     // Cancel if there are no columns
-    if table.Table.Columns.Length = 0 then ws
+    if table.DataContexts.Count = 0 then ws
     else
 
     let columns = 
-        table.Table.Columns
-        |> List.ofArray
-        |> List.sortBy classifyColumnOrder
-        |> List.collect DataMapColumn.toFsColumns
+        DataMapColumn.toFsColumns table.DataContexts
     let maxRow = columns.Head.Length
     let maxCol = columns.Length
     let fsTable = ws.Table("datamapTable",FsRangeAddress(FsAddress(1,1),FsAddress(maxRow,maxCol)))
