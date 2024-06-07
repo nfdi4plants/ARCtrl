@@ -10,9 +10,9 @@ let setFromFsColumns (dc : ResizeArray<DataContext>) (columns : list<FsColumn>) 
         columns
         |> List.map (fun c -> c.[1])
         |> DataMapHeader.fromFsCells
-    for i = 2 to dc.Count - 1 do
+    for i = 0 to dc.Count - 1 do
         columns
-        |> List.map (fun c -> c.[i])
+        |> List.map (fun c -> c.[i+2])
         |> cellParser (dc.[i])
         |> ignore
     dc
@@ -45,9 +45,9 @@ let toFsColumns (dc : ResizeArray<DataContext>) : FsCell list list =
         ]
     let createData (dc : DataContext) =
         [
-            FsCell(dc.Name)
-            FsCell(dc.Format)
-            FsCell(dc.SelectorFormat)        
+            FsCell(dc.Name |> Option.defaultValue "")
+            FsCell(dc.Format |> Option.defaultValue "")
+            FsCell(dc.SelectorFormat |> Option.defaultValue "")        
         ]
     let createRow (dc : DataContext) = 
         [
@@ -74,3 +74,4 @@ let toFsColumns (dc : ResizeArray<DataContext>) : FsCell list list =
         for dc in dc do
             createRow dc
     ]
+    |> List.transpose

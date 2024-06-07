@@ -31,7 +31,7 @@ let tryDataMapTable (sheet : FsWorksheet) =
 
 /// Groups and parses a collection of single columns into the according ISA composite columns
 let composeColumns (columns : seq<FsColumn>) : ResizeArray<DataContext> =
-    let l = (columns |> Seq.item 0).MaxRowIndex
+    let l = (columns |> Seq.item 0).MaxRowIndex - 1
     let dc = ResizeArray([| for i = 0 to l - 1 do yield DataContext()|])
     columns
     |> Seq.toList
@@ -88,4 +88,5 @@ let toFsWorksheet (table : DataMap) =
             fsTable.Cell(address, ws.CellCollection).SetValueAs value
         )  
     )
+    ws.RescanRows()
     ws

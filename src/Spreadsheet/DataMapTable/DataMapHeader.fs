@@ -144,14 +144,15 @@ open ActivePattern
 
 let fromFsCells (cells : FsCell list) : DataContext -> FsCell list -> DataContext =
     match cells with
-    | Explication r -> r
-    | Unit r -> r
-    | ObjectType r -> r
-    | Description r -> r
-    | GeneratedBy r -> r
-    | Data r -> r
-    | Comment r -> r
-    | Freetext r -> r
+    | Explication r 
+    | Unit r 
+    | ObjectType r 
+    | Description r 
+    | GeneratedBy r 
+    | Data r 
+    | Comment r 
+    | Freetext r -> 
+        fun (dc : DataContext) (cells : FsCell list) -> r dc cells
     | _ -> failwithf "Could not parse data map column: %s" (cells |> List.map (fun c -> c.ValueAsString()) |> String.concat ", ")
 
 let toFsCells (commentKeys : string list) : list<FsCell> = 
