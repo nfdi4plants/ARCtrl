@@ -12,13 +12,13 @@
     <Compile Include="FileSystemTree.fs" />
     <Compile Include="FileSystem.fs" />
   </ItemGroup>
-	<ItemGroup>
-		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-		<None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-	</ItemGroup>
-    <ItemGroup>
-	    <PackageReference Include="Fable.Core" Version="4.2.0" />
-    </ItemGroup>
+  <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Core" Version="4.2.0" />
+  </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil </Authors>
     <Description>ARC helper functions for filesystem management.</Description>
