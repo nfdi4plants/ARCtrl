@@ -161,7 +161,7 @@ let private tests_read_contracts = testList "read_contracts" [
         let a1 = inv.GetAssay(SimpleISA.Assay.proteomeIdentifer)
         let datamap = Expect.wantSome a1.DataMap "Proteome Assay was supposed to have datamap"
         
-        Expect.equal 2 datamap.Table.RowCount "Datamap was not read correctly"
+        Expect.equal 2 datamap.DataContexts.Count "Datamap was not read correctly"
 
         let a2 = inv.GetAssay(SimpleISA.Assay.metabolomeIdentifer)
         Expect.isNone a2.DataMap "Metabolome Assay was not supposed to have datamap"
@@ -376,7 +376,7 @@ let private tests_updateContracts = testList "update_contracts" [
         let isa = arc.ISA.Value
 
         let dm = Expect.wantSome (isa.GetAssay(SimpleISA.Assay.proteomeIdentifer).DataMap) "Assay should have datamap"       
-        dm.Values.[(0,1)] <- CompositeCell.createDataFromString("Hello")
+        dm.GetDataContext(1).Name <- Some "Hello"
 
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 1 $"Should contain only assay datamap change contract"

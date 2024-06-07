@@ -35,6 +35,9 @@ type DataContext(?id,?name : string,?dataType,?format,?selectorFormat, ?explicat
         and set(generatedBy) = _generatedBy <- generatedBy
 
 
+    member this.AsData() =
+        Data(?id = this.ID,?name = this.Name, ?dataType = this.DataType, ?format = this.Format, ?selectorFormat = this.SelectorFormat, comments = this.Comments)
+
     member this.Copy() = 
         let copy = new DataContext()
         copy.ID <- this.ID
