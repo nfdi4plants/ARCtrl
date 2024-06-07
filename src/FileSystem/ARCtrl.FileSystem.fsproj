@@ -13,8 +13,9 @@
     <Compile Include="FileSystem.fs" />
   </ItemGroup>
 	<ItemGroup>
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+		<None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
     <ItemGroup>
 	    <PackageReference Include="Fable.Core" Version="4.2.0" />
     </ItemGroup>

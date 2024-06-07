@@ -57,9 +57,10 @@
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+	<ItemGroup>
+		<Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+		<None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="7.0.401" />
   </ItemGroup>
