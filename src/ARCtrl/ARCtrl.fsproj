@@ -24,10 +24,10 @@
     <Compile Include="Xlsx.fs" />
     <None Include="README.md" />
   </ItemGroup>
-	<ItemGroup>
-		<PackageReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="Fable.Fetch" Version="2.6.0" />
-		<PackageReference Include="Fable.SimpleHttp" Version="3.5.0" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="Fable.Fetch" Version="2.6.0" />
+    <PackageReference Include="Fable.SimpleHttp" Version="3.5.0" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
@@ -47,7 +47,7 @@
       <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
     </PythonDependencies>
   </PropertyGroup>
-	<ItemGroup>
-	  <PackageReference Update="FSharp.Core" Version="7.0.401" />
-	</ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="7.0.401" />
+  </ItemGroup>
 </Project>
