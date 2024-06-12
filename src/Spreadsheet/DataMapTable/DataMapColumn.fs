@@ -3,46 +3,75 @@
 open ARCtrl
 open ArcTable
 open FsSpreadsheet
+open DataMapHeader.ActivePattern
 
-let fromFsColumns (columns : list<FsColumn>) : CompositeColumn =
-    let header, cellParser = 
+let setFromFsColumns (dc : ResizeArray<DataContext>) (columns : list<FsColumn>) : ResizeArray<DataContext> =
+    let cellParser = 
         columns
         |> List.map (fun c -> c.[1])
         |> DataMapHeader.fromFsCells
-    let l = columns.[0].RangeAddress.LastAddress.RowNumber
-    let cells = 
-        [|
-        for i = 2 to l do
-            columns
-            |> List.map (fun c -> c.[i])
-            |> cellParser
-        |]                 
-    CompositeColumn.create(header,cells)
+    for i = 0 to dc.Count - 1 do
+        columns
+        |> List.map (fun c -> c.[i+2])
+        |> cellParser (dc.[i])
+        |> ignore
+    dc
 
-
-let toFsColumns (column : CompositeColumn) : FsCell list list =
-    let isTerm = column.Header.IsTermColumn
-    let isData = column.Header.IsDataColumn
-    let header = DataMapHeader.toFsCells column.Header
-    let cells = column.Cells |> Array.map (CompositeCell.toFsCells isTerm false)
-    if isTerm then
-        [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
-            [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
-            [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
+let toFsColumns (dc : ResizeArray<DataContext>) : FsCell list list =
+    let commentKeys = 
+        dc 
+        |> Seq.collect (fun dc -> dc.Comments |> Seq.map (fun c -> c.Name |> Option.defaultValue ""))
+        |> Seq.distinct
+        |> Seq.toList
+    let headers = 
+        DataMapHeader.toFsCells commentKeys
+    let createTerm (oa : OntologyAnnotation option) = 
+        match oa with
+        | Some oa ->
+            [
+                oa.Name |> Option.defaultValue "" |> FsCell
+                oa.TermSourceREF |> Option.defaultValue "" |> FsCell
+                oa.TermAccessionNumber |> Option.defaultValue "" |> FsCell
+            ]
+        | None ->
+            [
+            FsCell("")
+            FsCell("")
+            FsCell("")
         ]
-    elif isData then
-        let hasFormat = column.Cells |> Seq.exists (fun c -> c.AsData.Format.IsSome)
-        let hasSelectorFormat = column.Cells |> Seq.exists (fun c -> c.AsData.SelectorFormat.IsSome)
-
+    let createText (s : string option) = 
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
-            if hasFormat then 
-                [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
-            if hasSelectorFormat then 
-                [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
+            FsCell(s |> Option.defaultValue "")    
         ]
-    else
+    let createData (dc : DataContext) =
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
+            FsCell(dc.Name |> Option.defaultValue "")
+            FsCell(dc.Format |> Option.defaultValue "")
+            FsCell(dc.SelectorFormat |> Option.defaultValue "")        
         ]
+    let createRow (dc : DataContext) = 
+        [
+            yield! (createData dc)
+            yield! (createTerm dc.Explication)
+            yield! (createTerm dc.Unit)
+            yield! (createTerm dc.ObjectType)
+            yield! (createText dc.Description)
+            yield! (createText dc.GeneratedBy)
+            yield! (
+                commentKeys
+                |> List.map (fun key -> 
+                    dc.Comments 
+                    |> Seq.tryFind (fun c -> 
+                        Option.defaultValue "" c.Name = key) 
+                    |> Option.bind (fun c -> c.Value)
+                    |> Option.defaultValue ""
+                    |> FsCell
+                )
+            )  
+        ]
+    [
+        headers
+        for dc in dc do
+            createRow dc
+    ]
+    |> List.transpose

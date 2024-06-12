@@ -18,6 +18,7 @@
     <Compile Include="OntologyAnnotation.fs" />
     <Compile Include="DataFile.fs" />
     <Compile Include="Data.fs" />
+    <Compile Include="DataContext.fs" />
     <Compile Include="Person.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="OntologySourceReference.fs" />

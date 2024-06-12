@@ -4,11 +4,28 @@ open ARCtrl
 open ARCtrl.Helper 
 open Fable.Core
 
+module DataAux = 
+    
+    let nameFromPathAndSelector (path : string) (selector : string) =
+        sprintf "%s#%s" path selector
+
+    let pathAndSelectorFromName (name : string) =
+        let parts = name.Split('#')
+        if parts.Length = 2 then
+            parts.[0], Some parts.[1]
+        else
+            name, None
+
 [<AttachMembers>]
-type Data(?id,?name,?dataType,?format,?selectorFormat,?comments) =
+type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
 
     let mutable _id : URI option = id
-    let mutable _name : string option = name
+    let mutable _filePath,_selector  = 
+        match name with
+        | Some n -> 
+            let p,s = DataAux.pathAndSelectorFromName n
+            Some p, s
+        | None -> None, None
     let mutable _dataType : DataFile option = dataType
     let mutable _format : string option = format
     let mutable _selectorFormat : URI option = selectorFormat
@@ -19,8 +36,28 @@ type Data(?id,?name,?dataType,?format,?selectorFormat,?comments) =
         and set(id) = _id <- id
 
     member this.Name
-        with get() = _name
-        and set(name) = _name <- name
+        with get() = 
+            match _filePath,_selector with
+            | Some p, Some s -> DataAux.nameFromPathAndSelector p s |> Some
+            | Some p, None -> p |> Some
+            | None, _ -> None 
+        and set(name) = 
+            match name with
+            | Some n -> 
+                let p,s = DataAux.pathAndSelectorFromName n
+                _filePath <- Some p
+                _selector <- s
+            | None -> 
+                _filePath <- None
+                _selector <- None
+
+    member this.FilePath 
+        with get() = _filePath
+        and set(filePath) = _filePath <- filePath
+
+    member this.Selector
+        with get() = _selector
+        and set(selector) = _selector <- selector
 
     member this.DataType
         with get() = _dataType
@@ -36,8 +73,7 @@ type Data(?id,?name,?dataType,?format,?selectorFormat,?comments) =
 
     member this.Comments
         with get() = _comments
-        and set(comments) = _comments <- comments
-    
+        and set(comments) = _comments <- comments    
 
     static member make id name dataType format selectorFormat comments =
         Data(?id=id,?name=name,?dataType=dataType,?format=format,?selectorFormat=selectorFormat,?comments=comments)

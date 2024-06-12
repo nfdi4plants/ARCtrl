@@ -8,7 +8,7 @@ open Fable.Core
 
 [<AttachMembers>]
 module DataMapAux = 
-    
+
     [<Literal>]
     let dataMapName = "DataMap"
 
@@ -51,88 +51,106 @@ module DataMapAux =
     let allowedHeaders = 
         [dataHeader; explicationHeader; unitHeader; objectTypeHeader; descriptionHeader; generatedByHeader]
 
-    let validate (headers : ResizeArray<CompositeHeader>) (values : System.Collections.Generic.Dictionary<int*int,CompositeCell>) (raiseException : bool) =  
-        let headersAreValid = 
-            headers
-            |> Seq.exists (fun h -> 
-                let hasForeignHeader =
-                    not (allowedHeaders |> List.exists (fun ah -> ah = h))
-                if raiseException && hasForeignHeader then
-                    failwithf "Header %O is not allowed in DataMap" h
-                hasForeignHeader
-            )
-        let tableIsValid = ArcTableAux.SanityChecks.validate headers values raiseException
-        headersAreValid && tableIsValid
+    let getOntologyColumn (f : DataContext -> OntologyAnnotation option) (dataContexts : ResizeArray<DataContext>) = 
+        dataContexts
+        |> Seq.map (fun dc -> 
+            match f dc with
+            | Some s -> CompositeCell.Term(s)
+            | None -> CompositeCell.emptyTerm
+        )
+        |> ResizeArray
 
-type DataMap(headers: ResizeArray<CompositeHeader>, values: System.Collections.Generic.Dictionary<int*int,CompositeCell>) = 
+    let getStringColumn (f : DataContext -> string option) (dataContexts : ResizeArray<DataContext>) = 
+        dataContexts
+        |> Seq.map (fun dc -> 
+            match f dc with
+            | Some s -> CompositeCell.FreeText(s)
+            | None -> CompositeCell.emptyFreeText
+        )
+        |> ResizeArray
+
+    let setOntologyColumn (f : DataContext -> OntologyAnnotation option -> unit) (column : CompositeCell []) (dataContexts : ResizeArray<DataContext>) = 
+        column
+        |> Seq.iteri (fun i cell -> 
+            match cell with
+            | CompositeCell.Term s -> f (dataContexts.[i]) (Some s)
+            | _ -> ()
+        )
+
+    let setStringColumn (f : DataContext -> string option -> unit) (column : CompositeCell []) (dataContexts : ResizeArray<DataContext>) =
+        column
+        |> Seq.iteri (fun i cell -> 
+            match cell with
+            | CompositeCell.FreeText s -> f (dataContexts.[i]) (Some s)
+            | _ -> ()
+        )
+
+    module SanityChecks =
+        
+        let rowIndexInBoundaries (row : int) (dataContexts : ResizeArray<DataContext>) = 
+            if row < 0 then 
+                failwith "Row index must be greater or equal to 0."
+            if row >= dataContexts.Count then 
+                failwith "Row index must be less than the number of rows."
+
+        let lengthOfNewColumn (newColumn : CompositeCell []) (dataContexts : ResizeArray<DataContext>) = 
+            if newColumn.Length <> dataContexts.Count then
+                failwith "Length of new column does not match length of data contexts."
+
+type DataMap(dataContexts : ResizeArray<DataContext>) = 
     
-    let _ = DataMapAux.validate headers values true
-
-    let table = ArcTable(DataMapAux.dataMapName, headers, values)
     let mutable staticHash = 0
+    let mutable dataContexts = dataContexts
 
-    member this.Headers = table.Headers
-    member this.Values = table.Values
     member this.StaticHash with get() = staticHash and set(value) = staticHash <- value
 
-    static member init() = DataMap(ResizeArray(),Dictionary())
+    member this.DataContexts with get() = dataContexts
 
-    member this.AddColumns(columns : CompositeColumn [], ?skipFillMissing : bool) =
-        columns |> Array.iter (fun c -> c.Validate(true) |> ignore)
-        table.AddColumns(columns, ?skipFillMissing = skipFillMissing)
-        DataMapAux.validate table.Headers table.Values true |> ignore
+    static member init() = DataMap(ResizeArray())
 
-    static member addColumns (columns : CompositeColumn [], ?skipFillMissing : bool) = 
-        fun (dm : DataMap) -> 
-            let dm : DataMap = dm.Copy()
-            dm.AddColumns(columns, ?skipFillMissing = skipFillMissing)
-            dm
 
-    member this.Table = table
+    member this.GetExplicationColumn() =     
+        DataMapAux.getOntologyColumn (fun dc -> dc.Explication) dataContexts
 
-    member this.TryGetCellAt (row: int, column: int) = table.TryGetCellAt(row, column)
-
-    member this.GetExplicationColumn() = 
-        table.GetColumnByHeader(DataMapAux.explicationHeader)
-
-    member this.AddExplicationColumn(cells : CompositeCell []) = 
-        table.AddColumn(DataMapAux.explicationHeader, cells)
+    member this.SetExplicationColumn(cells : CompositeCell []) = 
+        DataMapAux.setOntologyColumn (fun dc oa -> dc.Explication <- oa) cells dataContexts
 
     member this.GetUnitColumn() = 
-        table.GetColumnByHeader(DataMapAux.unitHeader)
+        DataMapAux.getOntologyColumn (fun dc -> dc.Unit) dataContexts
 
-    member this.AddUnitColumn(cells : CompositeCell []) =   
-        table.AddColumn(DataMapAux.unitHeader, cells)
+    member this.SetUnitColumn(cells : CompositeCell []) =   
+        DataMapAux.setOntologyColumn (fun dc oa -> dc.Unit <- oa) cells dataContexts
 
-    member this.GetDataTypeColumn() =
-        table.GetColumnByHeader(DataMapAux.objectTypeHeader)
+    member this.GetObjectTypeColumn() =
+        DataMapAux.getOntologyColumn (fun dc -> dc.ObjectType) dataContexts
 
-    member this.AddDataTypeColumn(cells : CompositeCell []) =
-        table.AddColumn(DataMapAux.objectTypeHeader, cells)
+    member this.SetDataTypeColumn(cells : CompositeCell []) =
+        DataMapAux.setOntologyColumn (fun dc oa -> dc.ObjectType <- oa) cells dataContexts
 
     member this.GetDescriptionColumn() =
-        table.GetColumnByHeader(DataMapAux.descriptionHeader)
+        DataMapAux.getStringColumn (fun dc -> dc.Description) dataContexts
 
-    member this.AddDescriptionColumn(cells : CompositeCell []) =
-        table.AddColumn(DataMapAux.descriptionHeader, cells)
-
+    member this.SetDescriptionColumn(cells : CompositeCell []) =
+        DataMapAux.setStringColumn (fun dc s -> dc.Description <- s) cells dataContexts
        
-    member this.GetRow(row: int, ?SkipValidation) = table.GetRow(row,?SkipValidation = SkipValidation)
+    member this.GetDataContext(row: int, ?SkipValidation) = 
+        DataMapAux.SanityChecks.rowIndexInBoundaries row dataContexts
+        dataContexts.Item(row)
 
-    static member getRow(row: int, ?SkipValidation) = 
-        fun (dm : DataMap) -> dm.GetRow(row,?SkipValidation = SkipValidation)
+    static member getDataContext(row: int, ?SkipValidation) = 
+        fun (dm : DataMap) -> dm.GetDataContext(row,?SkipValidation = SkipValidation)
 
     member this.Copy() =
         DataMap(
-            ResizeArray(this.Headers), 
-            Dictionary(this.Values)
+            dataContexts
+            |> Seq.map (fun dc -> dc.Copy())
+            |> ResizeArray
         )
 
     override this.Equals(obj) = 
-        match obj with
-        | :? DataMap as dm -> 
-            this.Table.Equals(dm.Table)
-        | _ -> false
+        HashCodes.hash this = HashCodes.hash obj
 
     override this.GetHashCode() = 
-        this.Table.GetHashCode()
+        dataContexts
+        |> HashCodes.boxHashSeq
+        |> fun x -> x :?> int

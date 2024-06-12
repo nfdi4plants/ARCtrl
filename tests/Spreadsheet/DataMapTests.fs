@@ -29,30 +29,28 @@ let private simpleTable =
             Expect.isSome table "Table was not created"
             let table = table.Value
 
-            Expect.equal table.Table.ColumnCount 6 "Wrong number of columns"
-            Expect.equal table.Table.RowCount 1 "Wrong number of rows"
+            Expect.equal table.DataContexts.Count 1 "Wrong number of rows"
 
-            let expectedHeaders = 
-                [
-                        DataMapAux.dataHeader
-                        DataMapAux.explicationHeader
-                        DataMapAux.unitHeader
-                        DataMapAux.objectTypeHeader
-                        DataMapAux.descriptionHeader
-                        DataMapAux.generatedByHeader
-                ]
-            Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
+            let dc = table.GetDataContext(0)
 
-            let expectedCells = 
-                [
-                        Data.dataValue
-                        Explication.meanValue
-                        Unit.ppmValue
-                        ObjectType.floatValue
-                        Description.descriptionValue
-                        GeneratedBy.generatedByValue
-                ]
-            Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+            Expect.equal (dc.AsData()) Data.dataValue "Data did not match"
+
+            let explication = Expect.wantSome dc.Explication "Explication was not set"
+            Expect.equal explication Explication.meanValue "Explication did not match"
+
+            let unit = Expect.wantSome dc.Unit "Unit was not set"
+            Expect.equal unit Unit.ppmValue "Unit did not match"
+
+            let objectType = Expect.wantSome dc.ObjectType "ObjectType was not set"
+            Expect.equal objectType ObjectType.floatValue "ObjectType did not match"
+
+            let description = Expect.wantSome dc.Description "Description was not set"
+            Expect.equal description Description.descriptionValue "Description did not match"
+
+            let generatedBy = Expect.wantSome dc.GeneratedBy "GeneratedBy was not set"
+            Expect.equal generatedBy GeneratedBy.generatedByValue "GeneratedBy did not match"
+
+            Expect.isEmpty dc.Comments "Comments should be empty"
         )
         testCase "Write" (fun () -> 
             
@@ -84,19 +82,8 @@ let private valuelessTable =
             Expect.isSome table "Table was not created"
             let table = table.Value
 
-            Expect.equal table.Table.ColumnCount 6 "Wrong number of columns"
-            Expect.equal table.Table.RowCount 0 "Wrong number of rows"
+            Expect.equal table.DataContexts.Count 0 "Wrong number of rows"
 
-            let expectedHeaders = 
-                [
-                        DataMapAux.dataHeader
-                        DataMapAux.explicationHeader
-                        DataMapAux.unitHeader
-                        DataMapAux.objectTypeHeader
-                        DataMapAux.descriptionHeader
-                        DataMapAux.generatedByHeader
-                ]
-            Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
         )
         // TODO: What should we do with units of empty columns?
         //testCase "Write" (fun () -> 
@@ -143,30 +130,28 @@ let private simpleFile =
                     
             let table = DataMap.fromFsWorkbook wb             
 
-            Expect.equal table.Table.ColumnCount 6 "Wrong number of columns"
-            Expect.equal table.Table.RowCount 1 "Wrong number of rows"
+            Expect.equal table.DataContexts.Count 1 "Wrong number of rows"
 
-            let expectedHeaders = 
-                [
-                        DataMapAux.dataHeader
-                        DataMapAux.explicationHeader
-                        DataMapAux.unitHeader
-                        DataMapAux.objectTypeHeader
-                        DataMapAux.descriptionHeader
-                        DataMapAux.generatedByHeader
-                ]
-            Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
+            let dc = table.GetDataContext(0)
 
-            let expectedCells = 
-                [
-                        Data.dataValue
-                        Explication.meanValue
-                        Unit.ppmValue
-                        ObjectType.floatValue
-                        Description.descriptionValue
-                        GeneratedBy.generatedByValue
-                ]
-            Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+            Expect.equal (dc.AsData()) Data.dataValue "Data did not match"
+
+            let explication = Expect.wantSome dc.Explication "Explication was not set"
+            Expect.equal explication Explication.meanValue "Explication did not match"
+
+            let unit = Expect.wantSome dc.Unit "Unit was not set"
+            Expect.equal unit Unit.ppmValue "Unit did not match"
+
+            let objectType = Expect.wantSome dc.ObjectType "ObjectType was not set"
+            Expect.equal objectType ObjectType.floatValue "ObjectType did not match"
+
+            let description = Expect.wantSome dc.Description "Description was not set"
+            Expect.equal description Description.descriptionValue "Description did not match"
+
+            let generatedBy = Expect.wantSome dc.GeneratedBy "GeneratedBy was not set"
+            Expect.equal generatedBy GeneratedBy.generatedByValue "GeneratedBy did not match"
+
+            Expect.isEmpty dc.Comments "Comments should be empty"
         )
         testCase "Write" (fun () -> 
             
