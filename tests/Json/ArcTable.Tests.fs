@@ -66,8 +66,7 @@ let private tests_compressedFilled =
         None
         None
 
-let private tests = testList "extended" [
-    testList "compressed" [
+let private tests_compressedExtended = testList "compressed_extended" [
         testCase "rangeColumnSize" <| fun _ ->
             // testTable column should be saved as range column, this should make it smaller than the IO column even though it has more cells
             let testTable = ArcTable.init("Test")
@@ -88,8 +87,33 @@ let private tests = testList "extended" [
             let encoded = testTable.ToCompressedJsonString()
             let decoded = ArcTable.fromCompressedJsonString encoded
             Expect.arcTableEqual decoded testTable "decompressed table should be equal to original table"
+        testCase "SeparateOntologyAnnotations" <| fun _ ->
+            let table = ArcTable.init "My Table"
+
+            table.AddColumn(
+                CompositeHeader.Component (OntologyAnnotation.create("instrument model", "MS", "MS:424242")),
+                [|for i in 0 .. 2 do CompositeCell.createTermFromString $"Term"|]
+            )
+
+            let encoded = table.ToCompressedJsonString()
+            let decoded = ArcTable.fromCompressedJsonString encoded
+
+            Expect.equal (table.Values.[(0,1)]) (decoded.Values.[(0,1)]) "Should be the same cell"
+
+            let cell = decoded.Values.[(0,0)]
+
+            match cell with
+            | CompositeCell.Term oa -> 
+              oa.Name <- Some "New Name"
+            | _ -> failwith "Expected a term"
+
+            let otherCell = decoded.Values.[(0,1)]
+
+            Expect.equal (table.Values.[(0,1)]) (decoded.Values.[(0,1)]) "Should still be the same cell"
+            Expect.equal (decoded.Values.[(0,1)]) (decoded.Values.[(0,2)]) "Should also be the same cell"
+            Expect.notEqual cell otherCell "Should not be the same cell"
     ]
-]
+
 
 let private tests_dataColumns = 
     testList "dataColumns" [
@@ -125,7 +149,7 @@ let private tests_commentColumns =
 
 
 let main = testList "ArcTable" [
-    tests
+    tests_compressedExtended
     tests_core
     tests_coreEmpty
     tests_compressedEmpty

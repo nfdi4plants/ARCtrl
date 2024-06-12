@@ -310,12 +310,12 @@ module Unchecked =
                 let rowKeys = Array.map snd col |> Set.ofArray
                 for rowIndex = 0 to rowCount - 1 do
                     if not <| rowKeys.Contains rowIndex then
-                        addCellAt (columnIndex,rowIndex,defaultCell) values
+                        addCellAt (columnIndex,rowIndex,defaultCell.Copy()) values
             // No values existed in this column. Fill with default cells
             | None ->
                 let defaultCell = getEmptyCellForHeader header None
                 for rowIndex = 0 to rowCount - 1 do
-                    addCellAt (columnIndex,rowIndex,defaultCell) values
+                    addCellAt (columnIndex,rowIndex,defaultCell.Copy()) values
 
 
     /// Increases the table size to the given new row count and fills the new rows with the last value of the column

@@ -2337,9 +2337,26 @@ let private tests_equality = testList "equality" [
 ]
 
 
-//let private tests_fillMissing = testList "fillMissing" [
+let private tests_fillMissing = testList "fillMissing" [
+        testCase "OntologyAnnotationCopied" <| fun _ ->
+            let table = ArcTable.init "My Table"
 
-//    ]
+            table.AddColumn(CompositeHeader.Input IOType.Source, [|for i in 0 .. 4 do CompositeCell.FreeText $"Source {i}"|])
+
+            table.AddColumn(CompositeHeader.Component (OntologyAnnotation.create("instrument model", "MS", "MS:424242")))
+
+            let cell = table.Values.[(1,0)]
+
+            match cell with
+            | CompositeCell.Term oa -> 
+              oa.Name <- Some "New Name"
+            | _ -> failwith "Expected a term"
+
+            let otherCell = table.Values.[(1,1)]
+
+            Expect.equal (table.Values.[(1,1)]) (table.Values.[(1,2)]) "Should be the same cell"
+            Expect.notEqual cell otherCell "Should not be the same cell"        
+    ]
 
 let main = 
     testList "ArcTable" [
@@ -2365,5 +2382,5 @@ let main =
         tests_IterColumns
         tests_GetHashCode
         tests_equality
-        //tests_fillMissing
+        tests_fillMissing
     ]

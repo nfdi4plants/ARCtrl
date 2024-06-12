@@ -42,5 +42,5 @@ module CellTable =
     let decodeCell (ot : CellTableArray) : Decoder<CompositeCell> = 
         Decode.object (fun get ->
             let i = get.Required.Raw Decode.int
-            ot.[i]
+            ot.[i].Copy()
         )
