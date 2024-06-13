@@ -5,7 +5,7 @@ open ARCtrl
 
 module private Helper = 
     let short = "EFO:0000721"
-    let uri = "http://purl.obolibrary.org/obo/EFO_0000721" 
+    let uri = "https://bioregistry.io/EFO:0000721" 
     let otherParseable = "http://www.ebi.ac.uk/efo/EFO_0000721"
     let other = "Unparseable"
 
@@ -84,19 +84,19 @@ let private tests_constructor = testList "constructor" [
         let oa = OntologyAnnotation(tan = short)
         Expect.equal oa.TermAccessionNumber.Value short "TAN incorrect"
         Expect.equal oa.TermAccessionShort short "short TAN incorrect"
-        Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
+        Expect.equal oa.TermAccessionOntobeeUrl uri "uri TAN incorrect"
     )
     testCase "FromUri" (fun () ->          
         let oa = OntologyAnnotation(tan = uri)
         Expect.equal oa.TermAccessionNumber.Value uri "TAN incorrect"
         Expect.equal oa.TermAccessionShort short "short TAN incorrect"
-        Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
+        Expect.equal oa.TermAccessionOntobeeUrl uri "uri TAN incorrect"
     )
     testCase "FromOtherParseable" (fun () ->          
         let oa = OntologyAnnotation(tan = otherParseable)
         Expect.equal oa.TermAccessionNumber.Value otherParseable "TAN incorrect"
         Expect.equal oa.TermAccessionShort short "short TAN incorrect"
-        Expect.equal oa.TermAccessionOntobeeUrl uri "short TAN incorrect"
+        Expect.equal oa.TermAccessionOntobeeUrl uri "uri TAN incorrect"
     )
     testCase "FromOther" (fun () ->          
         let oa = OntologyAnnotation(tan = other)

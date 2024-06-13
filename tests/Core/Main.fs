@@ -3,6 +3,7 @@
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "Core" [
+    UriHelper.Tests.main
     DataModel.Tests.main
     OntologyAnnotation.Tests.main
     Regex.Tests.main

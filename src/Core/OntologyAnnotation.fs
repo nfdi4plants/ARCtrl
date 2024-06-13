@@ -52,7 +52,7 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
 
     /// Create a path in form of `http://purl.obolibrary.org/obo/MS_1000121` from it's Term Accession Source `MS` and Local Term Accession Number `1000121`. 
     static member createUriAnnotation (termSourceRef : string) (localTAN : string) =
-        $"{Url.OntobeeOboPurl}{termSourceRef}_{localTAN}"
+        Helper.Url.createOAUri termSourceRef localTAN
 
     static member fromTermAnnotation (tan : string, ?name) =
         match Regex.tryParseTermAnnotation tan with
