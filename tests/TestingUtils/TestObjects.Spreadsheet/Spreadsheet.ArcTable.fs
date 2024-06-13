@@ -35,12 +35,12 @@ module Parameter =
     let temperatureValueV1 = "5"
     let temperatureValueV2 = "degree celsius"
     let temperatureValueV3 = "UO"
-    let temperatureValueV4 = "http://purl.obolibrary.org/obo/UO_0000027"
+    let temperatureValueV4 = Helper.Url.createOAUri "UO" "0000027"
 
     let temperatureValue2V1 = "10"
     let temperatureValue2V2 = "degree celsius"
     let temperatureValue2V3 = "UO"
-    let temperatureValue2V4 = "http://purl.obolibrary.org/obo/UO_0000027"
+    let temperatureValue2V4 = Helper.Url.createOAUri "UO" "0000027"
 
     let appendTemperatureColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
@@ -76,7 +76,7 @@ module Parameter =
             (OntologyAnnotation("instrument model","MS","MS:1000031"))
     let instrumentValue = 
         CompositeCell.createTermFromString
-            ("Thermo Fisher Scientific instrument model","MS","http://purl.obolibrary.org/obo/MS_1000483")
+            ("Thermo Fisher Scientific instrument model","MS",Helper.Url.createOAUri "MS" "1000483")
 
 
     let instrumentHeaderV1 = "Parameter [instrument model]"
@@ -85,7 +85,7 @@ module Parameter =
 
     let instrumentValueV1 = "Thermo Fisher Scientific instrument model"
     let instrumentValueV2 = "MS"
-    let instrumentValueV3 = "http://purl.obolibrary.org/obo/MS_1000483"
+    let instrumentValueV3 = Helper.Url.createOAUri "MS" "1000483"
 
     let appendInstrumentColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
@@ -143,7 +143,8 @@ module Factor =
     let timeValueV1 = "10"
     let timeValueV2 = "hour"
     let timeValueV3 = "UO"
-    let timeValueV4 = "http://purl.obolibrary.org/obo/UO_0000032"
+    let timeValueV4 = Helper.Url.createOAUri "UO" "0000032"
+
 
     let appendTimeColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
@@ -345,7 +346,7 @@ module Protocol =
         
         let collectionValue =
             CompositeCell.createTermFromString
-                ("sample collection protocol","DPBO","http://purl.obolibrary.org/obo/DPBO_1000169")
+                ("sample collection protocol","DPBO",Helper.Url.createOAUri "DPBO" "1000169")
 
         let collectionHeaderV1 = "Protocol Type"
         let collectionHeaderV2 = "Term Source REF (DPBO:1000161)"
@@ -353,7 +354,7 @@ module Protocol =
 
         let collectionValueV1 = "sample collection protocol"
         let collectionValueV2 = "DPBO"
-        let collectionValueV3 = "http://purl.obolibrary.org/obo/DPBO_1000169"
+        let collectionValueV3 = Helper.Url.createOAUri "DPBO" "1000169"
 
         let appendCollectionColumn l (c : FsCellsCollection) (t : FsTable) = 
             let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
@@ -372,7 +373,7 @@ module Protocol =
                 (OntologyAnnotation("instrument model","MS","MS:1000031"))
         let instrumentValue = 
             CompositeCell.createTermFromString
-                ("Thermo Fisher Scientific instrument model","MS","http://purl.obolibrary.org/obo/MS_1000483")
+                ("Thermo Fisher Scientific instrument model","MS",Helper.Url.createOAUri "MS" "1000483")
 
 
         let instrumentHeaderV1 = "Component [instrument model]"
@@ -381,7 +382,7 @@ module Protocol =
 
         let instrumentValueV1 = "Thermo Fisher Scientific instrument model"
         let instrumentValueV2 = "MS"
-        let instrumentValueV3 = "http://purl.obolibrary.org/obo/MS_1000483"
+        let instrumentValueV3 = Helper.Url.createOAUri "MS" "1000483"
 
         let appendInstrumentColumn l (c : FsCellsCollection) (t : FsTable) = 
             let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()

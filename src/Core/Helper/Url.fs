@@ -62,6 +62,7 @@ let uriParserCollection =
 
 
 let createOAUri (tsr : string) (localTan : string) =
-    match uriParserCollection.TryGetValue tsr with
-    | true, parser -> parser tsr localTan
-    | false, _ -> OntobeeParser tsr localTan
+    
+    match Dictionary.tryFind tsr uriParserCollection with
+    | Some parser -> parser tsr localTan
+    | None -> OntobeeParser tsr localTan
