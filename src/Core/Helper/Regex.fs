@@ -61,7 +61,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s\((?<id>.*)\)"   
+    let ReferenceColumnPattern = @"(Term Source REF|Term Accession Number)\s*\((?<id>.*)\)"   
 
     /// Hits Term Accession Number column header
     ///
@@ -69,7 +69,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let TermSourceREFColumnPattern = @"Term Source REF\s\((?<id>.*)\)" 
+    let TermSourceREFColumnPattern = @"Term Source REF\s*\((?<id>.*)\)" 
 
     /// Hits Term Source REF column header
     ///
@@ -77,7 +77,7 @@ module Pattern =
     ///
     /// the id part "MS:1003022" is captured as `id` group.
     [<LiteralAttribute>]
-    let TermAccessionNumberColumnPattern = @"Term Accession Number\s\((?<id>.*)\)" 
+    let TermAccessionNumberColumnPattern = @"Term Accession Number\s*\((?<id>.*)\)" 
 
     /// Hits term accession, without id: ENVO:01001831
     let TermAnnotationShortPattern = $@"(?<{MatchGroups.idspace}>\w+?):(?<{MatchGroups.localID}>\w+)" //prev: @"[\w]+?:[\d]+"
@@ -95,16 +95,16 @@ module Pattern =
 
 
     /// This pattern is used to match both Input and Output columns and capture the IOType as `iotype` group.
-    let IOTypePattern = $@"(Input|Output)\s\[(?<{MatchGroups.iotype}>.+)\]"
+    let IOTypePattern = $@"(Input|Output)\s*\[(?<{MatchGroups.iotype}>.+)\]"
 
     /// This pattern is used to match Input column and capture the IOType as `iotype` group.
-    let InputPattern = $@"Input\s\[(?<{MatchGroups.iotype}>.+)\]"
+    let InputPattern = $@"Input\s*\[(?<{MatchGroups.iotype}>.+)\]"
 
     /// This pattern is used to match Output column and capture the IOType as `iotype` group.
-    let OutputPattern = $@"Output\s\[(?<{MatchGroups.iotype}>.+)\]"
+    let OutputPattern = $@"Output\s*\[(?<{MatchGroups.iotype}>.+)\]"
 
     /// This pattern is used to match Comment column and capture the comment key as `commentKey` group.
-    let CommentPattern = $@"Comment\s\[(?<{MatchGroups.commentKey}>.+)\]"
+    let CommentPattern = $@"Comment\s*\[(?<{MatchGroups.commentKey}>.+)\]"
 
     /// This pattern matches any column header starting with some text, followed by one whitespace and a term name inside squared brackets.
     ///
@@ -116,7 +116,7 @@ module Pattern =
     ///
     /// Exmp. 2: Characteristic [species] --> termcolumntype: Characteristic; termname: species
     [<LiteralAttribute>]
-    let TermColumnPattern = @"(?<termcolumntype>.+?)\s\[(?<termname>.+)\]"
+    let TermColumnPattern = @"(?<termcolumntype>.+?)\s*\[(?<termname>.+)\]"
 
     /// This pattern is used to match auto-generated table names. Mainly used in ArcAssay.addTable(). Default tables will get such a name.
     ///

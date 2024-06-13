@@ -59,8 +59,34 @@ let private tests_AnnotationTableColums =
                 match testString with
                 | Regex.ActivePatterns.TSRColumnHeader result -> Some result
                 | _ -> None
-            Expect.isSome r "Could not match TSRColumnHeader"
-            let rv = r.Value
+            
+            let rv = Expect.wantSome r "Could not match TSRColumnHeader"
+            Expect.equal rv.LocalID localID "LocalId did not match"
+            Expect.equal rv.IDSpace space "TermSourceREF did not match"
+        )
+        testCase "Term Source REF No Spaces" (fun () ->
+            let localID = "12345"
+            let space = "UO"
+            let testString = $"Term Source REF({space}:{localID})"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.TSRColumnHeader result -> Some result
+                | _ -> None
+            
+            let rv = Expect.wantSome r "Could not match TSRColumnHeader"
+            Expect.equal rv.LocalID localID "LocalId did not match"
+            Expect.equal rv.IDSpace space "TermSourceREF did not match"
+        )
+        testCase "Term Source REF Two Spaces" (fun () ->
+            let localID = "12345"
+            let space = "UO"
+            let testString = $"Term Source REF  ({space}:{localID})"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.TSRColumnHeader result -> Some result
+                | _ -> None
+            
+            let rv = Expect.wantSome r "Could not match TSRColumnHeader"
             Expect.equal rv.LocalID localID "LocalId did not match"
             Expect.equal rv.IDSpace space "TermSourceREF did not match"
         )
@@ -70,8 +96,8 @@ let private tests_AnnotationTableColums =
                 match testString with
                 | Regex.ActivePatterns.TSRColumnHeader result -> Some result
                 | _ -> None
-            Expect.isSome r "Could not match TSRColumnHeader"
-            let rv = r.Value
+            
+            let rv = Expect.wantSome r "Could not match TSRColumnHeader"
             Expect.equal rv.LocalID "" "LocalID should be empty"
             Expect.equal rv.IDSpace "" "TermSourceREF should be empty"
         )
@@ -83,8 +109,21 @@ let private tests_AnnotationTableColums =
                 match testString with
                 | Regex.ActivePatterns.TANColumnHeader result -> Some result
                 | _ -> None
-            Expect.isSome r "Could not match TANColumnHeader"
-            let rv = r.Value
+            
+            let rv = Expect.wantSome r "Could not match TANColumnHeader"
+            Expect.equal rv.LocalID localID "LocalId did not match"
+            Expect.equal rv.IDSpace space "TermSourceREF did not match"
+        )
+        testCase "Term Accession Number No Spaces" (fun () ->
+            let localID = "12345"
+            let space = "UO"
+            let testString = $"Term Accession Number({space}:{localID})"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.TANColumnHeader result -> Some result
+                | _ -> None
+            
+            let rv = Expect.wantSome r "Could not match TANColumnHeader"
             Expect.equal rv.LocalID localID "LocalId did not match"
             Expect.equal rv.IDSpace space "TermSourceREF did not match"
         )
@@ -94,8 +133,8 @@ let private tests_AnnotationTableColums =
                 match testString with
                 | Regex.ActivePatterns.TANColumnHeader result -> Some result
                 | _ -> None
-            Expect.isSome r "Could not match TANColumnHeader"
-            let rv = r.Value
+            
+            let rv = Expect.wantSome r "Could not match TANColumnHeader"
             Expect.equal rv.LocalID "" "LocalID should be empty"
             Expect.equal rv.IDSpace "" "TermSourceREF should be empty"
         )
@@ -125,6 +164,66 @@ let private tests_AnnotationTableColums =
                 | Regex.ActivePatterns.ReferenceColumnHeader result -> Some result
                 | _ -> None
             Expect.isNone r "Should not match other String"
+        )
+        testCase "Parameter" (fun () ->
+            let parameterName = "My Parameter"
+            let testString = $"Parameter [{parameterName}]"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.ParameterColumnHeader result -> Some result
+                | _ -> None
+            let rv = Expect.wantSome r "Could not match ParameterColumnHeader"
+            Expect.equal rv parameterName "Header did not match"
+        )
+        testCase "Parameter No Spaces" (fun () ->
+            let parameterName = "My Parameter"
+            let testString = $"Parameter[{parameterName}]"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.ParameterColumnHeader result -> Some result
+                | _ -> None
+            let rv = Expect.wantSome r "Could not match ParameterColumnHeader"
+            Expect.equal rv parameterName "Header did not match"
+        )
+        testCase "Input" (fun () ->
+            let ioType = "Data"
+            let testString = $"Input [{ioType}]"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.InputColumnHeader result -> Some result
+                | _ -> None
+            let rv = Expect.wantSome r "Could not match IOTypeColumnHeader"
+            Expect.equal rv ioType "Header did not match"
+        )
+        testCase "Output No Spaces" (fun () ->
+            let ioType = "Data"
+            let testString = $"Output[{ioType}]"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.OutputColumnHeader result -> Some result
+                | _ -> None
+            let rv = Expect.wantSome r "Could not match IOTypeColumnHeader"
+            Expect.equal rv ioType "Header did not match"
+        )
+        testCase "Comment" (fun () ->
+            let comment = "My Comment"
+            let testString = $"Comment [{comment}]"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.Comment result -> Some result
+                | _ -> None
+            let rv = Expect.wantSome r "Could not match CommentColumnHeader"
+            Expect.equal rv comment "Header did not match"
+        )
+        testCase "Comment No Spaces" (fun () ->
+            let comment = "My Comment"
+            let testString = $"Comment[{comment}]"
+            let r = 
+                match testString with
+                | Regex.ActivePatterns.Comment result -> Some result
+                | _ -> None
+            let rv = Expect.wantSome r "Could not match CommentColumnHeader"
+            Expect.equal rv comment "Header did not match"
         )
     ]
 
