@@ -153,6 +153,13 @@ type CompositeCell =
         | Unitized (v,oa) -> $"{v} {oa.NameText}"
         | Data d -> $"{d.NameText}"
 
+    member this.Copy() =
+        match this with
+        | Term oa -> Term (oa.Copy())
+        | FreeText s -> FreeText s
+        | Unitized (v,oa) -> Unitized (v, oa.Copy())
+        | Data d -> Data (d.Copy())
+
 #if FABLE_COMPILER
     //[<CompiledName("Term")>]
     static member term (oa:OntologyAnnotation) = CompositeCell.Term(oa)
