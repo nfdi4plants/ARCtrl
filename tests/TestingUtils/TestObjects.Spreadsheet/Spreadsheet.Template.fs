@@ -38,11 +38,11 @@ let templateMetadata =
     row9.[6].Value <- "ENA"
     let row10 = ws.Row(10)
     row10.[1].Value <- "ER Term Accession Number"
-    row10.[2].Value <- "http://purl.obolibrary.org/obo/DPBO_1000096"
-    row10.[3].Value <- "http://purl.obolibrary.org/obo/NFDI4PSO_1000097"
-    row10.[4].Value <- "http://purl.obolibrary.org/obo/NFDI4PSO_1000098"
-    row10.[5].Value <- "http://purl.obolibrary.org/obo/NFDI4PSO_0010002"
-    row10.[6].Value <- "http://purl.obolibrary.org/obo/DPBO_0010000"
+    row10.[2].Value <- ARCtrl.Helper.Url.createOAUri "DPBO" "1000096"
+    row10.[3].Value <- ARCtrl.Helper.Url.createOAUri "NFDI4PSO" "1000097"
+    row10.[4].Value <- ARCtrl.Helper.Url.createOAUri "NFDI4PSO" "1000098"
+    row10.[5].Value <- ARCtrl.Helper.Url.createOAUri "NFDI4PSO" "0010002"
+    row10.[6].Value <- ARCtrl.Helper.Url.createOAUri "DPBO" "0010000"
     let row11 = ws.Row(11)
     row11.[1].Value <- "ER Term Source REF"
     row11.[2].Value <- "DPBO"
@@ -63,8 +63,8 @@ let templateMetadata =
     let row14 = ws.Row(14)
     row14.[1].Value <- "Tags Term Accession Number"
     row14.[2].Value <- ""
-    row14.[3].Value <- "http://purl.obolibrary.org/obo/NCIT_C71492"
-    row14.[4].Value <- "http://purl.obolibrary.org/obo/DPBO_1000164"
+    row14.[3].Value <- ARCtrl.Helper.Url.createOAUri "NCIT" "C71492"
+    row14.[4].Value <- ARCtrl.Helper.Url.createOAUri "DPBO" "1000164"
     row14.[5].Value <- ""
     row14.[6].Value <- ""
     let row15 = ws.Row(15)
@@ -195,7 +195,7 @@ let templateMetadata_deprecatedKeys =
     row8.[6].Value <- "ENA"
     let row9 = ws.Row(9)
     row9.[1].Value <- "ER Term Accession Number"
-    row9.[2].Value <- "http://purl.obolibrary.org/obo/DPBO_1000096"
+    row9.[2].Value <- ARCtrl.Helper.Url.createOAUri "DPBO" "1000096"
     row9.[3].Value <- "NFDI4PSO:1000097"
     row9.[4].Value <- "NFDI4PSO:1000098"
     row9.[5].Value <- "NFDI4PSO:0010002"
@@ -220,8 +220,8 @@ let templateMetadata_deprecatedKeys =
     let row13 = ws.Row(13)
     row13.[1].Value <- "Tags Term Accession Number"
     row13.[2].Value <- ""
-    row13.[3].Value <- "http://purl.obolibrary.org/obo/NCIT_C71492"
-    row13.[4].Value <- "http://purl.obolibrary.org/obo/DPBO_1000164"
+    row13.[3].Value <- ARCtrl.Helper.Url.createOAUri "NCIT" "C71492"
+    row13.[4].Value <- ARCtrl.Helper.Url.createOAUri "DPBO" "1000164"
     row13.[5].Value <- ""
     row13.[6].Value <- ""
     let row14 = ws.Row(14)
