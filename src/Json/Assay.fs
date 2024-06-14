@@ -176,6 +176,9 @@ module AssayExtensions =
                 Assay.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToJsonString(?spaces) = 
+            ArcAssay.toJsonString(?spaces=spaces) this
+
         static member fromCompressedJsonString (s: string) =
             try Decode.fromJsonString (Compression.decode Assay.decoderCompressed) s with
             | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
@@ -184,6 +187,9 @@ module AssayExtensions =
             fun (obj:ArcAssay) ->
                 let spaces = defaultArg spaces 0
                 Encode.toJsonString spaces (Compression.encode Assay.encoderCompressed obj)
+
+        member this.ToCompressedJsonString(?spaces) = 
+            ArcAssay.toCompressedJsonString(?spaces=spaces) this
 
         static member fromROCrateJsonString (s:string) = 
             Decode.fromJsonString Assay.ROCrate.decoder s
@@ -194,6 +200,9 @@ module AssayExtensions =
                 Assay.ROCrate.encoder studyName obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToROCrateJsonString(?studyName, ?spaces) = 
+            ArcAssay.toROCrateJsonString(?studyName=studyName, ?spaces=spaces) this
+
         static member toISAJsonString(?spaces) =
             fun (obj:ArcAssay) ->
                 Assay.ISAJson.encoder obj
@@ -201,3 +210,6 @@ module AssayExtensions =
 
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Assay.ISAJson.decoder s
+
+        member this.ToISAJsonString(?spaces) =
+            ArcAssay.toISAJsonString(?spaces=spaces) this

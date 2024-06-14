@@ -224,6 +224,9 @@ module InvestigationExtensions =
                 Investigation.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
 
+        member this.ToJsonString(?spaces) = 
+            ArcInvestigation.toJsonString(?spaces=spaces) this
+
         static member fromCompressedJsonString (s: string) =
             try Decode.fromJsonString (Compression.decode Investigation.decoderCompressed) s with
             | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
@@ -232,6 +235,9 @@ module InvestigationExtensions =
             fun (obj:ArcInvestigation) ->
                 let spaces = defaultArg spaces 0
                 Encode.toJsonString spaces (Compression.encode Investigation.encoderCompressed obj)
+
+        member this.ToCompressedJsonString(?spaces) = 
+            ArcInvestigation.toCompressedJsonString(?spaces=spaces) this
 
         static member fromROCrateJsonString (s:string) = 
             Decode.fromJsonString Investigation.ROCrate.decoder s
@@ -242,6 +248,9 @@ module InvestigationExtensions =
                 Investigation.ROCrate.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToROCrateJsonString(?spaces) = 
+            ArcInvestigation.toROCrateJsonString(?spaces=spaces) this
+
         static member toISAJsonString(?spaces) =
             fun (obj:ArcInvestigation) ->
                 Investigation.ISAJson.encoder obj
@@ -249,3 +258,6 @@ module InvestigationExtensions =
 
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Investigation.ISAJson.decoder s
+
+        member this.ToISAJsonString(?spaces) =
+            ArcInvestigation.toISAJsonString(?spaces=spaces) this

@@ -73,6 +73,9 @@ module SourceExtensions =
                 Source.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToISAJsonString(?spaces) =
+            Source.toISAJsonString(?spaces=spaces) this
+
         static member fromROCrateString (s:string) = 
             Decode.fromJsonString Source.ROCrate.decoder s
 
@@ -80,3 +83,6 @@ module SourceExtensions =
             fun (f:Source) ->
                 Source.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToROCrateString(?spaces) =
+            Source.toROCrateString(?spaces=spaces) this

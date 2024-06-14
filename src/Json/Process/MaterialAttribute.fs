@@ -37,3 +37,6 @@ module MaterialAttributeExtensions =
                 fun (v:MaterialAttribute) ->
                     MaterialAttribute.ISAJson.encoder v
                     |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+            member this.ToJsonString(?spaces) =
+                MaterialAttribute.toISAJsonString(?spaces=spaces) this

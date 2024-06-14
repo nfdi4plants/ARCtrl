@@ -53,3 +53,6 @@ module FactorValueExtensions =
             fun (f:FactorValue) ->
                 FactorValue.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToISAJsonString(?spaces) =
+            FactorValue.toISAJsonString(?spaces=spaces) this

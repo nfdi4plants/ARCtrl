@@ -48,6 +48,9 @@ module ProcessParameterValueExtensions =
                 ProcessParameterValue.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToISAJsonString(?spaces) =
+            ProcessParameterValue.toISAJsonString(?spaces=spaces) this
+
         static member fromROCrateJsonString (s:string) =
             Decode.fromJsonString ProcessParameterValue.ROCrate.decoder s
 
@@ -55,3 +58,6 @@ module ProcessParameterValueExtensions =
             fun (f:ProcessParameterValue) ->
                 ProcessParameterValue.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToROCrateJsonString(?spaces) =
+            ProcessParameterValue.toROCrateJsonString(?spaces=spaces) this

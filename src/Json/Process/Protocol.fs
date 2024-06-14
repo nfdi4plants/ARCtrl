@@ -105,11 +105,17 @@ module ProtocolExtensions =
             fun (f:Protocol) ->
                 Protocol.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+        
+        member this.ToISAJsonString(?spaces) =
+            Protocol.toISAJsonString(?spaces=spaces) this
 
         static member fromROCrateString (s:string) =
             Decode.fromJsonString (Protocol.ROCrate.decoder) s
 
-        static member toROCrateString (studyName:string Option) (assayName:string Option) (processName:string Option) (?spaces) =
+        static member toROCrateString (?studyName:string,?assayName:string,?processName:string,?spaces) =
             fun (f:Protocol) ->
                 Protocol.ROCrate.encoder studyName assayName processName f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToROCrateString (?studyName:string,?assayName:string,?processName:string,?spaces) =
+            Protocol.toROCrateString (?studyName=studyName,?assayName=assayName,?processName=processName,?spaces=spaces) this

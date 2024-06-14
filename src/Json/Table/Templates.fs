@@ -114,6 +114,9 @@ module TemplateExtension =
             fun (template:Template) ->
                 Encode.toJsonString (Encode.defaultSpaces spaces) (Template.encoder template)
 
+        member this.toJsonString(?spaces: int) =
+            Template.toJsonString(?spaces=spaces) this
+
         static member fromCompressedJsonString (s: string) =
             try Decode.fromJsonString (Compression.decode Template.decoderCompressed) s with
             | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
@@ -122,3 +125,6 @@ module TemplateExtension =
             fun (obj:Template) ->
                 let spaces = defaultArg spaces 0
                 Encode.toJsonString spaces (Compression.encode Template.encoderCompressed obj)
+
+        member this.toCompressedJsonString(?spaces) =
+            Template.toCompressedJsonString(?spaces=spaces) this
