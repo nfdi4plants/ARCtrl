@@ -112,6 +112,9 @@ module SampleExtensions =
                 Sample.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToISAJsonString(?spaces) =
+            Sample.toISAJsonString(?spaces=spaces) this
+
         static member fromROCrateString (s:string) =
             Decode.fromJsonString Sample.ROCrate.decoder s
 
@@ -119,3 +122,6 @@ module SampleExtensions =
             fun (f:Sample) ->
                 Sample.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToROCrateString(?spaces) =
+            Sample.toROCrateString(?spaces=spaces) this

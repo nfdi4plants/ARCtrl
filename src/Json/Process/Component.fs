@@ -55,6 +55,9 @@ module ComponentExtensions =
                 Component.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.toISAJsonString(?spaces) =
+            Component.toISAJsonString(?spaces=spaces) this
+
         static member fromROCrateJsonString (s:string) =
             Decode.fromJsonString Component.ROCrate.decoder s
 
@@ -62,3 +65,6 @@ module ComponentExtensions =
             fun (f:Component) ->
                 Component.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.toROCrateJsonString(?spaces) =
+            Component.toROCrateJsonString(?spaces=spaces) this

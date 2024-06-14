@@ -42,3 +42,6 @@ module FactorExtensions =
             fun (f:Factor) ->
                 Factor.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToISAJsonString(?spaces) =
+            Factor.toISAJsonString(?spaces=spaces) this

@@ -61,3 +61,6 @@ module ProcessInputExtensions =
             fun (f:ProcessInput) ->
                 ProcessInput.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToISAJsonString(?spaces) =
+            ProcessInput.toISAJsonString(?spaces=spaces) this

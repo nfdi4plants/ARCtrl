@@ -39,3 +39,5 @@ module ProtocolParameterExtensions =
                 ProtocolParameter.ISAJson.encoder v
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
                 
+        member this.ToISAJsonString(?spaces) =
+            ProtocolParameter.toISAJsonString(?spaces=spaces) this

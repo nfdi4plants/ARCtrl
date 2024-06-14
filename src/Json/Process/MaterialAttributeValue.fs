@@ -51,6 +51,9 @@ module MaterialAttributeValueExtensions =
                 MaterialAttributeValue.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToISAJsonString(?spaces) =
+            MaterialAttributeValue.toISAJsonString(?spaces=spaces) this
+
         static member fromROCrateJsonString (s:string) = 
             Decode.fromJsonString MaterialAttributeValue.ROCrate.decoder s
 
@@ -58,3 +61,6 @@ module MaterialAttributeValueExtensions =
             fun (f:MaterialAttributeValue) ->
                 MaterialAttributeValue.ROCrate.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToROCrateJsonString(?spaces) =
+            MaterialAttributeValue.toROCrateJsonString(?spaces=spaces) this

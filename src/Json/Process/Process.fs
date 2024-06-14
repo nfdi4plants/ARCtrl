@@ -101,6 +101,9 @@ module ProcessExtensions =
                 Process.ISAJson.encoder f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToISAJsonString(?spaces) =
+            Process.toISAJsonString(?spaces=spaces) this
+
         static member fromROCrateString (s:string) =
             Decode.fromJsonString Process.ROCrate.decoder s
 
@@ -108,3 +111,6 @@ module ProcessExtensions =
             fun (f:Process) ->
                 Process.ROCrate.encoder studyName assayName f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
+
+        member this.ToROCrateString(?studyName:string,?assayName:string,?spaces) =
+            Process.toROCrateString(?studyName=studyName,?assayName=assayName,?spaces=spaces) this

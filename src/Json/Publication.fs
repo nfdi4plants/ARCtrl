@@ -104,6 +104,9 @@ module PublicationExtensions =
                 Publication.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
 
+        member this.ToJsonString(?spaces) =
+            Publication.toJsonString(?spaces=spaces) this
+
         static member fromROCrateJsonString (s:string) = 
             Decode.fromJsonString Publication.ROCrate.decoder s
 
@@ -113,10 +116,16 @@ module PublicationExtensions =
                 Publication.ROCrate.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToROCrateJsonString(?spaces) =
+            Publication.toROCrateJsonString(?spaces=spaces) this
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString Publication.ISAJson.decoder s
+       
         static member toISAJsonString(?spaces) =
             fun (obj:Publication) ->
                 Publication.ISAJson.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        static member fromISAJsonString (s:string) = 
-            Decode.fromJsonString Publication.ISAJson.decoder s
+        member this.ToISAJsonString(?spaces) =
+            Publication.toISAJsonString(?spaces=spaces) this

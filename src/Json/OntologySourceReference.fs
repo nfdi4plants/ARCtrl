@@ -82,6 +82,9 @@ module OntologySourceReferenceExtensions =
                 OntologySourceReference.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)                  
 
+        member this.ToJsonString(?spaces) =
+            OntologySourceReference.toJsonString(?spaces=spaces) this
+
         static member fromROCrateJsonString (s:string) = 
             Decode.fromJsonString OntologySourceReference.ROCrate.decoder s
 
@@ -91,10 +94,16 @@ module OntologySourceReferenceExtensions =
                 OntologySourceReference.ROCrate.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
+        member this.ToROCrateJsonString(?spaces) =
+            OntologySourceReference.toROCrateJsonString(?spaces=spaces) this
+
+        static member fromISAJsonString (s:string) = 
+            Decode.fromJsonString OntologySourceReference.ISAJson.decoder s
+
         static member toISAJsonString(?spaces) =
             fun (obj:OntologySourceReference) ->
                 OntologySourceReference.ISAJson.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        static member fromISAJsonString (s:string) = 
-            Decode.fromJsonString OntologySourceReference.ISAJson.decoder s
+        member this.ToISAJsonString(?spaces) =
+            OntologySourceReference.toISAJsonString(?spaces=spaces) this
