@@ -66,7 +66,22 @@ module OntologySourceReference =
             )
 
     module ISAJson =
-        let encoder = encoder
+        let encoder (idMap : IDTable.IDTableWrite option) (osr : OntologySourceReference) = 
+            let f = fun (osr : OntologySourceReference) ->
+                [
+                    Encode.tryInclude "@id" Encode.string (ROCrate.genID osr |> Some)
+                    Encode.tryInclude "description" Encode.string (osr.Description)
+                    Encode.tryInclude "file" Encode.string (osr.File)
+                    Encode.tryInclude "name" Encode.string (osr.Name)
+                    Encode.tryInclude "version" Encode.string (osr.Version)
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) (osr.Comments)
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | Some idMap -> IDTable.encode (fun x -> ROCrate.genID x) f osr idMap
+            | None -> f osr
+
         let decoder = decoder
 
 [<AutoOpen>]
@@ -102,7 +117,7 @@ module OntologySourceReferenceExtensions =
 
         static member toISAJsonString(?spaces) =
             fun (obj:OntologySourceReference) ->
-                OntologySourceReference.ISAJson.encoder obj
+                OntologySourceReference.ISAJson.encoder None obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.ToISAJsonString(?spaces) =

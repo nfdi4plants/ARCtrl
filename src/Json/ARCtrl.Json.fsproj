@@ -32,6 +32,7 @@
     <Compile Include="ConverterOptions.fs" />
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
+    <Compile Include="IDTable.fs" />
     <Compile Include="StringTable.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="OntologyAnnotation.fs" />
@@ -84,7 +85,6 @@
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>

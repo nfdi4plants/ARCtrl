@@ -58,8 +58,20 @@ module Comment =
 
     module ISAJson =
 
-        let encoder = encoder
-        
+        let encoder (idMap : IDTable.IDTableWrite option) (comment : Comment) = 
+            let f (comment : Comment) =
+                [
+                    Encode.tryInclude "@id" Encode.string (ROCrate.genID comment |> Some)
+                    Encode.tryInclude "name" Encode.string (comment.Name)
+                    Encode.tryInclude "value" Encode.string (comment.Value)
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | Some idMap -> IDTable.encode ROCrate.genID f comment idMap
+            | None -> f comment
+
+
         let decoder = decoder
 
 [<AutoOpen>]
@@ -94,7 +106,7 @@ module CommentExtensions =
 
         static member toISAJsonString(?spaces) =
             fun (c:Comment) ->
-                Comment.ISAJson.encoder c
+                Comment.ISAJson.encoder None c
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.toISAJsonString(?spaces) =

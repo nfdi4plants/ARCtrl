@@ -161,22 +161,28 @@ module Person =
 
         let allowedFields = ["@id";"firstName";"lastName";"midInitials";"email";"phone";"fax";"address";"affiliation";"roles";"comments";"@type"; "@context"]
 
-        let encoder (person : Person) = 
-            let person = Person.setCommentFromORCID person
-            [
-                Encode.tryInclude "firstName" Encode.string person.FirstName
-                Encode.tryInclude "lastName" Encode.string person.LastName
-                Encode.tryInclude "midInitials" Encode.string person.MidInitials
-                Encode.tryInclude "email" Encode.string person.EMail
-                Encode.tryInclude "phone" Encode.string person.Phone
-                Encode.tryInclude "fax" Encode.string person.Fax
-                Encode.tryInclude "address" Encode.string person.Address
-                Encode.tryInclude "affiliation" Encode.string person.Affiliation
-                Encode.tryIncludeSeq "roles" OntologyAnnotation.encoder person.Roles
-                Encode.tryIncludeSeq "comments" Comment.encoder person.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (idMap : IDTable.IDTableWrite option) (person : Person) = 
+            let f (person : Person) =
+                let person = Person.setCommentFromORCID person
+                [
+                    Encode.tryInclude "@id" Encode.string (person |> ROCrate.genID |> Some)
+                    Encode.tryInclude "firstName" Encode.string person.FirstName
+                    Encode.tryInclude "lastName" Encode.string person.LastName
+                    Encode.tryInclude "midInitials" Encode.string person.MidInitials
+                    Encode.tryInclude "email" Encode.string person.EMail
+                    Encode.tryInclude "phone" Encode.string person.Phone
+                    Encode.tryInclude "fax" Encode.string person.Fax
+                    Encode.tryInclude "address" Encode.string person.Address
+                    Encode.tryInclude "affiliation" Encode.string person.Affiliation
+                    Encode.tryIncludeSeq "roles" OntologyAnnotation.encoder person.Roles
+                    Encode.tryIncludeSeq "comments" Comment.encoder person.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f person
+            | Some idMap -> IDTable.encode ROCrate.genID f person idMap
+
 
         let decoder: Decoder<Person> =
             Decode.objectNoAdditionalProperties allowedFields (fun get ->
@@ -227,10 +233,12 @@ module PersonExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Person.ISAJson.decoder s
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:Person) ->
-                Person.ISAJson.encoder obj
+                Person.ISAJson.encoder idMap obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.toISAJsonString(?spaces) =
-            Person.toISAJsonString(?spaces=spaces) this
+        member this.toISAJsonString(?spaces, ?useIDReferencing) =
+            Person.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
