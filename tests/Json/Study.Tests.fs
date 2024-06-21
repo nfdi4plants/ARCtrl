@@ -103,9 +103,9 @@ let private test_compressed =
         None
         compareFields
 
-let private test_isa =
+let private test_isa = testList "ISA" [
     createBaseJsonTests
-        "isa"
+        "base"
         create_filled
         ArcStudy.toISAJsonString
         (ArcStudy.fromISAJsonString >> fun (s,_) -> s)
@@ -115,6 +115,10 @@ let private test_isa =
         None
         #endif
         compareFields
+    testCase "UseIDTable" <| fun _ ->
+        let table = ArcTable.init ("Process1")
+        table.create
+     ]
 
 let private test_roCrate =
     createBaseJsonTests
