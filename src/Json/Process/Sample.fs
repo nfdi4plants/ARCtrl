@@ -75,16 +75,21 @@ module Sample =
 
     module ISAJson =
     
-        let encoder (oa : Sample) = 
-            [
-                Encode.tryInclude "@id" Encode.string (oa.ID)
-                Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ISAJson.encoder oa.Characteristics
-                Encode.tryIncludeListOpt "factorValues" FactorValue.ISAJson.encoder oa.FactorValues
-                Encode.tryIncludeListOpt "derivesFrom" Source.ISAJson.encoder oa.DerivesFrom
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (idMap : IDTable.IDTableWrite option) (oa : Sample) = 
+            let f (oa : Sample) =
+                [
+                    Encode.tryInclude "@id" Encode.string (oa |> ROCrate.genID |> Some)
+                    Encode.tryInclude "name" Encode.string oa.Name
+                    Encode.tryIncludeListOpt "characteristics" (MaterialAttributeValue.ISAJson.encoder idMap) oa.Characteristics
+                    Encode.tryIncludeListOpt "factorValues" (FactorValue.ISAJson.encoder idMap) oa.FactorValues
+                    Encode.tryIncludeListOpt "derivesFrom" (Source.ISAJson.encoder idMap) oa.DerivesFrom
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
+
 
         let allowedFields = ["@id";"name";"characteristics";"factorValues";"derivesFrom";"@type"; "@context"]
 
@@ -107,13 +112,15 @@ module SampleExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Sample.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = useIDReferencing |> Option.defaultValue false
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:Sample) ->
-                Sample.ISAJson.encoder f
+                Sample.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            Sample.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            Sample.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
 
         static member fromROCrateString (s:string) =
             Decode.fromJsonString Sample.ROCrate.decoder s

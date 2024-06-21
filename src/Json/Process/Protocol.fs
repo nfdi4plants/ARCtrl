@@ -62,20 +62,24 @@ module Protocol =
 
     module ISAJson =
 
-        let encoder (oa : Protocol) = 
-            [
-                Encode.tryInclude "@id" Encode.string (oa.ID)
-                Encode.tryInclude "name" Encode.string (oa.Name)
-                Encode.tryInclude "protocolType" OntologyAnnotation.ISAJson.encoder (oa.ProtocolType)
-                Encode.tryInclude "description" Encode.string (oa.Description)
-                Encode.tryInclude "uri" Encode.string (oa.Uri)
-                Encode.tryInclude "version" Encode.string (oa.Version)
-                Encode.tryIncludeListOpt "parameters" ProtocolParameter.ISAJson.encoder oa.Parameters
-                Encode.tryIncludeListOpt "components" Component.ISAJson.encoder oa.Components
-                Encode.tryIncludeListOpt "comments" Comment.ISAJson.encoder oa.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (studyName:string Option) (assayName:string Option) (processName:string Option) (idMap : IDTable.IDTableWrite option) (oa : Protocol) = 
+            let f (oa : Protocol) =
+                [
+                    Encode.tryInclude "@id" Encode.string (oa |> ROCrate.genID studyName assayName processName |> Some)
+                    Encode.tryInclude "name" Encode.string (oa.Name)
+                    Encode.tryInclude "protocolType" (OntologyAnnotation.ISAJson.encoder idMap) (oa.ProtocolType)
+                    Encode.tryInclude "description" Encode.string (oa.Description)
+                    Encode.tryInclude "uri" Encode.string (oa.Uri)
+                    Encode.tryInclude "version" Encode.string (oa.Version)
+                    Encode.tryIncludeListOpt "parameters" (ProtocolParameter.ISAJson.encoder idMap) oa.Parameters
+                    Encode.tryIncludeListOpt "components" (Component.ISAJson.encoder idMap) oa.Components
+                    Encode.tryIncludeListOpt "comments" (Comment.ISAJson.encoder idMap) oa.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode (ROCrate.genID studyName assayName processName) f oa idMap
 
         let decoder: Decoder<Protocol> =
             Decode.object (fun get ->
@@ -101,9 +105,11 @@ module ProtocolExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Protocol.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:Protocol) ->
-                Protocol.ISAJson.encoder f
+                Protocol.ISAJson.encoder None None None idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
         
         member this.ToISAJsonString(?spaces) =

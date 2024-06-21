@@ -104,15 +104,19 @@ module Data =
 
     module ISAJson =
     
-        let encoder (oa : Data) = 
-            [
-                Encode.tryInclude "@id" Encode.string oa.ID
-                Encode.tryInclude "name" Encode.string oa.Name
-                Encode.tryInclude "type" DataFile.ISAJson.encoder oa.DataType
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder oa.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (idMap : IDTable.IDTableWrite option) (oa : Data) = 
+            let f (oa : Data) =
+                [
+                    Encode.tryInclude "@id" Encode.string (oa |> ROCrate.genID |> Some)
+                    Encode.tryInclude "name" Encode.string oa.Name
+                    Encode.tryInclude "type" DataFile.ISAJson.encoder oa.DataType
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) oa.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
 
         let allowedFields = ["@id";"name";"type";"comments";"@type"; "@context"]
 
@@ -134,13 +138,15 @@ module DataExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Data.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = useIDReferencing |> Option.defaultValue false
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:Data) ->
-                Data.ISAJson.encoder f
+                Data.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.toISAJsonString(?spaces) = 
-            Data.toISAJsonString(?spaces=spaces) this
+        member this.toISAJsonString(?spaces, ?useIDReferencing) =
+            Data.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
 
         static member fromROCrateJsonString (s:string) =
             Decode.fromJsonString Data.ROCrate.decoder s

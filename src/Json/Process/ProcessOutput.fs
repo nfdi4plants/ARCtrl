@@ -27,14 +27,14 @@ module ProcessOutput =
 
     module ISAJson =
 
-        let encoder (value : ProcessOutput) = 
+        let encoder idMap (value : ProcessOutput) = 
             match value with
             | ProcessOutput.Sample s -> 
-                Sample.ISAJson.encoder s
+                Sample.ISAJson.encoder idMap s
             | ProcessOutput.Data d -> 
-                Data.ISAJson.encoder d
+                Data.ISAJson.encoder idMap d
             | ProcessOutput.Material m -> 
-                Material.ISAJson.encoder m
+                Material.ISAJson.encoder idMap m
 
         let decoder: Decoder<ProcessOutput> =
             Decode.oneOf [
@@ -52,13 +52,15 @@ module ProcessOutputExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString ProcessOutput.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = defaultArg useIDReferencing false
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:ProcessOutput) ->
-                ProcessOutput.ISAJson.encoder f
+                ProcessOutput.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.toISAJsonString(?spaces) = 
-            ProcessOutput.toISAJsonString(?spaces=spaces) this
+        member this.toISAJsonString(?spaces, ?useIDReferencing) = 
+            ProcessOutput.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
 
         static member fromROCrateJsonString (s:string) =
             Decode.fromJsonString ProcessOutput.ROCrate.decoder s

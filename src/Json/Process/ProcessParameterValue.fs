@@ -17,14 +17,21 @@ module ProcessParameterValue =
 
     module ISAJson =
 
-        let encoder (oa : ProcessParameterValue) = 
-            [
-                Encode.tryInclude "category" ProtocolParameter.ISAJson.encoder oa.Category
-                Encode.tryInclude "value" Value.ISAJson.encoder oa.Value
-                Encode.tryInclude "unit" OntologyAnnotation.ISAJson.encoder oa.Unit
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let genID (oa : ProcessParameterValue) = 
+            failwith "Not implemented"
+
+        let encoder (idMap : IDTable.IDTableWrite option) (oa : ProcessParameterValue) = 
+            let f (oa : ProcessParameterValue) =
+                [
+                    Encode.tryInclude "category" (ProtocolParameter.ISAJson.encoder idMap) oa.Category
+                    Encode.tryInclude "value" (Value.ISAJson.encoder idMap) oa.Value
+                    Encode.tryInclude "unit" (OntologyAnnotation.ISAJson.encoder idMap) oa.Unit
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode genID f oa idMap
 
         let decoder : Decoder<ProcessParameterValue> =
             Decode.object (fun get ->
@@ -43,13 +50,15 @@ module ProcessParameterValueExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString ProcessParameterValue.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:ProcessParameterValue) ->
-                ProcessParameterValue.ISAJson.encoder f
+                ProcessParameterValue.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            ProcessParameterValue.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            ProcessParameterValue.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
 
         static member fromROCrateJsonString (s:string) =
             Decode.fromJsonString ProcessParameterValue.ROCrate.decoder s

@@ -30,16 +30,16 @@ module ProcessInput =
 
     module ISAJson =
 
-        let encoder (value : ProcessInput) = 
+        let encoder idMap (value : ProcessInput) = 
             match value with
             | ProcessInput.Source s-> 
-                Source.ISAJson.encoder s
+                Source.ISAJson.encoder idMap s
             | ProcessInput.Sample s -> 
-                Sample.ISAJson.encoder s
+                Sample.ISAJson.encoder idMap s
             | ProcessInput.Data d -> 
-                Data.ISAJson.encoder d
+                Data.ISAJson.encoder idMap d
             | ProcessInput.Material m -> 
-                Material.ISAJson.encoder m
+                Material.ISAJson.encoder idMap m
 
         let decoder: Decoder<ProcessInput> =
             Decode.oneOf [
@@ -57,10 +57,12 @@ module ProcessInputExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString ProcessInput.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None           
             fun (f:ProcessInput) ->
-                ProcessInput.ISAJson.encoder f
+                ProcessInput.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            ProcessInput.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            ProcessInput.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this

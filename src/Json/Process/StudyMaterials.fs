@@ -9,14 +9,14 @@ open System.IO
 module StudyMaterials = 
 
     module ISAJson = 
-        let encoder (ps : Process list) = 
+        let encoder idMap (ps : Process list) = 
             let source = ProcessSequence.getSources ps
             let samples = ProcessSequence.getSamples ps
             let materials = ProcessSequence.getMaterials ps
             [
-                Encode.tryIncludeList "sources" (Source.ISAJson.encoder) source
-                Encode.tryIncludeList "samples" (Sample.ISAJson.encoder) samples
-                Encode.tryIncludeList "otherMaterials" (Material.ISAJson.encoder) materials
+                Encode.tryIncludeList "sources" (Source.ISAJson.encoder idMap) source
+                Encode.tryIncludeList "samples" (Sample.ISAJson.encoder idMap) samples
+                Encode.tryIncludeList "otherMaterials" (Material.ISAJson.encoder idMap) materials
             ]  
             |> Encode.choose
             |> Encode.object 

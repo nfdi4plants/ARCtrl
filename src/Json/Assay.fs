@@ -118,26 +118,31 @@ module Assay =
             
     module ISAJson = 
 
-        let encoder (a : ArcAssay) = 
-            let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
-            let processes = a.GetProcesses()
-            let dataFiles = ProcessSequence.getData processes
-            let characteristics = ProcessSequence.getCharacteristics processes
-            let units = ProcessSequence.getUnits processes
-            [
-                "filename", Encode.string fileName
-                Encode.tryInclude "measurementType" OntologyAnnotation.ISAJson.encoder a.MeasurementType
-                Encode.tryInclude "technologyType" OntologyAnnotation.ISAJson.encoder a.TechnologyType
-                Encode.tryInclude "technologyPlatform" Encode.string (a.TechnologyPlatform |> Option.map Conversion.JsonTypes.composeTechnologyPlatform)
-                Encode.tryIncludeList "dataFiles" Data.ISAJson.encoder dataFiles
-                Encode.tryInclude "materials" AssayMaterials.ISAJson.encoder (Option.fromValueWithDefault [] processes)
-                Encode.tryIncludeList "characteristicCategories" MaterialAttribute.ISAJson.encoder characteristics
-                Encode.tryIncludeList "unitCategories" OntologyAnnotation.ISAJson.encoder units
-                Encode.tryIncludeList "processSequence" Process.ISAJson.encoder processes
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder a.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (studyName:string Option) idMap (a : ArcAssay) = 
+            let f (a : ArcAssay) =
+                let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
+                let processes = a.GetProcesses()
+                let dataFiles = ProcessSequence.getData processes
+                let characteristics = ProcessSequence.getCharacteristics processes
+                let units = ProcessSequence.getUnits processes
+                [
+                    "filename", Encode.string fileName
+                    Encode.tryInclude "@id" Encode.string (ROCrate.genID a |> Some)
+                    Encode.tryInclude "measurementType" (OntologyAnnotation.ISAJson.encoder idMap) a.MeasurementType
+                    Encode.tryInclude "technologyType" (OntologyAnnotation.ISAJson.encoder idMap) a.TechnologyType
+                    Encode.tryInclude "technologyPlatform" Encode.string (a.TechnologyPlatform |> Option.map Conversion.JsonTypes.composeTechnologyPlatform)
+                    Encode.tryIncludeList "dataFiles" (Data.ISAJson.encoder idMap) dataFiles
+                    Encode.tryInclude "materials" (AssayMaterials.ISAJson.encoder idMap) (Option.fromValueWithDefault [] processes)
+                    Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.ISAJson.encoder idMap) characteristics
+                    Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap) units
+                    Encode.tryIncludeList "processSequence" (Process.ISAJson.encoder studyName (Some a.Identifier) idMap) processes
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) a.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f a
+            | Some idMap -> IDTable.encode ROCrate.genID f a idMap
 
         let allowedFields = ["@id";"filename";"measurementType";"technologyType";"technologyPlatform";"dataFiles";"materials";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
 
@@ -203,13 +208,15 @@ module AssayExtensions =
         member this.ToROCrateJsonString(?studyName, ?spaces) = 
             ArcAssay.toROCrateJsonString(?studyName=studyName, ?spaces=spaces) this
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:ArcAssay) ->
-                Assay.ISAJson.encoder obj
+                Assay.ISAJson.encoder None idMap obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Assay.ISAJson.decoder s
 
-        member this.ToISAJsonString(?spaces) =
-            ArcAssay.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            ArcAssay.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this

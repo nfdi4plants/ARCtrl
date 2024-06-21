@@ -73,17 +73,23 @@ module Publication =
 
     module ISAJson =
         
-        let encoder (oa : Publication) = 
-            [
-                Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
-                Encode.tryInclude "doi" Encode.string (oa.DOI)
-                Encode.tryInclude "authorList" Encode.string oa.Authors
-                Encode.tryInclude "title" Encode.string (oa.Title)
-                Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder oa.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (idMap : IDTable.IDTableWrite option) (oa : Publication) = 
+            let f (oa : Publication) =
+                [
+                    Encode.tryInclude "@id" Encode.string (ROCrate.genID oa |> Some)
+                    Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
+                    Encode.tryInclude "doi" Encode.string (oa.DOI)
+                    Encode.tryInclude "authorList" Encode.string oa.Authors
+                    Encode.tryInclude "title" Encode.string (oa.Title)
+                    Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) oa.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
+
 
         let allowedFields = ["pubMedID";"doi";"authorList";"title";"status";"comments";]
 
@@ -122,10 +128,12 @@ module PublicationExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Publication.ISAJson.decoder s
        
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:Publication) ->
-                Publication.ISAJson.encoder obj
+                Publication.ISAJson.encoder idMap obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            Publication.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            Publication.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this

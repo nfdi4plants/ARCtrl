@@ -44,16 +44,21 @@ module Material =
 
     module ISAJson =
     
-        let rec encoder (oa : Material) = 
-            [
-                Encode.tryInclude "@id" Encode.string oa.ID
-                Encode.tryInclude "name" Encode.string oa.Name
-                Encode.tryInclude "type" MaterialType.ISAJson.encoder oa.MaterialType
-                Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ISAJson.encoder oa.Characteristics
-                Encode.tryIncludeListOpt "derivesFrom" encoder oa.DerivesFrom
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let rec encoder (idMap : IDTable.IDTableWrite option) (c : Material) = 
+            let f (oa : Material) =
+                [
+                    Encode.tryInclude "@id" Encode.string (oa |> ROCrate.genID |> Some)
+                    Encode.tryInclude "name" Encode.string oa.Name
+                    Encode.tryInclude "type" MaterialType.ISAJson.encoder oa.MaterialType
+                    Encode.tryIncludeListOpt "characteristics" (MaterialAttributeValue.ISAJson.encoder idMap) oa.Characteristics
+                    Encode.tryIncludeListOpt "derivesFrom" (encoder idMap) oa.DerivesFrom
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f c
+            | Some idMap -> IDTable.encode ROCrate.genID f c idMap
+
 
         let allowedFields = ["@id";"@type";"name";"type";"characteristics";"derivesFrom"; "@context"]
 
@@ -78,13 +83,15 @@ module MaterialExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Material.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:Material) ->
-                Material.ISAJson.encoder f
+                Material.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            Material.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            Material.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
 
         static member fromROCrateJsonString (s:string) =
             Decode.fromJsonString Material.ROCrate.decoder s

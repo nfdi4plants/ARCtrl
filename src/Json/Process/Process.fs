@@ -52,22 +52,26 @@ module Process =
 
     module ISAJson =
 
-        let rec encoder (oa : Process) = 
-            [
-                Encode.tryInclude "@id" Encode.string oa.ID
-                Encode.tryInclude "name" Encode.string oa.Name
-                Encode.tryInclude "executesProtocol" Protocol.ISAJson.encoder oa.ExecutesProtocol
-                Encode.tryIncludeListOpt "parameterValues" ProcessParameterValue.ISAJson.encoder oa.ParameterValues
-                Encode.tryInclude "performer" Encode.string oa.Performer
-                Encode.tryInclude "date" Encode.string oa.Date
-                Encode.tryInclude "previousProcess" encoder oa.PreviousProcess
-                Encode.tryInclude "nextProcess" encoder oa.NextProcess
-                Encode.tryIncludeListOpt "inputs" ProcessInput.ISAJson.encoder oa.Inputs
-                Encode.tryIncludeListOpt "outputs" ProcessOutput.ISAJson.encoder oa.Outputs
-                Encode.tryIncludeListOpt "comments" Comment.ISAJson.encoder oa.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let rec encoder (studyName:string Option) (assayName:string Option) (idMap : IDTable.IDTableWrite option) (oa : Process) =
+            let f (oa : Process) =
+                [
+                    Encode.tryInclude "@id" Encode.string (ROCrate.genID oa |> Some)
+                    Encode.tryInclude "name" Encode.string oa.Name
+                    Encode.tryInclude "executesProtocol" (Protocol.ISAJson.encoder studyName assayName oa.Name idMap) oa.ExecutesProtocol
+                    Encode.tryIncludeListOpt "parameterValues" (ProcessParameterValue.ISAJson.encoder idMap) oa.ParameterValues
+                    Encode.tryInclude "performer" Encode.string oa.Performer
+                    Encode.tryInclude "date" Encode.string oa.Date
+                    Encode.tryInclude "previousProcess" (encoder studyName assayName idMap) oa.PreviousProcess
+                    Encode.tryInclude "nextProcess" (encoder studyName assayName idMap) oa.NextProcess
+                    Encode.tryIncludeListOpt "inputs" (ProcessInput.ISAJson.encoder idMap) oa.Inputs
+                    Encode.tryIncludeListOpt "outputs" (ProcessOutput.ISAJson.encoder idMap) oa.Outputs
+                    Encode.tryIncludeListOpt "comments" (Comment.ISAJson.encoder idMap) oa.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
 
         let decoder: Decoder<Process> =
             let rec decode() =
@@ -96,13 +100,15 @@ module ProcessExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Process.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:Process) ->
-                Process.ISAJson.encoder f
+                Process.ISAJson.encoder None None idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            Process.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces,?useIDReferencing) =
+            Process.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
 
         static member fromROCrateString (s:string) =
             Decode.fromJsonString Process.ROCrate.decoder s

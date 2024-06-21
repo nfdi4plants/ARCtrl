@@ -19,17 +19,24 @@ module FactorValue =
             PropertyValue.ROCrate.decoder<FactorValue> (FactorValue.createAsPV)
 
     module ISAJson = 
+        
+        let genID (fv : FactorValue) = 
+            PropertyValue.ROCrate.genID fv
 
-        let encoder (fv : FactorValue) = 
-            [
-                // Is this required for ISA-JSON? The FactorValue type has an @id field
-                Encode.tryInclude "@id" Encode.string fv.ID 
-                Encode.tryInclude "category" Factor.ISAJson.encoder fv.Category
-                Encode.tryInclude "value" Value.ISAJson.encoder fv.Value
-                Encode.tryInclude "unit" OntologyAnnotation.ISAJson.encoder fv.Unit
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder (idMap : IDTable.IDTableWrite option) (fv : FactorValue) = 
+            let f (fv : FactorValue) =
+                [
+                    // Is this required for ISA-JSON? The FactorValue type has an @id field
+                    Encode.tryInclude "@id" Encode.string (fv |> genID |> Some)
+                    Encode.tryInclude "category" (Factor.ISAJson.encoder idMap) fv.Category
+                    Encode.tryInclude "value" (Value.ISAJson.encoder idMap) fv.Value
+                    Encode.tryInclude "unit" (OntologyAnnotation.ISAJson.encoder idMap) fv.Unit
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f fv
+            | Some idMap -> IDTable.encode genID f fv idMap
 
         let decoder: Decoder<FactorValue> =
             Decode.object (fun get ->
@@ -49,10 +56,12 @@ module FactorValueExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString FactorValue.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:FactorValue) ->
-                FactorValue.ISAJson.encoder f
+                FactorValue.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?spaces) =
-            FactorValue.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            FactorValue.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this
