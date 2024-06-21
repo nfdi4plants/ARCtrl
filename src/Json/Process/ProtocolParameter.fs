@@ -13,7 +13,7 @@ module ProtocolParameter =
 
         let genID (p : ProtocolParameter) = 
             match p.ParameterName with
-            | Some name -> $"#ProtocolParameter/{name}"
+            | Some name -> $"#ProtocolParameter/{OntologyAnnotation.ROCrate.genID name}"
             | None -> "#EmptyProtocolParameter"
 
         let encoder (idMap : IDTable.IDTableWrite option) (value : ProtocolParameter) = 

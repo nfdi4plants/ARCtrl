@@ -28,6 +28,7 @@ let person =
 let personWithORCID = 
     """
 {
+  "@id":"0000-0002-1825-0097",
   "firstName": "Juan",
   "lastName": "Castrillo",
   "comments": [

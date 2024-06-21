@@ -13,7 +13,7 @@ module PropertyValue =
         
         let genID (p : IPropertyValue<'T>) = 
             match p.GetCategory() with
-            | Some t -> $"{p.GetAdditionalType()}/{t}{p.GetValue()}{p.GetUnit()}"
+            | Some t -> $"{p.GetAdditionalType()}/{OntologyAnnotation.ROCrate.genID t}{p.GetValue()}{p.GetUnit()}"
             | None -> $"#Empty{p.GetAdditionalType()}"
 
         let encoder<'T> (pv : IPropertyValue<'T>) = 

@@ -7,6 +7,7 @@ let protocol =
     "@id": "#protocols/peptide_digestion",
     "name": "peptide_digestion",
     "protocolType": {
+        "@id":"http://purl.obolibrary.org/obo/NCIT_C70845",
         "annotationValue": "Protein Digestion",
         "termSource": "NCIT",
         "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70845"
@@ -16,21 +17,27 @@ let protocol =
     "version": "1.0.0",
     "parameters": [
         {
+            "@id": "#ProtocolParameter/http://purl.obolibrary.org/obo/NCIT_C16965",
             "parameterName": {
+                "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                 "annotationValue": "Peptidase",
                 "termSource": "MS",
                 "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965"
             }
         },
         {
+            "@id": "#ProtocolParameter/http://purl.obolibrary.org/obo/NCRO_0000029",
             "parameterName": {
+                "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
                 "annotationValue": "temperature",
                 "termSource": "Ontobee",
                 "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029"
             }
         },
         {
+            "@id": "#ProtocolParameter/http://www.ebi.ac.uk/efo/EFO_0000721",
             "parameterName": {
+                "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
                 "annotationValue": "time",
                 "termSource": "EFO",
                 "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721"
@@ -41,6 +48,7 @@ let protocol =
         {
             "componentName": "digestion_stopper",
             "componentType": {
+                "@id": "http://purl.obolibrary.org/obo/NCIT_C83719",
                 "annotationValue": "Formic Acid",
                 "termSource": "NCIT",
                 "termAccession": "http://purl.obolibrary.org/obo/NCIT_C83719"
@@ -49,6 +57,7 @@ let protocol =
         {
             "componentName": "heater",
             "componentType": {
+                "@id": "http://purl.obolibrary.org/obo/NCIT_C49986",
                 "annotationValue": "Heater Device",
                 "termSource": "NCIT",
                 "termAccession": "http://purl.obolibrary.org/obo/NCIT_C49986"

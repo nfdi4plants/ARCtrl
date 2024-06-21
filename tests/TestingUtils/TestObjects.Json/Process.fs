@@ -10,6 +10,7 @@ let process' =
         "@id": "#protocols/peptide_digestion",
         "name": "peptide_digestion",
         "protocolType": {
+            "@id": "http://purl.obolibrary.org/obo/NCIT_C70845",
             "annotationValue": "Protein Digestion",
             "termSource": "NCIT",
             "termAccession": "http://purl.obolibrary.org/obo/NCIT_C70845"
@@ -19,21 +20,27 @@ let process' =
         "version": "1.0.0",
         "parameters": [
             {
+                "@id" : "#ProtocolParameter/http://purl.obolibrary.org/obo/NCIT_C16965",
                 "parameterName": {
+                    "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                     "annotationValue": "Peptidase",
                     "termSource": "MS",
                     "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965"
                 }
             },
             {
+                "@id" : "#ProtocolParameter/http://purl.obolibrary.org/obo/NCRO_0000029",
                 "parameterName": {
+                    "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
                     "annotationValue": "temperature",
                     "termSource": "Ontobee",
                     "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029"
                 }
             },
             {
+                "@id" : "#ProtocolParameter/http://www.ebi.ac.uk/efo/EFO_0000721",
                 "parameterName": {
+                    "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
                     "annotationValue": "time",
                     "termSource": "EFO",
                     "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721"
@@ -44,6 +51,7 @@ let process' =
             {
                 "componentName": "digestion_stopper",
                 "componentType": {
+                    "@id": "http://purl.obolibrary.org/obo/NCIT_C83719",
                     "annotationValue": "Formic Acid",
                     "termSource": "NCIT",
                     "termAccession": "http://purl.obolibrary.org/obo/NCIT_C83719"
@@ -52,6 +60,7 @@ let process' =
             {
                 "componentName": "heater",
                 "componentType": {
+                    "@id": "http://purl.obolibrary.org/obo/NCIT_C49986",
                     "annotationValue": "Heater Device",
                     "termSource": "NCIT",
                     "termAccession": "http://purl.obolibrary.org/obo/NCIT_C49986"
@@ -63,13 +72,16 @@ let process' =
     "parameterValues": [
         {
             "category": {
+                "@id" : "#ProtocolParameter/http://purl.obolibrary.org/obo/NCIT_C16965",
                 "parameterName": {
+                    "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                     "annotationValue": "Peptidase",
                     "termSource": "MS",
                     "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965"
                 }
             },
             "value": {
+                "@id": "http://purl.obolibrary.org/obo/MS_1001313",
                 "annotationValue": "Trypsin/P",
                 "termSource": "NCI",
                 "termAccession": "http://purl.obolibrary.org/obo/MS_1001313"
@@ -77,7 +89,9 @@ let process' =
         },
         {
             "category": {
+                "@id" : "#ProtocolParameter/http://purl.obolibrary.org/obo/NCRO_0000029",
                 "parameterName": {
+                    "@id": "http://purl.obolibrary.org/obo/NCRO_0000029",
                     "annotationValue": "temperature",
                     "termSource": "Ontobee",
                     "termAccession": "http://purl.obolibrary.org/obo/NCRO_0000029"
@@ -85,6 +99,7 @@ let process' =
             },
             "value": 37,
             "unit": {
+                "@id": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius",
                 "annotationValue": "degree Celsius",
                 "termSource": "OM2",
                 "termAccession": "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius"
@@ -92,7 +107,9 @@ let process' =
         },
         {
             "category": {
+                "@id" : "#ProtocolParameter/http://www.ebi.ac.uk/efo/EFO_0000721",
                 "parameterName": {
+                    "@id": "http://www.ebi.ac.uk/efo/EFO_0000721",
                     "annotationValue": "time",
                     "termSource": "EFO",
                     "termAccession": "http://www.ebi.ac.uk/efo/EFO_0000721"
@@ -100,6 +117,7 @@ let process' =
             },
             "value": 1,
             "unit": {
+                "@id": "http://purl.obolibrary.org/obo/UO_0000032",
                 "annotationValue": "hour",
                 "termSource": "UO",
                 "termAccession": "http://purl.obolibrary.org/obo/UO_0000032"

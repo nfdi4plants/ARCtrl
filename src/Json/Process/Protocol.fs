@@ -10,17 +10,20 @@ module Protocol =
     module ROCrate =
 
         let genID (studyName:string Option) (assayName:string Option) (processName:string Option) (p:Protocol): string = 
-            match p.Uri with
-            | Some u -> u
-            | None -> 
-                match p.Name with
-                | Some n -> "#Protocol_" + n.Replace(" ","_")
+            match p.ID with
+            | Some id when id <> "" -> id
+            | _ ->
+                match p.Uri with
+                | Some u -> u
                 | None -> 
-                    match (studyName,assayName,processName) with
-                    | (Some sn, Some an, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + an.Replace(" ","_") + "_" + pn.Replace(" ","_")
-                    | (Some sn, None, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + pn.Replace(" ","_")
-                    | (None, None, Some pn) -> "#Protocol_" + pn.Replace(" ","_")
-                    | _ -> "#EmptyProtocol" 
+                    match p.Name with
+                    | Some n -> "#Protocol_" + n.Replace(" ","_")
+                    | None -> 
+                        match (studyName,assayName,processName) with
+                        | (Some sn, Some an, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + an.Replace(" ","_") + "_" + pn.Replace(" ","_")
+                        | (Some sn, None, Some pn) -> "#Protocol_" + sn.Replace(" ","_") + "_" + pn.Replace(" ","_")
+                        | (None, None, Some pn) -> "#Protocol_" + pn.Replace(" ","_")
+                        | _ -> "#EmptyProtocol" 
 
         let encoder (studyName:string Option) (assayName:string Option) (processName:string Option) (oa : Protocol) = 
             [

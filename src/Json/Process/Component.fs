@@ -22,17 +22,12 @@ module Component =
             PropertyValue.ROCrate.genID c
 
         let encoder (idMap : IDTable.IDTableWrite option) (c : Component) = 
-            let f (c : Component) =
-                [
-                    Encode.tryInclude "@id" Encode.string (c |> genID |> Some)
-                    Encode.tryInclude "componentName" Encode.string c.ComponentName
-                    Encode.tryInclude "componentType" (OntologyAnnotation.ISAJson.encoder idMap) c.ComponentType
-                ]
-                |> Encode.choose
-                |> Encode.object
-            match idMap with
-            | None -> f c
-            | Some idMap -> IDTable.encode genID f c idMap
+            [
+                Encode.tryInclude "componentName" Encode.string c.ComponentName
+                Encode.tryInclude "componentType" (OntologyAnnotation.ISAJson.encoder idMap) c.ComponentType
+            ]
+            |> Encode.choose
+            |> Encode.object
 
         let decoder: Decoder<Component> =
             Decode.object (fun get ->

@@ -21,17 +21,14 @@ module ProcessParameterValue =
             failwith "Not implemented"
 
         let encoder (idMap : IDTable.IDTableWrite option) (oa : ProcessParameterValue) = 
-            let f (oa : ProcessParameterValue) =
-                [
-                    Encode.tryInclude "category" (ProtocolParameter.ISAJson.encoder idMap) oa.Category
-                    Encode.tryInclude "value" (Value.ISAJson.encoder idMap) oa.Value
-                    Encode.tryInclude "unit" (OntologyAnnotation.ISAJson.encoder idMap) oa.Unit
-                ]
-                |> Encode.choose
-                |> Encode.object
-            match idMap with
-            | None -> f oa
-            | Some idMap -> IDTable.encode genID f oa idMap
+            [
+                Encode.tryInclude "category" (ProtocolParameter.ISAJson.encoder idMap) oa.Category
+                Encode.tryInclude "value" (Value.ISAJson.encoder idMap) oa.Value
+                Encode.tryInclude "unit" (OntologyAnnotation.ISAJson.encoder idMap) oa.Unit
+            ]
+            |> Encode.choose
+            |> Encode.object
+            
 
         let decoder : Decoder<ProcessParameterValue> =
             Decode.object (fun get ->

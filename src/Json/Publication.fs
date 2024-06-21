@@ -74,22 +74,16 @@ module Publication =
     module ISAJson =
         
         let encoder (idMap : IDTable.IDTableWrite option) (oa : Publication) = 
-            let f (oa : Publication) =
-                [
-                    Encode.tryInclude "@id" Encode.string (ROCrate.genID oa |> Some)
-                    Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
-                    Encode.tryInclude "doi" Encode.string (oa.DOI)
-                    Encode.tryInclude "authorList" Encode.string oa.Authors
-                    Encode.tryInclude "title" Encode.string (oa.Title)
-                    Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
-                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) oa.Comments
-                ]
-                |> Encode.choose
-                |> Encode.object
-            match idMap with
-            | None -> f oa
-            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
-
+            [
+                Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
+                Encode.tryInclude "doi" Encode.string (oa.DOI)
+                Encode.tryInclude "authorList" Encode.string oa.Authors
+                Encode.tryInclude "title" Encode.string (oa.Title)
+                Encode.tryInclude "status" OntologyAnnotation.encoder oa.Status
+                Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) oa.Comments
+            ]
+            |> Encode.choose
+            |> Encode.object
 
         let allowedFields = ["pubMedID";"doi";"authorList";"title";"status";"comments";]
 
