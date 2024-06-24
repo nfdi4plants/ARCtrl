@@ -25,7 +25,7 @@ let studyWithIDTable =
                         "parameterName": {
                             "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
                             "annotationValue": "Peptidase",
-                            "termSource": "MS",
+                            "termSource": "NCIT",
                             "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965"
                         }
                     },
@@ -92,19 +92,11 @@ let studyWithIDTable =
         },
         "processSequence" : [
             {
-                "@id": "#Process/Process1",
-                "processName": "Process1",
+                "@id": "#Process_Process1",
+                "name": "Process1",
                 "executesProtocol": {
-                    "@id" : "#protocols/peptide_digestion"
+                    "@id" : "http://madeUpProtocolWebsize.org/protein_digestion"
                 },
-                "inputs" : [
-                    {"@id" : "#Source_Source1"},
-                    {"@id" : "#Source_Source2"}
-                ],
-                "outputs" : [
-                    {"@id" : "#Sample_Sample1"},
-                    {"@id" : "#Sample_Sample1"}
-                ],
                 "parameterValues" : [
                     {
                         "category" : {"@id" : "#ProtocolParameter/http://purl.obolibrary.org/obo/NCIT_C16965"},
@@ -125,6 +117,14 @@ let studyWithIDTable =
                         "value": 10,
                         "unit" : {"@id" : "http://purl.obolibrary.org/obo/UO_0000032"}
                     }
+                ],
+                "inputs" : [
+                    {"@id" : "#Source_Source1"},
+                    {"@id" : "#Source_Source2"}
+                ],
+                "outputs" : [
+                    {"@id" : "#Sample_Sample1"},
+                    {"@id" : "#Sample_Sample2"}
                 ]
             }
 

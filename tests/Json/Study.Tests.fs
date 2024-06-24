@@ -155,15 +155,15 @@ let private test_isa = testList "ISA" [
         let protocolVersionCells = [|for i = 0 to 1 do CompositeCell.FreeText protocolVersion|]
         let protocolVersionColumn = CompositeColumn.create(protocolVersionHeader, protocolVersionCells)
 
-        let peptidase = OntologyAnnotation.create("Peptidase", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965")
+        let peptidase = OntologyAnnotation.create("Peptidase", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C16965")
         let peptidaseHeader = CompositeHeader.Parameter peptidase
-        let trypsin = OntologyAnnotation.create("Trypsin/P", "MS", "http://purl.obolibrary.org/obo/NCIT_C16965")
+        let trypsin = OntologyAnnotation.create("Trypsin/P", "MS", "http://purl.obolibrary.org/obo/MS_1001313")
         let peptidaseCells = [|for i = 0 to 1 do CompositeCell.Term trypsin|]
         let peptidaseColumn = CompositeColumn.create(peptidaseHeader, peptidaseCells)
 
         let temperature = OntologyAnnotation.create("temperature", "Ontobee", "http://purl.obolibrary.org/obo/NCRO_0000029")
         let temperatureHeader = CompositeHeader.Parameter temperature
-        let degrees = OntologyAnnotation.create("degrees Celsius", "OM2", "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius")
+        let degrees = OntologyAnnotation.create("degree Celsius", "OM2", "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius")
         let temperatureCells = [|for i = 0 to 1 do CompositeCell.Unitized ("23",degrees)|]
         let temperatureColumn = CompositeColumn.create(temperatureHeader, temperatureCells)
 
