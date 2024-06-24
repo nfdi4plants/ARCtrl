@@ -186,10 +186,20 @@ module Study =
                         n.Add(assay)
                     n
                 let processes = study.GetProcesses()
-                let protocols = ProcessSequence.getProtocols processes
-                let factors = ProcessSequence.getFactors processes
-                let characteristics = ProcessSequence.getCharacteristics processes
-                let units = ProcessSequence.getUnits processes
+                let encodedUnits = 
+                    ProcessSequence.getUnits processes
+                    |> Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap) 
+                let encodedFactors = 
+                    ProcessSequence.getFactors processes
+                    |> Encode.tryIncludeList "factors" (Factor.ISAJson.encoder idMap)
+                let encodedCharacteristics =
+                    ProcessSequence.getCharacteristics processes
+                    |> Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.ISAJson.encoder idMap)
+                let encodedMaterials = 
+                    Encode.tryInclude "materials" (StudyMaterials.ISAJson.encoder idMap) (Option.fromValueWithDefault [] processes)
+                let encodedProtocols = 
+                    ProcessSequence.getProtocols processes
+                    |> Encode.tryIncludeList "protocols" (Protocol.ISAJson.encoder (Some s.Identifier) None None idMap)
                 [
                     "@id", Encode.string (study |> ROCrate.genID)
                     "filename", Encode.string fileName
@@ -201,13 +211,13 @@ module Study =
                     Encode.tryIncludeSeq "publications" (Publication.ISAJson.encoder idMap) study.Publications
                     Encode.tryIncludeSeq "people" (Person.ISAJson.encoder idMap) study.Contacts
                     Encode.tryIncludeSeq "studyDesignDescriptors" (OntologyAnnotation.ISAJson.encoder idMap) study.StudyDesignDescriptors
-                    Encode.tryIncludeList "protocols" (Protocol.ISAJson.encoder (Some s.Identifier) None None idMap) protocols
-                    Encode.tryInclude "materials" (StudyMaterials.ISAJson.encoder idMap) (Option.fromValueWithDefault [] processes)
-                    Encode.tryIncludeList "factors" (Factor.ISAJson.encoder idMap) factors
-                    Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.ISAJson.encoder idMap) characteristics     
-                    Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap) units
+                    encodedProtocols
+                    encodedMaterials
                     Encode.tryIncludeList "processSequence" (Process.ISAJson.encoder (Some s.Identifier) None idMap) processes
                     Encode.tryIncludeSeq "assays" (Assay.ISAJson.encoder (Some s.Identifier) idMap) assays
+                    encodedFactors
+                    encodedCharacteristics
+                    encodedUnits
                     Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) study.Comments
                 ]
                 |> Encode.choose
