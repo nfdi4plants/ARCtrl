@@ -5,9 +5,10 @@ let studyWithIDTable =
     {
         "@id": "#study/Study1",
         "filename" : "studies/Study1/isa.study.xlsx",
+        "identifier" : "Study1",
         "protocols" : [
             {
-                "@id" : "#protocols/peptide_digestion",
+                "@id" : "http://madeUpProtocolWebsize.org/protein_digestion",
                 "name": "peptide_digestion",
                 "protocolType": {
                     "@id":"http://purl.obolibrary.org/obo/NCIT_C70845",
@@ -49,44 +50,47 @@ let studyWithIDTable =
                 ]
             }
         ],
-        "materials" : [
-            {
-                "@id": "#Source/Source1",
-                "name": "Source1",
-                "characteristics" : [
-                    {
-                        "@id" : "#CharacteristicValue/",
-                        "category" : {
-                            "@id" : "#CharacteristicCategory/http://purl.obolibrary.org/obo/OBI_0100026"
-                        },
-                        "value" : {
-                            "@id": "http://purl.obolibrary.org/obo/NCBITaxon_3702",
-                            "annotationValue": "Arabidopsis thaliana",
-                            "termSource": "NCBITaxon",
-                            "termAccession": "http://purl.obolibrary.org/obo/NCBITaxon_3702"
+        "materials" : {           
+            "sources" : [
+                {
+                    "@id": "#Source_Source1",
+                    "name": "Source1",
+                    "characteristics" : [
+                        {
+                            "@id" : "#MaterialAttributeValue/organism=Arabidopsis thaliana",
+                            "category" : {
+                                "@id" : "#MaterialAttribute/http://purl.obolibrary.org/obo/OBI_0100026"
+                            },
+                            "value" : {
+                                "@id": "http://purl.obolibrary.org/obo/NCBITaxon_3702",
+                                "annotationValue": "Arabidopsis thaliana",
+                                "termSource": "NCBITaxon",
+                                "termAccession": "http://purl.obolibrary.org/obo/NCBITaxon_3702"
+                            }
                         }
-                    }
-                ]
+                    ]            
+                },
+                {
+                    "@id": "#Source_Source2",
+                    "name": "Source2",
+                    "characteristics" : [{"@id" : "#MaterialAttributeValue/organism=Arabidopsis thaliana"}
+                    ]
             
-            },
-            {
-                "@id": "#Source/Source2",
-                "name": "Source2",
-                "characteristics" : [{"@id" : "#CharacteristicValue/"}
-                ]
+                }
+            ],
+            "samples" : [
             
-            },
-            {
-                "@id": "#Sample/Sample1",
-                "name": "Sample1"           
-            },
-            {
-                "@id": "#Sample/Sample2",
-                "name": "Sample2"           
-            }
-
-        ],
-        "processes" : [
+                {
+                    "@id": "#Sample_Sample1",
+                    "name": "Sample1"           
+                },
+                {
+                    "@id": "#Sample_Sample2",
+                    "name": "Sample2"           
+                }
+            ]
+        },
+        "processSequence" : [
             {
                 "@id": "#Process/Process1",
                 "processName": "Process1",
@@ -94,12 +98,12 @@ let studyWithIDTable =
                     "@id" : "#protocols/peptide_digestion"
                 },
                 "inputs" : [
-                    {"@id" : "#Source/Source1"},
-                    {"@id" : "#Source/Source2"}
+                    {"@id" : "#Source_Source1"},
+                    {"@id" : "#Source_Source2"}
                 ],
                 "outputs" : [
-                    {"@id" : "#Sample/Sample1"},
-                    {"@id" : "#Sample/Sample1"}
+                    {"@id" : "#Sample_Sample1"},
+                    {"@id" : "#Sample_Sample1"}
                 ],
                 "parameterValues" : [
                     {
@@ -107,7 +111,7 @@ let studyWithIDTable =
                         "value": {
                             "@id": "http://purl.obolibrary.org/obo/MS_1001313",
                             "annotationValue": "Trypsin/P",
-                            "termSource": "NCI",
+                            "termSource": "MS",
                             "termAccession": "http://purl.obolibrary.org/obo/MS_1001313"
                         }
                     },
@@ -127,7 +131,7 @@ let studyWithIDTable =
         ],
         "characteristicCategories": [
             {
-                "@id" : "#CharacteristicCategory/http://purl.obolibrary.org/obo/OBI_0100026",
+                "@id" : "#MaterialAttribute/http://purl.obolibrary.org/obo/OBI_0100026",
                 "characteristicType" : {
                     "@id": "http://purl.obolibrary.org/obo/OBI_0100026",
                     "annotationValue": "organism",
