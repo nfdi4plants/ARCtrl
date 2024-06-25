@@ -18,10 +18,13 @@ module Component =
     
     module ISAJson =
 
-        let encoder (c : Component) = 
+        let genID (c : Component) = 
+            PropertyValue.ROCrate.genID c
+
+        let encoder (idMap : IDTable.IDTableWrite option) (c : Component) = 
             [
                 Encode.tryInclude "componentName" Encode.string c.ComponentName
-                Encode.tryInclude "componentType" OntologyAnnotation.ISAJson.encoder c.ComponentType
+                Encode.tryInclude "componentType" (OntologyAnnotation.ISAJson.encoder idMap) c.ComponentType
             ]
             |> Encode.choose
             |> Encode.object
@@ -50,9 +53,11 @@ module ComponentExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Component.ISAJson.decoder s   
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (f:Component) ->
-                Component.ISAJson.encoder f
+                Component.ISAJson.encoder idMap f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.toISAJsonString(?spaces) =

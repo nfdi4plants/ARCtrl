@@ -168,48 +168,63 @@ module Study =
         /// </summary>
         /// <param name="s"></param>
         /// <param name="assays"></param>
-        let encoder (assays: ArcAssay list option) (s : ArcStudy) = 
-            let study = s.Copy(true)
-            let fileName = Identifier.Study.fileNameFromIdentifier study.Identifier
-            let assaysRaw = Helper.getAssayInformation assays study
-            let assays = 
-                let n = ResizeArray()
-                for a in assaysRaw do 
-                    let assay = a.Copy()
-                    // Move persons to study
-                    for person in assay.Performers do
-                        // set source assay identifier as comment
-                        let person = Process.Conversion.Person.setSourceAssayComment person assay.Identifier
-                        study.Contacts.Add(person)
-                    assay.Performers <- ResizeArray()
-                    n.Add(assay)
-                n
-            let processes = study.GetProcesses()
-            let protocols = ProcessSequence.getProtocols processes
-            let factors = ProcessSequence.getFactors processes
-            let characteristics = ProcessSequence.getCharacteristics processes
-            let units = ProcessSequence.getUnits processes
-            [
-                "filename", Encode.string fileName
-                "identifier", Encode.string study.Identifier
-                Encode.tryInclude "title" Encode.string study.Title
-                Encode.tryInclude "description" Encode.string study.Description
-                Encode.tryInclude "submissionDate" Encode.string study.SubmissionDate
-                Encode.tryInclude "publicReleaseDate" Encode.string study.PublicReleaseDate
-                Encode.tryIncludeSeq "publications" Publication.ISAJson.encoder study.Publications
-                Encode.tryIncludeSeq "people" Person.ISAJson.encoder study.Contacts
-                Encode.tryIncludeSeq "studyDesignDescriptors" OntologyAnnotation.ISAJson.encoder study.StudyDesignDescriptors
-                Encode.tryIncludeList "protocols" Protocol.ISAJson.encoder protocols
-                Encode.tryInclude "materials" StudyMaterials.ISAJson.encoder (Option.fromValueWithDefault [] processes)
-                Encode.tryIncludeList "factors" Factor.ISAJson.encoder factors
-                Encode.tryIncludeList "characteristicCategories" MaterialAttribute.ISAJson.encoder characteristics     
-                Encode.tryIncludeList "unitCategories" OntologyAnnotation.ISAJson.encoder units
-                Encode.tryIncludeList "processSequence" Process.ISAJson.encoder processes
-                Encode.tryIncludeSeq "assays" Assay.ISAJson.encoder assays
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder study.Comments
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let encoder idMap (assays: ArcAssay list option) (s : ArcStudy) = 
+            let f (s : ArcStudy) =
+                let study = s.Copy(true)
+                let fileName = Identifier.Study.fileNameFromIdentifier study.Identifier
+                let assaysRaw = Helper.getAssayInformation assays study
+                let assays = 
+                    let n = ResizeArray()
+                    for a in assaysRaw do 
+                        let assay = a.Copy()
+                        // Move persons to study
+                        for person in assay.Performers do
+                            // set source assay identifier as comment
+                            let person = Process.Conversion.Person.setSourceAssayComment person assay.Identifier
+                            study.Contacts.Add(person)
+                        assay.Performers <- ResizeArray()
+                        n.Add(assay)
+                    n
+                let processes = study.GetProcesses()
+                let encodedUnits = 
+                    ProcessSequence.getUnits processes
+                    |> Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap) 
+                let encodedFactors = 
+                    ProcessSequence.getFactors processes
+                    |> Encode.tryIncludeList "factors" (Factor.ISAJson.encoder idMap)
+                let encodedCharacteristics =
+                    ProcessSequence.getCharacteristics processes
+                    |> Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.ISAJson.encoder idMap)
+                let encodedMaterials = 
+                    Encode.tryInclude "materials" (StudyMaterials.ISAJson.encoder idMap) (Option.fromValueWithDefault [] processes)
+                let encodedProtocols = 
+                    ProcessSequence.getProtocols processes
+                    |> Encode.tryIncludeList "protocols" (Protocol.ISAJson.encoder (Some s.Identifier) None None idMap)
+                [
+                    "@id", Encode.string (study |> ROCrate.genID)
+                    "filename", Encode.string fileName
+                    "identifier", Encode.string study.Identifier
+                    Encode.tryInclude "title" Encode.string study.Title
+                    Encode.tryInclude "description" Encode.string study.Description
+                    Encode.tryInclude "submissionDate" Encode.string study.SubmissionDate
+                    Encode.tryInclude "publicReleaseDate" Encode.string study.PublicReleaseDate
+                    Encode.tryIncludeSeq "publications" (Publication.ISAJson.encoder idMap) study.Publications
+                    Encode.tryIncludeSeq "people" (Person.ISAJson.encoder idMap) study.Contacts
+                    Encode.tryIncludeSeq "studyDesignDescriptors" (OntologyAnnotation.ISAJson.encoder idMap) study.StudyDesignDescriptors
+                    encodedProtocols
+                    encodedMaterials
+                    Encode.tryIncludeList "processSequence" (Process.ISAJson.encoder (Some s.Identifier) None idMap) processes
+                    Encode.tryIncludeSeq "assays" (Assay.ISAJson.encoder (Some s.Identifier) idMap) assays
+                    encodedFactors
+                    encodedCharacteristics
+                    encodedUnits
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) study.Comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f s
+            | Some idMap -> IDTable.encode (fun s -> ROCrate.genID s) f s idMap
 
         let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"publications";"people";"studyDesignDescriptors";"protocols";"materials";"assays";"factors";"characteristicCategories";"unitCategories";"processSequence";"comments";"@type"; "@context"]
         
@@ -308,10 +323,12 @@ module StudyExtensions =
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Study.ISAJson.decoder s
 
-        static member toISAJsonString(?assays: ArcAssay list, ?spaces) =
+        static member toISAJsonString(?assays: ArcAssay list, ?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:ArcStudy) ->
-                Study.ISAJson.encoder assays obj
+                Study.ISAJson.encoder idMap assays obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
-        member this.ToISAJsonString(?assays,?spaces) = 
-            ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces) this
+        member this.ToISAJsonString(?assays,?spaces, ?useIDReferencing) = 
+            ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces, ?useIDReferencing = useIDReferencing) this

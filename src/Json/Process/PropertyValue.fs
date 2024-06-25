@@ -12,9 +12,10 @@ module PropertyValue =
     module ROCrate =
         
         let genID (p : IPropertyValue<'T>) = 
-            match p.GetCategory() with
-            | Some t -> $"{p.GetAdditionalType()}/{t}{p.GetValue()}{p.GetUnit()}"
-            | None -> $"#Empty{p.GetAdditionalType()}"
+            match p.GetCategory(),p.GetValue(),p.GetUnit() with
+            | Some t, Some v, Some u -> $"#{p.GetAdditionalType()}/{t.NameText}={v.Text}{u.NameText}"
+            | Some t, Some v, None-> $"#{p.GetAdditionalType()}/{t.NameText}={v.Text}"
+            | _ -> $"#Empty{p.GetAdditionalType()}"
 
         let encoder<'T> (pv : IPropertyValue<'T>) = 
             let categoryName, categoryURL = 

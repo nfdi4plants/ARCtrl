@@ -165,19 +165,20 @@ module Investigation =
 
         let allowedFields = ["@id";"filename";"identifier";"title";"description";"submissionDate";"publicReleaseDate";"ontologySourceReferences";"publications";"people";"studies";"comments";"@type";"@context"]
 
-        let encoder (inv: ArcInvestigation) = 
+        let encoder idMap (inv: ArcInvestigation) = 
             [
+                "@id", Encode.string (inv |> ROCrate.genID)
                 "filename", Encode.string ArcInvestigation.FileName
                 "identifier", Encode.string (inv.Identifier)
                 Encode.tryInclude "title" Encode.string (inv.Title)
                 Encode.tryInclude "description" Encode.string (inv.Description)
                 Encode.tryInclude "submissionDate" Encode.string (inv.SubmissionDate)
                 Encode.tryInclude "publicReleaseDate" Encode.string (inv.PublicReleaseDate)
-                Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ISAJson.encoder inv.OntologySourceReferences
-                Encode.tryIncludeSeq "publications" Publication.ISAJson.encoder inv.Publications
-                Encode.tryIncludeSeq "people" Person.ISAJson.encoder inv.Contacts
-                Encode.tryIncludeSeq "studies" (Study.ISAJson.encoder None) inv.Studies 
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder inv.Comments
+                Encode.tryIncludeSeq "ontologySourceReferences" (OntologySourceReference.ISAJson.encoder idMap) inv.OntologySourceReferences
+                Encode.tryIncludeSeq "publications" (Publication.ISAJson.encoder idMap) inv.Publications
+                Encode.tryIncludeSeq "people" (Person.ISAJson.encoder idMap) inv.Contacts
+                Encode.tryIncludeSeq "studies" (Study.ISAJson.encoder idMap None) inv.Studies 
+                Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) inv.Comments
             ]
             |> Encode.choose
             |> Encode.object
@@ -251,13 +252,15 @@ module InvestigationExtensions =
         member this.ToROCrateJsonString(?spaces) = 
             ArcInvestigation.toROCrateJsonString(?spaces=spaces) this
 
-        static member toISAJsonString(?spaces) =
+        static member toISAJsonString(?spaces, ?useIDReferencing) =
+            let useIDReferencing = Option.defaultValue false useIDReferencing
+            let idMap = if useIDReferencing then Some (System.Collections.Generic.Dictionary()) else None
             fun (obj:ArcInvestigation) ->
-                Investigation.ISAJson.encoder obj
+                Investigation.ISAJson.encoder idMap obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         static member fromISAJsonString (s:string) = 
             Decode.fromJsonString Investigation.ISAJson.decoder s
 
-        member this.ToISAJsonString(?spaces) =
-            ArcInvestigation.toISAJsonString(?spaces=spaces) this
+        member this.ToISAJsonString(?spaces, ?useIDReferencing) =
+            ArcInvestigation.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) this

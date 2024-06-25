@@ -103,9 +103,9 @@ let private test_compressed =
         None
         compareFields
 
-let private test_isa =
+let private test_isa = testList "ISA" [
     createBaseJsonTests
-        "isa"
+        "base"
         create_filled
         ArcStudy.toISAJsonString
         (ArcStudy.fromISAJsonString >> fun (s,_) -> s)
@@ -115,6 +115,91 @@ let private test_isa =
         None
         #endif
         compareFields
+
+    testCase "UseIDTable" <| fun _ ->
+        let table = ArcTable.init ("Process1")
+
+        let inputHeader = CompositeHeader.Input (IOType.Source)
+        let inputCells = [|for i = 0 to 1 do CompositeCell.FreeText $"Source{i+1}"|]
+        let inputColumn = CompositeColumn.create(inputHeader, inputCells)
+
+        let organism = OntologyAnnotation.create("organism", "OBI", "http://purl.obolibrary.org/obo/OBI_0100026")
+        let organismHeader = CompositeHeader.Characteristic organism
+        let arabidopsis = OntologyAnnotation.create("Arabidopsis thaliana", "NCBITaxon", "http://purl.obolibrary.org/obo/NCBITaxon_3702")
+        let organismCells = [|for i = 0 to 1 do CompositeCell.Term arabidopsis|]
+        let organismColumn = CompositeColumn.create(organismHeader, organismCells)
+
+
+        let protocolName = "peptide_digestion"
+        let protocolREFHeader = CompositeHeader.ProtocolREF
+        let protocolREFCells = [|for i = 0 to 1 do CompositeCell.FreeText protocolName|]
+        let protocolREFColumn = CompositeColumn.create(protocolREFHeader, protocolREFCells)
+
+        let protocolType = OntologyAnnotation.create("Protein Digestion", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C70845")
+        let protocolTypeHeader = CompositeHeader.ProtocolType
+        let protocolTypeCells = [|for i = 0 to 1 do CompositeCell.Term protocolType|]
+        let protocolTypeColumn = CompositeColumn.create(protocolTypeHeader, protocolTypeCells)
+
+        let protocolDescription = "The isolated proteins get solubilized. Given protease is added and the solution is heated to a given temperature. After a given amount of time, the digestion is stopped by adding a denaturation agent."
+        let protocolDescriptionHeader = CompositeHeader.ProtocolDescription
+        let protocolDescriptionCells = [|for i = 0 to 1 do CompositeCell.FreeText protocolDescription|]
+        let protocolDescriptionColumn = CompositeColumn.create(protocolDescriptionHeader, protocolDescriptionCells)
+
+        let protocolURI = "http://madeUpProtocolWebsize.org/protein_digestion"
+        let protocolURIHeader = CompositeHeader.ProtocolUri
+        let protocolURICells = [|for i = 0 to 1 do CompositeCell.FreeText protocolURI|]
+        let protocolURIColumn = CompositeColumn.create(protocolURIHeader, protocolURICells)
+
+        let protocolVersion = "1.0.0"
+        let protocolVersionHeader = CompositeHeader.ProtocolVersion
+        let protocolVersionCells = [|for i = 0 to 1 do CompositeCell.FreeText protocolVersion|]
+        let protocolVersionColumn = CompositeColumn.create(protocolVersionHeader, protocolVersionCells)
+
+        let peptidase = OntologyAnnotation.create("Peptidase", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C16965")
+        let peptidaseHeader = CompositeHeader.Parameter peptidase
+        let trypsin = OntologyAnnotation.create("Trypsin/P", "MS", "http://purl.obolibrary.org/obo/MS_1001313")
+        let peptidaseCells = [|for i = 0 to 1 do CompositeCell.Term trypsin|]
+        let peptidaseColumn = CompositeColumn.create(peptidaseHeader, peptidaseCells)
+
+        let temperature = OntologyAnnotation.create("temperature", "Ontobee", "http://purl.obolibrary.org/obo/NCRO_0000029")
+        let temperatureHeader = CompositeHeader.Parameter temperature
+        let degrees = OntologyAnnotation.create("degree Celsius", "OM2", "http://www.ontology-of-units-of-measure.org/resource/om-2/degreeCelsius")
+        let temperatureCells = [|for i = 0 to 1 do CompositeCell.Unitized ("23",degrees)|]
+        let temperatureColumn = CompositeColumn.create(temperatureHeader, temperatureCells)
+
+        let time = OntologyAnnotation.create("time", "EFO", "http://www.ebi.ac.uk/efo/EFO_0000721")
+        let timeHeader = CompositeHeader.Parameter time
+        let hours = OntologyAnnotation.create("hour", "UO", "http://purl.obolibrary.org/obo/UO_0000032")
+        let timeCells = [|for i = 0 to 1 do CompositeCell.Unitized ("10",hours)|]
+        let timeColumn = CompositeColumn.create(timeHeader, timeCells)
+
+        let outputHeader = CompositeHeader.Output (IOType.Sample)
+        let outputCells = [|for i = 0 to 1 do CompositeCell.FreeText $"Sample{i+1}"|]
+        let outputColumn = CompositeColumn.create(outputHeader, outputCells)
+
+        table.AddColumns [|
+            inputColumn;
+            organismColumn;
+            protocolREFColumn;
+            protocolTypeColumn;
+            protocolDescriptionColumn;
+            protocolURIColumn;
+            protocolVersionColumn;
+            peptidaseColumn;
+            temperatureColumn;
+            timeColumn;
+            outputColumn        
+        |]
+
+        let study = ArcStudy.init("Study1")
+        study.AddTable table
+
+        let json = ArcStudy.toISAJsonString(useIDReferencing = true) study
+
+        //let expectedString = TestObjects.Json.Study.studyWithIDTable.Replace("\s","")
+
+        Expect.stringEqual json TestObjects.Json.Study.studyWithIDTable "json"
+     ]
 
 let private test_roCrate =
     createBaseJsonTests

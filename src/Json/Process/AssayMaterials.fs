@@ -10,12 +10,12 @@ module AssayMaterials =
 
     module ISAJson = 
 
-        let encoder (ps : Process list) = 
+        let encoder idMap (ps : Process list) = 
             let samples = ProcessSequence.getSamples ps
             let materials = ProcessSequence.getMaterials ps
             [
-                Encode.tryIncludeList "samples" Sample.ISAJson.encoder samples
-                Encode.tryIncludeList "otherMaterials" Material.ISAJson.encoder materials
+                Encode.tryIncludeList "samples" (Sample.ISAJson.encoder idMap) samples
+                Encode.tryIncludeList "otherMaterials" (Material.ISAJson.encoder idMap) materials
             ]
            
             |> Encode.choose

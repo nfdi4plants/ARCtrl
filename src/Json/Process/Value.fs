@@ -11,7 +11,7 @@ module Value =
 
     module ISAJson = 
 
-        let encoder (value : Value) = 
+        let encoder (idMap : IDTable.IDTableWrite option) (value : Value) = 
             match value with
             | Value.Float f -> 
                 Encode.float f
@@ -20,7 +20,7 @@ module Value =
             | Value.Name s -> 
                 Encode.string s
             | Value.Ontology s -> 
-                OntologyAnnotation.ISAJson.encoder s
+                OntologyAnnotation.ISAJson.encoder idMap s
 
         let decoder : Decoder<Value> =
             Decode.oneOf [
@@ -41,7 +41,7 @@ module ValueExtensions =
 
         static member toISAJsonString(?spaces) =
             fun (v:Value) ->
-                Value.ISAJson.encoder v
+                Value.ISAJson.encoder None v
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
             
 

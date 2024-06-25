@@ -23,7 +23,7 @@ module JsonHelper =
         member _.fromROCrateJsonString (s: string) = ArcAssay.fromROCrateJsonString s
         member _.toJsonString (assay: ArcAssay, ?spaces) = ArcAssay.toJsonString(?spaces=spaces) assay
         member _.toCompressedJsonString (assay: ArcAssay,?spaces) = ArcAssay.toCompressedJsonString(?spaces=spaces) assay
-        member _.toISAJsonString (assay: ArcAssay, ?spaces) = ArcAssay.toISAJsonString(?spaces=spaces) assay
+        member _.toISAJsonString (assay: ArcAssay, ?spaces, ?useIDReferencing) = ArcAssay.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) assay
         member _.toROCrateJsonString(assay: ArcAssay, studyName, ?spaces) = ArcAssay.toROCrateJsonString(studyName, ?spaces=spaces) assay
 
     [<AttachMembers>]
@@ -34,7 +34,7 @@ module JsonHelper =
         member _.fromROCrateJsonString (s: string) = ArcStudy.fromROCrateJsonString s
         member _.toJsonString (study: ArcStudy, ?spaces) = ArcStudy.toJsonString(?spaces=spaces) study
         member _.toCompressedJsonString (study: ArcStudy, ?spaces) = ArcStudy.toCompressedJsonString(?spaces=spaces) study
-        member _.toISAJsonString (study: ArcStudy, ?assays,?spaces) = ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces) study
+        member _.toISAJsonString (study: ArcStudy, ?assays,?spaces, ?useIDReferencing) = ArcStudy.toISAJsonString(?assays=assays,?spaces=spaces, ?useIDReferencing = useIDReferencing) study
         member _.toROCrateJsonString(study: ArcStudy, ?assays,?spaces) = ArcStudy.toROCrateJsonString(?assays=assays,?spaces=spaces) study
 
     [<AttachMembers>]
@@ -45,7 +45,7 @@ module JsonHelper =
         member _.fromROCrateJsonString (s: string) = ArcInvestigation.fromROCrateJsonString s
         member _.toJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toJsonString(?spaces=spaces) investigation
         member _.toCompressedJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toCompressedJsonString(?spaces=spaces) investigation
-        member _.toISAJsonString (investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toISAJsonString(?spaces=spaces) investigation
+        member _.toISAJsonString (investigation: ArcInvestigation, ?spaces, ?useIDReferencing) = ArcInvestigation.toISAJsonString(?spaces=spaces, ?useIDReferencing = useIDReferencing) investigation
         member _.toROCrateJsonString(investigation: ArcInvestigation, ?spaces) = ArcInvestigation.toROCrateJsonString(?spaces=spaces) investigation
 
     [<AttachMembers>]

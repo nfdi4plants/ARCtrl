@@ -22,7 +22,7 @@ module AnnotationValue =
 
 module OntologyAnnotation =  
 
-    let encoder (oa : OntologyAnnotation) = 
+    let encoder (oa : OntologyAnnotation) =         
         [
             Encode.tryInclude "annotationValue" Encode.string (oa.Name)
             Encode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
@@ -125,7 +125,27 @@ module OntologyAnnotation =
 
     module ISAJson =
         
-        let encoder = encoder
+        let encoder (idMap : IDTable.IDTableWrite option) (oa : OntologyAnnotation) = 
+            let f = fun (oa : OntologyAnnotation) ->
+                let comments = 
+                    oa.Comments
+                    |> Seq.filter (fun c -> 
+                        match c.Name with
+                        | Some n when n = Process.ColumnIndex.orderName -> false
+                        | _ -> true)
+                [
+                    Encode.tryInclude "@id" Encode.string (ROCrate.genID oa |> Some)
+                    Encode.tryInclude "annotationValue" Encode.string (oa.Name)
+                    Encode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
+                    Encode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
+                    Encode.tryIncludeSeq "comments" Comment.encoder comments
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f oa
+            | Some idMap -> IDTable.encode ROCrate.genID f oa idMap
+
         let decoder = decoder
 
 [<AutoOpen>]
@@ -161,7 +181,7 @@ module OntologyAnnotationExtensions =
 
         static member toISAJsonString(?spaces) =
             fun (obj:OntologyAnnotation) ->
-                OntologyAnnotation.ISAJson.encoder obj
+                OntologyAnnotation.ISAJson.encoder None obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.ToISAJsonString(?spaces) =

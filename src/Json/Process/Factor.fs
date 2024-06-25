@@ -12,14 +12,28 @@ module Factor =
 
     module ISAJson = 
 
-        let encoder (value : Factor) = 
-            [
-                Encode.tryInclude "factorName" Encode.string value.Name
-                Encode.tryInclude "factorType" OntologyAnnotation.ISAJson.encoder value.FactorType
-                Encode.tryIncludeSeq "comments" Comment.ISAJson.encoder (value.Comments |> Option.defaultValue (ResizeArray()))
-            ]
-            |> Encode.choose
-            |> Encode.object
+        let genID (f : Factor) = 
+            match f.Name with
+            | Some name -> $"#Factor/{name}"
+            | None -> 
+                match f.FactorType with
+                | Some factorType -> 
+                    $"#Factor/{OntologyAnnotation.ROCrate.genID factorType}"
+                | None -> "#EmptyFactor"
+
+        let encoder (idMap : IDTable.IDTableWrite option) (value : Factor) = 
+            let f (value : Factor) =
+                [
+                    Encode.tryInclude "@id" Encode.string (value |> genID |> Some)
+                    Encode.tryInclude "factorName" Encode.string value.Name
+                    Encode.tryInclude "factorType" (OntologyAnnotation.ISAJson.encoder idMap) value.FactorType
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) (value.Comments |> Option.defaultValue (ResizeArray()))
+                ]
+                |> Encode.choose
+                |> Encode.object
+            match idMap with
+            | None -> f value
+            | Some idMap -> IDTable.encode genID f value idMap
 
         let decoder : Decoder<Factor> =
             Decode.object (fun get ->
@@ -40,7 +54,7 @@ module FactorExtensions =
 
         static member toISAJsonString(?spaces) =
             fun (f:Factor) ->
-                Factor.ISAJson.encoder f
+                Factor.ISAJson.encoder None f
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.ToISAJsonString(?spaces) =
