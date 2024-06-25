@@ -122,8 +122,17 @@ module Assay =
             let f (a : ArcAssay) =
                 let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
                 let processes = a.GetProcesses()
-                let dataFiles = ProcessSequence.getData processes
-                let characteristics = ProcessSequence.getCharacteristics processes
+                let encodedUnits = 
+                    ProcessSequence.getUnits processes
+                    |> Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap)
+                let encodedCharacteristics = 
+                    ProcessSequence.getCharacteristics processes
+                    |> Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.ISAJson.encoder idMap) 
+                let encodedMaterials = 
+                    Encode.tryInclude "materials" (AssayMaterials.ISAJson.encoder idMap) (Option.fromValueWithDefault [] processes)
+                let encocedDataFiles = 
+                    ProcessSequence.getData processes
+                    |> Encode.tryIncludeList "dataFiles" (Data.ISAJson.encoder idMap) 
                 let units = ProcessSequence.getUnits processes
                 [
                     "filename", Encode.string fileName
@@ -131,10 +140,10 @@ module Assay =
                     Encode.tryInclude "measurementType" (OntologyAnnotation.ISAJson.encoder idMap) a.MeasurementType
                     Encode.tryInclude "technologyType" (OntologyAnnotation.ISAJson.encoder idMap) a.TechnologyType
                     Encode.tryInclude "technologyPlatform" Encode.string (a.TechnologyPlatform |> Option.map Conversion.JsonTypes.composeTechnologyPlatform)
-                    Encode.tryIncludeList "dataFiles" (Data.ISAJson.encoder idMap) dataFiles
-                    Encode.tryInclude "materials" (AssayMaterials.ISAJson.encoder idMap) (Option.fromValueWithDefault [] processes)
-                    Encode.tryIncludeList "characteristicCategories" (MaterialAttribute.ISAJson.encoder idMap) characteristics
-                    Encode.tryIncludeList "unitCategories" (OntologyAnnotation.ISAJson.encoder idMap) units
+                    encocedDataFiles
+                    encodedMaterials
+                    encodedCharacteristics
+                    encodedUnits
                     Encode.tryIncludeList "processSequence" (Process.ISAJson.encoder studyName (Some a.Identifier) idMap) processes
                     Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) a.Comments
                 ]
