@@ -1,5 +1,19 @@
-### 2.0.0+be3f8a2 (Released 2024-6-3)
+### 2.0.0+dba6e24 (Released 2024-6-25)
 * Additions:
+    * [[#56f3a7a](https://github.com/nfdi4plants/ARCtrl/commit/56f3a7afaec3572882b1b67b0890ac346aa0ef93)] add manage-issues.yml
+    * [[#ee1091f](https://github.com/nfdi4plants/ARCtrl/commit/ee1091f6ece4d248dc18fa5e045cbbd525c60d76)] rework datamap to be represented as a row of records
+    * [[#2261883](https://github.com/nfdi4plants/ARCtrl/commit/22618830d79537c2f3cc10e2f69567432b0e8594)] adjust spreadsheet parsing to datamap datamodel change
+    * [[#aa28494](https://github.com/nfdi4plants/ARCtrl/commit/aa284947a4bc69a55158495866d3edb79a2737fb)] update templates json parsing
+    * [[#4358b6a](https://github.com/nfdi4plants/ARCtrl/commit/4358b6aad3d6d353c8271d52e8666c82de9f66c7)] increase robustness against OntologyAnnotation mutability issues
+    * [[#44c4ded](https://github.com/nfdi4plants/ARCtrl/commit/44c4dedec6b997611cc09a295dbc1056ec28f64d)] add new uri parsing rules and core tests
+    * [[#758a083](https://github.com/nfdi4plants/ARCtrl/commit/758a083841c7b4358265292dc4d52a651c7647ad)] make ArcTable header parsing patterns less strict
+    * [[#ab38980](https://github.com/nfdi4plants/ARCtrl/commit/ab3898052db88d200c589596360e20d2675a6c84)] add toJsonString extensions members
+    * [[#108f6f4](https://github.com/nfdi4plants/ARCtrl/commit/108f6f446b1864fede67446a1ec9b4e6fb953645)] start implementing @id in isa json writer logic
+    * [[#70f9047](https://github.com/nfdi4plants/ARCtrl/commit/70f9047bc40ad258821bc28835b808154ec84961)] finish implementing @id in isa json writer logic
+    * [[#8bd5d21](https://github.com/nfdi4plants/ARCtrl/commit/8bd5d21c461956c6e2e6a279563daa6425545078)] add study test file for @id json writer
+    * [[#85a8e1b](https://github.com/nfdi4plants/ARCtrl/commit/85a8e1bee819540bd37a24aa865b1df664e16ef2)] add idmap test case for study
+    * [[#8c93928](https://github.com/nfdi4plants/ARCtrl/commit/8c93928cfab0831c4ba3f86a662abe25b89628dd)] change encoding order of assay properties for isa json parsing
+    * [[#e138dcc](https://github.com/nfdi4plants/ARCtrl/commit/e138dcc0ddde2ed0d3561e8c3de90dcc3a188975)] add useIDReferencing flag to JsonController
     * [[#8c192dd](https://github.com/nfdi4plants/ARCtrl/commit/8c192dde7df77bc8d9597d550cbc6734545124e0)] small change in ArcTable.ToString function to make it more robust
     * [[#4173454](https://github.com/nfdi4plants/ARCtrl/commit/4173454f557263df30b8359810a2a13b54d8fd4b)] small speed improvement to ArcTable move column
     * [[#fceee84](https://github.com/nfdi4plants/ARCtrl/commit/fceee84badd6bd2bd5c87d64336c2c4aeac15a3a)] add column move function to ArcTable
@@ -100,8 +114,16 @@
     * [[#abd3d89](https://github.com/nfdi4plants/ARCtrl/commit/abd3d890fb58a0962d4e7d841df7440d9a4bed90)] Merge pull request #317 from nfdi4plants/python_integration
     * [[#b6e2eca](https://github.com/nfdi4plants/ARCtrl/commit/b6e2ecab5a0a3630e1dd24ae36d34be79ad21d6d)] small change to semver in npm
 * Deletions:
+    * [[#1ce8001](https://github.com/nfdi4plants/ARCtrl/commit/1ce80017ddd48bbe217ee99ac70923cb5dca8bc1)] Remove ALL tabs from fsproj files
     * [[#f055617](https://github.com/nfdi4plants/ARCtrl/commit/f05561709a0a8d1da752d54d5a997db225a3384e)] remove erroneous exe output type from testingutils
 * Bugfixes:
+    * [[#4136027](https://github.com/nfdi4plants/ARCtrl/commit/4136027d19e01df6b4d24c2558d7f58fa071b83a)] Fix missing fable includes #369
+    * [[#ff4bad8](https://github.com/nfdi4plants/ARCtrl/commit/ff4bad8421b6bb0c1103b152d69cc471b5259ca2)] fix datamap spreadsheet parsing against tests
+    * [[#0ead1eb](https://github.com/nfdi4plants/ARCtrl/commit/0ead1eb2ca62057fb9e7c2eb585df94ad50ce56f)] fix datamap spreadsheet parser against tests
+    * [[#65274ec](https://github.com/nfdi4plants/ARCtrl/commit/65274ec72288016450ce9cb151fd11e9a04d23b8)] fix tests againsts iri generation changes
+    * [[#2abd33f](https://github.com/nfdi4plants/ARCtrl/commit/2abd33f46a8e9dd9d56373302a13d5d9ac1cbe4b)] fix tests against @id json writer changes
+    * [[#f8ae105](https://github.com/nfdi4plants/ARCtrl/commit/f8ae10529112c38cc90a1664626d80334e71e9bb)] some fixes against study idmap test case
+    * [[#b367d01](https://github.com/nfdi4plants/ARCtrl/commit/b367d014eee9a9ca113367426ade1bab27b7540a)] fix id table json parsing tests
     * [[#3f164c3](https://github.com/nfdi4plants/ARCtrl/commit/3f164c3eb87aa68ecc6ad5cb50dade9f0c769752)] small fix for jsnativetests for comment column addition
     * [[#6ef030d](https://github.com/nfdi4plants/ARCtrl/commit/6ef030da7ab86ace826706731848db7098ff2ed5)] Merge pull request #358 from nfdi4plants/fixes
     * [[#e2cb695](https://github.com/nfdi4plants/ARCtrl/commit/e2cb695115ddd5a93e0871638d4649fe326adef7)] Fix python docs for contract logic :bug: #342
