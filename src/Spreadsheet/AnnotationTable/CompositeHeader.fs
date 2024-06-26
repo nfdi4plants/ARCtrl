@@ -13,127 +13,127 @@ module ActivePattern =
         if localID1 <> localID2 then failwithf "LocalID %s and %s do not match" localID1 localID2
         {|TermSourceRef = idSpace1; TermAccessionNumber = $"{idSpace1}:{localID1}"|}
 
-    let (|Term|_|) (categoryParser : string -> string option) (f : OntologyAnnotation -> CompositeHeader) (cells : FsCell list) : (CompositeHeader*(FsCell list -> CompositeCell)) option =
+    let (|Term|_|) (categoryParser : string -> string option) (f : OntologyAnnotation -> CompositeHeader) (cellValues : string []) : (CompositeHeader*(string [] -> CompositeCell)) option =
         let (|AC|_|) s =
             categoryParser s
-        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
-        | [AC name] -> 
+        | [|AC name|] -> 
             let ont = OntologyAnnotation.create(name)
-            (f ont, CompositeCell.termFromFsCells None None)
+            (f ont, CompositeCell.termFromStringCells None None)
             |> Some
-        | [AC name; TSRColumnHeader term1; TANColumnHeader term2] ->
+        | [|AC name; TSRColumnHeader term1; TANColumnHeader term2|] ->
             let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
             let ont = OntologyAnnotation.create(name, term.TermSourceRef, term.TermAccessionNumber)
-            (f ont, CompositeCell.termFromFsCells (Some 1) (Some 2))
+            (f ont, CompositeCell.termFromStringCells (Some 1) (Some 2))
             |> Some
-        | [AC name; TANColumnHeader term2; TSRColumnHeader term1] ->
+        | [|AC name; TANColumnHeader term2; TSRColumnHeader term1|] ->
             let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
             let ont = OntologyAnnotation.create(name, term.TermSourceRef, term.TermAccessionNumber)
-            (f ont, CompositeCell.termFromFsCells (Some 2) (Some 1))
+            (f ont, CompositeCell.termFromStringCells (Some 2) (Some 1))
             |> Some
-        | [AC name; UnitColumnHeader _; TSRColumnHeader term1; TANColumnHeader term2] ->
+        | [|AC name; UnitColumnHeader _; TSRColumnHeader term1; TANColumnHeader term2|] ->
             let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
             let ont = OntologyAnnotation.create(name, term.TermSourceRef, term.TermAccessionNumber)
-            (f ont, CompositeCell.unitizedFromFsCells 1 (Some 2) (Some 3))
+            (f ont, CompositeCell.unitizedFromStringCells 1 (Some 2) (Some 3))
             |> Some
-        | [AC name; UnitColumnHeader _; TANColumnHeader term2; TSRColumnHeader term1] ->
+        | [|AC name; UnitColumnHeader _; TANColumnHeader term2; TSRColumnHeader term1|] ->
             let term = mergeIDInfo term1.IDSpace term1.LocalID term2.IDSpace term2.LocalID
             let ont = OntologyAnnotation.create(name, term.TermSourceRef, term.TermAccessionNumber)
-            (f ont, CompositeCell.unitizedFromFsCells 1 (Some 3) (Some 2))
+            (f ont, CompositeCell.unitizedFromStringCells 1 (Some 3) (Some 2))
             |> Some
         | _ -> None
 
-    let (|Parameter|_|) (cells : FsCell list) =
-        match cells with
+    let (|Parameter|_|) (cellValues : string []) =
+        match cellValues with
         | Term Regex.tryParseParameterColumnHeader CompositeHeader.Parameter r ->
             Some r
         | _ -> None
 
-    let (|Factor|_|) (cells : FsCell list) =
-        match cells with
+    let (|Factor|_|) (cellValues : string []) =
+        match cellValues with
         | Term Regex.tryParseFactorColumnHeader CompositeHeader.Factor r ->
             Some r
         | _ -> None
 
-    let (|Characteristic|_|) (cells : FsCell list) =
-        match cells with
+    let (|Characteristic|_|) (cellValues : string []) =
+        match cellValues with
         | Term Regex.tryParseCharacteristicColumnHeader CompositeHeader.Characteristic r ->
             Some r
         | _ -> None
     
-    let (|Component|_|) (cells : FsCell list) =
-        match cells with
+    let (|Component|_|) (cellValues : string []) =
+        match cellValues with
         | Term Regex.tryParseComponentColumnHeader CompositeHeader.Component r ->
             Some r
         | _ -> None
 
-    let (|Input|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+    let (|Input|_|) (cellValues : string []) =
+        if cellValues.Length = 0 then None
+        else
+            match cellValues.[0] with
+            | InputColumnHeader ioType -> 
+                let cols = cellValues |> Array.skip 1
+                match IOType.ofString ioType with
+                | IOType.Data ->
+                    let format = cols |> Array.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
+                    let selectorFormat = cols |> Array.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
+                    (CompositeHeader.Input (IOType.Data), CompositeCell.dataFromStringCells format selectorFormat)
+                    |> Some
+                | ioType ->
+                    (CompositeHeader.Input ioType, CompositeCell.freeTextFromStringCells)
+                    |> Some
+            | _ -> None
+
+    let (|Output|_|) (cellValues : string []) =
+        if cellValues.Length = 0 then None
+        else
+            match cellValues.[0] with
+            | OutputColumnHeader ioType -> 
+                let cols = cellValues |> Array.skip 1
+                match IOType.ofString ioType with
+                | IOType.Data ->
+                    let format = cols |> Array.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
+                    let selectorFormat = cols |> Array.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
+                    (CompositeHeader.Output (IOType.Data), CompositeCell.dataFromStringCells format selectorFormat)
+                    |> Some
+                | ioType ->
+                    (CompositeHeader.Output ioType, CompositeCell.freeTextFromStringCells)
+                    |> Some
+            | _ -> None
+
+    let (|Comment|_|) (cellValues : string []) =
         match cellValues with
-        | InputColumnHeader ioType :: cols -> 
-            match IOType.ofString ioType with
-            | IOType.Data ->
-                let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
-                let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
-                (CompositeHeader.Input (IOType.Data), CompositeCell.dataFromFsCells format selectorFormat)
-                |> Some
-            | ioType ->
-                (CompositeHeader.Input ioType, CompositeCell.freeTextFromFsCells)
-                |> Some
+        | [|Comment key|] -> Some (CompositeHeader.Comment key, CompositeCell.freeTextFromStringCells)
         | _ -> None
 
-    let (|Output|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
-        match cellValues with
-        | OutputColumnHeader ioType :: cols -> 
-            match IOType.ofString ioType with
-            | IOType.Data ->
-                let format = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Format"))  |> Option.map ((+) 1)
-                let selectorFormat = cols |> List.tryFindIndex (fun s -> s.StartsWith("Data Selector Format"))  |> Option.map ((+) 1)
-                (CompositeHeader.Output (IOType.Data), CompositeCell.dataFromFsCells format selectorFormat)
-                |> Some
-            | ioType ->
-                (CompositeHeader.Output ioType, CompositeCell.freeTextFromFsCells)
-                |> Some
-        | _ -> None
-
-    let (|Comment|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
-        match cellValues with
-        | [Comment key] -> Some (CompositeHeader.Comment key, CompositeCell.freeTextFromFsCells)
-        | _ -> None
-
-    let (|ProtocolType|_|) (cells : FsCell list) =
+    let (|ProtocolType|_|) (cellValues : string []) =
         let parser s = if s = "Protocol Type" then Some s else None
         let header _ = CompositeHeader.ProtocolType
-        match cells with
+        match cellValues with
         | Term parser header r -> Some r
         | _ -> None
 
-    let (|ProtocolHeader|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+    let (|ProtocolHeader|_|) (cellValues : string []) =
         match cellValues with
-        | ["Protocol REF"] -> Some (CompositeHeader.ProtocolREF, CompositeCell.freeTextFromFsCells)
-        | ["Protocol Description"] -> Some (CompositeHeader.ProtocolDescription, CompositeCell.freeTextFromFsCells)
-        | ["Protocol Uri"] -> Some (CompositeHeader.ProtocolUri, CompositeCell.freeTextFromFsCells)
-        | ["Protocol Version"] -> Some (CompositeHeader.ProtocolVersion, CompositeCell.freeTextFromFsCells)
-        | ["Performer"] -> Some (CompositeHeader.Performer, CompositeCell.freeTextFromFsCells)
-        | ["Date"] -> Some (CompositeHeader.Date, CompositeCell.freeTextFromFsCells)       
+        | [|"Protocol REF"|] -> Some (CompositeHeader.ProtocolREF, CompositeCell.freeTextFromStringCells)
+        | [|"Protocol Description"|] -> Some (CompositeHeader.ProtocolDescription, CompositeCell.freeTextFromStringCells)
+        | [|"Protocol Uri"|] -> Some (CompositeHeader.ProtocolUri, CompositeCell.freeTextFromStringCells)
+        | [|"Protocol Version"|] -> Some (CompositeHeader.ProtocolVersion, CompositeCell.freeTextFromStringCells)
+        | [|"Performer"|] -> Some (CompositeHeader.Performer, CompositeCell.freeTextFromStringCells)
+        | [|"Date"|] -> Some (CompositeHeader.Date, CompositeCell.freeTextFromStringCells)       
         | _ -> None
 
-    let (|FreeText|_|) (cells : FsCell list) =
-        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+    let (|FreeText|_|) (cellValues : string []) =
         match cellValues with
-        | [text] -> 
-            (CompositeHeader.FreeText text, CompositeCell.freeTextFromFsCells)
+        | [|text|] -> 
+            (CompositeHeader.FreeText text, CompositeCell.freeTextFromStringCells)
             |> Some
         | _ -> None
 
 open ActivePattern
 
-let fromFsCells (cells : list<FsCell>) : CompositeHeader*(FsCell list -> CompositeCell) =
-    match cells with
+let fromStringCells (cellValues : string []) : CompositeHeader*(string [] -> CompositeCell) =
+    match cellValues with
     | Parameter p -> p
     | Factor f -> f
     | Characteristic c -> c
@@ -144,20 +144,20 @@ let fromFsCells (cells : list<FsCell>) : CompositeHeader*(FsCell list -> Composi
     | ProtocolHeader ph -> ph 
     | Comment c -> c
     | FreeText ft -> ft
-    | _ -> failwithf "Could not parse header group %O" cells
+    | _ -> failwithf "Could not parse header group %O" cellValues
   
 
-let toFsCells (hasUnit : bool) (header : CompositeHeader) : list<FsCell> = 
+let toStringCells (hasUnit : bool) (header : CompositeHeader) : string [] = 
     if header.IsDataColumn then
-        [FsCell(header.ToString()); FsCell "Data Format"; FsCell "Data Selector Format"]
+        [|header.ToString(); "Data Format";  "Data Selector Format"|]
     elif header.IsSingleColumn then
-        [FsCell(header.ToString())]
+        [|header.ToString()|]
     elif header.IsTermColumn then
-        [
-            FsCell(header.ToString())
-            if hasUnit then FsCell("Unit")
-            FsCell($"Term Source REF ({header.GetColumnAccessionShort})")
-            FsCell($"Term Accession Number ({header.GetColumnAccessionShort})")
-        ]
+        [|
+            header.ToString()
+            if hasUnit then "Unit"
+            $"Term Source REF ({header.GetColumnAccessionShort})"
+            $"Term Accession Number ({header.GetColumnAccessionShort})"
+        |]
     else 
         failwithf "header %O is neither single nor term column" header

@@ -56,6 +56,7 @@ let private groupCols =
                         Characteristic.appendOrganismColumn  1
                         Factor.appendTimeColumn              1
                     ]
+                |> Array.map (fun c -> c |> Seq.toArray |> Array.map (fun c -> c.ValueAsString()))
             let grouped = ArcTable.groupColumnsByHeader ws
         
             let expectedHeaderGroups = 
@@ -69,7 +70,7 @@ let private groupCols =
                 ]
             let actualHeaderGroups =
                 grouped
-                |> List.map (fun cols -> cols |> List.map (fun c -> c.[1].ValueAsString()) |> List.reduce (fun a b -> a + ";" + b))
+                |> Array.map (fun cols -> cols |> Array.map (Array.head) |> Array.reduce (fun a b -> a + ";" + b))
             Expect.sequenceEqual actualHeaderGroups expectedHeaderGroups "Header groups did not match"
         )
     ]
