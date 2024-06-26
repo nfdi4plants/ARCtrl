@@ -10,10 +10,9 @@ open FsSpreadsheet
 ///
 /// A "Source Name" column will now be mapped to the propper "Input [Source Name]", and all other IO types will be mapped to "Output [<IO Type>]".
 let fixDeprecatedIOHeader (stringCellCol : string list) = 
-    let header,values = 
-        match stringCellCol with
-        | header :: values -> header,values
-        | _ -> failwith "Can't fix IOHeader Invalid column, neither header nor values given"
+    if stringCellCol.Length = 0 then 
+        failwith "Can't fix IOHeader Invalid column, neither header nor values given"
+    let values = stringCellCol |> List.skip 1
     match IOType.ofString (stringCellCol.[0]) with
     | IOType.FreeText _ -> stringCellCol
     | IOType.Source -> 
