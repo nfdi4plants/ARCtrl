@@ -100,6 +100,10 @@ module JsonTypes =
         let c = MaterialAttribute.create(CharacteristicType = header.ToTerm())
         MaterialAttributeValue.create(Category = c,?Value = v,?Unit = u)
 
+    let composeFreetextMaterialName (headerFT : string) (name : string) =
+        $"{headerFT}={name}"
+        
+
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
     let composeProcessInput (header : CompositeHeader) (value : CompositeCell) : ProcessInput =
         match header with
@@ -107,6 +111,8 @@ module JsonTypes =
         | CompositeHeader.Input IOType.Sample -> ProcessInput.createSample(value.ToString())
         | CompositeHeader.Input IOType.Material -> ProcessInput.createMaterial(value.ToString())
         | CompositeHeader.Input IOType.Data -> ProcessInput.createRawData(value.ToString())
+        | CompositeHeader.Input (IOType.FreeText ft) ->
+            ProcessInput.createMaterial(composeFreetextMaterialName ft (value.ToString()))
         | _ ->
             failwithf "Could not parse input header %O" header
 
@@ -114,9 +120,12 @@ module JsonTypes =
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessOutput
     let composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : ProcessOutput =
         match header with
-        | CompositeHeader.Output IOType.Sample -> ProcessOutput.createSample(value.ToString())
+        | CompositeHeader.Output IOType.Source
+        | CompositeHeader.Output IOType.Sample -> ProcessOutput.createSample(value.ToString())       
         | CompositeHeader.Output IOType.Material -> ProcessOutput.createMaterial(value.ToString())
         | CompositeHeader.Output IOType.Data -> ProcessOutput.createRawData(value.ToString())
+        | CompositeHeader.Output (IOType.FreeText ft) ->
+            ProcessOutput.createMaterial(composeFreetextMaterialName ft (value.ToString()))
         | _ ->
             failwithf "Could not parse output header %O" header
 
@@ -407,8 +416,11 @@ module ProcessParsing =
                         ProcessInput.createSample(input.Name, characteristics = chars)
                         ]
                     else
-                        input
-                        |> ProcessInput.setCharacteristicValues chars
+                        if chars.Length > 0 then
+                            input
+                            |> ProcessInput.setCharacteristicValues chars
+                        else
+                            input                           
                         |> List.singleton
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -429,8 +441,11 @@ module ProcessParsing =
                         ProcessOutput.createSample(output.Name, factors = factors)
                         ]
                     else
-                        output
-                        |> ProcessOutput.setFactorValues factors
+                        if factors.Length > 0 then
+                            output
+                            |> ProcessOutput.setFactorValues factors
+                        else
+                            output
                         |> List.singleton
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
