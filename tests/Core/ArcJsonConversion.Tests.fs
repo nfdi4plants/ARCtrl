@@ -42,6 +42,17 @@ module Helper =
         t.AddColumns(columns)
         t
 
+    let singleRowOutputSource = 
+    /// Input [Source] --> Source_0 .. Source_4
+        let columns = 
+            [|
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Source, createCells_FreeText "Sample" 1)
+            |]
+        let t = ArcTable.init(tableName1)
+        t.AddColumns(columns)
+        t
+
     let singleRowMixedValues = 
     /// Input [Source] --> Source_0 .. Source_4
         let columns = 
@@ -137,15 +148,19 @@ let private tests_ArcTableProcess =
             let expectedParam = ProtocolParameter.create(ParameterName = oa_species)
             let expectedValue = Value.Ontology oa_chlamy
             let expectedPPV = ProcessParameterValue.create(Category = expectedParam, Value = expectedValue)
+            let expectedInput = Source.create(Name = "Source_0") |> ProcessInput.Source 
+            let expectedOutput = Sample.create(Name = "Sample_0") |> ProcessOutput.Sample
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            Expect.isSome p.ParameterValues "Process should have parameter values"
-            Expect.equal p.ParameterValues.Value.Length 1 "Process should have 1 parameter values"
-            Expect.equal p.ParameterValues.Value.[0] expectedPPV "Param value does not match"
-            Expect.isSome p.Inputs "Process should have inputs"
-            Expect.equal p.Inputs.Value.Length 1 "Process should have 1 input"
-            Expect.isSome p.Outputs "Process should have outputs"
-            Expect.equal p.Outputs.Value.Length 1 "Process should have 1 output"
+            let paramValues = Expect.wantSome p.ParameterValues "Process should have parameter values"
+            Expect.equal paramValues.Length 1 "Process should have 1 parameter values"
+            Expect.equal paramValues.[0] expectedPPV "Param value does not match"
+            let inputs = Expect.wantSome p.Inputs "Process should have inputs"
+            Expect.equal inputs.Length 1 "Process should have 1 input"
+            Expect.equal inputs.[0] expectedInput "Input value does not match"
+            let outputs = Expect.wantSome p.Outputs "Process should have outputs"
+            Expect.equal outputs.Length 1 "Process should have 1 output"
+            Expect.equal outputs.[0] expectedOutput "Output value does not match"
             Expect.isSome p.Name "Process should have name"
             Expect.equal p.Name.Value tableName1 "Process name should match table name"
         )
@@ -155,6 +170,22 @@ let private tests_ArcTableProcess =
             let table = ArcTable.fromProcesses tableName1 processes
             let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
+        )
+        testCase "SingleRowOutputSource GetProcesses" (fun () ->
+            let t = singleRowOutputSource.Copy()
+            let processes = t.GetProcesses()           
+            let expectedInput = Source.create(Name = "Source_0") |> ProcessInput.Source 
+            let expectedOutput = Sample.create(Name = "Sample_0") |> ProcessOutput.Sample
+            Expect.equal processes.Length 1 "Should have 1 process"
+            let p = processes.[0]
+            let inputs = Expect.wantSome p.Inputs "Process should have inputs"
+            Expect.equal inputs.Length 1 "Process should have 1 input"
+            Expect.equal inputs.[0] expectedInput "Input value does not match"
+            let outputs = Expect.wantSome p.Outputs "Process should have outputs"
+            Expect.equal outputs.Length 1 "Process should have 1 output"
+            Expect.equal outputs.[0] expectedOutput "Output value does not match"
+            let name = Expect.wantSome p.Name "Process should have name"
+            Expect.equal name tableName1 "Process name should match table name"
         )
 
         testCase "SingleRowMixedValues GetProcesses" (fun () ->          
