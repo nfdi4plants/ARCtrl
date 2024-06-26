@@ -26,7 +26,7 @@ module AssayContractExtensions =
             let c = Contract.createCreate(path, DTOType.ISA_Assay, DTO.Spreadsheet (this |> ArcAssay.toFsWorkbook))
             [|
                 if withFolder then 
-                    let folderFS = FileSystemTree.createAssayFolder this.Identifier
+                    let folderFS =  FileSystemTree.createAssaysFolder([|FileSystemTree.createAssayFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
                         if p <> path then Contract.createCreate(p, DTOType.PlainText)
                 c

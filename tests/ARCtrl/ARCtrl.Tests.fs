@@ -335,6 +335,88 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
     )
+    testCase "empty_addAssay" (fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        i.InitAssay("MyAssay") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 4 $"Should contain exactly as much contracts as needed for new assay: {contractPathsString}"
+        // Assay file contract
+        let assayFilePath = "assays/MyAssay/isa.assay.xlsx"
+        let assayFileContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = assayFilePath)) $"Assay file contract for {assayFilePath} missing"
+        Expect.equal assayFileContract.Operation Operation.CREATE "Operation for assay file contract should be CREATE"
+        let assayFileDTOType = Expect.wantSome assayFileContract.DTOType "DTOType for assay file contract missing"
+        Expect.equal assayFileDTOType DTOType.ISA_Assay "DTOType for assay file contract should be ISA_Assay"
+        let assayFileDTO = Expect.wantSome assayFileContract.DTO "DTO for assay file contract missing"
+        let wb = assayFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let assay = ArcAssay.fromFsWorkbook wb
+        Expect.equal assay.Identifier "MyAssay" "Assay identifier should be set"
+        // readme contract
+        let readmeFilePath = "assays/MyAssay/README.md"
+        let readmeContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = readmeFilePath)) $"Readme contract for {readmeFilePath} missing"
+        Expect.equal readmeContract.Operation Operation.CREATE "Operation for readme contract should be CREATE"
+        let readmeDTOType = Expect.wantSome readmeContract.DTOType "DTOType for readme contract missing"
+        Expect.equal readmeDTOType DTOType.PlainText "DTOType for readme contract should be ISA_Readme"
+        Expect.isNone readmeContract.DTO "DTO for readme contract should be None"
+        // protocols gitkeep contract
+        let protocolsGitkeepFilePath = "assays/MyAssay/protocols/.gitkeep"
+        let protocolsGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = protocolsGitkeepFilePath)) $"Protocols gitkeep contract for {protocolsGitkeepFilePath} missing"
+        Expect.equal protocolsGitkeepContract.Operation Operation.CREATE "Operation for protocols gitkeep contract should be CREATE"
+        let protocolsGitkeepDTOType = Expect.wantSome protocolsGitkeepContract.DTOType "DTOType for protocols gitkeep contract missing"
+        Expect.equal protocolsGitkeepDTOType DTOType.PlainText "DTOType for protocols gitkeep contract should be GitKeep"
+        Expect.isNone protocolsGitkeepContract.DTO "DTO for protocols gitkeep contract should be None"
+        // dataset gitkeep contract
+        let datasetGitkeepFilePath = "assays/MyAssay/dataset/.gitkeep"
+        let datasetGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = datasetGitkeepFilePath)) $"Dataset gitkeep contract for {datasetGitkeepFilePath} missing"
+        Expect.equal datasetGitkeepContract.Operation Operation.CREATE "Operation for dataset gitkeep contract should be CREATE"
+        let datasetGitkeepDTOType = Expect.wantSome datasetGitkeepContract.DTOType "DTOType for dataset gitkeep contract missing"
+        Expect.equal datasetGitkeepDTOType DTOType.PlainText "DTOType for dataset gitkeep contract should be GitKeep"
+        Expect.isNone datasetGitkeepContract.DTO "DTO for dataset gitkeep contract should be None"
+    )
+    testCase "empty_addStudy" (fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        i.InitStudy("MyStudy") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 4 $"Should contain exactly as much contracts as needed for new study: {contractPathsString}"
+        // Study file contract
+        let studyFilePath = "studies/MyStudy/isa.study.xlsx"
+        let studyFileContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = studyFilePath)) $"Study file contract for {studyFilePath} missing"
+        Expect.equal studyFileContract.Operation Operation.CREATE "Operation for study file contract should be CREATE"
+        let studyFileDTOType = Expect.wantSome studyFileContract.DTOType "DTOType for study file contract missing"
+        Expect.equal studyFileDTOType DTOType.ISA_Study "DTOType for study file contract should be ISA_Study"
+        let studyFileDTO = Expect.wantSome studyFileContract.DTO "DTO for study file contract missing"
+        let wb = studyFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let study,_ = ArcStudy.fromFsWorkbook wb
+        Expect.equal study.Identifier "MyStudy" "Study identifier should be set"
+        // readme contract
+        let readmeFilePath = "studies/MyStudy/README.md"
+        let readmeContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = readmeFilePath)) $"Readme contract for {readmeFilePath} missing"
+        Expect.equal readmeContract.Operation Operation.CREATE "Operation for readme contract should be CREATE"
+        let readmeDTOType = Expect.wantSome readmeContract.DTOType "DTOType for readme contract missing"
+        Expect.equal readmeDTOType DTOType.PlainText "DTOType for readme contract should be ISA_Readme"
+        Expect.isNone readmeContract.DTO "DTO for readme contract should be None"
+        // protocols gitkeep contract
+        let protocolsGitkeepFilePath = "studies/MyStudy/protocols/.gitkeep"
+        let protocolsGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = protocolsGitkeepFilePath)) $"Protocols gitkeep contract for {protocolsGitkeepFilePath} missing"
+        Expect.equal protocolsGitkeepContract.Operation Operation.CREATE "Operation for protocols gitkeep contract should be CREATE"
+        let protocolsGitkeepDTOType = Expect.wantSome protocolsGitkeepContract.DTOType "DTOType for protocols gitkeep contract missing"
+        Expect.equal protocolsGitkeepDTOType DTOType.PlainText "DTOType for protocols gitkeep contract should be GitKeep"
+        Expect.isNone protocolsGitkeepContract.DTO "DTO for protocols gitkeep contract should be None"
+        // resources gitkeep contract
+        let resourcesGitkeepFilePath = "studies/MyStudy/resources/.gitkeep"
+        let resourcesGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = resourcesGitkeepFilePath)) $"Resources gitkeep contract for {resourcesGitkeepFilePath} missing"
+        Expect.equal resourcesGitkeepContract.Operation Operation.CREATE "Operation for resources gitkeep contract should be CREATE"
+        let resourcesGitkeepDTOType = Expect.wantSome resourcesGitkeepContract.DTOType "DTOType for resources gitkeep contract missing"
+        Expect.equal resourcesGitkeepDTOType DTOType.PlainText "DTOType for resources gitkeep contract should be GitKeep"
+        Expect.isNone resourcesGitkeepContract.DTO "DTO for resources gitkeep contract should be None"
+    )
     testCase "init_simpleISA" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         inv.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
