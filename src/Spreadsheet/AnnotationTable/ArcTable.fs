@@ -71,10 +71,10 @@ let helperColumnStrings =
         "Data Selector Format"
     ]
 
-let groupColumnsByHeader (columns : list<FsColumn>) = 
-    columns
+let groupColumnsByHeader (stringCellColumns : list<string list>) = 
+    stringCellColumns
     |> Aux.List.groupWhen (fun c -> 
-        let v = c.[1].ValueAsString()
+        let v = c.[0]
         helperColumnStrings
         |> List.exists (fun s -> v.StartsWith s) 
         |> not
@@ -86,11 +86,11 @@ let tryAnnotationTable (sheet : FsWorksheet) =
     |> Seq.tryFind (fun t -> t.Name.StartsWith annotationTablePrefix)
 
 /// Groups and parses a collection of single columns into the according ISA composite columns
-let composeColumns (columns : seq<FsColumn>) : CompositeColumn [] =
-    columns
+let composeColumns (stringCellColumns : list<string list>) : CompositeColumn [] =
+    stringCellColumns
     |> Seq.toList
     |> groupColumnsByHeader
-    |> List.map CompositeColumn.fromFsColumns
+    |> List.map CompositeColumn.fromStringCellColumns
     |> List.toArray
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
@@ -98,9 +98,18 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
     try
         match tryAnnotationTable sheet with
         | Some (t: FsTable) -> 
+            let stringCellColumns = 
+                [
+                for c = 1 to t.RangeAddress.LastAddress.ColumnNumber do
+                    [for r = 1 to t.RangeAddress.LastAddress.RowNumber do
+                        match sheet.CellCollection.TryGetCell(r,c) with
+                        | Some cell -> cell.ValueAsString()
+                        | None -> ""
+                    ]
+                ]              
             let compositeColumns = 
-                t.GetColumns(sheet.CellCollection)
-                |> Seq.map CompositeColumn.fixDeprecatedIOHeader
+                stringCellColumns
+                |> List.map CompositeColumn.fixDeprecatedIOHeader
                 |> composeColumns
             ArcTable.init sheet.Name
             |> ArcTable.addColumns(compositeColumns,skipFillMissing = true)
@@ -124,26 +133,25 @@ let toFsWorksheet (table : ArcTable) =
         table.Columns
         |> List.ofArray
         |> List.sortBy classifyColumnOrder
-        |> List.collect CompositeColumn.toFsColumns
+        |> List.collect CompositeColumn.toStringCellColumns
     let maxRow = columns.Head.Length
     let maxCol = columns.Length
     let fsTable = ws.Table("annotationTable",FsRangeAddress(FsAddress(1,1),FsAddress(maxRow,maxCol)))
     columns
     |> List.iteri (fun colI col ->         
         col
-        |> List.iteri (fun rowI cell -> 
+        |> List.iteri (fun rowI stringCell -> 
             let value = 
-                let v = cell.ValueAsString()
                 if rowI = 0 then
                     
-                    match Dictionary.tryGet v stringCount with
+                    match Dictionary.tryGet stringCell stringCount with
                     | Some spaces ->
-                        stringCount.[v] <- spaces + " "
-                        v + " " + spaces
+                        stringCount.[stringCell] <- spaces + " "
+                        stringCell + " " + spaces
                     | None ->
-                        stringCount.Add(cell.ValueAsString(),"")
-                        v
-                else v
+                        stringCount.Add(stringCell,"")
+                        stringCell
+                else stringCell
             let address = FsAddress(rowI+1,colI+1)
             fsTable.Cell(address, ws.CellCollection).SetValueAs value
         )  
