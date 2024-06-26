@@ -716,6 +716,63 @@ let tests_RenameAssay = testList "RenameAssay" [
         let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
         let updatedAssay = ArcAssay.fromFsWorkbook wb
         Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
+    testCase "NotRegisteredInStudy" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitStudy("MyStudy") |> ignore
+        i.InitAssay("MyOldAssay") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        Expect.hasLength contracts 2 "Contract count is wrong"
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "assays/MyOldAssay" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "assays/MyNewAssay"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        let updateContract = contracts.[1]
+        Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal updateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
+        let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
+        Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
+        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedAssay = ArcAssay.fromFsWorkbook wb
+        Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
+    testCase "RegisteredInStudy" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let s = i.InitStudy("MyStudy")
+        s.InitRegisteredAssay("MyOldAssay") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        Expect.hasLength contracts 3 "Contract count is wrong"
+        // Rename contract
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "assays/MyOldAssay" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "assays/MyNewAssay"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Study Update contract
+        let StudyUpdateContract = contracts.[1]
+        Expect.equal StudyUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal StudyUpdateContract.Path "studies/MyStudy/isa.study.xlsx" "Update contract path"
+        let studyUpdateDTO = Expect.wantSome StudyUpdateContract.DTO "Update contract dto"
+        Expect.isTrue studyUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = studyUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
+        Expect.equal updatedStudy.Identifier "MyStudy" "Update contract Study Identifier"
+        Expect.hasLength updatedStudy.RegisteredAssayIdentifiers 1 "Update contract Study Assay count"
+        Expect.equal updatedStudy.RegisteredAssayIdentifiers.[0] "MyNewAssay" "Update contract Study Assay Identifier"
+        // Assay Update contract
+        let assayUpdateContract = contracts.[2]
+        Expect.equal assayUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal assayUpdateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
+        let assayUpdateDTO = Expect.wantSome assayUpdateContract.DTO "Update contract dto"
+        Expect.isTrue assayUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = assayUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedAssay = ArcAssay.fromFsWorkbook wb
+        Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
 ]
 
 open ARCtrl.Spreadsheet
@@ -737,12 +794,14 @@ let tests_RenameStudy = testList "RenameStudy" [
         arc.GetWriteContracts() |> ignore
         let contracts = arc.RenameStudy("MyOldStudy","MyNewStudy")
         Expect.hasLength contracts 2 "Contract count is wrong"
+        // Rename contract
         let renameContract = contracts.[0]
         Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
         Expect.equal "studies/MyOldStudy" renameContract.Path "Rename contract path"
         let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
         let expectedRenameDTO = DTO.Text "studies/MyNewStudy"
         Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Update study contract
         let updateContract = contracts.[1]
         Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
         Expect.equal updateContract.Path "studies/MyNewStudy/isa.study.xlsx" "Update contract path"
@@ -751,7 +810,43 @@ let tests_RenameStudy = testList "RenameStudy" [
         let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
         let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
         Expect.equal updatedStudy.Identifier "MyNewStudy" "Update contract Study Identifier"
-]
+    testCase "RegisteredInInvestigation" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitStudy("MyOldStudy") |> ignore
+        i.RegisterStudy("MyOldStudy") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameStudy("MyOldStudy","MyNewStudy")
+        Expect.hasLength contracts 3 "Contract count is wrong"
+        // Rename contract
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "studies/MyOldStudy" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "studies/MyNewStudy"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Investigation Update contract
+        let invUpdateContract = contracts.[1]
+        Expect.equal invUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal invUpdateContract.Path "isa.investigation.xlsx" "Update contract path"
+        let invUpdateDTO = Expect.wantSome invUpdateContract.DTO "Update contract dto"
+        Expect.isTrue invUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = invUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedInvestigation = ArcInvestigation.fromFsWorkbook wb
+        Expect.equal updatedInvestigation.Identifier "MyInvestigation" "Update contract Investigation Identifier"
+        Expect.hasLength updatedInvestigation.RegisteredStudyIdentifiers 1 "Update contract Investigation Study count"
+        Expect.equal updatedInvestigation.RegisteredStudyIdentifiers.[0] "MyNewStudy" "Update contract Investigation Study Identifier"
+        // Study update contract
+        let studyUpdateContract = contracts.[2]
+        Expect.equal studyUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal studyUpdateContract.Path "studies/MyNewStudy/isa.study.xlsx" "Update contract path"
+        let studyUpdateDTO = Expect.wantSome studyUpdateContract.DTO "Update contract dto"
+        Expect.isTrue studyUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = studyUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
+        Expect.equal updatedStudy.Identifier "MyNewStudy" "Update contract Study Identifier"
+
+] 
 
 let main = testList "ARCtrl" [
     tests_model

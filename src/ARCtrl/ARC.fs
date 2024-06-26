@@ -315,13 +315,12 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
     /// <summary>
     /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
-    member this.GetWriteContracts (?isLight: bool) =
-        let isLight = defaultArg isLight true
+    member this.GetWriteContracts () =
         /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match this.ISA with
         | Some inv -> 
-            let investigationConverter = if isLight then Spreadsheet.ArcInvestigation.toLightFsWorkbook else Spreadsheet.ArcInvestigation.toFsWorkbook
+            let investigationConverter = Spreadsheet.ArcInvestigation.toFsWorkbook
             workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
             inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
@@ -357,7 +356,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             
         | None -> 
             //printfn "ARC contains no ISA part."
-            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toLightFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)
@@ -373,14 +372,13 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
     /// 
     /// ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
-    member this.GetUpdateContracts (?isLight: bool) =
-        let isLight = defaultArg isLight true
+    member this.GetUpdateContracts () =
         // Map containing the DTOTypes and objects for the ISA objects.
         match this.ISA with
         | None -> // if no ISA is present, return write contracts
-            this.GetWriteContracts(isLight) 
+            this.GetWriteContracts() 
         | Some inv when inv.StaticHash = 0 -> // if ISA is present but has not been written to disk, return write contracts
-            this.GetWriteContracts(isLight)
+            this.GetWriteContracts()
         | Some inv -> 
             [|
                 // Get Investigation contract
@@ -389,7 +387,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                 //if inv.StaticHash = 0 then       
                 //    yield inv.ToCreateContract(isLight)
                 if inv.StaticHash <> hash then 
-                    yield inv.ToUpdateContract(isLight)
+                    yield inv.ToUpdateContract()
                 inv.StaticHash <- hash
 
                 // Get Study contracts             
