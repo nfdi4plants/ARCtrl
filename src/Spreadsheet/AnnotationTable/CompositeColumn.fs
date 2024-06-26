@@ -9,44 +9,45 @@ open FsSpreadsheet
 /// The old format of IO Headers was only the type of IO so, e.g. "Source Name" or "Raw Data File".
 ///
 /// A "Source Name" column will now be mapped to the propper "Input [Source Name]", and all other IO types will be mapped to "Output [<IO Type>]".
-let fixDeprecatedIOHeader (stringCellCol : string list) = 
+let fixDeprecatedIOHeader (stringCellCol : string []) = 
     if stringCellCol.Length = 0 then 
         failwith "Can't fix IOHeader Invalid column, neither header nor values given"
-    let values = stringCellCol |> List.skip 1
+    let values = stringCellCol |> Array.skip 1
     match IOType.ofString (stringCellCol.[0]) with
     | IOType.FreeText _ -> stringCellCol
     | IOType.Source -> 
         let comp = CompositeHeader.Input (IOType.Source)       
-        comp.ToString() :: values
+        stringCellCol.[0] <- comp.ToString()
+        stringCellCol
     | ioType ->
         let comp = CompositeHeader.Output (ioType)       
-        comp.ToString() :: values
+        stringCellCol.[0] <- comp.ToString()
+        stringCellCol
 
-let fromStringCellColumns (columns : list<string list>) : CompositeColumn =
+let fromStringCellColumns (columns : array<string []>) : CompositeColumn =
     let header, cellParser = 
         columns
-        |> List.map (fun c -> c.[0])
+        |> Array.map (fun c -> c.[0])
         |> CompositeHeader.fromStringCells
     let l = columns.[0].Length
     let cells = 
         [|
         for i = 1 to l - 1 do
             columns
-            |> List.map (fun c -> c.[i])
+            |> Array.map (fun c -> c.[i])
             |> cellParser
         |]                 
     CompositeColumn.create(header,cells)
 
 
-let fromFsColumns (columns : list<FsColumn>) : CompositeColumn = 
+let fromFsColumns (columns : FsColumn []) : CompositeColumn = 
     let stringCellColumns = 
         columns
-        |> List.map (fun c -> 
+        |> Array.map (fun c -> 
             c.ToDenseColumn()
             c.Cells
-            |> Seq.toList
-            |> List.map (fun c -> c.ValueAsString())
-
+            |> Seq.toArray
+            |> Array.map (fun c -> c.ValueAsString())
         )
     fromStringCellColumns stringCellColumns
 

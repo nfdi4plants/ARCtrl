@@ -71,14 +71,17 @@ let helperColumnStrings =
         "Data Selector Format"
     ]
 
-let groupColumnsByHeader (stringCellColumns : list<string list>) = 
+let groupColumnsByHeader (stringCellColumns : array<string []>) = 
     stringCellColumns
+    |> Array.toList
     |> Aux.List.groupWhen (fun c -> 
         let v = c.[0]
         helperColumnStrings
         |> List.exists (fun s -> v.StartsWith s) 
         |> not
     )
+    |> Array.ofList
+    |> Array.map Array.ofList
 
 /// Returns the annotation table of the worksheet if it exists, else returns None
 let tryAnnotationTable (sheet : FsWorksheet) =
@@ -86,12 +89,10 @@ let tryAnnotationTable (sheet : FsWorksheet) =
     |> Seq.tryFind (fun t -> t.Name.StartsWith annotationTablePrefix)
 
 /// Groups and parses a collection of single columns into the according ISA composite columns
-let composeColumns (stringCellColumns : list<string list>) : CompositeColumn [] =
+let composeColumns (stringCellColumns : array<string []>) : CompositeColumn [] =
     stringCellColumns
-    |> Seq.toList
     |> groupColumnsByHeader
-    |> List.map CompositeColumn.fromStringCellColumns
-    |> List.toArray
+    |> Array.map CompositeColumn.fromStringCellColumns
 
 /// Returns the protocol described by the headers and a function for parsing the values of the matrix to the processes of this protocol
 let tryFromFsWorksheet (sheet : FsWorksheet) =
@@ -99,17 +100,17 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
         match tryAnnotationTable sheet with
         | Some (t: FsTable) -> 
             let stringCellColumns = 
-                [
+                [|
                 for c = 1 to t.RangeAddress.LastAddress.ColumnNumber do
-                    [for r = 1 to t.RangeAddress.LastAddress.RowNumber do
+                    [|for r = 1 to t.RangeAddress.LastAddress.RowNumber do
                         match sheet.CellCollection.TryGetCell(r,c) with
                         | Some cell -> cell.ValueAsString()
                         | None -> ""
-                    ]
-                ]              
+                    |]
+                |]              
             let compositeColumns = 
                 stringCellColumns
-                |> List.map CompositeColumn.fixDeprecatedIOHeader
+                |> Array.map CompositeColumn.fixDeprecatedIOHeader
                 |> composeColumns
             ArcTable.init sheet.Name
             |> ArcTable.addColumns(compositeColumns,skipFillMissing = true)

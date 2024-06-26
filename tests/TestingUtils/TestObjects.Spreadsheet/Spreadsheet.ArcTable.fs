@@ -419,7 +419,7 @@ let initTable (appendOperations : (FsCellsCollection -> FsTable -> unit) list)=
 let initTableCols (appendOperations : (FsCellsCollection -> FsTable -> unit) list)= 
     let c,t = initTable appendOperations
     t.GetColumns(c)
-    |> Seq.toList
+    |> Seq.toArray
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(name)
