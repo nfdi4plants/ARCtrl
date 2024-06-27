@@ -225,13 +225,13 @@ type FileSystemTree =
     static member createAssaysFolder(assays : FileSystemTree array) =
         FileSystemTree.createFolder(
             ARCtrl.Path.AssaysFolderName, 
-            Array.append [|if assays.Length = 0 then FileSystemTree.createGitKeepFile()|] assays
+            Array.append [|FileSystemTree.createGitKeepFile()|] assays
         )
 
     static member createStudiesFolder(studies : FileSystemTree array) =
         FileSystemTree.createFolder(
             ARCtrl.Path.StudiesFolderName,
-            Array.append [|if studies.Length = 0 then FileSystemTree.createGitKeepFile()|] studies
+            Array.append [|FileSystemTree.createGitKeepFile()|] studies
         )
 
     static member createWorkflowsFolder(workflows : FileSystemTree array) =
