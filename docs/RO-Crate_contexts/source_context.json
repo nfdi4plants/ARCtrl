@@ -1,0 +1,7 @@
+{
+  "sdo": "http://schema.org/",
+  "bio": "https://bioschemas.org/",
+  "Source": "bio:Sample",
+  "name": "sdo:name",
+  "characteristics": "bio:additionalProperty"
+}

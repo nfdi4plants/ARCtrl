@@ -1,0 +1,9 @@
+{
+  "sdo": "http://schema.org/",
+  "OntologySourceReference": "sdo:DefinedTermSet",
+  "description": "sdo:description",
+  "name": "sdo:name",
+  "file": "sdo:url",
+  "version": "sdo:version",
+  "comments": "sdo:disambiguatingDescription"
+}

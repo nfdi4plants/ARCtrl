@@ -1,0 +1,14 @@
+{
+  "sdo": "http://schema.org/",
+  "bio": "https://bioschemas.org/",
+  "Protocol": "bio:LabProtocol",
+  "name": "sdo:name",
+  "protocolType": "bio:intendedUse",
+  "description": "sdo:description",
+  "version": "sdo:version",
+  "components": "bio:labEquipment",
+  "reagents": "bio:reagent",
+  "computationalTools": "bio:computationalTool",
+  "uri": "sdo:url",
+  "comments": "sdo:comment"
+}

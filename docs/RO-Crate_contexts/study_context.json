@@ -1,0 +1,17 @@
+{
+  "sdo": "http://schema.org/",
+  "Study": "sdo:Dataset",
+  "identifier": "sdo:identifier",
+  "title": "sdo:headline",
+  "additionalType": "sdo:additionalType",
+  "description": "sdo:description",
+  "submissionDate": "sdo:dateCreated",
+  "publicReleaseDate": "sdo:datePublished",
+  "publications": "sdo:citation",
+  "people": "sdo:creator",
+  "assays": "sdo:hasPart",
+  "filename": "sdo:alternateName",
+  "comments": "sdo:comment",
+  "processSequence": "sdo:about",
+  "studyDesignDescriptors": "arc:ARC#ARC_00000037"
+}

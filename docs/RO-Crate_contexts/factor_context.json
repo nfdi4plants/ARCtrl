@@ -1,0 +1,9 @@
+{
+  "sdo": "http://schema.org/",
+  "Factor": "sdo:DefinedTerm",
+  "factorName": "sdo:name",
+  "annotationValue": "sdo:name",
+  "termSource": "sdo:inDefinedTermSet",
+  "termAccession": "sdo:termCode",
+  "comments": "sdo:disambiguatingDescription"
+}

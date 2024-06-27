@@ -1,0 +1,10 @@
+{
+  "sdo": "http://schema.org/",
+  "Component": "sdo:PropertyValue",
+  "category": "sdo:name",
+  "categoryCode": "sdo:propertyID",
+  "value": "sdo:value",
+  "valueCode": "sdo:valueReference",
+  "unit": "sdo:unitText",
+  "unitCode": "sdo:unitCode"
+}

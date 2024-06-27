@@ -1,0 +1,10 @@
+{
+  "sdo": "http://schema.org/",
+  "Publication": "sdo:ScholarlyArticle",
+  "pubMedID": "sdo:url",
+  "doi": "sdo:sameAs",
+  "title": "sdo:headline",
+  "status": "sdo:creativeWorkStatus",
+  "authorList": "sdo:author",
+  "comments": "sdo:disambiguatingDescription"
+}
