@@ -164,7 +164,7 @@ module ArcInvestigation =
             failwith "emptyInvestigationFile"
  
    
-    let toRows (isLight: bool) (investigation:ArcInvestigation) : seq<SparseRow> =
+    let toRows (investigation:ArcInvestigation) : seq<SparseRow> =
         let insertRemarks (remarks:Remark list) (rows:seq<SparseRow>) = 
             try 
                 let rm = remarks |> List.map Remark.toTuple |> Map.ofList            
@@ -194,11 +194,10 @@ module ArcInvestigation =
             yield  SparseRow.fromValues [contactsLabel]
             yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofSeq investigation.Contacts)
 
-            if not isLight then
-                for studyIdentifier in investigation.RegisteredStudyIdentifiers do
-                    let study = investigation.TryGetStudy(studyIdentifier) |> Option.defaultValue (ArcStudy(studyIdentifier))
-                    yield  SparseRow.fromValues [studyLabel]
-                    yield! Studies.toRows study None
+            for studyIdentifier in investigation.RegisteredStudyIdentifiers do
+                let study = investigation.TryGetStudy(studyIdentifier) |> Option.defaultValue (ArcStudy(studyIdentifier))
+                yield  SparseRow.fromValues [studyLabel]
+                yield! Studies.toRows study None
         }
         |> insertRemarks (List.ofSeq investigation.Remarks)
         |> seq
@@ -222,19 +221,7 @@ module ArcInvestigation =
             let wb = new FsWorkbook()
             let sheet = FsWorksheet(metaDataSheetName)
             investigation
-            |> toRows false
-            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
-            wb.AddWorksheet(sheet)
-            wb
-        with
-        | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message
-
-    let toLightFsWorkbook (investigation: ArcInvestigation) : FsWorkbook =
-        try
-            let wb = new FsWorkbook()
-            let sheet = FsWorksheet(metaDataSheetName)
-            investigation
-            |> toRows true
+            |> toRows
             |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
             wb.AddWorksheet(sheet)
             wb

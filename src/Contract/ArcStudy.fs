@@ -29,7 +29,7 @@ module StudyContractExtensions =
                 if withFolder then 
                     let folderFS = FileSystemTree.createStudiesFolder ([|FileSystemTree.createStudyFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
-                        if p <> path then Contract.createCreate(p, DTOType.PlainText)
+                        if p <> path && p <> "studies/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
                 c
             |]
 

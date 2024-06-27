@@ -25,9 +25,7 @@ module XlsxHelper =
     [<AttachMembers>]
     type InvestigationXlsx() =
         member _.fromFsWorkbook (fswb: FsWorkbook) = ArcInvestigation.fromFsWorkbook fswb
-        member _.toFsWorkbook (investigation: ArcInvestigation) = ArcInvestigation.toFsWorkbook(investigation)
-        member _.toLightFsWorkbook (investigation: ArcInvestigation) = ArcInvestigation.toLightFsWorkbook(investigation)
-        
+        member _.toFsWorkbook (investigation: ArcInvestigation) = ArcInvestigation.toFsWorkbook(investigation)        
 
 open XlsxHelper
 

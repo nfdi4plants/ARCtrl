@@ -20,16 +20,14 @@ module InvestigationContractExtensions =
 
     type ArcInvestigation with
 
-        member this.ToCreateContract (?isLight: bool) =
-            let isLight = defaultArg isLight true
-            let converter = if isLight then ArcInvestigation.toLightFsWorkbook else ArcInvestigation.toFsWorkbook
+        member this.ToCreateContract () =
+            let converter = ArcInvestigation.toFsWorkbook
             let path = InvestigationFileName
             let c = Contract.createCreate(path, DTOType.ISA_Investigation, DTO.Spreadsheet (this |> converter))
             c
 
-        member this.ToUpdateContract (?isLight: bool) =
-            let isLight = defaultArg isLight true
-            let converter = if isLight then ArcInvestigation.toLightFsWorkbook else ArcInvestigation.toFsWorkbook
+        member this.ToUpdateContract () =
+            let converter = ArcInvestigation.toFsWorkbook
             let path = InvestigationFileName
             let c = Contract.createUpdate(path, DTOType.ISA_Investigation, DTO.Spreadsheet (this |> converter))
             c
@@ -44,11 +42,11 @@ module InvestigationContractExtensions =
         //    let c = Contract.createDelete(path)
         //    c
 
-        static member toCreateContract (inv: ArcInvestigation, ?isLight: bool) : Contract =
-            inv.ToCreateContract(?isLight=isLight)
+        static member toCreateContract (inv: ArcInvestigation) : Contract =
+            inv.ToCreateContract()
 
-        static member toUpdateContract (inv: ArcInvestigation, ?isLight: bool) : Contract =
-            inv.ToUpdateContract(?isLight=isLight)
+        static member toUpdateContract (inv: ArcInvestigation) : Contract =
+            inv.ToUpdateContract()
 
         static member tryFromReadContract (c:Contract) =
             match c with

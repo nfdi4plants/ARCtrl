@@ -1090,6 +1090,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashSeq this.StudyDesignDescriptors
             HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.RegisteredAssayIdentifiers
             HashCodes.boxHashSeq this.Comments
         |]
         |> HashCodes.boxHashArray 
@@ -1292,11 +1293,13 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         )
         this.Studies
         |> Seq.iter (fun s ->
-            s.RegisteredAssayIdentifiers
-            |> Seq.iteri (fun i ai -> 
-                if ai = oldIdentifier then
-                    s.RegisteredAssayIdentifiers[i] <- newIdentifier
-            )       
+            let index = 
+                s.RegisteredAssayIdentifiers 
+                |> Seq.tryFindIndex (fun ai -> ai = oldIdentifier)
+            match index with
+            | None -> ()
+            | Some index -> 
+                s.RegisteredAssayIdentifiers.[index] <- newIdentifier
         )
 
     static member renameAssay(oldIdentifier: string, newIdentifier: string) =       
@@ -1543,11 +1546,12 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             if s.Identifier = oldIdentifier then 
                 s.Identifier <- newIdentifier
         )
-        this.RegisteredStudyIdentifiers
-        |> Seq.iteri (fun i si -> 
-            if si = oldIdentifier then
-                this.RegisteredStudyIdentifiers.[i] <- newIdentifier
-        )
+        let index =
+            this.RegisteredStudyIdentifiers
+            |> Seq.tryFindIndex (fun si -> si = oldIdentifier)
+        match index with
+        | None -> ()
+        | Some index -> this.RegisteredStudyIdentifiers.[index] <- newIdentifier
 
     /// <summary>
     /// Renames a study in the whole investigation
@@ -1925,6 +1929,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             HashCodes.boxHashSeq this.Publications
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashSeq this.OntologySourceReferences
+            HashCodes.boxHashSeq this.RegisteredStudyIdentifiers
             HashCodes.boxHashSeq this.Comments
             HashCodes.boxHashSeq this.Remarks
         |]

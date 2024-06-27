@@ -335,6 +335,88 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
     )
+    testCase "empty_addAssay" (fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        i.InitAssay("MyAssay") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 4 $"Should contain exactly as much contracts as needed for new assay: {contractPathsString}"
+        // Assay file contract
+        let assayFilePath = "assays/MyAssay/isa.assay.xlsx"
+        let assayFileContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = assayFilePath)) $"Assay file contract for {assayFilePath} missing"
+        Expect.equal assayFileContract.Operation Operation.CREATE "Operation for assay file contract should be CREATE"
+        let assayFileDTOType = Expect.wantSome assayFileContract.DTOType "DTOType for assay file contract missing"
+        Expect.equal assayFileDTOType DTOType.ISA_Assay "DTOType for assay file contract should be ISA_Assay"
+        let assayFileDTO = Expect.wantSome assayFileContract.DTO "DTO for assay file contract missing"
+        let wb = assayFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let assay = ArcAssay.fromFsWorkbook wb
+        Expect.equal assay.Identifier "MyAssay" "Assay identifier should be set"
+        // readme contract
+        let readmeFilePath = "assays/MyAssay/README.md"
+        let readmeContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = readmeFilePath)) $"Readme contract for {readmeFilePath} missing"
+        Expect.equal readmeContract.Operation Operation.CREATE "Operation for readme contract should be CREATE"
+        let readmeDTOType = Expect.wantSome readmeContract.DTOType "DTOType for readme contract missing"
+        Expect.equal readmeDTOType DTOType.PlainText "DTOType for readme contract should be ISA_Readme"
+        Expect.isNone readmeContract.DTO "DTO for readme contract should be None"
+        // protocols gitkeep contract
+        let protocolsGitkeepFilePath = "assays/MyAssay/protocols/.gitkeep"
+        let protocolsGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = protocolsGitkeepFilePath)) $"Protocols gitkeep contract for {protocolsGitkeepFilePath} missing"
+        Expect.equal protocolsGitkeepContract.Operation Operation.CREATE "Operation for protocols gitkeep contract should be CREATE"
+        let protocolsGitkeepDTOType = Expect.wantSome protocolsGitkeepContract.DTOType "DTOType for protocols gitkeep contract missing"
+        Expect.equal protocolsGitkeepDTOType DTOType.PlainText "DTOType for protocols gitkeep contract should be GitKeep"
+        Expect.isNone protocolsGitkeepContract.DTO "DTO for protocols gitkeep contract should be None"
+        // dataset gitkeep contract
+        let datasetGitkeepFilePath = "assays/MyAssay/dataset/.gitkeep"
+        let datasetGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = datasetGitkeepFilePath)) $"Dataset gitkeep contract for {datasetGitkeepFilePath} missing"
+        Expect.equal datasetGitkeepContract.Operation Operation.CREATE "Operation for dataset gitkeep contract should be CREATE"
+        let datasetGitkeepDTOType = Expect.wantSome datasetGitkeepContract.DTOType "DTOType for dataset gitkeep contract missing"
+        Expect.equal datasetGitkeepDTOType DTOType.PlainText "DTOType for dataset gitkeep contract should be GitKeep"
+        Expect.isNone datasetGitkeepContract.DTO "DTO for dataset gitkeep contract should be None"
+    )
+    testCase "empty_addStudy" (fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        i.InitStudy("MyStudy") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 4 $"Should contain exactly as much contracts as needed for new study: {contractPathsString}"
+        // Study file contract
+        let studyFilePath = "studies/MyStudy/isa.study.xlsx"
+        let studyFileContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = studyFilePath)) $"Study file contract for {studyFilePath} missing"
+        Expect.equal studyFileContract.Operation Operation.CREATE "Operation for study file contract should be CREATE"
+        let studyFileDTOType = Expect.wantSome studyFileContract.DTOType "DTOType for study file contract missing"
+        Expect.equal studyFileDTOType DTOType.ISA_Study "DTOType for study file contract should be ISA_Study"
+        let studyFileDTO = Expect.wantSome studyFileContract.DTO "DTO for study file contract missing"
+        let wb = studyFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let study,_ = ArcStudy.fromFsWorkbook wb
+        Expect.equal study.Identifier "MyStudy" "Study identifier should be set"
+        // readme contract
+        let readmeFilePath = "studies/MyStudy/README.md"
+        let readmeContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = readmeFilePath)) $"Readme contract for {readmeFilePath} missing"
+        Expect.equal readmeContract.Operation Operation.CREATE "Operation for readme contract should be CREATE"
+        let readmeDTOType = Expect.wantSome readmeContract.DTOType "DTOType for readme contract missing"
+        Expect.equal readmeDTOType DTOType.PlainText "DTOType for readme contract should be ISA_Readme"
+        Expect.isNone readmeContract.DTO "DTO for readme contract should be None"
+        // protocols gitkeep contract
+        let protocolsGitkeepFilePath = "studies/MyStudy/protocols/.gitkeep"
+        let protocolsGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = protocolsGitkeepFilePath)) $"Protocols gitkeep contract for {protocolsGitkeepFilePath} missing"
+        Expect.equal protocolsGitkeepContract.Operation Operation.CREATE "Operation for protocols gitkeep contract should be CREATE"
+        let protocolsGitkeepDTOType = Expect.wantSome protocolsGitkeepContract.DTOType "DTOType for protocols gitkeep contract missing"
+        Expect.equal protocolsGitkeepDTOType DTOType.PlainText "DTOType for protocols gitkeep contract should be GitKeep"
+        Expect.isNone protocolsGitkeepContract.DTO "DTO for protocols gitkeep contract should be None"
+        // resources gitkeep contract
+        let resourcesGitkeepFilePath = "studies/MyStudy/resources/.gitkeep"
+        let resourcesGitkeepContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = resourcesGitkeepFilePath)) $"Resources gitkeep contract for {resourcesGitkeepFilePath} missing"
+        Expect.equal resourcesGitkeepContract.Operation Operation.CREATE "Operation for resources gitkeep contract should be CREATE"
+        let resourcesGitkeepDTOType = Expect.wantSome resourcesGitkeepContract.DTOType "DTOType for resources gitkeep contract missing"
+        Expect.equal resourcesGitkeepDTOType DTOType.PlainText "DTOType for resources gitkeep contract should be GitKeep"
+        Expect.isNone resourcesGitkeepContract.DTO "DTO for resources gitkeep contract should be None"
+    )
     testCase "init_simpleISA" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         inv.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
@@ -716,6 +798,63 @@ let tests_RenameAssay = testList "RenameAssay" [
         let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
         let updatedAssay = ArcAssay.fromFsWorkbook wb
         Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
+    testCase "NotRegisteredInStudy" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitStudy("MyStudy") |> ignore
+        i.InitAssay("MyOldAssay") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        Expect.hasLength contracts 2 "Contract count is wrong"
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "assays/MyOldAssay" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "assays/MyNewAssay"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        let updateContract = contracts.[1]
+        Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal updateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
+        let updateDTO = Expect.wantSome updateContract.DTO "Update contract dto"
+        Expect.isTrue updateDTO.isSpreadsheet "Update contract dto"
+        let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedAssay = ArcAssay.fromFsWorkbook wb
+        Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
+    testCase "RegisteredInStudy" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let s = i.InitStudy("MyStudy")
+        s.InitRegisteredAssay("MyOldAssay") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        Expect.hasLength contracts 3 "Contract count is wrong"
+        // Rename contract
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "assays/MyOldAssay" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "assays/MyNewAssay"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Study Update contract
+        let StudyUpdateContract = contracts.[1]
+        Expect.equal StudyUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal StudyUpdateContract.Path "studies/MyStudy/isa.study.xlsx" "Update contract path"
+        let studyUpdateDTO = Expect.wantSome StudyUpdateContract.DTO "Update contract dto"
+        Expect.isTrue studyUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = studyUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
+        Expect.equal updatedStudy.Identifier "MyStudy" "Update contract Study Identifier"
+        Expect.hasLength updatedStudy.RegisteredAssayIdentifiers 1 "Update contract Study Assay count"
+        Expect.equal updatedStudy.RegisteredAssayIdentifiers.[0] "MyNewAssay" "Update contract Study Assay Identifier"
+        // Assay Update contract
+        let assayUpdateContract = contracts.[2]
+        Expect.equal assayUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal assayUpdateContract.Path "assays/MyNewAssay/isa.assay.xlsx" "Update contract path"
+        let assayUpdateDTO = Expect.wantSome assayUpdateContract.DTO "Update contract dto"
+        Expect.isTrue assayUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = assayUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedAssay = ArcAssay.fromFsWorkbook wb
+        Expect.equal updatedAssay.Identifier "MyNewAssay" "Update contract Assay Identifier"
 ]
 
 open ARCtrl.Spreadsheet
@@ -737,12 +876,14 @@ let tests_RenameStudy = testList "RenameStudy" [
         arc.GetWriteContracts() |> ignore
         let contracts = arc.RenameStudy("MyOldStudy","MyNewStudy")
         Expect.hasLength contracts 2 "Contract count is wrong"
+        // Rename contract
         let renameContract = contracts.[0]
         Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
         Expect.equal "studies/MyOldStudy" renameContract.Path "Rename contract path"
         let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
         let expectedRenameDTO = DTO.Text "studies/MyNewStudy"
         Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Update study contract
         let updateContract = contracts.[1]
         Expect.equal updateContract.Operation Operation.UPDATE "Update contract operation"
         Expect.equal updateContract.Path "studies/MyNewStudy/isa.study.xlsx" "Update contract path"
@@ -751,7 +892,43 @@ let tests_RenameStudy = testList "RenameStudy" [
         let wb = updateDTO.AsSpreadsheet() :?> FsWorkbook
         let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
         Expect.equal updatedStudy.Identifier "MyNewStudy" "Update contract Study Identifier"
-]
+    testCase "RegisteredInInvestigation" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        i.InitStudy("MyOldStudy") |> ignore
+        i.RegisterStudy("MyOldStudy") |> ignore
+        let arc = ARC(isa = i)
+        arc.GetWriteContracts() |> ignore
+        let contracts = arc.RenameStudy("MyOldStudy","MyNewStudy")
+        Expect.hasLength contracts 3 "Contract count is wrong"
+        // Rename contract
+        let renameContract = contracts.[0]
+        Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
+        Expect.equal "studies/MyOldStudy" renameContract.Path "Rename contract path"
+        let renameDTO = Expect.wantSome renameContract.DTO "Rename contract dto"
+        let expectedRenameDTO = DTO.Text "studies/MyNewStudy"
+        Expect.equal renameDTO expectedRenameDTO "Rename contract dto"
+        // Investigation Update contract
+        let invUpdateContract = contracts.[1]
+        Expect.equal invUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal invUpdateContract.Path "isa.investigation.xlsx" "Update contract path"
+        let invUpdateDTO = Expect.wantSome invUpdateContract.DTO "Update contract dto"
+        Expect.isTrue invUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = invUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedInvestigation = ArcInvestigation.fromFsWorkbook wb
+        Expect.equal updatedInvestigation.Identifier "MyInvestigation" "Update contract Investigation Identifier"
+        Expect.hasLength updatedInvestigation.RegisteredStudyIdentifiers 1 "Update contract Investigation Study count"
+        Expect.equal updatedInvestigation.RegisteredStudyIdentifiers.[0] "MyNewStudy" "Update contract Investigation Study Identifier"
+        // Study update contract
+        let studyUpdateContract = contracts.[2]
+        Expect.equal studyUpdateContract.Operation Operation.UPDATE "Update contract operation"
+        Expect.equal studyUpdateContract.Path "studies/MyNewStudy/isa.study.xlsx" "Update contract path"
+        let studyUpdateDTO = Expect.wantSome studyUpdateContract.DTO "Update contract dto"
+        Expect.isTrue studyUpdateDTO.isSpreadsheet "Update contract dto"
+        let wb = studyUpdateDTO.AsSpreadsheet() :?> FsWorkbook
+        let updatedStudy,_ = ArcStudy.fromFsWorkbook wb
+        Expect.equal updatedStudy.Identifier "MyNewStudy" "Update contract Study Identifier"
+
+] 
 
 let main = testList "ARCtrl" [
     tests_model
