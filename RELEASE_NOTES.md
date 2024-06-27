@@ -1,5 +1,9 @@
-### 2.0.0+dba6e24 (Released 2024-6-25)
+### 2.0.0+06ab9f5 (Released 2024-6-27)
 * Additions:
+    * [[#485d778](https://github.com/nfdi4plants/ARCtrl/commit/485d778ed49f99b1ae7994d1a1e764ea08091e95)] make process conversion more robust against different outputs
+    * [[#0b85fcd](https://github.com/nfdi4plants/ARCtrl/commit/0b85fcd8fc825866c10792465a33c1cf81b92e08)] base spreadsheet parsers on string columns
+    * [[#142b6a2](https://github.com/nfdi4plants/ARCtrl/commit/142b6a20c3df620822bfe602136040d3b62fd944)] change main types of spreadsheet parsing collections from list to array
+    * [[#61eec9f](https://github.com/nfdi4plants/ARCtrl/commit/61eec9fd15e4de9b7cd3771c4e488d6722aa7964)] small adjustments to renaming contract handling
     * [[#56f3a7a](https://github.com/nfdi4plants/ARCtrl/commit/56f3a7afaec3572882b1b67b0890ac346aa0ef93)] add manage-issues.yml
     * [[#ee1091f](https://github.com/nfdi4plants/ARCtrl/commit/ee1091f6ece4d248dc18fa5e045cbbd525c60d76)] rework datamap to be represented as a row of records
     * [[#2261883](https://github.com/nfdi4plants/ARCtrl/commit/22618830d79537c2f3cc10e2f69567432b0e8594)] adjust spreadsheet parsing to datamap datamodel change
@@ -117,6 +121,9 @@
     * [[#1ce8001](https://github.com/nfdi4plants/ARCtrl/commit/1ce80017ddd48bbe217ee99ac70923cb5dca8bc1)] Remove ALL tabs from fsproj files
     * [[#f055617](https://github.com/nfdi4plants/ARCtrl/commit/f05561709a0a8d1da752d54d5a997db225a3384e)] remove erroneous exe output type from testingutils
 * Bugfixes:
+    * [[#621f769](https://github.com/nfdi4plants/ARCtrl/commit/621f769ead6a0616a78f5db0ff23c5bfd6d53a5b)] small fix for changes to spreadsheet parsing
+    * [[#19b6a4c](https://github.com/nfdi4plants/ARCtrl/commit/19b6a4cb2d9ff89a68428f226ed49ffa34641c93)] fix and test rename leading to update contracts when the renamed entity is registered and remove isalight
+    * [[#4ae6bd0](https://github.com/nfdi4plants/ARCtrl/commit/4ae6bd029c7ecd14cb16e6fea221983d29e43fea)] fixes and tests for updateContracts when assays or studies are added
     * [[#4136027](https://github.com/nfdi4plants/ARCtrl/commit/4136027d19e01df6b4d24c2558d7f58fa071b83a)] Fix missing fable includes #369
     * [[#ff4bad8](https://github.com/nfdi4plants/ARCtrl/commit/ff4bad8421b6bb0c1103b152d69cc471b5259ca2)] fix datamap spreadsheet parsing against tests
     * [[#0ead1eb](https://github.com/nfdi4plants/ARCtrl/commit/0ead1eb2ca62057fb9e7c2eb585df94ad50ce56f)] fix datamap spreadsheet parser against tests
