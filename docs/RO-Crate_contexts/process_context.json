@@ -1,0 +1,13 @@
+{
+  "sdo": "http://schema.org/",
+  "bio": "https://bioschemas.org/",
+  "Process": "bio:LabProcess",
+  "name": "sdo:name",
+  "executesProtocol": "bio:executesLabProtocol",
+  "parameterValues": "bio:parameterValue",
+  "performer": "sdo:agent",
+  "date": "sdo:endTime",
+  "inputs": "sdo:object",
+  "outputs": "sdo:result",
+  "comments": "sdo:disambiguatingDescription"
+}

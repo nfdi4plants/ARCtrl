@@ -1,0 +1,16 @@
+{
+  "sdo": "http://schema.org/",
+  "Investigation": "sdo:Dataset",
+  "identifier": "sdo:identifier",
+  "title": "sdo:headline",
+  "additionalType": "sdo:additionalType",
+  "description": "sdo:description",
+  "submissionDate": "sdo:dateCreated",
+  "publicReleaseDate": "sdo:datePublished",
+  "publications": "sdo:citation",
+  "people": "sdo:creator",
+  "studies": "sdo:hasPart",
+  "ontologySourceReferences": "sdo:mentions",
+  "comments": "sdo:comment",
+  "filename": "sdo:alternateName"
+}

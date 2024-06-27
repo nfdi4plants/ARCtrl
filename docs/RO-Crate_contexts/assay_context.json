@@ -1,0 +1,14 @@
+{
+  "sdo": "http://schema.org/",
+  "Assay": "sdo:Dataset",
+  "identifier": "sdo:identifier",
+  "additionalType": "sdo:additionalType",
+  "measurementType": "sdo:variableMeasured",
+  "technologyType": "sdo:measurementTechnique",
+  "technologyPlatform": "sdo:measurementMethod",
+  "dataFiles": "sdo:hasPart",
+  "performers": "sdo:creator",
+  "processSequences": "sdo:about",
+  "comments": "sdo:comment",
+  "filename": "sdo:url"
+}

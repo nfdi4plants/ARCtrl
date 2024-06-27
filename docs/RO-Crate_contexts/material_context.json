@@ -1,0 +1,8 @@
+{
+  "sdo": "http://schema.org/",
+  "bio": "https://bioschemas.org/",
+  "Material": "bio:Sample",
+  "type": "sdo:disambiguatingDescription",
+  "name": "sdo:name",
+  "characteristics": "bio:additionalProperty"
+}

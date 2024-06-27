@@ -1,0 +1,7 @@
+{
+  "sdo": "http://schema.org/",
+  "Data": "sdo:MediaObject",
+  "type": "sdo:disambiguatingDescription",
+  "name": "sdo:name",
+  "comments": "sdo:comment"
+}

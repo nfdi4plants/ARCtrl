@@ -1,0 +1,11 @@
+{
+  "sdo": "http://schema.org/",
+  "MaterialAttributeValue": "sdo:PropertyValue",
+  "additionalType": "sdo:additionalType",
+  "category": "sdo:name",
+  "categoryCode": "sdo:propertyID",
+  "value": "sdo:value",
+  "valueCode": "sdo:valueReference",
+  "unit": "sdo:unitText",
+  "unitCode": "sdo:unitCode"
+}
