@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open Fable.Core
 
@@ -76,6 +76,13 @@ type CompositeCell =
         | Term term -> FreeText(term.NameText)
         | Unitized (v,unit) -> FreeText(unit.NameText)
         | Data d -> FreeText (Option.defaultValue "" d.Name)
+
+    member this.ToDataCell() =
+        match this with
+        | Unitized (_, unit) -> CompositeCell.createDataFromString unit.NameText
+        | FreeText txt -> CompositeCell.createDataFromString txt
+        | Term term -> CompositeCell.createDataFromString term.NameText
+        | Data _ -> this
 
     // Suggest this syntax for easy "of-something" access
     member this.AsUnitized  =
