@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.CompositeColumn
+module ARCtrl.Spreadsheet.CompositeColumn
 
 open ARCtrl
 open ARCtrl.Helper
@@ -16,11 +16,11 @@ let fixDeprecatedIOHeader (stringCellCol : string []) =
     match IOType.ofString (stringCellCol.[0]) with
     | IOType.FreeText _ -> stringCellCol
     | IOType.Source -> 
-        let comp = CompositeHeader.Input (IOType.Source)       
+        let comp = CompositeHeader.Input (IOType.Source)
         stringCellCol.[0] <- comp.ToString()
         stringCellCol
     | ioType ->
-        let comp = CompositeHeader.Output (ioType)       
+        let comp = CompositeHeader.Output (ioType)
         stringCellCol.[0] <- comp.ToString()
         stringCellCol
 
@@ -54,7 +54,7 @@ let fromFsColumns (columns : FsColumn []) : CompositeColumn =
 let toStringCellColumns (column : CompositeColumn) : string list list =
     let hasUnit = column.Cells |> Seq.exists (fun c -> c.isUnitized)
     let isTerm = column.Header.IsTermColumn
-    let isData = column.Header.IsDataColumn
+    let isData = column.Header.IsDataColumn && column.Cells |> Seq.exists (fun c -> c.isData)
     let header = CompositeHeader.toStringCells hasUnit column.Header
     let cells = column.Cells |> Array.map (CompositeCell.toStringCells isTerm hasUnit)
     if hasUnit then

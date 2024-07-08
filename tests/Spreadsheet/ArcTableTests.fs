@@ -1,10 +1,31 @@
-﻿module ArcTableTests
+module ArcTableTests
 
 open ARCtrl
 open ARCtrl.Spreadsheet
 
 open TestingUtils
 open TestObjects.Spreadsheet.ArcTable
+
+let private dataColumnsTable =
+    testList "dataColumnsTable" [
+        testCase "Only Freetext" <| fun _ ->
+            let table = ArcTable.init("MyTable")
+            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do sprintf "Input_%i" i |> CompositeCell.FreeText|])
+            let fsws = ArcTable.toFsWorksheet table
+            let actualColValues = (fsws.Column(1).Cells |> Seq.map (fun c -> c.ValueAsString())) 
+            Expect.sequenceEqual actualColValues ["Input [Data]"; "Input_1"; "Input_2"; "Input_3"; "Input_4"; "Input_5"] ""
+        testCase "Only Data" <| fun _ ->
+            let table = ArcTable.init("MyTable")
+            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do CompositeCell.createData (Data(name = sprintf "MyData#row=%i" i, format = "text/csv", selectorFormat = "MySelector"))|])
+            let fsws = ArcTable.toFsWorksheet table
+            fsws.RescanRows()
+            let rows = fsws.Rows |> Seq.map (fun x -> x.Cells |> Seq.map (fun c -> c.ValueAsString()) |> Array.ofSeq) |> Array.ofSeq
+            Expect.equal rows.[0].Length 3 "col count"
+            Expect.sequenceEqual rows.[0] ["Input [Data]"; "Data Format"; "Data Selector Format"] "header row"
+            for i in 1 .. 5 do
+                Expect.sequenceEqual rows.[i] [sprintf "MyData#row=%i" i; "text/csv"; "MySelector"] (sprintf "row %i" i)
+            Expect.equal 1 1 ""
+    ]
 
 let private ensureCorrectTestHeaders = 
     testList "ensureCorrectTestHeaders" [
@@ -476,6 +497,7 @@ let private emptyTable =
 
 let main = 
     testList "ArcTableTests" [
+        dataColumnsTable
         ensureCorrectTestHeaders
         groupCols
         simpleTable
