@@ -1,7 +1,7 @@
-﻿namespace ARCtrl.Contract
+namespace ARCtrl.Contract
 
 open ARCtrl.FileSystem
-open ARCtrl.Path
+open ARCtrl.ArcPathHelper
 open ARCtrl
 open ARCtrl.Yaml
 open ARCtrl.Helper
@@ -13,11 +13,11 @@ module ValidationPackagesConfigExtensions =
     let (|ValidationPackagesYamlPath|_|) (input) =
         match input with
         | [|ARCConfigFolderName; ValidationPackagesYamlFileName|] -> 
-            let path = ARCtrl.Path.combineMany input
+            let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
         | _ -> None
 
-    let internal config_file_path = [|ARCConfigFolderName; ValidationPackagesYamlFileName|] |> ARCtrl.Path.combineMany
+    let internal config_file_path = [|ARCConfigFolderName; ValidationPackagesYamlFileName|] |> ARCtrl.ArcPathHelper.combineMany
 
     type ValidationPackagesConfig with
     

@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open ARCtrl.FileSystem
 open ARCtrl.Contract
@@ -7,6 +7,7 @@ open ARCtrl.Helper
 open ARCtrl.Spreadsheet
 open FsSpreadsheet
 open Fable.Core
+open ARCtrl.ArcPathHelper
 
 module ARCAux =
 
@@ -95,7 +96,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let studies = assay.StudiesRegisteredIn
         isa.RemoveAssay(assayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
-        let assayFolderPath = Path.getAssayFolderPath(assayIdentifier)
+        let assayFolderPath = getAssayFolderPath(assayIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
         this.SetFilePaths(filteredPaths)      
         [
@@ -115,8 +116,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
         isa.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
-        let oldAssayFolderPath = Path.getAssayFolderPath(oldAssayIdentifier)
-        let newAssayFolderPath = Path.getAssayFolderPath(newAssayIdentifier)
+        let oldAssayFolderPath = getAssayFolderPath(oldAssayIdentifier)
+        let newAssayFolderPath = getAssayFolderPath(newAssayIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldAssayFolderPath,newAssayFolderPath))
         this.SetFilePaths(renamedPaths)
         [
@@ -132,7 +133,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             | None -> failwith "Cannot remove study from null ISA value."
         isa.RemoveStudy(studyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
-        let studyFolderPath = Path.getStudyFolderPath(studyIdentifier)
+        let studyFolderPath = getStudyFolderPath(studyIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
         this.SetFilePaths(filteredPaths)
         [
@@ -150,8 +151,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
         isa.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
-        let oldStudyFolderPath = Path.getStudyFolderPath(oldStudyIdentifier)
-        let newStudyFolderPath = Path.getStudyFolderPath(newStudyIdentifier)
+        let oldStudyFolderPath = getStudyFolderPath(oldStudyIdentifier)
+        let newStudyFolderPath = getStudyFolderPath(newStudyIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldStudyFolderPath,newStudyFolderPath))
         this.SetFilePaths(renamedPaths)
         [
@@ -321,7 +322,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         match this.ISA with
         | Some inv -> 
             let investigationConverter = Spreadsheet.ArcInvestigation.toFsWorkbook
-            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
+            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
             inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
             |> Seq.iter (fun s ->
@@ -356,7 +357,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             
         | None -> 
             //printfn "ARC contains no ISA part."
-            workbooks.Add (Path.InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)
@@ -466,26 +467,26 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
         let includeRootFiles : Set<string> = 
             set [
-                Path.InvestigationFileName
-                Path.READMEFileName
+                InvestigationFileName
+                READMEFileName
             ]
 
         let includeStudyFiles = 
             registeredStudies
             |> Array.map (fun s -> 
-                let studyFoldername = $"{Path.StudiesFolderName}/{s.Identifier}"
+                let studyFoldername = $"{StudiesFolderName}/{s.Identifier}"
 
                 set [
-                    yield $"{studyFoldername}/{Path.StudyFileName}"
-                    yield $"{studyFoldername}/{Path.READMEFileName}"
+                    yield $"{studyFoldername}/{StudyFileName}"
+                    yield $"{studyFoldername}/{READMEFileName}"
 
                     //just allow any constructed path from cell values. there may be occasions where this includes wrong files, but its good enough for now.
                     for table in s.Tables do
                         for kv in table.Values do
                             let textValue = kv.Value.ToFreeTextCell().AsFreeText
                             yield textValue // from arc root
-                            yield $"{studyFoldername}/{Path.StudiesResourcesFolderName}/{textValue}" // from study root > resources
-                            yield $"{studyFoldername}/{Path.StudiesProtocolsFolderName}/{textValue}" // from study root > protocols
+                            yield $"{studyFoldername}/{StudiesResourcesFolderName}/{textValue}" // from study root > resources
+                            yield $"{studyFoldername}/{StudiesProtocolsFolderName}/{textValue}" // from study root > protocols
                 ]
             )
             |> Set.unionMany
@@ -493,19 +494,19 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let includeAssayFiles = 
             registeredAssays
             |> Array.map (fun a -> 
-                let assayFoldername = $"{Path.AssaysFolderName}/{a.Identifier}"
+                let assayFoldername = $"{AssaysFolderName}/{a.Identifier}"
 
                 set [
-                    yield $"{assayFoldername}/{Path.AssayFileName}"
-                    yield $"{assayFoldername}/{Path.READMEFileName}"
+                    yield $"{assayFoldername}/{AssayFileName}"
+                    yield $"{assayFoldername}/{READMEFileName}"
 
                     //just allow any constructed path from cell values. there may be occasions where this includes wrong files, but its good enough for now.
                     for table in a.Tables do
                         for kv in table.Values do
                             let textValue = kv.Value.ToFreeTextCell().AsFreeText
                             yield textValue // from arc root
-                            yield $"{assayFoldername}/{Path.AssayDatasetFolderName}/{textValue}" // from assay root > dataset
-                            yield $"{assayFoldername}/{Path.AssayProtocolsFolderName}/{textValue}" // from assay root > protocols
+                            yield $"{assayFoldername}/{AssayDatasetFolderName}/{textValue}" // from assay root > dataset
+                            yield $"{assayFoldername}/{AssayProtocolsFolderName}/{textValue}" // from assay root > protocols
                 ]
             )
             |> Set.unionMany
@@ -519,8 +520,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         fsCopy.Tree
         |> FileSystemTree.toFilePaths()
         |> Array.filter (fun p -> 
-            p.StartsWith(Path.WorkflowsFolderName) 
-            || p.StartsWith(Path.RunsFolderName) 
+            p.StartsWith(WorkflowsFolderName) 
+            || p.StartsWith(RunsFolderName) 
             || includeFiles.Contains(p)
         )
         |> FileSystemTree.fromFilePaths

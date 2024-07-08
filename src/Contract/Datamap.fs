@@ -1,7 +1,7 @@
-﻿namespace ARCtrl.Contract
+namespace ARCtrl.Contract
 
 open ARCtrl.FileSystem
-open ARCtrl.Path
+open ARCtrl.ArcPathHelper
 open ARCtrl.Spreadsheet
 open ARCtrl
 open ARCtrl.Helper
@@ -13,10 +13,10 @@ module DatamapContractExtensions =
     let (|DatamapPath|_|) (input) =
         match input with
         | [|AssaysFolderName; anyAssayName; DataMapFileName|] -> 
-            let path = ARCtrl.Path.combineMany input
+            let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
         | [|StudiesFolderName; anyStudyName; DataMapFileName|] -> 
-            let path = ARCtrl.Path.combineMany input
+            let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
         | _ -> None
 

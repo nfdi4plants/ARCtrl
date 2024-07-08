@@ -1,9 +1,9 @@
-﻿namespace ARCtrl.Contract
+namespace ARCtrl.Contract
 
-open ARCtrl.FileSystem
-open ARCtrl.Path
-open ARCtrl.Spreadsheet
 open ARCtrl
+open ARCtrl.FileSystem
+open ARCtrl.Spreadsheet
+open ARCtrl.ArcPathHelper
 open ARCtrl.Helper
 open FsSpreadsheet
 
@@ -14,7 +14,7 @@ module AssayContractExtensions =
     let (|AssayPath|_|) (input) =
         match input with
         | [|AssaysFolderName; anyAssayName; AssayFileName|] -> 
-            let path = ARCtrl.Path.combineMany input
+            let path = combineMany input
             Some path
         | _ -> None
 

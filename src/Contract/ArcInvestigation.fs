@@ -1,7 +1,7 @@
-﻿namespace ARCtrl.Contract
+namespace ARCtrl.Contract
 
 open ARCtrl.FileSystem
-open ARCtrl.Path
+open ARCtrl.ArcPathHelper
 open ARCtrl.Spreadsheet
 open ARCtrl
 open ARCtrl.Helper
@@ -14,7 +14,7 @@ module InvestigationContractExtensions =
     let (|InvestigationPath|_|) (input) =
         match input with
         | [|InvestigationFileName|] -> 
-            let path = ARCtrl.Path.combineMany input
+            let path = ARCtrl.ArcPathHelper.combineMany input
             Some path
         | _ -> None
 

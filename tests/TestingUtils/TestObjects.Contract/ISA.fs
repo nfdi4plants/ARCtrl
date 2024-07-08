@@ -1,4 +1,4 @@
-﻿module TestObjects.Contract.ISA
+module TestObjects.Contract.ISA
     
 open FsSpreadsheet
 open ARCtrl.Contract
@@ -147,7 +147,7 @@ module SimpleISA =
         let investigationReadContract =
             Contract.create(
                 Operation.READ,
-                path = Path.InvestigationFileName,
+                path = ArcPathHelper.InvestigationFileName,
                 dtoType = DTOType.ISA_Investigation,
                 dto = DTO.Spreadsheet Investigation.BII_I_1.fullInvestigation)
 
@@ -201,6 +201,6 @@ module UpdateAssayWithStudyProtocol =
     let investigationReadContract =
         Contract.create(
             Operation.READ,
-            path = Path.InvestigationFileName,
+            path = ArcPathHelper.InvestigationFileName,
             dtoType = DTOType.ISA_Investigation,
             dto = DTO.Spreadsheet investigationWB)
