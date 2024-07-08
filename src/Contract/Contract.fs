@@ -15,6 +15,7 @@ type DTOType =
     | [<CompiledName("JSON")>] JSON // arc.json
     | [<CompiledName("Markdown")>] Markdown // README.md
     | [<CompiledName("CWL")>] CWL // workflow.cwl, might be a new DTO once we 
+    | [<CompiledName("YAML")>] YAML // .arc/validation_packages.yml
     | [<CompiledName("PlainText")>] PlainText // any other
     | [<CompiledName("Cli")>] CLI
     //| [<CompiledName("EmptyFile")>] EmptyFile // .gitkeep
