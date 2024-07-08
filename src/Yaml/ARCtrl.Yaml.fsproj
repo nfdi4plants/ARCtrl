@@ -4,12 +4,22 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <ItemGroup> 
-    <Compile Include="Library.fs" />
+  <ItemGroup>
+    <Compile Include="Encode.fs" />
+    <Compile Include="Decode.fs" />
+    <Compile Include="ValidationPackage.fs" />
+    <Compile Include="ValidationPackagesConfig.fs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="YAMLicious" Version="0.0.1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\ValidationPackages\ARCtrl.ValidationPackages.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants</Authors>

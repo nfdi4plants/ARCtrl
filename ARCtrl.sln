@@ -5,6 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{326188FB-2CC0-4610-A082-708885BF47AA}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		.github\workflows\build-test.yml = .github\workflows\build-test.yml
 		build.cmd = build.cmd
@@ -70,6 +71,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Python", "Python", "{501F6D
 		tests\Python\test_OntologyAnnotation.py = tests\Python\test_OntologyAnnotation.py
 		tests\Python\test_XlsxController.py = tests\Python\test_XlsxController.py
 	EndProjectSection
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ValidationPackages", "src\ValidationPackages\ARCtrl.ValidationPackages.fsproj", "{0C35D768-BF55-4BD9-B915-35125CED65A0}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Yaml", "src\Yaml\ARCtrl.Yaml.fsproj", "{4CC3AAC2-030B-4B2E-A386-9C1F68E42238}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -137,6 +142,14 @@ Global
 		{704935A5-68F2-4070-8A55-AFF8F66ACAD6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{704935A5-68F2-4070-8A55-AFF8F66ACAD6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{704935A5-68F2-4070-8A55-AFF8F66ACAD6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C35D768-BF55-4BD9-B915-35125CED65A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C35D768-BF55-4BD9-B915-35125CED65A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C35D768-BF55-4BD9-B915-35125CED65A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C35D768-BF55-4BD9-B915-35125CED65A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4CC3AAC2-030B-4B2E-A386-9C1F68E42238}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CC3AAC2-030B-4B2E-A386-9C1F68E42238}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CC3AAC2-030B-4B2E-A386-9C1F68E42238}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CC3AAC2-030B-4B2E-A386-9C1F68E42238}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -158,6 +171,8 @@ Global
 		{03F4E6D0-CFE7-44A6-994B-778B3DF6532C} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{704935A5-68F2-4070-8A55-AFF8F66ACAD6} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{501F6D1E-6300-4CA4-8E61-3523BCF4D533} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{0C35D768-BF55-4BD9-B915-35125CED65A0} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
+		{4CC3AAC2-030B-4B2E-A386-9C1F68E42238} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}

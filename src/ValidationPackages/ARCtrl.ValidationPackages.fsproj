@@ -5,11 +5,16 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup> 
-    <Compile Include="Library.fs" />
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" /> 
+    <Compile Include="ValidationPackage.fs" />
+    <Compile Include="ValidationPackagesConfig.fs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants</Authors>

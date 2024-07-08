@@ -1,4 +1,4 @@
-﻿module JsonExtensions 
+module JsonExtensions 
 
 let private f2 i = 
     if i < 10 then sprintf "0%i" i
@@ -22,7 +22,7 @@ module Time =
 
 module Date =
     
-    let fromInts year month day = 
+    let fromInts (year:int) (month:int) (day:int) = 
         let d = System.DateTime(year,month,day)
         d.ToJsonDateString()
       

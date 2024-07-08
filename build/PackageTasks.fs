@@ -1,4 +1,4 @@
-﻿module PackageTasks
+module PackageTasks
 
 open MessagePrompts
 open BasicTasks
@@ -29,6 +29,7 @@ module BundleDotNet =
                         "Version",versionTag
                         "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.toLines )
                     ] @ p.MSBuildParams.Properties)
+                    DisableInternalBinLog = true
                 }
             {
                 p with 

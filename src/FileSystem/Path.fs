@@ -15,8 +15,10 @@ let [<Literal>] StudyFileName = "isa.study.xlsx"
 let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
 let [<Literal>] GitKeepFileName = ".gitkeep" 
 let [<Literal>] READMEFileName = "README.md"
+let [<Literal>] ValidationPackagesYamlFileName = "validation_packages.yml"
 
 // Folder
+let [<Literal>] ARCConfigFolderName = ".arc"
 let [<Literal>] AssaysFolderName = "assays"
 let [<Literal>] StudiesFolderName = "studies"
 let [<Literal>] WorkflowsFolderName = "workflows"
