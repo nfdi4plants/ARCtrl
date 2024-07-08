@@ -1,4 +1,4 @@
-﻿module BasicTasks
+module BasicTasks
 
 open BlackFox.Fake
 open Fake.IO
@@ -159,5 +159,15 @@ let clean = BuildTask.create "Clean" [] {
 
 let build = BuildTask.create "Build" [clean] {
     solutionFile
-    |> DotNet.build id
+    |> DotNet.build (fun p ->
+        let msBuildParams =
+            {p.MSBuildParams with 
+                DisableInternalBinLog = true
+            }
+        {
+            p with 
+                MSBuildParams = msBuildParams
+        }
+        |> DotNet.Options.withCustomParams (Some "-tl")
+    )
 }

@@ -19,12 +19,6 @@ type ValidationPackage(name, ?version) =
 
     static member make name version = ValidationPackage(name=name, ?version=version)
 
-    static member create(name,?version) : ValidationPackage =
-        ValidationPackage.make name version
-    
-    static member toString (vp : ValidationPackage) =
-        vp.Name, Option.defaultValue "" vp.Version
-
     member this.Copy() =
         ValidationPackage.make this.Name this.Version
 

@@ -8,7 +8,7 @@ module ValidationPackagesConfig =
 
     let encoder (validationpackage : ValidationPackagesConfig) = 
         [
-            "validation_packages", Encode.array ValidationPackage.encoder validationpackage.ValidationPackages
+            "validation_packages", Encode.resizearray ValidationPackage.encoder validationpackage.ValidationPackages
             Encode.tryInclude "arc_specification" Encode.string  (validationpackage.ARCSpecification)
         ]
         |> Encode.choose
@@ -17,7 +17,7 @@ module ValidationPackagesConfig =
     let decoder : (YAMLElement -> ValidationPackagesConfig) = 
         Decode.object (fun get ->
             ValidationPackagesConfig(
-                validation_packages = get.Required.Field "validation_packages" (Decode.array ValidationPackage.decoder),
+                validation_packages = get.Required.Field "validation_packages" (Decode.resizearray ValidationPackage.decoder),
                 ?arc_specification = get.Optional.Field "arc_specification" Decode.string
             )
         )

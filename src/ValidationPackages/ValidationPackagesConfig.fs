@@ -6,7 +6,7 @@ open Fable.Core
 [<AttachMembers>]
 type ValidationPackagesConfig(validation_packages, ?arc_specification) =
     
-    let mutable _validation_packages : ValidationPackage array = validation_packages
+    let mutable _validation_packages : ResizeArray<ValidationPackage> = validation_packages
     let mutable _arc_specification : string option = arc_specification
 
     member this.ValidationPackages 
@@ -18,12 +18,6 @@ type ValidationPackagesConfig(validation_packages, ?arc_specification) =
         and set(arc_specification) = _arc_specification <- arc_specification
 
     static member make validation_packages arc_specification = ValidationPackagesConfig(validation_packages=validation_packages, ?arc_specification=arc_specification)
-
-    static member create(validation_packages,?arc_specification) : ValidationPackagesConfig =
-        ValidationPackagesConfig.make validation_packages arc_specification
-    
-    static member toString (vp : ValidationPackagesConfig) =
-        vp.ValidationPackages, Option.defaultValue "" vp.ARCSpecification
 
     member this.Copy() =
         ValidationPackagesConfig.make this.ValidationPackages this.ARCSpecification

@@ -47,7 +47,4 @@
       <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
     </PythonDependencies>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.401" />
-  </ItemGroup>
 </Project>

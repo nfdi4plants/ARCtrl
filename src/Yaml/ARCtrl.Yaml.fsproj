@@ -12,7 +12,7 @@
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="YAMLicious" Version="0.0.1-alpha" />
+    <PackageReference Include="YAMLicious" Version="0.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />

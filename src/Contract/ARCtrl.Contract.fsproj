@@ -25,9 +25,6 @@
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.401" />
-  </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Kevin Frey, Lukas Weil, Kevin Schneider, Oliver Maus</Authors>
     <Description>ARC helper functions for contracts management.</Description>
