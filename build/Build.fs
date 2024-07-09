@@ -27,7 +27,7 @@ let _release =
 let _preRelease = 
     BuildTask.createEmpty 
         "PreRelease" 
-        [setPrereleaseTag; clean; build; (*runTests;*) packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease; publishPyPiPrerelease]
+        [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease; publishPyPiPrerelease]
 
 ReleaseNotesTasks.updateReleaseNotes |> ignore
 PerformanceTasks.perforanceReport |> ignore
