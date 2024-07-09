@@ -7,24 +7,45 @@ open TestingUtils
 open TestObjects.Spreadsheet.ArcTable
 
 let private dataColumnsTable =
+    let mkInputStr (i:int) = sprintf "Input_%i" i
+    let mkDataNameStr (i:int) = sprintf "MyData#row=%i" i
     testList "dataColumnsTable" [
-        testCase "Only Freetext" <| fun _ ->
+        ftestCase "Only Freetext" <| fun _ ->
             let table = ArcTable.init("MyTable")
-            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do sprintf "Input_%i" i |> CompositeCell.FreeText|])
+            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do mkInputStr i |> CompositeCell.FreeText|])
             let fsws = ArcTable.toFsWorksheet table
             let actualColValues = (fsws.Column(1).Cells |> Seq.map (fun c -> c.ValueAsString())) 
             Expect.sequenceEqual actualColValues ["Input [Data]"; "Input_1"; "Input_2"; "Input_3"; "Input_4"; "Input_5"] ""
-        testCase "Only Data" <| fun _ ->
+        ftestCase "Only Data" <| fun _ ->
             let table = ArcTable.init("MyTable")
-            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do CompositeCell.createData (Data(name = sprintf "MyData#row=%i" i, format = "text/csv", selectorFormat = "MySelector"))|])
+            table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))|])
             let fsws = ArcTable.toFsWorksheet table
             fsws.RescanRows()
             let rows = fsws.Rows |> Seq.map (fun x -> x.Cells |> Seq.map (fun c -> c.ValueAsString()) |> Array.ofSeq) |> Array.ofSeq
             Expect.equal rows.[0].Length 3 "col count"
             Expect.sequenceEqual rows.[0] ["Input [Data]"; "Data Format"; "Data Selector Format"] "header row"
             for i in 1 .. 5 do
-                Expect.sequenceEqual rows.[i] [sprintf "MyData#row=%i" i; "text/csv"; "MySelector"] (sprintf "row %i" i)
-            Expect.equal 1 1 ""
+                Expect.sequenceEqual rows.[i] [mkDataNameStr i; "text/csv"; "MySelector"] (sprintf "row %i" i)
+        ftestCase "Mixed" <| fun _ ->
+            let table = ArcTable.init("MyTable")
+            table.AddColumn(
+                CompositeHeader.Input(IOType.Data),
+                [|
+                    for i in 1 .. 5 do
+                        CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))
+                    for i in 6 .. 10 do
+                        mkInputStr i |> CompositeCell.FreeText
+                |]
+            )
+            let fsws = ArcTable.toFsWorksheet table
+            fsws.RescanRows()
+            let rows = fsws.Rows |> Seq.map (fun x -> x.Cells |> Seq.map (fun c -> c.ValueAsString()) |> Array.ofSeq) |> Array.ofSeq
+            Expect.equal rows.[0].Length 3 "col count"
+            Expect.sequenceEqual rows.[0] ["Input [Data]"; "Data Format"; "Data Selector Format"] "header row"
+            for i in 1 .. 5 do
+                Expect.sequenceEqual rows.[i] [mkDataNameStr i; "text/csv"; "MySelector"] (sprintf "row %i" i)
+            for i in 6 .. 10 do
+                Expect.sequenceEqual rows.[i] [mkInputStr i; ""; ""] (sprintf "row %i" i)
     ]
 
 let private ensureCorrectTestHeaders = 
