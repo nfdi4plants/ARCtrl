@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Yaml
+namespace ARCtrl.Yaml
 
 open ARCtrl.ValidationPackages
 open YAMLicious
@@ -8,8 +8,8 @@ module ValidationPackagesConfig =
 
     let encoder (validationpackage : ValidationPackagesConfig) = 
         [
-            "validation_packages", Encode.resizearray ValidationPackage.encoder validationpackage.ValidationPackages
             Encode.tryInclude "arc_specification" Encode.string  (validationpackage.ARCSpecification)
+            "validation_packages", Encode.resizearray ValidationPackage.encoder validationpackage.ValidationPackages
         ]
         |> Encode.choose
         |> Encode.object
@@ -25,7 +25,7 @@ module ValidationPackagesConfig =
 [<AutoOpen>]
 module ValidationPackageConfigExtensions =
 
-    open Arctrl.Yaml
+    open ARCtrl.Yaml
     type ValidationPackagesConfig with
 
         static member fromYamlString (s:string)  = 

@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ValidationPackages
+namespace ARCtrl.ValidationPackages
 
 open ARCtrl.Helper
 open Fable.Core
@@ -21,6 +21,15 @@ type ValidationPackage(name, ?version) =
 
     member this.Copy() =
         ValidationPackage.make this.Name this.Version
+
+    /// Pretty printer 
+    override this.ToString() =
+        [
+            "-"
+            $"  name: {this.Name}"
+            if version.IsSome then $"  version: {this.Version}"
+        ]
+        |> String.concat System.Environment.NewLine
 
     override this.Equals(obj) =
         match obj with

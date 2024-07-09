@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ValidationPackages
+namespace ARCtrl.ValidationPackages
 
 open ARCtrl.Helper
 open Fable.Core
@@ -6,8 +6,8 @@ open Fable.Core
 [<AttachMembers>]
 type ValidationPackagesConfig(validation_packages, ?arc_specification) =
     
-    let mutable _validation_packages : ResizeArray<ValidationPackage> = validation_packages
     let mutable _arc_specification : string option = arc_specification
+    let mutable _validation_packages : ResizeArray<ValidationPackage> = validation_packages
 
     member this.ValidationPackages 
         with get() = _validation_packages
@@ -22,15 +22,36 @@ type ValidationPackagesConfig(validation_packages, ?arc_specification) =
     member this.Copy() =
         ValidationPackagesConfig.make this.ValidationPackages this.ARCSpecification
 
-    override this.Equals(obj) =
-        match obj with
-        | :? ValidationPackagesConfig as other_vpc -> other_vpc.ValidationPackages = this.ValidationPackages && other_vpc.ARCSpecification = this.ARCSpecification
+
+    /// Pretty printer 
+    override this.ToString() =
+        [
+            if this.ARCSpecification.IsSome then $"arc_specification: {this.ARCSpecification}"
+            "validation_packages:"
+            this.ValidationPackages
+            |> Seq.map (fun vp -> vp.ToString())
+            |> String.concat System.Environment.NewLine
+        ]
+        |> String.concat System.Environment.NewLine
+
+    member this.StructurallyEquals (other: ValidationPackagesConfig) =
+        let sort = Array.ofSeq >> Array.sortBy (fun (vp: ValidationPackage) -> vp.Name, vp.Version)
+        let specs = this.ARCSpecification = other.ARCSpecification
+        let packages = Seq.compare (sort this.ValidationPackages) (sort other.ValidationPackages)
+        specs && packages
+
+    member this.ReferenceEquals (other: ValidationPackagesConfig) = System.Object.ReferenceEquals(this,other)
+
+    override this.Equals other =
+        match other with
+        | :? ValidationPackagesConfig as other_vp -> 
+            this.StructurallyEquals(other_vp)
         | _ -> false
 
     override this.GetHashCode() =        
         [|
-            this.ValidationPackages.GetHashCode() |> box
             HashCodes.boxHashOption this.ARCSpecification
+            this.ValidationPackages.GetHashCode() |> box
         |]
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int

@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Yaml
+namespace ARCtrl.Yaml
 
 open ARCtrl.ValidationPackages
 open YAMLicious
@@ -25,7 +25,7 @@ module ValidationPackage =
 [<AutoOpen>]
 module ValidationPackageExtensions =
 
-    open Arctrl.Yaml
+    open ARCtrl.Yaml
     type ValidationPackage with
 
         static member fromYamlString (s:string)  = 

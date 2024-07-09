@@ -1,4 +1,4 @@
-﻿namespace Arctrl.Yaml
+namespace ARCtrl.Yaml
 
 module Decode =
 
