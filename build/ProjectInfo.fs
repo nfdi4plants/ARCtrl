@@ -1,4 +1,4 @@
-﻿module ProjectInfo
+module ProjectInfo
 
 open Fake.Core
 open Helpers
@@ -13,6 +13,8 @@ let testProjects =
         "tests/Spreadsheet"
         "tests/FileSystem"
         "tests/ARCtrl"
+        "tests/Yaml"
+        "tests/ValidationPackages"
     ]
 
 /// Native JS test paths

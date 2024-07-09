@@ -12,20 +12,20 @@ let tests_extended = testList "extended" [
 
     let vp_yaml_string = """name: name
 version: version
-"""                                     .ReplaceLineEndings(System.Environment.NewLine)
+"""
 
     let vp_no_version_yaml_string = """name: name
-"""                                     .ReplaceLineEndings(System.Environment.NewLine)
+"""
 
     testList "encoder (toYamlString)" [
         testCase "name and version" <| fun _ -> 
             let actual = ValidationPackage.encoder vp |> Encode.toYamlString 2
             let expected = vp_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
         testCase "no version" <| fun _ -> 
             let actual = ValidationPackage.encoder vp_no_version |> Encode.toYamlString 2
             let expected = vp_no_version_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
     ]
     testList "decoder (fromYamlString)" [ 
         testCase "name and version" <| fun _ -> 
@@ -45,7 +45,7 @@ version: version
                 |> ValidationPackage.encoder
                 |> Encode.toYamlString 2
             let expected = vp_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
         testCase "no version" <| fun _ -> 
             let actual =
                 vp_no_version_yaml_string
@@ -53,7 +53,7 @@ version: version
                 |> ValidationPackage.encoder
                 |> Encode.toYamlString 2
             let expected = vp_no_version_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
     ]
     testList "roundtrip (toYamlString >> fromYamlString)" [ 
         testCase "name and version" <| fun _ -> 

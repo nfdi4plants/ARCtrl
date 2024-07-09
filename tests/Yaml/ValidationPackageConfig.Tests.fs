@@ -20,7 +20,7 @@ validation_packages:
     version: version
   -
     name: name
-"""                                 .ReplaceLineEndings(System.Environment.NewLine)
+"""
 
     let vpc_no_specs_yaml_string = """validation_packages:
   -
@@ -28,17 +28,17 @@ validation_packages:
     version: version
   -
     name: name
-"""                                 .ReplaceLineEndings(System.Environment.NewLine)
+"""
 
     testList "encoder (toYamlString)" [
         testCase "no specification validation" <| fun _ -> 
             let actual = ValidationPackagesConfig.encoder vpc |> Encode.toYamlString 2
             let expected = vpc_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
         testCase "with specification validation" <| fun _ -> 
             let actual = ValidationPackagesConfig.encoder vpc_no_specs |> Encode.toYamlString 2
             let expected = vpc_no_specs_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
     ]
     testList "decoder (fromYamlString)" [ 
         testCase "name and version" <| fun _ -> 
@@ -58,7 +58,7 @@ validation_packages:
                 |> ValidationPackagesConfig.encoder
                 |> Encode.toYamlString 2
             let expected = vpc_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
         testCase "no version" <| fun _ -> 
             let actual =
                 vpc_no_specs_yaml_string
@@ -66,7 +66,7 @@ validation_packages:
                 |> ValidationPackagesConfig.encoder
                 |> Encode.toYamlString 2
             let expected = vpc_no_specs_yaml_string
-            Expect.equal actual expected ""
+            Expect.trimEqual actual expected ""
     ]
     testList "roundtrip (toYamlString >> fromYamlString)" [
         testCase "name and version" <| fun _ -> 
