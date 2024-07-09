@@ -722,7 +722,7 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         Expect.equal i.AssayCount 1 "ensure assay count"
         let actual = arc.RemoveAssay(assayIdentifier)
         let expected = [
-            Contract.createDelete (Path.getAssayFolderPath assayIdentifier)
+            Contract.createDelete (ArcPathHelper.getAssayFolderPath assayIdentifier)
             i.ToUpdateContract()
         ]
         Expect.sequenceEqual actual expected "we do not have correct FsWorkbook equality helper functions"
@@ -735,9 +735,9 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         Expect.equal i.AssayCount 1 "ensure assay count"
         let actual = arc.RemoveAssay(assayIdentifier)
         Expect.hasLength actual 2 "contract count"
-        Expect.equal actual.[0].Path (Path.getAssayFolderPath assayIdentifier) "assay contract path"
+        Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
         Expect.equal actual.[0].Operation DELETE "assay contract cmd"
-        Expect.equal actual.[1].Path (Path.InvestigationFileName) "inv contract path"
+        Expect.equal actual.[1].Path (ArcPathHelper.InvestigationFileName) "inv contract path"
         Expect.equal actual.[1].Operation UPDATE "inve contract cmd"
         Expect.isSome actual.[1].DTO "has DTO"
         let dtoType = Expect.wantSome actual.[1].DTOType "has DTOType"
@@ -757,9 +757,9 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         Expect.hasLength a.StudiesRegisteredIn 2 "ensure studies registered in - count"
         let actual = arc.RemoveAssay(assayIdentifier)
         Expect.hasLength actual 4 "contract count"
-        Expect.equal actual.[0].Path (Path.getAssayFolderPath assayIdentifier) "assay contract path"
+        Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
         Expect.equal actual.[0].Operation DELETE "assay contract cmd"
-        Expect.equal actual.[1].Path (Path.InvestigationFileName) "inv contract path"
+        Expect.equal actual.[1].Path (ArcPathHelper.InvestigationFileName) "inv contract path"
         Expect.equal actual.[1].Operation UPDATE "inv contract cmd"
         Expect.equal actual.[2].Path (Identifier.Study.fileNameFromIdentifier "Study 1") "study 1 contract path"
         Expect.equal actual.[2].Operation UPDATE "study 1 contract cmd"
