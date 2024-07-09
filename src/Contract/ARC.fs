@@ -1,6 +1,6 @@
-﻿module ARCtrl.Contract.ARC
+module ARCtrl.Contract.ARC
 
-open ARCtrl.Path
+open ARCtrl.ArcPathHelper
 
 open ARCtrl.Contract
 
@@ -13,7 +13,7 @@ open ARCtrl.Contract
 // 3. We ignore all other .xlsx files.
 /// Tries to create READ contract with DTOType = ISA_Assay, ISA_Study or ISA_Investigation from given path relative to ARC root.
 let tryISAReadContractFromPath (path: string) = 
-    let split = ARCtrl.Path.split path
+    let split = split path
     match split with
     | InvestigationPath p -> 
         Some <| Contract.createRead(p, DTOType.ISA_Investigation) 

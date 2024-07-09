@@ -1,4 +1,4 @@
-﻿module GenerateIndexPy
+module GenerateIndexPy
 
 open System
 open System.IO
@@ -25,6 +25,7 @@ let classes =
         "__future__", "annotations"
         "collections.abc", "Callable"
         "typing", "Any"
+        ".Contract.contract", "Contract";
         ".Core.comment", "Comment"
         ".Core.ontology_annotation","OntologyAnnotation"; 
         ".Core.person", "Person";

@@ -1,4 +1,4 @@
-﻿namespace rec ARCtrl
+namespace rec ARCtrl
 
 open Fable.Core
 open ARCtrl.Helper
@@ -143,7 +143,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (comments : ResizeArray<Comment>) = 
         ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
 
-    static member FileName = ARCtrl.Path.AssayFileName
+    static member FileName = ARCtrl.ArcPathHelper.AssayFileName
     member this.StudiesRegisteredIn
         with get () = 
             match this.Investigation with
@@ -585,7 +585,7 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
             (this.Comments.Count = 0)
 
     // Not sure how to handle this best case.
-    static member FileName = ARCtrl.Path.StudyFileName
+    static member FileName = ARCtrl.ArcPathHelper.StudyFileName
     //member this.FileName = ArcStudy.FileName
 
     /// Returns the count of registered assay *identifiers*. This is not necessarily the same as the count of registered assays, as not all identifiers correspond to an existing assay.
@@ -1147,7 +1147,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.Remarks with get() = remarks and set(n) = remarks <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
-    static member FileName = ARCtrl.Path.InvestigationFileName
+    static member FileName = ARCtrl.ArcPathHelper.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
     static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>,?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) = 

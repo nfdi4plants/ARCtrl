@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.FileSystem
+namespace ARCtrl.FileSystem
 
 open Fable.Core
 
@@ -65,7 +65,7 @@ type FileSystemTree =
     /// <param name="paths">A array of file paths relative to ARC root.</param>
     static member fromFilePaths (paths: string array) : FileSystemTree =
         // Split path by seperators into path sequence.
-        let splitPaths = paths |> Array.map Path.split |> Array.distinct
+        let splitPaths = paths |> Array.map ARCtrl.ArcPathHelper.split |> Array.distinct
         let root = FileSystemTree.createFolder(FileSystemTree.ROOT_NAME,[||])
         let rec loop (paths:string [] []) (parent: FileSystemTree) =
             // Files are always the last and only in path sequence.
@@ -98,7 +98,7 @@ type FileSystemTree =
                 (n::output)
                 |> List.rev 
                 |> Array.ofList 
-                |> Path.combineMany 
+                |> ARCtrl.ArcPathHelper.combineMany 
                 |> res.Add //output full path
             | Folder (n, children) ->
                 let nextOutput = n::output
@@ -187,61 +187,61 @@ type FileSystemTree =
 
 
     static member createGitKeepFile() = 
-        FileSystemTree.createFile ARCtrl.Path.GitKeepFileName
+        FileSystemTree.createFile ARCtrl.ArcPathHelper.GitKeepFileName
 
     static member createReadmeFile() = 
-        FileSystemTree.createFile ARCtrl.Path.READMEFileName
+        FileSystemTree.createFile ARCtrl.ArcPathHelper.READMEFileName
 
     static member createEmptyFolder (name : string) = 
         FileSystemTree.createFolder(name, [|FileSystemTree.createGitKeepFile()|])
 
     static member createAssayFolder(assayName : string, ?hasDataMap) = 
         let hasDataMap = defaultArg hasDataMap false
-        let dataset = FileSystemTree.createEmptyFolder ARCtrl.Path.AssayDatasetFolderName
-        let protocols = FileSystemTree.createEmptyFolder ARCtrl.Path.AssayProtocolsFolderName
+        let dataset = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.AssayDatasetFolderName
+        let protocols = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.AssayProtocolsFolderName
         let readme = FileSystemTree.createReadmeFile()
-        let assayFile = FileSystemTree.createFile ARCtrl.Path.AssayFileName
+        let assayFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.AssayFileName
         if hasDataMap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.Path.DataMapFileName
+            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
             FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme; dataMapFile|])
         else
             FileSystemTree.createFolder(assayName, [|dataset; protocols; assayFile; readme|])
 
     static member createStudyFolder(studyName : string, ?hasDataMap) = 
         let hasDataMap = defaultArg hasDataMap false
-        let resources = FileSystemTree.createEmptyFolder ARCtrl.Path.StudiesResourcesFolderName
-        let protocols = FileSystemTree.createEmptyFolder ARCtrl.Path.StudiesProtocolsFolderName
+        let resources = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.StudiesResourcesFolderName
+        let protocols = FileSystemTree.createEmptyFolder ARCtrl.ArcPathHelper.StudiesProtocolsFolderName
         let readme = FileSystemTree.createReadmeFile()
-        let studyFile = FileSystemTree.createFile ARCtrl.Path.StudyFileName
+        let studyFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.StudyFileName
         if hasDataMap then
-            let dataMapFile = FileSystemTree.createFile ARCtrl.Path.DataMapFileName
+            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme; dataMapFile|])
         else
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
 
     static member createInvestigationFile() = 
-        FileSystemTree.createFile ARCtrl.Path.InvestigationFileName
+        FileSystemTree.createFile ARCtrl.ArcPathHelper.InvestigationFileName
 
     static member createAssaysFolder(assays : FileSystemTree array) =
         FileSystemTree.createFolder(
-            ARCtrl.Path.AssaysFolderName, 
+            ARCtrl.ArcPathHelper.AssaysFolderName, 
             Array.append [|FileSystemTree.createGitKeepFile()|] assays
         )
 
     static member createStudiesFolder(studies : FileSystemTree array) =
         FileSystemTree.createFolder(
-            ARCtrl.Path.StudiesFolderName,
+            ARCtrl.ArcPathHelper.StudiesFolderName,
             Array.append [|FileSystemTree.createGitKeepFile()|] studies
         )
 
     static member createWorkflowsFolder(workflows : FileSystemTree array) =
         FileSystemTree.createFolder(
-            ARCtrl.Path.WorkflowsFolderName, 
+            ARCtrl.ArcPathHelper.WorkflowsFolderName, 
             Array.append [|FileSystemTree.createGitKeepFile()|] workflows
         )
 
     static member createRunsFolder(runs : FileSystemTree array) = 
         FileSystemTree.createFolder(
-            ARCtrl.Path.RunsFolderName, 
+            ARCtrl.ArcPathHelper.RunsFolderName, 
             Array.append [|FileSystemTree.createGitKeepFile()|] runs
         )

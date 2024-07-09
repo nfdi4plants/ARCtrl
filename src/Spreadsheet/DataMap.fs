@@ -1,11 +1,11 @@
-﻿module ARCtrl.Spreadsheet.DataMap
+module ARCtrl.Spreadsheet.DataMap
 
 open ARCtrl
 open ArcTable
 open FsSpreadsheet
 
 
-/// Reads an assay from a spreadsheet
+/// Reads an datamap from a spreadsheet
 let fromFsWorkbook (doc:FsWorkbook) = 
     try
         let dataMapTable = 

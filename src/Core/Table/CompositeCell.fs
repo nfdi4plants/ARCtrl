@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open Fable.Core
 
@@ -57,7 +57,7 @@ type CompositeCell =
         | Unitized _ -> this
         | FreeText text -> CompositeCell.Unitized ("", OntologyAnnotation.create(text))
         | Term term -> CompositeCell.Unitized ("", term)
-        | Data d -> failwith "Data cell cannot be converted to Unitized cell."
+        | Data d -> CompositeCell.Unitized ("", OntologyAnnotation.create(d.NameText))
 
     /// FreeText string will be converted to term name.
     ///
@@ -67,15 +67,22 @@ type CompositeCell =
         | Term _ -> this
         | Unitized (_,unit) -> CompositeCell.Term unit
         | FreeText text -> CompositeCell.Term(OntologyAnnotation.create(text))
-        | Data d -> failwith "Data cell cannot be converted to Term cell."
+        | Data d -> CompositeCell.Term(OntologyAnnotation(d.NameText))
 
     /// Will always keep `OntologyAnnotation.NameText` from Term or Unit.
     member this.ToFreeTextCell() =
         match this with
         | FreeText _ -> this
         | Term term -> FreeText(term.NameText)
-        | Unitized (v,unit) -> FreeText(unit.NameText)
-        | Data d -> FreeText (Option.defaultValue "" d.Name)
+        | Unitized (_,unit) -> FreeText(unit.NameText)
+        | Data d -> FreeText (d.NameText)
+
+    member this.ToDataCell() =
+        match this with
+        | Unitized (_, unit) -> CompositeCell.createDataFromString unit.NameText
+        | FreeText txt -> CompositeCell.createDataFromString txt
+        | Term term -> CompositeCell.createDataFromString term.NameText
+        | Data _ -> this
 
     // Suggest this syntax for easy "of-something" access
     member this.AsUnitized  =
@@ -133,7 +140,9 @@ type CompositeCell =
         | CompositeCell.Term _ -> CompositeCell.createTerm oa
         | CompositeCell.Unitized (v,_) -> CompositeCell.createUnitized (v,oa)
         | CompositeCell.FreeText _ -> CompositeCell.createFreeText oa.NameText
-        | CompositeCell.Data d -> failwith "Data cell cannot be updated with OntologyAnnotation."
+        | CompositeCell.Data d ->
+            d.Name <- Some oa.NameText
+            CompositeCell.Data d
 
     /// <summary>
     /// Updates current CompositeCell with information from OntologyAnnotation.

@@ -1,4 +1,4 @@
-﻿module ARCtrl.Path 
+module ARCtrl.ArcPathHelper
     
 open System
 

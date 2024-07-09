@@ -1,4 +1,4 @@
-﻿module GenerateIndexJs
+module GenerateIndexJs
 
 open System
 open System.IO
@@ -79,6 +79,7 @@ let private generateIndexfile (rootPath: string, fileName: string, whiteList: st
 
 let ARCtrl_generate(rootPath: string) = 
     let whiteList = [|
+        "Contract"
         "Comment$"
         "OntologyAnnotation"; 
         "Person";

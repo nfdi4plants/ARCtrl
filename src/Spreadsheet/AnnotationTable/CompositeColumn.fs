@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.CompositeColumn
+module ARCtrl.Spreadsheet.CompositeColumn
 
 open ARCtrl
 open ARCtrl.Helper
@@ -16,11 +16,11 @@ let fixDeprecatedIOHeader (stringCellCol : string []) =
     match IOType.ofString (stringCellCol.[0]) with
     | IOType.FreeText _ -> stringCellCol
     | IOType.Source -> 
-        let comp = CompositeHeader.Input (IOType.Source)       
+        let comp = CompositeHeader.Input (IOType.Source)
         stringCellCol.[0] <- comp.ToString()
         stringCellCol
     | ioType ->
-        let comp = CompositeHeader.Output (ioType)       
+        let comp = CompositeHeader.Output (ioType)
         stringCellCol.[0] <- comp.ToString()
         stringCellCol
 
@@ -54,32 +54,32 @@ let fromFsColumns (columns : FsColumn []) : CompositeColumn =
 let toStringCellColumns (column : CompositeColumn) : string list list =
     let hasUnit = column.Cells |> Seq.exists (fun c -> c.isUnitized)
     let isTerm = column.Header.IsTermColumn
-    let isData = column.Header.IsDataColumn
+    let isData = column.Header.IsDataColumn && column.Cells |> Seq.exists (fun c -> c.isData)
     let header = CompositeHeader.toStringCells hasUnit column.Header
     let cells = column.Cells |> Array.map (CompositeCell.toStringCells isTerm hasUnit)
+    let getCellOrDefault (ri: int) (ci: int) (cells: string [] []) = cells.[ri] |> Array.tryItem ci |> Option.defaultValue ""
     if hasUnit then
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
-            [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
-            [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
-            [header.[3]; for i = 0 to column.Cells.Length - 1 do cells.[i].[3]]
+            [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
+            [header.[1]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 1 cells]
+            [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
+            [header.[3]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 3 cells]
         ]
     elif isTerm then
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
-            [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
-            [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
+            [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
+            [header.[1]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 1 cells]
+            [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
         ]
     elif isData then
-        let hasFormat = column.Cells |> Seq.exists (fun c -> c.AsData.Format.IsSome)
-        let hasSelectorFormat = column.Cells |> Seq.exists (fun c -> c.AsData.SelectorFormat.IsSome)
-
+        let hasFormat = column.Cells |> Seq.exists (fun c -> c.ToDataCell().AsData.Format.IsSome)
+        let hasSelectorFormat = column.Cells |> Seq.exists (fun c -> c.ToDataCell().AsData.SelectorFormat.IsSome)
         [
-            [header.[0]; for i = 0 to column.Cells.Length - 1 do cells.[i].[0]]
+            [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
             if hasFormat then 
-                [header.[1]; for i = 0 to column.Cells.Length - 1 do cells.[i].[1]]
+                [header.[1]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 1 cells]
             if hasSelectorFormat then 
-                [header.[2]; for i = 0 to column.Cells.Length - 1 do cells.[i].[2]]
+                [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
         ]
     else
         [
