@@ -1,11 +1,18 @@
 namespace ARCtrl.Contract
 
 open ARCtrl.FileSystem
-open ARCtrl.ArcPathHelper
+open ARCtrl.Path
 open ARCtrl
 open ARCtrl.Yaml
 open ARCtrl.Helper
 open ARCtrl.ValidationPackages
+
+module ValidationPackagesConfigHelper = 
+
+    let ConfigFilePath = [|ARCConfigFolderName; ValidationPackagesYamlFileName|] |> ARCtrl.Path.combineMany
+
+    let ReadContract : Contract = {Operation = READ; DTOType = Some DTOType.YAML; Path = ConfigFilePath; DTO = None}
+
 
 [<AutoOpen>]
 module ValidationPackagesConfigExtensions = 
@@ -13,22 +20,17 @@ module ValidationPackagesConfigExtensions =
     let (|ValidationPackagesYamlPath|_|) (input) =
         match input with
         | [|ARCConfigFolderName; ValidationPackagesYamlFileName|] -> 
-            let path = ARCtrl.ArcPathHelper.combineMany input
+            let path = ARCtrl.Path.combineMany input
             Some path
         | _ -> None
-
-    let internal config_file_path = [|ARCConfigFolderName; ValidationPackagesYamlFileName|] |> ARCtrl.ArcPathHelper.combineMany
 
     type ValidationPackagesConfig with
     
         member this.ToCreateContract () =
-            Contract.createCreate(config_file_path, DTOType.YAML, DTO.Text (this |> ValidationPackagesConfig.toYamlString()))
-
-        member this.ToUpdateContract () =
-            Contract.createUpdate(config_file_path, DTOType.YAML, DTO.Text (this |> ValidationPackagesConfig.toYamlString()))
+            Contract.createCreate(ValidationPackagesConfigHelper.ConfigFilePath, DTOType.YAML, DTO.Text (this |> ValidationPackagesConfig.toYamlString()))
 
         member this.ToDeleteContract () =
-            Contract.createDelete(config_file_path)
+            Contract.createDelete(ValidationPackagesConfigHelper.ConfigFilePath)
 
         static member toDeleteContract (config: ValidationPackagesConfig) : Contract =
             config.ToDeleteContract()
@@ -36,12 +38,9 @@ module ValidationPackagesConfigExtensions =
         static member toCreateContract (config: ValidationPackagesConfig) : Contract =
             config.ToCreateContract()
 
-        static member toUpdateContract (config: ValidationPackagesConfig) : Contract =
-            config.ToUpdateContract()
-
         static member tryFromReadContract (c:Contract) =
             match c with
-            | {Operation = READ; DTOType = Some DTOType.YAML; DTO = Some (DTO.Text yaml)} ->
+            | {Operation = READ; DTOType = Some DTOType.YAML; Path = p; DTO = Some (DTO.Text yaml)} when p = ValidationPackagesConfigHelper.ConfigFilePath ->
                 yaml
                 |> ValidationPackagesConfig.fromYamlString
                 |> Some 
