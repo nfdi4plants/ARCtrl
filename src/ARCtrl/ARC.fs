@@ -281,7 +281,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             | None -> 
                 investigation.AddStudy(study)
             let datamap = ARCAux.getAssayDataMapFromContracts study.Identifier contracts
-            study.DataMap <- datamap
+            if study.DataMap.IsNone then
+                study.DataMap <- datamap
             study.StaticHash <- study.GetLightHashCode()
         )
         assays |> Array.iter (fun assay ->
@@ -299,7 +300,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     ArcTables.updateReferenceTablesBySheets(ArcTables(study.Tables),tables,false)
                 ) (ArcTables(assay.Tables))
             let datamap = ARCAux.getAssayDataMapFromContracts assay.Identifier contracts
-            assay.DataMap <- datamap
+            if assay.DataMap.IsNone then
+                assay.DataMap <- datamap
             assay.Tables <- updatedTables.Tables
         )
         investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetLightHashCode())
@@ -315,8 +317,12 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
     /// <summary>
     /// This function returns the all write Contracts for the current state of the ARC. ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
-    /// </summary>  
+    ///
+    /// If datamapFile is set to true, a write contract for the datamap file will be included for each study and assay.
+    /// </summary>
+    /// <param name="datamapFile">Default: false.</param>
     member this.GetWriteContracts () =
+        //let datamapFile = defaultArg datamapFile false
         /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match this.ISA with
@@ -331,7 +337,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     Identifier.Study.fileNameFromIdentifier s.Identifier,
                     (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
                 )
-                if s.DataMap.IsSome then 
+                if s.DataMap.IsSome (*&& datamapFile*) then 
                     let dm = s.DataMap.Value
                     dm.StaticHash <- dm.GetHashCode()
                     workbooks.Add (
@@ -345,8 +351,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                 a.StaticHash <- a.GetLightHashCode()
                 workbooks.Add (
                     Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Assay, Spreadsheet.ArcAssay.toFsWorkbook a))     
-                if a.DataMap.IsSome then 
+                    (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a))     
+                if a.DataMap.IsSome (*&& datamapFile*) then 
                     let dm = a.DataMap.Value
                     dm.StaticHash <- dm.GetHashCode()
                     workbooks.Add (
@@ -391,10 +397,10 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     yield inv.ToUpdateContract()
                 inv.StaticHash <- hash
 
-                // Get Study contracts             
+                // Get Study contracts
                 for s in inv.Studies do
                     let hash = s.GetLightHashCode()
-                    if s.StaticHash = 0 then 
+                    if s.StaticHash = 0 then
                         yield! s.ToCreateContract(WithFolder = true)
                     elif s.StaticHash <> hash then 
                         yield s.ToUpdateContract()

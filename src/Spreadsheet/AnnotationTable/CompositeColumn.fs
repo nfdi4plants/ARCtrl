@@ -72,10 +72,8 @@ let toStringCellColumns (column : CompositeColumn) : string list list =
             [header.[2]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 2 cells]
         ]
     elif isData then
-        printfn "Test"
         let hasFormat = column.Cells |> Seq.exists (fun c -> c.ToDataCell().AsData.Format.IsSome)
         let hasSelectorFormat = column.Cells |> Seq.exists (fun c -> c.ToDataCell().AsData.SelectorFormat.IsSome)
-        printfn "Test 2"
         [
             [header.[0]; for i = 0 to column.Cells.Length - 1 do getCellOrDefault i 0 cells]
             if hasFormat then 

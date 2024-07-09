@@ -10,13 +10,13 @@ let private dataColumnsTable =
     let mkInputStr (i:int) = sprintf "Input_%i" i
     let mkDataNameStr (i:int) = sprintf "MyData#row=%i" i
     testList "dataColumnsTable" [
-        ftestCase "Only Freetext" <| fun _ ->
+        testCase "Only Freetext" <| fun _ ->
             let table = ArcTable.init("MyTable")
             table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do mkInputStr i |> CompositeCell.FreeText|])
             let fsws = ArcTable.toFsWorksheet table
             let actualColValues = (fsws.Column(1).Cells |> Seq.map (fun c -> c.ValueAsString())) 
             Expect.sequenceEqual actualColValues ["Input [Data]"; "Input_1"; "Input_2"; "Input_3"; "Input_4"; "Input_5"] ""
-        ftestCase "Only Data" <| fun _ ->
+        testCase "Only Data" <| fun _ ->
             let table = ArcTable.init("MyTable")
             table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))|])
             let fsws = ArcTable.toFsWorksheet table
@@ -26,7 +26,7 @@ let private dataColumnsTable =
             Expect.sequenceEqual rows.[0] ["Input [Data]"; "Data Format"; "Data Selector Format"] "header row"
             for i in 1 .. 5 do
                 Expect.sequenceEqual rows.[i] [mkDataNameStr i; "text/csv"; "MySelector"] (sprintf "row %i" i)
-        ftestCase "Mixed" <| fun _ ->
+        testCase "Mixed" <| fun _ ->
             let table = ArcTable.init("MyTable")
             table.AddColumn(
                 CompositeHeader.Input(IOType.Data),
