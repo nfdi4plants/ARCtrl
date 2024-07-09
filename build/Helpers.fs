@@ -1,4 +1,4 @@
-﻿module Helpers
+module Helpers
 
 open BlackFox.Fake
 open Fake.Core
@@ -31,20 +31,26 @@ type PreReleaseFlag =
     | Alpha
     | Beta
     | ReleaseCandidate
+    | Swate of PreReleaseFlag // this was added to create swate release hotfixes
 
     static member fromInput (input: string) =
         match input with
         | "a" -> Alpha
         | "b" -> Beta
         | "rc" -> ReleaseCandidate
+        | any when any.StartsWith "swate" ->
+            let rmvdSwate = any.Replace("swate.","")
+            Swate (PreReleaseFlag.fromInput rmvdSwate)
         | _ -> failwith "Invalid input"
 
     static member toNugetTag (semVer : SemVerInfo) (flag: PreReleaseFlag) (number : int) =
-        let suffix = 
+        let rec mkSuffix (flag) (number) = 
             match flag with
             | Alpha -> $"alpha.{number}"
             | Beta -> $"beta.{number}"
             | ReleaseCandidate -> $"rc.{number}"
+            | Swate any -> mkSuffix any number + ".swate"
+        let suffix = mkSuffix flag number
         sprintf "%i.%i.%i-%s" semVer.Major semVer.Minor semVer.Patch suffix
 
 
@@ -57,5 +63,6 @@ type PreReleaseFlag =
             | Alpha -> $"a{number}"
             | Beta -> $"b{number}"
             | ReleaseCandidate -> $"rc{number}"
+            | Swate any -> failwith "Cannot publish swate prerelease to pypi."
         sprintf "%i.%i.%i%s" semVer.Major semVer.Minor semVer.Patch suffix
 

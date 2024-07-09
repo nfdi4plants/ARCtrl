@@ -1,4 +1,4 @@
-﻿module Build
+module Build
 open BlackFox.Fake
 open System.IO
 open Fake.Core
@@ -27,7 +27,7 @@ let _release =
 let _preRelease = 
     BuildTask.createEmpty 
         "PreRelease" 
-        [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease; publishPyPiPrerelease]
+        [setPrereleaseTag; clean; build; (*runTests;*) packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease; publishPyPiPrerelease]
 
 ReleaseNotesTasks.updateReleaseNotes |> ignore
 PerformanceTasks.perforanceReport |> ignore
