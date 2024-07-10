@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Process
+namespace ARCtrl.Process
 
 open ARCtrl
 open ARCtrl.Helper 
@@ -87,8 +87,11 @@ type FactorValue =
     static member nameEqualsString (name : string) (fv : FactorValue) =
         fv.NameText = name
 
-    interface IPropertyValue<FactorValue> with
+    interface IPropertyValue with
 
+        member this.AlternateName() = None
+        member this.MeasurementMethod() = None 
+        member this.Description() = None
         member this.GetCategory() =
             this.Category
             |> Option.bind (fun f -> f.FactorType)
@@ -102,7 +105,8 @@ type FactorValue =
         member this.GetAdditionalType() =
             "FactorValue"
 
-    static member createAsPV (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+    // TODO: @hlweil why are there unused params?
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
         let category = category |> Option.map (fun c -> Factor.create(FactorType = c))
         FactorValue.create(?Category = category, ?Value = value, ?Unit = unit)
 

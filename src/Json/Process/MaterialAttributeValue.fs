@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -11,7 +11,7 @@ module MaterialAttributeValue =
     module ROCrate =
 
         let encoder : MaterialAttributeValue -> Json= 
-            PropertyValue.ROCrate.encoder<MaterialAttributeValue>
+            PropertyValue.ROCrate.encoder
 
         let decoder : Decoder<MaterialAttributeValue> =
             PropertyValue.ROCrate.decoder<MaterialAttributeValue> (MaterialAttributeValue.createAsPV)

@@ -22,7 +22,8 @@ module Data =
       "Data", Encode.string "sdo:MediaObject"
 
       "type", Encode.string "sdo:disambiguatingDescription"
-
+      "encodingFormat", Encode.string "sdo:encodingFormat"
+      "usageInfo", Encode.string "sdo:usageInfo"
       "name", Encode.string "sdo:name"
       "comments", Encode.string "sdo:comment"
     ]

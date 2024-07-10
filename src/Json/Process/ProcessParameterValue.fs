@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -10,7 +10,7 @@ module ProcessParameterValue =
     module ROCrate =
 
         let encoder : ProcessParameterValue -> Json= 
-            PropertyValue.ROCrate.encoder<ProcessParameterValue>
+            PropertyValue.ROCrate.encoder
 
         let decoder : Decoder<ProcessParameterValue> =
             PropertyValue.ROCrate.decoder<ProcessParameterValue> (ProcessParameterValue.createAsPV)

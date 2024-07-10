@@ -1,4 +1,4 @@
-﻿/// All json objects tested against offical validator: https://validator.schema.org
+/// All json objects tested against offical validator: https://validator.schema.org
 module TestObjects.Json.ROCrate
 
 let definedTerm = """{
@@ -31,6 +31,9 @@ let propertyValue = """{
   "@context": {
     "sdo": "http://schema.org/",
     "additionalType": "sdo:additionalType",
+    "alternateName": "sdo:alternateName",
+    "measurementMethod": "sdo:measurementMethod",
+    "description": "sdo:description",
     "category": "sdo:name",
     "categoryCode": "sdo:propertyID",
     "value": "sdo:value",

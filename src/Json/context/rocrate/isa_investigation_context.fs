@@ -65,7 +65,7 @@ module Investigation =
     "ontologySourceReferences": "sdo:mentions",
     "comments": "sdo:disambiguatingDescription",
 
-    "publications?": "sdo:subjectOf?",
+    "publications?": "sdo:SubjectOf?",
     "filename": "sdo:alternateName"
   }
 }
