@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 
 open Thoth.Json.Core
@@ -13,7 +13,7 @@ module FactorValue =
     module ROCrate =
 
         let encoder : FactorValue -> Json= 
-            PropertyValue.ROCrate.encoder<FactorValue>
+            PropertyValue.ROCrate.encoder
 
         let decoder : Decoder<FactorValue> =
             PropertyValue.ROCrate.decoder<FactorValue> (FactorValue.createAsPV)

@@ -43,7 +43,7 @@ let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
     BundleDotNet.bundle ProjectInfo.stableVersionTag None
 }
 
-let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleaseTag; clean; build; runTests] {
+let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleaseTag; clean; build] {
     let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
     BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
 }

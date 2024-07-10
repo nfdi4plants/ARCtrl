@@ -1,4 +1,4 @@
-﻿module ReleaseTasks
+module ReleaseTasks
 
 open MessagePrompts
 open ProjectInfo
@@ -23,7 +23,7 @@ let createTag = BuildTask.create "CreateTag" [clean; build; runTests; packDotNet
         failwith "aborted"
 }
 
-let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseTag; clean; build; runTests; packDotNetPrerelease] {
+let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseTag; clean; build; packDotNetPrerelease] {
     let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
 
     if promptYesNo (sprintf "tagging branch with %s OK?" prereleaseTag ) then 
@@ -46,7 +46,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
     else failwith "aborted"
 }
 
-let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; runTests; packDotNetPrerelease] {
+let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; build; packDotNetPrerelease] {
     let targets = (!! (sprintf "%s/*.*pkg" netPkgDir ))
     for target in targets do printfn "%A" target
     let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber

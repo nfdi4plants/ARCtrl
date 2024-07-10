@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Process
+namespace ARCtrl.Process
 
 open ARCtrl
 
@@ -119,11 +119,14 @@ type Component =
     member this.SetCategory(c : OntologyAnnotation) =
         {this with ComponentType = Some c}
 
-    interface IPropertyValue<Component> with
+    interface IPropertyValue with
+        member this.AlternateName() = this.ComponentName
+        member this.MeasurementMethod() = None
+        member this.Description() = None
         member this.GetCategory() = this.ComponentType
         member this.GetAdditionalType() = "Component"
         member this.GetValue() = this.ComponentValue
         member this.GetUnit() = this.ComponentUnit
 
-    static member createAsPV (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
+    static member createAsPV (alternateName : string option) (measurementMethod : string option) (description : string option) (category : OntologyAnnotation option) (value : Value option) (unit : OntologyAnnotation option) =
         Component.create(?componentType = category, ?value = value, ?unit = unit)

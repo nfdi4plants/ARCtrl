@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open System.Collections.Generic
 open ARCtrl.Helper 
@@ -37,6 +37,11 @@ module DataMapAux =
 
     [<Literal>]
     let objectTypeShortHand = "Object Type"
+
+    let labelHeader = CompositeHeader.FreeText "Label"
+
+    [<Literal>]
+    let labelShortHand = "Label"
 
     let descriptionHeader = CompositeHeader.FreeText "Description"
 
@@ -126,6 +131,12 @@ type DataMap(dataContexts : ResizeArray<DataContext>) =
 
     member this.SetDataTypeColumn(cells : CompositeCell []) =
         DataMapAux.setOntologyColumn (fun dc oa -> dc.ObjectType <- oa) cells dataContexts
+
+    member this.GetLabelColumn() =
+        DataMapAux.getStringColumn (fun dc -> dc.Name) dataContexts
+
+    member this.SetLabelColumn(cells : CompositeCell []) =
+        DataMapAux.setStringColumn (fun dc s -> dc.Name <- s) cells dataContexts
 
     member this.GetDescriptionColumn() =
         DataMapAux.getStringColumn (fun dc -> dc.Description) dataContexts

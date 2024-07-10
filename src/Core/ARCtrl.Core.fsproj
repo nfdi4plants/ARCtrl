@@ -1,9 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Include all files that are compiled with this project -->
+    <Content Include="@(Compile)" Pack="true" PackagePath="fable/%(RelativeDir)%(Filename)%(Extension)" />
+    <!-- Include the project file itself as well -->
+    <Content Include="$(MSBuildThisFileFullPath)" Pack="true" PackagePath="fable/" />
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="Helper\Collections.fs" />
     <Compile Include="Helper\Url.fs" />
@@ -16,14 +23,14 @@
     <Compile Include="Comment.fs" />
     <Compile Include="CommentList.fs" />
     <Compile Include="OntologyAnnotation.fs" />
+    <Compile Include="Value.fs" />
+    <Compile Include="IPropertyValue.fs" />
     <Compile Include="DataFile.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="DataContext.fs" />
     <Compile Include="Person.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="OntologySourceReference.fs" />
-    <Compile Include="Process\Value.fs" />
-    <Compile Include="Process\IPropertyValue.fs" />
     <Compile Include="Process\Factor.fs" />
     <Compile Include="Process\FactorValue.fs" />
     <Compile Include="Process\MaterialAttribute.fs" />
@@ -47,7 +54,7 @@
     <Compile Include="Table\ArcTableAux.fs" />
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\ArcTables.fs" />
-    <Compile Include="Table\DataMap.fs" />
+    <Compile Include="DataMap.fs" />
     <Compile Include="ArcTypes.fs" />
     <Compile Include="Template.fs" />
     <Compile Include="Templates.fs" />
@@ -57,10 +64,6 @@
   <ItemGroup>
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>

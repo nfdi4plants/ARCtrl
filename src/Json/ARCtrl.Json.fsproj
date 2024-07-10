@@ -1,9 +1,16 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- Include all files that are compiled with this project -->
+    <Content Include="@(Compile)" Pack="true" PackagePath="fable/%(RelativeDir)%(Filename)%(Extension)" />
+    <!-- Include the project file itself as well -->
+    <Content Include="$(MSBuildThisFileFullPath)" Pack="true" PackagePath="fable/" />
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="context\rocrate\property_value_context.fs" />
     <Compile Include="context\rocrate\isa_assay_context.fs" />
@@ -36,11 +43,13 @@
     <Compile Include="StringTable.fs" />
     <Compile Include="Comment.fs" />
     <Compile Include="OntologyAnnotation.fs" />
+    <Compile Include="PropertyValue.fs" />
     <Compile Include="OntologySourceReference.fs" />
+    <Compile Include="DataFile.fs" />
+    <Compile Include="Data.fs" />
     <Compile Include="Person.fs" />
     <Compile Include="Publication.fs" />
     <Compile Include="Process\Value.fs" />
-    <Compile Include="Process\PropertyValue.fs" />
     <Compile Include="Process\Factor.fs" />
     <Compile Include="Process\FactorValue.fs" />
     <Compile Include="Process\ProtocolParameter.fs" />
@@ -50,8 +59,6 @@
     <Compile Include="Process\Protocol.fs" />
     <Compile Include="Process\MaterialAttributeValue.fs" />
     <Compile Include="Process\Material.fs" />
-    <Compile Include="Process\DataFile.fs" />
-    <Compile Include="Process\Data.fs" />
     <Compile Include="Process\Source.fs" />
     <Compile Include="Process\Sample.fs" />
     <Compile Include="Process\ProcessParameterValue.fs" />
@@ -69,6 +76,8 @@
     <Compile Include="Table\ArcTable.fs" />
     <Compile Include="Table\Compression.fs" />
     <Compile Include="Table\Templates.fs" />
+    <Compile Include="DataMap\DataContext.fs" />
+    <Compile Include="DataMap\DataMap.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
@@ -83,10 +92,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
