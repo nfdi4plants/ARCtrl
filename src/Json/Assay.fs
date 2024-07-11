@@ -31,7 +31,7 @@ module Assay =
                 ?technologyType = get.Optional.Field "TechnologyType" OntologyAnnotation.decoder,
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
                 ?tables = get.Optional.Field "Tables" (Decode.resizeArray ArcTable.decoder),
-                ?datamap = get.Optional.Field "Datamap" DataMap.decoder,
+                ?datamap = get.Optional.Field "DataMap" DataMap.decoder,
                 ?performers = get.Optional.Field "Performers" (Decode.resizeArray Person.decoder),
                 ?comments = get.Optional.Field "Comments" (Decode.resizeArray Comment.decoder)
             ) 

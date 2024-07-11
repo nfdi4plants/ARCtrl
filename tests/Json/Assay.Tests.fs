@@ -1,4 +1,4 @@
-﻿module Tests.Assay
+module Tests.Assay
 
 open ARCtrl
 open ARCtrl.Json
@@ -6,6 +6,17 @@ open TestingUtils
 
 module Helper =
     let create_empty() = ArcAssay.create("My Assay")
+    let create_filled_datamap() = 
+        ArcAssay.create(
+            "My Cool Assay",
+            OntologyAnnotation("MT", "MS", "MS:424242", ResizeArray [Comment.create("ByeBye","Space")]), 
+            OntologyAnnotation("TT", "MS", "MS:696969"), 
+            OntologyAnnotation("TP", "MS", "MS:123456", ResizeArray [Comment.create("Hello","Space")]), 
+            ResizeArray([Tests.ArcTable.Helper.create_filled(); ArcTable.init("My Second Table")]),
+            DataMap.Helper.create_filled(),
+            performers = ResizeArray [|Person.create(firstName="Kevin", lastName="Frey")|],
+            comments = ResizeArray [|Comment.create("Hello", "World")|]
+        )
     let create_filled() = 
         ArcAssay.create(
             "My Cool Assay",
@@ -23,6 +34,7 @@ module Helper =
             Expect.equal a1.MeasurementType a2.MeasurementType "MeasurementType"
             Expect.equal a1.TechnologyType a2.TechnologyType "TechnologyType"
             Expect.equal a1.TechnologyPlatform a2.TechnologyPlatform "TechnologyPlatform"
+            Expect.equal a1.DataMap a2.DataMap "DataMap"
             Expect.sequenceEqual a1.Tables a2.Tables "Tables"
             Expect.sequenceEqual a1.Performers a2.Performers "Performers"
             Expect.sequenceEqual a1.Comments a2.Comments "Comments"
@@ -73,7 +85,7 @@ let private test_roCrateEmpty =
 let private test_core =
     createBaseJsonTests
         "core"
-        create_filled
+        create_filled_datamap
         ArcAssay.toJsonString
         ArcAssay.fromJsonString
         None
@@ -82,7 +94,7 @@ let private test_core =
 let private test_compressed =
     createBaseJsonTests
         "compressed"
-        create_filled
+        create_filled_datamap
         ArcAssay.toCompressedJsonString
         ArcAssay.fromCompressedJsonString
         None

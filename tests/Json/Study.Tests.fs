@@ -1,4 +1,4 @@
-﻿module Tests.Study
+module Tests.Study
 
 open ARCtrl
 open ARCtrl.Json
@@ -8,6 +8,24 @@ open TestingUtils
 module Helper =
     
     let create_empty() = ArcStudy.init("My Fancy Stundy")
+    let create_filled_datamap() = ArcStudy.create(
+        "My Study",
+        "My Title",
+        "My Description",
+        #if !FABLE_COMPILER
+        "2024-03-15T20:20:39",
+        #else
+        "2024-03-15",
+        #endif        
+        "2024-04-20",
+        ResizeArray [|Publication.create(doi="any-nice-doi-42")|],
+        ResizeArray [|Person.create(firstName="Kevin", lastName="Frey", phone="023382093810")|], 
+        ResizeArray [|OntologyAnnotation(); OntologyAnnotation()|],
+        ResizeArray [ArcTable.Helper.create_filled(); ArcTable.init("Table 2")],
+        DataMap.Helper.create_filled(),
+        registeredAssayIdentifiers = ResizeArray ["Assay 1"; "Assay 2"],
+        comments = ResizeArray [|Comment.create("Hello", "World")|]
+    )
     let create_filled() = ArcStudy.create(
         "My Study",
         "My Title",
@@ -88,7 +106,7 @@ let private test_roCrateEmpty =
 let private test_core =
     createBaseJsonTests
         "core"
-        create_filled
+        create_filled_datamap
         ArcStudy.toJsonString
         ArcStudy.fromJsonString
         None
@@ -97,7 +115,7 @@ let private test_core =
 let private test_compressed =
     createBaseJsonTests
         "compressed"
-        create_filled
+        create_filled_datamap
         ArcStudy.toCompressedJsonString
         ArcStudy.fromCompressedJsonString
         None

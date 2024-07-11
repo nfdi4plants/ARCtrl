@@ -5,10 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Include all files that are compiled with this project -->
-    <Content Include="@(Compile)" Pack="true" PackagePath="fable/%(RelativeDir)%(Filename)%(Extension)" />
-    <!-- Include the project file itself as well -->
-    <Content Include="$(MSBuildThisFileFullPath)" Pack="true" PackagePath="fable/" />
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
