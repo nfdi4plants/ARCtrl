@@ -80,6 +80,8 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ValidationPackages.T
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Yaml.Tests", "tests\Yaml\ARCtrl.Yaml.Tests.fsproj", "{5810EF87-4F85-4B4C-98E3-833AE914C628}"
 EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.Contract.Tests", "tests\Contract\ARCtrl.Contract.Tests.fsproj", "{D10D12C7-B877-423B-867D-161D99E673C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -162,6 +164,10 @@ Global
 		{5810EF87-4F85-4B4C-98E3-833AE914C628}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5810EF87-4F85-4B4C-98E3-833AE914C628}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5810EF87-4F85-4B4C-98E3-833AE914C628}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D10D12C7-B877-423B-867D-161D99E673C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D10D12C7-B877-423B-867D-161D99E673C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D10D12C7-B877-423B-867D-161D99E673C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D10D12C7-B877-423B-867D-161D99E673C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -187,6 +193,7 @@ Global
 		{4CC3AAC2-030B-4B2E-A386-9C1F68E42238} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 		{1CA11165-4B70-41D2-A846-50374E85385E} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{5810EF87-4F85-4B4C-98E3-833AE914C628} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{D10D12C7-B877-423B-867D-161D99E673C9} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}
