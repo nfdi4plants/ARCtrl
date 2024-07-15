@@ -27,7 +27,7 @@ type ValidationPackage(name, ?version) =
         [
             "-"
             $"  name: {this.Name}"
-            if version.IsSome then $"  version: {this.Version}"
+            if version.IsSome then $"  version: {this.Version.Value}"
         ]
         |> String.concat System.Environment.NewLine
 

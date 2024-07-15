@@ -26,7 +26,7 @@ type ValidationPackagesConfig(validation_packages, ?arc_specification) =
     /// Pretty printer 
     override this.ToString() =
         [
-            if this.ARCSpecification.IsSome then $"arc_specification: {this.ARCSpecification}"
+            if this.ARCSpecification.IsSome then $"arc_specification: {this.ARCSpecification.Value}"
             "validation_packages:"
             this.ValidationPackages
             |> Seq.map (fun vp -> vp.ToString())
@@ -51,7 +51,7 @@ type ValidationPackagesConfig(validation_packages, ?arc_specification) =
     override this.GetHashCode() =        
         [|
             HashCodes.boxHashOption this.ARCSpecification
-            this.ValidationPackages.GetHashCode() |> box
+            this.ValidationPackages |> HashCodes.boxHashSeq 
         |]
         |> HashCodes.boxHashArray
         |> fun x -> x :?> int
