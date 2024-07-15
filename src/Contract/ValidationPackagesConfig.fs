@@ -1,7 +1,6 @@
 namespace ARCtrl.Contract
 
 open ARCtrl.FileSystem
-open ARCtrl.Path
 open ARCtrl
 open ARCtrl.Yaml
 open ARCtrl.Helper
@@ -9,7 +8,7 @@ open ARCtrl.ValidationPackages
 
 module ValidationPackagesConfigHelper = 
 
-    let ConfigFilePath = [|ARCConfigFolderName; ValidationPackagesYamlFileName|] |> ARCtrl.Path.combineMany
+    let ConfigFilePath = [|ArcPathHelper.ARCConfigFolderName; ArcPathHelper.ValidationPackagesYamlFileName|] |> ArcPathHelper.combineMany
 
     let ReadContract : Contract = {Operation = READ; DTOType = Some DTOType.YAML; Path = ConfigFilePath; DTO = None}
 
@@ -19,8 +18,8 @@ module ValidationPackagesConfigExtensions =
 
     let (|ValidationPackagesYamlPath|_|) (input) =
         match input with
-        | [|ARCConfigFolderName; ValidationPackagesYamlFileName|] -> 
-            let path = ARCtrl.Path.combineMany input
+        | [|ArcPathHelper.ARCConfigFolderName; ArcPathHelper.ValidationPackagesYamlFileName|] -> 
+            let path = ArcPathHelper.combineMany input
             Some path
         | _ -> None
 

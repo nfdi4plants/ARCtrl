@@ -15,6 +15,7 @@ let testProjects =
         "tests/ARCtrl"
         "tests/Yaml"
         "tests/ValidationPackages"
+        "tests/Contract"
     ]
 
 /// Native JS test paths
