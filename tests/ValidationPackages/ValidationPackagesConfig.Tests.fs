@@ -5,21 +5,13 @@ open TestingUtils
 open ARCtrl
 open ARCtrl.ValidationPackages
 
+let vp = ValidationPackages.ValidationPackage("name", "version")
+let vp_no_version = ValidationPackages.ValidationPackage("name")
+
+let vpc = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp; vp_no_version ]), "arc_specification")
+let vpc_no_specs = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp; vp_no_version ]))
+
 let tests_instance_methods = testList "Instance methods" [
-    let vp = ValidationPackages.ValidationPackage("name", "version")
-    let vp_no_version = ValidationPackages.ValidationPackage("name")
-
-    let vpc = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp; vp_no_version ]), "arc_specification")
-    let vpc_no_specs = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp; vp_no_version ]))
-
-    testCase "make - specs and packages" <| fun _ ->
-        let actual = ValidationPackagesConfig.make (new ResizeArray<ValidationPackage>([vp; vp_no_version ])) (Some "arc_specification")
-        let expected = vpc
-        Expect.equal actual expected ""
-    testCase "make - no specs" <| fun _ ->
-        let actual = ValidationPackagesConfig.make (new ResizeArray<ValidationPackage>([vp; vp_no_version ])) None
-        let expected = vpc_no_specs
-        Expect.equal actual expected ""
     testCase "Copy - specs and packages" <| fun _ ->
         let actual = vpc.Copy()
         let expected = vpc
@@ -30,11 +22,11 @@ let tests_instance_methods = testList "Instance methods" [
         Expect.equal actual expected ""
     testCase "ToString - specs and packages" <| fun _ ->
         let actual = vpc.ToString()
-        let expected = "arc_specification: arc_specification\nvalidation_packages:\n-\n  name: name\n  version: version\n-\n  name: name"
+        let expected = "{\n ARCSpecification = arc_specification\n ValidationPackages = [\n{\n Name = name\n Version = version\n};\n{\n Name = name\n}\n]\n}"
         Expect.trimEqual actual expected ""
     testCase "ToString - no specs" <| fun _ ->
         let actual = vpc_no_specs.ToString()
-        let expected = "validation_packages:\n-\n  name: name\n  version: version\n-\n  name: name"
+        let expected = "{\n ValidationPackages = [\n{\n Name = name\n Version = version\n};\n{\n Name = name\n}\n]\n}"
         Expect.trimEqual actual expected ""
     testCase "StructurallyEquals - specs and packages" <| fun _ ->
         let actual = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp_no_version; vp]), "arc_specification").StructurallyEquals(vpc)
@@ -79,6 +71,19 @@ let tests_instance_methods = testList "Instance methods" [
 
 ]
 
+let tests_static_methods = testList "Static methods" [
+    testCase "make - specs and packages" <| fun _ ->
+        let actual = ValidationPackagesConfig.make (new ResizeArray<ValidationPackage>([vp; vp_no_version ])) (Some "arc_specification")
+        let expected = vpc
+        Expect.equal actual expected ""
+    testCase "make - no specs" <| fun _ ->
+        let actual = ValidationPackagesConfig.make (new ResizeArray<ValidationPackage>([vp; vp_no_version ])) None
+        let expected = vpc_no_specs
+        Expect.equal actual expected ""
+]
+
+
 let main = testList "ValidationPackageConfig" [
     tests_instance_methods
+    tests_static_methods
 ]

@@ -26,11 +26,14 @@ type ValidationPackagesConfig(validation_packages, ?arc_specification) =
     /// Pretty printer 
     override this.ToString() =
         [
-            if this.ARCSpecification.IsSome then $"arc_specification: {this.ARCSpecification.Value}"
-            "validation_packages:"
+            "{"
+            if this.ARCSpecification.IsSome then $" ARCSpecification = {this.ARCSpecification.Value}"
+            " ValidationPackages = ["
             this.ValidationPackages
             |> Seq.map (fun vp -> vp.ToString())
-            |> String.concat System.Environment.NewLine
+            |> String.concat $";{System.Environment.NewLine}"
+            "]"
+            "}"
         ]
         |> String.concat System.Environment.NewLine
 

@@ -5,17 +5,10 @@ open TestingUtils
 open ARCtrl
 open ARCtrl.ValidationPackages
 
+let vp = ValidationPackage("name", "version")
+let vp_no_version = ValidationPackage("name")
+
 let tests_instance_methods = testList "Instance methods" [
-    let vp = ValidationPackage("name", "version")
-    let vp_no_version = ValidationPackage("name")
-    testCase "make - name and version" <| fun _ ->
-        let actual = ValidationPackage.make "name" (Some "version")
-        let expected = vp
-        Expect.equal actual expected ""
-    testCase "make - no version" <| fun _ ->
-        let actual = ValidationPackage.make "name" None
-        let expected = vp_no_version
-        Expect.equal actual expected ""
     testCase "Copy - name and version" <| fun _ ->
         let actual = vp.Copy()
         let expected = vp
@@ -26,11 +19,11 @@ let tests_instance_methods = testList "Instance methods" [
         Expect.equal actual expected ""
     testCase "ToString - name and version" <| fun _ ->
         let actual = vp.ToString()
-        let expected = "-\n  name: name\n  version: version"
+        let expected = "{\n Name = name\n Version = version\n}"
         Expect.trimEqual actual expected ""
     testCase "ToString - no version" <| fun _ ->
         let actual = vp_no_version.ToString()
-        let expected = "-\n  name: name"
+        let expected = "{\n Name = name\n}"
         Expect.trimEqual actual expected ""
     testCase "Equals - name and version" <| fun _ ->
         let actual = ValidationPackage("name", "version").Equals(vp)
@@ -48,9 +41,20 @@ let tests_instance_methods = testList "Instance methods" [
         let actual = ValidationPackage("name").GetHashCode()
         let expected = vp_no_version.GetHashCode()
         Expect.equal actual expected ""
+]
 
+let tests_static_methods = testList "Static methods" [
+    testCase "make - name and version" <| fun _ ->
+        let actual = ValidationPackage.make "name" (Some "version")
+        let expected = vp
+        Expect.equal actual expected ""
+    testCase "make - no version" <| fun _ ->
+        let actual = ValidationPackage.make "name" None
+        let expected = vp_no_version
+        Expect.equal actual expected ""
 ]
 
 let main = testList "ValidationPackage" [
     tests_instance_methods
+    tests_static_methods
 ]

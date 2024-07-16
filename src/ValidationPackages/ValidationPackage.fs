@@ -25,9 +25,10 @@ type ValidationPackage(name, ?version) =
     /// Pretty printer 
     override this.ToString() =
         [
-            "-"
-            $"  name: {this.Name}"
-            if version.IsSome then $"  version: {this.Version.Value}"
+            "{"
+            $" Name = {this.Name}"
+            if version.IsSome then $" Version = {this.Version.Value}"
+            "}"
         ]
         |> String.concat System.Environment.NewLine
 
