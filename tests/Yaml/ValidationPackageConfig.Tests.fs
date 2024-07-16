@@ -13,21 +13,21 @@ let tests_extended = testList "extended" [
     let vpc = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp; vp_no_version ]), "arc_specification")
     let vpc_no_specs = ValidationPackages.ValidationPackagesConfig(new ResizeArray<ValidationPackage>([vp; vp_no_version ]))
 
-    let vpc_yaml_string = """arc_specification: arc_specification
-validation_packages:
+    let vpc_yaml_string = $"""{ValidationPackagesConfig.ARC_SPECIFICATION_KEY}: arc_specification
+{ValidationPackagesConfig.VALIDATION_PACKAGES_KEY}:
   -
-    name: name
-    version: version
+    {ValidationPackage.NAME_KEY}: name
+    {ValidationPackage.VERSION_KEY}: version
   -
-    name: name
+    {ValidationPackage.NAME_KEY}: name
 """
 
-    let vpc_no_specs_yaml_string = """validation_packages:
+    let vpc_no_specs_yaml_string = $"""validation_packages:
   -
-    name: name
-    version: version
+    {ValidationPackage.NAME_KEY}: name
+    {ValidationPackage.VERSION_KEY}: version
   -
-    name: name
+    {ValidationPackage.NAME_KEY}: name
 """
 
     testList "encoder (toYamlString)" [

@@ -10,11 +10,11 @@ let tests_extended = testList "extended" [
     let vp = ValidationPackages.ValidationPackage("name", "version")
     let vp_no_version = ValidationPackages.ValidationPackage("name")
 
-    let vp_yaml_string = """name: name
-version: version
+    let vp_yaml_string = $"""{ValidationPackage.NAME_KEY}: name
+{ValidationPackage.VERSION_KEY}: version
 """
 
-    let vp_no_version_yaml_string = """name: name
+    let vp_no_version_yaml_string = $"""{ValidationPackage.NAME_KEY}: name
 """
 
     testList "encoder (toYamlString)" [
