@@ -587,9 +587,16 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
 
     /// <summary>
     /// Returns the delete contract for `.arc/validation_packages.yml`
+    ///
+    /// If the ARC file system includes the `.arc/validation_packages.yml` file, it is removed.
     /// </summary>
     /// <param name="vpc"></param>
     member this.GetValidationPackagesConfigDeleteContract(vpc) =
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        if (Array.contains ValidationPackagesConfigHelper.ConfigFilePath paths) then
+            paths
+            |> Array.filter (fun p -> not (p = ValidationPackagesConfigHelper.ConfigFilePath))
+            |> this.SetFilePaths
         ValidationPackagesConfig.toDeleteContract vpc
 
     /// <summary>
