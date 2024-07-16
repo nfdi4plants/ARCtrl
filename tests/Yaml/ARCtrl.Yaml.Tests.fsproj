@@ -6,16 +6,12 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="SemVer.Tests.fs" />
-    <Compile Include="Template.Tests.fs" />
-    <Compile Include="WebRequest.Tests.fs" />
-    <Compile Include="ARCtrl.Contracts.Tests.fs" />
-    <Compile Include="ARCtrl.Tests.fs" />
-    <Compile Include="ValidationPackagesConfig.Tests.fs" />
+    <Compile Include="ValidationPackage.Tests.fs" />
+    <Compile Include="ValidationPackageConfig.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
+    <ProjectReference Include="..\..\src\Yaml\ARCtrl.Yaml.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
 </Project>

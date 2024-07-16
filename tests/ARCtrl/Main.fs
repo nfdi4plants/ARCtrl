@@ -1,4 +1,4 @@
-﻿module Main.Tests
+module Main.Tests
 
 open Fable.Pyxpecto
 
@@ -7,6 +7,7 @@ let all = testSequenced <| testList "ARCtrl" [
     ARCtrl.WebRequest.Tests.main
     ARCtrl.SemVer.Tests.main
     ARCtrl.Template.Tests.main
+    ARCtrl.ValidationPackagesConfig.Tests.main
     ARCtrl.Tests.main
 ]
 

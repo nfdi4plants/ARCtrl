@@ -1,4 +1,4 @@
-﻿namespace TestingUtils
+namespace TestingUtils
 
 open FsSpreadsheet
 open ARCtrl
@@ -95,6 +95,12 @@ module Expect =
 
     let inline equal actual expected message = Expect.equal actual expected message
     let notEqual actual expected message = Expect.notEqual actual expected message
+
+    /// Trims whitespace and normalizes lineendings to "\n"
+    let trimEqual (actual: string) (expected: string) message =
+        let a = actual.Trim().Replace("\r\n", "\n")
+        let e = expected.Trim().Replace("\r\n", "\n")
+        Expect.equal a e message
 
     /// <summary>
     /// This function only verifies non-whitespace characters
@@ -248,3 +254,4 @@ module Test =
 
 
     let testList = testList
+    let ftestList = ftestList

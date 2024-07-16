@@ -1,5 +1,6 @@
 namespace ARCtrl
 
+open ARCtrl.ValidationPackages
 open ARCtrl.FileSystem
 open ARCtrl.Contract
 open ARCtrl
@@ -60,7 +61,8 @@ module ARCAux =
         let tree = 
             FileSystemTree.createRootFolder [|workflows;runs|]
             |> FileSystem.create
-        fs.Union(tree)    
+        fs.Union(tree)
+
 
 [<AttachMembers>]
 type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
@@ -569,6 +571,46 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         fun (obj:ARC) ->
             ARCtrl.Json.ARC.ROCrate.encoder (Option.get obj.ISA)
             |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
+
+    /// <summary>
+    /// Returns the write contract for the input ValidationPackagesConfig object.
+    ///
+    /// This will mutate the ARC file system to include the `.arc/validation_packages.yml` file if it is not already included.
+    /// </summary>
+    /// <param name="vpc">the config to write</param>
+    member this.GetValidationPackagesConfigWriteContract(vpc: ValidationPackagesConfig) =
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        if not (Array.contains ValidationPackagesConfigHelper.ConfigFilePath paths) then
+            Array.append [|ValidationPackagesConfigHelper.ConfigFilePath|] paths
+            |> this.SetFilePaths
+        ValidationPackagesConfig.toCreateContract vpc
+
+    /// <summary>
+    /// Returns the delete contract for `.arc/validation_packages.yml`
+    ///
+    /// If the ARC file system includes the `.arc/validation_packages.yml` file, it is removed.
+    /// </summary>
+    /// <param name="vpc"></param>
+    member this.GetValidationPackagesConfigDeleteContract(vpc) =
+        let paths = this.FileSystem.Tree.ToFilePaths()
+        if (Array.contains ValidationPackagesConfigHelper.ConfigFilePath paths) then
+            paths
+            |> Array.filter (fun p -> not (p = ValidationPackagesConfigHelper.ConfigFilePath))
+            |> this.SetFilePaths
+        ValidationPackagesConfig.toDeleteContract vpc
+
+    /// <summary>
+    /// Returns the read contract for `.arc/validation_packages.yml`
+    /// </summary>
+    member this.GetValidationPackagesConfigReadContract() =
+        ValidationPackagesConfigHelper.ReadContract
+
+    /// <summary>
+    /// Returns the ValidationPackagesConfig object from the given read contract if possible, otherwise returns None/null.
+    /// </summary>
+    /// <param name="contract">the input contract that contains the config in it's DTO</param>
+    member this.GetValidationPackagesConfigFromReadContract(contract) =
+        ValidationPackagesConfig.tryFromReadContract contract
 
 //-Pseudo code-//
 //// Option 1
