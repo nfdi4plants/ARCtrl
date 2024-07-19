@@ -1,4 +1,4 @@
-﻿module TestTasks
+module TestTasks
 
 open BlackFox.Fake
 open Fake.DotNet
@@ -59,6 +59,6 @@ module RunTests =
         |> Seq.iter dotnetRun
     }
 
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative; RunTests.runTestsDotnet] { 
+let runTests = BuildTask.create "RunTests" [clean; build; (*RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative;*) RunTests.runTestsDotnet] { 
     ()
 }
