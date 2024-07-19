@@ -8,7 +8,7 @@ open Outputs
 
 module CWL =
 
-    type CWL (
+    type CWLToolDescription (
             cwlVersion: string,
             cls: Class,
             outputs: Output [],
