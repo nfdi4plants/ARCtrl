@@ -6,7 +6,7 @@ open Requirements
 open Inputs
 open Outputs
 
-module CWL =
+module CWLProcessingUnits =
 
     type CWLToolDescription (
             cwlVersion: string,
