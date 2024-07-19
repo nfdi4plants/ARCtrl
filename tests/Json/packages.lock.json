@@ -417,7 +417,11 @@
         }
       },
       "arctrl.cwl": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "DynamicObj": "[2.0.0, 2.0.0]",
+          "YAMLicious": "[0.0.2, 0.0.2]"
+        }
       },
       "arctrl.filesystem": {
         "type": "Project",
@@ -563,10 +567,10 @@
       "YAMLicious": {
         "type": "CentralTransitive",
         "requested": "[0.0.1, )",
-        "resolved": "0.0.1",
-        "contentHash": "3QQH1VxkTdtU/RZgrzZwNNLAt8zg2Di65wh1dgS2OB1IT3NqFGyjhU+A60siB1+8rxXUe4Ou5nOVGvgDtydYug==",
+        "resolved": "0.0.2",
+        "contentHash": "YLsmaCOZFt+6I0myCi3nGXbwWnDx15b+sIit5iFpg5FDKcqrC4/M2uP1AiEJ9bL49ve16gRRNed7bth7cpcJOg==",
         "dependencies": {
-          "FSharp.Core": "8.0.300",
+          "FSharp.Core": "8.0.100",
           "Fable.Core": "4.3.0"
         }
       }

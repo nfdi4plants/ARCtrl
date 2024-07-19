@@ -8,6 +8,30 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup> 
+    <Compile Include="CWLTypes.fs" /> 
+    <Compile Include="Requirements.fs" /> 
+    <Compile Include="Inputs.fs" /> 
+    <Compile Include="Outputs.fs" /> 
+    <Compile Include="CWL.fs" /> 
+    <Compile Include="Decode.fs" />
+    <Compile Include="Encode.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="YAMLicious" Version="[0.0.2]" />
+    <PackageReference Include="DynamicObj" Version="[2.0.0]" />
+  </ItemGroup>
+  <PropertyGroup>
+    <Authors>nfdi4plants</Authors>
+    <Description>ARC helper functions for Common workflow language.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/CWL</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
 </Project>
