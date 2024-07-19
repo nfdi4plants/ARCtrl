@@ -171,7 +171,7 @@ module Decode =
 
     let decodeAll (cwl: string) =
         let yamlCWL = Decode.read cwl
-        CWL.CWL(
+        CWL.CWLToolDescription(
             cwlVersion = Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string) yamlCWL,
             cls = 
                 Decode.object (fun get ->
