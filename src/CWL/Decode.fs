@@ -1,6 +1,11 @@
 namespace ARCtrl.CWL
 
 open YAMLicious
+open YAMLicious.YAMLiciousTypes
+open CWLTypes
+open Requirements
+open Inputs
+open Outputs
 
 module Decode =
     
@@ -164,9 +169,9 @@ module Decode =
             outputs
         )
 
-    let decodeAll =
-        let yamlCWL = Decode.read exampleCWL
-        CWL(
+    let decodeAll (cwl: string) =
+        let yamlCWL = Decode.read cwl
+        CWL.CWL(
             cwlVersion = Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string) yamlCWL,
             cls = 
                 Decode.object (fun get ->
