@@ -181,12 +181,10 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             newTable.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
             newTable
 
-    // New AddColumnFill adds a new column which fills in the single given value for the length of the table.
-    member this.AddColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) =  // Member function to add a column with the same value for each cell
-        let cells = Array.init this.RowCount (fun _ -> cell.Copy())    // Create an array of cells with the same value based on the RowCount mutable object so use init instead of Array.create
-        this.AddColumn(header, cells = cells, ?index = index,  ?forceReplace = forceReplace)        // implementing existing AddColumn method
+    member this.AddColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) =  
+        let cells = Array.init this.RowCount (fun _ -> cell.Copy())    
+        this.AddColumn(header, cells = cells, ?index = index,  ?forceReplace = forceReplace)     
 
-    // Static function to add a column with the same value for each cell (returns a new ArcTable)
     static member addColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) : ArcTable -> ArcTable =
         fun (table: ArcTable) ->
             let newTable = table.Copy()

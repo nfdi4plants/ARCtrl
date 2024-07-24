@@ -1627,7 +1627,7 @@ let private tests_AddColumns =
 //New Test for AddColumnFill
 let private tests_AddColumnFill = 
     testList "AddColumnFill" [ 
-        testCase "addColumnFill to preexisting table with rows" (fun () ->  // AddColumnFill to Table with Rows // create ftestCase which prioritizes the testCase but only on local!!
+        testCase "addColumnFill to preexisting table with rows" (fun () ->  // AddColumnFill to Table with Rows // 
             let table = create_testTable()
             let expectedValue = CompositeCell.createUnitizedFromString("1")
             table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue) //or .createTermfromString
@@ -1639,7 +1639,7 @@ let private tests_AddColumnFill =
                 let value = getactualValue ri 
                 Expect.equal value expectedValue $"RowIndex: {ri}"
         )
-        ftestCase "addColumnFill to empty table" (fun () -> // "Empty Table" fail if empty flag at least RowCount 1 if table empty etc
+        testCase "addColumnFill to empty table" (fun () -> // "Empty Table" fail if empty flag at least RowCount 1 if table empty etc
             let table = ArcTable.init(name = "EmptyTable")
             let expectedValue = CompositeCell.createUnitizedFromString("1")
             table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue) 
@@ -1648,18 +1648,22 @@ let private tests_AddColumnFill =
             let content = table.Values.Values 
             Expect.isEmpty content "Cannot add column to empty table"
         )
-        
-        // )
-        // testCase "mutability test" (fun () ->  // Update single cell compositeCell all exepct freeText cosnequences (mutability test)
-        //     let table = create_testTable()
-        //     Expect.equal 
-        
-        // )
-        //    testCase "CheckBoundaries" (fun () ->  // Check boundaries test if fail if out of range indices AddColumn
-        //     let table = create_testTable()
-        //     let startTooHigh() = table.AddColumnFill(table.ColumnCount, 1)
-        //     Expect.throws startTooHigh "Should fail for start Index ColumnCount"
-        // )
+        testCase "mutability test" (fun () ->  // Update single cell compositeCell all exepct freeText cosnequences (mutability test)
+            let table = create_testTable()
+            let expectedValue = CompositeCell.createTermFromString("1")
+            table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue, index = 2) 
+            table.Values.[2,0].AsTerm.Name <- Some "2" 
+            let changedValue = table.Values.[(2, 0)]
+            let unaffectedValues = [ for ri in 1 .. table.RowCount - 1 -> table.Values.[(2, ri)] ]
+            for value in unaffectedValues do
+                Expect.notEqual value changedValue "Other cells should remain unchanged"
+        )
+        testCase "CheckBoundaries" (fun () ->  // Check boundaries test if fail if out of range indices AddColumn index 10 ex
+            let table = create_testTable()
+            let expectedValue = CompositeCell.createUnitizedFromString("1")
+            let newTable() = table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue, index = 10)
+            Expect.throws newTable "Should fail with index 10"
+        )
     ]
 
 
