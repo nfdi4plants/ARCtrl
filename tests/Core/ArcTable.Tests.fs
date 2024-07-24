@@ -1623,6 +1623,46 @@ let private tests_AddColumns =
         ]
     ]
 
+
+//New Test for AddColumnFill
+let private tests_AddColumnFill = 
+    testList "AddColumnFill" [ 
+        testCase "addColumnFill to preexisting table with rows" (fun () ->  // AddColumnFill to Table with Rows // create ftestCase which prioritizes the testCase but only on local!!
+            let table = create_testTable()
+            let expectedValue = CompositeCell.createUnitizedFromString("1")
+            table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue) //or .createTermfromString
+            Expect.equal table.ColumnCount 6 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+            let columnIndex = table.ColumnCount - 1
+            let getactualValue rowIndex  = table.Values.[columnIndex,rowIndex]
+            for ri in 0 .. table.RowCount - 1 do 
+                let value = getactualValue ri 
+                Expect.equal value expectedValue $"RowIndex: {ri}"
+        )
+        ftestCase "addColumnFill to empty table" (fun () -> // "Empty Table" fail if empty flag at least RowCount 1 if table empty etc
+            let table = ArcTable.init(name = "EmptyTable")
+            let expectedValue = CompositeCell.createUnitizedFromString("1")
+            table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue) 
+            Expect.equal table.ColumnCount 1 "ColumnCount"
+            Expect.equal table.RowCount 0 "RowCount"            
+            let content = table.Values.Values 
+            Expect.isEmpty content "Cannot add column to empty table"
+        )
+        
+        // )
+        // testCase "mutability test" (fun () ->  // Update single cell compositeCell all exepct freeText cosnequences (mutability test)
+        //     let table = create_testTable()
+        //     Expect.equal 
+        
+        // )
+        //    testCase "CheckBoundaries" (fun () ->  // Check boundaries test if fail if out of range indices AddColumn
+        //     let table = create_testTable()
+        //     let startTooHigh() = table.AddColumnFill(table.ColumnCount, 1)
+        //     Expect.throws startTooHigh "Should fail for start Index ColumnCount"
+        // )
+    ]
+
+
 let private tests_RemoveColumn = 
     testList "RemoveColumn" [
         testCase "ensure table" (fun () ->
@@ -2369,6 +2409,7 @@ let main =
         tests_AddColumn_Mutable
         tests_addColumn_Copy
         tests_AddColumns
+        tests_AddColumnFill
         tests_RemoveColumn
         tests_RemoveColumns
         tests_MoveColumn
