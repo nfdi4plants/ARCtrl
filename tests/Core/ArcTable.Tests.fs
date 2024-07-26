@@ -1624,44 +1624,40 @@ let private tests_AddColumns =
     ]
 
 
-//New Test for AddColumnFill
+//Test for AddColumnFill
 let private tests_AddColumnFill = 
     testList "AddColumnFill" [ 
-        testCase "addColumnFill to preexisting table with rows" (fun () ->  // AddColumnFill to Table with Rows // 
-            let table = create_testTable()
-            let expectedValue = CompositeCell.createUnitizedFromString("1")
-            table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue) //or .createTermfromString
+        let table = create_testTable()
+        let inputHeader = CompositeHeader.Parameter (OntologyAnnotation("chlamy_r"))
+        let cellU = CompositeCell.createUnitizedFromString("1")
+        testCase "addColumnFill to preexisting table with rows" (fun () -> 
+            table.AddColumnFill(inputHeader, cellU)
             Expect.equal table.ColumnCount 6 "ColumnCount"
             Expect.equal table.RowCount 5 "RowCount"
             let columnIndex = table.ColumnCount - 1
-            let getactualValue rowIndex  = table.Values.[columnIndex,rowIndex]
-            for ri in 0 .. table.RowCount - 1 do 
-                let value = getactualValue ri 
-                Expect.equal value expectedValue $"RowIndex: {ri}"
+            for ri in 0 .. table.RowCount - 1 do
+                let value = table.Values.[(columnIndex, ri)]
+                Expect.equal value cellU $"Value at column {columnIndex}, row {ri} should be equal to the input cellU"
         )
-        testCase "addColumnFill to empty table" (fun () -> // "Empty Table" fail if empty flag at least RowCount 1 if table empty etc
-            let table = ArcTable.init(name = "EmptyTable")
-            let expectedValue = CompositeCell.createUnitizedFromString("1")
-            table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue) 
-            Expect.equal table.ColumnCount 1 "ColumnCount"
-            Expect.equal table.RowCount 0 "RowCount"            
-            let content = table.Values.Values 
+        testCase "addColumnFill to empty table" (fun () -> 
+            let emptyTable = ArcTable.init(name = "EmptyTable")
+            emptyTable.AddColumnFill(inputHeader, cellU) 
+            Expect.equal emptyTable.ColumnCount 1 "ColumnCount"
+            Expect.equal emptyTable.RowCount 0 "RowCount"            
+            let content = emptyTable.Values.Values 
             Expect.isEmpty content "Cannot add column to empty table"
         )
-        testCase "mutability test" (fun () ->  // Update single cell compositeCell all exepct freeText cosnequences (mutability test)
-            let table = create_testTable()
-            let expectedValue = CompositeCell.createTermFromString("1")
-            table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue, index = 2) 
+        testCase "mutability test" (fun () ->  
+            let cell = CompositeCell.createTermFromString("1")
+            table.AddColumnFill(inputHeader, cell, index = 2) 
             table.Values.[2,0].AsTerm.Name <- Some "2" 
-            let changedValue = table.Values.[(2, 0)]
-            let unaffectedValues = [ for ri in 1 .. table.RowCount - 1 -> table.Values.[(2, ri)] ]
-            for value in unaffectedValues do
-                Expect.notEqual value changedValue "Other cells should remain unchanged"
+            let changedCell = table.Values.[(2, 0)]
+            let unaffectedCell = [ for ri in 1 .. table.RowCount - 1 -> table.Values.[(2, ri)] ]
+            for el in unaffectedCell do
+                Expect.notEqual el changedCell "Other cells should remain unchanged"
         )
-        testCase "CheckBoundaries" (fun () ->  // Check boundaries test if fail if out of range indices AddColumn index 10 ex
-            let table = create_testTable()
-            let expectedValue = CompositeCell.createUnitizedFromString("1")
-            let newTable() = table.AddColumnFill(CompositeHeader.Parameter (OntologyAnnotation("chlamy_r")), expectedValue, index = 10)
+        testCase "checkBoundaries" (fun () ->  
+            let newTable() = table.AddColumnFill(inputHeader, cellU, index = 10)
             Expect.throws newTable "Should fail with index 10"
         )
     ]
