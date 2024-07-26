@@ -181,6 +181,17 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             newTable.AddColumn(header, ?cells = cells, ?index = index, ?forceReplace = forceReplace)
             newTable
 
+    /// Adds a new column which fills in the single given value for the length of the table.
+    member this.AddColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) =  
+        let cells = Array.init this.RowCount (fun _ -> cell.Copy())    
+        this.AddColumn(header, cells = cells, ?index = index,  ?forceReplace = forceReplace)     
+
+    static member addColumnFill (header: CompositeHeader, cell: CompositeCell, ?index: int ,?forceReplace : bool) : ArcTable -> ArcTable =
+        fun (table: ArcTable) ->
+            let newTable = table.Copy()
+            newTable.AddColumnFill(header, cell, ?index = index,  ?forceReplace = forceReplace)
+            newTable
+
     // - Column API - //
     /// Replaces the header and cells of a column at given index.
     member this.UpdateColumn (columnIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?skipFillMissing) =

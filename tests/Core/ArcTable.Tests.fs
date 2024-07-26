@@ -1623,6 +1623,46 @@ let private tests_AddColumns =
         ]
     ]
 
+
+//Test for AddColumnFill
+let private tests_AddColumnFill = 
+    testList "AddColumnFill" [ 
+        let table = create_testTable()
+        let inputHeader = CompositeHeader.Parameter (OntologyAnnotation("chlamy_r"))
+        let cellU = CompositeCell.createUnitizedFromString("1")
+        testCase "addColumnFill to preexisting table with rows" (fun () -> 
+            table.AddColumnFill(inputHeader, cellU)
+            Expect.equal table.ColumnCount 6 "ColumnCount"
+            Expect.equal table.RowCount 5 "RowCount"
+            let columnIndex = table.ColumnCount - 1
+            for ri in 0 .. table.RowCount - 1 do
+                let value = table.Values.[(columnIndex, ri)]
+                Expect.equal value cellU $"Value at column {columnIndex}, row {ri} should be equal to the input cellU"
+        )
+        testCase "addColumnFill to empty table" (fun () -> 
+            let emptyTable = ArcTable.init(name = "EmptyTable")
+            emptyTable.AddColumnFill(inputHeader, cellU) 
+            Expect.equal emptyTable.ColumnCount 1 "ColumnCount"
+            Expect.equal emptyTable.RowCount 0 "RowCount"            
+            let content = emptyTable.Values.Values 
+            Expect.isEmpty content "Cannot add column to empty table"
+        )
+        testCase "mutability test" (fun () ->  
+            let cell = CompositeCell.createTermFromString("1")
+            table.AddColumnFill(inputHeader, cell, index = 2) 
+            table.Values.[2,0].AsTerm.Name <- Some "2" 
+            let changedCell = table.Values.[(2, 0)]
+            let unaffectedCell = [ for ri in 1 .. table.RowCount - 1 -> table.Values.[(2, ri)] ]
+            for el in unaffectedCell do
+                Expect.notEqual el changedCell "Other cells should remain unchanged"
+        )
+        testCase "checkBoundaries" (fun () ->  
+            let newTable() = table.AddColumnFill(inputHeader, cellU, index = 10)
+            Expect.throws newTable "Should fail with index 10"
+        )
+    ]
+
+
 let private tests_RemoveColumn = 
     testList "RemoveColumn" [
         testCase "ensure table" (fun () ->
@@ -2369,6 +2409,7 @@ let main =
         tests_AddColumn_Mutable
         tests_addColumn_Copy
         tests_AddColumns
+        tests_AddColumnFill
         tests_RemoveColumn
         tests_RemoveColumns
         tests_MoveColumn
