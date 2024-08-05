@@ -566,11 +566,14 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
         ARC(?isa = isa)
 
+    member this.ToROCrateJsonString(?spaces) =
+        ARCtrl.Json.ARC.ROCrate.encoder (Option.get _isa)
+        |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
+
         /// exports in json-ld format
     static member toROCrateJsonString(?spaces) =
         fun (obj:ARC) ->
-            ARCtrl.Json.ARC.ROCrate.encoder (Option.get obj.ISA)
-            |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
+            obj.ToROCrateJsonString(?spaces = spaces)
 
     /// <summary>
     /// Returns the write contract for the input ValidationPackagesConfig object.
