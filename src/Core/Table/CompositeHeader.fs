@@ -427,6 +427,11 @@ type CompositeHeader =
         | Output io | Input io -> Some io
         | _ -> None
 
+    member this.IsUnique =
+        match this with
+        | ProtocolType | ProtocolREF | ProtocolDescription | ProtocolUri | ProtocolVersion | Performer | Date | Input _ | Output _ -> true
+        | _ -> false
+
 #if FABLE_COMPILER
     
     [<CompiledName("component")>]
