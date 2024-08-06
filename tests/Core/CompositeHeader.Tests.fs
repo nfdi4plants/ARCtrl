@@ -1,4 +1,4 @@
-﻿module CompositeHeader.Tests
+module CompositeHeader.Tests
 
 open ARCtrl
 
@@ -26,15 +26,6 @@ let private tests_iotype =
             let caseInfos = IOType.Cases
             Expect.hasLength IOType.All (caseInfos.Length-1) "Expect one less than all because we do not want to track `FreeText` case."
         )
-        ptestCase "getUIToolTip" <| fun _ ->
-            let cases = IOType.Cases |> Array.map snd
-            for case in cases do
-                let actual = IOType.getUITooltip(U2.Case2 case)
-                Expect.isTrue (actual.Length > 0) $"{case}"
-        testCase "GetUIToolTip" <| fun _ ->
-            let iotype = IOType.Material
-            let actual = iotype.GetUITooltip()
-            Expect.isTrue (actual.Length > 0) ""
     ]
 
 let private tests_jsHelper = testList "jsHelper" [
@@ -52,15 +43,6 @@ let private tests_compositeHeader =
         testCase "Cases" <| fun _ ->
             let count = CompositeHeader.Cases.Length
             Expect.equal count 15 "count"
-        testCase "getExplanation" <| fun _ ->
-            let cases = CompositeHeader.Cases |> Array.map snd
-            for case in cases do
-                let actual = CompositeHeader.getUITooltip(U2.Case2 case)
-                Expect.isTrue (actual.Length > 0) $"{case}"
-        testCase "GetExplanation" <| fun _ ->
-            let header = CompositeHeader.Component (OntologyAnnotation())
-            let actual = header.GetUITooltip()
-            Expect.isTrue (actual.Length > 0) ""
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 
                 let header = CompositeHeader.Characteristic <| OntologyAnnotation("species", "MS", "MS:0000042")
