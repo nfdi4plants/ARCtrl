@@ -1,4 +1,4 @@
-﻿module TestObjects.Spreadsheet.Study
+module TestObjects.Spreadsheet.Study
 
 open FsSpreadsheet
 
@@ -539,7 +539,7 @@ module LargeFile =
             | Some t -> t
             | None -> createTable()
 
-        let fsws_large = Spreadsheet.ArcTable.toFsWorksheet table
+        let fsws_large = Spreadsheet.ArcTable.toFsWorksheet None table
         Workbook.AddWorksheet(fsws_large)
         Workbook.AddWorksheet studyMetadataEmpty
 

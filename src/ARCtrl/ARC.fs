@@ -329,7 +329,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match this.ISA with
         | Some inv -> 
-            let investigationConverter = Spreadsheet.ArcInvestigation.toFsWorkbook
+            let investigationConverter = ArcInvestigation.toFsWorkbook
             workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
             inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
@@ -365,7 +365,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             
         | None -> 
             //printfn "ARC contains no ISA part."
-            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)

@@ -133,6 +133,12 @@ module ArcAssayExtensions =
                 |> Option.iter (DataMapTable.toFsWorksheet >> doc.AddWorksheet)
      
             assay.Tables
-            |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+            |> Seq.iteri (fun i -> ArcTable.toFsWorksheet (Some i) >> doc.AddWorksheet)
 
             doc
+
+        /// Write an assay to a spreadsheet
+        ///
+        /// If datamapSheet is true, the datamap will be written to a worksheet inside assay workbook.
+        member this.ToFsWorkbook (?datamapSheet: bool) =
+            ArcAssay.toFsWorkbook (this, ?datamapSheet = datamapSheet)

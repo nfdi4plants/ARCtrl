@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Spreadsheet
+namespace ARCtrl.Spreadsheet
 
 open FsSpreadsheet
 open ARCtrl.Helper
@@ -300,7 +300,7 @@ module Template =
         doc.AddWorksheet metaDataSheet
 
         template.Table
-        |> ArcTable.toFsWorksheet 
+        |> ArcTable.toFsWorksheet None
         |> doc.AddWorksheet
 
         doc

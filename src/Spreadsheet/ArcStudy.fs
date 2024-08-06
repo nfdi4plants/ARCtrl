@@ -108,6 +108,9 @@ module ArcStudyExtensions =
                 |> Option.iter (DataMapTable.toFsWorksheet >> doc.AddWorksheet)
 
             study.Tables
-            |> ResizeArray.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+            |> Seq.iteri (fun i -> ArcTable.toFsWorksheet (Some i) >> doc.AddWorksheet)
 
             doc
+
+        member this.ToFsWorkbook (?assays : ArcAssay list, ?datamapSheet: bool) =
+            ArcStudy.toFsWorkbook (this, ?assays = assays, ?datamapSheet = datamapSheet)
