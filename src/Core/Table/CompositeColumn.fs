@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open Fable.Core
 
@@ -76,3 +76,6 @@ type CompositeColumn = {
                     CompositeCell.emptyTerm
                 else
                     CompositeCell.emptyUnitized
+
+    member this.IsUnique =
+        this.Header.IsUnique

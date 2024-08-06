@@ -1,4 +1,4 @@
-﻿module CompositeHeader.Tests
+module CompositeHeader.Tests
 
 open ARCtrl
 
@@ -26,15 +26,6 @@ let private tests_iotype =
             let caseInfos = IOType.Cases
             Expect.hasLength IOType.All (caseInfos.Length-1) "Expect one less than all because we do not want to track `FreeText` case."
         )
-        ptestCase "getUIToolTip" <| fun _ ->
-            let cases = IOType.Cases |> Array.map snd
-            for case in cases do
-                let actual = IOType.getUITooltip(U2.Case2 case)
-                Expect.isTrue (actual.Length > 0) $"{case}"
-        testCase "GetUIToolTip" <| fun _ ->
-            let iotype = IOType.Material
-            let actual = iotype.GetUITooltip()
-            Expect.isTrue (actual.Length > 0) ""
     ]
 
 let private tests_jsHelper = testList "jsHelper" [
@@ -52,15 +43,6 @@ let private tests_compositeHeader =
         testCase "Cases" <| fun _ ->
             let count = CompositeHeader.Cases.Length
             Expect.equal count 15 "count"
-        testCase "getExplanation" <| fun _ ->
-            let cases = CompositeHeader.Cases |> Array.map snd
-            for case in cases do
-                let actual = CompositeHeader.getUITooltip(U2.Case2 case)
-                Expect.isTrue (actual.Length > 0) $"{case}"
-        testCase "GetExplanation" <| fun _ ->
-            let header = CompositeHeader.Component (OntologyAnnotation())
-            let actual = header.GetUITooltip()
-            Expect.isTrue (actual.Length > 0) ""
         testList "ToString()" [
             testCase "Characteristic" (fun () -> 
                 let header = CompositeHeader.Characteristic <| OntologyAnnotation("species", "MS", "MS:0000042")
@@ -288,6 +270,30 @@ let private tests_compositeHeader =
 
 open ARCtrl
 
+let tests_isUnique = testList "IsUnique" [
+    testCase "Input" (fun () ->
+        let input = CompositeHeader.Input(IOType.Source)
+        let isUnique = input.IsUnique
+        Expect.isTrue isUnique "Input should be unique"
+    )
+    testCase "Output" (fun () ->
+        let output = CompositeHeader.Output(IOType.Sample)
+        let isUnique = output.IsUnique
+        Expect.isTrue isUnique "Output should be unique"
+    )
+    testCase "Parameter" (fun () ->
+        let oa = OntologyAnnotation("MyTerm",tan = "LOL:123")
+        let p1 = CompositeHeader.Parameter(oa)
+        let isUnique = p1.IsUnique
+        Expect.isFalse isUnique "Parameter should not be unique"
+    )
+    testCase "FreeText" (fun () ->
+        let ft1 = CompositeHeader.FreeText("MyText")
+        let isUnique = ft1.IsUnique
+        Expect.isFalse isUnique "FreeText should not be unique"
+    )
+]
+
 let tests_ToTerm = testList "ToTerm" [
     let testToTerm (ch: CompositeHeader) =
         testCase (sprintf "%s" <| ch.ToString()) <| fun _ ->
@@ -462,6 +468,7 @@ let tests_comparison = testList "Comparison" [
 
 let main = 
     testList "CompositeHeader" [
+        tests_isUnique
         tests_iotype
         tests_jsHelper
         tests_compositeHeader

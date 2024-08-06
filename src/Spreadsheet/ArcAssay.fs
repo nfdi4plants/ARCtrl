@@ -13,8 +13,8 @@ module ArcAssay =
     let [<Literal>] assaysPrefix = "Assay"
     let [<Literal>] contactsPrefix = "Assay Person"
 
-    let [<Literal>] obsoleteMetaDataSheetName = "Assay"
-    let [<Literal>] metaDataSheetName = "isa_assay"
+    let [<Literal>] obsoleteMetadataSheetName = "Assay"
+    let [<Literal>] metadataSheetName = "isa_assay"
 
     let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
         let toRows (assay:ArcAssay) =
@@ -25,7 +25,7 @@ module ArcAssay =
                 yield SparseRow.fromValues [contactsLabel]
                 yield! Contacts.toRows (Some contactsPrefix) (List.ofSeq assay.Performers)
             }
-        let sheet = FsWorksheet(metaDataSheetName)
+        let sheet = FsWorksheet(metadataSheetName)
         assay
         |> toRows
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
@@ -76,6 +76,15 @@ module ArcAssay =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
+    let isMetadataSheetName (name:string) =
+        name = metadataSheetName || name = obsoleteMetadataSheetName
+
+    let isMetadataSheet (sheet : FsWorksheet) =
+        isMetadataSheetName sheet.Name
+
+    let tryGetMetadataSheet (doc:FsWorkbook) =
+        doc.GetWorksheets()
+        |> Seq.tryFind isMetadataSheet
 
 [<AutoOpen>]
 module ArcAssayExtensions =
@@ -86,27 +95,22 @@ module ArcAssayExtensions =
         static member fromFsWorkbook (doc:FsWorkbook) : ArcAssay = 
             try
                 // Reading the "Assay" metadata sheet. Here metadata 
-                let assayMetaData = 
-        
-                    match doc.TryGetWorksheetByName ArcAssay.metaDataSheetName with 
+                let assayMetadata = 
+                    match ArcAssay.tryGetMetadataSheet doc with
                     | Option.Some sheet ->
                         ArcAssay.fromMetadataSheet sheet
                     | None -> 
-                        match doc.TryGetWorksheetByName ArcAssay.obsoleteMetaDataSheetName with 
-                        | Option.Some sheet ->
-                            ArcAssay.fromMetadataSheet sheet
-                        | None -> 
-                            printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" or \"%s\" sheet." ArcAssay.metaDataSheetName ArcAssay.obsoleteMetaDataSheetName
-                            ArcAssay.create(Identifier.createMissingIdentifier())
+                        printfn "Cannot retrieve metadata: Assay file does not contain \"%s\" or \"%s\" sheet." ArcAssay.metadataSheetName ArcAssay.obsoleteMetadataSheetName
+                        ArcAssay.create(Identifier.createMissingIdentifier())
                 let sheets = doc.GetWorksheets()
                 let annotationTables = 
                     sheets |> Seq.choose ArcTable.tryFromFsWorksheet
                 let datamapSheet =
                     sheets |> Seq.tryPick DataMapTable.tryFromFsWorksheet
                 if annotationTables |> Seq.isEmpty |> not then
-                    assayMetaData.Tables <- ResizeArray annotationTables
-                assayMetaData.DataMap <- datamapSheet
-                assayMetaData
+                    assayMetadata.Tables <- ResizeArray annotationTables
+                assayMetadata.DataMap <- datamapSheet
+                assayMetadata
             with
             | err -> failwithf "Could not parse assay: \n%s" err.Message
             
@@ -121,14 +125,20 @@ module ArcAssayExtensions =
         static member toFsWorkbook (assay : ArcAssay, ?datamapSheet: bool) =
             let datamapSheet = defaultArg datamapSheet true
             let doc = new FsWorkbook()
-            let metaDataSheet = ArcAssay.toMetadataSheet (assay)
-            doc.AddWorksheet metaDataSheet
+            let metadataSheet = ArcAssay.toMetadataSheet (assay)
+            doc.AddWorksheet metadataSheet
 
             if datamapSheet then
                 assay.DataMap
                 |> Option.iter (DataMapTable.toFsWorksheet >> doc.AddWorksheet)
      
             assay.Tables
-            |> Seq.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+            |> Seq.iteri (fun i -> ArcTable.toFsWorksheet (Some i) >> doc.AddWorksheet)
 
             doc
+
+        /// Write an assay to a spreadsheet
+        ///
+        /// If datamapSheet is true, the datamap will be written to a worksheet inside assay workbook.
+        member this.ToFsWorkbook (?datamapSheet: bool) =
+            ArcAssay.toFsWorkbook (this, ?datamapSheet = datamapSheet)

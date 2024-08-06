@@ -329,7 +329,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
         match this.ISA with
         | Some inv -> 
-            let investigationConverter = Spreadsheet.ArcInvestigation.toFsWorkbook
+            let investigationConverter = ArcInvestigation.toFsWorkbook
             workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
             inv.StaticHash <- inv.GetLightHashCode()
             inv.Studies
@@ -365,7 +365,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
             
         | None -> 
             //printfn "ARC contains no ISA part."
-            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, Spreadsheet.ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)
@@ -566,11 +566,14 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
         let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
         ARC(?isa = isa)
 
+    member this.ToROCrateJsonString(?spaces) =
+        ARCtrl.Json.ARC.ROCrate.encoder (Option.get _isa)
+        |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
+
         /// exports in json-ld format
     static member toROCrateJsonString(?spaces) =
         fun (obj:ARC) ->
-            ARCtrl.Json.ARC.ROCrate.encoder (Option.get obj.ISA)
-            |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
+            obj.ToROCrateJsonString(?spaces = spaces)
 
     /// <summary>
     /// Returns the write contract for the input ValidationPackagesConfig object.

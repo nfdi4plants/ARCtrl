@@ -13,13 +13,13 @@ let private dataColumnsTable =
         testCase "Only Freetext" <| fun _ ->
             let table = ArcTable.init("MyTable")
             table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do mkInputStr i |> CompositeCell.FreeText|])
-            let fsws = ArcTable.toFsWorksheet table
+            let fsws = ArcTable.toFsWorksheet None table
             let actualColValues = (fsws.Column(1).Cells |> Seq.map (fun c -> c.ValueAsString())) 
             Expect.sequenceEqual actualColValues ["Input [Data]"; "Input_1"; "Input_2"; "Input_3"; "Input_4"; "Input_5"] ""
         testCase "Only Data" <| fun _ ->
             let table = ArcTable.init("MyTable")
             table.AddColumn(CompositeHeader.Input(IOType.Data), [|for i in 1 .. 5 do CompositeCell.createData (Data(name = mkDataNameStr i, format = "text/csv", selectorFormat = "MySelector"))|])
-            let fsws = ArcTable.toFsWorksheet table
+            let fsws = ArcTable.toFsWorksheet None table
             fsws.RescanRows()
             let rows = fsws.Rows |> Seq.map (fun x -> x.Cells |> Seq.map (fun c -> c.ValueAsString()) |> Array.ofSeq) |> Array.ofSeq
             Expect.equal rows.[0].Length 3 "col count"
@@ -37,7 +37,7 @@ let private dataColumnsTable =
                         mkInputStr i |> CompositeCell.FreeText
                 |]
             )
-            let fsws = ArcTable.toFsWorksheet table
+            let fsws = ArcTable.toFsWorksheet None table
             fsws.RescanRows()
             let rows = fsws.Rows |> Seq.map (fun x -> x.Cells |> Seq.map (fun c -> c.ValueAsString()) |> Array.ofSeq) |> Array.ofSeq
             Expect.equal rows.[0].Length 3 "col count"
@@ -170,7 +170,7 @@ let private simpleTable =
             
             let table = ArcTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = ArcTable.toFsWorksheet table.Value
+            let out = ArcTable.toFsWorksheet None table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -262,7 +262,7 @@ let private mixedTable =
             
             let table = ArcTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = ArcTable.toFsWorksheet table.Value
+            let out = ArcTable.toFsWorksheet None table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -317,7 +317,7 @@ let private ioTable =
             
             let table = ArcTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = ArcTable.toFsWorksheet table.Value
+            let out = ArcTable.toFsWorksheet None table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -366,7 +366,7 @@ let private fullDataTable =
             
             let table = ArcTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = ArcTable.toFsWorksheet table.Value
+            let out = ArcTable.toFsWorksheet None table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -414,7 +414,7 @@ let private commentTable =
             
             let table = ArcTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
-            let out = ArcTable.toFsWorksheet table.Value
+            let out = ArcTable.toFsWorksheet None table.Value
             Expect.workSheetEqual out ws "Worksheet was not correctly written"
            
         )
@@ -483,7 +483,7 @@ let private writeOrder =
                     ]
 
             let mixedTable = ArcTable.tryFromFsWorksheet mixedWs |> Option.get
-            let mixedOut = ArcTable.toFsWorksheet mixedTable
+            let mixedOut = ArcTable.toFsWorksheet None mixedTable
 
             let orderedWs =  
                 initWorksheet wsName
@@ -506,12 +506,12 @@ let private emptyTable =
         let name = "EmptyTable"
         let t = ArcTable.init(name)
         testCase "Write" (fun () -> 
-            let sheet = ArcTable.toFsWorksheet t
+            let sheet = ArcTable.toFsWorksheet None t
             Expect.equal name sheet.Name "Worksheet name did not match"
             Expect.equal 0 sheet.Rows.Count "Row count should be 0"
         )
         testCase "Read" (fun () ->
-            let sheet = ArcTable.toFsWorksheet t
+            let sheet = ArcTable.toFsWorksheet None t
             Expect.isNone (ArcTable.tryFromFsWorksheet sheet) "Table was not created"
         )
     ]

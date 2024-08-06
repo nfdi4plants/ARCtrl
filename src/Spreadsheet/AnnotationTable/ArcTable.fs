@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.ArcTable
+module ARCtrl.Spreadsheet.ArcTable
 
 open ARCtrl
 open ARCtrl.Helper
@@ -121,7 +121,7 @@ let tryFromFsWorksheet (sheet : FsWorksheet) =
     | err -> failwithf "Could not parse table with name \"%s\":\n%s" sheet.Name err.Message
 
 
-let toFsWorksheet (table : ArcTable) =
+let toFsWorksheet (index : int option) (table : ArcTable) =
     /// This dictionary is used to add spaces at the end of duplicate headers.
     let stringCount = System.Collections.Generic.Dictionary<string,string>()
     let ws = FsWorksheet(table.Name)
@@ -137,7 +137,11 @@ let toFsWorksheet (table : ArcTable) =
         |> List.collect CompositeColumn.toStringCellColumns
     let maxRow = columns.Head.Length
     let maxCol = columns.Length
-    let fsTable = ws.Table("annotationTable",FsRangeAddress(FsAddress(1,1),FsAddress(maxRow,maxCol)))
+    let name =
+        match index with
+        | Some i -> $"{annotationTablePrefix}{i}"
+        | None -> annotationTablePrefix
+    let fsTable = ws.Table(name,FsRangeAddress(FsAddress(1,1),FsAddress(maxRow,maxCol)))
     columns
     |> List.iteri (fun colI col ->         
         col

@@ -103,10 +103,13 @@ module ArcTypesAux =
 [<AttachMembers>]
 type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
-    
+
     let performers = defaultArg performers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
-    let mutable identifier : string = identifier
+    let mutable identifier : string =
+        let identifier = identifier.Trim()
+        Helper.Identifier.checkValidCharacters identifier
+        identifier
     let mutable investigation : ArcInvestigation option = None
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
@@ -530,7 +533,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
     let registeredAssayIdentifiers = defaultArg registeredAssayIdentifiers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
 
-    let mutable identifier = identifier
+    let mutable identifier : string =
+        let identifier = identifier.Trim()
+        Helper.Identifier.checkValidCharacters identifier
+        identifier
     let mutable investigation : ArcInvestigation option = None
     let mutable title : string option = title
     let mutable description : string option = description 

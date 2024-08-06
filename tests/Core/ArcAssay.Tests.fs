@@ -1,4 +1,4 @@
-﻿module ArcAssay.Tests
+module ArcAssay.Tests
 
 open ARCtrl
 
@@ -160,6 +160,13 @@ let private test_create =
             let createAssay =
                 fun () -> ArcAssay.create("MyAssay", tables = tables) |> ignore
             Expect.throws createAssay "throws, duplicate table names"
+        testCase "failsForInvalidCharacters" <| fun _ ->
+            let createAssay =
+                fun () -> ArcAssay("My{Assay") |> ignore
+            Expect.throws createAssay "throws, invalid characters"
+        testCase "whiteSpaceTrimmed" <| fun _ ->
+            let assay = ArcAssay(" MyAssay ")
+            Expect.equal assay.Identifier "MyAssay" "Identifier"
     ]
 
 let private tests_AddTable = 

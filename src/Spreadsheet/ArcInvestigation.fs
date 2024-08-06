@@ -24,8 +24,8 @@ module ArcInvestigation =
     let [<Literal>] publicationsLabelPrefix = "Investigation Publication"
     let [<Literal>] contactsLabelPrefix = "Investigation Person"
 
-    let [<Literal>] metaDataSheetName = "isa_investigation"
-    let [<Literal>] metaDataSheetName_deprecated = "Investigation"
+    let [<Literal>] metadataSheetName = "isa_investigation"
+    let [<Literal>] obsoleteMetadataSheetName = "Investigation"
 
 
     type InvestigationInfo =
@@ -202,28 +202,45 @@ module ArcInvestigation =
         |> insertRemarks (List.ofSeq investigation.Remarks)
         |> seq
 
-    let fromFsWorkbook (doc:FsWorkbook) =  
-        try
-            match doc.TryGetWorksheetByName metaDataSheetName with
-            | Some sheet -> sheet
-            | None -> 
-                match doc.TryGetWorksheetByName metaDataSheetName_deprecated with
+    let isMetadataSheetName (name : string) =
+        name = metadataSheetName || name = obsoleteMetadataSheetName
+
+    let isMetadataSheet (sheet : FsWorksheet) =
+        isMetadataSheetName sheet.Name
+
+    let tryGetMetadataSheet (doc:FsWorkbook) =
+        doc.GetWorksheets()
+        |> Seq.tryFind isMetadataSheet
+
+
+[<AutoOpen>]
+module ArcInvestigationExtensions =
+
+    open ArcInvestigation
+
+    type ArcInvestigation with
+
+        static member fromFsWorkbook (doc:FsWorkbook) =  
+            try
+                match ArcInvestigation.tryGetMetadataSheet doc with
                 | Some sheet -> sheet
                 | None -> failwith "Could not find metadata sheet with sheetname \"isa_investigation\" or deprecated sheetname \"Investigation\""
-            |> FsWorksheet.getRows
-            |> Seq.map SparseRow.fromFsRow
-            |> fromRows 
-        with
-        | err -> failwithf "Could not read investigation from spreadsheet: %s" err.Message
+                |> FsWorksheet.getRows
+                |> Seq.map SparseRow.fromFsRow
+                |> fromRows 
+            with
+            | err -> failwithf "Could not read investigation from spreadsheet: %s" err.Message
 
-    let toFsWorkbook (investigation:ArcInvestigation) : FsWorkbook =           
-        try
-            let wb = new FsWorkbook()
-            let sheet = FsWorksheet(metaDataSheetName)
-            investigation
-            |> toRows
-            |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
-            wb.AddWorksheet(sheet)
-            wb
-        with
-        | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message
+        static member toFsWorkbook (investigation:ArcInvestigation) : FsWorkbook =           
+            try
+                let wb = new FsWorkbook()
+                let sheet = FsWorksheet(metadataSheetName)
+                investigation
+                |> toRows
+                |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)                     
+                wb.AddWorksheet(sheet)
+                wb
+            with
+            | err -> failwithf "Could not write investigation to spreadsheet: %s" err.Message
+
+        member this.ToFsWorkbook() = ArcInvestigation.toFsWorkbook this

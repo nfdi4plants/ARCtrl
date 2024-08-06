@@ -1,4 +1,4 @@
-﻿module Fable.Tests
+module Fable.Tests
 
 open ARCtrl
 
@@ -11,7 +11,7 @@ let private tests_EmptyObjectCreation =
             Expect.isNone i.Title "Should be None"                   
         )
         testCase "CreateEmptyAssay" (fun () ->
-            let a = ArcAssay("")
+            let a = ArcAssay("My Assay")
             Expect.isNone a.MeasurementType "Should be None"                
         )
         testCase "CreateEmptyStudy" (fun () ->

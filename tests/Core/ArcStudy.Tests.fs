@@ -1,4 +1,4 @@
-﻿module ArcStudy.Tests
+module ArcStudy.Tests
 
 open ARCtrl
 
@@ -145,6 +145,13 @@ let private test_create =
             Expect.equal actual.Tables tables "Tables"
             Expect.equal actual.RegisteredAssayIdentifiers assay_identifiers "Assays"
             Expect.equal actual.Comments comments "Comments"
+        testCase "failsForInvalidCharacters" <| fun _ ->
+            let createStudy =
+                fun () -> ArcStudy("My%Study") |> ignore
+            Expect.throws createStudy "throws, invalid characters"
+        testCase "whiteSpaceTrimmed" <| fun _ ->
+            let study = ArcStudy(" MyStudy ")
+            Expect.equal study.Identifier "MyStudy" "Identifier"
     ]
 
 let tests_RegisteredAssays = testList "RegisteredAssays" [

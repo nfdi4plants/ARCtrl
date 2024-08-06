@@ -10,8 +10,8 @@ module ArcStudy =
     let [<Literal>] obsoleteStudiesLabel = "STUDY METADATA"
     let [<Literal>] studiesLabel = "STUDY"
 
-    let [<Literal>] obsoleteMetaDataSheetName = "Study"
-    let [<Literal>] metaDataSheetName = "isa_study"
+    let [<Literal>] obsoleteMetadataSheetName = "Study"
+    let [<Literal>] metadataSheetName = "isa_study"
 
     let toMetadataSheet (study : ArcStudy) (assays : ArcAssay list option) : FsWorksheet =
         //let toRows (study:ArcStudy) assays =
@@ -19,7 +19,7 @@ module ArcStudy =
         //        yield  SparseRow.fromValues [studiesLabel]
         //        yield! Studies.StudyInfo.toRows study
         //    }
-        let sheet = FsWorksheet(metaDataSheetName)
+        let sheet = FsWorksheet(metadataSheetName)
         Studies.toRows study assays
         |> Seq.append [SparseRow.fromValues [studiesLabel]]
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
@@ -39,6 +39,16 @@ module ArcStudy =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
+    let isMetadataSheetName (name : string) =
+        name = metadataSheetName || name = obsoleteMetadataSheetName
+
+    let isMetadataSheet (sheet : FsWorksheet) =
+        isMetadataSheetName sheet.Name
+
+    let tryGetMetadataSheet (doc:FsWorkbook) =
+        doc.GetWorksheets()
+        |> Seq.tryFind isMetadataSheet
+
 [<AutoOpen>]
 module ArcStudyExtensions =
 
@@ -48,18 +58,13 @@ module ArcStudyExtensions =
         static member fromFsWorkbook (doc:FsWorkbook) = 
             try
                 // Reading the "Assay" metadata sheet. Here metadata 
-                let studyMetadata,assays = 
-        
-                    match doc.TryGetWorksheetByName ArcStudy.metaDataSheetName with 
+                let studyMetadata,assays =       
+                    match ArcStudy.tryGetMetadataSheet doc with                     
                     | Option.Some sheet ->
                         ArcStudy.fromMetadataSheet sheet
-                    | None ->  
-                        match doc.TryGetWorksheetByName ArcStudy.obsoleteMetaDataSheetName with 
-                        | Option.Some sheet ->
-                            ArcStudy.fromMetadataSheet sheet
-                        | None -> 
-                            printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." ArcStudy.metaDataSheetName ArcStudy.obsoleteMetaDataSheetName
-                            ArcStudy.create(Identifier.createMissingIdentifier()),[]
+                    | None -> 
+                        printfn "Cannot retrieve metadata: Study file does not contain \"%s\" or \"%s\" sheet." ArcStudy.metadataSheetName ArcStudy.obsoleteMetadataSheetName
+                        ArcStudy.create(Identifier.createMissingIdentifier()),[]
                 let sheets = doc.GetWorksheets()
                 let annotationTables = 
                     sheets
@@ -95,14 +100,17 @@ module ArcStudyExtensions =
         static member toFsWorkbook (study : ArcStudy, ?assays : ArcAssay list, ?datamapSheet: bool) =
             let datamapSheet = defaultArg datamapSheet true
             let doc = new FsWorkbook()
-            let metaDataSheet = ArcStudy.toMetadataSheet study assays
-            doc.AddWorksheet metaDataSheet
+            let metadataSheet = ArcStudy.toMetadataSheet study assays
+            doc.AddWorksheet metadataSheet
 
             if datamapSheet then
                 study.DataMap
                 |> Option.iter (DataMapTable.toFsWorksheet >> doc.AddWorksheet)
 
             study.Tables
-            |> ResizeArray.iter (ArcTable.toFsWorksheet >> doc.AddWorksheet)
+            |> Seq.iteri (fun i -> ArcTable.toFsWorksheet (Some i) >> doc.AddWorksheet)
 
             doc
+
+        member this.ToFsWorkbook (?assays : ArcAssay list, ?datamapSheet: bool) =
+            ArcStudy.toFsWorkbook (this, ?assays = assays, ?datamapSheet = datamapSheet)
