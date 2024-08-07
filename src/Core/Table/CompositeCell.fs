@@ -169,6 +169,29 @@ type CompositeCell =
         | Unitized (v,oa) -> Unitized (v, oa.Copy())
         | Data d -> Data (d.Copy())
 
+    member this.ValidateAgainstHeader(header : CompositeHeader, ?raiseException) =
+        let raiseExeption = Option.defaultValue false raiseException
+        let cell = this
+        match header, cell with
+        // no cell values will be handled later and is no error case
+        | isData when header.IsDataColumn && (cell.isData || cell.isFreeText) -> 
+            true
+        | isData when header.IsDataColumn -> 
+            if raiseExeption then 
+                let msg = $"Invalid combination of header `{header}` and cell `{cell}`, Data header should have either Data or Freetext cells"
+                failwith msg
+            false
+        | isTerm when header.IsTermColumn && (cell.isTerm || cell.isUnitized) -> 
+            true
+        | isNotTerm when (not header.IsTermColumn) && cell.isFreeText -> 
+            true
+        | h, c -> 
+            if raiseExeption then 
+                let msg = $"Invalid combination of header `{h}` and cell `{cell}`"
+                failwith msg
+            // Maybe still return `msg` somehow if `raiseExeption` is false?
+            false
+
 #if FABLE_COMPILER
     //[<CompiledName("Term")>]
     static member term (oa:OntologyAnnotation) = CompositeCell.Term(oa)

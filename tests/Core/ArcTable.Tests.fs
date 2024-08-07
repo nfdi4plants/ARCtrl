@@ -1,4 +1,4 @@
-﻿module ArcTable.Tests
+module ArcTable.Tests
 
 open ARCtrl
 
@@ -303,6 +303,63 @@ let private tests_ArcTableAux =
         ]
     ]
 
+let private tests_GetCellAt =
+    testList "GetCellAt" [
+        testCase "InsideBoundaries" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+                
+            Expect.equal (table.GetCellAt(0,0)) (CompositeCell.FreeText "Source_0") "Wrong at 0,0"
+            Expect.equal (table.GetCellAt(0,1)) (CompositeCell.FreeText "Source_1") "Wrong at 0,1"
+            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.FreeText "Sample_0") "Wrong at 1,0"
+            Expect.equal (table.GetCellAt(1,1)) (CompositeCell.FreeText "Sample_1") "Wrong at 1,1"       
+        )
+        testCase "Outside Boundaries" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+            let f = fun () -> table.GetCellAt(2,0) |> ignore
+
+            Expect.throws f "Should have failed"
+        )       
+    ]
+
+let private tests_TryGetCellAt =
+    testList "TryGetCellAt" [
+        testCase "InsideBoundaries" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+                
+            let cell1 = Expect.wantSome (table.TryGetCellAt(0,0)) "Should have found cell at 0,0"
+            let cell2 = Expect.wantSome (table.TryGetCellAt(0,1)) "Should have found cell at 0,1"
+            let cell3 = Expect.wantSome (table.TryGetCellAt(1,0)) "Should have found cell at 1,0"
+            let cell4 = Expect.wantSome (table.TryGetCellAt(1,1)) "Should have found cell at 1,1"
+
+            Expect.equal cell1 (CompositeCell.FreeText "Source_0") "Wrong at 0,0"
+            Expect.equal cell2 (CompositeCell.FreeText "Source_1") "Wrong at 0,1"
+            Expect.equal cell3 (CompositeCell.FreeText "Sample_0") "Wrong at 1,0"
+            Expect.equal cell4 (CompositeCell.FreeText "Sample_1") "Wrong at 1,1"
+    
+        )
+        testCase "Outside Boundaries" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+            let cell = table.TryGetCellAt(2,0)
+            Expect.isNone None "Should have failed"
+        )       
+    
+
+
+    ]
+
+
 let private tests_UpdateHeader = 
     testList "UpdateHeader" [
         testCase "ensure test table" (fun () ->
@@ -424,8 +481,8 @@ let private tests_UpdateHeader =
             TestingUtils.Expect.sequenceEqual table.Values table2.Values "equal table values"
     ]
 
-let private tests_UpdateCell =
-    testList "UpdateCell" [
+let private tests_UpdateCellAt =
+    testList "UpdateCellAt" [
         testCase "ensure test table" (fun () ->
             let testTable = create_testTable()
             Expect.equal testTable.RowCount 5 "RowCount"
@@ -470,6 +527,74 @@ let private tests_UpdateCell =
             let cell = CompositeCell.createTerm (OntologyAnnotation())
             let eval() = table.UpdateCellAt(0,0,cell)
             Expect.throws eval ""
+        )
+    ]
+
+let private tests_SetCellAt =
+    testList "SetCellAt" [
+        testCase "Valid" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+            table.SetCellAt(0,1,CompositeCell.createFreeText "NewCell")
+                
+            Expect.equal (table.GetCellAt(0,0)) (CompositeCell.FreeText "Source_0") "Wrong at 0,0"
+            Expect.equal (table.GetCellAt(0,1)) (CompositeCell.FreeText "NewCell") "Wrong at 0,1"
+            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.FreeText "Sample_0") "Wrong at 1,0"
+            Expect.equal (table.GetCellAt(1,1)) (CompositeCell.FreeText "Sample_1") "Wrong at 1,1"       
+        )
+        testCase "Outside Row boundary (Valid)" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+            table.SetCellAt(0,3,CompositeCell.createFreeText "NewCell")
+                
+            Expect.equal (table.GetCellAt(0,0)) (CompositeCell.FreeText "Source_0") "Wrong at 0,0"
+            Expect.equal (table.GetCellAt(0,1)) (CompositeCell.FreeText "Source_1") "Wrong at 0,1"
+            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.FreeText "Sample_0") "Wrong at 1,0"
+            Expect.equal (table.GetCellAt(1,1)) (CompositeCell.FreeText "Sample_1") "Wrong at 1,1"
+            Expect.equal (table.GetCellAt(0,3)) (CompositeCell.FreeText "NewCell") "Wrong at 0,3"   
+        )
+        testCase "Outside column boundary (Invalid)" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+
+            let f = fun () ->table.SetCellAt(3,0,CompositeCell.createFreeText "NewCell")
+
+            Expect.throws f "Should have failed"
+        )
+    ]
+
+let private tests_UpdateCellsBy =
+    testList "UpdateCellsBy" [
+        testCase "InputAndOutput" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            let c2 = CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            table.AddColumns([|c1;c2|])
+            table.UpdateCellsBy(fun _ _ c ->
+                match c with
+                | CompositeCell.FreeText s -> CompositeCell.createFreeText (s + "_new")
+                | _ -> c
+             )
+            Expect.equal (table.GetCellAt(0,0)) (CompositeCell.FreeText "Source_0_new") "Wrong at 0,0"
+            Expect.equal (table.GetCellAt(0,1)) (CompositeCell.FreeText "Source_1_new") "Wrong at 0,1"
+            Expect.equal (table.GetCellAt(1,0)) (CompositeCell.FreeText "Sample_0_new") "Wrong at 1,0"
+            Expect.equal (table.GetCellAt(1,1)) (CompositeCell.FreeText "Sample_1_new") "Wrong at 1,1"           
+        )
+        testCase "Fail For Wrong CellType" (fun () ->
+            let table = ArcTable.init "MyTable"
+            let c1 = CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            table.AddColumns([|c1|])
+            let f = fun () ->
+                table.UpdateCellsBy(fun _ _ c ->
+                    c.ToTermCell()
+                 )
+            Expect.throws f "Should have failed"
         )
     ]
 
@@ -2403,8 +2528,12 @@ let main =
         tests_SanityChecks
         tests_ArcTableAux
         tests_member
+        tests_GetCellAt
+        tests_TryGetCellAt
         tests_UpdateHeader
-        tests_UpdateCell
+        tests_UpdateCellAt
+        tests_SetCellAt
+        tests_UpdateCellsBy
         tests_UpdateColumn
         tests_AddColumn_Mutable
         tests_addColumn_Copy

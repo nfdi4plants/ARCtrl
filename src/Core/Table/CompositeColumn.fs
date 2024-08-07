@@ -19,32 +19,9 @@ type CompositeColumn = {
     /// ?raiseExeption: Default false. Set true if this function should raise an exception instead of return false.
     // TODO! Do not only check cells.Head
     member this.Validate(?raiseException: bool) =
-        let raiseExeption = Option.defaultValue false raiseException
-        let header = this.Header
-        let cells = this.Cells
-        match header, cells with
-        // no cell values will be handled later and is no error case
-        | _, emptyCell when cells.Length = 0 -> 
-            true
-        | isData when header.IsDataColumn && (cells.[0].isData || cells.[0].isFreeText) -> 
-            true
-        | isData when header.IsDataColumn -> 
-            if raiseExeption then 
-                let exampleCells = cells.[0]
-                let msg = $"Invalid combination of header `{header}` and cells `{exampleCells}`, Data header should have either Data or Freetext cells"
-                failwith msg
-            false
-        | isTerm when header.IsTermColumn && (cells.[0].isTerm || cells.[0].isUnitized) -> 
-            true
-        | isNotTerm when (not header.IsTermColumn) && cells.[0].isFreeText -> 
-            true
-        | h, c -> 
-            if raiseExeption then 
-                let exampleCells = c.[0]
-                let msg = $"Invalid combination of header `{h}` and cells `{exampleCells}`"
-                failwith msg
-            // Maybe still return `msg` somehow if `raiseExeption` is false?
-            false
+        this.Cells
+        |> Seq.exists (fun c -> c.ValidateAgainstHeader(this.Header, ?raiseException = raiseException) |> not)
+        |> not
 
     /// <summary>
     /// Returns an array of all units found in the cells of this column. Returns None if no units are found.
