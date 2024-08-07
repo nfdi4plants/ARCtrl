@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open Fable.Core
 open System.Collections.Generic
@@ -87,6 +87,16 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.TryGetCellAt(column, row)
 
+    member this.GetCellAt (column: int,row: int) =
+        try 
+            this.Values.[column,row]
+        with
+        | _ -> failwithf "Unable to find cell for index: (%i, %i) in table %s" column row this.Name
+
+    static member getCellAt (column: int,row: int) =
+        fun (table:ArcTable) ->
+            table.GetCellAt(column, row)
+
     member this.IterColumns(action: CompositeColumn -> unit) =
         for columnIndex in 0 .. (this.ColumnCount-1) do
             let column = this.GetColumn columnIndex
@@ -110,18 +120,77 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
             copy
 
     // - Cell API - //
-    // TODO: And then directly a design question. Is a column with rows containing both CompositeCell.Term and CompositeCell.Unitized allowed?
-    member this.UpdateCellAt(columnIndex, rowIndex,c : CompositeCell) =
-        SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
-        SanityChecks.validateRowIndex rowIndex this.RowCount false
-        SanityChecks.validateColumn <| CompositeColumn.create(this.Headers.[columnIndex],[|c|])
+    /// Update an already existing cell in the table. Fails if cell is outside the column AND row bounds of the table
+    member this.UpdateCellAt(columnIndex, rowIndex,c : CompositeCell, ?skipValidation) =
+        let skipValidation = defaultArg skipValidation false
+        if not(skipValidation) then
+            SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
+            SanityChecks.validateRowIndex rowIndex this.RowCount false
+            c.ValidateAgainstHeader(this.Headers.[columnIndex],raiseException = true) |> ignore
         Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
 
-    static member updateCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell) =
+    /// Update an already existing cell in the table. Fails if cell is outside the columnd AND row bounds of the table
+    static member updateCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell, ?skipValidation) =
         fun (table:ArcTable) ->
             let newTable = table.Copy()
-            newTable.UpdateCellAt(columnIndex,rowIndex,cell)
+            newTable.UpdateCellAt(columnIndex,rowIndex,cell, ?skipValidation = skipValidation)
             newTable
+
+
+    /// Update an already existing cell in the table, or adds a new cell if the row boundary is exceeded. Fails if cell is outside the column bounds of the table
+    member this.SetCellAt(columnIndex, rowIndex,c : CompositeCell, ?skipValidation) =
+        let skipValidation = defaultArg skipValidation false
+        if not(skipValidation) then
+            SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
+            c.ValidateAgainstHeader(this.Headers.[columnIndex],raiseException = true) |> ignore
+        Unchecked.setCellAt(columnIndex, rowIndex,c) this.Values
+
+    /// Update an already existing cell in the table, or adds a new cell if the row boundary is exceeded. Fails if cell is outside the column bounds of the table
+    static member setCellAt(columnIndex: int, rowIndex: int, cell: CompositeCell, ?skipValidation) =
+        fun (table:ArcTable) ->
+            let newTable = table.Copy()
+            newTable.SetCellAt(columnIndex,rowIndex,cell, ?skipValidation = skipValidation)
+            newTable
+
+
+    /// Update cells in a column by a function.
+    ///
+    /// Inputs of the function are columnIndex, rowIndex, and the current cell.
+    member this.UpdateCellsBy(f : int -> int -> CompositeCell -> CompositeCell, ?skipValidation) =
+        let skipValidation = defaultArg skipValidation false
+        for kv in this.Values do
+            let ci,ri = kv.Key
+            let newCell = f ci ri kv.Value
+            if not(skipValidation) then newCell.ValidateAgainstHeader(this.Headers[ci],raiseException = true) |> ignore
+            Unchecked.setCellAt(ci, ri,newCell) this.Values
+    
+    /// Update cells in a column by a function.
+    ///
+    /// Inputs of the function are columnIndex, rowIndex, and the current cell.static member updateCellBy(f : int -> int -> CompositeCell -> CompositeCell) =
+    static member updateCellsBy(f : int -> int -> CompositeCell -> CompositeCell, ?skipValidation) =
+        fun (table:ArcTable) ->
+            let newTable = table.Copy()
+            newTable.UpdateCellsBy(f, ?skipValidation = skipValidation)
+
+    /// Update cells in a column by a function.
+    ///
+    /// Inputs of the function are columnIndex, rowIndex, and the current cell.
+    member this.UpdateCellBy(columnIndex, rowIndex, f : CompositeCell -> CompositeCell, ?skipValidation) =
+        let skipValidation = defaultArg skipValidation false
+        if not(skipValidation) then
+            SanityChecks.validateColumnIndex columnIndex this.ColumnCount false
+            SanityChecks.validateRowIndex rowIndex this.RowCount false
+        let newCell = this.GetCellAt(columnIndex, rowIndex) |> f
+        if not(skipValidation) then newCell.ValidateAgainstHeader(this.Headers.[columnIndex],raiseException = true) |> ignore
+        Unchecked.setCellAt(columnIndex, rowIndex, newCell) this.Values
+    
+    /// Update cells in a column by a function.
+    ///
+    /// Inputs of the function are columnIndex, rowIndex, and the current cell.static member updateCellBy(f : int -> int -> CompositeCell -> CompositeCell) =
+    static member updateCellBy(columnIndex, rowIndex, f : CompositeCell -> CompositeCell, ?skipValidation) =
+        fun (table:ArcTable) ->
+            let newTable = table.Copy()
+            newTable.UpdateCellBy(columnIndex, rowIndex, f, ?skipValidation = skipValidation)
 
     // - Header API - //
     member this.UpdateHeader (index:int, newHeader: CompositeHeader, ?forceConvertCells: bool) =
