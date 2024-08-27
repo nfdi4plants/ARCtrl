@@ -5,11 +5,24 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
+    <Compile Include="IROCrateObject.fs" />
+    <Compile Include="ISAProfile\Dataset.fs" />
+    <Compile Include="ISAProfile\Investigation.fs" />
+    <Compile Include="ISAProfile\Study.fs" />
+    <Compile Include="ISAProfile\Assay.fs" />
+    <Compile Include="ISAProfile\LabProcess.fs" />
+    <Compile Include="ISAProfile\LabProtocol.fs" />
+    <Compile Include="ISAProfile\Sample.fs" />
+    <Compile Include="ISAProfile\Data.fs" />
+    <Compile Include="ISAProfile\PropertyValue.fs" />
+    <Compile Include="ISAProfile\Person.fs" />
+    <Compile Include="ISAProfile\ScholarlyArticle.fs" />
+    <Compile Include="ROCrateObject.fs" />
+    <None Include="playground.fsx" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Library.fs" />
+    <PackageReference Include="DynamicObj" Version="3.0.0" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>Kevin Schneider, nfdi4plants, DataPLANT OSS contributors</Authors>
