@@ -1,20 +1,26 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
-
   <ItemGroup>
+    <Compile Include="ISAProfile\Dataset.Tests.fs" />
+    <Compile Include="ISAProfile\Investigation.Tests.fs" />
+    <Compile Include="ISAProfile\Study.Tests.fs" />
+    <Compile Include="ISAProfile\Assay.Tests.fs" />
+    <Compile Include="ISAProfile\LabProcess.tests.fs" />
+    <Compile Include="ISAProfile\LabProtocol.Tests.fs" />
+    <Compile Include="ISAProfile\Sample.tests.fs" />
+    <Compile Include="ISAProfile\Data.Tests.fs" />
+    <Compile Include="ISAProfile\PropertyValue.Tests.fs" />
+    <Compile Include="ISAProfile\Person.Tests.fs" />
+    <Compile Include="ISAProfile\ScholarlyArticle.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <ProjectReference Include="..\..\src\ROCrate\ARCtrl.ROCrate.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="7.0.402" />
   </ItemGroup>
 </Project>

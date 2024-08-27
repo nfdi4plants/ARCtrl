@@ -1,35 +1,33 @@
-﻿namespace ARCtrl.ROCrate
+namespace ARCtrl.ROCrate
 
-module ROCrateObject =
+open DynamicObj
+
+/// Base interface implemented by all explicitly known objects in our ROCrate profiles.
+type IROCrateObject =
+    abstract member SchemaType : string
+    abstract member Id: string
+    abstract member AdditionalType: string option
+
+/// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
+/// Basically a DynamicObj that implements the IROPCrateObject interface.
+type ROCrateObject(id:string, schemaType: string, ?additionalType) =
+    inherit DynamicObj()
+
+    let mutable _schemaType = "schema.org/Dataset"
+    let mutable _additionalType = additionalType
+
+    member this.Id 
+        with get() = id
     
-    let tryAsDataset (roco: IROCrateObject) =
-        match roco with 
-        | :? Dataset as ds when ds.SchemaType = "schema.org/Dataset" -> Some ds
-        | _ -> None
+    member this.SchemaType 
+        with get() = _schemaType
+        and set(value) = _schemaType <- value
 
-    let tryAsInvestigation (roco: IROCrateObject) =
-        match roco.AdditionalType, roco.SchemaType with 
-        | Some "Investigation", "schema.org/Dataset" -> 
-            match roco with
-            | :? Investigation as ids -> Some ids
-            | _ -> None
-        | _ -> 
-            None
+    member this.AdditionalType
+        with get() = _additionalType
+        and set(value) = _additionalType <- value
 
-    let tryAsStudy (roco: IROCrateObject) =
-        match roco.AdditionalType, roco.SchemaType with 
-        | Some "Study", "schema.org/Dataset" -> 
-            match roco with
-            | :? Study as sds -> Some sds
-            | _ -> None
-        | _ -> 
-            None
-
-    let tryAsAssay (roco: IROCrateObject) =
-        match roco.AdditionalType, roco.SchemaType with 
-        | Some "Assay", "schema.org/Dataset" -> 
-            match roco with
-            | :? Assay as ads -> Some ads
-            | _ -> None
-        | _ -> 
-            None
+    interface IROCrateObject with
+        member this.SchemaType = schemaType
+        member this.Id = id
+        member this.AdditionalType = additionalType

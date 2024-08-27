@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ROCrate
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
@@ -6,21 +6,7 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Dataset (id: string, ?additionalType: string) =
-    inherit DynamicObj()
-
-    let mutable _schemaType = "schema.org/Dataset"
-    let mutable _additionalType = additionalType
-
-    member this.Id 
-        with get() = id
-    
-    member this.SchemaType 
-        with get() = _schemaType
-        and set(value) = _schemaType <- value
-
-    member this.AdditionalType
-        with get() = _additionalType
-        and set(value) = _additionalType <- value
+    inherit ROCrateObject(id = id, schemaType = "schema.org/Dataset", ?additionalType = additionalType)
 
      //interface implementations
     interface IROCrateObject with 

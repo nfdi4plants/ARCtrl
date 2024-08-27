@@ -5,7 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="IROCrateObject.fs" />
+    <Compile Include="ROCrateObject.fs" />
     <Compile Include="ISAProfile\Dataset.fs" />
     <Compile Include="ISAProfile\Investigation.fs" />
     <Compile Include="ISAProfile\Study.fs" />
@@ -17,7 +17,6 @@
     <Compile Include="ISAProfile\PropertyValue.fs" />
     <Compile Include="ISAProfile\Person.fs" />
     <Compile Include="ISAProfile\ScholarlyArticle.fs" />
-    <Compile Include="ROCrateObject.fs" />
     <None Include="playground.fsx" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>

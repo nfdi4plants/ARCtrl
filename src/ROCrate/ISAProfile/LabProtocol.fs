@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ROCrate
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
@@ -6,31 +6,12 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type LabProtocol(id: string, ?additionalType: string) =
-    inherit DynamicObj()
-
-    let mutable _schemaType = "bioschemas.org/LabProtocol"
-    let mutable _additionalType = additionalType
-
-    member this.Id 
-        with get() = id
-    
-    member this.SchemaType 
-        with get() = _schemaType
-        and set(value) = _schemaType <- value
-
-    member this.AdditionalType
-        with get() = _additionalType
-        and set(value) = _additionalType <- value
-
-     //interface implementations
-    interface IROCrateObject with 
-        member this.Id with get () = this.Id
-        member this.SchemaType with get (): string = this.SchemaType
-        member this.AdditionalType with get (): string option = this.AdditionalType
+    inherit ROCrateObject(id = id, schemaType = "bioschemas.org/LabProtocol", ?additionalType = additionalType)
 
     static member create(
         // mandatory
         id,
+        ?additionalType,
         ?name,
         ?intendedUse,
         ?description,
@@ -41,7 +22,7 @@ type LabProtocol(id: string, ?additionalType: string) =
         ?reagent,
         ?computationalTool
     ) =
-        let lp = LabProcess(id)
+        let lp = LabProcess(id, ?additionalType = additionalType)
 
         DynObj.setValueOpt lp (nameof name) name
         DynObj.setValueOpt lp (nameof intendedUse) intendedUse

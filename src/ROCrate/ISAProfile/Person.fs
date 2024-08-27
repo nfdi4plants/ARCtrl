@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.ROCrate
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
@@ -6,32 +6,13 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Person(id: string, ?additionalType: string) =
-    inherit DynamicObj()
-
-    let mutable _schemaType = "schema.org/Person"
-    let mutable _additionalType = additionalType
-
-    member this.Id 
-        with get() = id
-    
-    member this.SchemaType 
-        with get() = _schemaType
-        and set(value) = _schemaType <- value
-
-    member this.AdditionalType
-        with get() = _additionalType
-        and set(value) = _additionalType <- value
-
-     //interface implementations
-    interface IROCrateObject with 
-        member this.Id with get () = this.Id
-        member this.SchemaType with get (): string = this.SchemaType
-        member this.AdditionalType with get (): string option = this.AdditionalType
+    inherit ROCrateObject(id = id, schemaType = "schema.org/Person", ?additionalType = additionalType)
 
     static member create(
         // mandatory
         id,
         givenName,
+        ?additionalType,
         ?familyName,
         ?email,
         ?identifier,
@@ -43,7 +24,7 @@ type Person(id: string, ?additionalType: string) =
         ?faxNumber,
         ?disambiguatingDescription
     ) =
-        let p = Person(id)
+        let p = Person(id, ?additionalType = additionalType)
 
         DynObj.setValue p (nameof givenName) givenName
 
