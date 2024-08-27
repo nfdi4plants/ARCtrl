@@ -60,6 +60,21 @@ let publishNugetPrerelease = BuildTask.create "PublishNugetPrerelease" [clean; b
     else failwith "aborted"
 }
 
+let publishNugetSwate = BuildTask.create "publishNugetSwate" [clean; build; packDotNetSwate] {
+    let targets = (!! (sprintf "%s/*.*pkg" netPkgDir ))
+    for target in targets do printfn "%A" target
+    let semVer = release.SemVer
+    let releaseTag = sprintf "%i.%i.%i-swate" semVer.Major semVer.Minor semVer.Patch
+    let msg = sprintf "[NUGET] release package with version %s?" releaseTag
+    if promptYesNo msg then
+        let source = "https://api.nuget.org/v3/index.json"
+        let apikey =  Environment.environVar "NUGET_KEY"
+        for artifact in targets do
+            let result = DotNet.exec id "nuget" (sprintf "push -s %s -k %s %s --skip-duplicate" source apikey artifact)
+            if not result.OK then failwith "failed to push packages"
+    else failwith "aborted"
+}
+
 let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] {
     let target = 
         (!! (sprintf "%s/*.tgz" npmPkgDir ))

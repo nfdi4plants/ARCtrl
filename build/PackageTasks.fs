@@ -48,6 +48,12 @@ let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleas
     BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
 }
 
+let packDotNetSwate = BuildTask.create "packDotNetSwate" [clean; build; RunTests.runTestsDotnet; RunTests.runTestsJs; RunTests.runTestsJsNative] {
+    let semVer = release.SemVer
+    let releaseTag = sprintf "%i.%i.%i-swate" semVer.Major semVer.Minor semVer.Patch
+    BundleDotNet.bundle releaseTag (Some releaseTag)
+}
+
 module BundleJs =
     let bundle (versionTag: string) =
         Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)

@@ -1,5 +1,39 @@
-### 2.0.0+06ab9f5 (Released 2024-6-27)
+### 2.0.0+6c267dd (Released 2024-8-27)
 * Additions:
+    * [[#c250f52](https://github.com/nfdi4plants/ARCtrl/commit/c250f52322e6c22714b02dccb37b93ca2a9cb5d8)] add RO-Crate contexts to docs
+    * [[#55ad878](https://github.com/nfdi4plants/ARCtrl/commit/55ad87892d23a77517cdbe380f5bc4e75cea2744)] Update fsspreadsheet
+    * [[#263db68](https://github.com/nfdi4plants/ARCtrl/commit/263db68d22addaa26552a85a4dd86eac29c2153f)] include fable files
+    * [[#c59b883](https://github.com/nfdi4plants/ARCtrl/commit/c59b8834d09fcdae7e47b575c4d2dff316c44a18)] Add ARCtrl.ValidationPackages project: - base type model for ValidationPackages and the config file
+    * [[#cc879fd](https://github.com/nfdi4plants/ARCtrl/commit/cc879fd276e25d4ead4c9b5051f839567e1a745e)] Add ARCtrl.Yaml: - Uses YAMLicious - tries to mirror ARCtrl.Json - Encoder/Decoder logic for ValidatioNpackages type model
+    * [[#c5a9e7c](https://github.com/nfdi4plants/ARCtrl/commit/c5a9e7c8f25352437c757147203f6df327957da4)] Add contracts for ValidationPackagesConfig
+    * [[#532d310](https://github.com/nfdi4plants/ARCtrl/commit/532d310e4f149a4a7ff48e62d98e836db85982a1)] Update to .NET 8, requested PR changes
+    * [[#137d885](https://github.com/nfdi4plants/ARCtrl/commit/137d885f1a8a76c43fca0e1d631ad70c9eae8667)] add fable files
+    * [[#87ed783](https://github.com/nfdi4plants/ARCtrl/commit/87ed783823ebfa9e56486cd2d5edcb2e406216cd)] add the fable files for real. fable be fablin'
+    * [[#8b55020](https://github.com/nfdi4plants/ARCtrl/commit/8b55020d557e39b78a7f512ff29370bfd53e98aa)] Add classes for index files :sparkles: #386
+    * [[#27d259a](https://github.com/nfdi4plants/ARCtrl/commit/27d259a22b3d357798ac190b867b33972814033d)] Rename ARCtrl.Path to ARCtrl.ArcPathHelper #398
+    * [[#3e427f1](https://github.com/nfdi4plants/ARCtrl/commit/3e427f188ecc5244fffa63e534314e30699efb29)] Add CompositeCell.ToDataCell #404
+    * [[#bf79874](https://github.com/nfdi4plants/ARCtrl/commit/bf798749e0de183502ca52df000943a06ccccee2)] Unifiy expected functionality of CompositeCell conversion utility #402
+    * [[#8432507](https://github.com/nfdi4plants/ARCtrl/commit/8432507efc446ca93f7c0d333a0bbd8d79a96395)] Add api to include datamap in assay/study #406
+    * [[#b00b17e](https://github.com/nfdi4plants/ARCtrl/commit/b00b17eaf6c397e3d3ff30795199767697ab0572)] add swate prerelease target
+    * [[#486d6a7](https://github.com/nfdi4plants/ARCtrl/commit/486d6a7e611c739452aab1d11003478c9940cf62)] rmv comment
+    * [[#d036c31](https://github.com/nfdi4plants/ARCtrl/commit/d036c3161ddc53118bed5aeb5be2b32102ec6b76)] add first json logic for datamap :construction:
+    * [[#22b48f5](https://github.com/nfdi4plants/ARCtrl/commit/22b48f54ae2992269a4ab891035653c5712cf0ec)] Add YAML tests for Validation packages, use custom equality
+    * [[#b510ab2](https://github.com/nfdi4plants/ARCtrl/commit/b510ab2b793c87a6ce0a70fd92ae99791624f307)] add a test placeholder -.-
+    * [[#9c70c5d](https://github.com/nfdi4plants/ARCtrl/commit/9c70c5dffea4a28f262f972651b712bf0e5ffefa)] Add contract handling for `validation_packages.yml` to top-level ARC API
+    * [[#263db27](https://github.com/nfdi4plants/ARCtrl/commit/263db27e067fb1c6af81211be15d6eb80390783a)] wip
+    * [[#6273594](https://github.com/nfdi4plants/ARCtrl/commit/6273594c1a4b7b4813ddffd4a0b0f9beea095892)] Add instance method tests for ARCtrl.ValidationPackages
+    * [[#4101dcb](https://github.com/nfdi4plants/ARCtrl/commit/4101dcb2b0f38e80f77501c5e2dadd1fe422b7a4)] Add Contract tests for ValidationPackagesConfig
+    * [[#995e2f8](https://github.com/nfdi4plants/ARCtrl/commit/995e2f8bef5c5f9510aa3cf9f77b7968d16eb271)] Add topm level api tests for ValidationPackagesConfig
+    * [[#8de0653](https://github.com/nfdi4plants/ARCtrl/commit/8de0653bfd3d361b8571f2c59eb65823e1832022)] Use literal for yaml keys (also in tests)
+    * [[#d64f841](https://github.com/nfdi4plants/ARCtrl/commit/d64f841685b5314627ef6d6829cceeb9d1dc88a3)] Use more Record-like ToString() for ValidationPackages and ValidationpackagesConfig
+    * [[#88c9b9d](https://github.com/nfdi4plants/ARCtrl/commit/88c9b9d831f8918e7eadb511cdaf0e7baf9bfbdf)] add addColumnFill member function with tests
+    * [[#e68ca44](https://github.com/nfdi4plants/ARCtrl/commit/e68ca449ba9aa741e96f4bb9195ac3f354625ac7)] Additional tests for AddColumnFill
+    * [[#df0bda9](https://github.com/nfdi4plants/ARCtrl/commit/df0bda98b004caf1896c91a5d9d69c50885b01d3)] Reviewed AddColumnFill member function and tests
+    * [[#94fba28](https://github.com/nfdi4plants/ARCtrl/commit/94fba285c10678314a9ae7fd47c146862109b77a)] add ARC.ToROCrateJsonString member #344
+    * [[#064b3e0](https://github.com/nfdi4plants/ARCtrl/commit/064b3e0beb10b34cb28d32db7f55342bf5479d22)] added functions for checking assay and study metadata sheet names #414
+    * [[#c5a929d](https://github.com/nfdi4plants/ARCtrl/commit/c5a929df8b140e9bb749fe2f01db386ccadd818c)] check identifiers when creating assay and study objects #415
+    * [[#d40fea9](https://github.com/nfdi4plants/ARCtrl/commit/d40fea9442d34a3b7fa6bff76682423fdcff5992)] add CompositeHeader.IsUnique #416
+    * [[#de4246f](https://github.com/nfdi4plants/ARCtrl/commit/de4246f16d09b81cd94f18784772618bb095a6c8)] add  ArcTable cell accession and manipulation functions
     * [[#485d778](https://github.com/nfdi4plants/ARCtrl/commit/485d778ed49f99b1ae7994d1a1e764ea08091e95)] make process conversion more robust against different outputs
     * [[#0b85fcd](https://github.com/nfdi4plants/ARCtrl/commit/0b85fcd8fc825866c10792465a33c1cf81b92e08)] base spreadsheet parsers on string columns
     * [[#142b6a2](https://github.com/nfdi4plants/ARCtrl/commit/142b6a20c3df620822bfe602136040d3b62fd944)] change main types of spreadsheet parsing collections from list to array
@@ -118,9 +152,20 @@
     * [[#abd3d89](https://github.com/nfdi4plants/ARCtrl/commit/abd3d890fb58a0962d4e7d841df7440d9a4bed90)] Merge pull request #317 from nfdi4plants/python_integration
     * [[#b6e2eca](https://github.com/nfdi4plants/ARCtrl/commit/b6e2ecab5a0a3630e1dd24ae36d34be79ad21d6d)] small change to semver in npm
 * Deletions:
+    * [[#cd1620c](https://github.com/nfdi4plants/ARCtrl/commit/cd1620c615ec500713ba12da7b685eca7305a12f)] remove entry when delete contract is created for validation packages config file, add related tests
+    * [[#e50083c](https://github.com/nfdi4plants/ARCtrl/commit/e50083ce6638fc6e7ac607bd1a090948046d1d84)] remove UI helper functions #329
     * [[#1ce8001](https://github.com/nfdi4plants/ARCtrl/commit/1ce80017ddd48bbe217ee99ac70923cb5dca8bc1)] Remove ALL tabs from fsproj files
     * [[#f055617](https://github.com/nfdi4plants/ARCtrl/commit/f05561709a0a8d1da752d54d5a997db225a3384e)] remove erroneous exe output type from testingutils
 * Bugfixes:
+    * [[#ad6f37f](https://github.com/nfdi4plants/ARCtrl/commit/ad6f37f02cc24c22b9b6744fc59039bf3644eb4b)] Fix spreadsheet writer for data with freetext :bug::white_check_mark: #405
+    * [[#e358522](https://github.com/nfdi4plants/ARCtrl/commit/e358522720ac8343d470c33e13e8cdd1363e18e2)] fix data column spreadsheet export for mixed columns :bug::white_check_mark:
+    * [[#f60e663](https://github.com/nfdi4plants/ARCtrl/commit/f60e663aa68f6fbae2eb0da65f20950b9ee67545)] fix module references :bug:
+    * [[#36ab086](https://github.com/nfdi4plants/ARCtrl/commit/36ab0864dfda70ed078cef089dcc9f3e0847341a)] Added missing datamap to compressed study json :bug:
+    * [[#5cfffe9](https://github.com/nfdi4plants/ARCtrl/commit/5cfffe92e47ffd342a44debcf50ea0d08ef27359)] fix study datamap json key name :bug:
+    * [[#dc3822f](https://github.com/nfdi4plants/ARCtrl/commit/dc3822fd1fec14c6009425e618531adf8828119a)] Fixed json key naming issue, added tests :bug::white_check_mark:
+    * [[#a88344a](https://github.com/nfdi4plants/ARCtrl/commit/a88344a7f5f6d96b82e31af85b582b7425db8d7c)] fix test transpilation for YAML
+    * [[#ba8d69e](https://github.com/nfdi4plants/ARCtrl/commit/ba8d69ef5e3668d986ee2e948699cce8dd1e977b)] Fix path helper usage after rebase
+    * [[#d1b9f9b](https://github.com/nfdi4plants/ARCtrl/commit/d1b9f9b3e640ccf688af7cbd2d34d07589a6f1ac)] fix multi annotationTable writing and unify API #423
     * [[#621f769](https://github.com/nfdi4plants/ARCtrl/commit/621f769ead6a0616a78f5db0ff23c5bfd6d53a5b)] small fix for changes to spreadsheet parsing
     * [[#19b6a4c](https://github.com/nfdi4plants/ARCtrl/commit/19b6a4cb2d9ff89a68428f226ed49ffa34641c93)] fix and test rename leading to update contracts when the renamed entity is registered and remove isalight
     * [[#4ae6bd0](https://github.com/nfdi4plants/ARCtrl/commit/4ae6bd029c7ecd14cb16e6fea221983d29e43fea)] fixes and tests for updateContracts when assays or studies are added
