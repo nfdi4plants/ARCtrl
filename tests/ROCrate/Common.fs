@@ -17,9 +17,13 @@ module Expect =
         Expect.equal roc.AdditionalType (Some expectedAdditionalType) "object did not contain correct additionalType"
 
     let inline ROCrateObjectHasProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#ROCrateObject) =
+        #if !FABLE_COMPILER
         Expect.isTrue (roc.Properties.ContainsKey expectedPropertyName) $"object did not contain the property 'expectedPropertyName'"
         Expect.equal (roc.TryGetTypedValue<'P>(expectedPropertyName)) (Some expectedPropertyValue) "property value of 'expectedPropertyName' was not correct"
-
+        #endif
+        #if FABLE_COMPILER
+        Expect.equal (roc.TryGetValue(expectedPropertyName)) (Some expectedPropertyValue) "property value of 'expectedPropertyName' was not correct"
+        #endif
     let inline ROCrateObjectHasExpectedInterfaceMembers (expectedType:string) (expectedId:string) (expectedAdditionalType:string option) (roc:#ROCrateObject) =
         let interfacerino = roc :> IROCrateObject
         Expect.equal interfacerino.SchemaType expectedType "object did not contain correct @type via interface access"
