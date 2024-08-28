@@ -5,13 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="TestObjects.ROCrate\Common.fs" />
-    <Compile Include="TestObjects.ROCrate\PropertyValue.fs" />
-    <Compile Include="TestObjects.ROCrate\Sample.fs" />
-    <Compile Include="TestObjects.ROCrate\Person.fs" />
-    <Compile Include="TestObjects.ROCrate\ScholarlyArtice.fs" />
-    <Compile Include="TestObjects.ROCrate\LabProcess.fs" />
-    <Compile Include="TestObjects.ROCrate\Study.fs" />
+    <Content Include="testobjects.rocrate\ArcPrototype%4070a7c83e7858a974bf913de2e27d8e44191fc73f.json" />
     <Compile Include="TestObjects.Json\Study.fs" />
     <Compile Include="TestObjects.Json\ROCrate.fs" />
     <Content Include="TestObjects.Json\MinimalJson.json" />

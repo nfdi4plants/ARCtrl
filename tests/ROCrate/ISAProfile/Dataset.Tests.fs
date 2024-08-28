@@ -3,17 +3,27 @@ module Tests.Dataset
 open ARCtrl.ROCrate
 
 open TestingUtils
+open Common
 
-let default_constructor = Dataset("id")
+let mandatory_properties = Dataset("dataset_mandatory_properties_id")
+let all_properties = Dataset("dataset_all_properties_id", additionalType = "additionalType")
 
-let tests_profile_object_is_valid = testList "profile object is valid" [
-    testCase "Id" <| fun _ -> Expect.equal default_constructor.Id "id" "mandatory field Id was not correct"
-    testCase "SchemaType" <| fun _ -> Expect.equal default_constructor.SchemaType "schema.org/Dataset" "mandatory field SchemaType was not correct"
-    testCase "AdditionalType" <| fun _ -> Expect.isNone default_constructor.AdditionalType "optional field AdditionalType was not correct"
-    testCase "Properties" <| fun _ -> Expect.isEmpty default_constructor.Properties "Dynamic properties were not empty"
+let tests_profile_object_is_valid = testList "constructed properties" [
+    testList "mandatory properties" [
+        testCase "Id" <| fun _ -> Expect.ROCrateObjectHasId "dataset_mandatory_properties_id" mandatory_properties
+        testCase "SchemaType" <| fun _ -> Expect.ROCrateObjectHasType "schema.org/Dataset" mandatory_properties
+    ]
+    testList "all properties" [
+        testCase "Id" <| fun _ -> Expect.ROCrateObjectHasId "dataset_all_properties_id" all_properties
+        testCase "SchemaType" <| fun _ -> Expect.ROCrateObjectHasType "schema.org/Dataset" all_properties
+        testCase "AdditionalType" <| fun _ -> Expect.ROCrateObjectHasAdditionalType "additionalType" all_properties
+    ]
 ]
 
-let tests_interface_members = testList "interface members" []
+let tests_interface_members = testList "interface members" [
+    testCase "mandatoryProperties" <| fun _ -> Expect.ROCrateObjectHasExpectedInterfaceMembers "schema.org/Dataset" "dataset_mandatory_properties_id" None mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.ROCrateObjectHasExpectedInterfaceMembers "schema.org/Dataset" "dataset_all_properties_id" (Some "additionalType") all_properties
+]
 
 let tests_dynamic_members = testList "dynamic members" []
 
