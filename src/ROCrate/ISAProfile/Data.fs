@@ -5,24 +5,19 @@ open Fable.Core
 
 ///
 [<AttachMembers>]
-type Data(id: string, ?additionalType: string) =
+type Data(
+    id,
+    name,
+    ?additionalType,
+    ?comment,
+    ?encodingFormat,
+    ?disambiguatingDescription
+) as this =
     inherit ROCrateObject(id = id, schemaType = "schema.org/MediaObject", ?additionalType = additionalType)
+    do
+        DynObj.setValue this (nameof name) name
 
-    static member create(
-        // mandatory
-        id,
-        name,
-        ?additionalType,
-        ?comment,
-        ?encodingFormat,
-        ?disambiguatingDescription
-    ) =
-        let d = Data(id, ?additionalType = additionalType)
+        DynObj.setValueOpt this (nameof comment) comment
+        DynObj.setValueOpt this (nameof encodingFormat) encodingFormat
+        DynObj.setValueOpt this (nameof disambiguatingDescription) disambiguatingDescription
 
-        DynObj.setValue d (nameof name) name
-
-        DynObj.setValueOpt d (nameof comment) comment
-        DynObj.setValueOpt d (nameof encodingFormat) encodingFormat
-        DynObj.setValueOpt d (nameof disambiguatingDescription) disambiguatingDescription
-
-        d

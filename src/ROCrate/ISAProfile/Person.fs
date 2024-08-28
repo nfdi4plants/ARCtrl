@@ -5,38 +5,33 @@ open Fable.Core
 
 ///
 [<AttachMembers>]
-type Person(id: string, ?additionalType: string) =
+type Person(
+    id,
+    givenName,
+    ?additionalType,
+    ?familyName,
+    ?email,
+    ?identifier,
+    ?affiliation,
+    ?jobTitle,
+    ?additionalName,
+    ?address,
+    ?telephone,
+    ?faxNumber,
+    ?disambiguatingDescription
+) as this=
     inherit ROCrateObject(id = id, schemaType = "schema.org/Person", ?additionalType = additionalType)
+    do
 
-    static member create(
-        // mandatory
-        id,
-        givenName,
-        ?additionalType,
-        ?familyName,
-        ?email,
-        ?identifier,
-        ?affiliation,
-        ?jobTitle,
-        ?additionalName,
-        ?address,
-        ?telephone,
-        ?faxNumber,
-        ?disambiguatingDescription
-    ) =
-        let p = Person(id, ?additionalType = additionalType)
+        DynObj.setValue this (nameof givenName) givenName
 
-        DynObj.setValue p (nameof givenName) givenName
-
-        DynObj.setValueOpt p (nameof familyName) familyName
-        DynObj.setValueOpt p (nameof email) email
-        DynObj.setValueOpt p (nameof identifier) identifier
-        DynObj.setValueOpt p (nameof affiliation) affiliation
-        DynObj.setValueOpt p (nameof jobTitle) jobTitle
-        DynObj.setValueOpt p (nameof additionalName) additionalName
-        DynObj.setValueOpt p (nameof address) address
-        DynObj.setValueOpt p (nameof telephone) telephone
-        DynObj.setValueOpt p (nameof faxNumber) faxNumber
-        DynObj.setValueOpt p (nameof disambiguatingDescription) disambiguatingDescription
-
-        p
+        DynObj.setValueOpt this (nameof familyName) familyName
+        DynObj.setValueOpt this (nameof email) email
+        DynObj.setValueOpt this (nameof identifier) identifier
+        DynObj.setValueOpt this (nameof affiliation) affiliation
+        DynObj.setValueOpt this (nameof jobTitle) jobTitle
+        DynObj.setValueOpt this (nameof additionalName) additionalName
+        DynObj.setValueOpt this (nameof address) address
+        DynObj.setValueOpt this (nameof telephone) telephone
+        DynObj.setValueOpt this (nameof faxNumber) faxNumber
+        DynObj.setValueOpt this (nameof disambiguatingDescription) disambiguatingDescription

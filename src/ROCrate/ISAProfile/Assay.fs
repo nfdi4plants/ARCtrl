@@ -1,46 +1,31 @@
-﻿namespace ARCtrl.ROCrate
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
 
 ///
 [<AttachMembers>]
-type Assay(id: string) =
-    // inheritance
+type Assay(
+    id,
+    identifier,
+    ?about,
+    ?comment,
+    ?creator,
+    ?hasPart,
+    ?measurementMethod,
+    ?measurementTechnique,
+    ?url,
+    ?variableMeasured
+) as this =
     inherit Dataset(id, "Assay")
-    static member create(
-        // mandatory
-        id,
-        // Properties from Thing
-        identifier,
-        // optional
-        // Properties from CreativeWork
-        // Properties from Dataset
-        ?measurementMethod,
-        ?measurementTechnique,
-        ?variableMeasured,
-        // Properties from CreativeWork
-        ?about,
-        ?comment,
-        ?creator,
-        ?hasPart,
-        ?url
-    ) =
-        let ds = Assay(id = id)
+    do
+        DynObj.setValue this (nameof identifier) identifier
 
-        // Properties from Dataset
-        DynObj.setValueOpt ds (nameof measurementMethod) measurementMethod
-        DynObj.setValueOpt ds (nameof measurementTechnique) measurementTechnique
-        DynObj.setValueOpt ds (nameof variableMeasured) variableMeasured
-
-        // Properties from CreativeWork
-        DynObj.setValueOpt ds (nameof about) about
-        DynObj.setValueOpt ds (nameof comment) comment
-        DynObj.setValueOpt ds (nameof creator) creator
-        DynObj.setValueOpt ds (nameof hasPart) hasPart
-        DynObj.setValueOpt ds (nameof url) url
-
-        // Properties from Thing
-        DynObj.setValue ds (nameof identifier) identifier
-
-        ds
+        DynObj.setValueOpt this (nameof measurementMethod) measurementMethod
+        DynObj.setValueOpt this (nameof measurementTechnique) measurementTechnique
+        DynObj.setValueOpt this (nameof variableMeasured) variableMeasured
+        DynObj.setValueOpt this (nameof about) about
+        DynObj.setValueOpt this (nameof comment) comment
+        DynObj.setValueOpt this (nameof creator) creator
+        DynObj.setValueOpt this (nameof hasPart) hasPart
+        DynObj.setValueOpt this (nameof url) url

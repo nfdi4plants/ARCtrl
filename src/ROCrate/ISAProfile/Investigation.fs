@@ -1,49 +1,43 @@
-﻿namespace ARCtrl.ROCrate
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
 
 ///
 [<AttachMembers>]
-type Investigation(id: string) =
-
+type Investigation(
+    id,
+    // Properties from Thing
+    identifier,
+    // optional
+    // Properties from CreativeWork
+    ?citation,
+    ?comment,
+    ?creator,
+    ?dateCreated,
+    ?dateModified,
+    ?datePublished,
+    ?hasPart,
+    ?headline,
+    ?mentions,
+    ?url,
+    // Properties from Thing
+    ?description
+) as this =
     inherit Dataset(id, "Investigation")
-
-    static member create(
-        id,
-        // Properties from Thing
-        identifier,
-        // optional
+    do 
         // Properties from CreativeWork
-        ?citation,
-        ?comment,
-        ?creator,
-        ?dateCreated,
-        ?dateModified,
-        ?datePublished,
-        ?hasPart,
-        ?headline,
-        ?mentions,
-        ?url,
-        // Properties from Thing
-        ?description
-    ) =
-        let ds = Investigation(id = id)
-
-        // Properties from CreativeWork
-        DynObj.setValueOpt ds (nameof citation) citation
-        DynObj.setValueOpt ds (nameof comment) comment
-        DynObj.setValueOpt ds (nameof creator) creator
-        DynObj.setValueOpt ds (nameof dateCreated) dateCreated
-        DynObj.setValueOpt ds (nameof dateModified) dateModified
-        DynObj.setValueOpt ds (nameof datePublished) datePublished
-        DynObj.setValueOpt ds (nameof hasPart) hasPart
-        DynObj.setValueOpt ds (nameof headline) headline
-        DynObj.setValueOpt ds (nameof mentions) mentions
-        DynObj.setValueOpt ds (nameof url) url
+        DynObj.setValueOpt this (nameof citation) citation
+        DynObj.setValueOpt this (nameof comment) comment
+        DynObj.setValueOpt this (nameof creator) creator
+        DynObj.setValueOpt this (nameof dateCreated) dateCreated
+        DynObj.setValueOpt this (nameof dateModified) dateModified
+        DynObj.setValueOpt this (nameof datePublished) datePublished
+        DynObj.setValueOpt this (nameof hasPart) hasPart
+        DynObj.setValueOpt this (nameof headline) headline
+        DynObj.setValueOpt this (nameof mentions) mentions
+        DynObj.setValueOpt this (nameof url) url
 
         // Properties from Thing
-        DynObj.setValueOpt ds (nameof description) description
-        DynObj.setValue ds (nameof identifier) identifier
-
-        ds
+        DynObj.setValueOpt this (nameof description) description
+        DynObj.setValue this (nameof identifier) identifier

@@ -5,34 +5,26 @@ open Fable.Core
 
 ///
 [<AttachMembers>]
-type LabProcess(id: string, ?additionalType: string) =
-
+type LabProcess(
+    id,
+    name,
+    agent,
+    object,
+    result,
+    ?additionalType,
+    ?executesLabProtocol,
+    ?parameterValue,
+    ?endTime,
+    ?disambiguatingDescription
+) as this =
     inherit ROCrateObject(id = id, schemaType = "bioschemas.org/LabProcess", ?additionalType = additionalType)
+    do
+        DynObj.setValue this (nameof name) name
+        DynObj.setValue this (nameof agent) agent
+        DynObj.setValue this (nameof object) object
+        DynObj.setValue this (nameof result) result
 
-    static member create(
-        // mandatory
-        id,
-        name,
-        agent,
-        object,
-        result,
-        // optional
-        ?additionalType,
-        ?executesLabProtocol,
-        ?parameterValue,
-        ?endTime,
-        ?disambiguatingDescription
-    ) =
-        let lp = LabProcess(id, ?additionalType = additionalType)
-
-        DynObj.setValue lp (nameof name) name
-        DynObj.setValue lp (nameof agent) agent
-        DynObj.setValue lp (nameof object) object
-        DynObj.setValue lp (nameof result) result
-
-        DynObj.setValueOpt lp (nameof executesLabProtocol) executesLabProtocol
-        DynObj.setValueOpt lp (nameof parameterValue) parameterValue
-        DynObj.setValueOpt lp (nameof endTime) endTime
-        DynObj.setValueOpt lp (nameof disambiguatingDescription) disambiguatingDescription
-
-        lp
+        DynObj.setValueOpt this (nameof executesLabProtocol) executesLabProtocol
+        DynObj.setValueOpt this (nameof parameterValue) parameterValue
+        DynObj.setValueOpt this (nameof endTime) endTime
+        DynObj.setValueOpt this (nameof disambiguatingDescription) disambiguatingDescription

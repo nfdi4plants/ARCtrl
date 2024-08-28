@@ -5,22 +5,16 @@ open Fable.Core
 
 ///
 [<AttachMembers>]
-type Sample(id: string, ?additionalType: string) =
+type Sample(
+    id,
+    name,
+    ?additionalType,
+    ?additionalProperty,
+    ?derivesFrom
+) as this =
     inherit ROCrateObject(id = id, schemaType = "bioschemas.org/Sample", ?additionalType = additionalType)
+    do
+        DynObj.setValue this (nameof name) name
 
-    static member create(
-        // mandatory
-        id,
-        name,
-        ?additionalType,
-        ?additionalProperty,
-        ?derivesFrom
-    ) =
-        let s = Sample(id, ?additionalType = additionalType)
-
-        DynObj.setValue s (nameof name) name
-
-        DynObj.setValueOpt s (nameof additionalProperty) additionalProperty
-        DynObj.setValueOpt s (nameof derivesFrom) derivesFrom
-
-        s
+        DynObj.setValueOpt this (nameof additionalProperty) additionalProperty
+        DynObj.setValueOpt this (nameof derivesFrom) derivesFrom
