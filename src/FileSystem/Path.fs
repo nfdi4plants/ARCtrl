@@ -34,6 +34,7 @@ let [<Literal>] StudiesResourcesFolderName = "resources"
 
 let split(path: string) = 
     path.Split(seperators, enum<StringSplitOptions>(3))
+    |> Array.filter (fun p -> p <> "" && p <> ".")
 
 let combine (path1 : string) (path2 : string) : string = 
     let path1_trimmed = path1.TrimEnd(seperators)
