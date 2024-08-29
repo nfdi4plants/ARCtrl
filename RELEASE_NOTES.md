@@ -1,3 +1,7 @@
+### 2.0.1+5e6cc32 (Released 2024-8-29)
+* Bugfixes:
+    * [[#bfaaaf6](https://github.com/nfdi4plants/ARCtrl/commit/bfaaaf614a1a2dc788a1b7de17761b5867aa9fee)] fix single dot in paths being interpreted as folder
+
 ### 2.0.0+6c267dd (Released 2024-8-27)
 * Additions:
     * [[#c250f52](https://github.com/nfdi4plants/ARCtrl/commit/c250f52322e6c22714b02dccb37b93ca2a9cb5d8)] add RO-Crate contexts to docs

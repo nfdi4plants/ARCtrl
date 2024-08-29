@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ARCtrl"
-version = "2.0.0"
+version = "2.0.1"
 description = "Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems."
 authors = ["Heinrich Lukas Weil <weil@rptu.de>", "Kevin Frey <freymaurer@gmx.de>"]
 maintainers = ["Florian Wetzels"]
