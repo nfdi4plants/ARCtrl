@@ -10,12 +10,16 @@ open ARCtrl.Spreadsheet
 open ARCtrl.Helper
 open FsSpreadsheet
 
-let private tests_model = testList "model" [
-    testCase "create" <| fun _ ->
+let tests_create = testList "create" [
+    testCase "empty" <| fun _ ->
         let arc = ARC()
         Expect.isNone arc.CWL "cwl"
         Expect.isNone arc.ISA "isa"
-    testCase "fromFilePath" <| fun _ ->
+] 
+
+let private tests_fromFilePaths = testList "fromFilePaths" [
+
+    testCase "simple" <| fun _ ->
         let input = 
             [|@"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
             @".git\description"; @".git\HEAD"; @"assays\.gitkeep"; @"runs\.gitkeep";
@@ -47,6 +51,14 @@ let private tests_model = testList "model" [
         Expect.isNone arc.ISA "isa"
         let actualFilePaths = arc.FileSystem.Tree.ToFilePaths() |> Array.sort
         Expect.equal actualFilePaths input "isSome fs"
+    testCase "correctContractsFor(.)AtBeginning" <| fun _ ->
+        let input =  [|
+            @"./isa.investigation.xlsx"
+            @"./assays/TestAssay1/isa.assay.xlsx"
+            @"./studies/TestAssay1/isa.study.xlsx";|]
+        let arc = ARC.fromFilePaths(input)
+        let contracts = arc.GetReadContracts()
+        Expect.hasLength contracts 3 "should have read 3 contracts"
 ]
 
 let private simpleISAContracts = 
@@ -931,7 +943,8 @@ let tests_RenameStudy = testList "RenameStudy" [
 ] 
 
 let main = testList "ARCtrl" [
-    tests_model
+    tests_create
+    tests_fromFilePaths
     tests_updateFileSystem
     tests_read_contracts
     tests_writeContracts
