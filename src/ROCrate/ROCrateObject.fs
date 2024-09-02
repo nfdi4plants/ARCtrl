@@ -13,7 +13,7 @@ type IROCrateObject =
 type ROCrateObject(id:string, schemaType: string, ?additionalType) =
     inherit DynamicObj()
 
-    let mutable _schemaType = "schema.org/Dataset"
+    let mutable _schemaType = schemaType
     let mutable _additionalType = additionalType
 
     member this.Id 
