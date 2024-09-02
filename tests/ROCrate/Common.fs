@@ -1,6 +1,7 @@
 module Tests.Common
 
 open ARCtrl.ROCrate
+open DynamicObj
 
 open TestingUtils
 
@@ -16,14 +17,20 @@ module Expect =
         Expect.isSome roc.AdditionalType "additionalType was None"
         Expect.equal roc.AdditionalType (Some expectedAdditionalType) "object did not contain correct additionalType"
 
-    let inline ROCrateObjectHasProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#ROCrateObject) =
-        #if !FABLE_COMPILER
-        Expect.isTrue (roc.Properties.ContainsKey expectedPropertyName) $"object did not contain the property 'expectedPropertyName'"
-        Expect.equal (roc.TryGetTypedValue<'P>(expectedPropertyName)) (Some expectedPropertyValue) "property value of 'expectedPropertyName' was not correct"
-        #endif
-        #if FABLE_COMPILER
-        Expect.equal (roc.TryGetValue(expectedPropertyName)) (Some expectedPropertyValue) "property value of 'expectedPropertyName' was not correct"
-        #endif
+    let inline ROCrateObjectHasDynamicProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#ROCrateObject) =
+        Expect.isSome (roc.TryGetDynamicPropertyInfo(expectedPropertyName)) $"object did not contain the dynamic property 'expectedPropertyName'"
+        Expect.equal
+            (DynObj.tryGetTypedValue<'P> expectedPropertyName roc)
+            (Some expectedPropertyValue)
+            "property value of 'expectedPropertyName' was not correct"
+
+    let inline ROCrateObjectHasStaticProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#ROCrateObject) =
+        Expect.isSome (roc.TryGetStaticPropertyInfo(expectedPropertyName)) $"object did not contain the dynamic property 'expectedPropertyName'"
+        Expect.equal
+            (DynObj.tryGetTypedValue<'P> expectedPropertyName roc)
+            (Some expectedPropertyValue)
+            "property value of 'expectedPropertyName' was not correct"
+
     let inline ROCrateObjectHasExpectedInterfaceMembers (expectedType:string) (expectedId:string) (expectedAdditionalType:string option) (roc:#ROCrateObject) =
         let interfacerino = roc :> IROCrateObject
         Expect.equal interfacerino.SchemaType expectedType "object did not contain correct @type via interface access"

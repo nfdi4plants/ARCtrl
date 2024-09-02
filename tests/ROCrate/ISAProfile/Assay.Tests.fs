@@ -28,21 +28,21 @@ let tests_profile_object_is_valid = testList "constructed properties" [
         testCase "Id" <| fun _ -> Expect.ROCrateObjectHasId "assay_mandatory_properties_id" mandatory_properties
         testCase "SchemaType" <| fun _ -> Expect.ROCrateObjectHasType "schema.org/Dataset" mandatory_properties
         testCase "AdditionalType" <| fun _ -> Expect.ROCrateObjectHasAdditionalType "Assay" mandatory_properties
-        testCase "identifier" <| fun _ -> Expect.ROCrateObjectHasProperty "identifier" "identifier" mandatory_properties
+        testCase "identifier" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "identifier" "identifier" mandatory_properties
     ]
     testList "all properties" [
         testCase "Id" <| fun _ -> Expect.ROCrateObjectHasId "assay_all_properties_id" all_properties
         testCase "SchemaType" <| fun _ -> Expect.ROCrateObjectHasType "schema.org/Dataset" all_properties
         testCase "AdditionalType" <| fun _ -> Expect.ROCrateObjectHasAdditionalType "Assay" all_properties
-        testCase "identifier" <| fun _ -> Expect.ROCrateObjectHasProperty "identifier" "identifier" all_properties
-        testCase "about" <| fun _ -> Expect.ROCrateObjectHasProperty "about" "about" all_properties
-        testCase "comment" <| fun _ -> Expect.ROCrateObjectHasProperty "comment" "comment" all_properties
-        testCase "creator" <| fun _ -> Expect.ROCrateObjectHasProperty "creator" "creator" all_properties
-        testCase "hasPart" <| fun _ -> Expect.ROCrateObjectHasProperty "hasPart" "hasPart" all_properties
-        testCase "measurementMethod" <| fun _ -> Expect.ROCrateObjectHasProperty "measurementMethod" "measurementMethod" all_properties
-        testCase "measurementTechnique" <| fun _ -> Expect.ROCrateObjectHasProperty "measurementTechnique" "measurementTechnique" all_properties
-        testCase "url" <| fun _ -> Expect.ROCrateObjectHasProperty "url" "url" all_properties
-        testCase "variableMeasured" <| fun _ -> Expect.ROCrateObjectHasProperty "variableMeasured" "variableMeasured" all_properties
+        testCase "identifier" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "identifier" "identifier" all_properties
+        testCase "about" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "about" "about" all_properties
+        testCase "comment" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "comment" "comment" all_properties
+        testCase "creator" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "creator" "creator" all_properties
+        testCase "hasPart" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "hasPart" "hasPart" all_properties
+        testCase "measurementMethod" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "measurementMethod" "measurementMethod" all_properties
+        testCase "measurementTechnique" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "measurementTechnique" "measurementTechnique" all_properties
+        testCase "url" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "url" "url" all_properties
+        testCase "variableMeasured" <| fun _ -> Expect.ROCrateObjectHasDynamicProperty "variableMeasured" "variableMeasured" all_properties
     ]
 ]
 
