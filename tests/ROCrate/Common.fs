@@ -18,18 +18,18 @@ module Expect =
         Expect.equal roc.AdditionalType (Some expectedAdditionalType) "object did not contain correct additionalType"
 
     let inline ROCrateObjectHasDynamicProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#ROCrateObject) =
-        Expect.isSome (roc.TryGetDynamicPropertyInfo(expectedPropertyName)) $"object did not contain the dynamic property 'expectedPropertyName'"
+        Expect.isSome (roc.TryGetDynamicPropertyInfo(expectedPropertyName)) $"object did not contain the dynamic property '{expectedPropertyName}'"
         Expect.equal
             (DynObj.tryGetTypedValue<'P> expectedPropertyName roc)
             (Some expectedPropertyValue)
-            "property value of 'expectedPropertyName' was not correct"
+            $"property value of '{expectedPropertyName}' was not correct"
 
     let inline ROCrateObjectHasStaticProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#ROCrateObject) =
-        Expect.isSome (roc.TryGetStaticPropertyInfo(expectedPropertyName)) $"object did not contain the dynamic property 'expectedPropertyName'"
+        Expect.isSome (roc.TryGetStaticPropertyInfo(expectedPropertyName)) $"object did not contain the dynamic property '{expectedPropertyName}'"
         Expect.equal
             (DynObj.tryGetTypedValue<'P> expectedPropertyName roc)
             (Some expectedPropertyValue)
-            "property value of 'expectedPropertyName' was not correct"
+            $"property value of '{expectedPropertyName}' was not correct"
 
     let inline ROCrateObjectHasExpectedInterfaceMembers (expectedType:string) (expectedId:string) (expectedAdditionalType:string option) (roc:#ROCrateObject) =
         let interfacerino = roc :> IROCrateObject
