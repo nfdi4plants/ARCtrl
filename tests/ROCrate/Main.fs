@@ -3,6 +3,7 @@ module ROCrate.Tests
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "ROCrate" [
+    Tests.ROCrateObject.main
     Tests.Dataset.main
     Tests.Investigation.main
     Tests.Study.main

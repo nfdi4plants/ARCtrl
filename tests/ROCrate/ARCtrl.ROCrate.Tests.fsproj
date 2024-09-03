@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
+    <Compile Include="ROCrateObject.Tests.fs" />
     <Compile Include="ISAProfile\Dataset.Tests.fs" />
     <Compile Include="ISAProfile\Investigation.Tests.fs" />
     <Compile Include="ISAProfile\Study.Tests.fs" />

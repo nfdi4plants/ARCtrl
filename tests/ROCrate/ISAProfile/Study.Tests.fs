@@ -1,6 +1,7 @@
 module Tests.Study
 
 open ARCtrl.ROCrate
+open DynamicObj
 
 open TestingUtils
 open Common
@@ -57,7 +58,17 @@ let tests_interface_members = testList "interface members" [
     testCase "allProperties" <| fun _ -> Expect.ROCrateObjectHasExpectedInterfaceMembers "schema.org/Dataset" "study_all_properties_id" (Some "Study") all_properties
 ]
 
-let tests_dynamic_members = testList "dynamic members" []
+let tests_dynamic_members = testSequenced (
+    testList "dynamic members" [
+        testCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
+        testCase "Set dynamic property" <| fun _ ->
+            mandatory_properties.SetValue("yes",42)
+            Expect.ROCrateObjectHasDynamicProperty "yes" 42 mandatory_properties
+        testCase "Remove dynamic property" <| fun _ ->
+            mandatory_properties.Remove("yes")
+            Expect.isNone (DynObj.tryGetTypedValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be removed"
+    ]
+)
 
 let main = testList "Study" [
     tests_profile_object_is_valid
