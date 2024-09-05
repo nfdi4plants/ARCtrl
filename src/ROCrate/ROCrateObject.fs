@@ -4,9 +4,9 @@ open DynamicObj
 
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
 type IROCrateObject =
-    abstract member SchemaType : string
+    abstract member SchemaType : string with get, set
     abstract member Id: string
-    abstract member AdditionalType: string option
+    abstract member AdditionalType: string option with get, set
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
 /// Basically a DynamicObj that implements the IROPCrateObject interface.
@@ -28,6 +28,13 @@ type ROCrateObject(id:string, schemaType: string, ?additionalType) =
         and set(value) = _additionalType <- value
 
     interface IROCrateObject with
-        member this.SchemaType = schemaType
+
+        member this.SchemaType
+            with get() = _schemaType
+            and set(value) = _schemaType <- value
+
         member this.Id = id
-        member this.AdditionalType = additionalType
+
+        member this.AdditionalType
+            with get() = _additionalType
+            and set(value) = _additionalType <- value
