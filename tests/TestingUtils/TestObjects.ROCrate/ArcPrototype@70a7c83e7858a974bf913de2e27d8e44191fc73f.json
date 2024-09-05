@@ -1,0 +1,193 @@
+{
+    "@type": "CreativeWork",
+    "@id": "ro-crate-metadata.json",
+    "about": {
+        "@id": "./",
+        "@type": "Investigation",
+        "additionalType": "Investigation",
+        "identifier": "ArcPrototype",
+        "filename": "isa.investigation.xlsx",
+        "title": "ArcPrototype",
+        "description": "A prototypic ARC that implements all specification standards accordingly",
+        "people": [
+            {
+                "@id": "timo.muehlhaus@rptu.de",
+                "@type": "Person",
+                "orcid": "http://orcid.org/0000-0003-3925-6778",
+                "firstName": "Timo",
+                "lastName": "Mühlhaus",
+                "email": "timo.muehlhaus@rptu.de",
+                "phone": "0 49 (0)631 205 4657",
+                "address": "RPTU University of Kaiserslautern, Paul-Ehrlich-Str. 23 , 67663 Kaiserslautern",
+                "affiliation": {
+                    "@type": "Organization",
+                    "@id": "#Organization_RPTU_University_of_Kaiserslautern",
+                    "name": "RPTU University of Kaiserslautern",
+                    "@context": {
+                        "sdo": "http://schema.org/",
+                        "Organization": "sdo:Organization",
+                        "name": "sdo:name"
+                    }
+                },
+                "roles": [
+                    {
+                        "@id": "http://purl.org/spar/scoro/principal-investigator",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "principal investigator",
+                        "termSource": "scoro",
+                        "termAccession": "http://purl.org/spar/scoro/principal-investigator",
+                        "@context": {
+                            "sdo": "http://schema.org/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                        }
+                    }
+                ],
+                "@context": {
+                    "sdo": "http://schema.org/",
+                    "Person": "sdo:Person",
+                    "orcid": "sdo:identifier",
+                    "firstName": "sdo:givenName",
+                    "lastName": "sdo:familyName",
+                    "midInitials": "sdo:additionalName",
+                    "email": "sdo:email",
+                    "address": "sdo:address",
+                    "phone": "sdo:telephone",
+                    "fax": "sdo:faxNumber",
+                    "comments": "sdo:disambiguatingDescription",
+                    "roles": "sdo:jobTitle",
+                    "affiliation": "sdo:affiliation"
+                }
+            },
+            {
+                "@id": "garth@rptu.de",
+                "@type": "Person",
+                "firstName": "Christoph",
+                "lastName": "Garth",
+                "email": "garth@rptu.de",
+                "affiliation": {
+                    "@type": "Organization",
+                    "@id": "#Organization_RPTU_University_of_Kaiserslautern",
+                    "name": "RPTU University of Kaiserslautern",
+                    "@context": {
+                        "sdo": "http://schema.org/",
+                        "Organization": "sdo:Organization",
+                        "name": "sdo:name"
+                    }
+                },
+                "roles": [
+                    {
+                        "@id": "http://purl.org/spar/scoro/principal-investigator",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "principal investigator",
+                        "termSource": "scoro",
+                        "termAccession": "http://purl.org/spar/scoro/principal-investigator",
+                        "@context": {
+                            "sdo": "http://schema.org/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                        }
+                    }
+                ],
+                "@context": {
+                    "sdo": "http://schema.org/",
+                    "Person": "sdo:Person",
+                    "orcid": "sdo:identifier",
+                    "firstName": "sdo:givenName",
+                    "lastName": "sdo:familyName",
+                    "midInitials": "sdo:additionalName",
+                    "email": "sdo:email",
+                    "address": "sdo:address",
+                    "phone": "sdo:telephone",
+                    "fax": "sdo:faxNumber",
+                    "comments": "sdo:disambiguatingDescription",
+                    "roles": "sdo:jobTitle",
+                    "affiliation": "sdo:affiliation"
+                }
+            },
+            {
+                "@id": "maus@nfdi4plants.org",
+                "@type": "Person",
+                "orcid": "0000-0002-8241-5300",
+                "firstName": "Oliver",
+                "lastName": "Maus",
+                "email": "maus@nfdi4plants.org",
+                "address": "RPTU University of Kaiserslautern, Erwin-Schrödinger-Str. 56 , 67663 Kaiserslautern",
+                "affiliation": {
+                    "@type": "Organization",
+                    "@id": "#Organization_RPTU_University_of_Kaiserslautern",
+                    "name": "RPTU University of Kaiserslautern",
+                    "@context": {
+                        "sdo": "http://schema.org/",
+                        "Organization": "sdo:Organization",
+                        "name": "sdo:name"
+                    }
+                },
+                "roles": [
+                    {
+                        "@id": "http://purl.org/spar/scoro/research-assistant",
+                        "@type": "OntologyAnnotation",
+                        "annotationValue": "research assistant",
+                        "termSource": "scoro",
+                        "termAccession": "http://purl.org/spar/scoro/research-assistant",
+                        "@context": {
+                            "sdo": "http://schema.org/",
+                            "OntologyAnnotation": "sdo:DefinedTerm",
+                            "annotationValue": "sdo:name",
+                            "termSource": "sdo:inDefinedTermSet",
+                            "termAccession": "sdo:termCode",
+                            "comments": "sdo:disambiguatingDescription"
+                        }
+                    }
+                ],
+                "@context": {
+                    "sdo": "http://schema.org/",
+                    "Person": "sdo:Person",
+                    "orcid": "sdo:identifier",
+                    "firstName": "sdo:givenName",
+                    "lastName": "sdo:familyName",
+                    "midInitials": "sdo:additionalName",
+                    "email": "sdo:email",
+                    "address": "sdo:address",
+                    "phone": "sdo:telephone",
+                    "fax": "sdo:faxNumber",
+                    "comments": "sdo:disambiguatingDescription",
+                    "roles": "sdo:jobTitle",
+                    "affiliation": "sdo:affiliation"
+                }
+            }
+        ],
+        "@context": {
+            "sdo": "http://schema.org/",
+            "Investigation": "sdo:Dataset",
+            "identifier": "sdo:identifier",
+            "title": "sdo:headline",
+            "additionalType": "sdo:additionalType",
+            "description": "sdo:description",
+            "submissionDate": "sdo:dateCreated",
+            "publicReleaseDate": "sdo:datePublished",
+            "publications": "sdo:citation",
+            "people": "sdo:creator",
+            "studies": "sdo:hasPart",
+            "ontologySourceReferences": "sdo:mentions",
+            "comments": "sdo:comment",
+            "filename": "sdo:alternateName"
+        }
+    },
+    "conformsTo": {
+        "@id": "https://w3id.org/ro/crate/1.1"
+    },
+    "@context": {
+        "sdo": "http://schema.org/",
+        "arc": "http://purl.org/nfdi4plants/ontology/",
+        "CreativeWork": "sdo:CreativeWork",
+        "about": "sdo:about",
+        "conformsTo": "sdo:conformsTo"
+    }
+}
