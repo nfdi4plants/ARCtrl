@@ -88,10 +88,10 @@ let tests_static_methods = testSequenced (
             ROCrateObject.setContext context mandatory_properties
             Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
         testCase "can get context" <| fun _ ->
-            let ctx = ROCrateObject.tryGetContext mandatory_properties
+            let ctx = ROCrateObject.tryGetContext() mandatory_properties
             Expect.equal ctx (Some context) "context was not set correctly"
         testCase "can remove context" <| fun _ ->
-            ROCrateObject.removeContext mandatory_properties
+            ROCrateObject.removeContext() mandatory_properties
             Expect.isNone (DynObj.tryGetTypedValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
     ]
 )

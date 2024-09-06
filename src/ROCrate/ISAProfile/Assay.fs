@@ -6,8 +6,8 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Assay(
-    id,
-    identifier,
+    id: string,
+    identifier: string,
     ?about,
     ?comment,
     ?creator,
@@ -21,11 +21,14 @@ type Assay(
     do
         DynObj.setProperty (nameof identifier) identifier this
 
-        DynObj.setOptionalProperty (nameof measurementMethod) measurementMethod         this
-        DynObj.setOptionalProperty (nameof measurementTechnique) measurementTechnique   this
-        DynObj.setOptionalProperty (nameof variableMeasured) variableMeasured           this
-        DynObj.setOptionalProperty (nameof about) about                                 this
-        DynObj.setOptionalProperty (nameof comment) comment                             this
-        DynObj.setOptionalProperty (nameof creator) creator                             this
-        DynObj.setOptionalProperty (nameof hasPart) hasPart                             this
-        DynObj.setOptionalProperty (nameof url) url                                     this
+        DynObj.setValueOpt this (nameof measurementMethod) measurementMethod
+        DynObj.setValueOpt this (nameof measurementTechnique) measurementTechnique
+        DynObj.setValueOpt this (nameof variableMeasured) variableMeasured
+        DynObj.setValueOpt this (nameof about) about
+        DynObj.setValueOpt this (nameof comment) comment
+        DynObj.setValueOpt this (nameof creator) creator
+        DynObj.setValueOpt this (nameof hasPart) hasPart
+        DynObj.setValueOpt this (nameof url) url
+
+    member this.GetIdentifier() = DynObj.tryGetTypedValue<string> (nameof identifier) this |> Option.get
+    static member getIdentifier = fun (ass: Assay) -> ass.GetIdentifier()
