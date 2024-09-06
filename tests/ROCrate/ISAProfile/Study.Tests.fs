@@ -70,8 +70,46 @@ let tests_dynamic_members = testSequenced (
     ]
 )
 
+let tests_instance_methods = testSequenced (
+    testList "instance methods" [
+
+        let context = new DynamicObj()
+        context.SetValue("more", "context")
+
+        testCase "can set context" <| fun _ ->
+            mandatory_properties.SetContext context
+            Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
+        testCase "can get context" <| fun _ ->
+            let ctx = mandatory_properties.TryGetContext()
+            Expect.equal ctx (Some context) "context was not set correctly"
+        testCase "can remove context" <| fun _ ->
+            mandatory_properties.RemoveContext()
+            Expect.isNone (DynObj.tryGetTypedValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+    ]
+)
+
+let tests_static_methods = testSequenced (
+    testList "static methods" [
+
+        let context = new DynamicObj()
+        context.SetValue("more", "context")
+
+        testCase "can set context" <| fun _ ->
+            ROCrateObject.setContext context mandatory_properties
+            Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
+        testCase "can get context" <| fun _ ->
+            let ctx = ROCrateObject.tryGetContext mandatory_properties
+            Expect.equal ctx (Some context) "context was not set correctly"
+        testCase "can remove context" <| fun _ ->
+            ROCrateObject.removeContext mandatory_properties
+            Expect.isNone (DynObj.tryGetTypedValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+    ]
+)
+
 let main = testList "Study" [
     tests_profile_object_is_valid
     tests_interface_members
     tests_dynamic_members
+    tests_instance_methods
+    tests_static_methods
 ]
