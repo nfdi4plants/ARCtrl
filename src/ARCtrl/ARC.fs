@@ -55,7 +55,7 @@ module ARCAux =
             |> FileSystem.create
         fs.Union(tree)
 
-    let updateFSByCWL (cwl : CWL.CWL option) (fs : FileSystem) =       
+    let updateFSByCWL (cwl : CWL.CWLProcessingUnits.CWLToolDescription option) (fs : FileSystem) =       
         let workflows = FileSystemTree.createWorkflowsFolder [||]
         let runs = FileSystemTree.createRunsFolder [||]       
         let tree = 
@@ -65,7 +65,7 @@ module ARCAux =
 
 
 [<AttachMembers>]
-type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
+type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWLProcessingUnits.CWLToolDescription, ?fs : FileSystem.FileSystem) =
 
     let mutable _isa = isa
     let mutable _cwl = cwl
