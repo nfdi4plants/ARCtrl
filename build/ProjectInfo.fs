@@ -17,6 +17,7 @@ let testProjects =
         "tests/ValidationPackages"
         "tests/Contract"
         "tests/ROCrate"
+        "tests/CWL"
     ]
 
 /// Native JS test paths

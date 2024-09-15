@@ -1,9 +1,10 @@
-module ARCtrl.CWL.Tests
+module CWL.Tests
 
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "CWL" [
-    ()
+    Tests.CWLObject.main
+
 ]
 
 [<EntryPoint>]
