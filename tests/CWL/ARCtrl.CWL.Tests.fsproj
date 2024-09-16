@@ -6,8 +6,10 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="TestUtil.fs" />
     <Compile Include="CWLObject.Tests.fs" />
+    <Compile Include="Outputs.Tests.fs" />
+    <Compile Include="Inputs.Tests.fs" />
+    <Compile Include="Requirements.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
