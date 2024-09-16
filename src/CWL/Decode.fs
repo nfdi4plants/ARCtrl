@@ -121,15 +121,15 @@ module Decode =
                 )
             )
 
-    let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
+    let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[] option) =
         Decode.object (fun get ->
-            let requirements = get.Required.Field "requirements" requirementArrayDecoder
+            let requirements = get.Optional.Field "requirements" requirementArrayDecoder
             requirements
         )
 
-    let hintsDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
+    let hintsDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[] option) =
         Decode.object (fun get ->
-            let requirements = get.Required.Field "hints" requirementArrayDecoder
+            let requirements = get.Optional.Field "hints" requirementArrayDecoder
             requirements
         )
 
@@ -163,28 +163,50 @@ module Decode =
             |]     
         )
     
-    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> Input[]) =
+    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> Input[] option) =
         Decode.object (fun get ->
-            let outputs = get.Required.Field "inputs" inputArrayDecoder
+            let outputs = get.Optional.Field "inputs" inputArrayDecoder
             outputs
         )
 
-    let decodeAll (cwl: string) =
-        let yamlCWL = Decode.read cwl
-        CWLProcessingUnits.CWLToolDescription(
-            cwlVersion = Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string) yamlCWL,
-            cls = 
-                Decode.object (fun get ->
-                    match get.Required.Field "class" Decode.string with
-                    | "Workflow" -> Workflow
-                    | "CommandLineTool" -> CommandLineTool
-                    | "ExpressionTool" -> ExpressionTool
-                    | _ -> failwith "Invalid class"
-                ) yamlCWL
-                ,
-            outputs = outputsDecoder yamlCWL,
-            inputs = inputsDecoder yamlCWL,
-            //baseCommand = Decode.object (fun get -> get.Optional.Field "baseCommand" (Decode.array Decode.string)) yamlCWL,
-            requirements = requirementsDecoder yamlCWL,
-            hints = hintsDecoder yamlCWL
+    let baseCommandDecoder: (YAMLiciousTypes.YAMLElement -> string [] option) =
+        Decode.object (fun get ->
+            get.Optional.Field "baseCommand" (Decode.array Decode.string)
         )
+
+    let versionDecoder: (YAMLiciousTypes.YAMLElement -> string) =
+        Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string)
+
+    let classDecoder: (YAMLiciousTypes.YAMLElement -> Class) =
+        Decode.object (fun get ->
+            match get.Required.Field "class" Decode.string with
+            | "Workflow" -> Workflow
+            | "CommandLineTool" -> CommandLineTool
+            | "ExpressionTool" -> ExpressionTool
+            | _ -> failwith "Invalid class"
+        )
+
+    let decodeCommandLineTool (cwl: string) =
+        let yamlCWL = Decode.read cwl
+        let cwlVersion = versionDecoder yamlCWL
+        let outputs = outputsDecoder yamlCWL
+        let inputs = inputsDecoder yamlCWL
+        let requirements = requirementsDecoder yamlCWL
+        let hints = hintsDecoder yamlCWL
+        let baseCommand = baseCommandDecoder yamlCWL
+        let description =
+            CWLProcessingUnits.CWLToolDescription(
+                cwlVersion,
+                CommandLineTool,
+                outputs
+            )
+        if inputs.IsSome then
+            description.Inputs <- inputs
+        if requirements.IsSome then
+            description.Requirements <- requirements
+        if hints.IsSome then
+            description.Hints <- hints
+        if baseCommand.IsSome then
+            description.BaseCommand <- baseCommand
+        description
+
