@@ -5,6 +5,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="TestObjects.CWL\CommandLineTool.fs" />
+    <Compile Include="TestObjects.CWL\Outputs.fs" />
+    <Compile Include="TestObjects.CWL\Inputs.fs" />
+    <Compile Include="TestObjects.CWL\Requirements.fs" />
     <Content Include="TestObjects.ROCrate\ArcPrototype%4070a7c83e7858a974bf913de2e27d8e44191fc73f.json" />
     <Compile Include="TestObjects.Json\Study.fs" />
     <Compile Include="TestObjects.Json\ROCrate.fs" />
