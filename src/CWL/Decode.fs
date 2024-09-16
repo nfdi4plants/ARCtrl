@@ -96,6 +96,14 @@ module Decode =
             outputs
         )
 
+    let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
+        let dockerReq = {
+            DockerPull = get.Optional.Field "dockerPull" Decode.string
+            DockerFile = get.Optional.Field "dockerFile" (Decode.map id Decode.string )
+            DockerImageId = get.Optional.Field "dockerImageId" Decode.string
+        }
+        dockerReq
+
     let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
         Decode.array 
             (
@@ -104,20 +112,13 @@ module Decode =
                     match cls with
                     | "InlineJavascriptRequirement" -> InlineJavascriptRequirement
                     | "SchemaDefRequirement" -> SchemaDefRequirement [||]
-                    | "DockerRequirement" ->
-                        let dockerReq = {
-                            DockerPull = get.Optional.Field "dockerPull" Decode.string
-                            DockerFile = Some ""
-                            DockerImageId = get.Optional.Field "dockerImageId" Decode.string
-                        }
-                        DockerRequirement dockerReq
+                    | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
                     | "SoftwareRequirement" -> SoftwareRequirement [||]
                     | "InitialWorkDirRequirement" -> InitialWorkDirRequirement [||]
                     | "EnvVarRequirement" -> EnvVarRequirement {EnvName = ""; EnvValue = ""}
                     | "ShellCommandRequirement" -> ShellCommandRequirement
                     | "ResourceRequirement" -> ResourceRequirement (ResourceRequirementInstance())
                     | "NetworkAccess" -> NetworkAccessRequirement
- 
                 )
             )
 

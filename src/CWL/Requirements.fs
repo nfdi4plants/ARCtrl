@@ -6,7 +6,7 @@ open CWLTypes
 module Requirements =
     type DockerRequirement = {
         DockerPull: string option
-        DockerFile: string option
+        DockerFile: Map<string,string> option
         DockerImageId: string option
     }
 

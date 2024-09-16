@@ -20,7 +20,7 @@ let testRequirement =
         testList "DockerRequirement" [
             let dockerItem = decodeRequirement.[0]
             testCase "Class" <| fun _ ->
-                let expected = DockerRequirement {DockerPull = None; DockerFile = Some "FSharpArcCapsule/Dockerfile"; DockerImageId = Some "devcontainer"}
+                let expected = DockerRequirement {DockerPull = None; DockerFile = Some (Map [("$include", "FSharpArcCapsule/Dockerfile")]); DockerImageId = Some "devcontainer"}
                 let actual = dockerItem
                 Expect.isTrue
                     (expected = actual)
