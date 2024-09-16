@@ -385,6 +385,16 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
         fun (table:ArcTable) ->
             table.TryGetColumnByHeader(header)
 
+    // tryGetColumnByHeaderBy 
+    member this.TryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool) = //better name for header / action
+        this.Headers 
+        |> Seq.tryFindIndex headerPredicate 
+        |> Option.map (fun i -> this.GetColumn(i))
+    
+    static member tryGetColumnByHeaderBy (headerPredicate:CompositeHeader -> bool) = 
+        fun (table:ArcTable) -> 
+            table.TryGetColumnByHeaderBy(headerPredicate)
+
     member this.GetColumnByHeader (header:CompositeHeader) =
         match this.TryGetColumnByHeader(header) with
         | Some c -> c

@@ -1863,6 +1863,40 @@ let private tests_RemoveColumns =
             Expect.equal table.Values.[(table.ColumnCount-1,table.RowCount-1)] (CompositeCell.createTerm oa_SCIEXInstrumentModel) "table.ColumnCount-1,table.RowCount-1"
         )
     ]
+
+let private tests_TryGetColumnByHeaderBy =
+    testList "TryGetColumnByHeaderBy" [                 
+        testCase "on empty column" (fun () ->
+            let table = create_testTable()
+            let colOption = table.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
+                match header with 
+                | CompositeHeader.Component oa -> oa = oa_instrumentModel
+                | _ -> false )        
+            let col = Expect.wantSome colOption "should have found col but returned None"
+            Expect.sequenceEqual col.Cells column_component.Cells "cells did not match"
+        )
+        testCase "find ontology with values" (fun () ->
+            let table = create_testTable()
+            let column_Chlamy = CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_Term 8)
+            table.AddColumns[|column_Chlamy|]
+            let colOption = table.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
+                match header with
+                | CompositeHeader.Characteristic oa -> oa = oa_species
+                | _ -> false )
+            let col = Expect.wantSome colOption "should find column with values"
+            Expect.sequenceEqual col.Cells column_Chlamy.Cells "cells did match"
+        )
+        testCase "fail to find ontology" (fun () -> 
+            let table = create_testTable()
+            let colOption = table.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
+                match header with 
+                | CompositeHeader.Parameter oa -> oa = oa_temperature
+                | _ -> false ) 
+            Expect.isNone colOption "fails to find col therefore returns none"
+        )
+    ]
+
+
 let private tests_MoveColumn = 
     testList "MoveColumn" [
         testCase "CheckBoundaries" (fun () ->
@@ -2541,6 +2575,7 @@ let main =
         tests_AddColumnFill
         tests_RemoveColumn
         tests_RemoveColumns
+        tests_TryGetColumnByHeaderBy
         tests_MoveColumn
         tests_RemoveRow
         tests_RemoveRows
