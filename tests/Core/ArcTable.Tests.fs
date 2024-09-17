@@ -1866,27 +1866,31 @@ let private tests_RemoveColumns =
 
 let private tests_TryGetColumnByHeaderBy =
     testList "TryGetColumnByHeaderBy" [                 
-        testCase "on empty column" (fun () ->
-            let table = create_testTable()
-            let colOption = table.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
+        testCase "Empty column" (fun () ->
+            let emptyTable = ArcTable.init("empty table")
+            let column_species = CompositeColumn.create(CompositeHeader.Characteristic oa_species)
+            emptyTable.AddColumns[|column_species|]
+            let colOption = emptyTable.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
                 match header with 
-                | CompositeHeader.Component oa -> oa = oa_instrumentModel
+                | CompositeHeader.Characteristic oa -> oa = oa_species
                 | _ -> false )        
             let col = Expect.wantSome colOption "should have found col but returned None"
-            Expect.sequenceEqual col.Cells column_component.Cells "cells did not match"
+            // Expect.sequenceEqual col.Cells column_component.Cells "cells did not match"
+            Expect.hasLength col.Cells 0 "cells did not match"
         )
-        testCase "find ontology with values" (fun () ->
+        testCase "Column with values" (fun () ->
             let table = create_testTable()
-            let column_Chlamy = CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_Term 8)
-            table.AddColumns[|column_Chlamy|]
+            let column_species = CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_Term 8)
+            table.AddColumns[|column_species|]
             let colOption = table.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
                 match header with
                 | CompositeHeader.Characteristic oa -> oa = oa_species
                 | _ -> false )
-            let col = Expect.wantSome colOption "should find column with values"
-            Expect.sequenceEqual col.Cells column_Chlamy.Cells "cells did match"
+            let col = Expect.wantSome colOption "should have found col but returned None"
+            // Expect.hasLength col.Cells 8 "cells did not match"
+            Expect.sequenceEqual col.Cells column_species.Cells "cells did not match"
         )
-        testCase "fail to find ontology" (fun () -> 
+        testCase "Non-existing column" (fun () -> 
             let table = create_testTable()
             let colOption = table.TryGetColumnByHeaderBy (fun (header:CompositeHeader) -> 
                 match header with 
