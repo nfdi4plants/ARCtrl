@@ -13,5 +13,7 @@ let requirements ="""requirements:
     envDef:
       - envName: DOTNET_NOLOGO
         envValue: "true"
+      - envName: TEST
+        envValue: "false"
   - class: NetworkAccess
     networkAccess: true"""

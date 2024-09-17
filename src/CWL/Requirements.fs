@@ -44,7 +44,7 @@ module Requirements =
         | DockerRequirement of DockerRequirement
         | SoftwareRequirement of SoftwarePackage []
         | InitialWorkDirRequirement of CWLType []
-        | EnvVarRequirement of EnvironmentDef
+        | EnvVarRequirement of EnvironmentDef []
         | ShellCommandRequirement
         | ResourceRequirement of ResourceRequirementInstance
         | NetworkAccessRequirement

@@ -50,7 +50,7 @@ let testCWLToolDescription =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
             testCase "EnvVarRequirement" <| fun _ ->
-                let expected = EnvVarRequirement {EnvName = ""; EnvValue = ""}
+                let expected = EnvVarRequirement [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}|]
                 let actual = requirementsItem.Value.[1]
                 Expect.isTrue
                     (expected = actual)
