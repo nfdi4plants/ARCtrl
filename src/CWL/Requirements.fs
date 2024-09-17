@@ -19,10 +19,10 @@ module Requirements =
     type InputArraySchema () =
         inherit DynamicObj ()
 
-    type SchemaDefRequirementType =
-        | InputRecordSchema of InputRecordSchema
-        | InputEnumSchema of InputEnumSchema
-        | InputArraySchema of InputArraySchema
+    type SchemaDefRequirementType (types, definitions) as this =
+        inherit DynamicObj ()
+        do
+            DynObj.setValue this (nameof types) definitions
 
     type SoftwarePackage = {
         Package: string
