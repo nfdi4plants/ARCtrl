@@ -104,6 +104,24 @@ module Decode =
         }
         dockerReq
 
+    let envVarRequirementDecoder (get: Decode.IGetters): EnvironmentDef[] =
+        let envDef = 
+            get.Required.Field
+                "envDef"
+                (
+                    Decode.seq 
+                        (
+                            Decode.object (fun get2 ->
+                                {
+                                    EnvName = get2.Required.Field "envName" Decode.string
+                                    EnvValue = get2.Required.Field "envValue" Decode.string
+                                }
+                            )
+                        )
+                )
+        envDef
+        |> Seq.toArray
+
     let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
         Decode.array 
             (
@@ -115,7 +133,7 @@ module Decode =
                     | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
                     | "SoftwareRequirement" -> SoftwareRequirement [||]
                     | "InitialWorkDirRequirement" -> InitialWorkDirRequirement [||]
-                    | "EnvVarRequirement" -> EnvVarRequirement {EnvName = ""; EnvValue = ""}
+                    | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
                     | "ShellCommandRequirement" -> ShellCommandRequirement
                     | "ResourceRequirement" -> ResourceRequirement (ResourceRequirementInstance())
                     | "NetworkAccess" -> NetworkAccessRequirement

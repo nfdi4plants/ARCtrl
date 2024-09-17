@@ -38,7 +38,7 @@ let testRequirement =
         testList "EnvVarRequirement" [
             let envVarItem = decodeRequirement.[2]
             testCase "Class" <| fun _ ->
-                let expected = EnvVarRequirement {EnvName = ""; EnvValue = ""}
+                let expected = EnvVarRequirement [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|]
                 let actual = envVarItem
                 Expect.isTrue
                     (expected = actual)
