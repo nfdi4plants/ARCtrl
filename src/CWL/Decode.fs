@@ -122,6 +122,20 @@ module Decode =
         envDef
         |> Seq.toArray
 
+    let schemaDefRequirementDecoder (get: Decode.IGetters): SchemaDefRequirementType[] =
+        let schemaDef =
+            get.Required.Field 
+                "types" 
+                (
+                    Decode.seq
+                        (
+                            Decode.map id Decode.string
+                        )
+                )
+                |> Seq.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
+        schemaDef
+        |> Seq.toArray
+
     let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
         Decode.array 
             (
@@ -129,7 +143,7 @@ module Decode =
                     let cls = get.Required.Field "class" Decode.string
                     match cls with
                     | "InlineJavascriptRequirement" -> InlineJavascriptRequirement
-                    | "SchemaDefRequirement" -> SchemaDefRequirement [||]
+                    | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
                     | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
                     | "SoftwareRequirement" -> SoftwareRequirement [||]
                     | "InitialWorkDirRequirement" -> InitialWorkDirRequirement [||]
