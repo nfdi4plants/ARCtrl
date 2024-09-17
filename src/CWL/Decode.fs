@@ -109,7 +109,7 @@ module Decode =
             get.Required.Field
                 "envDef"
                 (
-                    Decode.seq 
+                    Decode.array 
                         (
                             Decode.object (fun get2 ->
                                 {
@@ -120,21 +120,37 @@ module Decode =
                         )
                 )
         envDef
-        |> Seq.toArray
+
+    let softwareRequirementDecoder (get: Decode.IGetters): SoftwarePackage[] =
+        let envDef = 
+            get.Required.Field
+                "packages"
+                (
+                    Decode.array 
+                        (
+                            Decode.object (fun get2 ->
+                                {
+                                    Package = get2.Required.Field "package" Decode.string
+                                    Version = get2.Optional.Field "version" (Decode.array Decode.string)
+                                    Specs = get2.Optional.Field "specs" (Decode.array Decode.string)
+                                }
+                            )
+                        )
+                )
+        envDef
 
     let schemaDefRequirementDecoder (get: Decode.IGetters): SchemaDefRequirementType[] =
         let schemaDef =
             get.Required.Field 
                 "types" 
                 (
-                    Decode.seq
+                    Decode.array
                         (
                             Decode.map id Decode.string
                         )
                 )
-                |> Seq.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
+                |> Array.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
         schemaDef
-        |> Seq.toArray
 
     let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
         Decode.array 
@@ -145,7 +161,7 @@ module Decode =
                     | "InlineJavascriptRequirement" -> InlineJavascriptRequirement
                     | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
                     | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
-                    | "SoftwareRequirement" -> SoftwareRequirement [||]
+                    | "SoftwareRequirement" -> SoftwareRequirement (softwareRequirementDecoder get)
                     | "InitialWorkDirRequirement" -> InitialWorkDirRequirement [||]
                     | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
                     | "ShellCommandRequirement" -> ShellCommandRequirement

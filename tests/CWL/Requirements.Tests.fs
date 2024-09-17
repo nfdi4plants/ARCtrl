@@ -16,7 +16,7 @@ let decodeRequirement =
 
 let testRequirement =
     testList "requirements with DockerRequirement, InitialWorkDirRequirement, EnvVarRequirement and NetworkAccess" [
-        testCase "Length" <| fun _ -> Expect.isTrue (4 = decodeRequirement.Length) "Length of requirements is not 4"
+        testCase "Length" <| fun _ -> Expect.isTrue (5 = decodeRequirement.Length) "Length of requirements is not 5"
         testList "DockerRequirement" [
             let dockerItem = decodeRequirement.[0]
             testCase "Class" <| fun _ ->
@@ -44,8 +44,17 @@ let testRequirement =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
         ]
+        testList "SoftwareRequirement" [
+            let softwareItem = decodeRequirement.[3]
+            testCase "Class" <| fun _ ->
+                let expected = SoftwareRequirement [|{Package = "interproscan"; Specs = Some [| "https://identifiers.org/rrid/RRID:SCR_005829" |]; Version = Some [| "5.21-60" |]}|]
+                let actual = softwareItem
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+        ]
         testList "NetworkAccess" [
-            let networkAccessItem = decodeRequirement.[3]
+            let networkAccessItem = decodeRequirement.[4]
             testCase "Class" <| fun _ ->
                 let expected = NetworkAccessRequirement
                 let actual = networkAccessItem
