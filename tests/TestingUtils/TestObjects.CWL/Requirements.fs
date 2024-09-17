@@ -15,5 +15,10 @@ let requirements ="""requirements:
         envValue: "true"
       - envName: TEST
         envValue: "false"
+  - class: SoftwareRequirement
+    packages:
+      - package: interproscan
+        specs: [ "https://identifiers.org/rrid/RRID:SCR_005829" ]
+        version: [ "5.21-60" ]
   - class: NetworkAccess
     networkAccess: true"""
