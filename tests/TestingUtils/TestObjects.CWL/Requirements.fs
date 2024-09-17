@@ -9,6 +9,8 @@ let requirements ="""requirements:
       - entryname: arc
         entry: $(inputs.arcDirectory)
         writable: true
+      - entry: $(inputs.outputDirectory)
+        writable: true
   - class: EnvVarRequirement
     envDef:
       - envName: DOTNET_NOLOGO

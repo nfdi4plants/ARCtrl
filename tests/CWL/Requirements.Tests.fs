@@ -29,7 +29,7 @@ let testRequirement =
         testList "InitialWorkDirRequirement" [
             let initialWorkDirItem = decodeRequirement.[1]
             testCase "Class" <| fun _ ->
-                let expected = InitialWorkDirRequirement [||]
+                let expected = InitialWorkDirRequirement [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|]
                 let actual = initialWorkDirItem
                 Expect.isTrue
                     (expected = actual)
