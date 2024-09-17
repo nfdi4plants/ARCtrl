@@ -139,6 +139,48 @@ module Decode =
                 )
         envDef
 
+    let decodeStringOrExpression (yEle:YAMLElement) =
+        match yEle with
+        | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> v.Value
+        | YAMLElement.Object [YAMLElement.Mapping (c,YAMLElement.Object [YAMLElement.Value v])] -> sprintf "%s: %s" c.Value v.Value
+        | _ -> failwithf "%A" yEle
+
+    let initialWorkDirRequirementDecoder (get: Decode.IGetters): CWLType[] =
+        let initialWorkDir =
+            try
+                get.Required.Field
+                    "listing"
+                    (
+                        Decode.array 
+                            (
+                                Decode.object (fun get2 ->
+                                    Dirent
+                                        {
+                                            // BUG: Entry Requires an Entryname to be present when it's an expression
+                                            Entry = get2.Required.Field "entry" decodeStringOrExpression
+                                            Entryname = get2.Optional.Field "entryname" decodeStringOrExpression
+                                            Writable = get2.Optional.Field "writable" Decode.bool
+                                        }
+                                )
+                            )
+                    )
+            with
+            | _ -> failwith "Only Dirent supported"
+        initialWorkDir
+
+    let resourceRequirementDecoder (get: Decode.IGetters): ResourceRequirementInstance =
+        ResourceRequirementInstance(
+            get.Optional.Field "coresMin" id,
+            get.Optional.Field "coresMax" id,
+            get.Optional.Field "ramMin" id,
+            get.Optional.Field "ramMax" id,
+            get.Optional.Field "tmpdirMin" id,
+            get.Optional.Field "tmpdirMax" id,
+            get.Optional.Field "outdirMin" id,
+            get.Optional.Field "outdirMax" id
+        )
+        
+
     let schemaDefRequirementDecoder (get: Decode.IGetters): SchemaDefRequirementType[] =
         let schemaDef =
             get.Required.Field 
@@ -152,6 +194,7 @@ module Decode =
                 |> Array.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
         schemaDef
 
+
     let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
         Decode.array 
             (
@@ -162,10 +205,10 @@ module Decode =
                     | "SchemaDefRequirement" -> SchemaDefRequirement (schemaDefRequirementDecoder get)
                     | "DockerRequirement" -> DockerRequirement (dockerRequirementDecoder get)
                     | "SoftwareRequirement" -> SoftwareRequirement (softwareRequirementDecoder get)
-                    | "InitialWorkDirRequirement" -> InitialWorkDirRequirement [||]
+                    | "InitialWorkDirRequirement" -> InitialWorkDirRequirement (initialWorkDirRequirementDecoder get)
                     | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
                     | "ShellCommandRequirement" -> ShellCommandRequirement
-                    | "ResourceRequirement" -> ResourceRequirement (ResourceRequirementInstance())
+                    | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
                     | "NetworkAccess" -> NetworkAccessRequirement
                 )
             )

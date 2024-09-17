@@ -44,7 +44,7 @@ let testCWLToolDescription =
         testList "Requirements" [
             let requirementsItem = decodeCWLToolDescription.Requirements
             testCase "InitialWorkDirRequirement" <| fun _ ->
-                let expected = InitialWorkDirRequirement [||]
+                let expected = InitialWorkDirRequirement [|Dirent {Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None }|]
                 let actual = requirementsItem.Value.[0]
                 Expect.isTrue
                     (expected = actual)
