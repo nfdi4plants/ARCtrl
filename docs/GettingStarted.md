@@ -78,13 +78,11 @@ console.log(ARC) // [class ARC]
 1. Install [python >=3.12](https://www.python.org/downloads/)
 2. Run `pip install arctrl`
 
-   Of course you can replace the command `py` with anything that leads to the python executable of your liking.
-
 Thats it! 🎉
 
-You can now reference ARCtrl in any `.py` file and run it with `py path/to/Any.py`.
+You can now reference ARCtrl in any `.py` file and run it with `python path/to/Any.py`.
 
-Verify correct setup by creating `ARCTest.py` file with the content from below in the same folder, which contains your `requirements.txt`. Then run `py ./ArcTest.py`. This will print `<class 'arctrl.arc.ARC'>` into the console.
+Verify correct setup by creating `ARCTest.py` file with the content from below in the same folder, which contains your `requirements.txt`. Then run `python ./ArcTest.py`. This will print `<class 'arctrl.arc.ARC'>` into the console.
 
 ```python
 # ARCTest.py
