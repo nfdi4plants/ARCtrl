@@ -75,7 +75,7 @@ console.log(ARC) // [class ARC]
 
 ## Setup - Python
 
-1. Install [python >3.11.x](https://www.python.org/downloads/)
+1. Install [python >=3.12](https://www.python.org/downloads/)
 2. Create folder and put an `requirements.txt` file inside.
 3. Write `arctrl` and `fsspreadsheet` in two separate lines into it
    ```
