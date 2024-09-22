@@ -2,9 +2,9 @@ namespace ARCtrl.CWL
 
 open DynamicObj
 open CWLTypes
-open Requirements
-open Inputs
-open Outputs
+open Requirements.CommandLineTool
+open Inputs.CommandLineTool
+open Outputs.CommandLineTool
 
 module CWLProcessingUnits =
 

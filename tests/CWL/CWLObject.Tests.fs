@@ -2,9 +2,9 @@ module Tests.CWLObject
 
 open ARCtrl.CWL
 open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements
-open ARCtrl.CWL.Inputs
-open ARCtrl.CWL.Outputs
+open ARCtrl.CWL.Requirements.CommandLineTool
+open ARCtrl.CWL.Inputs.CommandLineTool
+open ARCtrl.CWL.Outputs.CommandLineTool
 open YAMLicious
 open TestingUtils
 

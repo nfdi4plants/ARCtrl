@@ -2,9 +2,7 @@ module Tests.Outputs
 
 open ARCtrl.CWL
 open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements
-open ARCtrl.CWL.Inputs
-open ARCtrl.CWL.Outputs
+open ARCtrl.CWL.Outputs.CommandLineTool
 open YAMLicious
 open TestingUtils
 

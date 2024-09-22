@@ -3,9 +3,9 @@ namespace ARCtrl.CWL
 open YAMLicious
 open YAMLicious.YAMLiciousTypes
 open CWLTypes
-open Requirements
-open Inputs
-open Outputs
+open Requirements.CommandLineTool
+open Inputs.CommandLineTool
+open Outputs.CommandLineTool
 
 module Decode =
     
