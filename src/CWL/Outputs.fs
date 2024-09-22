@@ -1,6 +1,7 @@
 namespace ARCtrl.CWL
 
 open CWLTypes
+open DynamicObj
 
 module Outputs =
 
@@ -8,11 +9,18 @@ module Outputs =
         Glob: string option
     }
 
-    type Output = {
-        Name: string
-        Type: CWLType
-        OutputBinding: OutputBinding option
-    }
+    type Output (
+        name: string,
+        ?type_: CWLType,
+        ?outputBinding: OutputBinding
+    ) as this =
+        inherit DynamicObj ()
+        do
+            DynObj.setValueOpt this ("type") type_
+            DynObj.setValueOpt this ("outputBinding") outputBinding
+        member this.Name = name
+        member this.Type = DynObj.tryGetTypedValue<CWLType> ("type") this
+        member this.OutputBinding = DynObj.tryGetTypedValue<OutputBinding> ("outputBinding") this
 
     module Workflow =
 
