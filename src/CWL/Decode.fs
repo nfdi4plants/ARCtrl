@@ -6,6 +6,7 @@ open CWLTypes
 open Requirements
 open Inputs
 open Outputs
+open DynamicObj
 
 module Decode =
     
@@ -86,7 +87,11 @@ module Decode =
                     let value = dict.[key]
                     let outputBinding = outputBindingDecoder value
                     let cwlType = cwlTypeDecoder value
-                    { Name = key; Type = cwlType; OutputBinding = Some outputBinding }
+                    Output(
+                        key,
+                        cwlType,
+                        outputBinding
+                    )
             |]     
         )
     
@@ -251,7 +256,14 @@ module Decode =
                     let value = dict.[key]
                     let inputBinding = inputBindingDecoder value
                     let cwlType = cwlTypeDecoder value
-                    { Name = key; Type = cwlType; InputBinding = inputBinding }
+                    let input =
+                        Input(
+                            key,
+                            cwlType
+                        )
+                    if inputBinding.IsSome then
+                        DynObj.setValueOpt input "inputBinding" inputBinding
+                    input
             |]     
         )
     

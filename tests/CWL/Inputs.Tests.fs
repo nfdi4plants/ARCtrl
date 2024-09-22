@@ -18,12 +18,12 @@ let testInput =
         testList "Directory" [
             let directoryItem = decodeInput.[0]
             testCase "Name" <| fun _ -> Expect.isTrue ("arcDirectory" = directoryItem.Name) "Name of input is not 'arcDirectory'"
-            testCase "Type" <| fun _ -> Expect.isTrue ((Directory (DirectoryInstance())) = directoryItem.Type) "Type of input is not Directory"
+            testCase "Type" <| fun _ -> Expect.isTrue ((Directory (DirectoryInstance())) = directoryItem.Type.Value) "Type of input is not Directory"
         ]
         testList "File" [
             let fileItem = decodeInput.[1]
             testCase "Name" <| fun _ -> Expect.isTrue ("firstArg" = fileItem.Name) "Name of input is not 'firstArg'"
-            testCase "Type" <| fun _ -> Expect.isTrue ((File (FileInstance())) = fileItem.Type) "Type of input is not File"
+            testCase "Type" <| fun _ -> Expect.isTrue ((File (FileInstance())) = fileItem.Type.Value) "Type of input is not File"
             testCase "InputBinding" <| fun _ -> Expect.isTrue (Some {Position = Some 1; Prefix = Some "--example"; ItemSeparator = None; Separate = None} = fileItem.InputBinding) "InputBinding of input is not Some Pattern"
         ]
         testList "String" [
@@ -31,7 +31,7 @@ let testInput =
             testCase "Name" <| fun _ -> Expect.isTrue ("secondArg" = stringItem.Name) "Name of input is not 'secondArg'"
             testCase "Type" <| fun _ ->
                 let expected = String
-                let actual = stringItem.Type
+                let actual = stringItem.Type.Value
                 Expect.isTrue
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
