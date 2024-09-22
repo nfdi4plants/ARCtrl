@@ -35,3 +35,23 @@ module CWLTypes =
     | Workflow
     | CommandLineTool
     | ExpressionTool
+
+    type InputRecordSchema () =
+        inherit DynamicObj ()
+
+    type InputEnumSchema () =
+        inherit DynamicObj ()
+
+    type InputArraySchema () =
+        inherit DynamicObj ()
+
+    type SchemaDefRequirementType (types, definitions) as this =
+        inherit DynamicObj ()
+        do
+            DynObj.setValue this (nameof types) definitions
+
+    type SoftwarePackage = {
+        Package: string
+        Version: string [] option
+        Specs: string [] option
+    }

@@ -2,7 +2,7 @@ module Tests.Requirements
 
 open ARCtrl.CWL
 open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements.CommandLineTool
+open ARCtrl.CWL.Requirements
 open YAMLicious
 open TestingUtils
 
