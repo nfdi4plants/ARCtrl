@@ -4,15 +4,18 @@ open CWLTypes
 
 module Outputs =
 
-    module CommandLineTool =
+    type OutputBinding = {
+        Glob: string option
+    }
 
-        type OutputBinding = {
-            Glob: string option
+    type Output = {
+        Name: string
+        Type: CWLType
+        OutputBinding: OutputBinding option
+    }
+
+    module Workflow =
+
+        type StepOutput = {
+            Id: string
         }
-
-        type Output = {
-            Name: string
-            Type: CWLType
-            OutputBinding: OutputBinding option
-        }
-
