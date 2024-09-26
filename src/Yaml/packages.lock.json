@@ -32,6 +32,11 @@
         "resolved": "1.1.0",
         "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
       },
+      "Newtonsoft.Json": {
+        "type": "Transitive",
+        "resolved": "13.0.1",
+        "contentHash": "ppPFpBcvxdsfUonNcvITKqLl3bqxWbDCZIzDWHzjpdAHRFfZe0Dw9HmA0+za13IdyrgJwpkDTDA9fHaxOrt20A=="
+      },
       "arctrl.core": {
         "type": "Project",
         "dependencies": {
@@ -40,7 +45,11 @@
         }
       },
       "arctrl.cwl": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "DynamicObj": "[3.1.0, 3.1.0]",
+          "YAMLicious": "[0.0.2, 0.0.2]"
+        }
       },
       "arctrl.filesystem": {
         "type": "Project",
@@ -52,6 +61,17 @@
         "type": "Project",
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )"
+        }
+      },
+      "DynamicObj": {
+        "type": "CentralTransitive",
+        "requested": "[4.0.0, )",
+        "resolved": "3.1.0",
+        "contentHash": "8WUIDLa7tiqRXYGRnkYvIbKyuc4JRVi+H7m/EGBX2BYwV2wVyK3M5mLuTvymLCxpYO4WCZ632oMdmsGasJ9Nkw==",
+        "dependencies": {
+          "FSharp.Core": "6.0.7",
+          "Fable.Core": "4.3.0",
+          "Newtonsoft.Json": "13.0.1"
         }
       },
       "Fable.Core": {
