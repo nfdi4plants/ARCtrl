@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -28,9 +28,9 @@ module Template =
             "description", Encode.string template.Description
             "organisation", Organisation.encoder template.Organisation
             "version", Encode.string template.Version
-            Encode.tryIncludeSeq "authors" Person.encoder template.Authors 
-            Encode.tryIncludeSeq "endpoint_repositories" OntologyAnnotation.encoder template.EndpointRepositories 
-            Encode.tryIncludeSeq "tags" OntologyAnnotation.encoder template.Tags 
+            "authors", (template.Authors |> Seq.map Person.encoder |> Encode.seq)
+            "endpoint_repositories", (template.EndpointRepositories |> Seq.map OntologyAnnotation.encoder |> Encode.seq)
+            "tags", (template.Tags |> Seq.map OntologyAnnotation.encoder |> Encode.seq)
             "last_updated", Encode.dateTime template.LastUpdated
         ]
 
@@ -52,15 +52,15 @@ module Template =
 
     let encoderCompressed stringTable oaTable cellTable (template: Template) =
         Encode.object [
-            "id", Encode.guid template.Id
+            "id", Encode.guid template.Id 
             "table", ArcTable.encoderCompressed stringTable oaTable cellTable template.Table
             "name", Encode.string template.Name
             "description", Encode.string template.Description
             "organisation", Organisation.encoder template.Organisation
             "version", Encode.string template.Version
-            Encode.tryIncludeSeq "authors" Person.encoder template.Authors 
-            Encode.tryIncludeSeq "endpoint_repositories" OntologyAnnotation.encoder template.EndpointRepositories 
-            Encode.tryIncludeSeq "tags" OntologyAnnotation.encoder template.Tags 
+            "authors", (template.Authors |> Seq.map Person.encoder |> Encode.seq)
+            "endpoint_repositories", (template.EndpointRepositories |> Seq.map OntologyAnnotation.encoder |> Encode.seq)
+            "tags", (template.Tags |> Seq.map OntologyAnnotation.encoder |> Encode.seq)
             "last_updated", Encode.datetime template.LastUpdated
         ]
 

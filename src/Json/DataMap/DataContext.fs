@@ -11,7 +11,7 @@ module DataContext =
 
     let encoder (dc:DataContext) = 
         [ 
-            "data", Data.encoder dc
+            "data", Data.encoder dc |> Some
             Encode.tryInclude "explication" OntologyAnnotation.encoder dc.Explication 
             Encode.tryInclude "unit" OntologyAnnotation.encoder dc.Unit
             Encode.tryInclude "objectType" OntologyAnnotation.encoder dc.ObjectType

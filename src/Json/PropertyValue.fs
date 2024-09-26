@@ -38,9 +38,9 @@ module PropertyValue =
                     oa.Name, oa.TermAccessionNumber
                 | None -> None, None
             [
-                "@id", Encode.string (pv |> genID)
-                "@type", Encode.string "PropertyValue"
-                "additionalType", Encode.string (pv.GetAdditionalType())
+                "@id", Encode.string (pv |> genID) |> Some
+                "@type", Encode.string "PropertyValue" |> Some
+                "additionalType", Encode.string (pv.GetAdditionalType()) |> Some
                 Encode.tryInclude "alternateName" Encode.string (pv.AlternateName())
                 Encode.tryInclude "measurementMethod" Encode.string (pv.MeasurementMethod())
                 Encode.tryInclude "description" Encode.string (pv.Description())
@@ -50,7 +50,7 @@ module PropertyValue =
                 Encode.tryInclude "valueCode" id valueCode
                 Encode.tryInclude "unit" Encode.string unit
                 Encode.tryInclude "unitCode" Encode.string unitCode
-                "@context", ROCrateContext.PropertyValue.context_jsonvalue
+                "@context", ROCrateContext.PropertyValue.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

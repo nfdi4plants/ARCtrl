@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -18,11 +18,11 @@ module Source =
     
         let rec encoder (oa : Source) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", (Encode.list [ Encode.string "Source"])
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", (Encode.list [ Encode.string "Source"]) |> Some
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)      
-                "@context", ROCrateContext.Source.context_jsonvalue
+                "@context", ROCrateContext.Source.context_jsonvalue |> Some
                 ]
             |> Encode.choose
             |> Encode.object

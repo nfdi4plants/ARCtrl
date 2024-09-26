@@ -81,8 +81,8 @@ module Person =
 
         let encoder (oa : Person) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", Encode.string "Person"
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", Encode.string "Person" |> Some
                 Encode.tryInclude "orcid" Encode.string oa.ORCID 
                 Encode.tryInclude "firstName" Encode.string oa.FirstName
                 Encode.tryInclude "lastName" Encode.string oa.LastName
@@ -94,7 +94,7 @@ module Person =
                 Encode.tryInclude "affiliation" Affiliation.encoder oa.Affiliation
                 Encode.tryIncludeSeq "roles" OntologyAnnotation.ROCrate.encoderDefinedTerm oa.Roles
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
-                "@context", ROCrateContext.Person.context_jsonvalue
+                "@context", ROCrateContext.Person.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object
@@ -133,9 +133,9 @@ module Person =
             let names = authorList.Split([|separator|], System.StringSplitOptions.None) |> Array.map (fun s -> s.Trim())
             let encodeSingle (name:string) =
                 [
-                    "@type", Encode.string "Person"
+                    "@type", Encode.string "Person" |> Some
                     Encode.tryInclude "name" Encode.string (Some name)
-                    "@context", ROCrateContext.Person.contextMinimal_jsonValue
+                    "@context", ROCrateContext.Person.contextMinimal_jsonValue  |> Some
                 ]
                 |> Encode.choose
                 |> Encode.object

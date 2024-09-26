@@ -46,15 +46,15 @@ module Publication =
 
         let encoder (oa : Publication) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", Encode.string "Publication"
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", Encode.string "Publication" |> Some
                 Encode.tryInclude "pubMedID" Encode.string oa.PubMedID
                 Encode.tryInclude "doi" Encode.string (oa.DOI)
                 Encode.tryInclude "authorList" Person.ROCrate.encodeAuthorListString oa.Authors
                 Encode.tryInclude "title" Encode.string (oa.Title)
                 Encode.tryInclude "status" OntologyAnnotation.ROCrate.encoderDefinedTerm oa.Status
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription oa.Comments
-                "@context", ROCrateContext.Publication.context_jsonvalue
+                "@context", ROCrateContext.Publication.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

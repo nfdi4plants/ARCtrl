@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open System.Collections.Generic
 open Thoth.Json.Core
@@ -8,7 +8,7 @@ open ARCtrl.Helper
 
 module IDTable =
 
-    type IDTableWrite = Dictionary<URI,Json>
+    type IDTableWrite = Dictionary<URI,IEncodable>
 
     type IDTableRead = Dictionary<URI,obj>
 
@@ -16,7 +16,7 @@ module IDTable =
         ["@id",Encode.string id]
         |> Encode.object
 
-    let encode (genID: 'Value -> URI) (encoder : 'Value -> Json) (value : 'Value) (table:IDTableWrite) =
+    let encode (genID: 'Value -> URI) (encoder : 'Value -> IEncodable) (value : 'Value) (table:IDTableWrite) =
         let id = genID value
         if table.ContainsKey id then 
            encodeID id

@@ -1,9 +1,9 @@
-﻿module ARCtrl.WebRequestHelpers.NodeJs
+module ARCtrl.WebRequestHelpers.NodeJs
 
+#if FABLE_COMPILER_JAVASCRIPT
 open Fable.Core
 open Fable.SimpleHttp
 
-#if FABLE_COMPILER_JAVASCRIPT
 open Fable.Core.JsInterop
 
 open Fable.SimpleHttp 

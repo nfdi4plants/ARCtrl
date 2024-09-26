@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -22,11 +22,11 @@ module Sample =
                 oa.Characteristics |> Option.defaultValue [] |> List.map MaterialAttributeValue.ROCrate.encoder
                 |> List.append (oa.FactorValues |> Option.defaultValue [] |> List.map FactorValue.ROCrate.encoder)
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", (Encode.list [ Encode.string "Sample"])
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", (Encode.list [ Encode.string "Sample"]) |> Some
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryIncludeList "additionalProperties" id additionalProperties
-                "@context", ROCrateContext.Sample.context_jsonvalue
+                "@context", ROCrateContext.Sample.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

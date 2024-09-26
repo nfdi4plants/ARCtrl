@@ -27,8 +27,8 @@ module Protocol =
 
         let encoder (studyName:string Option) (assayName:string Option) (processName:string Option) (oa : Protocol) = 
             [
-                "@id", Encode.string (genID studyName assayName processName oa)
-                "@type", (Encode.list [Encode.string "Protocol"])
+                "@id", Encode.string (genID studyName assayName processName oa) |> Some
+                "@type", (Encode.list [Encode.string "Protocol"]) |> Some
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryInclude "protocolType" OntologyAnnotation.ROCrate.encoderDefinedTerm (oa.ProtocolType)
                 Encode.tryInclude "description" Encode.string (oa.Description)
@@ -36,7 +36,7 @@ module Protocol =
                 Encode.tryInclude "version" Encode.string (oa.Version)
                 Encode.tryIncludeListOpt "components" Component.ROCrate.encoder oa.Components
                 Encode.tryIncludeListOpt "comments" Comment.ROCrate.encoder oa.Comments
-                "@context", ROCrateContext.Protocol.context_jsonvalue
+                "@context", ROCrateContext.Protocol.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

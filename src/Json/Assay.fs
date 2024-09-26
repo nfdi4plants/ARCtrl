@@ -11,7 +11,7 @@ module Assay =
     
     let encoder (assay:ArcAssay) = 
         [ 
-            "Identifier", Encode.string assay.Identifier
+            "Identifier", Encode.string assay.Identifier |> Some
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
@@ -43,7 +43,7 @@ module Assay =
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (assay:ArcAssay) =
         [ 
-            "Identifier", Encode.string assay.Identifier
+            "Identifier", Encode.string assay.Identifier |> Some
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
@@ -84,11 +84,11 @@ module Assay =
             let dataFiles = ProcessSequence.getData processes
 
             [
-                "@id", Encode.string (a |> genID)
-                "@type", (Encode.list [ Encode.string "Assay"])
-                "additionalType", Encode.string "Assay"
-                "identifier", Encode.string a.Identifier
-                "filename", Encode.string fileName
+                "@id", Encode.string (a |> genID) |> Some
+                "@type", (Encode.list [ Encode.string "Assay"]) |> Some
+                "additionalType", Encode.string "Assay" |> Some
+                "identifier", Encode.string a.Identifier |> Some
+                "filename", Encode.string fileName |> Some
                 Encode.tryInclude "measurementType" OntologyAnnotation.ROCrate.encoderPropertyValue a.MeasurementType
                 Encode.tryInclude "technologyType" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyType
                 Encode.tryInclude "technologyPlatform" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyPlatform
@@ -96,7 +96,7 @@ module Assay =
                 Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder dataFiles
                 Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder studyName (Some a.Identifier)) processes
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder a.Comments
-                "@context", ROCrateContext.Assay.context_jsonvalue
+                "@context", ROCrateContext.Assay.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object
@@ -139,7 +139,7 @@ module Assay =
                     |> Encode.tryIncludeList "dataFiles" (Data.ISAJson.encoder idMap) 
                 let units = ProcessSequence.getUnits processes
                 [
-                    "filename", Encode.string fileName
+                    "filename", Encode.string fileName |> Some
                     Encode.tryInclude "@id" Encode.string (ROCrate.genID a |> Some)
                     Encode.tryInclude "measurementType" (OntologyAnnotation.ISAJson.encoder idMap) a.MeasurementType
                     Encode.tryInclude "technologyType" (OntologyAnnotation.ISAJson.encoder idMap) a.TechnologyType
@@ -199,7 +199,7 @@ module AssayExtensions =
 
         static member fromCompressedJsonString (s: string) =
             try Decode.fromJsonString (Compression.decode Assay.decoderCompressed) s with
-            | e -> failwithf "Error. Unable to parse json string to ArcStudy: %s" e.Message
+            | e -> failwithf "Error. Unable to parse json string to ArcAssay: %s" e.Message
 
         static member toCompressedJsonString(?spaces) =
             fun (obj:ArcAssay) ->

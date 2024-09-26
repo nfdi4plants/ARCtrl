@@ -79,13 +79,13 @@ module OntologyAnnotation =
 
         let encoderDefinedTerm (oa : OntologyAnnotation) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", Encode.string "OntologyAnnotation"
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", Encode.string "OntologyAnnotation" |> Some
                 Encode.tryInclude "annotationValue" Encode.string (oa.Name)
                 Encode.tryInclude "termSource" Encode.string (oa.TermSourceREF)
                 Encode.tryInclude "termAccession" Encode.string (oa.TermAccessionNumber)
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription (oa.Comments)
-                "@context", ROCrateContext.OntologyAnnotation.context_jsonvalue
+                "@context", ROCrateContext.OntologyAnnotation.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object
@@ -102,13 +102,13 @@ module OntologyAnnotation =
 
         let encoderPropertyValue (oa : OntologyAnnotation) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", Encode.string "PropertyValue"
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", Encode.string "PropertyValue" |> Some
 
                 Encode.tryInclude "category" Encode.string oa.Name
                 Encode.tryInclude "categoryCode" Encode.string oa.TermAccessionNumber
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoderDisambiguatingDescription (oa.Comments)
-                "@context", ROCrateContext.PropertyValue.context_jsonvalue
+                "@context", ROCrateContext.PropertyValue.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

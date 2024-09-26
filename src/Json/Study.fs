@@ -28,7 +28,7 @@ module Study =
 
     let encoder (study:ArcStudy) = 
         [ 
-            "Identifier", Encode.string study.Identifier
+            "Identifier", Encode.string study.Identifier  |> Some
             Encode.tryInclude "Title" Encode.string study.Title
             Encode.tryInclude "Description" Encode.string study.Description
             Encode.tryInclude "SubmissionDate" Encode.string study.SubmissionDate
@@ -68,7 +68,7 @@ module Study =
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (study:ArcStudy) =
         [ 
-            "Identifier", Encode.string study.Identifier
+            "Identifier", Encode.string study.Identifier  |> Some
             Encode.tryInclude "Title" Encode.string study.Title
             Encode.tryInclude "Description" Encode.string study.Description
             Encode.tryInclude "SubmissionDate" Encode.string study.SubmissionDate
@@ -116,10 +116,10 @@ module Study =
             let processes = s.GetProcesses()
             let assays = Helper.getAssayInformation assays s
             [
-                "@id", Encode.string (s |> genID)               
-                "@type", (Encode.list [Encode.string "Study"])
-                "additionalType", Encode.string "Study"
-                "identifier", Encode.string (s.Identifier)
+                "@id", Encode.string (s |> genID) |> Some
+                "@type", (Encode.list [Encode.string "Study"])  |> Some
+                "additionalType", Encode.string "Study" |> Some
+                "identifier", Encode.string (s.Identifier) |> Some
                 Encode.tryInclude "filename" Encode.string fileName
                 Encode.tryInclude "title" Encode.string (s.Title)
                 Encode.tryInclude "description" Encode.string (s.Description)
@@ -131,7 +131,7 @@ module Study =
                 Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder (Some s.Identifier) None) processes
                 Encode.tryIncludeSeq "assays" (Assay.ROCrate.encoder (Some s.Identifier)) assays           
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder s.Comments
-                "@context", ROCrateContext.Study.context_jsonvalue
+                "@context", ROCrateContext.Study.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object
@@ -205,9 +205,9 @@ module Study =
                     ProcessSequence.getProtocols processes
                     |> Encode.tryIncludeList "protocols" (Protocol.ISAJson.encoder (Some s.Identifier) None None idMap)
                 [
-                    "@id", Encode.string (study |> ROCrate.genID)
-                    "filename", Encode.string fileName
-                    "identifier", Encode.string study.Identifier
+                    "@id", Encode.string (study |> ROCrate.genID) |> Some
+                    "filename", Encode.string fileName |> Some
+                    "identifier", Encode.string study.Identifier |> Some
                     Encode.tryInclude "title" Encode.string study.Title
                     Encode.tryInclude "description" Encode.string study.Description
                     Encode.tryInclude "submissionDate" Encode.string study.SubmissionDate

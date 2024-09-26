@@ -9,7 +9,7 @@ module ProcessParameterValue =
     
     module ROCrate =
 
-        let encoder : ProcessParameterValue -> Json= 
+        let encoder : ProcessParameterValue -> IEncodable = 
             PropertyValue.ROCrate.encoder
 
         let decoder : Decoder<ProcessParameterValue> =
