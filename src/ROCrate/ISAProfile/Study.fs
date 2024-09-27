@@ -6,8 +6,8 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Study(
-    id,
-    identifier,
+    id: string,
+    identifier: string,
     ?about,
     ?citation,
     ?comment,
@@ -36,3 +36,5 @@ type Study(
         DynObj.setValueOpt this (nameof headline) headline
         DynObj.setValueOpt this (nameof url) url
 
+    member this.GetIdentifier() = DynObj.tryGetTypedValue<string> (nameof identifier) this |> Option.get
+    static member getIdentifier = fun (inv: Investigation) -> inv.GetIdentifier()

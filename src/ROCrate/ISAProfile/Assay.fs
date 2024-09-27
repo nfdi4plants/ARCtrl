@@ -6,8 +6,8 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Assay(
-    id,
-    identifier,
+    id: string,
+    identifier: string,
     ?about,
     ?comment,
     ?creator,
@@ -29,3 +29,6 @@ type Assay(
         DynObj.setValueOpt this (nameof creator) creator
         DynObj.setValueOpt this (nameof hasPart) hasPart
         DynObj.setValueOpt this (nameof url) url
+
+    member this.GetIdentifier() = DynObj.tryGetTypedValue<string> (nameof identifier) this |> Option.get
+    static member getIdentifier = fun (ass: Assay) -> ass.GetIdentifier()
