@@ -9,7 +9,7 @@ module Investigation =
     
     let encoder (inv : ArcInvestigation) = 
         [ 
-            "Identifier", Encode.string inv.Identifier
+            "Identifier", Encode.string inv.Identifier |> Some
             Encode.tryInclude "Title" Encode.string inv.Title
             Encode.tryInclude "Description" Encode.string inv.Description
             Encode.tryInclude "SubmissionDate" Encode.string inv.SubmissionDate
@@ -50,7 +50,7 @@ module Investigation =
 
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (inv : ArcInvestigation) = 
         [ 
-            "Identifier", Encode.string inv.Identifier
+            "Identifier", Encode.string inv.Identifier |> Some
             Encode.tryInclude "Title" Encode.string inv.Title
             Encode.tryInclude "Description" Encode.string inv.Description
             Encode.tryInclude "SubmissionDate" Encode.string inv.SubmissionDate
@@ -100,11 +100,11 @@ module Investigation =
 
         let encoder (oa : ArcInvestigation) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", Encode.string "Investigation"
-                "additionalType", Encode.string "Investigation"
-                "identifier", Encode.string oa.Identifier
-                "filename", Encode.string ArcInvestigation.FileName
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", Encode.string "Investigation" |> Some
+                "additionalType", Encode.string "Investigation" |> Some
+                "identifier", Encode.string oa.Identifier |> Some
+                "filename", Encode.string ArcInvestigation.FileName |> Some
                 Encode.tryInclude "title" Encode.string oa.Title
                 Encode.tryInclude "description" Encode.string oa.Description
                 Encode.tryInclude "submissionDate" Encode.string oa.SubmissionDate
@@ -114,7 +114,7 @@ module Investigation =
                 Encode.tryIncludeSeq "people" Person.ROCrate.encoder oa.Contacts
                 Encode.tryIncludeSeq "studies" (Study.ROCrate.encoder None) oa.Studies
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder oa.Comments
-                "@context", ROCrateContext.Investigation.context_jsonvalue
+                "@context", ROCrateContext.Investigation.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object
@@ -155,8 +155,8 @@ module Investigation =
                 Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
                 Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
                 Encode.tryInclude "about" encoder (Some oa)
-                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
-                "@context", ROCrateContext.ROCrate.context_jsonvalue
+                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue |> Some
+                "@context", ROCrateContext.ROCrate.context_jsonvalue |> Some
                 ]
             |> Encode.choose
             |> Encode.object
@@ -167,9 +167,9 @@ module Investigation =
 
         let encoder idMap (inv: ArcInvestigation) = 
             [
-                "@id", Encode.string (inv |> ROCrate.genID)
-                "filename", Encode.string ArcInvestigation.FileName
-                "identifier", Encode.string (inv.Identifier)
+                "@id", Encode.string (inv |> ROCrate.genID) |> Some
+                "filename", Encode.string ArcInvestigation.FileName |> Some
+                "identifier", Encode.string (inv.Identifier) |> Some
                 Encode.tryInclude "title" Encode.string (inv.Title)
                 Encode.tryInclude "description" Encode.string (inv.Description)
                 Encode.tryInclude "submissionDate" Encode.string (inv.SubmissionDate)

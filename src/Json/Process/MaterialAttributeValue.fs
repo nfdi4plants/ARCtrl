@@ -10,7 +10,7 @@ module MaterialAttributeValue =
 
     module ROCrate =
 
-        let encoder : MaterialAttributeValue -> Json= 
+        let encoder : MaterialAttributeValue -> IEncodable = 
             PropertyValue.ROCrate.encoder
 
         let decoder : Decoder<MaterialAttributeValue> =

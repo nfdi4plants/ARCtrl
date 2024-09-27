@@ -33,7 +33,7 @@
     <Compile Include="Template.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="6.2.0" />
+    <PackageReference Include="FsSpreadsheet" Version="6.3.0-alpha.3" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />

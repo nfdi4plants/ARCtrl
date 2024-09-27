@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 open ARCtrl
@@ -42,14 +42,14 @@ module OntologySourceReference =
 
         let encoder (osr : OntologySourceReference) = 
             [
-                "@id", Encode.string (osr |> genID)
-                "@type", Encode.string "OntologySourceReference"
+                "@id", Encode.string (osr |> genID) |> Some
+                "@type", Encode.string "OntologySourceReference" |> Some
                 Encode.tryInclude "description" Encode.string (osr.Description)
                 Encode.tryInclude "file" Encode.string (osr.File)
                 Encode.tryInclude "name" Encode.string (osr.Name)
                 Encode.tryInclude "version" Encode.string (osr.Version)
                 Encode.tryIncludeSeq "comments" Comment.encoder (osr.Comments)
-                "@context", ROCrateContext.OntologySourceReference.context_jsonvalue
+                "@context", ROCrateContext.OntologySourceReference.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

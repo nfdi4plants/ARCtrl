@@ -18,13 +18,13 @@ module Material =
     
         let rec encoder (oa : Material) = 
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", (Encode.list [Encode.string "Material"])
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", (Encode.list [Encode.string "Material"]) |> Some
                 Encode.tryInclude "name" Encode.string oa.Name
                 Encode.tryInclude "type" MaterialType.ROCrate.encoder oa.MaterialType
                 Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder oa.Characteristics
                 Encode.tryIncludeListOpt "derivesFrom" encoder oa.DerivesFrom
-                "@context", ROCrateContext.Material.context_jsonvalue
+                "@context", ROCrateContext.Material.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

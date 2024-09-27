@@ -76,14 +76,14 @@ module Data =
     
         let encoder (oa : Data) = 
             [
-                "@id", Encode.string (oa |> genID)           
-                "@type", (Encode.list [Encode.string "Data"])
+                "@id", Encode.string (oa |> genID) |> Some           
+                "@type", (Encode.list [Encode.string "Data"]) |> Some
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryInclude "type" DataFile.ROCrate.encoder oa.DataType
                 Encode.tryInclude "encodingFormat" Encode.string oa.Format
                 Encode.tryInclude "usageInfo" Encode.string oa.SelectorFormat
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder oa.Comments
-                "@context", ROCrateContext.Data.context_jsonvalue
+                "@context", ROCrateContext.Data.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

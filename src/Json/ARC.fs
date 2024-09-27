@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -17,8 +17,8 @@ module ARC =
                 Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
                 Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
                 Encode.tryInclude "about" Investigation.ROCrate.encoder (Some isa)
-                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue
-                "@context", ROCrateContext.ROCrate.context_jsonvalue
+                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue |> Some
+                "@context", ROCrateContext.ROCrate.context_jsonvalue |> Some
                 ]
             |> Encode.choose
             |> Encode.object

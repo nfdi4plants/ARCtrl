@@ -32,11 +32,11 @@ module Comment =
     
         let encoder (comment : Comment) = 
             [
-                "@id", Encode.string (comment |> genID)
-                "@type", Encode.string "Comment"
+                "@id", Encode.string (comment |> genID) |> Some
+                "@type", Encode.string "Comment" |> Some
                 Encode.tryInclude "name" Encode.string (comment.Name)
                 Encode.tryInclude "value" Encode.string (comment.Value)
-                "@context", ROCrateContext.Comment.context_jsonvalue
+                "@context", ROCrateContext.Comment.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

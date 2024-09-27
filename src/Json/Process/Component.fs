@@ -10,7 +10,7 @@ module Component =
 
     module ROCrate =
 
-        let encoder : Component -> Json= 
+        let encoder : Component -> IEncodable = 
             PropertyValue.ROCrate.encoder
 
         let decoder : Decoder<Component> =

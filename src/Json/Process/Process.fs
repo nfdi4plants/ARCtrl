@@ -18,8 +18,8 @@ module Process =
 
         let encoder (studyName:string Option) (assayName:string Option) (oa : Process) =            
             [
-                "@id", Encode.string (oa |> genID)
-                "@type", (Encode.list [Encode.string "Process"])
+                "@id", Encode.string (oa |> genID) |> Some
+                "@type", (Encode.list [Encode.string "Process"]) |> Some 
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryInclude "executesProtocol" (Protocol.ROCrate.encoder studyName assayName oa.Name) (oa.ExecutesProtocol)
                 Encode.tryIncludeListOpt "parameterValues" ProcessParameterValue.ROCrate.encoder (oa.ParameterValues)
@@ -28,7 +28,7 @@ module Process =
                 Encode.tryIncludeListOpt "inputs" ProcessInput.ROCrate.encoder (oa.Inputs)
                 Encode.tryIncludeListOpt "outputs" ProcessOutput.ROCrate.encoder (oa.Outputs)
                 Encode.tryIncludeListOpt "comments" Comment.ROCrate.encoder (oa.Comments)
-                "@context", ROCrateContext.Process.context_jsonvalue
+                "@context", ROCrateContext.Process.context_jsonvalue |> Some
             ]
             |> Encode.choose
             |> Encode.object

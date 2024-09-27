@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 
 open Thoth.Json.Core
@@ -9,16 +9,21 @@ open System.Collections.Generic
 /// This module is used to generalize json compression helpers
 module Compression =
 
-    let encode (encoder: Dictionary<string, int> -> Dictionary<OntologyAnnotation, int> -> Dictionary<CompositeCell, int> -> 'A -> Json) (obj: 'A) = 
-        let stringTable = Dictionary()
-        let oaTable = Dictionary()
-        let cellTable = Dictionary()
-        let arcStudy = encoder stringTable oaTable cellTable obj 
+    let encode (encoder: Dictionary<string, int> -> Dictionary<OntologyAnnotation, int> -> Dictionary<CompositeCell, int> -> 'A -> IEncodable) (obj: 'A) = 
+        let stringTable = Dictionary<string, int>()
+        let oaTable = Dictionary<OntologyAnnotation, int>()
+        let cellTable = Dictionary<CompositeCell, int>()
+        let object = encoder stringTable oaTable cellTable obj
+        object |> Encode.toJsonString 0 |> ignore
+        let encodedCellTable = CellTable.arrayFromMap cellTable |> CellTable.encoder stringTable oaTable
+        let encodedOATable = OATable.arrayFromMap oaTable |> OATable.encoder stringTable
+        let encodedStringTable = StringTable.arrayFromMap stringTable |> StringTable.encoder
+
         Encode.object [
-            "cellTable", CellTable.arrayFromMap cellTable |> CellTable.encoder stringTable oaTable
-            "oaTable", OATable.arrayFromMap oaTable |> OATable.encoder stringTable
-            "stringTable", StringTable.arrayFromMap stringTable |> StringTable.encoder
-            "object", arcStudy
+            "cellTable", encodedCellTable
+            "oaTable", encodedOATable
+            "stringTable", encodedStringTable
+            "object", object
         ] 
 
     let decode (decoder) =
