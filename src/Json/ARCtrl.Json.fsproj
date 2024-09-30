@@ -5,7 +5,6 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
@@ -78,6 +77,7 @@
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
+    <Compile Include="ROCrateObject.fs" />
     <Compile Include="ARC.fs" />
   </ItemGroup>
   <ItemGroup>
@@ -89,6 +89,10 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.400" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>

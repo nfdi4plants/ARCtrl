@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -47,4 +47,7 @@
       <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
     </PythonDependencies>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.400" />
+  </ItemGroup>
 </Project>

@@ -1,6 +1,8 @@
 namespace ARCtrl.ROCrate
 
 open DynamicObj
+open Thoth.Json.Core
+open System
 
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
 type IROCrateObject =

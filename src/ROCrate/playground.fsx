@@ -65,20 +65,20 @@ type Study(id: string) =
         let ds = Study(id = id)
 
         // Properties from CreativeWork
-        DynObj.setValueOpt ds (nameof about) about
-        DynObj.setValueOpt ds (nameof citation) citation
-        DynObj.setValueOpt ds (nameof comment) comment
-        DynObj.setValueOpt ds (nameof creator) creator
-        DynObj.setValueOpt ds (nameof dateCreated) dateCreated
-        DynObj.setValueOpt ds (nameof dateModified) dateModified
-        DynObj.setValueOpt ds (nameof datePublished) datePublished
-        DynObj.setValueOpt ds (nameof hasPart) hasPart
-        DynObj.setValueOpt ds (nameof headline) headline
-        DynObj.setValueOpt ds (nameof url) url
+        DynObj.setOptionalProperty ds (nameof about) about
+        DynObj.setOptionalProperty ds (nameof citation) citation
+        DynObj.setOptionalProperty ds (nameof comment) comment
+        DynObj.setOptionalProperty ds (nameof creator) creator
+        DynObj.setOptionalProperty ds (nameof dateCreated) dateCreated
+        DynObj.setOptionalProperty ds (nameof dateModified) dateModified
+        DynObj.setOptionalProperty ds (nameof datePublished) datePublished
+        DynObj.setOptionalProperty ds (nameof hasPart) hasPart
+        DynObj.setOptionalProperty ds (nameof headline) headline
+        DynObj.setOptionalProperty ds (nameof url) url
 
         // Properties from Thing
-        DynObj.setValueOpt ds (nameof description) description
-        DynObj.setValue ds (nameof identifier) identifier
+        DynObj.setOptionalProperty ds (nameof description) description
+        DynObj.setProperty ds (nameof identifier) identifier
 
         ds
 
@@ -108,20 +108,20 @@ module I =
         do 
 
             // Properties from CreativeWork
-            DynObj.setValueOpt i (nameof citation) citation
-            DynObj.setValueOpt i (nameof comment) comment
-            DynObj.setValueOpt i (nameof creator) creator
-            DynObj.setValueOpt i (nameof dateCreated) dateCreated
-            DynObj.setValueOpt i (nameof dateModified) dateModified
-            DynObj.setValueOpt i (nameof datePublished) datePublished
-            DynObj.setValueOpt i (nameof hasPart) hasPart
-            DynObj.setValueOpt i (nameof headline) headline
-            DynObj.setValueOpt i (nameof mentions) mentions
-            DynObj.setValueOpt i (nameof url) url
+            DynObj.setOptionalProperty i (nameof citation) citation
+            DynObj.setOptionalProperty i (nameof comment) comment
+            DynObj.setOptionalProperty i (nameof creator) creator
+            DynObj.setOptionalProperty i (nameof dateCreated) dateCreated
+            DynObj.setOptionalProperty i (nameof dateModified) dateModified
+            DynObj.setOptionalProperty i (nameof datePublished) datePublished
+            DynObj.setOptionalProperty i (nameof hasPart) hasPart
+            DynObj.setOptionalProperty i (nameof headline) headline
+            DynObj.setOptionalProperty i (nameof mentions) mentions
+            DynObj.setOptionalProperty i (nameof url) url
 
             // Properties from Thing
-            DynObj.setValueOpt i (nameof description) description
-            DynObj.setValue i (nameof identifier) identifier
+            DynObj.setOptionalProperty i (nameof description) description
+            DynObj.setProperty i (nameof identifier) identifier
 
 I.Investigation("lol", [1.])
 I.Investigation("lol", "")

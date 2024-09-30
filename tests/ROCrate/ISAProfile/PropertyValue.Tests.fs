@@ -50,13 +50,13 @@ let tests_interface_members = testList "interface members" [
 
 let tests_dynamic_members = testSequenced (
     testList "dynamic members" [
-        testCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
+        testCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
         testCase "Set dynamic property" <| fun _ ->
-            mandatory_properties.SetValue("yes",42)
+            mandatory_properties.SetProperty("yes",42)
             Expect.ROCrateObjectHasDynamicProperty "yes" 42 mandatory_properties
         testCase "Remove dynamic property" <| fun _ ->
-            mandatory_properties.Remove("yes")
-            Expect.isNone (DynObj.tryGetTypedValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be removed"
+            mandatory_properties.RemoveProperty("yes") |> ignore
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be removed"
     ]
 )
 

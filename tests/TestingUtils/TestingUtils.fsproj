@@ -27,12 +27,15 @@
     <Compile Include="TestObjects.Contract\ISA.fs" />
     <Compile Include="Library.fs" />
   </ItemGroup>
-<ItemGroup>
-  <PackageReference Include="Fable.Node" Version="1.2.0" />
-  <PackageReference Include="Fable.Pyxpecto" Version="1.2.0" />
-</ItemGroup>
-<ItemGroup>
-  <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
-  <ProjectReference Include="..\..\src\ROCrate\ARCtrl.ROCrate.fsproj" />
-</ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Node" Version="1.2.0" />
+    <PackageReference Include="Fable.Pyxpecto" Version="1.2.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
+    <ProjectReference Include="..\..\src\ROCrate\ARCtrl.ROCrate.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.400" />
+  </ItemGroup>
 </Project>

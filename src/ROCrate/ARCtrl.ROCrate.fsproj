@@ -21,7 +21,11 @@
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="DynamicObj" Version="3.1.0" />
+    <PackageReference Include="DynamicObj" Version="4.0.0" />
+    <PackageReference Include="Thoth.Json.Core" Version="0.4.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.400" />
   </ItemGroup>
   <PropertyGroup>
     <Authors>Kevin Schneider, nfdi4plants, DataPLANT OSS contributors</Authors>

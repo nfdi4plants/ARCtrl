@@ -20,12 +20,12 @@ type LabProtocol(
 ) as this =
     inherit ROCrateObject(id = id, schemaType = "bioschemas.org/LabProtocol", ?additionalType = additionalType)
     do
-        DynObj.setValueOpt this (nameof name) name
-        DynObj.setValueOpt this (nameof intendedUse) intendedUse
-        DynObj.setValueOpt this (nameof description) description
-        DynObj.setValueOpt this (nameof url) url
-        DynObj.setValueOpt this (nameof comment) comment
-        DynObj.setValueOpt this (nameof version) version
-        DynObj.setValueOpt this (nameof labEquipment) labEquipment
-        DynObj.setValueOpt this (nameof reagent) reagent
-        DynObj.setValueOpt this (nameof computationalTool) computationalTool
+        DynObj.setOptionalProperty (nameof name) name                            this
+        DynObj.setOptionalProperty (nameof intendedUse) intendedUse              this
+        DynObj.setOptionalProperty (nameof description) description              this
+        DynObj.setOptionalProperty (nameof url) url                              this
+        DynObj.setOptionalProperty (nameof comment) comment                      this
+        DynObj.setOptionalProperty (nameof version) version                      this
+        DynObj.setOptionalProperty (nameof labEquipment) labEquipment            this
+        DynObj.setOptionalProperty (nameof reagent) reagent                      this
+        DynObj.setOptionalProperty (nameof computationalTool) computationalTool  this

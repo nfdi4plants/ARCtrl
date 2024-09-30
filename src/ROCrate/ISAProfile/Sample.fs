@@ -14,7 +14,7 @@ type Sample(
 ) as this =
     inherit ROCrateObject(id = id, schemaType = "bioschemas.org/Sample", ?additionalType = additionalType)
     do
-        DynObj.setValue this (nameof name) name
+        DynObj.setProperty (nameof name) name this
 
-        DynObj.setValueOpt this (nameof additionalProperty) additionalProperty
-        DynObj.setValueOpt this (nameof derivesFrom) derivesFrom
+        DynObj.setOptionalProperty (nameof additionalProperty) additionalProperty this
+        DynObj.setOptionalProperty (nameof derivesFrom) derivesFrom               this

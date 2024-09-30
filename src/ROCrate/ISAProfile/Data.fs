@@ -15,9 +15,9 @@ type Data(
 ) as this =
     inherit ROCrateObject(id = id, schemaType = "schema.org/MediaObject", ?additionalType = additionalType)
     do
-        DynObj.setValue this (nameof name) name
+        DynObj.setProperty (nameof name) name this
 
-        DynObj.setValueOpt this (nameof comment) comment
-        DynObj.setValueOpt this (nameof encodingFormat) encodingFormat
-        DynObj.setValueOpt this (nameof disambiguatingDescription) disambiguatingDescription
+        DynObj.setOptionalProperty (nameof comment) comment this
+        DynObj.setOptionalProperty (nameof encodingFormat) encodingFormat this
+        DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this
 

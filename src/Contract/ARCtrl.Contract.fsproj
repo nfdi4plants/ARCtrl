@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -35,4 +35,7 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.400" />
+  </ItemGroup>
 </Project>
