@@ -50,21 +50,12 @@ module Comment =
             )    
 
         let encoderDisambiguatingDescription (comment : Comment) =
-            let name = Option.defaultValue "" comment.Name
-            let value = Option.defaultValue "" comment.Value
-            $"{name}:{value}" |> Encode.string
+            comment.ToString() |> Encode.string
 
         let decoderDisambiguatingDescription : Decoder<Comment> = 
             Decode.string 
             |> Decode.map (fun s ->
-                let a = s.Trim().Split(':')
-                let name,value =
-                    match a.Length with
-                        | 1 -> Some a.[0], None
-                        | 2 -> Some a.[0], Some a.[1]
-                        | _ -> Some a.[0], Some(Array.reduce (fun acc x -> acc + ":" + x) (Array.skip 1 a))
-                Comment(?name = name, ?value = value)
-
+                Comment.fromString s
             )
 
     module ISAJson =

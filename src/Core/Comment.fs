@@ -58,6 +58,14 @@ type Comment(?name, ?value) =
         sb.Append("}") |> ignore
         sb.ToString()
 
+    // Reverse function to ToString() override
+    static member fromString(s) =
+        let nameRegex = System.Text.RegularExpressions.Regex("(?<=Name = \")[^\"]*(?=\",|})").Match(s)
+        let valueRegex = System.Text.RegularExpressions.Regex("(?<=Value = \")[^\"]*(?=\",|\"})").Match(s)
+        let name = if nameRegex.Success then Some nameRegex.Value else None
+        let value = if valueRegex.Success then Some valueRegex.Value else None
+        Comment(?name=name, ?value=value)
+
 
 [<AttachMembers>]
 type Remark = 

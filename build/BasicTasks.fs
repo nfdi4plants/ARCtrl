@@ -163,6 +163,7 @@ let build = BuildTask.create "Build" [clean] {
         let msBuildParams =
             {p.MSBuildParams with 
                 DisableInternalBinLog = true
+                NodeReuse = false
             }
         {
             p with 

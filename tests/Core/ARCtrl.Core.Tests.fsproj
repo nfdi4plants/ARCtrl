@@ -27,7 +27,6 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-   <ProjectReference Include="..\..\src\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <ItemGroup>

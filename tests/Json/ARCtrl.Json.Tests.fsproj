@@ -46,6 +46,6 @@
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="8.0.400" />
+    <PackageReference Include="NJsonSchema" />
   </ItemGroup>
 </Project>

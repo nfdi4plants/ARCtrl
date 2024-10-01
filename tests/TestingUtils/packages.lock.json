@@ -95,6 +95,7 @@
           "ARCtrl.Contract": "[1.0.0, )",
           "ARCtrl.FileSystem": "[1.0.0, )",
           "ARCtrl.Json": "[1.0.0, )",
+          "ARCtrl.ROCrate": "[1.0.0, )",
           "ARCtrl.Spreadsheet": "[1.0.0, )",
           "Fable.SimpleHttp": "[3.5.0, )",
           "Thoth.Json.Newtonsoft": "[0.2.0, )"

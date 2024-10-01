@@ -68,6 +68,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
     <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
+    <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
     <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
     <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
