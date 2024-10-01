@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -80,19 +80,3 @@ module CompositeCell =
                 CompositeCell.Data d
             | anyelse -> failwithf "Error reading CompositeCell from json string: %A" anyelse 
         ) 
-
-[<AutoOpen>]
-module CompositeCellExtensions =
-
-    type CompositeCell with
-
-        static member fromJsonString (s:string)  = 
-            Decode.fromJsonString CompositeCell.decoder s
-
-        static member toJsonString(?spaces) = 
-            fun (obj:CompositeCell) ->
-                CompositeCell.encoder obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToJsonString(?spaces) =
-            CompositeCell.toJsonString(?spaces=spaces) this

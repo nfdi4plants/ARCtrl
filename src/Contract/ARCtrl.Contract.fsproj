@@ -35,7 +35,4 @@
     <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="8.0.400" />
-  </ItemGroup>
 </Project>

@@ -5,6 +5,7 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
@@ -61,7 +62,6 @@
     <Compile Include="Process\ProcessInput.fs" />
     <Compile Include="Process\ProcessOutput.fs" />
     <Compile Include="Process\Process.fs" />
-    <Compile Include="Process\ProcessSequence.fs" />
     <Compile Include="Process\AssayMaterials.fs" />
     <Compile Include="Process\StudyMaterials.fs" />
     <Compile Include="Table\OATable.fs" />
@@ -70,7 +70,6 @@
     <Compile Include="Table\IOType.fs" />
     <Compile Include="Table\CompositeHeader.fs" />
     <Compile Include="Table\ArcTable.fs" />
-    <Compile Include="Table\Compression.fs" />
     <Compile Include="Table\Templates.fs" />
     <Compile Include="DataMap\DataContext.fs" />
     <Compile Include="DataMap\DataMap.fs" />
@@ -81,21 +80,14 @@
     <Compile Include="ARC.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NJsonSchema" Version="10.8.0" />
-    <PackageReference Include="Thoth.Json.Core" Version="0.4.0" />
-    <PackageReference Include="Thoth.Json.Newtonsoft" Version="0.2.0" />
-    <PackageReference Include="FsSpreadsheet.Js" Version="6.3.0-alpha.3" />
-    <PackageReference Include="FsSpreadsheet.Py" Version="6.3.0-alpha.3" />
+    <PackageReference Include="Thoth.Json.Core" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="8.0.400" />
-  </ItemGroup>
   <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
+    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Florian Wetzels</Authors>
     <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>logo.png</PackageIcon>

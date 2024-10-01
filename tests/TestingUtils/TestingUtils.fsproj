@@ -28,8 +28,8 @@
     <Compile Include="Library.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fable.Node" Version="1.2.0" />
-    <PackageReference Include="Fable.Pyxpecto" Version="1.2.0" />
+    <PackageReference Include="Fable.Node" />
+    <PackageReference Include="Fable.Pyxpecto" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
