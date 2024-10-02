@@ -1,3 +1,36 @@
+### 2.1.0+99b2659 (Released 2024-10-2)
+* Additions:
+    * [[#28cfd13](https://github.com/nfdi4plants/ARCtrl/commit/28cfd133152fa3cdc6606b4ccb7cda3c340e8f62)] add rocrate project
+    * [[#f71faea](https://github.com/nfdi4plants/ARCtrl/commit/f71faea334538425d5f92e81c650b1cdd46446ef)] rocrate datamodel wip based on inheritance and single interface
+    * [[#ef15f35](https://github.com/nfdi4plants/ARCtrl/commit/ef15f35779606a1bfcaecdadfc7532886466ec46)] implement first POC of ISA ROCrate profile
+    * [[#168ead8](https://github.com/nfdi4plants/ARCtrl/commit/168ead84ca93dc0fae911e760673ef6e33180447)] add test project
+    * [[#2cea57c](https://github.com/nfdi4plants/ARCtrl/commit/2cea57cc1415310e36f5931ef376ea183b85fb71)] update solution
+    * [[#ccd1805](https://github.com/nfdi4plants/ARCtrl/commit/ccd18053a83c80f4ca4b7a2ac7008a4a0cf3d348)] Unify Inheritance to ROCrateObject
+    * [[#95cab6f](https://github.com/nfdi4plants/ARCtrl/commit/95cab6f0f85f71a7adea887a25bd47c714e5af35)] wip ro-crate tests
+    * [[#9ef48d7](https://github.com/nfdi4plants/ARCtrl/commit/9ef48d75f5439d3a71ca943941b70c5af3ff9261)] only use primary constructor
+    * [[#9deffb7](https://github.com/nfdi4plants/ARCtrl/commit/9deffb7ea81f76c067de5618f2b3388303402191)] Add basic tests for I/S/A ROCrateObjects
+    * [[#4b4a2fc](https://github.com/nfdi4plants/ARCtrl/commit/4b4a2fcc3bd32b31ec5aa3b4f1127883f7af83fc)] temp workaround in tests for https://github.com/CSBiology/DynamicObj/issues/25
+    * [[#f67e78b](https://github.com/nfdi4plants/ARCtrl/commit/f67e78b068350a8e1aecf80fa8b9dd4646fb9ddd)] Use unblocking version of DynamicObj, introduce runTestProject target
+    * [[#4e91e9d](https://github.com/nfdi4plants/ARCtrl/commit/4e91e9dcc5b34747a2e4a16f33aee1a227eb08ef)] finish basic property tests for isa profile types
+    * [[#8b4368a](https://github.com/nfdi4plants/ARCtrl/commit/8b4368aed9a9705a78f95ec752143b1620fb0408)] Merge pull request #426 from nfdi4plants/ro-crate-data-model
+    * [[#fdc4773](https://github.com/nfdi4plants/ARCtrl/commit/fdc4773125fb37bf7140476460a117e575e420ae)] add tryGetColumnByHeaderBy member and static + tests
+    * [[#1a5c4d6](https://github.com/nfdi4plants/ARCtrl/commit/1a5c4d64cdd3c591a2c7af73c4bdb7a9261c5ffb)] Update ArcTable.Tests.fs
+    * [[#29d1bb2](https://github.com/nfdi4plants/ARCtrl/commit/29d1bb250a2fc6ee4253e8a94f820f03bf87a09d)] update to thoth.json.core 0.4.0 and use temporary FsSpreadsheet implementations for js and py
+    * [[#2e47979](https://github.com/nfdi4plants/ARCtrl/commit/2e479798a7812233b109da566db68246fc9df7a2)] start working on ro-crate-json parsing
+    * [[#f6afa53](https://github.com/nfdi4plants/ARCtrl/commit/f6afa53b83b8003f16c7881a8bd7ea958466c5fb)] first buildable version after fable restructure
+    * [[#755879d](https://github.com/nfdi4plants/ARCtrl/commit/755879dbf3d30d1305ae8645fdf84338ce89c26a)] move duplicate project references into props files
+    * [[#93030e9](https://github.com/nfdi4plants/ARCtrl/commit/93030e915329c23b4b4f8cddc5b622312de6cedb)] Make use of Fable.Package.SDK
+    * [[#99b2659](https://github.com/nfdi4plants/ARCtrl/commit/99b2659d1dd5c3815693f4df85691f9bead3e26d)] rename json IO implementations folder to reduce ambiguity in py and javascript packages
+* Deletions:
+    * [[#c71b8a3](https://github.com/nfdi4plants/ARCtrl/commit/c71b8a301fbdf95531a9ba0d33f8e6d0d238adc9)] correct interface implementation on ROCrateObject, remove interface implementation from Dataset
+    * [[#c429686](https://github.com/nfdi4plants/ARCtrl/commit/c4296864a7443a990257f7eb47fed92458fa0a7b)] remove javascript and pyton packages from main solution
+    * [[#3586dee](https://github.com/nfdi4plants/ARCtrl/commit/3586dee6a736d3ad2ed9e79778e3ea136c638eac)] remove restorelockedmode flag
+* Bugfixes:
+    * [[#9d526b8](https://github.com/nfdi4plants/ARCtrl/commit/9d526b82df1d7ac04283cbe23c9832f1d5818771)] add LabProcess tests, fix schematype of ROCrateObject base constructor
+    * [[#192812d](https://github.com/nfdi4plants/ARCtrl/commit/192812d43569270845883ca116de9931dea6ba62)] fix error messages of ROCrate testing utils
+    * [[#43d65db](https://github.com/nfdi4plants/ARCtrl/commit/43d65db3fb121a4832e771541880c1fe79cfe89c)] various test fixes for Fable logic transition
+    * [[#8552f9e](https://github.com/nfdi4plants/ARCtrl/commit/8552f9ea7b2183c4cb382049c71793918d4128b3)] fix fable ready packaging and/by update package tags
+
 ### 2.0.1+5e6cc32 (Released 2024-8-29)
 * Bugfixes:
     * [[#bfaaaf6](https://github.com/nfdi4plants/ARCtrl/commit/bfaaaf614a1a2dc788a1b7de17761b5867aa9fee)] fix single dot in paths being interpreted as folder
