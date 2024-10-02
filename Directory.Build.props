@@ -4,14 +4,14 @@
         <DisableImplicitSystemValueTupleReference>true</DisableImplicitSystemValueTupleReference>
         <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
     </PropertyGroup>
-    <!-- Use lock files -->
+    <!-- Use lock files --><!--
     <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
         <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     </PropertyGroup>
     <PropertyGroup>
         <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
         <RestoreLockedMode Condition="'$(ContinuousIntegrationBuild)' == 'true'">true</RestoreLockedMode>
-    </PropertyGroup>
+    </PropertyGroup>-->
 	<PropertyGroup>
 		<!-- Make all the projects use the highest warning level -->
 		<WarningLevel>3</WarningLevel>
