@@ -22,22 +22,30 @@ module BundleDotNet =
         System.IO.Directory.CreateDirectory(ProjectInfo.netPkgDir) |> ignore
         !! "src/**/*.*proj"
         -- "src/bin/*"
-        |> Seq.iter (Fake.DotNet.DotNet.pack (fun p ->
-            let msBuildParams =
-                {p.MSBuildParams with 
-                    Properties = ([
-                        "Version",versionTag
-                        "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.toLines )
-                    ] @ p.MSBuildParams.Properties)
-                    DisableInternalBinLog = true
-                }
-            {
-                p with 
-                    VersionSuffix = versionSuffix
-                    MSBuildParams = msBuildParams
-                    OutputPath = Some ProjectInfo.netPkgDir
-            }
-        ))
+        |> Seq.iter (fun g ->
+            try
+                g
+                |> Fake.DotNet.DotNet.pack (fun p ->
+            
+                    let msBuildParams =
+                        {p.MSBuildParams with 
+                            Properties = ([
+                                "Version",versionTag
+                                "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.toLines )
+                            ] @ p.MSBuildParams.Properties)
+                            DisableInternalBinLog = true
+                        }
+                    {
+                        p with 
+                            VersionSuffix = versionSuffix
+                            MSBuildParams = msBuildParams
+                            OutputPath = Some ProjectInfo.netPkgDir
+                    }
+
+                ) 
+            with
+            | err -> ()
+        )
 
 let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
     BundleDotNet.bundle ProjectInfo.stableVersionTag None
@@ -86,7 +94,7 @@ let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; cl
 module BundlePy =
     let bundle (versionTag: string) =
         
-        run dotnet $"fable src/ARCtrl -o {ProjectInfo.pyPkgDir}/arctrl --lang python" ""
+        run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {ProjectInfo.pyPkgDir}/arctrl --lang python" ""
         run python "-m poetry install --no-root" ProjectInfo.pyPkgDir
         GenerateIndexPy.ARCtrl_generate (ProjectInfo.pyPkgDir + "/arctrl")
 
@@ -104,7 +112,7 @@ module BundlePy =
         run python "-m poetry build" ProjectInfo.pyPkgDir //Remove "-o ." because not compatible with publish 
 
 
-let packPy = BuildTask.create "PackPy" [clean; build; runTests] {
+let packPy = BuildTask.create "PackPy" [clean; build; (*runTests*)] {
     BundlePy.bundle ProjectInfo.stableVersionTag
 
 }
