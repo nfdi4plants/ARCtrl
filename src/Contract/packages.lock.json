@@ -26,21 +26,16 @@
         "type": "Project",
         "dependencies": {
           "ARCtrl.CWL": "[1.0.0, )",
-          "ARCtrl.FileSystem": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "ARCtrl.FileSystem": "[1.0.0, )"
         }
       },
       "arctrl.cwl": {
-        "type": "Project",
-        "dependencies": {
-          "Fable.Package.SDK": "[1.1.0, )"
-        }
+        "type": "Project"
       },
       "arctrl.filesystem": {
         "type": "Project",
         "dependencies": {
-          "Fable.Core": "[4.3.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "Fable.Core": "[4.3.0, )"
         }
       },
       "arctrl.json": {
@@ -48,7 +43,6 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ROCrate": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -56,7 +50,6 @@
         "type": "Project",
         "dependencies": {
           "DynamicObj": "[4.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -65,15 +58,13 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.FileSystem": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "FsSpreadsheet": "[6.3.0-alpha.4, )"
         }
       },
       "arctrl.validationpackages": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "ARCtrl.Core": "[1.0.0, )"
         }
       },
       "arctrl.yaml": {
@@ -81,7 +72,6 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ValidationPackages": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "YAMLicious": "[0.0.1, )"
         }
       },

@@ -1,6 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageTags>fable-javascript;fable-python;fable-dotnet</PackageTags>
+    <Description>A data model of the ARC concept via it's RO Crate profile</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ROCrate</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />
   
@@ -23,9 +25,4 @@
     <PackageReference Include="DynamicObj" />
     <PackageReference Include="Thoth.Json.Core" />
   </ItemGroup>
-  <PropertyGroup>
-    <Description>A data model of the ARC concept via it's RO Crate profile</Description>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/CWL</PackageProjectUrl>
-  </PropertyGroup>
 </Project>

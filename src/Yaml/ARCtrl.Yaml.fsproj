@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageTags>fable-javascript;fable-python;fable-dotnet</PackageTags>
+    <Description>ARC helper functions for Parsing YAML files.</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/YAML</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;YAML;fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />
-  
+
   <ItemGroup>
     <Compile Include="Encode.fs" />
     <Compile Include="Decode.fs" />
@@ -19,9 +21,4 @@
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\ValidationPackages\ARCtrl.ValidationPackages.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <Description>ARC helper functions for Parsing YAML files.</Description>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/CWL</PackageProjectUrl>
-  </PropertyGroup>
 </Project>

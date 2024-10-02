@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageTags>fable-javascript;fable-python;fable-dotnet</PackageTags>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-javascript;fable-python;fable-dotnet</PackageTags>
+    <Description>ARC helper functions for contracts management.</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/Contract</PackageProjectUrl>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />
   
@@ -22,9 +24,4 @@
     <ProjectReference Include="..\Yaml\ARCtrl.Yaml.fsproj" />
     <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <Description>ARC helper functions for contracts management.</Description>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/Contract</PackageProjectUrl>
-  </PropertyGroup>
 </Project>

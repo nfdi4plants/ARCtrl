@@ -25,10 +25,10 @@
       },
       "Fable.Browser.Blob": {
         "type": "Transitive",
-        "resolved": "1.2.0",
-        "contentHash": "bM4zbtIeycTFFCH7o4WuN28W70dTxNTMZiMvR70XUTYrBnbz7GpS5XxzUy5caDB4l7s2l7wiuVDhh52t7NXxDg==",
+        "resolved": "1.1.0",
+        "contentHash": "xMX7hPFwBUGuj75xLlH6VsVThZjRlGW4zOqXb1X+byRPLSBE91vtn9EueNUB+YpGhE9LfrtakIPNGy+dkoMkjg==",
         "dependencies": {
-          "FSharp.Core": "4.7.2",
+          "FSharp.Core": "4.6.2",
           "Fable.Core": "3.0.0"
         }
       },
@@ -46,20 +46,10 @@
       },
       "Fable.Browser.Event": {
         "type": "Transitive",
-        "resolved": "1.5.0",
-        "contentHash": "Bx2AOOASIG1Eq1Pe8869H8baMePte6STmKGccGuOYMT2p6nWVS8G6ZBZb5encQ0tAL2/0vhA4KJOl4bYwUaQqg==",
+        "resolved": "1.0.0",
+        "contentHash": "T1bGrlRJ4A2fxOfAVPzJpxanR6lkzPgJroPdSN1IU5CLdKtvRakWmYq6QKqu4dz6ZV9Z3fIPTWLZkoGKEOEo3w==",
         "dependencies": {
-          "FSharp.Core": "4.7.2",
-          "Fable.Browser.Gamepad": "1.1.0",
-          "Fable.Core": "3.0.0"
-        }
-      },
-      "Fable.Browser.Gamepad": {
-        "type": "Transitive",
-        "resolved": "1.1.0",
-        "contentHash": "8m/Ae/mrH2Hb2ue435rTPEeVb2FhfWsRJJLpCxMvk+5EUOO2+IIjIkLq4thUfRL98uQVt9V5cQd14h2aBf2XJA==",
-        "dependencies": {
-          "FSharp.Core": "4.7.2",
+          "FSharp.Core": "4.5.2",
           "Fable.Core": "3.0.0"
         }
       },
@@ -82,15 +72,6 @@
           "Fable.Browser.Blob": "1.1.0",
           "Fable.Browser.Event": "1.0.0",
           "Fable.Core": "3.0.0"
-        }
-      },
-      "Fable.Promise": {
-        "type": "Transitive",
-        "resolved": "2.2.2",
-        "contentHash": "yHFSo7GCY0l/Wjskh/HESuFoGzXIoRM22UlrARA5ewnX736Y1wM27kcqCWeGcIzaEsgJnZcDkp093M0gQyMcWA==",
-        "dependencies": {
-          "FSharp.Core": "4.7.2",
-          "Fable.Core": "3.1.5"
         }
       },
       "Fable.Python": {
@@ -116,7 +97,6 @@
           "ARCtrl.Json": "[1.0.0, )",
           "ARCtrl.ROCrate": "[1.0.0, )",
           "ARCtrl.Spreadsheet": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "Fable.SimpleHttp": "[3.5.0, )",
           "Thoth.Json.Newtonsoft": "[0.2.0, )"
         }
@@ -127,44 +107,23 @@
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.Json": "[1.0.0, )",
           "ARCtrl.Spreadsheet": "[1.0.0, )",
-          "ARCtrl.Yaml": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "ARCtrl.Yaml": "[1.0.0, )"
         }
       },
       "arctrl.core": {
         "type": "Project",
         "dependencies": {
           "ARCtrl.CWL": "[1.0.0, )",
-          "ARCtrl.FileSystem": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "ARCtrl.FileSystem": "[1.0.0, )"
         }
       },
       "arctrl.cwl": {
-        "type": "Project",
-        "dependencies": {
-          "Fable.Package.SDK": "[1.1.0, )"
-        }
+        "type": "Project"
       },
       "arctrl.filesystem": {
         "type": "Project",
         "dependencies": {
-          "Fable.Core": "[4.3.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
-        }
-      },
-      "arctrl.javascript": {
-        "type": "Project",
-        "dependencies": {
-          "ARCtrl.CWL": "[1.0.0, )",
-          "ARCtrl.Contract": "[1.0.0, )",
-          "ARCtrl.FileSystem": "[1.0.0, )",
-          "ARCtrl.Json": "[1.0.0, )",
-          "ARCtrl.ROCrate": "[1.0.0, )",
-          "ARCtrl.Spreadsheet": "[1.0.0, )",
-          "Fable.Fetch": "[2.6.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
-          "Fable.SimpleHttp": "[3.5.0, )",
-          "Thoth.Json.Javascript": "[0.3.0, )"
+          "Fable.Core": "[4.3.0, )"
         }
       },
       "arctrl.json": {
@@ -172,7 +131,6 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ROCrate": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -180,7 +138,6 @@
         "type": "Project",
         "dependencies": {
           "DynamicObj": "[4.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -189,15 +146,13 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.FileSystem": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "FsSpreadsheet": "[6.3.0-alpha.4, )"
         }
       },
       "arctrl.validationpackages": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "ARCtrl.Core": "[1.0.0, )"
         }
       },
       "arctrl.yaml": {
@@ -205,7 +160,6 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ValidationPackages": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "YAMLicious": "[0.0.1, )"
         }
       },
@@ -224,25 +178,6 @@
         "requested": "[4.3.0, )",
         "resolved": "4.3.0",
         "contentHash": "sbK+hYs7H7I3b3sbgttI4GlvQfNPcIqSz1qPSagF3QbVA46KJ/pWSXC/Dwv0s9M6AeRGmoqcIeD7GUaLn41zkA=="
-      },
-      "Fable.Fetch": {
-        "type": "CentralTransitive",
-        "requested": "[2.6.0, )",
-        "resolved": "2.6.0",
-        "contentHash": "zhCl95EYeuKcc7bk2jGHLSuLhkPqvRcrlwC91GqgX51BlQ7WJF2IQ7mUxW2n1mg74M1D2VOwEKqQpTAZDCVa8Q==",
-        "dependencies": {
-          "FSharp.Core": "4.7.2",
-          "Fable.Browser.Blob": "1.2.0",
-          "Fable.Browser.Event": "1.5.0",
-          "Fable.Core": "3.7.1",
-          "Fable.Promise": "2.2.2"
-        }
-      },
-      "Fable.Package.SDK": {
-        "type": "CentralTransitive",
-        "requested": "[1.1.0, )",
-        "resolved": "1.1.0",
-        "contentHash": "YEMSyiB/HCpBgDSZUr0LHaTa9vYH+xj8Fvd/AvzUAVbLQ3Bc2l9xHOI9g4+Bh1wGsLFrhMwFW+U39D7m5a6oOw=="
       },
       "Fable.SimpleHttp": {
         "type": "CentralTransitive",
@@ -282,18 +217,6 @@
           "FSharp.Core": "5.0.0",
           "Fable.Core": "4.1.0",
           "Fable.Package.SDK": "1.0.0"
-        }
-      },
-      "Thoth.Json.JavaScript": {
-        "type": "CentralTransitive",
-        "requested": "[0.3.0, )",
-        "resolved": "0.3.0",
-        "contentHash": "A4Cwv+RigC52/OdcrU2woEvjd6rsiDlQGDNTqwXYe3Yh6cdzcLWTfmmwTuCOXgV8SMbcSkviqiS2AG5BS42ayg==",
-        "dependencies": {
-          "FSharp.Core": "5.0.0",
-          "Fable.Core": "4.1.0",
-          "Fable.Package.SDK": "1.0.0",
-          "Thoth.Json.Core": "0.4.0"
         }
       },
       "Thoth.Json.Newtonsoft": {

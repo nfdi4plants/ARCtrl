@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageTags>fable-python</PackageTags>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-python</PackageTags>
     <DefineConstants>FABLE_COMPILER_PYTHON;FABLE_COMPILER</DefineConstants>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />

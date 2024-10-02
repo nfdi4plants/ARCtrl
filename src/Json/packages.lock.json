@@ -37,28 +37,22 @@
         "type": "Project",
         "dependencies": {
           "ARCtrl.CWL": "[1.0.0, )",
-          "ARCtrl.FileSystem": "[1.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "ARCtrl.FileSystem": "[1.0.0, )"
         }
       },
       "arctrl.cwl": {
-        "type": "Project",
-        "dependencies": {
-          "Fable.Package.SDK": "[1.1.0, )"
-        }
+        "type": "Project"
       },
       "arctrl.filesystem": {
         "type": "Project",
         "dependencies": {
-          "Fable.Core": "[4.3.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "Fable.Core": "[4.3.0, )"
         }
       },
       "arctrl.rocrate": {
         "type": "Project",
         "dependencies": {
           "DynamicObj": "[4.0.0, )",
-          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },

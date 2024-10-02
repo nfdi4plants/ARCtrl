@@ -23,16 +23,12 @@
         "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
       },
       "arctrl.cwl": {
-        "type": "Project",
-        "dependencies": {
-          "Fable.Package.SDK": "[1.1.0, )"
-        }
+        "type": "Project"
       },
       "arctrl.filesystem": {
         "type": "Project",
         "dependencies": {
-          "Fable.Core": "[4.3.0, )",
-          "Fable.Package.SDK": "[1.1.0, )"
+          "Fable.Core": "[4.3.0, )"
         }
       },
       "Fable.Core": {

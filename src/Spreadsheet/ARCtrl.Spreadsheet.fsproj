@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageTags>fable-javascript;fable-python;fable-dotnet</PackageTags>
+    <Description>ARC and ISA xlsx compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-xlsx format.</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/Spreadsheet</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;investigation;study;assay;ISA;Spreadsheet;xlsx;excel;fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />
   
@@ -40,9 +42,4 @@
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <Description>ARC and ISA xlsx compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-xlsx format.</Description>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Spreadsheet xlsx excel</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
-  </PropertyGroup>
 </Project>

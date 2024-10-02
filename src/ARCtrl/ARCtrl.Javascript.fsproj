@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <PackageTags>fable-javascript</PackageTags>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-javascript</PackageTags>
     <DefineConstants>FABLE_COMPILER_JAVASCRIPT;FABLE_COMPILER;FABLE_COMPILER_TYPESCRIPT</DefineConstants>
   </PropertyGroup>
   <Import Project="../Package.Metadata.props" />
