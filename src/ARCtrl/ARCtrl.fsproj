@@ -4,77 +4,20 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
-  <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>
-    <Description>Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtimer agnostic contract systems.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
+
+  <Import Project="ARCtrl.Common.props" />
   <ItemGroup>  
-    <Compile Include="Json\Decode.fs" />
-    <Compile Include="Json\Encode.fs" />
-    <Compile Include="Json\Comment.fs" />
-    <Compile Include="Json\OntologyAnnotation.fs" />
-    <Compile Include="Json\OntologySourceReference.fs" />
-    <Compile Include="Json\DataFile.fs" />
-    <Compile Include="Json\Data.fs" />
-    <Compile Include="Json\Person.fs" />
-    <Compile Include="Json\Publication.fs" />
-    <Compile Include="Json\Process\Value.fs" />
-    <Compile Include="Json\Process\Factor.fs" />
-    <Compile Include="Json\Process\FactorValue.fs" />
-    <Compile Include="Json\Process\ProtocolParameter.fs" />
-    <Compile Include="Json\Process\MaterialType.fs" />
-    <Compile Include="Json\Process\MaterialAttribute.fs" />
-    <Compile Include="Json\Process\Component.fs" />
-    <Compile Include="Json\Process\Protocol.fs" />
-    <Compile Include="Json\Process\MaterialAttributeValue.fs" />
-    <Compile Include="Json\Process\Material.fs" />
-    <Compile Include="Json\Process\Source.fs" />
-    <Compile Include="Json\Process\Sample.fs" />
-    <Compile Include="Json\Process\ProcessParameterValue.fs" />
-    <Compile Include="Json\Process\ProcessInput.fs" />
-    <Compile Include="Json\Process\ProcessOutput.fs" />
-    <Compile Include="Json\Process\Process.fs" />
-    <Compile Include="Json\Process\ProcessSequence.fs" />
-    <Compile Include="Json\Process\StudyMaterials.fs" />
-    <Compile Include="Json\Table\Compression.fs" />
-    <Compile Include="Json\Table\CompositeCell.fs" />
-    <Compile Include="Json\Table\IOType.fs" />
-    <Compile Include="Json\Table\CompositeHeader.fs" />
-    <Compile Include="Json\Table\ArcTable.fs" />
-    <Compile Include="Json\Table\Templates.fs" />
-    <Compile Include="Json\DataMap\DataMap.fs" />
-    <Compile Include="Json\Assay.fs" />
-    <Compile Include="Json\Study.fs" />
-    <Compile Include="Json\Investigation.fs" />
-    <Compile Include="Json\ROCrateObject.fs" />
-    <Compile Include="Json\ARC.fs" />
+    <None Include="ARCtrl.Common.props" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
     <Compile Include="Json.fs" />
     <Compile Include="Xlsx.fs" />
-    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.SimpleHttp" />
     <PackageReference Include="Thoth.Json.Newtonsoft" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
-    <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
-    <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
-    <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
-    <ProjectReference Include="..\Json\ARCtrl.Json.fsproj" />
-    <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.fsproj" />
-  </ItemGroup>
-  <ItemGroup>
-
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+ 
+  
 </Project>

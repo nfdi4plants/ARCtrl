@@ -1,4 +1,15 @@
 <Project>
+
+    <PropertyGroup>
+        <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Florian Wetzels</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
+        <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+    
     <!-- Make F# support Central Package Management -->
     <PropertyGroup>
         <DisableImplicitSystemValueTupleReference>true</DisableImplicitSystemValueTupleReference>
@@ -16,4 +27,5 @@
 		<!-- Make all the projects use the highest warning level -->
 		<WarningLevel>3</WarningLevel>
 	</PropertyGroup>
+
 </Project>

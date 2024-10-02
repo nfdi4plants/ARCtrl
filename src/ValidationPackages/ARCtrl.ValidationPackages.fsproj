@@ -17,13 +17,8 @@
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
   </ItemGroup>
   <PropertyGroup>
-    <Authors>nfdi4plants</Authors>
     <Description>ARC helper functions for Common workflow language.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
     <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
     <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/CWL</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 </Project>

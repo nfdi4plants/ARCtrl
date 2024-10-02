@@ -87,13 +87,8 @@
     <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
   </ItemGroup>
   <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Florian Wetzels</Authors>
     <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
     <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Json</PackageTags>
     <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 </Project>

@@ -63,13 +63,8 @@
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
   <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Oliver Maus</Authors>
     <Description>ARC and ISA compliant experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in the dotnet environment.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
     <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Json</PackageTags>
     <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 </Project>
