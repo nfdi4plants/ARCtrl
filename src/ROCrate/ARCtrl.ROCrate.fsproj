@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
+  <Import Project="../Package.Metadata.props" />
+  
   <ItemGroup>
     <Compile Include="ROCrateObject.fs" />
     <Compile Include="ISAProfile\Dataset.fs" />
@@ -18,7 +18,6 @@
     <Compile Include="ISAProfile\Person.fs" />
     <Compile Include="ISAProfile\ScholarlyArticle.fs" />
     <None Include="playground.fsx" />
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="DynamicObj" />

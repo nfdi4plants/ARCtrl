@@ -1,0 +1,23 @@
+<Project>
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <FablePackageType>library</FablePackageType>
+    </PropertyGroup>
+        
+    <PropertyGroup>
+        <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Florian Wetzels</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
+        <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Fable.Package.SDK"/>
+        <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
+</Project>

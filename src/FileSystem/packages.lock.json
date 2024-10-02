@@ -8,6 +8,12 @@
         "resolved": "4.3.0",
         "contentHash": "sbK+hYs7H7I3b3sbgttI4GlvQfNPcIqSz1qPSagF3QbVA46KJ/pWSXC/Dwv0s9M6AeRGmoqcIeD7GUaLn41zkA=="
       },
+      "Fable.Package.SDK": {
+        "type": "Direct",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "YEMSyiB/HCpBgDSZUr0LHaTa9vYH+xj8Fvd/AvzUAVbLQ3Bc2l9xHOI9g4+Bh1wGsLFrhMwFW+U39D7m5a6oOw=="
+      },
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",

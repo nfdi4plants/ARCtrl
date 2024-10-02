@@ -2,6 +2,12 @@
   "version": 2,
   "dependencies": {
     ".NETStandard,Version=v2.0": {
+      "Fable.Package.SDK": {
+        "type": "Direct",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "YEMSyiB/HCpBgDSZUr0LHaTa9vYH+xj8Fvd/AvzUAVbLQ3Bc2l9xHOI9g4+Bh1wGsLFrhMwFW+U39D7m5a6oOw=="
+      },
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",
@@ -20,16 +26,21 @@
         "type": "Project",
         "dependencies": {
           "ARCtrl.CWL": "[1.0.0, )",
-          "ARCtrl.FileSystem": "[1.0.0, )"
+          "ARCtrl.FileSystem": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.cwl": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Fable.Package.SDK": "[1.1.0, )"
+        }
       },
       "arctrl.filesystem": {
         "type": "Project",
         "dependencies": {
-          "Fable.Core": "[4.3.0, )"
+          "Fable.Core": "[4.3.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.json": {
@@ -37,6 +48,7 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ROCrate": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -44,6 +56,7 @@
         "type": "Project",
         "dependencies": {
           "DynamicObj": "[4.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -52,13 +65,15 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.FileSystem": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "FsSpreadsheet": "[6.3.0-alpha.4, )"
         }
       },
       "arctrl.validationpackages": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[1.0.0, )"
+          "ARCtrl.Core": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.yaml": {
@@ -66,6 +81,7 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ValidationPackages": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "YAMLicious": "[0.0.1, )"
         }
       },
@@ -84,12 +100,6 @@
         "requested": "[4.3.0, )",
         "resolved": "4.3.0",
         "contentHash": "sbK+hYs7H7I3b3sbgttI4GlvQfNPcIqSz1qPSagF3QbVA46KJ/pWSXC/Dwv0s9M6AeRGmoqcIeD7GUaLn41zkA=="
-      },
-      "Fable.Package.SDK": {
-        "type": "CentralTransitive",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "TIXktcGpeqE3QOr2coV+w5erpLtfijpfBilhb0MNV2OSao/Y5Zg3r7StF+wZ4jSm4Pkid4HpjshZB/V9fUc/Ew=="
       },
       "FSharp.Core": {
         "type": "CentralTransitive",

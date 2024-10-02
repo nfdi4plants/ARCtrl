@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0</TargetFrameworks>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageTags>fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+  <Import Project="../Package.Metadata.props" />
+  
   <ItemGroup>
     <Compile Include="Helper\Collections.fs" />
     <Compile Include="Helper\Url.fs" />

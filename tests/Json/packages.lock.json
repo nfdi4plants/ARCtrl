@@ -396,6 +396,7 @@
           "ARCtrl.Json": "[1.0.0, )",
           "ARCtrl.ROCrate": "[1.0.0, )",
           "ARCtrl.Spreadsheet": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "Fable.SimpleHttp": "[3.5.0, )",
           "Thoth.Json.Newtonsoft": "[0.2.0, )"
         }
@@ -406,23 +407,29 @@
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.Json": "[1.0.0, )",
           "ARCtrl.Spreadsheet": "[1.0.0, )",
-          "ARCtrl.Yaml": "[1.0.0, )"
+          "ARCtrl.Yaml": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.core": {
         "type": "Project",
         "dependencies": {
           "ARCtrl.CWL": "[1.0.0, )",
-          "ARCtrl.FileSystem": "[1.0.0, )"
+          "ARCtrl.FileSystem": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.cwl": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "Fable.Package.SDK": "[1.1.0, )"
+        }
       },
       "arctrl.filesystem": {
         "type": "Project",
         "dependencies": {
-          "Fable.Core": "[4.3.0, )"
+          "Fable.Core": "[4.3.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.json": {
@@ -430,6 +437,7 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ROCrate": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -437,6 +445,7 @@
         "type": "Project",
         "dependencies": {
           "DynamicObj": "[4.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -445,13 +454,15 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.FileSystem": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "FsSpreadsheet": "[6.3.0-alpha.4, )"
         }
       },
       "arctrl.validationpackages": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[1.0.0, )"
+          "ARCtrl.Core": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )"
         }
       },
       "arctrl.yaml": {
@@ -459,6 +470,7 @@
         "dependencies": {
           "ARCtrl.Core": "[1.0.0, )",
           "ARCtrl.ValidationPackages": "[1.0.0, )",
+          "Fable.Package.SDK": "[1.1.0, )",
           "YAMLicious": "[0.0.1, )"
         }
       },
@@ -498,9 +510,9 @@
       },
       "Fable.Package.SDK": {
         "type": "CentralTransitive",
-        "requested": "[1.0.0, )",
-        "resolved": "1.0.0",
-        "contentHash": "TIXktcGpeqE3QOr2coV+w5erpLtfijpfBilhb0MNV2OSao/Y5Zg3r7StF+wZ4jSm4Pkid4HpjshZB/V9fUc/Ew=="
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "YEMSyiB/HCpBgDSZUr0LHaTa9vYH+xj8Fvd/AvzUAVbLQ3Bc2l9xHOI9g4+Bh1wGsLFrhMwFW+U39D7m5a6oOw=="
       },
       "Fable.Pyxpecto": {
         "type": "CentralTransitive",
