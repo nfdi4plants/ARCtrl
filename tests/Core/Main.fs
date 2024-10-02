@@ -1,10 +1,11 @@
-﻿module ARCtrl.ISADotnet.Tests
+module ARCtrl.ISADotnet.Tests
 
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "Core" [
     UriHelper.Tests.main
     DataModel.Tests.main
+    Comment.Tests.main
     OntologyAnnotation.Tests.main
     Regex.Tests.main
     Person.Tests.main

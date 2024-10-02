@@ -8,7 +8,7 @@ let definedTerm = """{
   "termSource": "MS",
   "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
   "comments": [
-    "{\"@id\":\"#Comment_comment_This_is_a_comment\",\"@type\":\"Comment\",\"name\":\"comment\",\"value\":\"This is a comment\",\"@context\":{\"sdo\":\"http://schema.org/\",\"Comment\":\"sdo:Comment\",\"name\":\"sdo:name\",\"value\":\"sdo:text\"}}"
+    "Comment {Name = \"comment\", Value= \"This is a comment\"}"
   ],
   "@context": {
     "sdo": "http://schema.org/",
@@ -26,7 +26,7 @@ let propertyValue = """{
   "category": "Peptidase",
   "categoryCode": "http://purl.obolibrary.org/obo/NCIT_C16965",
   "comments": [
-    "{\"@id\":\"#Comment_comment_This_is_a_comment\",\"@type\":\"Comment\",\"name\":\"comment\",\"value\":\"This is a comment\",\"@context\":{\"sdo\":\"http://schema.org/\",\"Comment\":\"sdo:Comment\",\"name\":\"sdo:name\",\"value\":\"sdo:text\"}}"
+    "Comment {Name = \"comment\", Value= \"This is a comment\"}"
   ],
   "@context": {
     "sdo": "http://schema.org/",
@@ -107,7 +107,7 @@ let person = """{
     }
   ],
   "comments": [
-    "{\"@id\":\"#Comment_Wow_Very_Wow\",\"@type\":\"Comment\",\"name\":\"Wow\",\"value\":\"Very Wow\",\"@context\":{\"sdo\":\"http://schema.org/\",\"Comment\":\"sdo:Comment\",\"name\":\"sdo:name\",\"value\":\"sdo:text\"}}"
+    "Comment {Name = \"Wow\", Value= \"VeryWow\"}"
   ],
   "@context": {
     "sdo": "http://schema.org/",
@@ -186,8 +186,8 @@ let publication = """{
     }
   },
   "comments": [
-    "{\"@id\":\"#Comment_ByeBye_World\",\"@type\":\"Comment\",\"name\":\"ByeBye\",\"value\":\"World\",\"@context\":{\"sdo\":\"http://schema.org/\",\"Comment\":\"sdo:Comment\",\"name\":\"sdo:name\",\"value\":\"sdo:text\"}}",
-    "{\"@id\":\"#Comment_Hello_Space\",\"@type\":\"Comment\",\"name\":\"Hello\",\"value\":\"Space\",\"@context\":{\"sdo\":\"http://schema.org/\",\"Comment\":\"sdo:Comment\",\"name\":\"sdo:name\",\"value\":\"sdo:text\"}}"
+    "Comment {Name = \"ByeBye\", Value= \"World\"}",
+    "Comment {Name = \"Hello\", Value= \"Space\"}"
   ],
   "@context": {
     "sdo": "http://schema.org/",

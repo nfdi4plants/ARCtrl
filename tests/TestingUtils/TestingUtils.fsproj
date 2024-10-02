@@ -33,8 +33,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
-    <!--<ProjectReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Javascript.fsproj" />-->
-    <!--<ProjectReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Python.fsproj" />-->
+    <ProjectReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Javascript.fsproj" />
+    <ProjectReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Python.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="8.0.400" />

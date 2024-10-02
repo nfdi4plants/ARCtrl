@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="UriHelper.Tests.fs" />
     <Compile Include="Regex.Tests.fs" />
+    <Compile Include="Comment.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="OntologyAnnotation.Tests.fs" />
     <Compile Include="Data.Tests.fs" />

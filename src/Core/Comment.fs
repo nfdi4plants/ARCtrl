@@ -4,6 +4,7 @@ type EMail = string
 
 open Fable.Core
 open ARCtrl.Helper
+open System.Text.RegularExpressions
 
 [<AttachMembers>]
 type Comment(?name, ?value) =
@@ -51,7 +52,7 @@ type Comment(?name, ?value) =
             "Value", this.Value
         ] 
         |> List.choose (fun (s,opt) -> opt |> Option.map (fun o -> s,o))
-        |> List.map (fun (s,v) -> sprintf "%s = %A" s v)
+        |> List.map (fun (s,v) -> sprintf "%s = \"%s\"" s v)
         |> String.concat ", "
         |> sb.Append
         |> ignore
@@ -60,10 +61,42 @@ type Comment(?name, ?value) =
 
     // Reverse function to ToString() override
     static member fromString(s) =
-        let nameRegex = System.Text.RegularExpressions.Regex("(?<=Name = \")[^\"]*(?=\",|})").Match(s)
-        let valueRegex = System.Text.RegularExpressions.Regex("(?<=Value = \")[^\"]*(?=\",|\"})").Match(s)
-        let name = if nameRegex.Success then Some nameRegex.Value else None
-        let value = if valueRegex.Success then Some valueRegex.Value else None
+
+
+        // Buggy because of fable
+
+        //let namePattern = Regex.Pattern.handleGroupPatterns """(?<=Name = ")[^"]*(?=")"""
+        ////let nameResult = Regex(namePattern).Match(s)
+        //let nameResult = Regex.Match(s, namePattern)
+
+        //let valuePattern = Regex.Pattern.handleGroupPatterns """(?<=Value = ")[^"]*(?=")"""
+        ////let valueResult = Regex(valuePattern).Match(s)
+        //let valueResult = Regex.Match(s, valuePattern)
+
+        //let name = if nameResult.Success then Some nameResult.Value else None
+        //let value = if valueResult.Success then Some valueResult.Value else None
+
+
+
+        let namePattern = Regex.Pattern.handleGroupPatterns "Name = \"[^\"]*\""
+        //let nameResult = Regex(namePattern).Match(s)
+        let nameResult = Regex.Match(s, namePattern)
+
+        let valuePattern = Regex.Pattern.handleGroupPatterns "Value = \"[^\"]*\""
+        //let valueResult = Regex(valuePattern).Match(s)
+        let valueResult = Regex.Match(s, valuePattern)
+
+        let name = if nameResult.Success then Some (nameResult.Value.Replace("Name = ","").Replace("\"","")) else None
+        let value = if valueResult.Success then Some (valueResult.Value.Replace("Value = ","").Replace("\"","")) else None
+
+
+
+
+
+
+
+
+
         Comment(?name=name, ?value=value)
 
 
