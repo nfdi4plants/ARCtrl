@@ -22,30 +22,22 @@ module BundleDotNet =
         System.IO.Directory.CreateDirectory(ProjectInfo.netPkgDir) |> ignore
         !! "src/**/*.*proj"
         -- "src/bin/*"
-        |> Seq.iter (fun g ->
-            try
-                g
-                |> Fake.DotNet.DotNet.pack (fun p ->
-            
-                    let msBuildParams =
-                        {p.MSBuildParams with 
-                            Properties = ([
-                                "Version",versionTag
-                                "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.toLines )
-                            ] @ p.MSBuildParams.Properties)
-                            DisableInternalBinLog = true
-                        }
-                    {
-                        p with 
-                            VersionSuffix = versionSuffix
-                            MSBuildParams = msBuildParams
-                            OutputPath = Some ProjectInfo.netPkgDir
-                    }
-
-                ) 
-            with
-            | err -> ()
-        )
+        |> Seq.iter (Fake.DotNet.DotNet.pack (fun p ->           
+            let msBuildParams =
+                {p.MSBuildParams with 
+                    Properties = ([
+                        "Version",versionTag
+                        "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.toLines )
+                    ] @ p.MSBuildParams.Properties)
+                    DisableInternalBinLog = true
+                }
+            {
+                p with 
+                    VersionSuffix = versionSuffix
+                    MSBuildParams = msBuildParams
+                    OutputPath = Some ProjectInfo.netPkgDir
+            }
+        ))
 
 let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
     BundleDotNet.bundle ProjectInfo.stableVersionTag None
