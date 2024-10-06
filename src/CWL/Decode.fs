@@ -399,3 +399,19 @@ module Decode =
             steps
         )
 
+    let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
+        for e in dict do
+            match e.Value with
+            | YAMLElement.Object [YAMLElement.Value v] -> 
+                DynObj.setValue dynObj e.Key v.Value
+            | YAMLElement.Object [YAMLElement.Sequence s] ->
+                let newDynObj = new DynamicObj ()
+                (s |> List.map ((Decode.object (fun get ->  (get.Overflow.FieldList []))) >> overflowDecoder newDynObj))
+                |> List.iter (fun x ->
+                    DynObj.setValue
+                        dynObj
+                        e.Key
+                        x
+                )
+        dynObj
+
