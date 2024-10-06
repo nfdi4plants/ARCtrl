@@ -30,8 +30,7 @@ module Inputs =
 
         type StepInput = {
             Id: string
-            Source: StepOutput option
-            linkMerge: string option
+            Source: string option
             defaultValue: string option
             valueFrom: string option
         }
