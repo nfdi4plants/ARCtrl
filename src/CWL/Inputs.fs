@@ -31,6 +31,6 @@ module Inputs =
         type StepInput = {
             Id: string
             Source: string option
-            defaultValue: string option
-            valueFrom: string option
+            DefaultValue: string option
+            ValueFrom: string option
         }

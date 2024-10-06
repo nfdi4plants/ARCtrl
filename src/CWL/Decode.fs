@@ -5,7 +5,10 @@ open YAMLicious.YAMLiciousTypes
 open CWLTypes
 open Requirements
 open Inputs
+open Inputs.Workflow
 open Outputs
+open Outputs.Workflow
+open WorkflowSteps
 open DynamicObj
 
 module Decode =
@@ -313,4 +316,67 @@ module Decode =
         if baseCommand.IsSome then
             description.BaseCommand <- baseCommand
         description
+
+    let stringOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string option) =
+        Decode.object(fun get ->
+            let fieldValue = get.Optional.Field field Decode.string
+            fieldValue
+        )
+
+    let stringFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string) =
+        Decode.object(fun get ->
+            let fieldValue = get.Required.Field field Decode.string
+            fieldValue
+        )
+
+    let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> StepInput []) =
+        Decode.object (fun get ->
+            let dict = get.Overflow.FieldList []
+            [|
+                for key in dict.Keys do
+                    let value = dict.[key]
+                    let source = stringOptionFieldDecoder "source" value
+                    let defaultValue = stringOptionFieldDecoder "default" value
+                    let valueFrom = stringOptionFieldDecoder "valueFrom" value
+                    { Id = key; Source = source; DefaultValue = defaultValue; ValueFrom = valueFrom }
+            |]   
+        )
+
+    let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> string []) =
+        Decode.object (fun get ->
+            let outputs = get.Required.Field "out" (Decode.array Decode.string)
+            outputs
+        )
+
+    let stepArrayDecoder =
+        Decode.object (fun get ->
+            let dict = get.Overflow.FieldList []
+            [|
+                for key in dict.Keys do
+                    let value = dict.[key]
+                    let run = stringFieldDecoder "run" value
+                    let inputs = Decode.object (fun get -> get.Required.Field "in" inputStepDecoder) value
+                    let outputs = {Id = outputStepsDecoder value}
+                    let requirements = requirementsDecoder value
+                    let hints = hintsDecoder value
+                    let wfStep =
+                        WorkflowStep(
+                            key,
+                            inputs,
+                            outputs,
+                            run
+                        )
+                    if requirements.IsSome then
+                        wfStep.Requirements <- requirements
+                    if hints.IsSome then
+                        wfStep.Hints <- hints
+                    wfStep
+            |]     
+        )
+    
+    let stepsDecoder =
+        Decode.object (fun get ->
+            let steps = get.Required.Field "steps" stepArrayDecoder
+            steps
+        )
 

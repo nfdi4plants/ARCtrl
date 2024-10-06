@@ -9,19 +9,25 @@ open DynamicObj
 module WorkflowSteps =
 
     type WorkflowStep (
+        id: string,
         in_: StepInput [],
-        out_: StepOutput [],
+        out_: StepOutput,
         run: string,
         ?requirements: Requirement [],
         ?hints: Requirement []
     ) =
         inherit DynamicObj ()
 
+        let mutable _id: string = id
         let mutable _in: StepInput [] = in_
-        let mutable _out: StepOutput [] = out_
+        let mutable _out: StepOutput = out_
         let mutable _run: string = run
         let mutable _requirements: Requirement [] option = requirements
         let mutable _hints: Requirement [] option = hints
+
+        member this.Id
+            with get() = _id
+            and set(id) = _id <- id
 
         member this.In
             with get() = _in
