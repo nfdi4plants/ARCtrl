@@ -10,6 +10,7 @@
     <Compile Include="Outputs.Tests.fs" />
     <Compile Include="Inputs.Tests.fs" />
     <Compile Include="Requirements.Tests.fs" />
+    <Compile Include="WorkflowSteps.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

@@ -7,6 +7,7 @@ let all = testSequenced <| testList "CWL" [
     Tests.Outputs.testOutput
     Tests.Inputs.testInput
     Tests.Requirements.testRequirement
+    Tests.WorkflowSteps.testWorkflowStep
 ]
 
 [<EntryPoint>]
