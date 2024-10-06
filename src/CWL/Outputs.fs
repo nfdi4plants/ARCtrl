@@ -25,5 +25,5 @@ module Outputs =
     module Workflow =
 
         type StepOutput = {
-            Id: string
+            Id: string []
         }
