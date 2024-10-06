@@ -335,7 +335,16 @@ module Decode =
             [|
                 for key in dict.Keys do
                     let value = dict.[key]
-                    let source = stringOptionFieldDecoder "source" value
+                    let source =
+                        let s1 =
+                            match value with
+                            | YAMLElement.Object [YAMLElement.Value v] -> Some v.Value
+                            | _ -> None
+                        let s2 = stringOptionFieldDecoder "source" value
+                        match s1,s2 with
+                        | Some s1, _ -> Some s1
+                        | _, Some s2 -> Some s2
+                        | _ -> None
                     let defaultValue = stringOptionFieldDecoder "default" value
                     let valueFrom = stringOptionFieldDecoder "valueFrom" value
                     { Id = key; Source = source; DefaultValue = defaultValue; ValueFrom = valueFrom }
