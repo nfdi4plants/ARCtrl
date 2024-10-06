@@ -164,25 +164,23 @@ module Decode =
 
     let initialWorkDirRequirementDecoder (get: Decode.IGetters): CWLType[] =
         let initialWorkDir =
-            try
-                get.Required.Field
-                    "listing"
-                    (
-                        Decode.array 
-                            (
-                                Decode.object (fun get2 ->
-                                    Dirent
-                                        {
-                                            // BUG: Entry Requires an Entryname to be present when it's an expression
-                                            Entry = get2.Required.Field "entry" decodeStringOrExpression
-                                            Entryname = get2.Optional.Field "entryname" decodeStringOrExpression
-                                            Writable = get2.Optional.Field "writable" Decode.bool
-                                        }
-                                )
+            //TODO: Support more than dirent
+            get.Required.Field
+                "listing"
+                (
+                    Decode.array 
+                        (
+                            Decode.object (fun get2 ->
+                                Dirent
+                                    {
+                                        // BUG: Entry Requires an Entryname to be present when it's an expression
+                                        Entry = get2.Required.Field "entry" decodeStringOrExpression
+                                        Entryname = get2.Optional.Field "entryname" decodeStringOrExpression
+                                        Writable = get2.Optional.Field "writable" Decode.bool
+                                    }
                             )
+                        )
                     )
-            with
-            | _ -> failwith "Only Dirent supported"
         initialWorkDir
 
     let resourceRequirementDecoder (get: Decode.IGetters): ResourceRequirementInstance =
