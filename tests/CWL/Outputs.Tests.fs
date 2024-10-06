@@ -14,7 +14,7 @@ let decodeOutput =
 let testOutput =
     testList "outputs with basetypes and array" [
         testCase "Length" <| fun _ ->
-            let expected = 4
+            let expected = 5
             let actual = decodeOutput.Length
             Expect.isTrue
                 (expected = actual)
@@ -43,7 +43,7 @@ let testOutput =
         testList "Directory" [
             let directoryItem = decodeOutput.[1]
             testCase "Name" <| fun _ ->
-                let expected = "example"
+                let expected = "example1"
                 let actual = directoryItem.Name
                 Expect.isTrue
                     (expected = actual)
@@ -61,8 +61,29 @@ let testOutput =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
         ]
+        testList "Directory 2" [
+            let directoryItem = decodeOutput.[2]
+            testCase "Name" <| fun _ ->
+                let expected = "example2"
+                let actual = directoryItem.Name
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+            testCase "Type" <| fun _ ->
+                let expected = Directory (DirectoryInstance())
+                let actual = directoryItem.Type.Value
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+            testCase "OutputBinding" <| fun _ ->
+                let expected = None
+                let actual = directoryItem.OutputBinding
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+        ]
         testList "File Array" [
-            let fileArrayItem = decodeOutput.[2]
+            let fileArrayItem = decodeOutput.[3]
             testCase "Name" <| fun _ ->
                 let expected = "exampleArray1"
                 let actual = fileArrayItem.Name
@@ -83,7 +104,7 @@ let testOutput =
                     $"Expected: {expected}\nActual: {actual}"
         ]
         testList "File Array 2" [
-            let fileArrayItem = decodeOutput.[3]
+            let fileArrayItem = decodeOutput.[4]
             testCase "Name" <| fun _ ->
                 let expected = "exampleArray2"
                 let actual = fileArrayItem.Name

@@ -1,8 +1,7 @@
 module TestObjects.CWL.Inputs
 
 let inputs ="""inputs:
-  arcDirectory:
-    type: Directory
+  arcDirectory: Directory
   firstArg:
     type: File
     inputBinding:

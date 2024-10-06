@@ -5,10 +5,11 @@ let outputs ="""outputs:
     type: File
     outputBinding:
       glob: ./arc/runs/fsResult1/result.csv
-  example:
+  example1:
     type: Directory
     outputBinding:
       glob: ./arc/runs/fsResult1/example.csv
+  example2: Directory
   exampleArray1:
     type: File[]
     outputBinding:

@@ -19,9 +19,9 @@ module Decode =
             { Glob = glob }
         )
 
-    let outputBindingDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
+    let outputBindingDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding option) =
         Decode.object(fun get ->
-            let outputBinding = get.Required.Field "outputBinding" outputBindingGlobDecoder
+            let outputBinding = get.Optional.Field "outputBinding" outputBindingGlobDecoder
             outputBinding
         )
 
@@ -41,6 +41,30 @@ module Decode =
             | _ -> failwith "Invalid CWL type"
         )
 
+    let cwlTypeStringMatcher t =
+        match t with
+        | "File" -> File (FileInstance ())
+        | "Directory" -> Directory (DirectoryInstance ())
+        | "Dirent" -> Dirent { Entry = ""; Entryname = None; Writable = None }
+        | "string" -> String
+        | "int" -> Int
+        | "long" -> Long
+        | "float" -> Float
+        | "double" -> Double
+        | "boolean" -> Boolean
+        | "File[]" -> Array (File (FileInstance ()))
+        | "Directory[]" -> Array (Directory (DirectoryInstance ()))
+        | "Dirent[]" -> Array (Dirent { Entry = ""; Entryname = None; Writable = None })
+        | "string[]" -> Array String
+        | "int[]" -> Array Int
+        | "long[]" -> Array Long
+        | "float[]" -> Array Float
+        | "double[]" -> Array Double
+        | "boolean[]" -> Array Boolean
+        | "stdout" -> Stdout
+        | "null" -> Null
+        | _ -> failwith "Invalid CWL type"
+
     let cwlTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
             let cwlType = 
@@ -55,28 +79,7 @@ module Decode =
                     )
             match cwlType with
             | Some t ->
-                match t with
-                | "File" -> File (FileInstance ())
-                | "Directory" -> Directory (DirectoryInstance ())
-                | "Dirent" -> Dirent { Entry = ""; Entryname = None; Writable = None }
-                | "string" -> String
-                | "int" -> Int
-                | "long" -> Long
-                | "float" -> Float
-                | "double" -> Double
-                | "boolean" -> Boolean
-                | "File[]" -> Array (File (FileInstance ()))
-                | "Directory[]" -> Array (Directory (DirectoryInstance ()))
-                | "Dirent[]" -> Array (Dirent { Entry = ""; Entryname = None; Writable = None })
-                | "string[]" -> Array String
-                | "int[]" -> Array Int
-                | "long[]" -> Array Long
-                | "float[]" -> Array Float
-                | "double[]" -> Array Double
-                | "boolean[]" -> Array Boolean
-                | "stdout" -> Stdout
-                | "null" -> Null
-                | _ -> failwith "Invalid CWL type"
+                cwlTypeStringMatcher t
             | None -> 
                 let cwlTypeArray = get.Required.Field "type" cwlArrayTypeDecoder
                 cwlTypeArray
@@ -89,12 +92,18 @@ module Decode =
                 for key in dict.Keys do
                     let value = dict.[key]
                     let outputBinding = outputBindingDecoder value
-                    let cwlType = cwlTypeDecoder value
-                    Output(
-                        key,
-                        cwlType,
-                        outputBinding
-                    )
+                    let cwlType = 
+                        match value with
+                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value
+                        | _ -> cwlTypeDecoder value
+                    let output =
+                        Output(
+                            key,
+                            cwlType
+                        )
+                    if outputBinding.IsSome then
+                        DynObj.setValueOpt output "outputBinding" outputBinding
+                    output
             |]     
         )
     
@@ -258,7 +267,10 @@ module Decode =
                 for key in dict.Keys do
                     let value = dict.[key]
                     let inputBinding = inputBindingDecoder value
-                    let cwlType = cwlTypeDecoder value
+                    let cwlType = 
+                        match value with
+                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value
+                        | _ -> cwlTypeDecoder value
                     let input =
                         Input(
                             key,
