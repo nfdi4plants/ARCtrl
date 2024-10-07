@@ -23,15 +23,15 @@ type Person(
     inherit ROCrateObject(id = id, schemaType = "schema.org/Person", ?additionalType = additionalType)
     do
 
-        DynObj.setValue this (nameof givenName) givenName
+        DynObj.setProperty (nameof givenName) givenName this
 
-        DynObj.setValueOpt this (nameof familyName) familyName
-        DynObj.setValueOpt this (nameof email) email
-        DynObj.setValueOpt this (nameof identifier) identifier
-        DynObj.setValueOpt this (nameof affiliation) affiliation
-        DynObj.setValueOpt this (nameof jobTitle) jobTitle
-        DynObj.setValueOpt this (nameof additionalName) additionalName
-        DynObj.setValueOpt this (nameof address) address
-        DynObj.setValueOpt this (nameof telephone) telephone
-        DynObj.setValueOpt this (nameof faxNumber) faxNumber
-        DynObj.setValueOpt this (nameof disambiguatingDescription) disambiguatingDescription
+        DynObj.setOptionalProperty (nameof familyName) familyName         this
+        DynObj.setOptionalProperty (nameof email) email                   this
+        DynObj.setOptionalProperty (nameof identifier) identifier         this
+        DynObj.setOptionalProperty (nameof affiliation) affiliation       this
+        DynObj.setOptionalProperty (nameof jobTitle) jobTitle             this
+        DynObj.setOptionalProperty (nameof additionalName) additionalName this
+        DynObj.setOptionalProperty (nameof address) address               this
+        DynObj.setOptionalProperty (nameof telephone) telephone           this
+        DynObj.setOptionalProperty (nameof faxNumber) faxNumber           this
+        DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this

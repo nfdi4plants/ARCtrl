@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/Json</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;investigation;study;assay;ISA-Json;fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
-  </ItemGroup>
+  <Import Project="../Package.Metadata.props" />
+  
   <ItemGroup>
     <Compile Include="context\rocrate\property_value_context.fs" />
     <Compile Include="context\rocrate\isa_assay_context.fs" />
@@ -62,7 +61,6 @@
     <Compile Include="Process\ProcessInput.fs" />
     <Compile Include="Process\ProcessOutput.fs" />
     <Compile Include="Process\Process.fs" />
-    <Compile Include="Process\ProcessSequence.fs" />
     <Compile Include="Process\AssayMaterials.fs" />
     <Compile Include="Process\StudyMaterials.fs" />
     <Compile Include="Table\OATable.fs" />
@@ -71,33 +69,20 @@
     <Compile Include="Table\IOType.fs" />
     <Compile Include="Table\CompositeHeader.fs" />
     <Compile Include="Table\ArcTable.fs" />
-    <Compile Include="Table\Compression.fs" />
     <Compile Include="Table\Templates.fs" />
     <Compile Include="DataMap\DataContext.fs" />
     <Compile Include="DataMap\DataMap.fs" />
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
+    <Compile Include="ROCrateObject.fs" />
     <Compile Include="ARC.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="NJsonSchema" Version="10.8.0" />
-    <PackageReference Include="Thoth.Json.Core" Version="0.4.0" />
-    <PackageReference Include="Thoth.Json.Newtonsoft" Version="0.2.0" />
-    <PackageReference Include="FsSpreadsheet.Js" Version="6.3.0-alpha.3" />
-    <PackageReference Include="FsSpreadsheet.Py" Version="6.3.0-alpha.3" />
+    <PackageReference Include="Thoth.Json.Core" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+    <ProjectReference Include="..\ROCrate\ARCtrl.ROCrate.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil, Florian Wetzels, Kevin Frey</Authors>
-    <Description>ARC and ISA json compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-json format.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Json</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
 </Project>

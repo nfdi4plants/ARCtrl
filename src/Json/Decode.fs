@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -28,7 +28,7 @@ module PyTime =
         |> DateTime.fromTimeStamp
 #endif
     
-module internal Helpers =
+module Helpers =
 
     let prependPath
         (path: string)
@@ -46,18 +46,6 @@ module internal Helpers =
 
 module Decode =
 
-    let helpers = 
-        #if FABLE_COMPILER_PYTHON
-        Thoth.Json.Python.Decode.helpers
-        #endif
-        #if FABLE_COMPILER_JAVASCRIPT
-        Thoth.Json.JavaScript.Decode.helpers
-        #endif
-        #if !FABLE_COMPILER
-        Thoth.Json.Newtonsoft.Decode.helpers
-        #endif
-
-
     let isURI (s : string) = 
         true
         //s.StartsWith("http://") || s.StartsWith("https://")
@@ -70,20 +58,6 @@ module Decode =
                     | Ok s -> Error (DecoderError(s,ErrorReason.FailMessage (sprintf "Expected URI, got %s" s)))
                     | Error e -> Error e
         }
-
-    let inline fromJsonString (decoder : Decoder<'a>) (s : string) : 'a = 
-        #if FABLE_COMPILER_PYTHON
-        match Thoth.Json.Python.Decode.fromString decoder s with
-        #endif
-        #if FABLE_COMPILER_JAVASCRIPT
-        match Thoth.Json.JavaScript.Decode.fromString decoder s with
-        #endif
-        #if !FABLE_COMPILER
-        match Thoth.Json.Newtonsoft.Decode.fromString decoder s with
-        #endif
-        | Ok a -> a
-        | Error e -> failwith (sprintf "Error decoding string: %O" e)
-    
 
     let hasUnknownFields (helpers : IDecoderHelpers<'JsonValue>) (knownFields : Set<string>) (json : 'JsonValue) = 
         helpers.getProperties json

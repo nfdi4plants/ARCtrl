@@ -1,9 +1,12 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Description>ARC and ISA xlsx compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-xlsx format.</Description>
+    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/Spreadsheet</PackageProjectUrl>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;investigation;study;assay;ISA;Spreadsheet;xlsx;excel;fable-javascript;fable-python;fable-dotnet</PackageTags>
   </PropertyGroup>
+  <Import Project="../Package.Metadata.props" />
+  
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="CollectionAux.fs" />
@@ -33,24 +36,10 @@
     <Compile Include="Template.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet" Version="6.3.0-alpha.3" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="*.fsproj; **\*.fs; **\*.fsi" PackagePath="fable\" />
-    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+    <PackageReference Include="FsSpreadsheet"/>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\FileSystem\ARCtrl.FileSystem.fsproj" />
   </ItemGroup>
-  <PropertyGroup>
-    <Authors>nfdi4plants, Lukas Weil</Authors>
-    <Description>ARC and ISA xlsx compliant parser for experimental metadata toolkit in F#. This project is meant as an easy means to open, manipulate and save ISA (Investigation,Study,Assay) metadata files in isa-xlsx format.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata investigation study assay ISA Spreadsheet xlsx excel</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/ISA</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
 </Project>

@@ -14,17 +14,6 @@ open Fable.Core.JsInterop
 [<RequireQualifiedAccess>]
 module Encode = 
 
-    let inline toJsonString spaces (value : IEncodable) = 
-        #if FABLE_COMPILER_PYTHON
-        Thoth.Json.Python.Encode.toString spaces value
-        #endif
-        #if FABLE_COMPILER_JAVASCRIPT
-        Thoth.Json.JavaScript.Encode.toString spaces value
-        #endif
-        #if !FABLE_COMPILER
-        Thoth.Json.Newtonsoft.Encode.toString spaces value
-        #endif
-
     let inline choose (kvs : (string * IEncodable option) list) = 
         kvs
         |> List.choose (fun (k,v) ->

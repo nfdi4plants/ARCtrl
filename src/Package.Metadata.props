@@ -1,0 +1,25 @@
+<Project>
+
+    <PropertyGroup>
+        <TargetFramework>netstandard2.0</TargetFramework>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <FablePackageType>library</FablePackageType>
+    </PropertyGroup>
+        
+    <PropertyGroup>
+        <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Florian Wetzels</Authors>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>logo.png</PackageIcon>
+        <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
+        <RepositoryType>git</RepositoryType>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Fable.Package.SDK">
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+            <PrivateAssets>all</PrivateAssets>
+        </PackageReference>
+        <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+    </ItemGroup>
+</Project>

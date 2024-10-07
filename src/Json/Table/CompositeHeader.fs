@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Json
+namespace ARCtrl.Json
 
 open Thoth.Json.Core
 
@@ -56,19 +56,3 @@ module CompositeHeader =
       | "Comment" -> c() |> CompositeHeader.Comment
       | anyelse -> CompositeHeader.FreeText anyelse
     ) 
-
-[<AutoOpen>]
-module CompositeHeaderExtensions =
-
-    type CompositeHeader with
-
-        static member fromJsonString (s:string)  = 
-            Decode.fromJsonString CompositeHeader.decoder s
-
-        static member toJsonString(?spaces) = 
-            fun (obj:CompositeHeader) ->
-                CompositeHeader.encoder obj
-                |> Encode.toJsonString (Encode.defaultSpaces spaces)
-
-        member this.ToJsonString(?spaces) =
-            CompositeHeader.toJsonString(?spaces=spaces) this

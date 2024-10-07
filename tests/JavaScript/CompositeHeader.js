@@ -1,7 +1,7 @@
 import { equal, deepEqual, notEqual } from 'assert';
 import { CompositeHeader, IOType } from "./ARCtrl/index.js"
 import { OntologyAnnotation } from './ARCtrl/index.js';
-import { assertEqual } from './ARCtrl/fable_modules/fable-library-js.4.16.0/Util.js';
+import { assertEqual } from './ARCtrl/fable_modules/fable-library-js.4.22.0/Util.js';
 
 function tests_IOType() {
     describe('IOType', function () {

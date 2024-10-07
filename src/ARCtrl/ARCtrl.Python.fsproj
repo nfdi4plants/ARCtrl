@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-python</PackageTags>
+    <DefineConstants>FABLE_COMPILER_PYTHON;FABLE_COMPILER</DefineConstants>
+  </PropertyGroup>
+  <Import Project="../Package.Metadata.props" />
+  
+  <Import Project="ARCtrl.Common.props" />
+  <ItemGroup>   
+    <Compile Include="WebRequest\WebRequest.Py.fs" />
+    <Compile Include="WebRequest\WebRequest.fs" />
+    <Compile Include="Template.Web.fs" />
+    <Compile Include="ARC.fs" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Xlsx.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Thoth.Json.Python"/>
+  </ItemGroup>
+  <PropertyGroup>
+    <PythonDependencies>
+      <Package Name="requests" Version="&gt;= 2.28.1 &lt; 3.0.0" ResolutionStrategy="Max" />
+    </PythonDependencies>
+  </PropertyGroup>
+</Project>

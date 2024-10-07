@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="UriHelper.Tests.fs" />
     <Compile Include="Regex.Tests.fs" />
+    <Compile Include="Comment.Tests.fs" />
     <Compile Include="Person.Tests.fs" />
     <Compile Include="OntologyAnnotation.Tests.fs" />
     <Compile Include="Data.Tests.fs" />
@@ -27,7 +28,9 @@
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>
-   <ProjectReference Include="..\..\src\Core\ARCtrl.Core.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="8.0.400" />
   </ItemGroup>
 </Project>

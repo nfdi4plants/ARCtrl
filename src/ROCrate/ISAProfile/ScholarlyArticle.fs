@@ -19,10 +19,10 @@ type ScholarlyArticle(
     inherit ROCrateObject(id = id, schemaType = "schema.org/ScholarlyArticle", ?additionalType = additionalType)
     do
 
-        DynObj.setValue this (nameof headline) headline
-        DynObj.setValue this (nameof identifier) identifier
+        DynObj.setProperty (nameof headline) headline     this
+        DynObj.setProperty (nameof identifier) identifier this
 
-        DynObj.setValueOpt this (nameof author) author
-        DynObj.setValueOpt this (nameof url) url
-        DynObj.setValueOpt this (nameof creativeWorkStatus) creativeWorkStatus
-        DynObj.setValueOpt this (nameof disambiguatingDescription) disambiguatingDescription
+        DynObj.setOptionalProperty (nameof author) author this
+        DynObj.setOptionalProperty (nameof url) url this
+        DynObj.setOptionalProperty (nameof creativeWorkStatus) creativeWorkStatus this
+        DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this

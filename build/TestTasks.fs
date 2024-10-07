@@ -22,7 +22,7 @@ module RunTests =
         Trace.traceImportant "Start native JavaScript tests"
         for path in ProjectInfo.jsTestProjects do
             // transpile library for native access
-            run dotnet $"fable src/ARCtrl -o {path}/ARCtrl" ""
+            run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ARCtrl" ""
             GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
             run npx $"mocha {path} --timeout 20000" "" 
     }
@@ -40,7 +40,7 @@ module RunTests =
         Trace.traceImportant "Start native Python tests"
         for path in ProjectInfo.pyTestProjects do
             // transpile library for native access
-            run dotnet $"fable src/ARCtrl -o {path}/ARCtrl --lang python" ""
+            run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl --lang python" ""
             GenerateIndexPy.ARCtrl_generate($"{path}/ARCtrl")
             run python $"-m pytest {path}" "" 
     }

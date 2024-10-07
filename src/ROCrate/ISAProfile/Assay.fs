@@ -19,13 +19,13 @@ type Assay(
 ) as this =
     inherit Dataset(id, "Assay")
     do
-        DynObj.setValue this (nameof identifier) identifier
+        DynObj.setProperty (nameof identifier) identifier this
 
-        DynObj.setValueOpt this (nameof measurementMethod) measurementMethod
-        DynObj.setValueOpt this (nameof measurementTechnique) measurementTechnique
-        DynObj.setValueOpt this (nameof variableMeasured) variableMeasured
-        DynObj.setValueOpt this (nameof about) about
-        DynObj.setValueOpt this (nameof comment) comment
-        DynObj.setValueOpt this (nameof creator) creator
-        DynObj.setValueOpt this (nameof hasPart) hasPart
-        DynObj.setValueOpt this (nameof url) url
+        DynObj.setOptionalProperty (nameof measurementMethod) measurementMethod         this
+        DynObj.setOptionalProperty (nameof measurementTechnique) measurementTechnique   this
+        DynObj.setOptionalProperty (nameof variableMeasured) variableMeasured           this
+        DynObj.setOptionalProperty (nameof about) about                                 this
+        DynObj.setOptionalProperty (nameof comment) comment                             this
+        DynObj.setOptionalProperty (nameof creator) creator                             this
+        DynObj.setOptionalProperty (nameof hasPart) hasPart                             this
+        DynObj.setOptionalProperty (nameof url) url                                     this

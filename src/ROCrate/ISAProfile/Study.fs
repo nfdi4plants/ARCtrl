@@ -22,17 +22,17 @@ type Study(
 ) as this = 
     inherit Dataset(id, "Study")
     do
-        DynObj.setValue this (nameof identifier) identifier
+        DynObj.setProperty (nameof identifier) identifier this
 
-        DynObj.setValueOpt this (nameof about) about
-        DynObj.setValueOpt this (nameof citation) citation
-        DynObj.setValueOpt this (nameof comment) comment
-        DynObj.setValueOpt this (nameof creator) creator
-        DynObj.setValueOpt this (nameof dateCreated) dateCreated
-        DynObj.setValueOpt this (nameof dateModified) dateModified
-        DynObj.setValueOpt this (nameof datePublished) datePublished
-        DynObj.setValueOpt this (nameof description) description
-        DynObj.setValueOpt this (nameof hasPart) hasPart
-        DynObj.setValueOpt this (nameof headline) headline
-        DynObj.setValueOpt this (nameof url) url
+        DynObj.setOptionalProperty (nameof about) about                 this 
+        DynObj.setOptionalProperty (nameof citation) citation           this 
+        DynObj.setOptionalProperty (nameof comment) comment             this 
+        DynObj.setOptionalProperty (nameof creator) creator             this 
+        DynObj.setOptionalProperty (nameof dateCreated) dateCreated     this 
+        DynObj.setOptionalProperty (nameof dateModified) dateModified   this 
+        DynObj.setOptionalProperty (nameof datePublished) datePublished this 
+        DynObj.setOptionalProperty (nameof description) description     this 
+        DynObj.setOptionalProperty (nameof hasPart) hasPart             this 
+        DynObj.setOptionalProperty (nameof headline) headline           this 
+        DynObj.setOptionalProperty (nameof url) url                     this 
 

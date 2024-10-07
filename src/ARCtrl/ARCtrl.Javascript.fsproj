@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageTags>ARC;F#;FSharp;dotnet;.Net;bioinformatics;biology;fable-library;datascience;dataplant;nfdi;metadata;fable-javascript</PackageTags>
+    <DefineConstants>FABLE_COMPILER_JAVASCRIPT;FABLE_COMPILER;FABLE_COMPILER_TYPESCRIPT</DefineConstants>
+  </PropertyGroup>
+  <Import Project="../Package.Metadata.props" />
+  
+  <Import Project="ARCtrl.Common.props" />
+  <ItemGroup>
+    <Compile Include="WebRequest\WebRequest.Node.fs" />
+    <Compile Include="WebRequest\WebRequest.fs" />
+    <Compile Include="Template.Web.fs" />
+    <Compile Include="ARC.fs" />
+    <Compile Include="Json.fs" />
+    <Compile Include="Xlsx.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Fetch"/>
+    <PackageReference Include="Fable.SimpleHttp"/>
+    <PackageReference Include="Thoth.Json.Javascript"/>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NpmDependencies>
+      <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+  </PropertyGroup>
+  
+</Project>

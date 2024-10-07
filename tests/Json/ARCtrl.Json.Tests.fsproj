@@ -45,4 +45,7 @@
     <ProjectReference Include="..\..\src\Json\ARCtrl.Json.fsproj" />
     <ProjectReference Include="..\TestingUtils\TestingUtils.fsproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="NJsonSchema" />
+  </ItemGroup>
 </Project>

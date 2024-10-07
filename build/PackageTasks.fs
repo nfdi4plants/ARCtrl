@@ -22,7 +22,7 @@ module BundleDotNet =
         System.IO.Directory.CreateDirectory(ProjectInfo.netPkgDir) |> ignore
         !! "src/**/*.*proj"
         -- "src/bin/*"
-        |> Seq.iter (Fake.DotNet.DotNet.pack (fun p ->
+        |> Seq.iter (Fake.DotNet.DotNet.pack (fun p ->           
             let msBuildParams =
                 {p.MSBuildParams with 
                     Properties = ([
@@ -56,8 +56,10 @@ let packDotNetSwate = BuildTask.create "packDotNetSwate" [clean; build; RunTests
 
 module BundleJs =
     let bundle (versionTag: string) =
-        Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)
+        run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {ProjectInfo.npmPkgDir}" ""
+
         GenerateIndexJs.ARCtrl_generate ProjectInfo.npmPkgDir
+
         Fake.IO.File.readAsString "build/release_package.json"
         |> fun t ->
             let t = t.Replace(ProjectInfo.stableVersionTag, versionTag)
@@ -86,7 +88,7 @@ let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; cl
 module BundlePy =
     let bundle (versionTag: string) =
         
-        run dotnet $"fable src/ARCtrl -o {ProjectInfo.pyPkgDir}/arctrl --lang python" ""
+        run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {ProjectInfo.pyPkgDir}/arctrl --lang python" ""
         run python "-m poetry install --no-root" ProjectInfo.pyPkgDir
         GenerateIndexPy.ARCtrl_generate (ProjectInfo.pyPkgDir + "/arctrl")
 
