@@ -56,8 +56,10 @@ let packDotNetSwate = BuildTask.create "packDotNetSwate" [clean; build; RunTests
 
 module BundleJs =
     let bundle (versionTag: string) =
-        Fake.JavaScript.Npm.run "bundlejs" (fun o -> o)
+        run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {ProjectInfo.npmPkgDir}" ""
+
         GenerateIndexJs.ARCtrl_generate ProjectInfo.npmPkgDir
+
         Fake.IO.File.readAsString "build/release_package.json"
         |> fun t ->
             let t = t.Replace(ProjectInfo.stableVersionTag, versionTag)
@@ -104,7 +106,7 @@ module BundlePy =
         run python "-m poetry build" ProjectInfo.pyPkgDir //Remove "-o ." because not compatible with publish 
 
 
-let packPy = BuildTask.create "PackPy" [clean; build; (*runTests*)] {
+let packPy = BuildTask.create "PackPy" [clean; build; runTests] {
     BundlePy.bundle ProjectInfo.stableVersionTag
 
 }

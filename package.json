@@ -1,25 +1,5 @@
 {
   "type": "module",
-    "scripts": {
-        "mocha": "mocha",
-        "prebundlejs": "mkdirp .\\dist/js && dotnet fable clean -o ./dist/js --yes",
-        "bundlejs": "dotnet fable ./src/ARCtrl/ARCtrl.Javascript.fsproj -o ./dist/js",
-        "prebundlets": "mkdirp .\\dist/ts && dotnet fable clean -o ./dist/ts --yes --extension .ts",
-        "bundlets": "dotnet fable ./src/ARCtrl/ARCtrl.Javascript.fsproj -o ./dist/ts --lang ts",
-        "pretestJson": "dotnet fable tests/Json -o tests/Json/js",
-        "testJson": "mocha tests/Json/js --timeout 20000",
-        "pretestXlsx": "dotnet fable tests/Spreadsheet -o tests/Spreadsheet/js",
-        "testXlsx": "mocha tests/Spreadsheet/js --timeout 20000",
-        "pretestIsa": "dotnet fable tests/Core -o tests/Core/js",
-        "testIsa": "mocha tests/Core/js",
-        "pretestFiles": "dotnet fable tests/FileSystem -o tests/FileSystem/js",
-        "testFiles": "mocha tests/FileSystem/js",
-        "pretestArctrl": "dotnet fable tests/ARCtrl -o tests/ARCtrl/js",
-        "testArctrl": "mocha tests/ARCtrl/js",
-        "pretestjs": "dotnet fable src/ARCtrl/ARCtrl.Javascript.fsproj -o tests/JavaScript/ARCtrl ",
-        "testjs": "mocha tests/JavaScript",
-        "devui": "cd tests/UI & npx vite"
-    },
   "author": "Heinrich Lukas Weil <weil@rptu.de> (https://github.com/HLWeil)",
   "contributors": [
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
