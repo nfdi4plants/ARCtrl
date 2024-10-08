@@ -29,7 +29,7 @@ let testOutput =
                     $"Expected: {expected}\nActual: {actual}"
             testCase "Type" <| fun _ ->
                 let expected = File (FileInstance())
-                let actual = fileItem.Type.Value
+                let actual = fileItem.Type_.Value
                 Expect.isTrue
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
@@ -50,7 +50,7 @@ let testOutput =
                     $"Expected: {expected}\nActual: {actual}"
             testCase "Type" <| fun _ ->
                 let expected = Directory (DirectoryInstance())
-                let actual = directoryItem.Type.Value
+                let actual = directoryItem.Type_.Value
                 Expect.isTrue
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
@@ -71,7 +71,7 @@ let testOutput =
                     $"Expected: {expected}\nActual: {actual}"
             testCase "Type" <| fun _ ->
                 let expected = Directory (DirectoryInstance())
-                let actual = directoryItem.Type.Value
+                let actual = directoryItem.Type_.Value
                 Expect.isTrue
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
@@ -92,7 +92,7 @@ let testOutput =
                     $"Expected: {expected}\nActual: {actual}"
             testCase "Type" <| fun _ ->
                 let expected = Array (File (FileInstance()))
-                let actual = fileArrayItem.Type.Value
+                let actual = fileArrayItem.Type_.Value
                 Expect.isTrue
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
@@ -113,7 +113,7 @@ let testOutput =
                     $"Expected: {expected}\nActual: {actual}"
             testCase "Type" <| fun _ ->
                 let expected = Array (File (FileInstance()))
-                let actual = fileArrayItem.Type.Value
+                let actual = fileArrayItem.Type_.Value
                 Expect.isTrue
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"

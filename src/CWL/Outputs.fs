@@ -19,7 +19,7 @@ module Outputs =
             DynObj.setOptionalProperty ("type") type_ this
             DynObj.setOptionalProperty ("outputBinding") outputBinding this
         member this.Name = name
-        member this.Type = DynObj.tryGetTypedPropertyValue<CWLType> ("type") this
+        member this.Type_ = DynObj.tryGetTypedPropertyValue<CWLType> ("type") this
         member this.OutputBinding = DynObj.tryGetTypedPropertyValue<OutputBinding> ("outputBinding") this
 
     module Workflow =

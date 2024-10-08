@@ -80,7 +80,7 @@ let testCWLToolDescription =
                         "Name of input is not 'firstArg'"
                 testCase "Type" <| fun _ ->
                     let expected = File (FileInstance())
-                    let actual = fileItem.Type.Value
+                    let actual = fileItem.Type_.Value
                     Expect.isTrue
                         (expected = actual)
                         $"Expected: {expected}\nActual: {actual}"
@@ -101,7 +101,7 @@ let testCWLToolDescription =
                         $"Expected: {expected}\nActual: {actual}"
                 testCase "Type" <| fun _ ->
                     let expected = String
-                    let actual = stringItem.Type.Value
+                    let actual = stringItem.Type_.Value
                     Expect.isTrue
                         (expected = actual)
                         $"Expected: {expected}\nActual: {actual}"
@@ -131,7 +131,7 @@ let testCWLToolDescription =
                         $"Expected: {expected}\nActual: {actual}"
                 testCase "Type" <| fun _ ->
                     let expected = Directory (DirectoryInstance())
-                    let actual = directoryItem.Type.Value
+                    let actual = directoryItem.Type_.Value
                     Expect.isTrue
                         (expected = actual)
                         $"Expected: {expected}\nActual: {actual}"
@@ -152,7 +152,7 @@ let testCWLToolDescription =
                         $"Expected: {expected}\nActual: {actual}"
                 testCase "Type" <| fun _ ->
                     let expected = File (FileInstance())
-                    let actual = fileItem.Type.Value
+                    let actual = fileItem.Type_.Value
                     Expect.isTrue
                         (expected = actual)
                         $"Expected: {expected}\nActual: {actual}"
