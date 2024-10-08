@@ -1,18 +1,19 @@
-module Tests.CWLObject
+module Tests.CWLObjectMetadata
 
 open ARCtrl.CWL
 open ARCtrl.CWL.CWLTypes
 open ARCtrl.CWL.Requirements
 open ARCtrl.CWL.Inputs
 open ARCtrl.CWL.Outputs
+open DynamicObj
 open YAMLicious
 open TestingUtils
 
 let decodeCWLToolDescription =
-    TestObjects.CWL.CommandLineTool.cwl
+    TestObjects.CWL.CommandLineToolMetadata.cwl
     |> Decode.decodeCommandLineTool
 
-let testCWLToolDescription =
+let testCWLToolDescriptionMetadata =
     testList "CWLToolDescription" [
         testCase "Class" <| fun _ ->
             let expected = Class.CommandLineTool
@@ -165,8 +166,8 @@ let testCWLToolDescription =
             ]
         ]
         testCase "Metadata" <| fun _ ->
-            let expected = None
-            let actual = decodeCWLToolDescription.Metadata
+            let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString
+            let actual = decodeCWLToolDescription.Metadata.Value |> DynObj.format
             Expect.isTrue
                 (expected = actual)
                 $"Expected: {expected}\nActual: {actual}"

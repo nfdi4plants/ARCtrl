@@ -16,7 +16,8 @@ module CWLProcessingUnits =
             ?baseCommand: string [],
             ?requirements: Requirement [],
             ?hints: Requirement [],
-            ?inputs: Input []
+            ?inputs: Input [],
+            ?metadata: DynamicObj
         ) =
         inherit DynamicObj ()
 
@@ -27,6 +28,7 @@ module CWLProcessingUnits =
         let mutable _requirements: Requirement [] option = requirements
         let mutable _hints: Requirement [] option = hints
         let mutable _inputs: Input [] option = inputs
+        let mutable _metadata: DynamicObj option = metadata
 
         member this.CWLVersion
             with get() = _cwlVersion
@@ -56,6 +58,10 @@ module CWLProcessingUnits =
             with get() = _inputs
             and set(inputs) = _inputs <- inputs
 
+        member this.Metadata
+            with get() = _metadata
+            and set(metadata) = _metadata <- metadata
+
     type CWLWorkflowDescription(
         cwlVersion: string,
         cls: Class,
@@ -63,7 +69,8 @@ module CWLProcessingUnits =
         inputs: Input [],
         outputs: Output [],
         ?requirements: Requirement [],
-        ?hints: Requirement []
+        ?hints: Requirement [],
+        ?metadata: DynamicObj
     ) =
         inherit DynamicObj()
 
@@ -74,6 +81,7 @@ module CWLProcessingUnits =
         let mutable _outputs: Output [] = outputs
         let mutable _requirements: Requirement [] option = requirements
         let mutable _hints: Requirement [] option = hints
+        let mutable _metadata: DynamicObj option = metadata
 
         member this.CWLVersion
             with get() = _cwlVersion
@@ -102,3 +110,7 @@ module CWLProcessingUnits =
         member this.Hints
             with get() = _hints
             and set(hints) = _hints <- hints
+
+        member this.Metadata
+            with get() = _metadata
+            and set(metadata) = _metadata <- metadata
