@@ -42,18 +42,25 @@ module StudyContractExtensions =
             |]
 
         member this.ToUpdateContract (?datamapAsFile) =
-            let dataMapAsFile = defaultArg datamapAsFile false
+            let datamapAsFile = defaultArg datamapAsFile false
             let path = Identifier.Study.fileNameFromIdentifier this.Identifier
-            let dto = DTO.Spreadsheet (ArcStudy.toFsWorkbook(this, datamapSheet = not dataMapAsFile))
-            let c = Contract.createUpdate(path, DTOType.ISA_Study, dto)
-            [|
+            let hash = this.GetLightHashCode()
+            let datamapHasChanged = 
                 match this.DataMap with
-                    | Some dm -> 
-                        dm.StaticHash <- dm.GetHashCode()
-                        if dataMapAsFile then
-                            yield dm.ToUpdateContractForStudy(this.Identifier)
-                    | _ -> ()
-                yield c
+                | Some dm -> 
+                    let hc = dm.GetHashCode() <> dm.StaticHash
+                    dm.StaticHash <- dm.GetHashCode()
+                    hc
+                | _ -> false
+            let createStudyContract() =                 
+                let dto = DTO.Spreadsheet (ArcStudy.toFsWorkbook(this, datamapSheet = not datamapAsFile))
+                Contract.createUpdate(path, DTOType.ISA_Study, dto)                  
+            [|
+                if hash <> this.StaticHash || (datamapHasChanged && not datamapAsFile) then
+                    createStudyContract()
+                if datamapHasChanged && datamapAsFile then
+                    this.DataMap.Value.ToUpdateContractForStudy(this.Identifier)
+
             |]
 
         member this.ToDeleteContract () =

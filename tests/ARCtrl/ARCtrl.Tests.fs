@@ -490,8 +490,8 @@ let private tests_updateContracts = testList "update_contracts" [
 
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 1 $"Should contain only assay datamap change contract"
-        let expectedPath = Identifier.Assay.datamapFileNameFromIdentifier SimpleISA.Assay.proteomeIdentifer
-        Expect.equal contracts.[0].Path expectedPath "Should be the assay datamap file"
+        let expectedPath = Identifier.Assay.fileNameFromIdentifier SimpleISA.Assay.proteomeIdentifer
+        Expect.equal contracts.[0].Path expectedPath "Should be the assay file, as datamap is contained in assay"
         let nextContracts = arc.GetUpdateContracts()
         Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
     )

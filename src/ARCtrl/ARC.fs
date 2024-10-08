@@ -406,7 +406,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     let hash = s.GetLightHashCode()
                     if s.StaticHash = 0 then
                         yield! s.ToCreateContract(WithFolder = true,?datamapAsFile = datamapAsFile)
-                    elif s.StaticHash <> hash then 
+                    else
                         yield! s.ToUpdateContract(?datamapAsFile = datamapAsFile)
                     s.StaticHash <- hash
                 
@@ -415,7 +415,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : CWL.CWL, ?fs : FileSystem.FileSystem) =
                     let hash = a.GetLightHashCode()
                     if a.StaticHash = 0 then 
                         yield! a.ToCreateContract(WithFolder = true,?datamapAsFile = datamapAsFile)
-                    elif a.StaticHash <> hash then 
+                    else
                         yield! a.ToUpdateContract(?datamapAsFile = datamapAsFile)
                     a.StaticHash <- hash
             |]

@@ -43,18 +43,25 @@ module AssayContractExtensions =
 
 
         member this.ToUpdateContract (?datamapAsFile) =
-            let dataMapAsFile = defaultArg datamapAsFile false
+            let datamapAsFile = defaultArg datamapAsFile false
             let path = Identifier.Assay.fileNameFromIdentifier this.Identifier
-            let dto = DTO.Spreadsheet (ArcAssay.toFsWorkbook(this, datamapSheet = not dataMapAsFile))
-            let c = Contract.createUpdate(path, DTOType.ISA_Assay, dto)
-            [|
+            let hash = this.GetLightHashCode()
+            let datamapHasChanged = 
                 match this.DataMap with
-                    | Some dm -> 
-                        dm.StaticHash <- dm.GetHashCode()
-                        if dataMapAsFile then
-                            yield dm.ToUpdateContractForAssay(this.Identifier)
-                    | _ -> ()
-                yield c
+                | Some dm -> 
+                    let hc = dm.GetHashCode() <> dm.StaticHash
+                    dm.StaticHash <- dm.GetHashCode()
+                    hc
+                | _ -> false
+            let createAssayContract() =                 
+                let dto = DTO.Spreadsheet (ArcAssay.toFsWorkbook(this, datamapSheet = not datamapAsFile))
+                Contract.createUpdate(path, DTOType.ISA_Assay, dto)                  
+            [|
+                if hash <> this.StaticHash || (datamapHasChanged && not datamapAsFile) then
+                    createAssayContract()
+                if datamapHasChanged && datamapAsFile then
+                    this.DataMap.Value.ToUpdateContractForAssay(this.Identifier)
+
             |]
 
         member this.ToDeleteContract () =
