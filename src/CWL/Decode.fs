@@ -17,16 +17,17 @@ module Decode =
         for e in dict do
             match e.Value with
             | YAMLElement.Object [YAMLElement.Value v] -> 
-                DynObj.setValue dynObj e.Key v.Value
+                DynObj.setProperty e.Key v.Value dynObj
             | YAMLElement.Object [YAMLElement.Sequence s] ->
                 let newDynObj = new DynamicObj ()
                 (s |> List.map ((Decode.object (fun get ->  (get.Overflow.FieldList []))) >> overflowDecoder newDynObj))
                 |> List.iter (fun x ->
-                    DynObj.setValue
-                        dynObj
+                    DynObj.setProperty
                         e.Key
                         x
+                        dynObj
                 )
+            | _ -> DynObj.setProperty e.Key e.Value dynObj
         dynObj
     
     let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
@@ -118,7 +119,7 @@ module Decode =
                             cwlType
                         )
                     if outputBinding.IsSome then
-                        DynObj.setValueOpt output "outputBinding" outputBinding
+                        DynObj.setOptionalProperty "outputBinding" outputBinding output
                     output
             |]     
         )
@@ -291,7 +292,7 @@ module Decode =
                             cwlType
                         )
                     if inputBinding.IsSome then
-                        DynObj.setValueOpt input "inputBinding" inputBinding
+                        DynObj.setOptionalProperty "inputBinding" inputBinding input
                     input
             |]     
         )
