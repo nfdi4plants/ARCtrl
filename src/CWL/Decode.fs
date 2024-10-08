@@ -242,6 +242,7 @@ module Decode =
                     | "ShellCommandRequirement" -> ShellCommandRequirement
                     | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
                     | "NetworkAccess" -> NetworkAccessRequirement
+                    | _ -> failwith "Invalid requirement"
                 )
             )
 
