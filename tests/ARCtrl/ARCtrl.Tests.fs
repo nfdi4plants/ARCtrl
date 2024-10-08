@@ -163,7 +163,7 @@ let private tests_read_contracts = testList "read_contracts" [
             (Array.create 2 (CompositeCell.createFreeText UpdateAssayWithStudyProtocol.description))
             "Description value was not taken correctly"
     )
-    testCase "SimpleISA_WithDataset" (fun _ ->
+    testCase "SimpleISA_WithDatamap" (fun _ ->
         let contracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
 
         let arc = ARC()
@@ -226,13 +226,13 @@ let private tests_writeContracts = testList "write_contracts" [
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
 
     )
-    testCase "assayWithDatamap" (fun _ ->
+    testCase "assayWithDatamap_AsFile" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         let a = inv.InitAssay("MyAssay")
         let dm = DataMap.init()
         a.DataMap <- Some dm
         let arc = ARC(isa = inv)
-        let contracts = arc.GetWriteContracts()
+        let contracts = arc.GetWriteContracts(datamapAsFile = true)
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 10 $"Should contain more contracts as base folders but contained: {contractPathsString}"
 
@@ -463,7 +463,23 @@ let private tests_updateContracts = testList "update_contracts" [
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 0 "Should contain no contracts as there are no changes"
     )
-    testCase "simpleISA_Datamap_Changed" (fun _ ->
+    testCase "simpleISA_Datamap_Changed_AsFile" (fun _ ->
+        let arc = ARC()
+        let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
+        arc.SetISAFromContracts readContracts
+        let isa = arc.ISA.Value
+
+        let dm = Expect.wantSome (isa.GetAssay(SimpleISA.Assay.proteomeIdentifer).DataMap) "Assay should have datamap"       
+        dm.GetDataContext(1).Name <- Some "Hello"
+
+        let contracts = arc.GetUpdateContracts(datamapAsFile = true)
+        Expect.equal contracts.Length 1 $"Should contain only assay datamap change contract"
+        let expectedPath = Identifier.Assay.datamapFileNameFromIdentifier SimpleISA.Assay.proteomeIdentifer
+        Expect.equal contracts.[0].Path expectedPath "Should be the assay datamap file"
+        let nextContracts = arc.GetUpdateContracts(datamapAsFile = true)
+        Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
+    )
+    testCase "simpleISA_Datamap_Changed_AsSheet" (fun _ ->
         let arc = ARC()
         let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
         arc.SetISAFromContracts readContracts
