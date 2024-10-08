@@ -12,6 +12,22 @@ open WorkflowSteps
 open DynamicObj
 
 module Decode =
+
+    let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
+        for e in dict do
+            match e.Value with
+            | YAMLElement.Object [YAMLElement.Value v] -> 
+                DynObj.setValue dynObj e.Key v.Value
+            | YAMLElement.Object [YAMLElement.Sequence s] ->
+                let newDynObj = new DynamicObj ()
+                (s |> List.map ((Decode.object (fun get ->  (get.Overflow.FieldList []))) >> overflowDecoder newDynObj))
+                |> List.iter (fun x ->
+                    DynObj.setValue
+                        dynObj
+                        e.Key
+                        x
+                )
+        dynObj
     
     let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
         Decode.object (fun get ->
@@ -317,6 +333,35 @@ module Decode =
                 CommandLineTool,
                 outputs
             )
+        let metadata =
+            let md = new DynamicObj ()
+            yamlCWL
+            |> Decode.object (fun get ->
+                overflowDecoder
+                    md
+                    (
+                        get.Overflow.FieldList [
+                            "inputs";
+                            "outputs";
+                            "class";
+                            "id";
+                            "label";
+                            "doc";
+                            "requirements";
+                            "hints";
+                            "cwlVersion";
+                            "baseCommand";
+                            "arguments";
+                            "stdin";
+                            "stderr";
+                            "stdout";
+                            "successCodes";
+                            "temporaryFailCodes";
+                            "permanentFailCodes"
+                        ]
+                    )
+            ) |> ignore
+            md
         if inputs.IsSome then
             description.Inputs <- inputs
         if requirements.IsSome then
@@ -325,6 +370,8 @@ module Decode =
             description.Hints <- hints
         if baseCommand.IsSome then
             description.BaseCommand <- baseCommand
+        if metadata.Properties.Count > 0 then
+            description.Metadata <- Some metadata
         description
 
     let stringOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string option) =
@@ -398,20 +445,4 @@ module Decode =
             let steps = get.Required.Field "steps" stepArrayDecoder
             steps
         )
-
-    let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
-        for e in dict do
-            match e.Value with
-            | YAMLElement.Object [YAMLElement.Value v] -> 
-                DynObj.setValue dynObj e.Key v.Value
-            | YAMLElement.Object [YAMLElement.Sequence s] ->
-                let newDynObj = new DynamicObj ()
-                (s |> List.map ((Decode.object (fun get ->  (get.Overflow.FieldList []))) >> overflowDecoder newDynObj))
-                |> List.iter (fun x ->
-                    DynObj.setValue
-                        dynObj
-                        e.Key
-                        x
-                )
-        dynObj
 

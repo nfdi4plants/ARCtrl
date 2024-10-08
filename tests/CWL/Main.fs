@@ -4,6 +4,7 @@ open Fable.Pyxpecto
 
 let all = testSequenced <| testList "CWL" [
     Tests.CWLObject.testCWLToolDescription
+    Tests.CWLObjectMetadata.testCWLToolDescriptionMetadata
     Tests.Outputs.testOutput
     Tests.Inputs.testInput
     Tests.Requirements.testRequirement
