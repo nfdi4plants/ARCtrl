@@ -43,8 +43,8 @@
       "arctrl.cwl": {
         "type": "Project",
         "dependencies": {
-          "DynamicObj": "[3.1.0, 3.1.0]",
-          "YAMLicious": "[0.0.2, 0.0.2]"
+          "DynamicObj": "[4.0.0, )",
+          "YAMLicious": "[0.0.2, )"
         }
       },
       "arctrl.filesystem": {
@@ -84,7 +84,7 @@
       },
       "YAMLicious": {
         "type": "CentralTransitive",
-        "requested": "[0.0.1, )",
+        "requested": "[0.0.2, )",
         "resolved": "0.0.2",
         "contentHash": "YLsmaCOZFt+6I0myCi3nGXbwWnDx15b+sIit5iFpg5FDKcqrC4/M2uP1AiEJ9bL49ve16gRRNed7bth7cpcJOg==",
         "dependencies": {
