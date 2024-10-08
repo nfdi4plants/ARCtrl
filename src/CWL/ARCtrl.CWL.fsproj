@@ -8,6 +8,20 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup> 
-    <Compile Include="Library.fs" />
+    <Compile Include="CWLTypes.fs" /> 
+    <Compile Include="Requirements.fs" /> 
+    <Compile Include="Outputs.fs" /> 
+    <Compile Include="Inputs.fs" /> 
+    <Compile Include="WorkflowSteps.fs" /> 
+    <Compile Include="CWL.fs" /> 
+    <Compile Include="Decode.fs" />
+    <Compile Include="Encode.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="YAMLicious"/>
+    <PackageReference Include="DynamicObj"/>
   </ItemGroup>
 </Project>
