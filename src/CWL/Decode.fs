@@ -242,6 +242,10 @@ module Decode =
                     | "ShellCommandRequirement" -> ShellCommandRequirement
                     | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
                     | "NetworkAccess" -> NetworkAccessRequirement
+                    | "SubworkflowFeatureRequirement" -> SubworkflowFeatureRequirement
+                    | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
+                    | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
+                    | "StepInputExpressionRequirement" -> StepInputExpressionRequirement
                     | _ -> failwith "Invalid requirement"
                 )
             )
