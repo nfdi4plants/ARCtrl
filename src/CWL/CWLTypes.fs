@@ -48,7 +48,7 @@ module CWLTypes =
     type SchemaDefRequirementType (types, definitions) as this =
         inherit DynamicObj ()
         do
-            DynObj.setValue this (nameof types) definitions
+            DynObj.setProperty (nameof types) definitions this
 
     type SoftwarePackage = {
         Package: string

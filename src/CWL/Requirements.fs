@@ -29,14 +29,14 @@ module Requirements =
     ) as this =
         inherit DynamicObj ()
         do
-            DynObj.setValueOpt this (nameof coresMin) coresMin
-            DynObj.setValueOpt this (nameof coresMax) coresMax
-            DynObj.setValueOpt this (nameof ramMin) ramMin
-            DynObj.setValueOpt this (nameof ramMax) ramMax
-            DynObj.setValueOpt this (nameof tmpdirMin) tmpdirMin
-            DynObj.setValueOpt this (nameof tmpdirMax) tmpdirMax
-            DynObj.setValueOpt this (nameof outdirMin) outdirMin
-            DynObj.setValueOpt this (nameof outdirMax) outdirMax
+            DynObj.setOptionalProperty (nameof coresMin) coresMin this
+            DynObj.setOptionalProperty (nameof coresMax) coresMax this
+            DynObj.setOptionalProperty (nameof ramMin) ramMin this
+            DynObj.setOptionalProperty (nameof ramMax) ramMax this
+            DynObj.setOptionalProperty (nameof tmpdirMin) tmpdirMin this
+            DynObj.setOptionalProperty (nameof tmpdirMax) tmpdirMax this
+            DynObj.setOptionalProperty (nameof outdirMin) outdirMin this
+            DynObj.setOptionalProperty (nameof outdirMax) outdirMax this
 
     type Requirement = 
         | InlineJavascriptRequirement

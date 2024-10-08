@@ -16,11 +16,11 @@ module Outputs =
     ) as this =
         inherit DynamicObj ()
         do
-            DynObj.setValueOpt this ("type") type_
-            DynObj.setValueOpt this ("outputBinding") outputBinding
+            DynObj.setOptionalProperty ("type") type_ this
+            DynObj.setOptionalProperty ("outputBinding") outputBinding this
         member this.Name = name
-        member this.Type = DynObj.tryGetTypedValue<CWLType> ("type") this
-        member this.OutputBinding = DynObj.tryGetTypedValue<OutputBinding> ("outputBinding") this
+        member this.Type = DynObj.tryGetTypedPropertyValue<CWLType> ("type") this
+        member this.OutputBinding = DynObj.tryGetTypedPropertyValue<OutputBinding> ("outputBinding") this
 
     module Workflow =
 
