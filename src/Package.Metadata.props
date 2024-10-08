@@ -7,7 +7,7 @@
     </PropertyGroup>
         
     <PropertyGroup>
-        <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Florian Wetzels</Authors>
+        <Authors>nfdi4plants, Lukas Weil, Kevin Frey, Kevin Schneider, Florian Wetzels, Caroline Ott</Authors>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageIcon>logo.png</PackageIcon>
         <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl</PackageProjectUrl>

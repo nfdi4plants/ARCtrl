@@ -21,17 +21,7 @@
     <None Include="../../build/logo.png" Pack="true" PackagePath="\" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="YAMLicious" Version="[0.0.2]" />
-    <PackageReference Include="DynamicObj" Version="[3.1.0]" />
+    <PackageReference Include="YAMLicious"/>
+    <PackageReference Include="DynamicObj"/>
   </ItemGroup>
-  <PropertyGroup>
-    <Authors>nfdi4plants</Authors>
-    <Description>ARC helper functions for Common workflow language.</Description>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>logo.png</PackageIcon>
-    <PackageTags>ARC F# FSharp dotnet .Net bioinformatics biology fable-library datascience dataplant nfdi metadata</PackageTags>
-    <PackageProjectUrl>https://github.com/nfdi4plants/ARCtrl/tree/main/src/CWL</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/nfdi4plants/ARCtrl</RepositoryUrl>
-    <RepositoryType>git</RepositoryType>
-  </PropertyGroup>
 </Project>
