@@ -226,7 +226,6 @@ module Template =
     let [<Literal>] metaDataSheetName = "isa_template"
     let [<Literal>] obsoletemetaDataSheetName = "SwateTemplateMetadata"
 
-
     let fromParts (templateInfo:TemplateInfo) (ers:OntologyAnnotation list) (tags: OntologyAnnotation list) (authors : Person list) (table : ArcTable) (lastUpdated : System.DateTime)=
             Template.make 
                 (System.Guid templateInfo.Id)
@@ -240,8 +239,7 @@ module Template =
                 (ResizeArray tags)  
                 (lastUpdated)
 
-    let toMetadataSheet (template : Template) : FsWorksheet =
-        
+    let toMetadataSheet (template : Template) : FsWorksheet =        
         let sheet = FsWorksheet(metaDataSheetName)
         Template.toRows template
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
@@ -250,6 +248,15 @@ module Template =
     let fromMetadataSheet (sheet : FsWorksheet)  =
         sheet.Rows 
         |> Seq.map SparseRow.fromFsRow
+        |> Template.fromRows
+
+    let toMetadataCollection (template : Template) =
+        Template.toRows template
+        |> Seq.map (fun row -> SparseRow.getAllValues row)
+
+    let fromMetadataCollection (collection: seq<seq<string option>>) =
+        collection
+        |> Seq.map SparseRow.fromAllValues
         |> Template.fromRows
 
     /// Reads an assay from a spreadsheet

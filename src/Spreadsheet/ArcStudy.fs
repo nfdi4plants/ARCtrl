@@ -42,7 +42,7 @@ module ArcStudy =
     let toMetadataCollection (study : ArcStudy) (assays : ArcAssay list option) =
         Studies.toRows study assays
         |> Seq.append [SparseRow.fromValues [studiesLabel]]
-        |> Seq.map (fun r -> SparseRow.getAllValues r)
+        |> Seq.map (fun row -> SparseRow.getAllValues row)
 
     let fromMetadataCollection (collection: seq<seq<string option>>) : ArcStudy*ArcAssay list =
         try
