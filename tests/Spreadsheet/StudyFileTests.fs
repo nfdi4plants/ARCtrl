@@ -1,4 +1,4 @@
-﻿module ArcStudyTests
+module ArcStudyTests
 
 
 open TestingUtils
@@ -58,6 +58,21 @@ let testMetaDataFunctions =
                 | err -> Result.Error(sprintf "Writing the Empty test file failed: %s" err.Message)
 
             Expect.isOk writingSuccess (Result.getMessage writingSuccess)
+        )
+
+        testCase "TestMetadataFromCollection" (fun () ->
+
+            let study, assays = 
+                Study.BII_S_1.studyMetadataCollection
+                |> ArcStudy.fromMetadataCollection
+
+            Expect.isSome study.Title "Study of the impact of changes in flux on the transcriptome, proteome, endometabolome and exometabolome of the yeast Saccharomyces cerevisiae under different nutrient limitations"
+            Expect.isSome study.Description "We wished to study the impact of growth rate on the total complement of mRNA molecules, proteins, and metabolites in S. cerevisiae, independent of any nutritional or other physiological effects. To achieve this, we carried out our analyses on yeast grown in steady-state chemostat culture under four different nutrient limitations (glucose, ammonium, phosphate, and sulfate) at three different dilution (that is, growth) rates (D = u = 0.07, 0.1, and 0.2/hour, equivalent to population doubling times (Td) of 10 hours, 7 hours, and 3.5 hours, respectively; u = specific growth rate defined as grams of biomass generated per gram of biomass present per unit time)."
+            Expect.isSome study.SubmissionDate "2007-04-30"
+
+            Expect.isSome assays.[0].MeasurementType "protein expression profiling"
+            Expect.isSome assays.[1].MeasurementType "etabolite profiling"
+            Expect.isSome assays.[2].MeasurementType "transcription profiling"
         )
 
         testCase "OutputMatchesInputEmpty" (fun () ->

@@ -39,6 +39,25 @@ module ArcStudy =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
+    let toMetadataCollection (study : ArcStudy) (assays : ArcAssay list option) =
+        Studies.toRows study assays
+        |> Seq.append [SparseRow.fromValues [studiesLabel]]
+        |> Seq.map (fun r -> SparseRow.getAllValues r)
+
+    let fromMetadataCollection (collection: seq<seq<string option>>) : ArcStudy*ArcAssay list =
+        try
+            let fromRows (rows: seq<SparseRow>) =
+                let en = rows.GetEnumerator()
+                en.MoveNext() |> ignore  
+                let _,_,_,study = Studies.fromRows 2 en
+                study
+            collection
+            |> Seq.map SparseRow.fromAllValues
+            |> fromRows
+            |> Option.defaultValue (ArcStudy.create(Identifier.createMissingIdentifier()),[])
+        with 
+        | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
+
     let isMetadataSheetName (name : string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
 
