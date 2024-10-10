@@ -76,6 +76,63 @@ module ArcAssay =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
+    let toMetadataCollection (assay: ArcAssay) =
+        let toRows (assay: ArcAssay) =
+            seq {          
+                yield  SparseRow.fromValues [assaysLabel]
+                yield! Assays.toRows (Some assaysPrefix) [assay]
+
+                yield SparseRow.fromValues [contactsLabel]
+                yield! Contacts.toRows (Some contactsPrefix) (List.ofSeq assay.Performers)
+            }
+        assay
+        |> toRows
+        |> Seq.map (fun row -> SparseRow.getAllValues row)
+
+    let fromMetadataCollection (collection: seq<seq<string option>>) : ArcAssay =
+        try
+            let fromRows (usePrefixes: bool) (rows: seq<SparseRow>) =
+                let aPrefix, cPrefix = 
+                    if usePrefixes then 
+                        Some assaysPrefix, Some contactsPrefix
+                    else None, None
+                let en = rows.GetEnumerator()
+                let rec loop lastRow assays contacts rowNumber =
+               
+                    match lastRow with
+                    | Some prefix when prefix = assaysLabel || prefix = obsoleteAssaysLabel -> 
+                        let currentRow, rowNumber, _, assays = Assays.fromRows aPrefix (rowNumber + 1) en       
+                        loop currentRow assays contacts rowNumber
+
+                    | Some prefix when prefix = contactsLabel -> 
+                        let currentLine, rowNumber, _, contacts = Contacts.fromRows cPrefix (rowNumber + 1) en  
+                        loop currentLine assays contacts rowNumber
+                    | _ -> 
+                        match assays, contacts with
+                        | [], [] -> ArcAssay.create(Identifier.createMissingIdentifier())
+                        | assays, contacts ->
+                            assays
+                            |> Seq.tryHead 
+                            |> Option.defaultValue (ArcAssay.create(Identifier.createMissingIdentifier()))
+                            |> ArcAssay.setPerformers (ResizeArray contacts)
+        
+                if en.MoveNext () then
+                    let currentLine = en.Current |> SparseRow.tryGetValueAt 0
+                    loop currentLine [] [] 1
+            
+                else
+                    failwith "empty assay metadata sheet"
+            let rows =        
+                collection 
+                |> Seq.map SparseRow.fromAllValues
+            let hasPrefix = 
+                rows
+                |> Seq.exists (fun row -> row |> Seq.head |> snd |> fun s -> s.StartsWith(assaysPrefix))
+            rows
+            |> fromRows hasPrefix
+        with 
+        | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
+
     let isMetadataSheetName (name:string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
 
