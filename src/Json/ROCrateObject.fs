@@ -53,7 +53,7 @@ module rec ROCrateObject =
         |> Encode.object
 
 
-    let rec decoder : Decoder<obj> = 
+    let rec decoderWith (constructorByTypeFunc : string -> (string -> string -> string option -> #ROCrateObject)) : Decoder<obj> = 
         let rec decode() = 
             let decodeObject : Decoder<ROCrateObject> =
                 { new Decoder<ROCrateObject> with
@@ -63,10 +63,11 @@ module rec ROCrateObject =
                             let properties = helpers.getProperties value
                             let builder =
                                 fun (get : Decode.IGetters) ->
-                                    let o = ROCrateObject(
-                                        id = get.Required.Field "@id" Decode.string,
-                                        schemaType = get.Required.Field "@type" Decode.string
-                                    )
+                                    let t = get.Required.Field "@type" Decode.string
+                                    let id = get.Required.Field "@id" Decode.string
+                                    let additionalType = get.Optional.Field "@additionalType" Decode.string
+                                    let f = constructorByTypeFunc t
+                                    let o = f t id additionalType :> ROCrateObject
                                     for property in properties do
                                         if property <> "@id" && property <> "@type" then
                                             o.SetProperty(property,get.Required.Field property (decode()))
@@ -121,3 +122,14 @@ module rec ROCrateObject =
 
             ]
         decode()
+
+    let untypedDecoder = decoderWith (fun _ ->
+        fun id t additionalType -> ROCrateObject(id,t,?additionalType = additionalType)      
+    )
+
+    let typings : (string*(string->string->string option->#ROCrateObject)) list=
+        [
+            ROCrate.Assay
+
+
+        ]
