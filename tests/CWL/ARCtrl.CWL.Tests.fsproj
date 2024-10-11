@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="CWLObject.Tests.fs" />
     <Compile Include="CWLObjectMetadata.Tests.fs" />
+    <Compile Include="Metadata.Tests.fs" />
     <Compile Include="Outputs.Tests.fs" />
     <Compile Include="Inputs.Tests.fs" />
     <Compile Include="Requirements.Tests.fs" />

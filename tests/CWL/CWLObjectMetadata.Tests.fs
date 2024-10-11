@@ -166,6 +166,7 @@ let testCWLToolDescriptionMetadata =
             ]
         ]
         testCase "Metadata" <| fun _ ->
+            Expect.isSome decodeCWLToolDescription.Metadata $"Expected {decodeCWLToolDescription.Metadata} to be Some"
             let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString
             let actual = decodeCWLToolDescription.Metadata.Value |> DynObj.format
             Expect.isTrue

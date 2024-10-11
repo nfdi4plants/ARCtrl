@@ -376,7 +376,7 @@ module Decode =
             description.Hints <- hints
         if baseCommand.IsSome then
             description.BaseCommand <- baseCommand
-        if metadata.Properties.Count > 0 then
+        if metadata.GetProperties(false) |> Seq.length > 0 then
             description.Metadata <- Some metadata
         description
 
