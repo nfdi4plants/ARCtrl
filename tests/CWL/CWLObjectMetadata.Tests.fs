@@ -167,9 +167,8 @@ let testCWLToolDescriptionMetadata =
         ]
         testCase "Metadata" <| fun _ ->
             Expect.isSome decodeCWLToolDescription.Metadata $"Expected {decodeCWLToolDescription.Metadata} to be Some"
-            let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString
-            let actual = decodeCWLToolDescription.Metadata.Value |> DynObj.format
-            Expect.isTrue
-                (expected = actual)
+            let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString.Trim().Replace("\r\n", "\n")
+            let actual = (decodeCWLToolDescription.Metadata.Value |> DynObj.format).Trim().Replace("\r\n", "\n")
+            Expect.equal actual expected
                 $"Expected: {expected}\nActual: {actual}"
     ]
