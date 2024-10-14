@@ -145,7 +145,7 @@ module ArcInvestigation =
                 else 
                     loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
-            | k -> 
+            | _ -> 
                 let studies, assays = 
                     studies 
                     |> List.unzip 

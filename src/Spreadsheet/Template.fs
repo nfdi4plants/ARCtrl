@@ -227,17 +227,17 @@ module Template =
     let [<Literal>] obsoletemetaDataSheetName = "SwateTemplateMetadata"
 
     let fromParts (templateInfo: TemplateInfo) (ers: OntologyAnnotation list) (tags: OntologyAnnotation list) (authors: Person list) (table: ArcTable) (lastUpdated: System.DateTime) =
-            Template.make 
-                (System.Guid templateInfo.Id)
-                table
-                templateInfo.Name
-                templateInfo.Description
-                (Organisation.ofString templateInfo.Organisation) 
-                templateInfo.Version
-                (ResizeArray authors)
-                (ResizeArray ers)
-                (ResizeArray tags)  
-                lastUpdated
+        Template.make 
+            (System.Guid templateInfo.Id)
+            table
+            templateInfo.Name
+            templateInfo.Description
+            (Organisation.ofString templateInfo.Organisation) 
+            templateInfo.Version
+            (ResizeArray authors)
+            (ResizeArray ers)
+            (ResizeArray tags)  
+            lastUpdated
 
     let toMetadataSheet (template: Template) : FsWorksheet =        
         let sheet = FsWorksheet(metaDataSheetName)
