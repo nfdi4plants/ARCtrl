@@ -27,7 +27,6 @@ module ArcInvestigation =
     let [<Literal>] metadataSheetName = "isa_investigation"
     let [<Literal>] obsoleteMetadataSheetName = "Investigation"
 
-
     type InvestigationInfo =
         {
             Identifier : string
@@ -40,15 +39,15 @@ module ArcInvestigation =
 
         static member create identifier title description submissionDate publicReleaseDate comments =
             {
-            Identifier = identifier
-            Title = title
-            Description = description
-            SubmissionDate = submissionDate
-            PublicReleaseDate = publicReleaseDate
-            Comments = comments
+                Identifier = identifier
+                Title = title
+                Description = description
+                SubmissionDate = submissionDate
+                PublicReleaseDate = publicReleaseDate
+                Comments = comments
             }
   
-        static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel]
+        static member Labels = [identifierLabel; titleLabel; descriptionLabel; submissionDateLabel; publicReleaseDateLabel]
     
         static member FromSparseTable (matrix: SparseTable) =
         
@@ -101,7 +100,7 @@ module ArcInvestigation =
     let fromParts (investigationInfo: InvestigationInfo) (ontologySourceReference: OntologySourceReference list) (publications: Publication list) (contacts: Person list) (studies: ArcStudy list) (assays: ArcAssay list) (remarks: Remark list) =
         let studyIdentifiers = studies |> List.map (fun s -> s.Identifier)
         ArcInvestigation.make 
-            (investigationInfo.Identifier)
+             investigationInfo.Identifier
             (Option.fromValueWithDefault "" investigationInfo.Title)
             (Option.fromValueWithDefault "" investigationInfo.Description) 
             (Option.fromValueWithDefault "" investigationInfo.SubmissionDate) 
@@ -114,7 +113,6 @@ module ArcInvestigation =
             (ResizeArray studyIdentifiers)
             (ResizeArray investigationInfo.Comments)  
             (ResizeArray remarks)
-
 
     let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()              
@@ -137,11 +135,11 @@ module ArcInvestigation =
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = contactsLabel -> 
-                let currentLine,lineNumber,newRemarks,contacts = Contacts.fromRows (Some contactsLabelPrefix) (lineNumber + 1) en       
+                let currentLine,lineNumber, newRemarks, contacts = Contacts.fromRows (Some contactsLabelPrefix) (lineNumber + 1) en       
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = studyLabel -> 
-                let currentLine,lineNumber,newRemarks,study = Studies.fromRows (lineNumber + 1) en  
+                let currentLine, lineNumber, newRemarks, study = Studies.fromRows (lineNumber + 1) en  
                 if study.IsSome then
                     loop currentLine ontologySourceReferences investigationInfo publications contacts (study.Value::studies) (List.append remarks newRemarks) lineNumber
                 else 
@@ -201,6 +199,15 @@ module ArcInvestigation =
         }
         |> insertRemarks (List.ofSeq investigation.Remarks)
         |> seq
+
+    let toMetadataCollection (investigation: ArcInvestigation) =
+        toRows investigation
+        |> Seq.map (fun row -> SparseRow.getAllValues row)
+
+    let fromMetadataCollection (collection: seq<seq<string option>>) =
+        collection
+        |> Seq.map SparseRow.fromAllValues
+        |> fromRows
 
     let isMetadataSheetName (name: string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
