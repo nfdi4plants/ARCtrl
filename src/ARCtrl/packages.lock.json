@@ -11,7 +11,9 @@
       "NETStandard.Library": {
         "type": "Direct",
         "requested": "[2.0.3, )",
-@@ -17,47 +29,94 @@
+        "resolved": "2.0.3",
+        "contentHash": "st47PosZSHrjECdjeIzZQbzivYBJFv6P2nv4cj2ypdI204DO+vZ7l5raGMiX4eXMJ53RfOIg+/s4DHVZ54Nu2A==",
+        "dependencies": {
           "Microsoft.NETCore.Platforms": "1.1.0"
         }
       },
@@ -59,7 +61,14 @@
         }
       },
       "arctrl.cwl": {
-@@ -72,8 +131,8 @@
+        "type": "Project"
+      },
+      "arctrl.filesystem": {
+        "type": "Project",
+        "dependencies": {
+          "Fable.Core": "[4.3.0, )"
+        }
+      },
       "arctrl.json": {
         "type": "Project",
         "dependencies": {
@@ -68,7 +77,13 @@
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
-@@ -87,22 +146,22 @@
+      "arctrl.rocrate": {
+        "type": "Project",
+        "dependencies": {
+          "DynamicObj": "[4.0.0, )",
+          "Thoth.Json.Core": "[0.4.0, )"
+        }
+      },
       "arctrl.spreadsheet": {
         "type": "Project",
         "dependencies": {
