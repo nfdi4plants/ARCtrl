@@ -30,12 +30,12 @@ module ArcInvestigation =
 
     type InvestigationInfo =
         {
-        Identifier : string
-        Title : string
-        Description : string
-        SubmissionDate : string
-        PublicReleaseDate : string
-        Comments : Comment list
+            Identifier : string
+            Title : string
+            Description : string
+            SubmissionDate : string
+            PublicReleaseDate : string
+            Comments : Comment list
         }
 
         static member create identifier title description submissionDate publicReleaseDate comments =
@@ -50,21 +50,21 @@ module ArcInvestigation =
   
         static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel]
     
-        static member FromSparseTable (matrix : SparseTable) =
+        static member FromSparseTable (matrix: SparseTable) =
         
             let i = 0
 
             let comments = 
                 matrix.CommentKeys 
                 |> List.map (fun k -> 
-                    Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+                    Comment.fromString k (matrix.TryGetValueDefault("", (k, i))))
 
             InvestigationInfo.create
-                (matrix.TryGetValueDefault("",(identifierLabel,i)))  
-                (matrix.TryGetValueDefault("",(titleLabel,i)))  
-                (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
-                (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
-                (matrix.TryGetValueDefault("",(publicReleaseDateLabel,i)))  
+                (matrix.TryGetValueDefault("", (identifierLabel, i)))  
+                (matrix.TryGetValueDefault("", (titleLabel, i)))  
+                (matrix.TryGetValueDefault("", (descriptionLabel, i)))  
+                (matrix.TryGetValueDefault("", (submissionDateLabel, i)))  
+                (matrix.TryGetValueDefault("", (publicReleaseDateLabel, i)))  
                 comments
 
 
@@ -73,32 +73,32 @@ module ArcInvestigation =
             let matrix = SparseTable.Create (keys = InvestigationInfo.Labels,length=2)
             let mutable commentKeys = []
 
-            do matrix.Matrix.Add ((identifierLabel,i),          (investigation.Identifier))
-            do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" investigation.Title))
-            do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" investigation.Description))
-            do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" investigation.SubmissionDate))
-            do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" investigation.PublicReleaseDate))
+            do matrix.Matrix.Add ((identifierLabel, i),         (investigation.Identifier))
+            do matrix.Matrix.Add ((titleLabel, i),              (Option.defaultValue "" investigation.Title))
+            do matrix.Matrix.Add ((descriptionLabel, i),        (Option.defaultValue "" investigation.Description))
+            do matrix.Matrix.Add ((submissionDateLabel, i),     (Option.defaultValue "" investigation.SubmissionDate))
+            do matrix.Matrix.Add ((publicReleaseDateLabel, i),  (Option.defaultValue "" investigation.PublicReleaseDate))
 
             investigation.Comments
             |> ResizeArray.iter (fun comment -> 
-                let n,v = comment |> Comment.toString
+                let n, v = comment |> Comment.toString
                 commentKeys <- n :: commentKeys
-                matrix.Matrix.Add((n,i),v)
+                matrix.Matrix.Add((n, i), v)
             )   
 
             {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
       
-        static member fromRows lineNumber (rows : IEnumerator<SparseRow>) =
-            SparseTable.FromRows(rows,InvestigationInfo.Labels,lineNumber)
-            |> fun (s,ln,rs,sm) -> (s,ln,rs, InvestigationInfo.FromSparseTable sm)    
+        static member fromRows lineNumber (rows: IEnumerator<SparseRow>) =
+            SparseTable.FromRows(rows, InvestigationInfo.Labels, lineNumber)
+            |> fun (s, ln, rs, sm) -> (s, ln, rs, InvestigationInfo.FromSparseTable sm)    
     
-        static member toRows (investigation : ArcInvestigation) =  
+        static member toRows (investigation: ArcInvestigation) =  
             investigation
             |> InvestigationInfo.ToSparseTable
             |> SparseTable.ToRows
  
-    let fromParts (investigationInfo:InvestigationInfo) (ontologySourceReference:OntologySourceReference list) (publications: Publication list) (contacts: Person list) (studies: ArcStudy list) (assays: ArcAssay list) (remarks: Remark list) =
+    let fromParts (investigationInfo: InvestigationInfo) (ontologySourceReference: OntologySourceReference list) (publications: Publication list) (contacts: Person list) (studies: ArcStudy list) (assays: ArcAssay list) (remarks: Remark list) =
         let studyIdentifiers = studies |> List.map (fun s -> s.Identifier)
         ArcInvestigation.make 
             (investigationInfo.Identifier)
@@ -116,7 +116,7 @@ module ArcInvestigation =
             (ResizeArray remarks)
 
 
-    let fromRows (rows:seq<SparseRow>) =
+    let fromRows (rows: seq<SparseRow>) =
         let en = rows.GetEnumerator()              
         
         let emptyInvestigationInfo = InvestigationInfo.create "" "" "" "" "" []
@@ -125,7 +125,7 @@ module ArcInvestigation =
             match lastLine with
 
             | Some k when k = ontologySourceReferenceLabel -> 
-                let currentLine,lineNumber,newRemarks,ontologySourceReferences = OntologySourceReference.fromRows (lineNumber + 1) en
+                let currentLine, lineNumber, newRemarks, ontologySourceReferences = OntologySourceReference.fromRows (lineNumber + 1) en
                 loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | Some k when k = investigationLabel -> 
@@ -148,10 +148,10 @@ module ArcInvestigation =
                     loop currentLine ontologySourceReferences investigationInfo publications contacts studies (List.append remarks newRemarks) lineNumber
 
             | k -> 
-                let studies,assays = 
+                let studies, assays = 
                     studies 
                     |> List.unzip 
-                    |> fun (s,a) -> 
+                    |> fun (s, a) -> 
                         s |> List.rev, 
                         a |> List.concat |> List.distinctBy (fun a -> a.Identifier)
                 fromParts investigationInfo ontologySourceReferences publications contacts studies assays remarks
@@ -164,8 +164,8 @@ module ArcInvestigation =
             failwith "emptyInvestigationFile"
  
    
-    let toRows (investigation:ArcInvestigation) : seq<SparseRow> =
-        let insertRemarks (remarks:Remark list) (rows:seq<SparseRow>) = 
+    let toRows (investigation: ArcInvestigation) : seq<SparseRow> =
+        let insertRemarks (remarks: Remark list) (rows: seq<SparseRow>) = 
             try 
                 let rm = remarks |> List.map Remark.toTuple |> Map.ofList            
                 let rec loop i l nl =
@@ -202,13 +202,13 @@ module ArcInvestigation =
         |> insertRemarks (List.ofSeq investigation.Remarks)
         |> seq
 
-    let isMetadataSheetName (name : string) =
+    let isMetadataSheetName (name: string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
 
-    let isMetadataSheet (sheet : FsWorksheet) =
+    let isMetadataSheet (sheet: FsWorksheet) =
         isMetadataSheetName sheet.Name
 
-    let tryGetMetadataSheet (doc:FsWorkbook) =
+    let tryGetMetadataSheet (doc: FsWorkbook) =
         doc.GetWorksheets()
         |> Seq.tryFind isMetadataSheet
 
@@ -220,7 +220,7 @@ module ArcInvestigationExtensions =
 
     type ArcInvestigation with
 
-        static member fromFsWorkbook (doc:FsWorkbook) =  
+        static member fromFsWorkbook (doc: FsWorkbook) =  
             try
                 match ArcInvestigation.tryGetMetadataSheet doc with
                 | Some sheet -> sheet
@@ -231,7 +231,7 @@ module ArcInvestigationExtensions =
             with
             | err -> failwithf "Could not read investigation from spreadsheet: %s" err.Message
 
-        static member toFsWorkbook (investigation:ArcInvestigation) : FsWorkbook =           
+        static member toFsWorkbook (investigation: ArcInvestigation) : FsWorkbook =           
             try
                 let wb = new FsWorkbook()
                 let sheet = FsWorksheet(metadataSheetName)

@@ -16,7 +16,7 @@ module ArcAssay =
     let [<Literal>] obsoleteMetadataSheetName = "Assay"
     let [<Literal>] metadataSheetName = "isa_assay"
 
-    let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
+    let toMetadataSheet (assay: ArcAssay) : FsWorksheet =
         let toRows (assay:ArcAssay) =
             seq {          
                 yield  SparseRow.fromValues [assaysLabel]
@@ -31,10 +31,10 @@ module ArcAssay =
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
         sheet
 
-    let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
+    let fromMetadataSheet (sheet: FsWorksheet) : ArcAssay =
         try
-            let fromRows (usePrefixes : bool) (rows: seq<SparseRow>) =
-                let aPrefix,cPrefix = 
+            let fromRows (usePrefixes: bool) (rows: seq<SparseRow>) =
+                let aPrefix, cPrefix = 
                     if usePrefixes then 
                         Some assaysPrefix,Some contactsPrefix
                     else None,None
@@ -44,11 +44,11 @@ module ArcAssay =
                     match lastLine with
 
                     | Some k when k = assaysLabel || k = obsoleteAssaysLabel -> 
-                        let currentLine,lineNumber,_,assays = Assays.fromRows aPrefix (lineNumber + 1) en       
+                        let currentLine, lineNumber, _, assays = Assays.fromRows aPrefix (lineNumber + 1) en       
                         loop currentLine assays contacts lineNumber
 
                     | Some k when k = contactsLabel -> 
-                        let currentLine,lineNumber,_,contacts = Contacts.fromRows cPrefix (lineNumber + 1) en  
+                        let currentLine, lineNumber, _, contacts = Contacts.fromRows cPrefix (lineNumber + 1) en  
                         loop currentLine assays contacts lineNumber
                     | k -> 
                         match assays, contacts with
@@ -133,13 +133,13 @@ module ArcAssay =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
-    let isMetadataSheetName (name:string) =
+    let isMetadataSheetName (name: string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
 
-    let isMetadataSheet (sheet : FsWorksheet) =
+    let isMetadataSheet (sheet: FsWorksheet) =
         isMetadataSheetName sheet.Name
 
-    let tryGetMetadataSheet (doc:FsWorkbook) =
+    let tryGetMetadataSheet (doc: FsWorkbook) =
         doc.GetWorksheets()
         |> Seq.tryFind isMetadataSheet
 
@@ -149,7 +149,7 @@ module ArcAssayExtensions =
     type ArcAssay with
 
         /// Reads an assay from a spreadsheet
-        static member fromFsWorkbook (doc:FsWorkbook) : ArcAssay = 
+        static member fromFsWorkbook (doc: FsWorkbook) : ArcAssay = 
             try
                 // Reading the "Assay" metadata sheet. Here metadata 
                 let assayMetadata = 
@@ -179,7 +179,7 @@ module ArcAssayExtensions =
         /// </summary>
         /// <param name="assay"></param>
         /// <param name="datamapSheet">Default: true</param>
-        static member toFsWorkbook (assay : ArcAssay, ?datamapSheet: bool) =
+        static member toFsWorkbook (assay: ArcAssay, ?datamapSheet: bool) =
             let datamapSheet = defaultArg datamapSheet true
             let doc = new FsWorkbook()
             let metadataSheet = ArcAssay.toMetadataSheet (assay)
