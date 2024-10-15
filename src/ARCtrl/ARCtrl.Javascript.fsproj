@@ -8,6 +8,7 @@
   
   <Import Project="ARCtrl.Common.props" />
   <ItemGroup>
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/"/>
     <Compile Include="WebRequest\WebRequest.Node.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />

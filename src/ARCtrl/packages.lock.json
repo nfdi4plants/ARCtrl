@@ -47,17 +47,17 @@
       "arctrl.contract": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[2.1.0, )",
-          "ARCtrl.Json": "[2.1.0, )",
-          "ARCtrl.Spreadsheet": "[2.1.0, )",
-          "ARCtrl.Yaml": "[2.1.0, )"
+          "ARCtrl.Core": "[2.1.0-alpha.3, )",
+          "ARCtrl.Json": "[2.1.0-alpha.3, )",
+          "ARCtrl.Spreadsheet": "[2.1.0-alpha.3, )",
+          "ARCtrl.Yaml": "[2.1.0-alpha.3, )"
         }
       },
       "arctrl.core": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.CWL": "[2.1.0, )",
-          "ARCtrl.FileSystem": "[2.1.0, )"
+          "ARCtrl.CWL": "[2.1.0-alpha.3, )",
+          "ARCtrl.FileSystem": "[2.1.0-alpha.3, )"
         }
       },
       "arctrl.cwl": {
@@ -72,8 +72,8 @@
       "arctrl.json": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[2.1.0, )",
-          "ARCtrl.ROCrate": "[2.1.0, )",
+          "ARCtrl.Core": "[2.1.0-alpha.3, )",
+          "ARCtrl.ROCrate": "[2.1.0-alpha.3, )",
           "Thoth.Json.Core": "[0.4.0, )"
         }
       },
@@ -87,22 +87,22 @@
       "arctrl.spreadsheet": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[2.1.0, )",
-          "ARCtrl.FileSystem": "[2.1.0, )",
+          "ARCtrl.Core": "[2.1.0-alpha.3, )",
+          "ARCtrl.FileSystem": "[2.1.0-alpha.3, )",
           "FsSpreadsheet": "[6.3.0-alpha.4, )"
         }
       },
       "arctrl.validationpackages": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[2.1.0, )"
+          "ARCtrl.Core": "[2.1.0-alpha.3, )"
         }
       },
       "arctrl.yaml": {
         "type": "Project",
         "dependencies": {
-          "ARCtrl.Core": "[2.1.0, )",
-          "ARCtrl.ValidationPackages": "[2.1.0, )",
+          "ARCtrl.Core": "[2.1.0-alpha.3, )",
+          "ARCtrl.ValidationPackages": "[2.1.0-alpha.3, )",
           "YAMLicious": "[0.0.1, )"
         }
       },

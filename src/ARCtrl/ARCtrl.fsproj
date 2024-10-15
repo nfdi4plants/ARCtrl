@@ -6,8 +6,8 @@
   <Import Project="../Package.Metadata.props" />
   
   <Import Project="ARCtrl.Common.props" />
-  <ItemGroup>  
-    <None Include="ARCtrl.Common.props" />
+  <ItemGroup>
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
