@@ -313,6 +313,15 @@ module BII_S_1 =
         row61.[1].Value <- "Comment[Study Person REF]"
         ws
 
+    let studyMetadataCollection =
+        let study, assays = ARCtrl.Spreadsheet.ArcStudy.fromMetadataSheet studyMetadata
+
+        let assays =
+            if assays.IsEmpty then None
+            else Some assays
+
+        ARCtrl.Spreadsheet.ArcStudy.toMetadataCollection study assays
+
     let studyMetadataEmptyObsoleteSheetName =
         let cp = studyMetadataEmpty.Copy()
         cp.Name <- "Study"

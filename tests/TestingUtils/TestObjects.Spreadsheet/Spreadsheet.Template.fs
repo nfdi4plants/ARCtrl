@@ -1,4 +1,4 @@
-﻿module TestObjects.Spreadsheet.Template
+module TestObjects.Spreadsheet.Template
 
 open FsSpreadsheet
 
@@ -162,6 +162,11 @@ let templateMetadata =
     row28.[5].Value <- ""
     row28.[6].Value <- ""
     ws
+
+let templateetadataCollection table =
+    let template, ers, tags, authors = ARCtrl.Spreadsheet.Template.fromMetadataSheet templateMetadata
+    ARCtrl.Spreadsheet.Template.fromParts template ers tags authors table System.DateTime.Now
+    |> ARCtrl.Spreadsheet.Template.toMetadataCollection
 
 let templateMetadata_deprecatedKeys = 
     let ws = FsWorksheet("SwateTemplateMetadata")

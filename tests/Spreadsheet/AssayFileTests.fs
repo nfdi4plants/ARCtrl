@@ -1,4 +1,4 @@
-﻿module ArcAssayTests
+module ArcAssayTests
 
 
 open ARCtrl
@@ -71,6 +71,20 @@ let testMetaDataFunctions =
                 
             o.CellCollection.GetCells()
             |> Seq.iter (fun c -> Expect.notEqual (c.ValueAsString().Trim()) "" $"Cell {c.Address.ToString()} should not contain empty string")  
+        )
+
+        testCase "TestMetadataFromCollection" (fun () ->
+
+            let assay =
+                Assay.Proteome.assayMetadataCollection
+                |> ArcAssay.fromMetadataCollection
+
+            Expect.isSome assay.MeasurementType "protein expression profiling"
+            Expect.isSome assay.TechnologyPlatform "iTRAQ"
+            Expect.isSome assay.TechnologyType "mass spectrometry"
+            Expect.isSome (assay.Performers.Item 0).LastName "Oliver"
+            Expect.isSome (assay.Performers.Item 1).LastName "Juan"
+            Expect.isSome (assay.Performers.Item 2).LastName "Leo"
         )
 
         testCase "WriterSuccessObsoleteSheetName" (fun () ->
