@@ -1,4 +1,4 @@
-module ARCtrl.ISADotnet.Tests
+module ARCtrl.Core.Tests
 
 open Fable.Pyxpecto
 
@@ -24,5 +24,7 @@ let all = testSequenced <| testList "Core" [
     Fable.Tests.main
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all

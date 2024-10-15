@@ -1,4 +1,4 @@
-module ROCrate.Tests
+module ARCtrl.ROCrate.Tests
 
 open Fable.Pyxpecto
 
@@ -17,5 +17,7 @@ let all = testSequenced <| testList "ROCrate" [
     Tests.ScholarlyArticle.main
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all

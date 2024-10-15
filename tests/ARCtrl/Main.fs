@@ -1,4 +1,4 @@
-module Main.Tests
+module ARCtrl.ARC.Tests
 
 open Fable.Pyxpecto
 
@@ -11,5 +11,7 @@ let all = testSequenced <| testList "ARCtrl" [
     ARCtrl.Tests.main
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all

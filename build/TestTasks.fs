@@ -25,7 +25,7 @@ module RunTests =
             Trace.traceImportant "Start native JavaScript tests"
             for path in ProjectInfo.jsTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ARCtrl" ""
+                run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ARCtrl --nocache" ""
                 GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
                 run npx $"mocha {path} --timeout 20000" ""
         else
@@ -37,7 +37,7 @@ module RunTests =
             Trace.traceImportant "Start Js tests"
             for path in ProjectInfo.testProjects do
                 // transpile js files from fsharp code
-                run dotnet $"fable {path} -o {path}/js" ""
+                run dotnet $"fable {path} -o {path}/js --nocache" ""
                 // run mocha in target path to execute tests
                 // "--timeout 20000" is used, because json schema validation takes a bit of time.
                 run node $"{path}/js/Main.js" ""
@@ -50,7 +50,7 @@ module RunTests =
             Trace.traceImportant "Start native Python tests"
             for path in ProjectInfo.pyTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl --lang python" ""
+                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl --lang python --nocache" ""
                 GenerateIndexPy.ARCtrl_generate($"{path}/ARCtrl")
                 run python $"-m pytest {path}" ""
         else
@@ -62,7 +62,7 @@ module RunTests =
             Trace.traceImportant "Start Python tests"
             for path in ProjectInfo.testProjects do
                 //transpile py files from fsharp code
-                run dotnet $"fable {path} -o {path}/py --lang python" ""
+                run dotnet $"fable {path} -o {path}/py --lang python --nocache" ""
                 // run pyxpecto in target path to execute tests in python
                 run python $"{path}/py/main.py" ""
         else
