@@ -12,7 +12,8 @@ module Outputs =
     type Output (
         name: string,
         ?type_: CWLType,
-        ?outputBinding: OutputBinding
+        ?outputBinding: OutputBinding,
+        ?outputSource: string
     ) as this =
         inherit DynamicObj ()
         do
@@ -21,6 +22,7 @@ module Outputs =
         member this.Name = name
         member this.Type_ = DynObj.tryGetTypedPropertyValue<CWLType> ("type") this
         member this.OutputBinding = DynObj.tryGetTypedPropertyValue<OutputBinding> ("outputBinding") this
+        member this.OutputSource = DynObj.tryGetTypedPropertyValue<string> ("outputSource") this
 
     module Workflow =
 

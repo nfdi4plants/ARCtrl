@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="TestObjects.CWL\WorkflowSteps.fs" />
+    <Compile Include="TestObjects.CWL\Workflow.fs" />
     <Compile Include="TestObjects.CWL\CommandLineTool.fs" />
     <Compile Include="TestObjects.CWL\CommandLineToolMetadata.fs" />
     <Compile Include="TestObjects.CWL\Metadata.fs" />

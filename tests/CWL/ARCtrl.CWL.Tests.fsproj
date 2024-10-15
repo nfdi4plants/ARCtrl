@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CWLWorkflow.Tests.fs" />
     <Compile Include="CWLObject.Tests.fs" />
     <Compile Include="CWLObjectMetadata.Tests.fs" />
     <Compile Include="Metadata.Tests.fs" />

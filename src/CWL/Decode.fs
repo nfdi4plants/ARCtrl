@@ -29,7 +29,13 @@ module Decode =
                 )
             | _ -> DynObj.setProperty e.Key e.Value dynObj
         dynObj
-    
+
+    let decodeStringOrExpression (yEle:YAMLElement) =
+        match yEle with
+        | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> v.Value
+        | YAMLElement.Object [YAMLElement.Mapping (c,YAMLElement.Object [YAMLElement.Value v])] -> sprintf "%s: %s" c.Value v.Value
+        | _ -> failwithf "%A" yEle
+
     let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
         Decode.object (fun get ->
             let glob = get.Optional.Field "glob" Decode.string
@@ -42,13 +48,24 @@ module Decode =
             outputBinding
         )
 
+    let direntDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
+        Decode.object (fun get ->
+            Dirent
+                {
+                    // BUG: Entry Requires an Entryname to be present when it's an expression
+                    Entry = get.Required.Field "entry" decodeStringOrExpression
+                    Entryname = get.Optional.Field "entryname" decodeStringOrExpression
+                    Writable = get.Optional.Field "writable" Decode.bool
+                }
+        )
+
     let cwlArrayTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
             let items = get.Required.Field "items" Decode.string
             match items with
             | "File" -> Array (File (FileInstance ()))
             | "Directory" -> Array (Directory (DirectoryInstance ()))
-            | "Dirent" -> Array (Dirent { Entry = ""; Entryname = None; Writable = None })
+            | "Dirent" -> Array (get.Required.Field "listing" direntDecoder)
             | "string" -> Array String
             | "int" -> Array Int
             | "long" -> Array Long
@@ -58,11 +75,11 @@ module Decode =
             | _ -> failwith "Invalid CWL type"
         )
 
-    let cwlTypeStringMatcher t =
+    let cwlTypeStringMatcher t (get: Decode.IGetters) =
         match t with
         | "File" -> File (FileInstance ())
         | "Directory" -> Directory (DirectoryInstance ())
-        | "Dirent" -> Dirent { Entry = ""; Entryname = None; Writable = None }
+        | "Dirent" -> (get.Required.Field "listing" direntDecoder)
         | "string" -> String
         | "int" -> Int
         | "long" -> Long
@@ -71,7 +88,7 @@ module Decode =
         | "boolean" -> Boolean
         | "File[]" -> Array (File (FileInstance ()))
         | "Directory[]" -> Array (Directory (DirectoryInstance ()))
-        | "Dirent[]" -> Array (Dirent { Entry = ""; Entryname = None; Writable = None })
+        | "Dirent[]" -> Array (get.Required.Field "listing" direntDecoder)
         | "string[]" -> Array String
         | "int[]" -> Array Int
         | "long[]" -> Array Long
@@ -96,7 +113,7 @@ module Decode =
                     )
             match cwlType with
             | Some t ->
-                cwlTypeStringMatcher t
+                cwlTypeStringMatcher t get
             | None -> 
                 let cwlTypeArray = get.Required.Field "type" cwlArrayTypeDecoder
                 cwlTypeArray
@@ -109,9 +126,10 @@ module Decode =
                 for key in dict.Keys do
                     let value = dict.[key]
                     let outputBinding = outputBindingDecoder value
+                    let outputSource = get.Optional.Field "outputSource" Decode.string
                     let cwlType = 
                         match value with
-                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value
+                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
                         | _ -> cwlTypeDecoder value
                     let output =
                         Output(
@@ -120,6 +138,8 @@ module Decode =
                         )
                     if outputBinding.IsSome then
                         DynObj.setOptionalProperty "outputBinding" outputBinding output
+                    if outputSource.IsSome then
+                        DynObj.setOptionalProperty "outputSource" outputSource output
                     output
             |]     
         )
@@ -173,31 +193,12 @@ module Decode =
                 )
         envDef
 
-    let decodeStringOrExpression (yEle:YAMLElement) =
-        match yEle with
-        | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> v.Value
-        | YAMLElement.Object [YAMLElement.Mapping (c,YAMLElement.Object [YAMLElement.Value v])] -> sprintf "%s: %s" c.Value v.Value
-        | _ -> failwithf "%A" yEle
-
     let initialWorkDirRequirementDecoder (get: Decode.IGetters): CWLType[] =
         let initialWorkDir =
             //TODO: Support more than dirent
             get.Required.Field
                 "listing"
-                (
-                    Decode.array 
-                        (
-                            Decode.object (fun get2 ->
-                                Dirent
-                                    {
-                                        // BUG: Entry Requires an Entryname to be present when it's an expression
-                                        Entry = get2.Required.Field "entry" decodeStringOrExpression
-                                        Entryname = get2.Optional.Field "entryname" decodeStringOrExpression
-                                        Writable = get2.Optional.Field "writable" Decode.bool
-                                    }
-                            )
-                        )
-                    )
+                (Decode.array direntDecoder)
         initialWorkDir
 
     let resourceRequirementDecoder (get: Decode.IGetters): ResourceRequirementInstance =
@@ -289,7 +290,7 @@ module Decode =
                     let inputBinding = inputBindingDecoder value
                     let cwlType = 
                         match value with
-                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value
+                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
                         | _ -> cwlTypeDecoder value
                     let input =
                         Input(
@@ -324,62 +325,6 @@ module Decode =
             | "ExpressionTool" -> ExpressionTool
             | _ -> failwith "Invalid class"
         )
-
-    let decodeCommandLineTool (cwl: string) =
-        let yamlCWL = Decode.read cwl
-        let cwlVersion = versionDecoder yamlCWL
-        let outputs = outputsDecoder yamlCWL
-        let inputs = inputsDecoder yamlCWL
-        let requirements = requirementsDecoder yamlCWL
-        let hints = hintsDecoder yamlCWL
-        let baseCommand = baseCommandDecoder yamlCWL
-        let description =
-            CWLProcessingUnits.CWLToolDescription(
-                cwlVersion,
-                CommandLineTool,
-                outputs
-            )
-        let metadata =
-            let md = new DynamicObj ()
-            yamlCWL
-            |> Decode.object (fun get ->
-                overflowDecoder
-                    md
-                    (
-                        get.Overflow.FieldList [
-                            "inputs";
-                            "outputs";
-                            "class";
-                            "id";
-                            "label";
-                            "doc";
-                            "requirements";
-                            "hints";
-                            "cwlVersion";
-                            "baseCommand";
-                            "arguments";
-                            "stdin";
-                            "stderr";
-                            "stdout";
-                            "successCodes";
-                            "temporaryFailCodes";
-                            "permanentFailCodes"
-                        ]
-                    )
-            ) |> ignore
-            md
-        if inputs.IsSome then
-            description.Inputs <- inputs
-        if requirements.IsSome then
-            description.Requirements <- requirements
-        if hints.IsSome then
-            description.Hints <- hints
-        if baseCommand.IsSome then
-            description.BaseCommand <- baseCommand
-        if metadata.GetProperties(false) |> Seq.length > 0 then
-            description.Metadata <- Some metadata
-        description
-
     let stringOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string option) =
         Decode.object(fun get ->
             let fieldValue = get.Optional.Field field Decode.string
@@ -452,3 +397,140 @@ module Decode =
             steps
         )
 
+    let decodeCommandLineTool (cwl: string) =
+        let yamlCWL = Decode.read cwl
+        let cwlVersion = versionDecoder yamlCWL
+        let outputs = outputsDecoder yamlCWL
+        let inputs = inputsDecoder yamlCWL
+        let requirements = requirementsDecoder yamlCWL
+        let hints = hintsDecoder yamlCWL
+        let baseCommand = baseCommandDecoder yamlCWL
+        let description =
+            CWLProcessingUnits.CWLToolDescription(
+                cwlVersion,
+                CommandLineTool,
+                outputs
+            )
+        let metadata =
+            let md = new DynamicObj ()
+            yamlCWL
+            |> Decode.object (fun get ->
+                overflowDecoder
+                    md
+                    (
+                        get.Overflow.FieldList [
+                            "inputs";
+                            "outputs";
+                            "class";
+                            "id";
+                            "label";
+                            "doc";
+                            "requirements";
+                            "hints";
+                            "cwlVersion";
+                            "baseCommand";
+                            "arguments";
+                            "stdin";
+                            "stderr";
+                            "stdout";
+                            "successCodes";
+                            "temporaryFailCodes";
+                            "permanentFailCodes"
+                        ]
+                    )
+            ) |> ignore
+            md
+        yamlCWL
+        |> Decode.object (fun get ->
+            overflowDecoder
+                description
+                (
+                    get.MultipleOptional.FieldList [
+                        "id";
+                        "label";
+                        "doc";
+                        "arguments";
+                        "stdin";
+                        "stderr";
+                        "stdout";
+                        "successCodes";
+                        "temporaryFailCodes";
+                        "permanentFailCodes"
+                    ]
+                )
+        ) |> ignore
+        if inputs.IsSome then
+            description.Inputs <- inputs
+        if requirements.IsSome then
+            description.Requirements <- requirements
+        if hints.IsSome then
+            description.Hints <- hints
+        if baseCommand.IsSome then
+            description.BaseCommand <- baseCommand
+        if metadata.GetProperties(false) |> Seq.length > 0 then
+            description.Metadata <- Some metadata
+        description
+
+    let decodeWorkflow (cwl: string) =
+        let yamlCWL = Decode.read cwl
+        let cwlVersion = versionDecoder yamlCWL
+        let outputs = outputsDecoder yamlCWL
+        let inputs =
+            match inputsDecoder yamlCWL with
+            | Some i -> i
+            | None -> failwith "Inputs are required for a workflow"
+        let requirements = requirementsDecoder yamlCWL
+        let hints = hintsDecoder yamlCWL
+        let steps = stepsDecoder yamlCWL
+        printfn "%A" steps
+        printfn "%A" outputs
+        printfn "%A" inputs
+        let description =
+            CWLProcessingUnits.CWLWorkflowDescription(
+                cwlVersion,
+                Workflow,
+                steps,
+                inputs,
+                outputs
+            )
+        let metadata =
+            let md = new DynamicObj ()
+            yamlCWL
+            |> Decode.object (fun get ->
+                overflowDecoder
+                    md
+                    (
+                        get.Overflow.FieldList [
+                            "inputs";
+                            "outputs";
+                            "class";
+                            "steps";
+                            "id";
+                            "label";
+                            "doc";
+                            "requirements";
+                            "hints";
+                            "cwlVersion";
+                        ]
+                    )
+            ) |> ignore
+            md
+        yamlCWL
+        |> Decode.object (fun get ->
+            overflowDecoder
+                description
+                (
+                    get.MultipleOptional.FieldList [
+                        "id";
+                        "label";
+                        "doc"
+                    ]
+                )
+        ) |> ignore
+        if requirements.IsSome then
+            description.Requirements <- requirements
+        if hints.IsSome then
+            description.Hints <- hints
+        if metadata.GetProperties(false) |> Seq.length > 0 then
+            description.Metadata <- Some metadata
+        description

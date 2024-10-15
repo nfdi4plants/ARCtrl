@@ -3,6 +3,7 @@ module CWL.Tests
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "CWL" [
+    Tests.CWLWorkflow.testCWLWorkflowDescription
     Tests.CWLObject.testCWLToolDescription
     Tests.CWLObjectMetadata.testCWLToolDescriptionMetadata
     Tests.Metadata.testMetadata
