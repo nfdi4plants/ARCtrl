@@ -12,7 +12,7 @@ module ArcStudy =
     let [<Literal>] obsoleteMetadataSheetName = "Study"
     let [<Literal>] metadataSheetName = "isa_study"
 
-    let toMetadataSheet (study: ArcStudy) (assays: ArcAssay list option) : FsWorksheet =
+    let toMetadataSheet (study : ArcStudy) (assays : ArcAssay list option) : FsWorksheet =
         //let toRows (study:ArcStudy) assays =
         //    seq {          
         //        yield  SparseRow.fromValues [studiesLabel]
@@ -24,13 +24,13 @@ module ArcStudy =
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
         sheet
 
-    let fromRows (rows: seq<SparseRow>) =
+    let fromRows (rows : seq<SparseRow>) =
         let en = rows.GetEnumerator()
         en.MoveNext() |> ignore  
         let _, _, _,study = Studies.fromRows 2 en
         study
 
-    let fromMetadataSheet (sheet: FsWorksheet) : ArcStudy*ArcAssay list =
+    let fromMetadataSheet (sheet : FsWorksheet) : ArcStudy*ArcAssay list =
         try            
             sheet.Rows 
             |> Seq.map SparseRow.fromFsRow
@@ -39,12 +39,12 @@ module ArcStudy =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
-    let toMetadataCollection (study: ArcStudy) (assays: ArcAssay list option) =
+    let toMetadataCollection (study : ArcStudy) (assays : ArcAssay list option) =
         Studies.toRows study assays
         |> Seq.append [SparseRow.fromValues [studiesLabel]]
         |> Seq.map (fun row -> SparseRow.getAllValues row)
 
-    let fromMetadataCollection (collection: seq<seq<string option>>) : ArcStudy*ArcAssay list =
+    let fromMetadataCollection (collection : seq<seq<string option>>) : ArcStudy*ArcAssay list =
         try
             collection
             |> Seq.map SparseRow.fromAllValues
@@ -53,13 +53,13 @@ module ArcStudy =
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
-    let isMetadataSheetName (name: string) =
+    let isMetadataSheetName (name : string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
 
-    let isMetadataSheet (sheet: FsWorksheet) =
+    let isMetadataSheet (sheet : FsWorksheet) =
         isMetadataSheetName sheet.Name
 
-    let tryGetMetadataSheet (doc: FsWorkbook) =
+    let tryGetMetadataSheet (doc : FsWorkbook) =
         doc.GetWorksheets()
         |> Seq.tryFind isMetadataSheet
 
@@ -69,7 +69,7 @@ module ArcStudyExtensions =
     type ArcStudy with
     
         /// Reads an assay from a spreadsheet
-        static member fromFsWorkbook (doc: FsWorkbook) = 
+        static member fromFsWorkbook (doc : FsWorkbook) = 
             try
                 // Reading the "Assay" metadata sheet. Here metadata 
                 let studyMetadata,assays =       
@@ -111,7 +111,7 @@ module ArcStudyExtensions =
         /// <param name="study"></param>
         /// <param name="assays"></param>
         /// <param name="datamapSheet"></param>
-        static member toFsWorkbook (study: ArcStudy, ?assays: ArcAssay list, ?datamapSheet: bool) =
+        static member toFsWorkbook (study : ArcStudy, ?assays : ArcAssay list, ?datamapSheet : bool) =
             let datamapSheet = defaultArg datamapSheet true
             let doc = new FsWorkbook()
             let metadataSheet = ArcStudy.toMetadataSheet study assays
@@ -126,5 +126,5 @@ module ArcStudyExtensions =
 
             doc
 
-        member this.ToFsWorkbook (?assays: ArcAssay list, ?datamapSheet: bool) =
+        member this.ToFsWorkbook (?assays : ArcAssay list, ?datamapSheet : bool) =
             ArcStudy.toFsWorkbook (this, ?assays = assays, ?datamapSheet = datamapSheet)

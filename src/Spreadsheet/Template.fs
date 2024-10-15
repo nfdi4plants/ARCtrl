@@ -19,17 +19,17 @@ module Metadata =
 
         let labels = [erLabel;erTermAccessionNumberLabel;erTermSourceREFLabel]
 
-        let fromSparseTable (matrix: SparseTable) =
+        let fromSparseTable (matrix : SparseTable) =
             OntologyAnnotationSection.fromSparseTable erLabel erTermSourceREFLabel erTermAccessionNumberLabel matrix
 
-        let toSparseTable (designs: OntologyAnnotation list) =
+        let toSparseTable (designs : OntologyAnnotation list) =
             OntologyAnnotationSection.toSparseTable erLabel erTermSourceREFLabel erTermAccessionNumberLabel designs
 
-        let fromRows (prefix: string option) (rows: IEnumerator<SparseRow>) =
+        let fromRows (prefix : string option) (rows : IEnumerator<SparseRow>) =
             let nextHeader, _, _, ers = OntologyAnnotationSection.fromRows prefix erLabel erTermSourceREFLabel erTermAccessionNumberLabel 0 rows
             nextHeader,ers
     
-        let toRows (prefix: string option) (designs: OntologyAnnotation list) =
+        let toRows (prefix : string option) (designs : OntologyAnnotation list) =
             OntologyAnnotationSection.toRows prefix erLabel erTermSourceREFLabel erTermAccessionNumberLabel designs
 
     module Tags = 
@@ -40,17 +40,17 @@ module Metadata =
 
         let labels = [tagsLabel; tagsTermAccessionNumberLabel; tagsTermSourceREFLabel]
 
-        let fromSparseTable (matrix: SparseTable) =
+        let fromSparseTable (matrix : SparseTable) =
             OntologyAnnotationSection.fromSparseTable tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel matrix
 
-        let toSparseTable (designs: OntologyAnnotation list) =
+        let toSparseTable (designs : OntologyAnnotation list) =
             OntologyAnnotationSection.toSparseTable tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel designs
 
-        let fromRows (prefix: string option) (rows: IEnumerator<SparseRow>) =
+        let fromRows (prefix : string option) (rows : IEnumerator<SparseRow>) =
             let nextHeader, _, _, tags = OntologyAnnotationSection.fromRows prefix tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel 0 rows
             nextHeader, tags
 
-        let toRows (prefix: string option) (designs: OntologyAnnotation list) =
+        let toRows (prefix : string option) (designs : OntologyAnnotation list) =
             OntologyAnnotationSection.toRows prefix tagsLabel tagsTermSourceREFLabel tagsTermAccessionNumberLabel designs
 
     module Authors = 
@@ -98,7 +98,7 @@ module Metadata =
             static member Labels = 
                 [identifierLabel; nameLabel; versionLabel; descriptionLabel; organisationLabel; tableLabel]
 
-            static member FromSparseTable (matrix: SparseTable) =
+            static member FromSparseTable (matrix : SparseTable) =
         
                 let i = 0
 
@@ -117,7 +117,7 @@ module Metadata =
                     comments
 
 
-            static member ToSparseTable (template: Template) =
+            static member ToSparseTable (template : Template) =
                 let i = 1
                 let matrix = SparseTable.Create (keys = TemplateInfo.Labels, length = 2)
                 let mutable commentKeys = []
@@ -134,17 +134,17 @@ module Metadata =
 
                 {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
 
-            static member fromRows (rows: IEnumerator<SparseRow>) =
-                SparseTable.FromRows(rows,TemplateInfo.Labels, 0)
+            static member fromRows (rows : IEnumerator<SparseRow>) =
+                SparseTable.FromRows(rows, TemplateInfo.Labels, 0)
                 |> fun (s, _, _, sm) -> (s, TemplateInfo.FromSparseTable sm)
     
-            static member toRows (template: Template) =  
+            static member toRows (template : Template) =  
                 template
                 |> TemplateInfo.ToSparseTable
                 |> SparseTable.ToRows
     
         
-        let mapDeprecatedKeys (rows: seq<SparseRow>)  = 
+        let mapDeprecatedKeys (rows : seq<SparseRow>)  = 
             rows
             |> Seq.map (fun r -> 
                 r
@@ -176,9 +176,9 @@ module Metadata =
                 if Seq.head s |> SparseRow.tryGetValueAt 0 |> Option.exists (fun v -> v = templateLabel) then s else
                     Seq.append (SparseRow.fromValues [templateLabel] |> Seq.singleton) s
 
-        let fromRows (rows: seq<SparseRow>) = 
+        let fromRows (rows : seq<SparseRow>) = 
 
-            let rec loop en lastLine (templateInfo: TemplateInfo) ers tags authors  =
+            let rec loop en lastLine (templateInfo : TemplateInfo) ers tags authors  =
             
                 match lastLine with
 
@@ -202,7 +202,7 @@ module Metadata =
             loop en currentLine item [] [] []
 
     
-        let toRows (template: Template) =
+        let toRows (template : Template) =
             seq {          
                 yield  SparseRow.fromValues [templateLabel]
                 yield! TemplateInfo.toRows template
@@ -226,7 +226,7 @@ module Template =
     let [<Literal>] metaDataSheetName = "isa_template"
     let [<Literal>] obsoletemetaDataSheetName = "SwateTemplateMetadata"
 
-    let fromParts (templateInfo: TemplateInfo) (ers: OntologyAnnotation list) (tags: OntologyAnnotation list) (authors: Person list) (table: ArcTable) (lastUpdated: System.DateTime) =
+    let fromParts (templateInfo : TemplateInfo) (ers : OntologyAnnotation list) (tags : OntologyAnnotation list) (authors : Person list) (table : ArcTable) (lastUpdated : System.DateTime) =
         Template.make 
             (System.Guid templateInfo.Id)
             table
@@ -239,28 +239,28 @@ module Template =
             (ResizeArray tags)  
             lastUpdated
 
-    let toMetadataSheet (template: Template) : FsWorksheet =        
+    let toMetadataSheet (template : Template) : FsWorksheet =        
         let sheet = FsWorksheet(metaDataSheetName)
         Template.toRows template
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
         sheet
 
-    let fromMetadataSheet (sheet: FsWorksheet)  =
+    let fromMetadataSheet (sheet : FsWorksheet)  =
         sheet.Rows 
         |> Seq.map SparseRow.fromFsRow
         |> Template.fromRows
 
-    let toMetadataCollection (template: Template) =
+    let toMetadataCollection (template : Template) =
         Template.toRows template
         |> Seq.map (fun row -> SparseRow.getAllValues row)
 
-    let fromMetadataCollection (collection: seq<seq<string option>>) =
+    let fromMetadataCollection (collection : seq<seq<string option>>) =
         collection
         |> Seq.map SparseRow.fromAllValues
         |> Template.fromRows
 
     /// Reads an assay from a spreadsheet
-    let fromFsWorkbook (doc: FsWorkbook) = 
+    let fromFsWorkbook (doc : FsWorkbook) = 
         // Reading the "Assay" metadata sheet. Here metadata 
         let templateInfo, ers, tags, authors = 
         
@@ -274,10 +274,10 @@ module Template =
                 | None ->  
                     Metadata.Template.TemplateInfo.empty, [], [], []
             
-        let tryTableNameMatches (ws: FsWorksheet) = 
+        let tryTableNameMatches (ws : FsWorksheet) = 
             if ws.Tables |> Seq.exists (fun t -> t.Name = templateInfo.Table) then Some ws else None
 
-        let tryWSNameMatches (ws: FsWorksheet) = 
+        let tryWSNameMatches (ws : FsWorksheet) = 
             if ws.Name = templateInfo.Table then Some ws else None
 
         let sheets = doc.GetWorksheets()
@@ -301,7 +301,7 @@ module Template =
             
         fromParts templateInfo ers tags authors table (System.DateTime.Now)
 
-    let toFsWorkbook (template: Template) =
+    let toFsWorkbook (template : Template) =
         let doc = new FsWorkbook()
         let metaDataSheet = toMetadataSheet template
         doc.AddWorksheet metaDataSheet
