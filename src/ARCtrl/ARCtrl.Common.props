@@ -2,7 +2,7 @@
   <PropertyGroup>
     <Description>Library for management of Annotated Research Contexts (ARCs) using an in-memory representation and runtime agnostic contract systems.</Description>
   </PropertyGroup>
-  <ItemGroup>  
+  <!--<ItemGroup>  
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -43,7 +43,7 @@
     <Compile Include="JsonIO\ROCrateObject.fs" />
     <Compile Include="JsonIO\ARC.fs" />
     <None Include="README.md" />
-  </ItemGroup>
+  </ItemGroup>-->
   <ItemGroup>
       <ProjectReference Include="..\Contract\ARCtrl.Contract.fsproj" />
       <ProjectReference Include="..\CWL\ARCtrl.CWL.fsproj" />
