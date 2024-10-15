@@ -5,7 +5,7 @@ open ArcTable
 open FsSpreadsheet
 
 /// Reads an datamap from a spreadsheet
-let fromFsWorkbook (doc: FsWorkbook) = 
+let fromFsWorkbook (doc : FsWorkbook) = 
     try
         let dataMapTable = 
             doc.GetWorksheets()
@@ -16,7 +16,7 @@ let fromFsWorkbook (doc: FsWorkbook) =
     with
     | err -> failwithf "Could not parse datamap: \n%s" err.Message
             
-let toFsWorkbook (dataMap: DataMap) =
+let toFsWorkbook (dataMap : DataMap) =
     let doc = new FsWorkbook()
 
     DataMapTable.toFsWorksheet dataMap
