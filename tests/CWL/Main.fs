@@ -1,4 +1,4 @@
-module CWL.Tests
+module ARCtrl.CWL.Tests
 
 open Fable.Pyxpecto
 
@@ -13,5 +13,7 @@ let all = testSequenced <| testList "CWL" [
     Tests.WorkflowSteps.testWorkflowStep
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all
