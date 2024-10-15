@@ -1,4 +1,4 @@
-﻿module TemplateTests
+module TemplateTests
 
 
 open ARCtrl
@@ -51,6 +51,23 @@ let tests_Spreadsheet =  testList "Template_Spreadsheet" [
             let sheet = Spreadsheet.Template.toMetadataSheet template
 
             Expect.workSheetEqual sheet TestObjects.Spreadsheet.Template.templateMetadata "Metadata sheet should be equal"
+        testCase "TestMetadataFromCollection" (fun _ ->
+
+            let table = ArcTable.init(TestObjects.Spreadsheet.Template.templateTableName)
+            let templateInfo, ers,tags,authors = Spreadsheet.Template.fromMetadataCollection (TestObjects.Spreadsheet.Template.templateetadataCollection table)
+
+            let template = ARCtrl.Spreadsheet.Template.fromParts templateInfo ers tags authors table System.DateTime.Now
+
+            Expect.stringEqual template.Name "Plant growth" "Name should be equal"
+            Expect.stringEqual template.Version "1.2.0" "Version should be equal"
+
+            Expect.isSome (template.EndpointRepositories.Item 0).TermAccessionNumber (ARCtrl.Helper.Url.createOAUri "DPBO" "1000096")
+            Expect.isSome (template.EndpointRepositories.Item 0).TermAccessionNumber (ARCtrl.Helper.Url.createOAUri "NFDI4PSO" "1000097")
+            Expect.isSome (template.EndpointRepositories.Item 0).TermAccessionNumber (ARCtrl.Helper.Url.createOAUri "NFDI4PSO" "1000098")
+            Expect.isSome (template.EndpointRepositories.Item 0).TermAccessionNumber (ARCtrl.Helper.Url.createOAUri "NFDI4PSO" "0010002")
+            Expect.isSome (template.EndpointRepositories.Item 0).TermAccessionNumber (ARCtrl.Helper.Url.createOAUri "DPBO" "0010000")
+
+        )
     ]
     testList "fullFile" [
         testCase "simple" <| fun _ ->

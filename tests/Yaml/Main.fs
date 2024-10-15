@@ -7,5 +7,7 @@ let all = testSequenced <| testList "Yaml" [
     Tests.ValidationPackagesConfig.main
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all

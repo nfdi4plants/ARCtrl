@@ -1,7 +1,8 @@
-﻿module TestObjects.Spreadsheet.Investigation
+module TestObjects.Spreadsheet.Investigation
 
 open FsSpreadsheet.DSL
 open FsSpreadsheet 
+open ARCtrl.Spreadsheet
 
 let emptyInvestigation = 
     let wb = new FsWorkbook()

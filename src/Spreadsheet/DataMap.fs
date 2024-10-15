@@ -4,9 +4,8 @@ open ARCtrl
 open ArcTable
 open FsSpreadsheet
 
-
 /// Reads an datamap from a spreadsheet
-let fromFsWorkbook (doc:FsWorkbook) = 
+let fromFsWorkbook (doc : FsWorkbook) = 
     try
         let dataMapTable = 
             doc.GetWorksheets()

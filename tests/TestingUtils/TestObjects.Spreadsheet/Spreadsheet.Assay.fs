@@ -1,4 +1,4 @@
-﻿module TestObjects.Spreadsheet.Assay
+module TestObjects.Spreadsheet.Assay
 
 open FsSpreadsheet
 
@@ -86,6 +86,10 @@ module Proteome =
         row23.[2].Value <- "0000-0002-1825-0097"
         row23.[4].Value <- "0000-0002-1825-0098"
         ws
+
+    let assayMetadataCollection =
+        let assay = ARCtrl.Spreadsheet.ArcAssay.fromMetadataSheet assayMetadata
+        ARCtrl.Spreadsheet.ArcAssay.toMetadataCollection assay
 
     let assayMetadataDeprecatedKeys = 
         let ws = FsWorksheet("isa_assay")
@@ -220,7 +224,6 @@ module Proteome =
         let row22 = ws.Row(22)
         row22.[1].Value <- "Comment[Worksheet]"
         ws
-
 
     let assayMetadataEmptyObsoleteSheetName = 
         let cp = assayMetadataEmpty.Copy()

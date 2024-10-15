@@ -16,15 +16,51 @@ module ArcAssay =
     let [<Literal>] obsoleteMetadataSheetName = "Assay"
     let [<Literal>] metadataSheetName = "isa_assay"
 
-    let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
-        let toRows (assay:ArcAssay) =
-            seq {          
-                yield  SparseRow.fromValues [assaysLabel]
-                yield! Assays.toRows (Some assaysPrefix) [assay]
+    let fromRows (rows : seq<SparseRow>) =
+        let hasPrefix = 
+            rows
+            |> Seq.exists (fun row -> row |> Seq.head |> snd |> fun s -> s.StartsWith(assaysPrefix))
+        let aPrefix, cPrefix = 
+            if hasPrefix then 
+                Some assaysPrefix, Some contactsPrefix
+            else None, None
+        let en = rows.GetEnumerator()
+        let rec loop lastRow assays contacts rowNumber =
+               
+            match lastRow with
+            | Some prefix when prefix = assaysLabel || prefix = obsoleteAssaysLabel -> 
+                let currentRow, rowNumber, _, assays = Assays.fromRows aPrefix (rowNumber + 1) en       
+                loop currentRow assays contacts rowNumber
 
-                yield SparseRow.fromValues [contactsLabel]
-                yield! Contacts.toRows (Some contactsPrefix) (List.ofSeq assay.Performers)
-            }
+            | Some prefix when prefix = contactsLabel -> 
+                let currentLine, rowNumber, _, contacts = Contacts.fromRows cPrefix (rowNumber + 1) en  
+                loop currentLine assays contacts rowNumber
+            | _ -> 
+                match assays, contacts with
+                | [], [] -> ArcAssay.create(Identifier.createMissingIdentifier())
+                | assays, contacts ->
+                    assays
+                    |> Seq.tryHead 
+                    |> Option.defaultValue (ArcAssay.create(Identifier.createMissingIdentifier()))
+                    |> ArcAssay.setPerformers (ResizeArray contacts)
+        
+        if en.MoveNext () then
+            let currentLine = en.Current |> SparseRow.tryGetValueAt 0
+            loop currentLine [] [] 1
+            
+        else
+            failwith "empty assay metadata sheet"
+
+    let toRows (assay : ArcAssay) =
+        seq {          
+            yield  SparseRow.fromValues [assaysLabel]
+            yield! Assays.toRows (Some assaysPrefix) [assay]
+
+            yield SparseRow.fromValues [contactsLabel]
+            yield! Contacts.toRows (Some contactsPrefix) (List.ofSeq assay.Performers)
+        }
+
+    let toMetadataSheet (assay : ArcAssay) : FsWorksheet =
         let sheet = FsWorksheet(metadataSheetName)
         assay
         |> toRows
@@ -33,38 +69,6 @@ module ArcAssay =
 
     let fromMetadataSheet (sheet : FsWorksheet) : ArcAssay =
         try
-            let fromRows (usePrefixes : bool) (rows: seq<SparseRow>) =
-                let aPrefix,cPrefix = 
-                    if usePrefixes then 
-                        Some assaysPrefix,Some contactsPrefix
-                    else None,None
-                let en = rows.GetEnumerator()
-                let rec loop lastLine assays contacts lineNumber =
-               
-                    match lastLine with
-
-                    | Some k when k = assaysLabel || k = obsoleteAssaysLabel -> 
-                        let currentLine,lineNumber,_,assays = Assays.fromRows aPrefix (lineNumber + 1) en       
-                        loop currentLine assays contacts lineNumber
-
-                    | Some k when k = contactsLabel -> 
-                        let currentLine,lineNumber,_,contacts = Contacts.fromRows cPrefix (lineNumber + 1) en  
-                        loop currentLine assays contacts lineNumber
-                    | k -> 
-                        match assays, contacts with
-                        | [], [] -> ArcAssay.create(Identifier.createMissingIdentifier())
-                        | assays, contacts ->
-                            assays
-                            |> Seq.tryHead 
-                            |> Option.defaultValue (ArcAssay.create(Identifier.createMissingIdentifier()))
-                            |> ArcAssay.setPerformers (ResizeArray contacts)
-        
-                if en.MoveNext () then
-                    let currentLine = en.Current |> SparseRow.tryGetValueAt 0
-                    loop currentLine [] [] 1
-            
-                else
-                    failwith "empty assay metadata sheet"
             let rows =        
                 sheet.Rows 
                 |> Seq.map SparseRow.fromFsRow
@@ -72,17 +76,32 @@ module ArcAssay =
                 rows
                 |> Seq.exists (fun row -> row |> Seq.head |> snd |> fun s -> s.StartsWith(assaysPrefix))
             rows
-            |> fromRows hasPrefix
+            |> fromRows
         with 
         | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
 
-    let isMetadataSheetName (name:string) =
+    let toMetadataCollection (assay : ArcAssay) =
+        assay
+        |> toRows
+        |> Seq.map (fun row -> SparseRow.getAllValues row)
+
+    let fromMetadataCollection (collection : seq<seq<string option>>) : ArcAssay =
+        try
+            let rows =        
+                collection 
+                |> Seq.map SparseRow.fromAllValues   
+            rows
+            |> fromRows
+        with 
+        | err -> failwithf "Failed while parsing metadatasheet: %s" err.Message
+
+    let isMetadataSheetName (name : string) =
         name = metadataSheetName || name = obsoleteMetadataSheetName
 
     let isMetadataSheet (sheet : FsWorksheet) =
         isMetadataSheetName sheet.Name
 
-    let tryGetMetadataSheet (doc:FsWorkbook) =
+    let tryGetMetadataSheet (doc : FsWorkbook) =
         doc.GetWorksheets()
         |> Seq.tryFind isMetadataSheet
 
@@ -92,7 +111,7 @@ module ArcAssayExtensions =
     type ArcAssay with
 
         /// Reads an assay from a spreadsheet
-        static member fromFsWorkbook (doc:FsWorkbook) : ArcAssay = 
+        static member fromFsWorkbook (doc : FsWorkbook) : ArcAssay = 
             try
                 // Reading the "Assay" metadata sheet. Here metadata 
                 let assayMetadata = 
@@ -122,7 +141,7 @@ module ArcAssayExtensions =
         /// </summary>
         /// <param name="assay"></param>
         /// <param name="datamapSheet">Default: true</param>
-        static member toFsWorkbook (assay : ArcAssay, ?datamapSheet: bool) =
+        static member toFsWorkbook (assay : ArcAssay, ?datamapSheet : bool) =
             let datamapSheet = defaultArg datamapSheet true
             let doc = new FsWorkbook()
             let metadataSheet = ArcAssay.toMetadataSheet (assay)
@@ -140,5 +159,5 @@ module ArcAssayExtensions =
         /// Write an assay to a spreadsheet
         ///
         /// If datamapSheet is true, the datamap will be written to a worksheet inside assay workbook.
-        member this.ToFsWorkbook (?datamapSheet: bool) =
+        member this.ToFsWorkbook (?datamapSheet : bool) =
             ArcAssay.toFsWorkbook (this, ?datamapSheet = datamapSheet)
