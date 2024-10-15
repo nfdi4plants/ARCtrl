@@ -8,15 +8,16 @@ let project = "ARCtrl"
 /// Dotnet and JS test paths
 let testProjects = 
     [
-        "tests/Core"
-        "tests/Json"
-        "tests/Spreadsheet"
-        "tests/FileSystem"
-        "tests/ARCtrl"
-        "tests/Yaml"
-        "tests/ValidationPackages"
-        "tests/Contract"
-        "tests/ROCrate"
+        "tests/All"
+        //"tests/Core"
+        //"tests/Json"
+        //"tests/Spreadsheet"
+        //"tests/FileSystem"
+        //"tests/ARCtrl"
+        //"tests/Yaml"
+        //"tests/ValidationPackages"
+        //"tests/Contract"
+        //"tests/ROCrate"
     ]
 
 /// Native JS test paths

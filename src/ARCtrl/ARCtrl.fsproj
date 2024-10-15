@@ -6,8 +6,52 @@
   <Import Project="../Package.Metadata.props" />
   
   <Import Project="ARCtrl.Common.props" />
-  <ItemGroup>  
-    <None Include="ARCtrl.Common.props" />
+
+  <ItemGroup>
+    <Compile Include="JsonIO\Decode.fs" />
+    <Compile Include="JsonIO\Encode.fs" />
+    <Compile Include="JsonIO\Comment.fs" />
+    <Compile Include="JsonIO\OntologyAnnotation.fs" />
+    <Compile Include="JsonIO\OntologySourceReference.fs" />
+    <Compile Include="JsonIO\DataFile.fs" />
+    <Compile Include="JsonIO\Data.fs" />
+    <Compile Include="JsonIO\Person.fs" />
+    <Compile Include="JsonIO\Publication.fs" />
+    <Compile Include="JsonIO\Process\Value.fs" />
+    <Compile Include="JsonIO\Process\Factor.fs" />
+    <Compile Include="JsonIO\Process\FactorValue.fs" />
+    <Compile Include="JsonIO\Process\ProtocolParameter.fs" />
+    <Compile Include="JsonIO\Process\MaterialType.fs" />
+    <Compile Include="JsonIO\Process\MaterialAttribute.fs" />
+    <Compile Include="JsonIO\Process\Component.fs" />
+    <Compile Include="JsonIO\Process\Protocol.fs" />
+    <Compile Include="JsonIO\Process\MaterialAttributeValue.fs" />
+    <Compile Include="JsonIO\Process\Material.fs" />
+    <Compile Include="JsonIO\Process\Source.fs" />
+    <Compile Include="JsonIO\Process\Sample.fs" />
+    <Compile Include="JsonIO\Process\ProcessParameterValue.fs" />
+    <Compile Include="JsonIO\Process\ProcessInput.fs" />
+    <Compile Include="JsonIO\Process\ProcessOutput.fs" />
+    <Compile Include="JsonIO\Process\Process.fs" />
+    <Compile Include="JsonIO\Process\ProcessSequence.fs" />
+    <Compile Include="JsonIO\Process\StudyMaterials.fs" />
+    <Compile Include="JsonIO\Table\Compression.fs" />
+    <Compile Include="JsonIO\Table\CompositeCell.fs" />
+    <Compile Include="JsonIO\Table\IOType.fs" />
+    <Compile Include="JsonIO\Table\CompositeHeader.fs" />
+    <Compile Include="JsonIO\Table\ArcTable.fs" />
+    <Compile Include="JsonIO\Table\Templates.fs" />
+    <Compile Include="JsonIO\DataMap\DataMap.fs" />
+    <Compile Include="JsonIO\Assay.fs" />
+    <Compile Include="JsonIO\Study.fs" />
+    <Compile Include="JsonIO\Investigation.fs" />
+    <Compile Include="JsonIO\ROCrateObject.fs" />
+    <Compile Include="JsonIO\ARC.fs" />
+    <None Include="README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />

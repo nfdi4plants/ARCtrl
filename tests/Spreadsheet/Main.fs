@@ -1,4 +1,4 @@
-﻿module Spreadsheet.Tests
+module ARCtrl.Spreadsheet.Tests
 
 open Fable.Pyxpecto
 
@@ -17,5 +17,7 @@ let all = testSequenced <| testList "ISA.Spreadsheet" [
     TemplateTests.main
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all

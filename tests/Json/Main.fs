@@ -24,5 +24,7 @@ let all = testSequenced <| testList "Json" [
     Tests.SchemaValidation.main
 ]
 
+#if !TESTS_ALL
 [<EntryPoint>]
+#endif
 let main argv = Pyxpecto.runTests [||] all
