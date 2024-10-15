@@ -186,6 +186,7 @@ let private testInvestigationFile =
             Expect.sequenceEqual i.RegisteredStudyIdentifiers studyIdentifiers "Registered study Identifier were not written and read correctly"
         )
         testCase "TestMetadataCollection" (fun () ->
+
             let investigation =
                 Investigation.BII_I_1.fullInvestigation
                 |> ArcInvestigation.fromFsWorkbook

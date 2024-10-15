@@ -1,9 +1,8 @@
 namespace ARCtrl.Spreadsheet
 
 open ARCtrl
-open FsSpreadsheet
-
 open ARCtrl.Helper
+open FsSpreadsheet
 
 module ArcStudy = 
 
@@ -25,13 +24,14 @@ module ArcStudy =
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
         sheet
 
+    let fromRows (rows: seq<SparseRow>) =
+        let en = rows.GetEnumerator()
+        en.MoveNext() |> ignore  
+        let _, _, _,study = Studies.fromRows 2 en
+        study
+
     let fromMetadataSheet (sheet: FsWorksheet) : ArcStudy*ArcAssay list =
-        try
-            let fromRows (rows: seq<SparseRow>) =
-                let en = rows.GetEnumerator()
-                en.MoveNext() |> ignore  
-                let _, _, _,study = Studies.fromRows 2 en
-                study
+        try            
             sheet.Rows 
             |> Seq.map SparseRow.fromFsRow
             |> fromRows
@@ -46,11 +46,6 @@ module ArcStudy =
 
     let fromMetadataCollection (collection: seq<seq<string option>>) : ArcStudy*ArcAssay list =
         try
-            let fromRows (rows: seq<SparseRow>) =
-                let en = rows.GetEnumerator()
-                en.MoveNext() |> ignore  
-                let _, _, _,study = Studies.fromRows 2 en
-                study
             collection
             |> Seq.map SparseRow.fromAllValues
             |> fromRows

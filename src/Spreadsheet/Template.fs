@@ -1,9 +1,9 @@
 namespace ARCtrl.Spreadsheet
 
 open FsSpreadsheet
+open ARCtrl
 open ARCtrl.Helper
 open ARCtrl.Spreadsheet
-open ARCtrl
 open System.Collections.Generic
 
 exception TemplateReadError of string
