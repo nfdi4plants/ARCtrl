@@ -42,3 +42,10 @@ module XlsxHelper =
         member _.toXlsxFile (path: string, investigation: ArcInvestigation) = ArcInvestigation.toFsWorkbook(investigation) |> FsWorkbook.toXlsxFile path
 
 open XlsxHelper
+
+[<AttachMembers>]
+type XlsxController =
+    static member Datamap = DatamapXlsx()
+    static member Assay = AssayXlsx()
+    static member Study = StudyXlsx()
+    static member Investigation = InvestigationXlsx()
