@@ -51,13 +51,14 @@
     <Compile Include="JsonIO\ARC.fs" />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup>    
     <Compile Include ="ContractIO\FileSystemHelper.fs" />
+    <Compile Include ="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
     <Compile Include="Json.fs" />
-    <Compile Include="Xlsx.fs" />
+    <Compile Include="Xlsx.fs" /> 
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.SimpleHttp" />
