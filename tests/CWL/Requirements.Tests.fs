@@ -7,13 +7,13 @@ open YAMLicious
 open TestingUtils
 
 let decodeRequirement =
-    TestObjects.CWL.Requirements.requirements
+    TestObjects.CWL.Requirements.requirementsFileContent
     |> Decode.read
     |> Decode.requirementsDecoder
     |> fun r -> r.Value
 
 let testRequirement =
-    testList "requirements with DockerRequirement, InitialWorkDirRequirement, EnvVarRequirement and NetworkAccess" [
+    testList "Decode" [
         testCase "Length" <| fun _ -> Expect.isTrue (5 = decodeRequirement.Length) "Length of requirements is not 5"
         testList "DockerRequirement" [
             let dockerItem = decodeRequirement.[0]
@@ -60,4 +60,9 @@ let testRequirement =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
         ]
+    ]
+
+let main = 
+    testList "Requirement" [
+        testRequirement
     ]

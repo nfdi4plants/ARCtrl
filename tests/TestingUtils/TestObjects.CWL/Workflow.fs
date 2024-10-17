@@ -1,6 +1,6 @@
 module TestObjects.CWL.Workflow
 
-let workflow ="""cwlVersion: v1.2
+let workflowFile ="""cwlVersion: v1.2
 class: Workflow
 
 requirements:

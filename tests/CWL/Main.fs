@@ -3,14 +3,13 @@ module ARCtrl.CWL.Tests
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "CWL" [
-    Tests.CWLWorkflow.testCWLWorkflowDescription
-    Tests.CWLObject.testCWLToolDescription
-    Tests.CWLObjectMetadata.testCWLToolDescriptionMetadata
-    Tests.Metadata.testMetadata
-    Tests.Outputs.testOutput
-    Tests.Inputs.testInput
-    Tests.Requirements.testRequirement
-    Tests.WorkflowSteps.testWorkflowStep
+    Tests.CWLWorkflow.main
+    Tests.CWLObject.main
+    Tests.Metadata.main
+    Tests.Outputs.main
+    Tests.Inputs.main
+    Tests.Requirements.main
+    Tests.WorkflowSteps.main
 ]
 
 #if !TESTS_ALL

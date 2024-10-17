@@ -1,5 +1,6 @@
-namespace ARCtrl.CWL
+namespace ARCtrl
 
+open ARCtrl.CWL
 open DynamicObj
 open CWLTypes
 open Requirements
@@ -11,7 +12,7 @@ module CWLProcessingUnits =
 
     type CWLToolDescription (
             cwlVersion: string,
-            cls: Class,
+            cls: CWLClass,
             outputs: Output [],
             ?baseCommand: string [],
             ?requirements: Requirement [],
@@ -22,7 +23,7 @@ module CWLProcessingUnits =
         inherit DynamicObj ()
 
         let mutable _cwlVersion: string = cwlVersion
-        let mutable _class: Class = cls
+        let mutable _class: CWLClass = cls
         let mutable _outputs: Output [] = outputs
         let mutable _baseCommand: string [] option = baseCommand
         let mutable _requirements: Requirement [] option = requirements
@@ -64,7 +65,7 @@ module CWLProcessingUnits =
 
     type CWLWorkflowDescription(
         cwlVersion: string,
-        cls: Class,
+        cls: CWLClass,
         steps: WorkflowStep [],
         inputs: Input [],
         outputs: Output [],
@@ -75,7 +76,7 @@ module CWLProcessingUnits =
         inherit DynamicObj()
 
         let mutable _cwlVersion: string = cwlVersion
-        let mutable _class: Class = cls
+        let mutable _class: CWLClass = cls
         let mutable _steps: WorkflowStep [] = steps
         let mutable _inputs: Input [] = inputs
         let mutable _outputs: Output [] = outputs

@@ -1,6 +1,6 @@
 module TestObjects.CWL.Inputs
 
-let inputs ="""inputs:
+let inputsFileContent ="""inputs:
   arcDirectory: Directory
   firstArg:
     type: File

@@ -7,17 +7,16 @@ open ARCtrl.CWL.Inputs
 open ARCtrl.CWL.Outputs
 open ARCtrl.CWL.Outputs.Workflow
 open ARCtrl.CWL.Inputs.Workflow
-open YAMLicious
 open TestingUtils
 
 let decodeCWLWorkflowDescription =
-    TestObjects.CWL.Workflow.workflow
+    TestObjects.CWL.Workflow.workflowFile
     |> Decode.decodeWorkflow
 
 let testCWLWorkflowDescription =
-    testList "CWLWorkflowDescription" [
+    testList "Decode" [
         testCase "Class" <| fun _ ->
-            let expected = Class.Workflow
+            let expected = CWLClass.Workflow
             let actual = decodeCWLWorkflowDescription.Class
             Expect.equal actual expected
                 $"Expected: {expected}\nActual: {actual}"
@@ -130,4 +129,9 @@ let testCWLWorkflowDescription =
                 Expect.equal a.OutputBinding e.OutputBinding
                     $"Expected: {e}\nActual: {a}"
             ) actual expected
+    ]
+
+let main = 
+    testList "CWLWorkflowDescription" [
+        testCWLWorkflowDescription
     ]

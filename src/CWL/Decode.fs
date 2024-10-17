@@ -1,5 +1,6 @@
 namespace ARCtrl.CWL
 
+open ARCtrl
 open YAMLicious
 open YAMLicious.YAMLiciousTypes
 open CWLTypes
@@ -317,7 +318,7 @@ module Decode =
     let versionDecoder: (YAMLiciousTypes.YAMLElement -> string) =
         Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string)
 
-    let classDecoder: (YAMLiciousTypes.YAMLElement -> Class) =
+    let classDecoder: (YAMLiciousTypes.YAMLElement -> CWLClass) =
         Decode.object (fun get ->
             match get.Required.Field "class" Decode.string with
             | "Workflow" -> Workflow

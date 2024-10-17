@@ -9,12 +9,12 @@ open YAMLicious
 open TestingUtils
 
 let decodeWorkflowStep =
-    TestObjects.CWL.WorkflowSteps.workflowSteps
+    TestObjects.CWL.WorkflowSteps.workflowStepsFileContent
     |> Decode.read
     |> Decode.stepsDecoder
 
 let testWorkflowStep =
-    testList "Decode WorkflowStep" [
+    testList "Decode" [
         testCase "Length" <| fun _ -> Expect.isTrue (2 = decodeWorkflowStep.Length) "Length of WorkflowSteps is not 2"
         testList "IDs" [
             testCase "MzMLToMzlite" <| fun _ ->
@@ -79,4 +79,9 @@ let testWorkflowStep =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
         ]
+    ]
+
+let main = 
+    testList "WorkflowStep" [
+        testWorkflowStep
     ]

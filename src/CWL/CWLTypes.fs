@@ -31,7 +31,7 @@ module CWLTypes =
         | Null
         | Array of CWLType
 
-    type Class = 
+    type CWLClass = 
     | Workflow
     | CommandLineTool
     | ExpressionTool

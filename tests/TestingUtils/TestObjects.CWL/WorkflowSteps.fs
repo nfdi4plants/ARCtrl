@@ -1,6 +1,6 @@
 module TestObjects.CWL.WorkflowSteps
 
-let workflowSteps ="""steps:
+let workflowStepsFileContent ="""steps:
   MzMLToMzlite:
     run: ./runs/MzMLToMzlite/proteomiqon-mzmltomzlite.cwl
     in:
