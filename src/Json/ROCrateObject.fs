@@ -46,10 +46,19 @@ module rec ROCrateObject =
 
     let rec encoder(obj: ROCrateObject) =
         obj.GetProperties true
-        |> Seq.map (fun kv ->
-            kv.Key,
-            genericEncoder obj
+        |> Seq.choose (fun kv ->
+            if kv.Key <> "Id" && kv.Key <> "SchemaType" && kv.Key <> "AdditionalType" then
+                Some(kv.Key, genericEncoder kv.Value)
+            else
+                None
+         
         )
+        |> Seq.append [
+            "@id", Encode.string obj.Id
+            "@type", Encode.string obj.SchemaType
+            if obj.AdditionalType.IsSome then
+                "additionalType", Encode.string obj.AdditionalType.Value
+        ]
         |> Encode.object
 
     /// Returns a decoder
