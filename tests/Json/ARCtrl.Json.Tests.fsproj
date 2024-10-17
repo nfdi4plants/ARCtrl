@@ -33,6 +33,7 @@
     <Compile Include="Process\Protocol.Tests.fs" />
     <Compile Include="Process\Process.Tests.fs" />
     <Compile Include="Template.Tests.fs" />
+    <Compile Include="ROCrateObject.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>
