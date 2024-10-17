@@ -74,9 +74,49 @@ let private test_read = testList "Read" [
         Expect.equal o2 "Value2" "Second nested string was not parsed correctly"
         let o3 = nested.[2] :?> int
         Expect.equal o3 42 "Third nested int was not parsed correctly"
+]
+
+let test_write = testList "write" [
+    ftestCase "onlyIDAndType" <| fun _ ->
+        let json = GenericObjects.onlyIDAndType
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+    ftestCase "withStringFields" <| fun _ ->
+        let json = GenericObjects.withStringFields
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+    ftestCase "withIntFields" <| fun _ ->
+        let json = GenericObjects.withIntFields
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+    ftestCase "withStringArray" <| fun _ ->
+        let json = GenericObjects.withStringArray
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+    ftestCase "withNestedObject" <| fun _ ->
+        let json = GenericObjects.withNestedObject
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+    ftestCase "withObjectArray" <| fun _ ->
+        let json = GenericObjects.withObjectArray
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+    ftestCase "withMixedArray" <| fun _ ->
+        let json = GenericObjects.withMixedArray
+        let object = ROCrateObject.fromROCrateJsonString(json)
+        let output = ROCrateObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+        
 
 ]
 
 let main = testList "ROCrateObject" [
     test_read
+    test_write
 ]
