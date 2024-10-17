@@ -52,9 +52,11 @@ module rec ROCrateObject =
         )
         |> Encode.object
 
-
-    let rec decoderWith (constructorByTypeFunc : string -> (string -> string -> string option -> #ROCrateObject)) : Decoder<obj> = 
-        let rec decode() = 
+    /// Returns a decoder
+    ///
+    /// If expectObject is set to true, decoder fails if top-level value is not an ROCrate object
+    let rec getDecoder (expectObject : bool) : Decoder<obj> = 
+        let rec decode(expectObject) = 
             let decodeObject : Decoder<ROCrateObject> =
                 { new Decoder<ROCrateObject> with
                     member _.Decode(helpers, value) =     
@@ -65,12 +67,10 @@ module rec ROCrateObject =
                                 fun (get : Decode.IGetters) ->
                                     let t = get.Required.Field "@type" Decode.string
                                     let id = get.Required.Field "@id" Decode.string
-                                    let additionalType = get.Optional.Field "@additionalType" Decode.string
-                                    let f = constructorByTypeFunc t
-                                    let o = f t id additionalType :> ROCrateObject
+                                    let o = ROCrateObject(id,t)
                                     for property in properties do
                                         if property <> "@id" && property <> "@type" then
-                                            o.SetProperty(property,get.Required.Field property (decode()))
+                                            o.SetProperty(property,get.Required.Field property (decode(false)))
                                     o
                             let result = builder getters               
                             match getters.Errors with
@@ -98,7 +98,7 @@ module rec ROCrateObject =
                                 match acc with
                                 | Error _ -> acc
                                 | Ok acc ->
-                                    match decode().Decode(helpers, value) with
+                                    match decode(false).Decode(helpers, value) with
                                     | Error er ->
                                         Error(
                                             er
@@ -113,23 +113,19 @@ module rec ROCrateObject =
                         else
                             ("", BadPrimitive("an array", value)) |> Error
                 }
-            Decode.oneOf [
+            if expectObject then
                 Decode.map box (decodeObject)
-                Decode.map box (resizeArray)
-                Decode.map box (Decode.string)
-                Decode.map box (Decode.int)
-                Decode.map box (Decode.decimal)
+            else
+                Decode.oneOf [
+                    Decode.map box (decodeObject)
+                    Decode.map box (resizeArray)
+                    Decode.map box (Decode.string)
+                    Decode.map box (Decode.int)
+                    Decode.map box (Decode.decimal)
 
-            ]
-        decode()
+                ]
+        decode(expectObject)
 
-    let untypedDecoder = decoderWith (fun _ ->
-        fun id t additionalType -> ROCrateObject(id,t,?additionalType = additionalType)      
-    )
+    let decoder : Decoder<ROCrateObject> = Decode.map unbox (getDecoder(true))
 
-    let typings : (string*(string->string->string option->#ROCrateObject)) list=
-        [
-            ROCrate.Assay
-
-
-        ]
+    let genericDecoder : Decoder<obj> = getDecoder(false)
