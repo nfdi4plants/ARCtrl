@@ -1,17 +1,12 @@
 module Tests.Metadata
 
-open ARCtrl.CWL
-open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements
-open ARCtrl.CWL.Inputs
-open ARCtrl.CWL.Outputs
 open ARCtrl.CWL.Decode
 open DynamicObj
 open YAMLicious
 open TestingUtils
 
 let decodeMetadata =
-    TestObjects.CWL.Metadata.metadata
+    TestObjects.CWL.Metadata.metadataFileContent
     |> Decode.read
 
 let overflowDictionary =
@@ -22,7 +17,7 @@ let dynObj =
     overflowDecoder (new DynamicObj()) overflowDictionary
 
 let testMetadata =
-    testList "CWL Metadata" [
+    testList "Decode" [
         testCase "Overflow Dictionary Keys" <| fun _ ->
             let expected = ["arc:has technology type"; "arc:technology platform"; "arc:performer"; "arc:has process sequence"]
             let actual = overflowDictionary.Keys |> List.ofSeq
@@ -38,4 +33,10 @@ let testMetadata =
             let actualValue = dynObj |> DynObj.tryGetTypedPropertyValue<string> "arc:technology platform"
             Expect.equal actualValue.Value expectedValue
                 $"Expected: {expectedValue}\nActual: {actualValue}"
+    ]
+
+
+let main = 
+    testList "DynamicObj Metadata" [
+        testMetadata
     ]

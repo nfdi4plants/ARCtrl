@@ -1,6 +1,6 @@
 module TestObjects.CWL.Metadata
 
-let metadata ="""arc:has technology type:
+let metadataFileContent ="""arc:has technology type:
   - class: arc:technology type
     arc:annotation value: "Fsharp Devcontainer"
 

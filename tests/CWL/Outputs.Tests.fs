@@ -7,12 +7,12 @@ open YAMLicious
 open TestingUtils
 
 let decodeOutput =
-    TestObjects.CWL.Outputs.outputs
+    TestObjects.CWL.Outputs.outputsFileContent
     |> Decode.read
     |> Decode.outputsDecoder
 
 let testOutput =
-    testList "outputs with basetypes and array" [
+    testList "Decode" [
         testCase "Length" <| fun _ ->
             let expected = 5
             let actual = decodeOutput.Length
@@ -124,4 +124,9 @@ let testOutput =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
         ]
+    ]
+
+let main = 
+    testList "Output" [
+        testOutput
     ]

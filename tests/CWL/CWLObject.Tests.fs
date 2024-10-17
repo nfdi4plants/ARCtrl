@@ -5,17 +5,22 @@ open ARCtrl.CWL.CWLTypes
 open ARCtrl.CWL.Requirements
 open ARCtrl.CWL.Inputs
 open ARCtrl.CWL.Outputs
-open YAMLicious
 open TestingUtils
+open DynamicObj
 
 let decodeCWLToolDescription =
-    TestObjects.CWL.CommandLineTool.cwl
+    TestObjects.CWL.CommandLineTool.cwlFile
     |> Decode.decodeCommandLineTool
 
+let decodeCWLToolDescriptionMetadata =
+    TestObjects.CWL.CommandLineToolMetadata.cwlFile
+    |> Decode.decodeCommandLineTool
+
+
 let testCWLToolDescription =
-    testList "CWLToolDescription" [
+    testList "Decode" [
         testCase "Class" <| fun _ ->
-            let expected = Class.CommandLineTool
+            let expected = CWLClass.CommandLineTool
             let actual = decodeCWLToolDescription.Class
             Expect.isTrue
                 (expected = actual)
@@ -170,4 +175,170 @@ let testCWLToolDescription =
             Expect.isTrue
                 (expected = actual)
                 $"Expected: {expected}\nActual: {actual}"
+    ]
+
+let testCWLToolDescriptionMetadata =
+    testList "Decode with Metadata" [
+        testCase "Class" <| fun _ ->
+            let expected = CWLClass.CommandLineTool
+            let actual = decodeCWLToolDescriptionMetadata.Class
+            Expect.isTrue
+                (expected = actual)
+                $"Expected: {expected}\nActual: {actual}"
+        testCase "CWLVersion" <| fun _ ->
+            let expected = "v1.2"
+            let actual = decodeCWLToolDescriptionMetadata.CWLVersion
+            Expect.isTrue
+                (expected = actual)
+                $"Expected: {expected}\nActual: {actual}"
+        testCase "baseCommand" <| fun _ ->
+            let expected = Some [|"dotnet"; "fsi"; "script.fsx"|]
+            let actual = decodeCWLToolDescriptionMetadata.BaseCommand
+            Expect.isTrue
+                (expected = actual)
+                $"Expected: {expected}\nActual: {actual}"
+        testList "Hints" [
+            let hintsItem = decodeCWLToolDescriptionMetadata.Hints
+            testCase "DockerRequirement" <| fun _ ->
+                let expected = DockerRequirement {DockerPull = Some "mcr.microsoft.com/dotnet/sdk:6.0"; DockerFile = None; DockerImageId = None}
+                let actual = hintsItem.Value.[0]
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+        ]
+        testList "Requirements" [
+            let requirementsItem = decodeCWLToolDescriptionMetadata.Requirements
+            testCase "InitialWorkDirRequirement" <| fun _ ->
+                let expected = InitialWorkDirRequirement [|Dirent {Entry = "$include: script.fsx"; Entryname = Some "script.fsx"; Writable = None }|]
+                let actual = requirementsItem.Value.[0]
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+            testCase "EnvVarRequirement" <| fun _ ->
+                let expected = EnvVarRequirement [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}|]
+                let actual = requirementsItem.Value.[1]
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+            testCase "NetworkAccessRequirement" <| fun _ ->
+                let expected = NetworkAccessRequirement
+                let actual = requirementsItem.Value.[2]
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+        ]
+        testList "Inputs" [
+            let inputsItem = decodeCWLToolDescriptionMetadata.Inputs.Value
+            testCase "Length" <| fun _ ->
+                let expected = 2
+                let actual = inputsItem.Length
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+            testList "File" [
+                let fileItem = inputsItem.[0]
+                testCase "Name" <| fun _ ->
+                    let expected = "firstArg"
+                    let actual = fileItem.Name
+                    Expect.isTrue
+                        ("firstArg" = fileItem.Name)
+                        "Name of input is not 'firstArg'"
+                testCase "Type" <| fun _ ->
+                    let expected = File (FileInstance())
+                    let actual = fileItem.Type_.Value
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "InputBinding" <| fun _ ->
+                    let expected = Some {Position = Some 1; Prefix = None; ItemSeparator = None; Separate = None}
+                    let actual = fileItem.InputBinding
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+            ]
+            testList "String" [
+                let stringItem = inputsItem.[1]
+                testCase "Name" <| fun _ ->
+                    let expected = "secondArg"
+                    let actual = stringItem.Name
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "Type" <| fun _ ->
+                    let expected = String
+                    let actual = stringItem.Type_.Value
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "InputBinding" <| fun _ ->
+                    let expected = Some {Position = Some 2; Prefix = None; ItemSeparator = None; Separate = None}
+                    let actual = stringItem.InputBinding
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+            ]
+        ]
+        testList "Outputs" [
+            let outputsItem = decodeCWLToolDescriptionMetadata.Outputs
+            testCase "Length" <| fun _ ->
+                let expected = 2
+                let actual = outputsItem.Length
+                Expect.isTrue
+                    (expected = actual)
+                    $"Expected: {expected}\nActual: {actual}"
+            testList "Directory" [
+                let directoryItem = outputsItem.[0]
+                testCase "Name" <| fun _ ->
+                    let expected = "output"
+                    let actual = directoryItem.Name
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "Type" <| fun _ ->
+                    let expected = Directory (DirectoryInstance())
+                    let actual = directoryItem.Type_.Value
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "OutputBinding" <| fun _ ->
+                    let expected = Some {Glob = Some "$(runtime.outdir)/.nuget"}
+                    let actual = directoryItem.OutputBinding
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+            ]
+            testList "File" [
+                let fileItem = outputsItem.[1]
+                testCase "Name" <| fun _ ->
+                    let expected = "output2"
+                    let actual = fileItem.Name
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "Type" <| fun _ ->
+                    let expected = File (FileInstance())
+                    let actual = fileItem.Type_.Value
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+                testCase "OutputBinding" <| fun _ ->
+                    let expected = Some {Glob = Some "$(runtime.outdir)/*.csv"}
+                    let actual = fileItem.OutputBinding
+                    Expect.isTrue
+                        (expected = actual)
+                        $"Expected: {expected}\nActual: {actual}"
+            ]
+        ]
+        testCase "Metadata" <| fun _ ->
+            Expect.isSome decodeCWLToolDescriptionMetadata.Metadata $"Expected {decodeCWLToolDescriptionMetadata.Metadata} to be Some"
+            let expected = TestObjects.CWL.CommandLineToolMetadata.expectedMetadataString.Trim().Replace("\r\n", "\n")
+            let actual = (decodeCWLToolDescriptionMetadata.Metadata.Value |> DynObj.format).Trim().Replace("\r\n", "\n")
+            Expect.equal actual expected
+                $"Expected: {expected}\nActual: {actual}"
+    ]
+
+let main = 
+    testList "CWLToolDescription" [
+        testCWLToolDescription
+        testCWLToolDescriptionMetadata
     ]

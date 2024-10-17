@@ -8,7 +8,6 @@
   <ItemGroup>
     <Compile Include="CWLWorkflow.Tests.fs" />
     <Compile Include="CWLObject.Tests.fs" />
-    <Compile Include="CWLObjectMetadata.Tests.fs" />
     <Compile Include="Metadata.Tests.fs" />
     <Compile Include="Outputs.Tests.fs" />
     <Compile Include="Inputs.Tests.fs" />

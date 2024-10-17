@@ -1,6 +1,6 @@
 module TestObjects.CWL.CommandLineToolMetadata
 
-let cwl ="""cwlVersion: v1.2
+let cwlFile ="""cwlVersion: v1.2
 class: CommandLineTool
 hints:
   - class: DockerRequirement

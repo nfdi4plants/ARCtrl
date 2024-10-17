@@ -1,6 +1,6 @@
 module TestObjects.CWL.Outputs
 
-let outputs ="""outputs:
+let outputsFileContent ="""outputs:
   output:
     type: File
     outputBinding:

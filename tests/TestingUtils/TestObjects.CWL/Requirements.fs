@@ -1,6 +1,6 @@
 module TestObjects.CWL.Requirements
 
-let requirements ="""requirements:
+let requirementsFileContent ="""requirements:
   - class: DockerRequirement
     dockerImageId: "devcontainer"
     dockerFile: {$include: "FSharpArcCapsule/Dockerfile"}

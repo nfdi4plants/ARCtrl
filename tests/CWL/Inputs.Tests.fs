@@ -7,13 +7,13 @@ open YAMLicious
 open TestingUtils
 
 let decodeInput =
-    TestObjects.CWL.Inputs.inputs
+    TestObjects.CWL.Inputs.inputsFileContent
     |> Decode.read
     |> Decode.inputsDecoder
     |>fun i ->i.Value
 
 let testInput =
-    testList "inputs with Directory, File and string" [
+    testList "Decode" [
         testCase "Length" <| fun _ -> Expect.isTrue (3 = decodeInput.Length) "Length of inputs is not 3"
         testList "Directory" [
             let directoryItem = decodeInput.[0]
@@ -42,4 +42,9 @@ let testInput =
                     (expected = actual)
                     $"Expected: {expected}\nActual: {actual}"
         ]
+    ]
+
+let main = 
+    testList "Input" [
+        testInput
     ]
