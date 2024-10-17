@@ -2,6 +2,7 @@ namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Thoth.Json.Core
+open Fable.Core
 open System
 
 type LDContext() = inherit DynamicObj()
@@ -14,34 +15,35 @@ type IROCrateObject =
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
 /// Basically a DynamicObj that implements the IROPCrateObject interface.
+[<AttachMembers>]
 type ROCrateObject(id:string, schemaType: string, ?additionalType) =
     inherit DynamicObj()
 
-    let mutable _schemaType = schemaType
-    let mutable _additionalType = additionalType
+    let mutable schemaType = schemaType
+    let mutable additionalType = additionalType
 
     member this.Id 
         with get() = id
     
     member this.SchemaType 
-        with get() = _schemaType
-        and set(value) = _schemaType <- value
+        with get() = schemaType
+        and set(value) = schemaType <- value
 
     member this.AdditionalType
-        with get() = _additionalType
-        and set(value) = _additionalType <- value
+        with get() = additionalType
+        and set(value) = additionalType <- value
 
     interface IROCrateObject with
 
         member this.SchemaType
-            with get() = _schemaType
-            and set(value) = _schemaType <- value
+            with get() = schemaType
+            and set(value) = schemaType <- value
 
         member this.Id = id
 
         member this.AdditionalType
-            with get() = _additionalType
-            and set(value) = _additionalType <- value
+            with get() = additionalType
+            and set(value) = additionalType <- value
 
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)

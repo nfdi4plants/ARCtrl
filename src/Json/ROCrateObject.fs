@@ -47,7 +47,8 @@ module rec ROCrateObject =
     let rec encoder(obj: ROCrateObject) =
         obj.GetProperties true
         |> Seq.choose (fun kv ->
-            if kv.Key <> "Id" && kv.Key <> "SchemaType" && kv.Key <> "AdditionalType" then
+            let l = kv.Key.ToLower()
+            if l <> "id" && l <> "schematype" && l <> "additionaltype" then
                 Some(kv.Key, genericEncoder kv.Value)
             else
                 None
