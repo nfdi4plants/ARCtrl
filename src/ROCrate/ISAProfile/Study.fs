@@ -35,5 +35,5 @@ type Study(
         DynObj.setOptionalProperty (nameof headline) headline           this 
         DynObj.setOptionalProperty (nameof url) url                     this 
 
-    member this.GetIdentifier() = DynObj.tryGetTypedPropertyValue<string> (nameof identifier) this |> Option.get
+    member this.GetIdentifier() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "Study" (nameof identifier) this
     static member getIdentifier = fun (inv: Investigation) -> inv.GetIdentifier()

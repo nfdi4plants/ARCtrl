@@ -35,3 +35,6 @@ type Person(
         DynObj.setOptionalProperty (nameof telephone) telephone           this
         DynObj.setOptionalProperty (nameof faxNumber) faxNumber           this
         DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this
+
+    member this.GetGivenName() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "Person" (nameof givenName) this
+    static member getGivenName = fun (p: Person) -> p.GetGivenName()

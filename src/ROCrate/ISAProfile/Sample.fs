@@ -18,3 +18,6 @@ type Sample(
 
         DynObj.setOptionalProperty (nameof additionalProperty) additionalProperty this
         DynObj.setOptionalProperty (nameof derivesFrom) derivesFrom               this
+
+    member this.GetName() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "Sample" (nameof name) this
+    static member getName = fun (s: Sample) -> s.GetName()

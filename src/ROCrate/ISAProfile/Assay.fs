@@ -30,5 +30,5 @@ type Assay(
         DynObj.setOptionalProperty (nameof hasPart) hasPart this
         DynObj.setOptionalProperty (nameof url) url this
 
-    member this.GetIdentifier() = DynObj.tryGetTypedPropertyValue<string> (nameof identifier) this |> Option.get
+    member this.GetIdentifier() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "Assay" (nameof identifier) this
     static member getIdentifier = fun (ass: Assay) -> ass.GetIdentifier()

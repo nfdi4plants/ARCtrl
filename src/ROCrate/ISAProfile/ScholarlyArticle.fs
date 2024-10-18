@@ -26,3 +26,9 @@ type ScholarlyArticle(
         DynObj.setOptionalProperty (nameof url) url this
         DynObj.setOptionalProperty (nameof creativeWorkStatus) creativeWorkStatus this
         DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this
+
+    member this.GetHeadline() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "ScholarlyArticle" (nameof headline) this
+    static member getHeadline = fun (s: ScholarlyArticle) -> s.GetHeadline()
+
+    member this.GetIdentifier() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "ScholarlyArticle" (nameof identifier) this
+    static member getIdentifier = fun (s: ScholarlyArticle) -> s.GetIdentifier()

@@ -29,14 +29,14 @@ type LabProcess(
         DynObj.setOptionalProperty (nameof endTime) endTime this
         DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this
 
-    member this.GetName() = DynObj.tryGetPropertyValue (nameof name) this |> Option.get
+    member this.GetName() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "LabProcess" (nameof name) this
     static member getName = fun (lp: LabProcess) -> lp.GetName()
 
-    member this.GetAgent() = DynObj.tryGetTypedPropertyValue<string> (nameof agent) this |> Option.get
+    member this.GetAgent() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "LabProcess" (nameof agent) this
     static member getAgent = fun (lp: LabProcess) -> lp.GetAgent()
 
-    member this.GetObject() = DynObj.tryGetTypedPropertyValue<string> (nameof object) this |> Option.get
+    member this.GetObject() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "LabProcess" (nameof object) this
     static member getObject = fun (lp: LabProcess) -> lp.GetObject()
 
-    member this.GetResult() = DynObj.tryGetTypedPropertyValue<string> (nameof result) this |> Option.get
+    member this.GetResult() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "LabProcess" (nameof result) this
     static member getResult = fun (lp: LabProcess) -> lp.GetResult()

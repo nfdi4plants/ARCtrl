@@ -71,7 +71,7 @@ let tests_dynamic_members = testSequenced (
 let tests_instance_methods = testSequenced (
     testList "instance methods" [
 
-        let context = new DynamicObj()
+        let context = new LDContext()
         context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->
@@ -89,7 +89,7 @@ let tests_instance_methods = testSequenced (
 let tests_static_methods = testSequenced (
     testList "static methods" [
 
-        let context = new DynamicObj()
+        let context = new LDContext()
         context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->

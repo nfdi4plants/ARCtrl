@@ -73,7 +73,7 @@ let tests_dynamic_members = testSequenced (
 let tests_instance_methods = testSequenced (
     testList "instance methods" [
 
-        let context = new DynamicObj()
+        let context = new LDContext()
         context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->
@@ -85,13 +85,32 @@ let tests_instance_methods = testSequenced (
         testCase "can remove context" <| fun _ ->
             mandatory_properties.RemoveContext() |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+        testCase "can get identifier" <| fun _ ->
+            let identifier = mandatory_properties.GetIdentifier()
+            Expect.equal identifier "identifier" "identifier was not retrieved correctly"
+        testCase "unset identifier throws" <| fun _ ->
+            Expect.throws
+                (fun () ->
+                    let tmp = new Investigation("id", "identifier")
+                    tmp.RemoveProperty("identifier") |> ignore
+                    tmp.GetIdentifier() |> ignore
+                )
+                "unset identifier did not throw"
+        testCase "incorrectly typed identifier throws" <| fun _ ->
+            Expect.throws
+                (fun () ->
+                    let tmp = new Investigation("id", "identifier")
+                    tmp.SetProperty("identifier", 42) |> ignore
+                    tmp.GetIdentifier() |> ignore
+                )
+                "incorrectly typed identifier did not throw"
     ]
 )
 
 let tests_static_methods = testSequenced (
     testList "static methods" [
 
-        let context = new DynamicObj()
+        let context = new LDContext()
         context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->

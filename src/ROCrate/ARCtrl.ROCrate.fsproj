@@ -7,6 +7,7 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup>
+    <Compile Include="DynObjExtensions.fs" />
     <Compile Include="ROCrateObject.fs" />
     <Compile Include="ISAProfile\Dataset.fs" />
     <Compile Include="ISAProfile\Investigation.fs" />
