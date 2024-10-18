@@ -245,6 +245,10 @@ module Template =
     let isMetadataSheet (sheet : FsWorksheet) =
         isMetadataSheetName sheet.Name
 
+    let tryGetMetadataSheet (doc : FsWorkbook) =
+        doc.GetWorksheets()
+        |> Seq.tryFind isMetadataSheet
+
     let toMetadataSheet (template : Template) : FsWorksheet =        
         let sheet = FsWorksheet(metaDataSheetName)
         Template.toRows template
