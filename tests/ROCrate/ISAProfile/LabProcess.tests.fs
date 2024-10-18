@@ -73,7 +73,7 @@ let tests_instance_methods = testSequenced (
     testList "instance methods" [
 
         let context = new DynamicObj()
-        context.SetValue("more", "context")
+        context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->
             mandatory_properties.SetContext context
@@ -82,8 +82,8 @@ let tests_instance_methods = testSequenced (
             let ctx = mandatory_properties.TryGetContext()
             Expect.equal ctx (Some context) "context was not set correctly"
         testCase "can remove context" <| fun _ ->
-            mandatory_properties.RemoveContext()
-            Expect.isNone (DynObj.tryGetTypedValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+            mandatory_properties.RemoveContext() |> ignore
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
     ]
 )
 
@@ -91,7 +91,7 @@ let tests_static_methods = testSequenced (
     testList "static methods" [
 
         let context = new DynamicObj()
-        context.SetValue("more", "context")
+        context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->
             ROCrateObject.setContext context mandatory_properties
@@ -100,8 +100,8 @@ let tests_static_methods = testSequenced (
             let ctx = ROCrateObject.tryGetContext() mandatory_properties
             Expect.equal ctx (Some context) "context was not set correctly"
         testCase "can remove context" <| fun _ ->
-            ROCrateObject.removeContext() mandatory_properties
-            Expect.isNone (DynObj.tryGetTypedValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+            ROCrateObject.removeContext() mandatory_properties |> ignore
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
     ]
 )
 

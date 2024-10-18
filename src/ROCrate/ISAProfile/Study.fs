@@ -23,7 +23,6 @@ type Study(
     inherit Dataset(id, "Study")
     do
         DynObj.setProperty (nameof identifier) identifier this
-
         DynObj.setOptionalProperty (nameof about) about                 this 
         DynObj.setOptionalProperty (nameof citation) citation           this 
         DynObj.setOptionalProperty (nameof comment) comment             this 
@@ -36,5 +35,5 @@ type Study(
         DynObj.setOptionalProperty (nameof headline) headline           this 
         DynObj.setOptionalProperty (nameof url) url                     this 
 
-    member this.GetIdentifier() = DynObj.tryGetTypedValue<string> (nameof identifier) this |> Option.get
+    member this.GetIdentifier() = DynObj.tryGetTypedPropertyValue<string> (nameof identifier) this |> Option.get
     static member getIdentifier = fun (inv: Investigation) -> inv.GetIdentifier()

@@ -42,16 +42,16 @@ type ROCrateObject(id:string, schemaType: string, ?additionalType) =
             and set(value) = _additionalType <- value
 
     member this.SetContext (context: #DynamicObj) =
-        this.SetValue("@context", context)
+        this.SetProperty("@context", context)
 
     static member setContext (context: #DynamicObj) = fun (roc: #ROCrateObject) -> roc.SetContext(context)
 
     member this.TryGetContext() =
-        DynObj.tryGetTypedValue<DynamicObj>("@context") this
+        DynObj.tryGetTypedPropertyValue<DynamicObj>("@context") this
 
     static member tryGetContext () = fun (roc: #ROCrateObject) -> roc.TryGetContext()
 
     member this.RemoveContext() =
-        this.Remove("@context")
+        this.RemoveProperty("@context")
 
     static member removeContext () = fun (roc: #ROCrateObject) -> roc.RemoveContext()
