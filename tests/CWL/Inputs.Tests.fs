@@ -14,7 +14,7 @@ let decodeInput =
 
 let testInput =
     testList "Decode" [
-        testCase "Length" <| fun _ -> Expect.equal 3 decodeInput.Count ""
+        testCase "Length" <| fun _ -> Expect.equal 5 decodeInput.Count ""
         testList "Directory" [
             let directoryItem = decodeInput.[0]
             testCase "Name" <| fun _ -> Expect.equal "arcDirectory"  directoryItem.Name ""
@@ -26,8 +26,20 @@ let testInput =
             testCase "Type" <| fun _ -> Expect.equal (File (FileInstance()))  fileItem.Type_.Value ""
             testCase "InputBinding" <| fun _ -> Expect.equal (Some {Position = Some 1; Prefix = Some "--example"; ItemSeparator = None; Separate = None}) fileItem.InputBinding ""
         ]
+        testList "File optional" [
+            let fileItem = decodeInput.[2]
+            testCase "Name" <| fun _ -> Expect.equal "argOptional"  fileItem.Name ""
+            testCase "Type" <| fun _ -> Expect.equal (File (FileInstance()))  fileItem.Type_.Value ""
+            testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
+        ]
+        testList "File array optional" [
+            let fileItem = decodeInput.[3]
+            testCase "Name" <| fun _ -> Expect.equal "argOptionalMap"  fileItem.Name ""
+            testCase "Type" <| fun _ -> Expect.equal (Array (File (FileInstance())))  fileItem.Type_.Value ""
+            testCase "Optional" <| fun _ -> Expect.equal (Some true) fileItem.Optional ""
+        ]
         testList "String" [
-            let stringItem = decodeInput.[2]
+            let stringItem = decodeInput.[4]
             testCase "Name" <| fun _ -> Expect.equal "secondArg"  stringItem.Name ""
             testCase "Type" <| fun _ ->
                 let expected = String
