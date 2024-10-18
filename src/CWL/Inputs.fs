@@ -3,6 +3,7 @@ namespace ARCtrl.CWL
 open CWLTypes
 open Outputs.Workflow
 open DynamicObj
+open Fable.Core
 
 module Inputs =
 
@@ -13,6 +14,7 @@ module Inputs =
         Separate: bool option
     }
 
+    [<AttachMembers>]
     type Input (
         name: string,
         ?type_: CWLType,

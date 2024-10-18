@@ -2,6 +2,7 @@ namespace ARCtrl.CWL
 
 open CWLTypes
 open DynamicObj
+open Fable.Core
 
 module Outputs =
 
@@ -9,6 +10,7 @@ module Outputs =
         Glob: string option
     }
 
+    [<AttachMembers>]
     type Output (
         name: string,
         ?type_: CWLType,
