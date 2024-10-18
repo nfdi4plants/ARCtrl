@@ -7,6 +7,9 @@ let inputsFileContent ="""inputs:
     inputBinding:
       position: 1
       prefix: --example
+  argOptional:
+    type: File?
+  argOptionalMap: File[]?
   secondArg:
     type: string
     inputBinding:

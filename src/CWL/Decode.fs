@@ -90,9 +90,14 @@ module Decode =
             | _ -> failwith "Invalid CWL type"
         )
 
-    /// Match the input string to the possible CWL types
-    let cwlTypeStringMatcher t (get: Decode.IGetters) =
-        match t with
+    /// Match the input string to the possible CWL types and checks if it is optional
+    let cwlTypeStringMatcher (t: string) (get: Decode.IGetters) =
+        let optional, newT =
+            if t.EndsWith("?") then
+                true, t.Replace("?", "")
+            else
+                false, t
+        match newT with
         | "File" -> File (FileInstance ())
         | "Directory" -> Directory (DirectoryInstance ())
         | "Dirent" -> (get.Required.Field "listing" direntDecoder)
@@ -114,9 +119,10 @@ module Decode =
         | "stdout" -> Stdout
         | "null" -> Null
         | _ -> failwith "Invalid CWL type"
+        , optional
 
     /// Access the type field and decode a YAMLElement into a CWLType
-    let cwlTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
+    let cwlTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType*bool) =
         Decode.object (fun get ->
             let cwlType = 
                 get.Required.Field 
@@ -133,7 +139,7 @@ module Decode =
                 cwlTypeStringMatcher t get
             | None -> 
                 let cwlTypeArray = get.Required.Field "type" cwlArrayTypeDecoder
-                cwlTypeArray
+                cwlTypeArray, false
         )
 
     /// Decode a YAMLElement into an Output Array
@@ -147,8 +153,8 @@ module Decode =
                     let outputSource = get.Optional.Field "outputSource" Decode.string
                     let cwlType = 
                         match value with
-                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
-                        | _ -> cwlTypeDecoder value
+                        | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get |> fst
+                        | _ -> cwlTypeDecoder value |> fst
                     let output =
                         Output(
                             key,
@@ -324,7 +330,7 @@ module Decode =
                 for key in dict.Keys do
                     let value = dict.[key]
                     let inputBinding = inputBindingDecoder value
-                    let cwlType = 
+                    let cwlType,optional = 
                         match value with
                         | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
                         | _ -> cwlTypeDecoder value
@@ -335,6 +341,8 @@ module Decode =
                         )
                     if inputBinding.IsSome then
                         DynObj.setOptionalProperty "inputBinding" inputBinding input
+                    if optional then
+                        DynObj.setOptionalProperty "optional" (Some true) input
                     input
             |]
             |> ResizeArray
