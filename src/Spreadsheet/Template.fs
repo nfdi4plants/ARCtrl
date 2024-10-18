@@ -239,6 +239,12 @@ module Template =
             (ResizeArray tags)  
             lastUpdated
 
+    let isMetadataSheetName (name : string) =
+        name = metaDataSheetName || name = obsoletemetaDataSheetName
+
+    let isMetadataSheet (sheet : FsWorksheet) =
+        isMetadataSheetName sheet.Name
+
     let toMetadataSheet (template : Template) : FsWorksheet =        
         let sheet = FsWorksheet(metaDataSheetName)
         Template.toRows template
