@@ -8,18 +8,18 @@ open Thoth.Json.Core
 open DynamicObj
 
 [<AutoOpen>]
-module ROCrateObjectExtensions =
+module LDObjectExtensions =
 
-    type ROCrateObject with
+    type LDObject with
 
         static member fromROCrateJsonString (s:string) = 
-            Decode.fromJsonString ROCrateObject.decoder s
+            Decode.fromJsonString LDObject.decoder s
 
         /// exports in json-ld format
         static member toROCrateJsonString(?spaces) =
-            fun (obj:ROCrateObject) ->
-                ROCrateObject.encoder obj
+            fun (obj:LDObject) ->
+                LDObject.encoder obj
                 |> Encode.toJsonString (Encode.defaultSpaces spaces)
 
         member this.ToROCrateJsonString(?spaces) = 
-            ROCrateObject.toROCrateJsonString(?spaces=spaces) this
+            LDObject.toROCrateJsonString(?spaces=spaces) this

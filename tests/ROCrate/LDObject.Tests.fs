@@ -1,4 +1,4 @@
-module Tests.ROCrateObject
+module Tests.LDObject
 
 open ARCtrl.ROCrate
 open DynamicObj
@@ -6,24 +6,24 @@ open DynamicObj
 open TestingUtils
 open Common
 
-let mandatory_properties = ROCrateObject("rocrateobject_mandatory_properties_id", "someType")
-let all_properties = ROCrateObject("rocrateobject_all_properties_id", "someType", additionalType = "additionalType")
+let mandatory_properties = LDObject("LDObject_mandatory_properties_id", "someType")
+let all_properties = LDObject("LDObject_all_properties_id", "someType", additionalType = "additionalType")
 
 let tests_profile_object_is_valid = testList "constructed properties" [
     testList "mandatory properties" [
-        testCase "Id" <| fun _ -> Expect.ROCrateObjectHasId "rocrateobject_mandatory_properties_id" mandatory_properties
-        testCase "SchemaType" <| fun _ -> Expect.ROCrateObjectHasType "someType" mandatory_properties
+        testCase "Id" <| fun _ -> Expect.LDObjectHasId "LDObject_mandatory_properties_id" mandatory_properties
+        testCase "SchemaType" <| fun _ -> Expect.LDObjectHasType "someType" mandatory_properties
     ]
     testList "all properties" [
-        testCase "Id" <| fun _ -> Expect.ROCrateObjectHasId "rocrateobject_all_properties_id" all_properties
-        testCase "SchemaType" <| fun _ -> Expect.ROCrateObjectHasType "someType" all_properties
-        testCase "AdditionalType" <| fun _ -> Expect.ROCrateObjectHasAdditionalType "additionalType" all_properties
+        testCase "Id" <| fun _ -> Expect.LDObjectHasId "LDObject_all_properties_id" all_properties
+        testCase "SchemaType" <| fun _ -> Expect.LDObjectHasType "someType" all_properties
+        testCase "AdditionalType" <| fun _ -> Expect.LDObjectHasAdditionalType "additionalType" all_properties
     ]
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.ROCrateObjectHasExpectedInterfaceMembers "someType" "rocrateobject_mandatory_properties_id" None mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.ROCrateObjectHasExpectedInterfaceMembers "someType" "rocrateobject_all_properties_id" (Some "additionalType") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "someType" "LDObject_mandatory_properties_id" None mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "someType" "LDObject_all_properties_id" (Some "additionalType") all_properties
 ]
 
 let tests_dynamic_members = testSequenced (
@@ -31,7 +31,7 @@ let tests_dynamic_members = testSequenced (
         testCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
         testCase "Set dynamic property" <| fun _ ->
             mandatory_properties.SetProperty("yes",42)
-            Expect.ROCrateObjectHasDynamicProperty "yes" 42 mandatory_properties
+            Expect.LDObjectHasDynamicProperty "yes" 42 mandatory_properties
         testCase "Remove dynamic property" <| fun _ ->
             mandatory_properties.RemoveProperty("yes") |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be removed"
@@ -46,7 +46,7 @@ let tests_instance_methods = testSequenced (
 
         testCase "can set context" <| fun _ ->
             mandatory_properties.SetContext context
-            Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
+            Expect.LDObjectHasDynamicProperty "@context" context mandatory_properties
         testCase "can get context" <| fun _ ->
             let ctx = mandatory_properties.TryGetContext()
             Expect.equal ctx (Some context) "context was not set correctly"
@@ -63,18 +63,18 @@ let tests_static_methods = testSequenced (
         context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->
-            ROCrateObject.setContext context mandatory_properties
-            Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
+            LDObject.setContext context mandatory_properties
+            Expect.LDObjectHasDynamicProperty "@context" context mandatory_properties
         testCase "can get context" <| fun _ ->
-            let ctx = ROCrateObject.tryGetContext() mandatory_properties
+            let ctx = LDObject.tryGetContext() mandatory_properties
             Expect.equal ctx (Some context) "context was not set correctly"
         testCase "can remove context" <| fun _ ->
-            ROCrateObject.removeContext() mandatory_properties |> ignore
+            LDObject.removeContext() mandatory_properties |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
     ]
 )
 
-let main = testList "ROCrateObject" [
+let main = testList "LDObject" [
     tests_profile_object_is_valid
     tests_interface_members
     tests_dynamic_members

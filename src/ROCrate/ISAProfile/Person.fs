@@ -20,7 +20,7 @@ type Person(
     ?faxNumber,
     ?disambiguatingDescription
 ) as this=
-    inherit ROCrateObject(id = id, schemaType = "schema.org/Person", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "schema.org/Person", ?additionalType = additionalType)
     do
 
         DynObj.setProperty (nameof givenName) givenName this

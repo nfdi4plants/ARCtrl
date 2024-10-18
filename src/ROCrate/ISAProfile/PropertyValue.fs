@@ -15,7 +15,7 @@ type PropertyValue(
     ?valueReference,
     ?additionalType
 ) as this =
-    inherit ROCrateObject(id = id, schemaType = "schema.org/PropertyValue", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "schema.org/PropertyValue", ?additionalType = additionalType)
     do
 
         DynObj.setProperty (nameof name) name this

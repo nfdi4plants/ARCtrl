@@ -6,7 +6,7 @@ open ARCtrl.ROCrate
 open Thoth.Json.Core
 open DynamicObj
 
-module rec ROCrateObject =
+module rec LDObject =
 
     #if !FABLE_COMPILER
     let (|SomeObj|_|) =
@@ -36,7 +36,7 @@ module rec ROCrateObject =
         | :? bool as b -> Encode.bool b
         | :? float as f -> Encode.float f
         | :? DateTime as d -> Encode.dateTime d
-        | :? ROCrateObject as o -> encoder o
+        | :? LDObject as o -> encoder o
         #if !FABLE_COMPILER
         | SomeObj o -> genericEncoder o
         #endif
@@ -44,7 +44,7 @@ module rec ROCrateObject =
         | :? System.Collections.IEnumerable as l -> [ for x in l -> genericEncoder x] |> Encode.list
         | _ -> failwith "Unknown type"
 
-    let rec encoder(obj: ROCrateObject) =
+    let rec encoder(obj: LDObject) =
         obj.GetProperties true
         |> Seq.choose (fun kv ->
             let l = kv.Key.ToLower()
@@ -67,8 +67,8 @@ module rec ROCrateObject =
     /// If expectObject is set to true, decoder fails if top-level value is not an ROCrate object
     let rec getDecoder (expectObject : bool) : Decoder<obj> = 
         let rec decode(expectObject) = 
-            let decodeObject : Decoder<ROCrateObject> =
-                { new Decoder<ROCrateObject> with
+            let decodeObject : Decoder<LDObject> =
+                { new Decoder<LDObject> with
                     member _.Decode(helpers, value) =     
                         if helpers.isObject value then
                             let getters = Decode.Getters(helpers, value)
@@ -77,7 +77,7 @@ module rec ROCrateObject =
                                 fun (get : Decode.IGetters) ->
                                     let t = get.Required.Field "@type" Decode.string
                                     let id = get.Required.Field "@id" Decode.string
-                                    let o = ROCrateObject(id,t)
+                                    let o = LDObject(id,t)
                                     for property in properties do
                                         if property <> "@id" && property <> "@type" then
                                             o.SetProperty(property,get.Required.Field property (decode(false)))
@@ -136,6 +136,6 @@ module rec ROCrateObject =
                 ]
         decode(expectObject)
 
-    let decoder : Decoder<ROCrateObject> = Decode.map unbox (getDecoder(true))
+    let decoder : Decoder<LDObject> = Decode.map unbox (getDecoder(true))
 
     let genericDecoder : Decoder<obj> = getDecoder(false)

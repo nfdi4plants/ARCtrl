@@ -8,15 +8,15 @@ open System
 type LDContext() = inherit DynamicObj()
 
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
-type IROCrateObject =
+type ILDObject =
     abstract member SchemaType : string with get, set
     abstract member Id: string
     abstract member AdditionalType: string option with get, set
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
-/// Basically a DynamicObj that implements the IROPCrateObject interface.
+/// Basically a DynamicObj that implements the ILDObject interface.
 [<AttachMembers>]
-type ROCrateObject(id:string, schemaType: string, ?additionalType) =
+type LDObject(id:string, schemaType: string, ?additionalType) =
     inherit DynamicObj()
 
     let mutable schemaType = schemaType
@@ -33,7 +33,7 @@ type ROCrateObject(id:string, schemaType: string, ?additionalType) =
         with get() = additionalType
         and set(value) = additionalType <- value
 
-    interface IROCrateObject with
+    interface ILDObject with
 
         member this.SchemaType
             with get() = schemaType
@@ -48,12 +48,12 @@ type ROCrateObject(id:string, schemaType: string, ?additionalType) =
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)
 
-    static member setContext (context: LDContext) = fun (roc: #ROCrateObject) -> roc.SetContext(context)
+    static member setContext (context: LDContext) = fun (roc: #LDObject) -> roc.SetContext(context)
 
     member this.TryGetContext() = DynObj.tryGetTypedPropertyValue<DynamicObj>("@context") this
 
-    static member tryGetContext () = fun (roc: #ROCrateObject) -> roc.TryGetContext()
+    static member tryGetContext () = fun (roc: #LDObject) -> roc.TryGetContext()
 
     member this.RemoveContext() = this.RemoveProperty("@context")
 
-    static member removeContext () = fun (roc: #ROCrateObject) -> roc.RemoveContext() 
+    static member removeContext () = fun (roc: #LDObject) -> roc.RemoveContext() 

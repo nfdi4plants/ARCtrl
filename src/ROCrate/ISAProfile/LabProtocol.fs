@@ -18,7 +18,7 @@ type LabProtocol(
     ?reagent,
     ?computationalTool
 ) as this =
-    inherit ROCrateObject(id = id, schemaType = "bioschemas.org/LabProtocol", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "bioschemas.org/LabProtocol", ?additionalType = additionalType)
     do
         DynObj.setOptionalProperty (nameof name) name                            this
         DynObj.setOptionalProperty (nameof intendedUse) intendedUse              this
