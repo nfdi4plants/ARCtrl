@@ -5,9 +5,11 @@ open Outputs.Workflow
 open Inputs.Workflow
 open Requirements
 open DynamicObj
+open Fable.Core
 
 module WorkflowSteps =
 
+    [<AttachMembers>]
     type WorkflowStep (
         id: string,
         in_: StepInput [],

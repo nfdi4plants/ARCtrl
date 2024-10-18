@@ -7,9 +7,11 @@ open Requirements
 open Inputs
 open Outputs
 open WorkflowSteps
+open Fable.Core
 
 module CWLProcessingUnits =
 
+    [<AttachMembers>]
     type CWLToolDescription (
             cwlVersion: string,
             cls: CWLClass,
@@ -63,6 +65,7 @@ module CWLProcessingUnits =
             with get() = _metadata
             and set(metadata) = _metadata <- metadata
 
+    [<AttachMembers>]
     type CWLWorkflowDescription(
         cwlVersion: string,
         cls: CWLClass,
