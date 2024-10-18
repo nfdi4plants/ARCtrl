@@ -17,7 +17,7 @@ type LabProcess(
     ?endTime,
     ?disambiguatingDescription
 ) as this =
-    inherit ROCrateObject(id = id, schemaType = "bioschemas.org/LabProcess", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "bioschemas.org/LabProcess", ?additionalType = additionalType)
     do
         DynObj.setProperty (nameof name) name     this
         DynObj.setProperty (nameof agent) agent   this

@@ -200,3 +200,65 @@ let publication = """{
     "comments": "sdo:disambiguatingDescription"
   }
 }"""
+
+module GenericObjects =
+
+    let onlyIDAndType =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType"
+        }"""
+
+    let onlyID =
+        """{
+            "@id": "OnlyIdentifier"
+        }"""
+
+    let onlyType =
+        """{
+            "@type": "MyType"
+        }"""
+
+    let withStringFields =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "name": "MyName",
+            "description": "MyDescription"
+        }"""
+
+    let withIntFields =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "number": 42,
+            "anotherNumber": 1337
+        }"""
+
+    let withStringArray =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "names": ["MyName", "MySecondName"]           
+        }"""
+
+    let withNestedObject =
+        sprintf """{
+            "@id": "OuterIdentifier",
+            "@type": "MyType",
+            "nested": %s
+        }""" onlyIDAndType
+
+    let withObjectArray =
+        sprintf """{
+            "@id": "OuterIdentifier",
+            "@type": "MyType",
+            "nested": [%s, %s]
+        }""" onlyIDAndType onlyIDAndType
+
+    let withMixedArray =
+        sprintf """{
+            "@id": "OuterIdentifier",
+            "@type": "MyType",
+            "nested": [%s, "Value2", 42]
+        }""" onlyIDAndType

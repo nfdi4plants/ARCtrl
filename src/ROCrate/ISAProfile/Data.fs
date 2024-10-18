@@ -13,7 +13,7 @@ type Data(
     ?encodingFormat,
     ?disambiguatingDescription
 ) as this =
-    inherit ROCrateObject(id = id, schemaType = "schema.org/MediaObject", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "schema.org/MediaObject", ?additionalType = additionalType)
     do
         DynObj.setProperty (nameof name) name this
 

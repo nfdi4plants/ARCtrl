@@ -2,12 +2,12 @@
 
 open DynamicObj
 
-type IROCrateObject =
+type ILDObject =
     abstract member SchemaType : string
     abstract member Id: string
     abstract member AdditionalType: string option
 
-type ROCrateObject(id:string, schemaType: string, ?additionalType) =
+type LDObject(id:string, schemaType: string, ?additionalType) =
     inherit DynamicObj()
 
     let mutable _schemaType = "schema.org/Dataset"
@@ -24,16 +24,16 @@ type ROCrateObject(id:string, schemaType: string, ?additionalType) =
         with get() = _additionalType
         and set(value) = _additionalType <- value
 
-    interface IROCrateObject with
+    interface ILDObject with
         member this.SchemaType = schemaType
         member this.Id = id
         member this.AdditionalType = additionalType
 
 type Dataset (id: string, ?additionalType: string) =
-    inherit ROCrateObject(id = id, schemaType = "schema.org/Dataset", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "schema.org/Dataset", ?additionalType = additionalType)
 
      //interface implementations
-    interface IROCrateObject with 
+    interface ILDObject with 
         member this.Id with get () = this.Id
         member this.SchemaType with get (): string = this.SchemaType
         member this.AdditionalType with get (): string option = this.AdditionalType

@@ -6,7 +6,7 @@ open ARCtrl.ROCrate
 open Thoth.Json.Core
 open DynamicObj
 
-module rec ROCrateObject =
+module rec LDObject =
 
     #if !FABLE_COMPILER
     let (|SomeObj|_|) =
@@ -36,7 +36,7 @@ module rec ROCrateObject =
         | :? bool as b -> Encode.bool b
         | :? float as f -> Encode.float f
         | :? DateTime as d -> Encode.dateTime d
-        | :? ROCrateObject as o -> encoder o
+        | :? LDObject as o -> encoder o
         #if !FABLE_COMPILER
         | SomeObj o -> genericEncoder o
         #endif
@@ -44,32 +44,43 @@ module rec ROCrateObject =
         | :? System.Collections.IEnumerable as l -> [ for x in l -> genericEncoder x] |> Encode.list
         | _ -> failwith "Unknown type"
 
-    let rec encoder(obj: ROCrateObject) =
+    let rec encoder(obj: LDObject) =
         obj.GetProperties true
-        |> Seq.map (fun kv ->
-            kv.Key,
-            genericEncoder obj
+        |> Seq.choose (fun kv ->
+            let l = kv.Key.ToLower()
+            if l <> "id" && l <> "schematype" && l <> "additionaltype" then
+                Some(kv.Key, genericEncoder kv.Value)
+            else
+                None
+         
         )
+        |> Seq.append [
+            "@id", Encode.string obj.Id
+            "@type", Encode.string obj.SchemaType
+            if obj.AdditionalType.IsSome then
+                "additionalType", Encode.string obj.AdditionalType.Value
+        ]
         |> Encode.object
 
-
-    let rec decoder : Decoder<obj> = 
-        let rec decode() = 
-            let decodeObject : Decoder<ROCrateObject> =
-                { new Decoder<ROCrateObject> with
+    /// Returns a decoder
+    ///
+    /// If expectObject is set to true, decoder fails if top-level value is not an ROCrate object
+    let rec getDecoder (expectObject : bool) : Decoder<obj> = 
+        let rec decode(expectObject) = 
+            let decodeObject : Decoder<LDObject> =
+                { new Decoder<LDObject> with
                     member _.Decode(helpers, value) =     
                         if helpers.isObject value then
                             let getters = Decode.Getters(helpers, value)
                             let properties = helpers.getProperties value
                             let builder =
                                 fun (get : Decode.IGetters) ->
-                                    let o = ROCrateObject(
-                                        id = get.Required.Field "@id" Decode.string,
-                                        schemaType = get.Required.Field "@type" Decode.string
-                                    )
+                                    let t = get.Required.Field "@type" Decode.string
+                                    let id = get.Required.Field "@id" Decode.string
+                                    let o = LDObject(id,t)
                                     for property in properties do
                                         if property <> "@id" && property <> "@type" then
-                                            o.SetProperty(property,get.Required.Field property (decode()))
+                                            o.SetProperty(property,get.Required.Field property (decode(false)))
                                     o
                             let result = builder getters               
                             match getters.Errors with
@@ -97,7 +108,7 @@ module rec ROCrateObject =
                                 match acc with
                                 | Error _ -> acc
                                 | Ok acc ->
-                                    match decode().Decode(helpers, value) with
+                                    match decode(false).Decode(helpers, value) with
                                     | Error er ->
                                         Error(
                                             er
@@ -112,12 +123,19 @@ module rec ROCrateObject =
                         else
                             ("", BadPrimitive("an array", value)) |> Error
                 }
-            Decode.oneOf [
+            if expectObject then
                 Decode.map box (decodeObject)
-                Decode.map box (resizeArray)
-                Decode.map box (Decode.string)
-                Decode.map box (Decode.int)
-                Decode.map box (Decode.decimal)
+            else
+                Decode.oneOf [
+                    Decode.map box (decodeObject)
+                    Decode.map box (resizeArray)
+                    Decode.map box (Decode.string)
+                    Decode.map box (Decode.int)
+                    Decode.map box (Decode.decimal)
 
-            ]
-        decode()
+                ]
+        decode(expectObject)
+
+    let decoder : Decoder<LDObject> = Decode.map unbox (getDecoder(true))
+
+    let genericDecoder : Decoder<obj> = getDecoder(false)

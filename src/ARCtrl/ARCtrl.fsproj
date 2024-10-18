@@ -45,7 +45,7 @@
     <Compile Include="JsonIO\Assay.fs" />
     <Compile Include="JsonIO\Study.fs" />
     <Compile Include="JsonIO\Investigation.fs" />
-    <Compile Include="JsonIO\ROCrateObject.fs" />
+    <Compile Include="JsonIO\LDObject.fs" />
     <Compile Include="JsonIO\ARC.fs" />
     <None Include="README.md" />
   </ItemGroup>

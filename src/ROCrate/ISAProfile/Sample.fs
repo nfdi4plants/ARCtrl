@@ -12,7 +12,7 @@ type Sample(
     ?additionalProperty,
     ?derivesFrom
 ) as this =
-    inherit ROCrateObject(id = id, schemaType = "bioschemas.org/Sample", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "bioschemas.org/Sample", ?additionalType = additionalType)
     do
         DynObj.setProperty (nameof name) name this
 

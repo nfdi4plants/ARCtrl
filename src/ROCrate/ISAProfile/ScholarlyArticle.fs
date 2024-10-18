@@ -16,7 +16,7 @@ type ScholarlyArticle(
     ?disambiguatingDescription
 
 ) as this =
-    inherit ROCrateObject(id = id, schemaType = "schema.org/ScholarlyArticle", ?additionalType = additionalType)
+    inherit LDObject(id = id, schemaType = "schema.org/ScholarlyArticle", ?additionalType = additionalType)
     do
 
         DynObj.setProperty (nameof headline) headline     this
