@@ -4,6 +4,8 @@ open DynamicObj
 open Thoth.Json.Core
 open System
 
+type LDContext() = inherit DynamicObj()
+
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
 type IROCrateObject =
     abstract member SchemaType : string with get, set
@@ -40,3 +42,16 @@ type ROCrateObject(id:string, schemaType: string, ?additionalType) =
         member this.AdditionalType
             with get() = _additionalType
             and set(value) = _additionalType <- value
+
+    member this.SetContext (context: LDContext) =
+        this.SetProperty("@context", context)
+
+    static member setContext (context: LDContext) = fun (roc: #ROCrateObject) -> roc.SetContext(context)
+
+    member this.TryGetContext() = DynObj.tryGetTypedPropertyValue<DynamicObj>("@context") this
+
+    static member tryGetContext () = fun (roc: #ROCrateObject) -> roc.TryGetContext()
+
+    member this.RemoveContext() = this.RemoveProperty("@context")
+
+    static member removeContext () = fun (roc: #ROCrateObject) -> roc.RemoveContext() 

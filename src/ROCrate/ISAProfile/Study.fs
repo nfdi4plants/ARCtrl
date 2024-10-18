@@ -6,8 +6,8 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Study(
-    id,
-    identifier,
+    id: string,
+    identifier: string,
     ?about,
     ?citation,
     ?comment,
@@ -23,7 +23,6 @@ type Study(
     inherit Dataset(id, "Study")
     do
         DynObj.setProperty (nameof identifier) identifier this
-
         DynObj.setOptionalProperty (nameof about) about                 this 
         DynObj.setOptionalProperty (nameof citation) citation           this 
         DynObj.setOptionalProperty (nameof comment) comment             this 
@@ -36,3 +35,5 @@ type Study(
         DynObj.setOptionalProperty (nameof headline) headline           this 
         DynObj.setOptionalProperty (nameof url) url                     this 
 
+    member this.GetIdentifier() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "Study" (nameof identifier) this
+    static member getIdentifier = fun (inv: Investigation) -> inv.GetIdentifier()

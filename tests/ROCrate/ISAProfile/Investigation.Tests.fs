@@ -70,8 +70,65 @@ let tests_dynamic_members = testSequenced (
     ]
 )
 
+let tests_instance_methods = testSequenced (
+    testList "instance methods" [
+
+        let context = new LDContext()
+        context.SetProperty("more", "context")
+
+        testCase "can set context" <| fun _ ->
+            mandatory_properties.SetContext context
+            Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
+        testCase "can get context" <| fun _ ->
+            let ctx = mandatory_properties.TryGetContext()
+            Expect.equal ctx (Some context) "context was not set correctly"
+        testCase "can remove context" <| fun _ ->
+            mandatory_properties.RemoveContext() |> ignore
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+        testCase "can get identifier" <| fun _ ->
+            let identifier = mandatory_properties.GetIdentifier()
+            Expect.equal identifier "identifier" "identifier was not retrieved correctly"
+        testCase "unset identifier throws" <| fun _ ->
+            Expect.throws
+                (fun () ->
+                    let tmp = new Investigation("id", "identifier")
+                    tmp.RemoveProperty("identifier") |> ignore
+                    tmp.GetIdentifier() |> ignore
+                )
+                "unset identifier did not throw"
+        testCase "incorrectly typed identifier throws" <| fun _ ->
+            Expect.throws
+                (fun () ->
+                    let tmp = new Investigation("id", "identifier")
+                    tmp.SetProperty("identifier", 42) |> ignore
+                    tmp.GetIdentifier() |> ignore
+                )
+                "incorrectly typed identifier did not throw"
+    ]
+)
+
+let tests_static_methods = testSequenced (
+    testList "static methods" [
+
+        let context = new LDContext()
+        context.SetProperty("more", "context")
+
+        testCase "can set context" <| fun _ ->
+            ROCrateObject.setContext context mandatory_properties
+            Expect.ROCrateObjectHasDynamicProperty "@context" context mandatory_properties
+        testCase "can get context" <| fun _ ->
+            let ctx = ROCrateObject.tryGetContext() mandatory_properties
+            Expect.equal ctx (Some context) "context was not set correctly"
+        testCase "can remove context" <| fun _ ->
+            ROCrateObject.removeContext() mandatory_properties |> ignore
+            Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
+    ]
+)
+
 let main = testList "Investigation" [
     tests_profile_object_is_valid
     tests_interface_members
     tests_dynamic_members
+    tests_instance_methods
+    tests_static_methods
 ]

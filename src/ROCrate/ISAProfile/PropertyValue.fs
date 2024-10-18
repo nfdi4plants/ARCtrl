@@ -25,3 +25,9 @@ type PropertyValue(
         DynObj.setOptionalProperty (nameof unitCode) unitCode             this
         DynObj.setOptionalProperty (nameof unitText) unitText             this
         DynObj.setOptionalProperty (nameof valueReference) valueReference this
+
+    member this.GetName() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "PropertyValue" (nameof name) this
+    static member getName = fun (lp: PropertyValue) -> lp.GetName()
+
+    member this.GetValue() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "PropertyValue" (nameof name) this
+    static member getValue = fun (lp: PropertyValue) -> lp.GetValue()

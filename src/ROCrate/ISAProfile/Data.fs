@@ -21,3 +21,5 @@ type Data(
         DynObj.setOptionalProperty (nameof encodingFormat) encodingFormat this
         DynObj.setOptionalProperty (nameof disambiguatingDescription) disambiguatingDescription this
 
+    member this.GetName() = DynObj.getMandatoryDynamicPropertyOrThrow<string> "Data" (nameof name) this
+    static member getName = fun (d: Data) -> d.GetName()
