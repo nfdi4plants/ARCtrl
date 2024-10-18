@@ -21,18 +21,15 @@ let testMetadata =
         testCase "Overflow Dictionary Keys" <| fun _ ->
             let expected = ["arc:has technology type"; "arc:technology platform"; "arc:performer"; "arc:has process sequence"]
             let actual = overflowDictionary.Keys |> List.ofSeq
-            Expect.equal actual expected
-                $"Expected: {expected}\nActual: {actual}"
+            Expect.equal actual expected ""
         testCase "DynObj Keys" <| fun _ ->
             let expected = ["arc:has technology type"; "arc:technology platform"; "arc:performer"; "arc:has process sequence"]
             let actual = dynObj.GetProperties(false) |> List.ofSeq |> List.map (fun x -> x.Key)
-            Expect.equal actual expected
-                $"Expected: {expected}\nActual: {actual}"
+            Expect.equal actual expected ""
         testCase "DynObj setProperty Value check" <| fun _ ->
             let expectedValue = ".NET"
             let actualValue = dynObj |> DynObj.tryGetTypedPropertyValue<string> "arc:technology platform"
-            Expect.equal actualValue.Value expectedValue
-                $"Expected: {expectedValue}\nActual: {actualValue}"
+            Expect.equal actualValue.Value expectedValue ""
     ]
 
 

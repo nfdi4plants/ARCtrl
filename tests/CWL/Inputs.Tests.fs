@@ -14,33 +14,29 @@ let decodeInput =
 
 let testInput =
     testList "Decode" [
-        testCase "Length" <| fun _ -> Expect.isTrue (3 = decodeInput.Length) "Length of inputs is not 3"
+        testCase "Length" <| fun _ -> Expect.equal 3 decodeInput.Count ""
         testList "Directory" [
             let directoryItem = decodeInput.[0]
-            testCase "Name" <| fun _ -> Expect.isTrue ("arcDirectory" = directoryItem.Name) "Name of input is not 'arcDirectory'"
-            testCase "Type" <| fun _ -> Expect.isTrue ((Directory (DirectoryInstance())) = directoryItem.Type_.Value) "Type of input is not Directory"
+            testCase "Name" <| fun _ -> Expect.equal "arcDirectory"  directoryItem.Name ""
+            testCase "Type" <| fun _ -> Expect.equal (Directory (DirectoryInstance()))  directoryItem.Type_.Value ""
         ]
         testList "File" [
             let fileItem = decodeInput.[1]
-            testCase "Name" <| fun _ -> Expect.isTrue ("firstArg" = fileItem.Name) "Name of input is not 'firstArg'"
-            testCase "Type" <| fun _ -> Expect.isTrue ((File (FileInstance())) = fileItem.Type_.Value) "Type of input is not File"
-            testCase "InputBinding" <| fun _ -> Expect.isTrue (Some {Position = Some 1; Prefix = Some "--example"; ItemSeparator = None; Separate = None} = fileItem.InputBinding) "InputBinding of input is not Some Pattern"
+            testCase "Name" <| fun _ -> Expect.equal "firstArg"  fileItem.Name ""
+            testCase "Type" <| fun _ -> Expect.equal (File (FileInstance()))  fileItem.Type_.Value ""
+            testCase "InputBinding" <| fun _ -> Expect.equal (Some {Position = Some 1; Prefix = Some "--example"; ItemSeparator = None; Separate = None}) fileItem.InputBinding ""
         ]
         testList "String" [
             let stringItem = decodeInput.[2]
-            testCase "Name" <| fun _ -> Expect.isTrue ("secondArg" = stringItem.Name) "Name of input is not 'secondArg'"
+            testCase "Name" <| fun _ -> Expect.equal "secondArg"  stringItem.Name ""
             testCase "Type" <| fun _ ->
                 let expected = String
                 let actual = stringItem.Type_.Value
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                Expect.equal actual expected ""
             testCase "InputBinding" <| fun _ ->
                 let expected = Some {Position = Some 2; Prefix = None; ItemSeparator = None; Separate = Some false}
                 let actual = stringItem.InputBinding
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                Expect.equal actual expected ""
         ]
     ]
 

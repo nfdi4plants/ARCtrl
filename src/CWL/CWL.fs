@@ -15,22 +15,22 @@ module CWLProcessingUnits =
     type CWLToolDescription (
             cwlVersion: string,
             cls: CWLClass,
-            outputs: Output [],
-            ?baseCommand: string [],
-            ?requirements: Requirement [],
-            ?hints: Requirement [],
-            ?inputs: Input [],
+            outputs: ResizeArray<Output>,
+            ?baseCommand: ResizeArray<string>,
+            ?requirements: ResizeArray<Requirement>,
+            ?hints: ResizeArray<Requirement>,
+            ?inputs: ResizeArray<Input>,
             ?metadata: DynamicObj
         ) =
         inherit DynamicObj ()
 
         let mutable _cwlVersion: string = cwlVersion
         let mutable _class: CWLClass = cls
-        let mutable _outputs: Output [] = outputs
-        let mutable _baseCommand: string [] option = baseCommand
-        let mutable _requirements: Requirement [] option = requirements
-        let mutable _hints: Requirement [] option = hints
-        let mutable _inputs: Input [] option = inputs
+        let mutable _outputs: ResizeArray<Output> = outputs
+        let mutable _baseCommand: ResizeArray<string> option = baseCommand
+        let mutable _requirements: ResizeArray<Requirement> option = requirements
+        let mutable _hints: ResizeArray<Requirement> option = hints
+        let mutable _inputs: ResizeArray<Input> option = inputs
         let mutable _metadata: DynamicObj option = metadata
 
         member this.CWLVersion
@@ -69,22 +69,22 @@ module CWLProcessingUnits =
     type CWLWorkflowDescription(
         cwlVersion: string,
         cls: CWLClass,
-        steps: WorkflowStep [],
-        inputs: Input [],
-        outputs: Output [],
-        ?requirements: Requirement [],
-        ?hints: Requirement [],
+        steps: ResizeArray<WorkflowStep>,
+        inputs: ResizeArray<Input>,
+        outputs: ResizeArray<Output>,
+        ?requirements: ResizeArray<Requirement>,
+        ?hints: ResizeArray<Requirement>,
         ?metadata: DynamicObj
     ) =
         inherit DynamicObj()
 
         let mutable _cwlVersion: string = cwlVersion
         let mutable _class: CWLClass = cls
-        let mutable _steps: WorkflowStep [] = steps
-        let mutable _inputs: Input [] = inputs
-        let mutable _outputs: Output [] = outputs
-        let mutable _requirements: Requirement [] option = requirements
-        let mutable _hints: Requirement [] option = hints
+        let mutable _steps: ResizeArray<WorkflowStep> = steps
+        let mutable _inputs: ResizeArray<Input> = inputs
+        let mutable _outputs: ResizeArray<Output> = outputs
+        let mutable _requirements: ResizeArray<Requirement> option = requirements
+        let mutable _hints: ResizeArray<Requirement> option = hints
         let mutable _metadata: DynamicObj option = metadata
 
         member this.CWLVersion

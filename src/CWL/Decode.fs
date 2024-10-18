@@ -12,8 +12,17 @@ open Outputs.Workflow
 open WorkflowSteps
 open DynamicObj
 
+module ResizeArray =
+
+    let map  f (a : ResizeArray<_>) =
+        let b = ResizeArray<_>()
+        for i in a do
+            b.Add(f i)
+        b
+
 module Decode =
 
+    /// Decode key value pairs into a dynamic object, while preserving their tree structure
     let rec overflowDecoder (dynObj: DynamicObj) (dict: System.Collections.Generic.Dictionary<string,YAMLElement>) =
         for e in dict do
             match e.Value with
@@ -31,24 +40,28 @@ module Decode =
             | _ -> DynObj.setProperty e.Key e.Value dynObj
         dynObj
 
+    /// Decode a YAMLElement which is either a string or expression into a string
     let decodeStringOrExpression (yEle:YAMLElement) =
         match yEle with
         | YAMLElement.Value v | YAMLElement.Object [YAMLElement.Value v] -> v.Value
         | YAMLElement.Object [YAMLElement.Mapping (c,YAMLElement.Object [YAMLElement.Value v])] -> sprintf "%s: %s" c.Value v.Value
         | _ -> failwithf "%A" yEle
 
+    /// Decode a YAMLElement into a glob search pattern for output binding
     let outputBindingGlobDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding) =
         Decode.object (fun get ->
             let glob = get.Optional.Field "glob" Decode.string
             { Glob = glob }
         )
 
+    /// Decode a YAMLElement into an OutputBinding
     let outputBindingDecoder: (YAMLiciousTypes.YAMLElement -> OutputBinding option) =
         Decode.object(fun get ->
             let outputBinding = get.Optional.Field "outputBinding" outputBindingGlobDecoder
             outputBinding
         )
 
+    /// Decode a YAMLElement into a Dirent
     let direntDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
             Dirent
@@ -60,6 +73,7 @@ module Decode =
                 }
         )
 
+    /// Decode the contained type of a CWL Array
     let cwlArrayTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
             let items = get.Required.Field "items" Decode.string
@@ -76,6 +90,7 @@ module Decode =
             | _ -> failwith "Invalid CWL type"
         )
 
+    /// Match the input string to the possible CWL types
     let cwlTypeStringMatcher t (get: Decode.IGetters) =
         match t with
         | "File" -> File (FileInstance ())
@@ -100,6 +115,7 @@ module Decode =
         | "null" -> Null
         | _ -> failwith "Invalid CWL type"
 
+    /// Access the type field and decode a YAMLElement into a CWLType
     let cwlTypeDecoder: (YAMLiciousTypes.YAMLElement -> CWLType) =
         Decode.object (fun get ->
             let cwlType = 
@@ -120,7 +136,8 @@ module Decode =
                 cwlTypeArray
         )
 
-    let outputArrayDecoder: (YAMLiciousTypes.YAMLElement -> Output[]) =
+    /// Decode a YAMLElement into an Output Array
+    let outputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Output>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
             [|
@@ -142,15 +159,18 @@ module Decode =
                     if outputSource.IsSome then
                         DynObj.setOptionalProperty "outputSource" outputSource output
                     output
-            |]     
+            |]
+            |> ResizeArray
         )
-    
-    let outputsDecoder: (YAMLiciousTypes.YAMLElement -> Output[]) =
+
+    /// Access the outputs field and decode a YAMLElement into an Output Array
+    let outputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Output>) =
         Decode.object (fun get ->
             let outputs = get.Required.Field "outputs" outputArrayDecoder
             outputs
         )
 
+    /// Decode a YAMLElement into a DockerRequirement
     let dockerRequirementDecoder (get: Decode.IGetters): DockerRequirement =
         let dockerReq = {
             DockerPull = get.Optional.Field "dockerPull" Decode.string
@@ -159,12 +179,13 @@ module Decode =
         }
         dockerReq
 
-    let envVarRequirementDecoder (get: Decode.IGetters): EnvironmentDef[] =
+    /// Decode a YAMLElement into an EnvVarRequirement array
+    let envVarRequirementDecoder (get: Decode.IGetters): ResizeArray<EnvironmentDef> =
         let envDef = 
             get.Required.Field
                 "envDef"
                 (
-                    Decode.array 
+                    Decode.resizearray 
                         (
                             Decode.object (fun get2 ->
                                 {
@@ -176,32 +197,35 @@ module Decode =
                 )
         envDef
 
-    let softwareRequirementDecoder (get: Decode.IGetters): SoftwarePackage[] =
+    /// Decode a YAMLElement into a SoftwareRequirement array
+    let softwareRequirementDecoder (get: Decode.IGetters): ResizeArray<SoftwarePackage> =
         let envDef = 
             get.Required.Field
                 "packages"
                 (
-                    Decode.array 
+                    Decode.resizearray 
                         (
                             Decode.object (fun get2 ->
                                 {
                                     Package = get2.Required.Field "package" Decode.string
-                                    Version = get2.Optional.Field "version" (Decode.array Decode.string)
-                                    Specs = get2.Optional.Field "specs" (Decode.array Decode.string)
+                                    Version = get2.Optional.Field "version" (Decode.resizearray Decode.string)
+                                    Specs = get2.Optional.Field "specs" (Decode.resizearray Decode.string)
                                 }
                             )
                         )
                 )
         envDef
 
-    let initialWorkDirRequirementDecoder (get: Decode.IGetters): CWLType[] =
+    /// Decode a YAMLElement into a InitialWorkDirRequirement array
+    let initialWorkDirRequirementDecoder (get: Decode.IGetters): ResizeArray<CWLType> =
         let initialWorkDir =
             //TODO: Support more than dirent
             get.Required.Field
                 "listing"
-                (Decode.array direntDecoder)
+                (Decode.resizearray direntDecoder)
         initialWorkDir
 
+    /// Decode a YAMLElement into a ResourceRequirementInstance
     let resourceRequirementDecoder (get: Decode.IGetters): ResourceRequirementInstance =
         ResourceRequirementInstance(
             get.Optional.Field "coresMin" id,
@@ -214,23 +238,27 @@ module Decode =
             get.Optional.Field "outdirMax" id
         )
         
-
-    let schemaDefRequirementDecoder (get: Decode.IGetters): SchemaDefRequirementType[] =
+    /// Decode a YAMLElement into a SchemaDefRequirementType array
+    let schemaDefRequirementDecoder (get: Decode.IGetters): ResizeArray<SchemaDefRequirementType> =
         let schemaDef =
             get.Required.Field 
                 "types" 
                 (
-                    Decode.array
+                    Decode.resizearray
                         (
                             Decode.map id Decode.string
                         )
                 )
-                |> Array.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
+                |> ResizeArray.map (fun m -> SchemaDefRequirementType(m.Keys |> Seq.item 0, m.Values |> Seq.item 0))
         schemaDef
 
+    /// Decode a YAMLElement into a ToolTimeLimitRequirement
+    let toolTimeLimitRequirementDecoder (get: Decode.IGetters): float =
+        get.Required.Field "timelimit" Decode.float
 
-    let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[]) =
-        Decode.array 
+    /// Decode all YAMLElements matching the Requirement type into a ResizeArray of Requirement
+    let requirementArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement>) =
+        Decode.resizearray 
             (
                 Decode.object (fun get ->
                     let cls = get.Required.Field "class" Decode.string
@@ -243,7 +271,10 @@ module Decode =
                     | "EnvVarRequirement" -> EnvVarRequirement (envVarRequirementDecoder get)
                     | "ShellCommandRequirement" -> ShellCommandRequirement
                     | "ResourceRequirement" -> ResourceRequirement (resourceRequirementDecoder get)
+                    | "WorkReuse" -> WorkReuseRequirement
                     | "NetworkAccess" -> NetworkAccessRequirement
+                    | "InplaceUpdateRequirement" -> InplaceUpdateRequirement
+                    | "ToolTimeLimit" -> ToolTimeLimitRequirement (toolTimeLimitRequirementDecoder get)
                     | "SubworkflowFeatureRequirement" -> SubworkflowFeatureRequirement
                     | "ScatterFeatureRequirement" -> ScatterFeatureRequirement
                     | "MultipleInputFeatureRequirement" -> MultipleInputFeatureRequirement
@@ -252,18 +283,21 @@ module Decode =
                 )
             )
 
-    let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[] option) =
+    /// Access the requirements field and decode the YAMLElements into a Requirement array
+    let requirementsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement> option) =
         Decode.object (fun get ->
             let requirements = get.Optional.Field "requirements" requirementArrayDecoder
             requirements
         )
 
-    let hintsDecoder: (YAMLiciousTypes.YAMLElement -> Requirement[] option) =
+    /// Access the hints field and decode the YAMLElements into a Requirement array
+    let hintsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Requirement> option) =
         Decode.object (fun get ->
             let requirements = get.Optional.Field "hints" requirementArrayDecoder
             requirements
         )
 
+    /// Decode a YAMLElement into an InputBinding
     let inputBindingDecoder: (YAMLiciousTypes.YAMLElement -> InputBinding option) =
         Decode.object(fun get ->
             let outputBinding = 
@@ -282,7 +316,8 @@ module Decode =
             outputBinding
         )
 
-    let inputArrayDecoder: (YAMLiciousTypes.YAMLElement -> Input[]) =
+    /// Decode a YAMLElement into an Input array
+    let inputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Input>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
             [|
@@ -301,18 +336,20 @@ module Decode =
                     if inputBinding.IsSome then
                         DynObj.setOptionalProperty "inputBinding" inputBinding input
                     input
-            |]     
+            |]
+            |> ResizeArray
         )
-    
-    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> Input[] option) =
+
+    /// Access the inputs field and decode the YAMLElements into an Input array
+    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Input> option) =
         Decode.object (fun get ->
             let outputs = get.Optional.Field "inputs" inputArrayDecoder
             outputs
         )
 
-    let baseCommandDecoder: (YAMLiciousTypes.YAMLElement -> string [] option) =
+    let baseCommandDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string> option) =
         Decode.object (fun get ->
-            get.Optional.Field "baseCommand" (Decode.array Decode.string)
+            get.Optional.Field "baseCommand" (Decode.resizearray Decode.string)
         )
 
     let versionDecoder: (YAMLiciousTypes.YAMLElement -> string) =
@@ -338,7 +375,7 @@ module Decode =
             fieldValue
         )
 
-    let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> StepInput []) =
+    let inputStepDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<StepInput>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
             [|
@@ -357,12 +394,13 @@ module Decode =
                     let defaultValue = stringOptionFieldDecoder "default" value
                     let valueFrom = stringOptionFieldDecoder "valueFrom" value
                     { Id = key; Source = source; DefaultValue = defaultValue; ValueFrom = valueFrom }
-            |]   
+            |]
+            |> ResizeArray
         )
 
-    let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> string []) =
+    let outputStepsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<string>) =
         Decode.object (fun get ->
-            let outputs = get.Required.Field "out" (Decode.array Decode.string)
+            let outputs = get.Required.Field "out" (Decode.resizearray Decode.string)
             outputs
         )
 
@@ -389,7 +427,8 @@ module Decode =
                     if hints.IsSome then
                         wfStep.Hints <- hints
                     wfStep
-            |]     
+            |]
+            |> ResizeArray
         )
     
     let stepsDecoder =
@@ -398,6 +437,7 @@ module Decode =
             steps
         )
 
+    /// Decode a CWL file string written in the YAML format into a CWLToolDescription
     let decodeCommandLineTool (cwl: string) =
         let yamlCWL = Decode.read cwl
         let cwlVersion = versionDecoder yamlCWL
@@ -472,6 +512,7 @@ module Decode =
             description.Metadata <- Some metadata
         description
 
+    /// Decode a CWL file string written in the YAML format into a CWLWorkflowDescription
     let decodeWorkflow (cwl: string) =
         let yamlCWL = Decode.read cwl
         let cwlVersion = versionDecoder yamlCWL
@@ -483,9 +524,6 @@ module Decode =
         let requirements = requirementsDecoder yamlCWL
         let hints = hintsDecoder yamlCWL
         let steps = stepsDecoder yamlCWL
-        printfn "%A" steps
-        printfn "%A" outputs
-        printfn "%A" inputs
         let description =
             CWLProcessingUnits.CWLWorkflowDescription(
                 cwlVersion,

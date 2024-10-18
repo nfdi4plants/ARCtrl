@@ -17,9 +17,15 @@ module CWLTypes =
         Writable: bool option
     }
 
+    /// Primitive types with the concept of a file and directory as a builtin type.
     type CWLType =
+        /// Represents a file (or group of files when secondaryFiles is provided)
         | File of FileInstance
+        /// Represents a directory to present to a command line tool.
+        /// Directories are represented as objects with class of Directory. Directory objects have a number of properties that provide metadata about the directory.
         | Directory of DirectoryInstance
+        /// Define a file or subdirectory that must be placed in the designated output directory prior to executing the command line tool.
+        /// May be the result of executing an expression, such as building a configuration file from a template.
         | Dirent of DirentInstance
         | String
         | Int
@@ -52,6 +58,6 @@ module CWLTypes =
 
     type SoftwarePackage = {
         Package: string
-        Version: string [] option
-        Specs: string [] option
+        Version: ResizeArray<string> option
+        Specs: ResizeArray<string> option
     }
