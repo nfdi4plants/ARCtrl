@@ -42,6 +42,19 @@
         "resolved": "1.1.0",
         "contentHash": "kz0PEW2lhqygehI/d6XsPCQzD7ff7gUJaVGPVETX611eadGsA3A877GdSlU0LRVMCTH/+P3o2iDTak+S08V2+A=="
       },
+      "arctrl.core": {
+        "type": "Project",
+        "dependencies": {
+          "ARCtrl.CWL": "[1.0.0, )",
+          "ARCtrl.FileSystem": "[1.0.0, )"
+        }
+      },
+      "arctrl.filesystem": {
+        "type": "Project",
+        "dependencies": {
+          "Fable.Core": "[4.3.0, )"
+        }
+      },
       "Fable.Core": {
         "type": "CentralTransitive",
         "requested": "[4.3.0, )",

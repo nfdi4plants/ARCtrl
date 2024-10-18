@@ -14,51 +14,52 @@ let decodeRequirement =
 
 let testRequirement =
     testList "Decode" [
-        testCase "Length" <| fun _ -> Expect.isTrue (5 = decodeRequirement.Length) "Length of requirements is not 5"
+        testCase "Length" <| fun _ -> Expect.equal 5  decodeRequirement.Count ""
         testList "DockerRequirement" [
             let dockerItem = decodeRequirement.[0]
             testCase "Class" <| fun _ ->
                 let expected = DockerRequirement {DockerPull = None; DockerFile = Some (Map [("$include", "FSharpArcCapsule/Dockerfile")]); DockerImageId = Some "devcontainer"}
                 let actual = dockerItem
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                Expect.equal actual expected ""
         ]
         testList "InitialWorkDirRequirement" [
             let initialWorkDirItem = decodeRequirement.[1]
             testCase "Class" <| fun _ ->
-                let expected = InitialWorkDirRequirement [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|]
+                let expected = InitialWorkDirRequirement (ResizeArray [|Dirent {Entryname = Some "arc"; Entry = "$(inputs.arcDirectory)"; Writable = Some true}; Dirent {Entryname = None; Entry = "$(inputs.outputDirectory)"; Writable = Some true}|])
                 let actual = initialWorkDirItem
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                match actual, expected with
+                | InitialWorkDirRequirement actualType, InitialWorkDirRequirement expectedType ->
+                    Expect.sequenceEqual actualType expectedType ""
+                | _ -> failwith "This test case can only be InitialWorkDirRequirement"
         ]
         testList "EnvVarRequirement" [
             let envVarItem = decodeRequirement.[2]
             testCase "Class" <| fun _ ->
-                let expected = EnvVarRequirement [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|]
+                let expected = EnvVarRequirement (ResizeArray [|{EnvName = "DOTNET_NOLOGO"; EnvValue = "true"}; {EnvName = "TEST"; EnvValue = "false"}|])
                 let actual = envVarItem
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                match actual, expected with
+                | EnvVarRequirement actualType, EnvVarRequirement expectedType ->
+                    Expect.sequenceEqual actualType expectedType ""
+                | _ -> failwith "This test case can only be EnvVarRequirement"
         ]
         testList "SoftwareRequirement" [
             let softwareItem = decodeRequirement.[3]
             testCase "Class" <| fun _ ->
-                let expected = SoftwareRequirement [|{Package = "interproscan"; Specs = Some [| "https://identifiers.org/rrid/RRID:SCR_005829" |]; Version = Some [| "5.21-60" |]}|]
+                let expected = SoftwareRequirement (ResizeArray [|{Package = "interproscan"; Specs = Some (ResizeArray [| "https://identifiers.org/rrid/RRID:SCR_005829" |]); Version = Some (ResizeArray[| "5.21-60" |])}|])
                 let actual = softwareItem
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                match actual, expected with
+                | SoftwareRequirement actualType, SoftwareRequirement expectedType ->
+                    Expect.equal actualType.[0].Package expectedType.[0].Package ""
+                    Expect.sequenceEqual actualType.[0].Specs.Value expectedType.[0].Specs.Value ""
+                    Expect.sequenceEqual actualType.[0].Version.Value expectedType.[0].Version.Value ""
+                | _ -> failwith "This test case can only be SoftwareRequirement"
         ]
         testList "NetworkAccess" [
             let networkAccessItem = decodeRequirement.[4]
             testCase "Class" <| fun _ ->
                 let expected = NetworkAccessRequirement
                 let actual = networkAccessItem
-                Expect.isTrue
-                    (expected = actual)
-                    $"Expected: {expected}\nActual: {actual}"
+                Expect.equal actual expected ""
         ]
     ]
 

@@ -12,20 +12,20 @@ module WorkflowSteps =
     [<AttachMembers>]
     type WorkflowStep (
         id: string,
-        in_: StepInput [],
+        in_: ResizeArray<StepInput>,
         out_: StepOutput,
         run: string,
-        ?requirements: Requirement [],
-        ?hints: Requirement []
+        ?requirements: ResizeArray<Requirement>,
+        ?hints: ResizeArray<Requirement>
     ) =
         inherit DynamicObj ()
 
         let mutable _id: string = id
-        let mutable _in: StepInput [] = in_
+        let mutable _in: ResizeArray<StepInput> = in_
         let mutable _out: StepOutput = out_
         let mutable _run: string = run
-        let mutable _requirements: Requirement [] option = requirements
-        let mutable _hints: Requirement [] option = hints
+        let mutable _requirements: ResizeArray<Requirement> option = requirements
+        let mutable _hints: ResizeArray<Requirement> option = hints
 
         member this.Id
             with get() = _id
