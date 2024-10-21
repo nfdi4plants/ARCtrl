@@ -5,8 +5,7 @@ open ARCtrl.CWL.CWLTypes
 open ARCtrl.CWL.Requirements
 open ARCtrl.CWL.Inputs
 open ARCtrl.CWL.Outputs
-open ARCtrl.CWL.Outputs.Workflow
-open ARCtrl.CWL.Inputs.Workflow
+open ARCtrl.CWL.WorkflowSteps
 open TestingUtils
 
 let decodeCWLWorkflowDescription: CWLWorkflowDescription =

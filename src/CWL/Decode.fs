@@ -6,9 +6,7 @@ open YAMLicious.YAMLiciousTypes
 open CWLTypes
 open Requirements
 open Inputs
-open Inputs.Workflow
 open Outputs
-open Outputs.Workflow
 open WorkflowSteps
 open DynamicObj
 

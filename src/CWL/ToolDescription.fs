@@ -2,7 +2,6 @@ namespace ARCtrl.CWL
 
 open ARCtrl.CWL
 open DynamicObj
-open CWLTypes
 open Requirements
 open Inputs
 open Outputs

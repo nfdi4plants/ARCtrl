@@ -1,13 +1,24 @@
 namespace ARCtrl.CWL
 
 open CWLTypes
-open Outputs.Workflow
-open Inputs.Workflow
+open Outputs
+open Inputs
 open Requirements
 open DynamicObj
 open Fable.Core
 
 module WorkflowSteps =
+
+    type StepInput = {
+        Id: string
+        Source: string option
+        DefaultValue: string option
+        ValueFrom: string option
+    }
+
+    type StepOutput = {
+        Id: ResizeArray<string>
+    }
 
     [<AttachMembers>]
     type WorkflowStep (
@@ -50,3 +61,5 @@ module WorkflowSteps =
         member this.Hints
             with get() = _hints
             and set(hints) = _hints <- hints
+
+

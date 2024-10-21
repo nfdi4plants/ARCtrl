@@ -1,10 +1,7 @@
 module Tests.WorkflowSteps
 
 open ARCtrl.CWL
-open ARCtrl.CWL.CWLTypes
 open ARCtrl.CWL.WorkflowSteps
-open ARCtrl.CWL.Outputs.Workflow
-open ARCtrl.CWL.Inputs.Workflow
 open YAMLicious
 open TestingUtils
 
