@@ -1,10 +1,6 @@
 module Tests.CWLObject
 
 open ARCtrl.CWL
-open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements
-open ARCtrl.CWL.Inputs
-open ARCtrl.CWL.Outputs
 open TestingUtils
 open DynamicObj
 

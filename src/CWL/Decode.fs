@@ -1,13 +1,7 @@
 namespace ARCtrl.CWL
 
-open ARCtrl
 open YAMLicious
 open YAMLicious.YAMLiciousTypes
-open CWLTypes
-open Requirements
-open Inputs
-open Outputs
-open WorkflowSteps
 open DynamicObj
 
 module ResizeArray =
@@ -141,7 +135,7 @@ module Decode =
         )
 
     /// Decode a YAMLElement into an Output Array
-    let outputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Output>) =
+    let outputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
             [|
@@ -154,7 +148,7 @@ module Decode =
                         | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get |> fst
                         | _ -> cwlTypeDecoder value |> fst
                     let output =
-                        Output(
+                        CWLOutput(
                             key,
                             cwlType
                         )
@@ -168,7 +162,7 @@ module Decode =
         )
 
     /// Access the outputs field and decode a YAMLElement into an Output Array
-    let outputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Output>) =
+    let outputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLOutput>) =
         Decode.object (fun get ->
             let outputs = get.Required.Field "outputs" outputArrayDecoder
             outputs
@@ -321,7 +315,7 @@ module Decode =
         )
 
     /// Decode a YAMLElement into an Input array
-    let inputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Input>) =
+    let inputArrayDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLInput>) =
         Decode.object (fun get ->
             let dict = get.Overflow.FieldList []
             [|
@@ -333,7 +327,7 @@ module Decode =
                         | YAMLElement.Object [YAMLElement.Value v] -> cwlTypeStringMatcher v.Value get
                         | _ -> cwlTypeDecoder value
                     let input =
-                        Input(
+                        CWLInput(
                             key,
                             cwlType
                         )
@@ -347,7 +341,7 @@ module Decode =
         )
 
     /// Access the inputs field and decode the YAMLElements into an Input array
-    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<Input> option) =
+    let inputsDecoder: (YAMLiciousTypes.YAMLElement -> ResizeArray<CWLInput> option) =
         Decode.object (fun get ->
             let outputs = get.Optional.Field "inputs" inputArrayDecoder
             outputs

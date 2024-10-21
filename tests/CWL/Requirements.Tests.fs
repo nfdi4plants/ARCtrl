@@ -1,8 +1,6 @@
 module Tests.Requirements
 
 open ARCtrl.CWL
-open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements
 open YAMLicious
 open TestingUtils
 

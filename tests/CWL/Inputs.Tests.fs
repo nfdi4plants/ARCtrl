@@ -1,8 +1,6 @@
 module Tests.Inputs
 
 open ARCtrl.CWL
-open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Inputs
 open YAMLicious
 open TestingUtils
 

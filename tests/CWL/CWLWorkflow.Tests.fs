@@ -1,11 +1,6 @@
 module Tests.CWLWorkflow
 
 open ARCtrl.CWL
-open ARCtrl.CWL.CWLTypes
-open ARCtrl.CWL.Requirements
-open ARCtrl.CWL.Inputs
-open ARCtrl.CWL.Outputs
-open ARCtrl.CWL.WorkflowSteps
 open TestingUtils
 
 let decodeCWLWorkflowDescription: CWLWorkflowDescription =
@@ -25,14 +20,14 @@ let testCWLWorkflowDescription =
             Expect.equal actual expected ""
         testCase "inputs" <| fun _ ->
             let expected = ResizeArray [|
-                Input("cores", CWLType.Int);
-                Input("db", CWLType.File (FileInstance()));
-                Input ("stage", CWLType.Directory (DirectoryInstance()));
-                Input ("outputMzML", CWLType.Directory (DirectoryInstance()));
-                Input ("outputPSM", CWLType.Directory (DirectoryInstance()));
-                Input ("inputMzML", CWLType.Directory (DirectoryInstance()));
-                Input ("paramsMzML", CWLType.File (FileInstance()));
-                Input ("paramsPSM", CWLType.File (FileInstance()))
+                CWLInput("cores", CWLType.Int);
+                CWLInput("db", CWLType.File (FileInstance()));
+                CWLInput ("stage", CWLType.Directory (DirectoryInstance()));
+                CWLInput ("outputMzML", CWLType.Directory (DirectoryInstance()));
+                CWLInput ("outputPSM", CWLType.Directory (DirectoryInstance()));
+                CWLInput ("inputMzML", CWLType.Directory (DirectoryInstance()));
+                CWLInput ("paramsMzML", CWLType.File (FileInstance()));
+                CWLInput ("paramsPSM", CWLType.File (FileInstance()))
             |]
             let actual = decodeCWLWorkflowDescription.Inputs
             for i = 0 to actual.Count - 1 do
@@ -97,8 +92,8 @@ let testCWLWorkflowDescription =
         ]
         testCase "outputs" <| fun _ ->
             let expected = ResizeArray [|
-                Output("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = "MzMLToMzlite/dir");
-                Output("psm", CWLType.Directory (DirectoryInstance()), outputSource = "PeptideSpectrumMatching/dir")
+                CWLOutput("mzlite", CWLType.Directory (DirectoryInstance()), outputSource = "MzMLToMzlite/dir");
+                CWLOutput("psm", CWLType.Directory (DirectoryInstance()), outputSource = "PeptideSpectrumMatching/dir")
             |]
             let actual = decodeCWLWorkflowDescription.Outputs
             for i = 0 to actual.Count - 1 do

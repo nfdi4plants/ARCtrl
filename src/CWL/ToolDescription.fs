@@ -1,30 +1,26 @@
 namespace ARCtrl.CWL
 
-open ARCtrl.CWL
 open DynamicObj
-open Requirements
-open Inputs
-open Outputs
 open Fable.Core
 
 [<AttachMembers>]
 type CWLToolDescription (
-        outputs: ResizeArray<Output>,
+        outputs: ResizeArray<CWLOutput>,
         ?cwlVersion: string,
         ?baseCommand: ResizeArray<string>,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<Requirement>,
-        ?inputs: ResizeArray<Input>,
+        ?inputs: ResizeArray<CWLInput>,
         ?metadata: DynamicObj
     ) =
     inherit DynamicObj ()
 
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _outputs: ResizeArray<Output> = outputs
+    let mutable _outputs: ResizeArray<CWLOutput> = outputs
     let mutable _baseCommand: ResizeArray<string> option = baseCommand
     let mutable _requirements: ResizeArray<Requirement> option = requirements
     let mutable _hints: ResizeArray<Requirement> option = hints
-    let mutable _inputs: ResizeArray<Input> option = inputs
+    let mutable _inputs: ResizeArray<CWLInput> option = inputs
     let mutable _metadata: DynamicObj option = metadata
 
     member this.CWLVersion
