@@ -13,7 +13,7 @@ let all = testList "All" [
     ARCtrl.ValidationPackages.Tests.all
     ARCtrl.Contract.Tests.all
     ARCtrl.ROCrate.Tests.all
-    
+    ARCtrl.CWL.Tests.all
 ]
 
 [<EntryPoint>]

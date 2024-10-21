@@ -19,6 +19,7 @@
     <ProjectReference Include="..\Spreadsheet\ARCtrl.Spreadsheet.Tests.fsproj" />
     <ProjectReference Include="..\ValidationPackages\ARCtrl.ValidationPackages.Tests.fsproj" />
     <ProjectReference Include="..\Yaml\ARCtrl.Yaml.Tests.fsproj" />
+    <ProjectReference Include="..\CWL\ARCtrl.CWL.Tests.fsproj" />
   </ItemGroup>
 
   <ItemGroup>
