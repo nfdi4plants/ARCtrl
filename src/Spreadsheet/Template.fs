@@ -239,6 +239,16 @@ module Template =
             (ResizeArray tags)  
             lastUpdated
 
+    let isMetadataSheetName (name : string) =
+        name = metaDataSheetName || name = obsoletemetaDataSheetName
+
+    let isMetadataSheet (sheet : FsWorksheet) =
+        isMetadataSheetName sheet.Name
+
+    let tryGetMetadataSheet (doc : FsWorkbook) =
+        doc.GetWorksheets()
+        |> Seq.tryFind isMetadataSheet
+
     let toMetadataSheet (template : Template) : FsWorksheet =        
         let sheet = FsWorksheet(metaDataSheetName)
         Template.toRows template
@@ -261,19 +271,15 @@ module Template =
 
     /// Reads an assay from a spreadsheet
     let fromFsWorkbook (doc : FsWorkbook) = 
-        // Reading the "Assay" metadata sheet. Here metadata 
-        let templateInfo, ers, tags, authors = 
-        
-            match doc.TryGetWorksheetByName metaDataSheetName with 
+        // Reading the "Template" metadata sheet. Here metadata 
+        let templateInfo, ers, tags, authors =
+            match tryGetMetadataSheet doc with
             | Option.Some sheet ->
                 fromMetadataSheet sheet
-            | None ->  
-                match doc.TryGetWorksheetByName obsoletemetaDataSheetName with 
-                | Option.Some sheet ->
-                    fromMetadataSheet sheet
-                | None ->  
-                    Metadata.Template.TemplateInfo.empty, [], [], []
-            
+            | None -> 
+                printfn "Could not find metadata sheet with sheetname \"isa_template\" or deprecated sheetname \"Template\""
+                Metadata.Template.TemplateInfo.empty, [], [], []
+
         let tryTableNameMatches (ws : FsWorksheet) = 
             if ws.Tables |> Seq.exists (fun t -> t.Name = templateInfo.Table) then Some ws else None
 
