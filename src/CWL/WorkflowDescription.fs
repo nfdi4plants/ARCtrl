@@ -15,7 +15,6 @@ type CWLWorkflowDescription(
     inputs: ResizeArray<Input>,
     outputs: ResizeArray<Output>,
     ?cwlVersion: string,
-    ?cls: CWLClass,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<Requirement>,
     ?metadata: DynamicObj
@@ -23,7 +22,6 @@ type CWLWorkflowDescription(
     inherit DynamicObj()
 
     let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
-    let mutable _class: CWLClass = cls |> Option.defaultValue CWLClass.Workflow
     let mutable _steps: ResizeArray<WorkflowStep> = steps
     let mutable _inputs: ResizeArray<Input> = inputs
     let mutable _outputs: ResizeArray<Output> = outputs
@@ -34,10 +32,6 @@ type CWLWorkflowDescription(
     member this.CWLVersion
         with get() = _cwlVersion
         and set(version) = _cwlVersion <- version
-
-    member this.Class
-        with get() = _class
-        and set(cls) = _class <- cls
 
     member this.Steps
         with get() = _steps

@@ -363,13 +363,9 @@ module Decode =
     let versionDecoder: (YAMLiciousTypes.YAMLElement -> string) =
         Decode.object (fun get -> get.Required.Field "cwlVersion" Decode.string)
 
-    let classDecoder: (YAMLiciousTypes.YAMLElement -> CWLClass) =
+    let classDecoder: (YAMLiciousTypes.YAMLElement -> string) =
         Decode.object (fun get ->
-            match get.Required.Field "class" Decode.string with
-            | "Workflow" -> Workflow
-            | "CommandLineTool" -> CommandLineTool
-            | "ExpressionTool" -> ExpressionTool
-            | _ -> failwith "Invalid class"
+            get.Required.Field "class" Decode.string 
         )
     let stringOptionFieldDecoder field : (YAMLiciousTypes.YAMLElement -> string option) =
         Decode.object(fun get ->

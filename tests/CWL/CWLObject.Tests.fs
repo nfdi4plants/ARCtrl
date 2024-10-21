@@ -19,10 +19,6 @@ let decodeCWLToolDescriptionMetadata: CWLToolDescription =
 
 let testCWLToolDescription =
     testList "Decode" [
-        testCase "Class" <| fun _ ->
-            let expected = CWLClass.CommandLineTool
-            let actual = decodeCWLToolDescription.Class
-            Expect.equal actual expected ""
         testCase "CWLVersion" <| fun _ ->
             let expected = "v1.2"
             let actual = decodeCWLToolDescription.CWLVersion

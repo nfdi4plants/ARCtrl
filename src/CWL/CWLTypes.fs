@@ -37,11 +37,6 @@ module CWLTypes =
         | Null
         | Array of CWLType
 
-    type CWLClass = 
-    | Workflow
-    | CommandLineTool
-    | ExpressionTool
-
     type InputRecordSchema () =
         inherit DynamicObj ()
 

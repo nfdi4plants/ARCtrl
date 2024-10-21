@@ -15,10 +15,6 @@ let decodeCWLWorkflowDescription: CWLWorkflowDescription =
 
 let testCWLWorkflowDescription =
     testList "Decode" [
-        testCase "Class" <| fun _ ->
-            let expected = CWLClass.Workflow
-            let actual = decodeCWLWorkflowDescription.Class
-            Expect.equal actual expected ""
         testCase "CWLVersion" <| fun _ ->
             let expected = "v1.2"
             let actual = decodeCWLWorkflowDescription.CWLVersion
