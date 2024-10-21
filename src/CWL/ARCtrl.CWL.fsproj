@@ -13,12 +13,13 @@
     <Compile Include="Outputs.fs" /> 
     <Compile Include="Inputs.fs" /> 
     <Compile Include="WorkflowSteps.fs" /> 
-    <Compile Include="CWL.fs" /> 
+    <Compile Include="ToolDescription.fs" /> 
+    <Compile Include="WorkflowDescription.fs" /> 
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="YAMLicious"/>
-    <PackageReference Include="DynamicObj"/>
+    <PackageReference Include="YAMLicious" />
+    <PackageReference Include="DynamicObj" />
   </ItemGroup>
 </Project>

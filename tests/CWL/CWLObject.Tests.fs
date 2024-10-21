@@ -8,11 +8,11 @@ open ARCtrl.CWL.Outputs
 open TestingUtils
 open DynamicObj
 
-let decodeCWLToolDescription =
+let decodeCWLToolDescription: CWLToolDescription =
     TestObjects.CWL.CommandLineTool.cwlFile
     |> Decode.decodeCommandLineTool
 
-let decodeCWLToolDescriptionMetadata =
+let decodeCWLToolDescriptionMetadata: CWLToolDescription =
     TestObjects.CWL.CommandLineToolMetadata.cwlFile
     |> Decode.decodeCommandLineTool
 

@@ -455,7 +455,7 @@ module Decode =
         let hints = hintsDecoder yamlCWL
         let baseCommand = baseCommandDecoder yamlCWL
         let description =
-            CWLProcessingUnits.CWLToolDescription(
+            CWLToolDescription(
                 cwlVersion,
                 CommandLineTool,
                 outputs
@@ -533,7 +533,7 @@ module Decode =
         let hints = hintsDecoder yamlCWL
         let steps = stepsDecoder yamlCWL
         let description =
-            CWLProcessingUnits.CWLWorkflowDescription(
+            CWLWorkflowDescription(
                 cwlVersion,
                 Workflow,
                 steps,

@@ -9,7 +9,7 @@ open ARCtrl.CWL.Outputs.Workflow
 open ARCtrl.CWL.Inputs.Workflow
 open TestingUtils
 
-let decodeCWLWorkflowDescription =
+let decodeCWLWorkflowDescription: CWLWorkflowDescription =
     TestObjects.CWL.Workflow.workflowFile
     |> Decode.decodeWorkflow
 
