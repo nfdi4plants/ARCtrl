@@ -11,19 +11,19 @@ open Fable.Core
 
 [<AttachMembers>]
 type CWLWorkflowDescription(
-    cwlVersion: string,
-    cls: CWLClass,
     steps: ResizeArray<WorkflowStep>,
     inputs: ResizeArray<Input>,
     outputs: ResizeArray<Output>,
+    ?cwlVersion: string,
+    ?cls: CWLClass,
     ?requirements: ResizeArray<Requirement>,
     ?hints: ResizeArray<Requirement>,
     ?metadata: DynamicObj
 ) =
     inherit DynamicObj()
 
-    let mutable _cwlVersion: string = cwlVersion
-    let mutable _class: CWLClass = cls
+    let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
+    let mutable _class: CWLClass = cls |> Option.defaultValue CWLClass.Workflow
     let mutable _steps: ResizeArray<WorkflowStep> = steps
     let mutable _inputs: ResizeArray<Input> = inputs
     let mutable _outputs: ResizeArray<Output> = outputs

@@ -10,9 +10,9 @@ open Fable.Core
 
 [<AttachMembers>]
 type CWLToolDescription (
-        cwlVersion: string,
-        cls: CWLClass,
         outputs: ResizeArray<Output>,
+        ?cwlVersion: string,
+        ?cls: CWLClass,
         ?baseCommand: ResizeArray<string>,
         ?requirements: ResizeArray<Requirement>,
         ?hints: ResizeArray<Requirement>,
@@ -21,8 +21,8 @@ type CWLToolDescription (
     ) =
     inherit DynamicObj ()
 
-    let mutable _cwlVersion: string = cwlVersion
-    let mutable _class: CWLClass = cls
+    let mutable _cwlVersion: string = cwlVersion |> Option.defaultValue "v1.2"
+    let mutable _class: CWLClass = cls |> Option.defaultValue CWLClass.CommandLineTool
     let mutable _outputs: ResizeArray<Output> = outputs
     let mutable _baseCommand: ResizeArray<string> option = baseCommand
     let mutable _requirements: ResizeArray<Requirement> option = requirements

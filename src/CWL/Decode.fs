@@ -456,9 +456,8 @@ module Decode =
         let baseCommand = baseCommandDecoder yamlCWL
         let description =
             CWLToolDescription(
-                cwlVersion,
-                CommandLineTool,
-                outputs
+                outputs,
+                cwlVersion
             )
         let metadata =
             let md = new DynamicObj ()
@@ -534,11 +533,10 @@ module Decode =
         let steps = stepsDecoder yamlCWL
         let description =
             CWLWorkflowDescription(
-                cwlVersion,
-                Workflow,
                 steps,
                 inputs,
-                outputs
+                outputs,
+                cwlVersion
             )
         let metadata =
             let md = new DynamicObj ()
