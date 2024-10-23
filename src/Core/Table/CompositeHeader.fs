@@ -439,27 +439,7 @@ type CompositeHeader =
         | Characteristic oa -> Characteristic (oa.Copy())
         | Component oa -> Component (oa.Copy())
         | _ -> this
-
-
-
-
-        //| Parameter oa          -> $"Parameter [{oa.NameText}]"
-        //| Factor oa             -> $"Factor [{oa.NameText}]"
-        //| Characteristic oa     -> $"Characteristic [{oa.NameText}]"
-        //| Component oa          -> $"Component [{oa.NameText}]"
-        //| ProtocolType          -> "Protocol Type" 
-        //| ProtocolREF           -> "Protocol REF"
-        //| ProtocolDescription   -> "Protocol Description"
-        //| ProtocolUri           -> "Protocol Uri"
-        //| ProtocolVersion       -> "Protocol Version"
-        //| Performer             -> "Performer"
-        //| Date                  -> "Date"
-        //| Input io              -> io.asInput
-        //| Output io             -> io.asOutput
-        //| Comment key           -> $"Comment [{key}]"
-        //| FreeText str          -> str
-
-
+        
 
 #if FABLE_COMPILER
     
