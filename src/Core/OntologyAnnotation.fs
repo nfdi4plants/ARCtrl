@@ -42,8 +42,14 @@ type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
 
     member this.TANInfo = 
         match this.TermAccessionNumber with
-        | Some v -> 
-            Regex.tryParseTermAnnotation v
+        | Some tan -> 
+            match Regex.tryParseTermAnnotation tan with
+            | Some ta -> Some ta
+            | None ->
+                match this.TermSourceREF with
+                | Some "" | None -> None
+                | Some tsr -> 
+                    Some {| IDSpace = tsr; LocalID = tan |}
         | None -> None
 
     member this.NameText = 
