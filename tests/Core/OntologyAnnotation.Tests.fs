@@ -1,12 +1,14 @@
-﻿module OntologyAnnotation.Tests
+module OntologyAnnotation.Tests
 
 open TestingUtils
 open ARCtrl
 
-module private Helper = 
-    let short = "EFO:0000721"
-    let uri = "https://bioregistry.io/EFO:0000721" 
-    let otherParseable = "http://www.ebi.ac.uk/efo/EFO_0000721"
+module Helper =
+    let tsr = "EFO"
+    let localID = "0000721"
+    let short = $"{tsr}:{localID}"
+    let uri = $"https://bioregistry.io/{tsr}:{localID}" 
+    let otherParseable = $"http://www.ebi.ac.uk/efo/{tsr}_{localID}"
     let other = "Unparseable"
 
 open Helper
@@ -79,7 +81,13 @@ let private tests_equals = testList "Equals" [
         Expect.notEqual oa1 oa2 ""
 ]
 
-let private tests_constructor = testList "constructor" [       
+let private tests_constructor = testList "constructor" [
+    testCase "FromSplitTSRAndLocalID" (fun () ->
+        let oa = OntologyAnnotation(tsr = tsr, tan = localID)
+        Expect.equal oa.TermAccessionNumber.Value localID "TAN incorrect"
+        Expect.equal oa.TermAccessionShort short "short TAN incorrect"
+        Expect.equal oa.TermAccessionOntobeeUrl uri "uri TAN incorrect"
+    )
     testCase "FromShort" (fun () ->
         let oa = OntologyAnnotation(tan = short)
         Expect.equal oa.TermAccessionNumber.Value short "TAN incorrect"
