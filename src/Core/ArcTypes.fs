@@ -381,10 +381,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         assay
 
     member this.Copy() : ArcAssay =
-        let nextTables = ResizeArray()
-        for table in this.Tables do
-            let copy = table.Copy()
-            nextTables.Add(copy)
+        let nextTables = this.Tables |> ResizeArray.map (fun c -> c.Copy())
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())

@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open Fable.Core
 open ARCtrl.Helper
@@ -67,6 +67,23 @@ type Template(id: System.Guid, table: ArcTable, ?name: string, ?description, ?or
 
     member this.StructurallyEquals (other: Template) =
         this.GetHashCode() = other.GetHashCode()
+
+    member this.Copy() : Template =
+        let nextAuthors = this.Authors |> ResizeArray.map (fun c -> c.Copy())
+        let nextRepos = this.EndpointRepositories |> ResizeArray.map (fun c -> c.Copy())
+        let nextTags = this.Tags |> ResizeArray.map (fun c -> c.Copy())
+        Template.create(
+            this.Id,
+            this.Table.Copy(),
+            this.Name,
+            this.Description,
+            this.Organisation,
+            this.Version,
+            nextAuthors,
+            nextRepos,
+            nextTags,
+            this.LastUpdated
+        )
 
     // custom check
     override this.Equals other =
