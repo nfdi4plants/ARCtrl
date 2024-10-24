@@ -211,15 +211,21 @@ let private valuelessTable =
                 ]
             Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
         )
-        // TODO: What should we do with units of empty columns?
-        //testCase "Write" (fun () -> 
-            
-        //    let table = ArcTable.tryFromFsWorksheet ws        
-        //    Expect.isSome table "Table was not created"
-        //    let out = ArcTable.toFsWorksheet table.Value
-        //    Expect.workSheetEqual out ws "Worksheet was not correctly written"
+        testCase "Write TableElementHasTwoRows" (fun () -> 
+            let table = ArcTable.init("MyTable")
+            let header = CompositeHeader.Parameter (OntologyAnnotation("MyParameter"))
+            table.AddColumn(header)
+            let out = ArcTable.toFsWorksheet None table
+            let fsTable = out.Tables.[0]
+            let rowRangeLength = fsTable.RangeAddress.LastAddress.RowNumber - fsTable.RangeAddress.FirstAddress.RowNumber + 1
+            Expect.equal rowRangeLength 2 "Row range length should be 2"
+            // test against fail at read-in
+            let inAgainOption = ArcTable.tryFromFsWorksheet out
+            let inAgain = Expect.wantSome inAgainOption "Table was not created"
+            Expect.equal inAgain.ColumnCount 1 "Column count should be 1"
+            Expect.equal inAgain.Columns.[0].Header header "Header was not parsed correctly"
            
-        //)
+        )
     ]
 
 let private mixedTable = 
