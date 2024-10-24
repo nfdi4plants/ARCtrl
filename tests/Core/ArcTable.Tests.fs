@@ -2591,6 +2591,30 @@ let private tests_copy = testList "Copy" [
         copy.SetCellAt(0,0,CompositeCell.FreeText "NewFreetext")
         Expect.equal (table.GetCellAt(0,0)) (CompositeCell.FreeText "OldFreetext") "Cell of old table should stay as is"
         Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateDataCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Input IOType.Data,
+            [|CompositeCell.Data (Data(name = "OldData"))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.SetCellAt(0,0,CompositeCell.Data (Data(name = "NewData")))
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.Data (Data(name = "OldData"))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateNameOfDataCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Input IOType.Data,
+            [|CompositeCell.Data (Data(name = "OldData"))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        match copy.GetCellAt(0,0) with
+        | CompositeCell.Data d -> d.Name <- Some "NewData"
+        | _ -> Expect.isTrue false "Cell not data?"
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.Data (Data(name = "OldData"))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
     testCase "UpdateTermCell" <| fun _ ->
         let table = ArcTable.init("NewTable")
         table.AddColumn(
