@@ -1,3 +1,99 @@
+### 2.2.0+fd5eccc (Released 2024-10-24)
+* Additions:
+    * [[#b8640a7](https://github.com/nfdi4plants/ARCtrl/commit/b8640a7519b1c50a2b48d6720a35949039ba3fa9)] small changes to build-chain according to PR review
+    * [[#9e43e81](https://github.com/nfdi4plants/ARCtrl/commit/9e43e81945d7d204d14bed9be413ab2c10634c76)] Merge pull request #446 from nfdi4plants/ro-crate-json
+    * [[#e6becb8](https://github.com/nfdi4plants/ARCtrl/commit/e6becb8973ad26cea064968a81a0fe83a0fa195a)] Enable Sequence based metadata data creation for arc assays
+    * [[#3c383de](https://github.com/nfdi4plants/ARCtrl/commit/3c383de5768fd4609b2db00bfc35c243b9dc01e4)] Enable the creation of study metadata based on sequences
+    * [[#12e5d75](https://github.com/nfdi4plants/ARCtrl/commit/12e5d75da146a9e7831c82a665a41dbe096f854f)] Add excel get and create template meta data from sequence of strings
+    * [[#38b9ce8](https://github.com/nfdi4plants/ARCtrl/commit/38b9ce8e0ec768d356c8a448fd92c0e7375143e6)] Adapt styling
+    * [[#5e0e10e](https://github.com/nfdi4plants/ARCtrl/commit/5e0e10ef961ee858710535ac362ac291e9f7a338)] Add from and to seq for arc investigation
+    * [[#8050b1b](https://github.com/nfdi4plants/ARCtrl/commit/8050b1b4cefba5d243b96a5eff0469c7dcb20754)] Update build-test.yml
+    * [[#d4687f3](https://github.com/nfdi4plants/ARCtrl/commit/d4687f3e4c61f7495fb9fd4ec913841d12e61d60)] Added unit tests for investigation
+    * [[#8301e02](https://github.com/nfdi4plants/ARCtrl/commit/8301e0246d1c8584d9097faee19146b9c5d465fa)] restore package.json of ARCtrl
+    * [[#f525619](https://github.com/nfdi4plants/ARCtrl/commit/f5256198da2c8b4beef2c25fcbc0eaa6b4d1e480)] restore pagages.lock.json of ARCtrl
+    * [[#536b988](https://github.com/nfdi4plants/ARCtrl/commit/536b988e182fe35aa3ae0c6bf697197c7e4a31bd)] Apply review changes
+    * [[#79f4fde](https://github.com/nfdi4plants/ARCtrl/commit/79f4fdef1c2ee756872e33ca7cfdaa0484ea5a2b)] Adapt parameter styling
+    * [[#36f78d4](https://github.com/nfdi4plants/ARCtrl/commit/36f78d425a11f7a11015cecab8b42af52910516e)] small undo of styling change
+    * [[#0f9028c](https://github.com/nfdi4plants/ARCtrl/commit/0f9028cecaca805fc17aa2997604eaedaf81919d)] Merge pull request #451 from nfdi4plants/Feature_Enable_Sequence_Based_Metadata_Creation
+    * [[#25c8d3c](https://github.com/nfdi4plants/ARCtrl/commit/25c8d3caadcdf9e005a3a45ba908a028081d8561)] include ARCtrl Common props in package for downstream fable transpilation
+    * [[#97a3d46](https://github.com/nfdi4plants/ARCtrl/commit/97a3d4644aebb9f4c7b15c3be3da8e447bd1e708)] move jsonIO dependencies from shared props file directly into project files
+    * [[#850e889](https://github.com/nfdi4plants/ARCtrl/commit/850e889906fb28b845fa0fe4c49c95e0157bcacf)] created "All" Tests project which bundles all other tests
+    * [[#d5d5201](https://github.com/nfdi4plants/ARCtrl/commit/d5d5201898cdfe9bb365c902d6f33129a2f3e19a)]  #433: Add api functions for mandatory dynamic props on some classes
+    * [[#00c1ca7](https://github.com/nfdi4plants/ARCtrl/commit/00c1ca7d49c70cab98deec118bd75dcef6ac20df)] add requested changes, add at least some tests
+    * [[#d35c76a](https://github.com/nfdi4plants/ARCtrl/commit/d35c76a83596ddf0df924dbae12e0e98675a5124)] start working in potential typed ro-crate-json parser
+    * [[#9f9b9c7](https://github.com/nfdi4plants/ARCtrl/commit/9f9b9c7119a5d0eedc97b8c6a8f6543fcd13064f)] finish up first version of ROCrateObject serialization
+    * [[#d9fbb33](https://github.com/nfdi4plants/ARCtrl/commit/d9fbb33f95e46e3d505e3c1d6404b437c592bf36)] add ROCrateObject decoder tests
+    * [[#100fc34](https://github.com/nfdi4plants/ARCtrl/commit/100fc342aaf1990f704ca287d55fa3efe2c071ef)] Enable check for metadata sheetname and is meta data sheet
+    * [[#fc2f7d9](https://github.com/nfdi4plants/ARCtrl/commit/fc2f7d92924b9357bbf000665a50061c2170e636)] rename ROCrateObject to LDObject
+    * [[#a0eeeed](https://github.com/nfdi4plants/ARCtrl/commit/a0eeeed8bc8d73e807c2a779994da907cd9efa76)] Implented review changes
+    * [[#081ca04](https://github.com/nfdi4plants/ARCtrl/commit/081ca0452bad26245525872637662e18bdb16bef)] Add cwl model
+    * [[#ef04da1](https://github.com/nfdi4plants/ARCtrl/commit/ef04da1849b3757d180446fcaa095fed2a32f8b3)] Add cwl decode functions
+    * [[#8cfb04c](https://github.com/nfdi4plants/ARCtrl/commit/8cfb04c188f8b94db04968b7610f7bd886bce185)] Add testing project
+    * [[#3da6974](https://github.com/nfdi4plants/ARCtrl/commit/3da6974cea3440f17e7dacefb7c6ed79bf07e50c)] change naming of CWL to CWLProcessingUnits
+    * [[#1932c44](https://github.com/nfdi4plants/ARCtrl/commit/1932c44952c0cd818f15eddee7a0e186d3ded67e)] add test strings
+    * [[#6ae8e47](https://github.com/nfdi4plants/ARCtrl/commit/6ae8e47c6e7ac2fa98425885249b4f0ab12d98ae)] Add cwl test
+    * [[#a9e64d3](https://github.com/nfdi4plants/ARCtrl/commit/a9e64d3f94c697293d4ff898f08295b5ed2e52ce)] rewrite tests to be more clear
+    * [[#a59d834](https://github.com/nfdi4plants/ARCtrl/commit/a59d8346f2fe8981fd56780e60fce16db950024f)] reorganize tests
+    * [[#3c5e2f8](https://github.com/nfdi4plants/ARCtrl/commit/3c5e2f8dfeb1f0cc352ab704b48b5bea2e13c41d)] dix dockerFile requirement
+    * [[#3c6c0a3](https://github.com/nfdi4plants/ARCtrl/commit/3c6c0a3d88ea8104c29970ed6eeb6efcafd513b0)] start separating processunits for better modularity / edge case handling
+    * [[#13d8a9c](https://github.com/nfdi4plants/ARCtrl/commit/13d8a9c75178e4d5427608002e06e7c3e0dfdaf5)] reorder and specify wf specific types
+    * [[#c7a0082](https://github.com/nfdi4plants/ARCtrl/commit/c7a00821ed9ad34deabe358bef05c5d61f6cc277)] change in-/outputs to dynamicObj for more flexibility
+    * [[#9930238](https://github.com/nfdi4plants/ARCtrl/commit/993023849ef4e1fec616b059468b836e917a0cb8)] add workflow steps
+    * [[#0d049b1](https://github.com/nfdi4plants/ARCtrl/commit/0d049b16aeb5acafc412aeb804f35332e49694a8)] add workflow description type
+    * [[#ccefbff](https://github.com/nfdi4plants/ARCtrl/commit/ccefbffe4887726d0be30347c41e0e357579a470)] add steps decoding
+    * [[#3db45c6](https://github.com/nfdi4plants/ARCtrl/commit/3db45c64eff8b521907495a992fee34ddde79463)] add WorkflowSteps tests
+    * [[#95dab47](https://github.com/nfdi4plants/ARCtrl/commit/95dab475dc58269b1983af26d9e35e65fc6c12e9)] support direct type mappings for inputs and outputs
+    * [[#0fd5be9](https://github.com/nfdi4plants/ARCtrl/commit/0fd5be97fc9e5733e7e01836462b0c2d2b1580e1)] add overflow decoder
+    * [[#7007a0b](https://github.com/nfdi4plants/ARCtrl/commit/7007a0b1e58f8438a47beabdcfcb288716abe3e6)] add cmd tool metadata and tests
+    * [[#3fca0c1](https://github.com/nfdi4plants/ARCtrl/commit/3fca0c11671bd3cd3f75f5473bb43c1baf793a0b)] update fsproj
+    * [[#4ff39f9](https://github.com/nfdi4plants/ARCtrl/commit/4ff39f9f55b85a89f123de5db4aedb5dc3433c7d)] Update YAMLicious to version 0.0.2
+    * [[#ff5af9c](https://github.com/nfdi4plants/ARCtrl/commit/ff5af9c51afc9f2268f3bbab054737ededd9fb87)] rename Type to Type_ for fable
+    * [[#379efb4](https://github.com/nfdi4plants/ARCtrl/commit/379efb4d4e0c0fb023947557c927dbb785dba609)] add failcase to requirements
+    * [[#44112a8](https://github.com/nfdi4plants/ARCtrl/commit/44112a8638930494eabd379418b255df982fcd9a)] add wf requirements to decoder
+    * [[#8b6963e](https://github.com/nfdi4plants/ARCtrl/commit/8b6963edfa4a83f891d3e029c709054ce7aa4d33)] trim strings for python
+    * [[#7728ebb](https://github.com/nfdi4plants/ARCtrl/commit/7728ebbd168ff4f4b0301b81460149f89655e973)] update yamlicious version
+    * [[#1222f01](https://github.com/nfdi4plants/ARCtrl/commit/1222f018133f51baebd6d5faafc7ca12067056d5)] add workflow decoding
+    * [[#83cad3e](https://github.com/nfdi4plants/ARCtrl/commit/83cad3e0579d01ffa5e5d04b938efa65ef300908)] add cwl to all test list
+    * [[#f452622](https://github.com/nfdi4plants/ARCtrl/commit/f452622bde4bf2b10816a3d883869a8b6d3f3cfb)] rename types and tests
+    * [[#e6d9902](https://github.com/nfdi4plants/ARCtrl/commit/e6d9902b573d1c3271957cf20877b5475e2b3024)] add attachmembers attribute
+    * [[#070ca96](https://github.com/nfdi4plants/ARCtrl/commit/070ca96665fbbe241b379b64ae8576f89c7808f9)] switch to resizearray and add some comments
+    * [[#090a214](https://github.com/nfdi4plants/ARCtrl/commit/090a21479fed7a818dde644b1fcbeb42ade796fc)] add optional field to inputs
+    * [[#de6ef63](https://github.com/nfdi4plants/ARCtrl/commit/de6ef63c19bace7c567691d8f074923dabb5cba1)] change version and class to optional on tool and wf descriptions
+    * [[#fedc6d4](https://github.com/nfdi4plants/ARCtrl/commit/fedc6d4a7198db9bc2bbfa749f0965f27d1fbf3b)] reorganize modules
+    * [[#77d1054](https://github.com/nfdi4plants/ARCtrl/commit/77d105451f14a5d63fbefc3c8443a22009f5f23b)] make OntologyAnnotation work with localID as TAN
+    * [[#c3ed011](https://github.com/nfdi4plants/ARCtrl/commit/c3ed011ece9c38e874d954e062b897b0a9d985cf)] add template copy tests
+    * [[#d9e4ae4](https://github.com/nfdi4plants/ARCtrl/commit/d9e4ae4157c19ecaa13be13a690e0115f8120365)] small cleanup of CompositeHeader
+    * [[#68fc64e](https://github.com/nfdi4plants/ARCtrl/commit/68fc64e37032b26e7748e2e545096412f0a3596e)] add data cell update tests for ArcTable Copy function
+    * [[#1edfd80](https://github.com/nfdi4plants/ARCtrl/commit/1edfd80dbc37dc26e48cc305d831fb974847f98f)] add test against correctly writing valueless ArcTable
+    * [[#3b0fa76](https://github.com/nfdi4plants/ARCtrl/commit/3b0fa76489e1346cd30c3170bf48a47b00c00446)] treat empty strings in OntologyAnnotation as None
+    * [[#f4cad69](https://github.com/nfdi4plants/ARCtrl/commit/f4cad6964a6fc815f23e98be18e5666ed3e56dbc)] set RO-Crate empty unit test to pending
+* Deletions:
+    * [[#12eb2b9](https://github.com/nfdi4plants/ARCtrl/commit/12eb2b92018b8ef664853796374d6acf1fa85d3a)] remove leftover catching of erros in dotnet packaging
+    * [[#b038cfc](https://github.com/nfdi4plants/ARCtrl/commit/b038cfc1fd26c9bcca559c898d20e2f4943e4722)] Add '@context' support: - instance methods and static methods for set/tryGet/remove - tests for all classes
+    * [[#f53e73f](https://github.com/nfdi4plants/ARCtrl/commit/f53e73f8adfcf39c820d3b67a91565594a36cf05)] remove try with for dirent initial workdir
+    * [[#10e40ba](https://github.com/nfdi4plants/ARCtrl/commit/10e40baef1e30f56bce21a3d1cfb9b7874436667)] separate processing units and remove module
+    * [[#b783782](https://github.com/nfdi4plants/ARCtrl/commit/b7837828e800818dbd91f884ebcf7a48b988e409)] remove type CLWClass :(
+    * [[#844ca8b](https://github.com/nfdi4plants/ARCtrl/commit/844ca8be60907c50ffaaeb427642240a70b96958)] remove underlying modules
+* Bugfixes:
+    * [[#b2b6e8b](https://github.com/nfdi4plants/ARCtrl/commit/b2b6e8b04d0dc8e04e45e247e68ef1781bc404e1)] Merge pull request #452 from nfdi4plants/nugetFix
+    * [[#55d360f](https://github.com/nfdi4plants/ARCtrl/commit/55d360fff020aab8ec9b81a74ef8bdb0e8a67629)] fix rebase conflicts, update to DynObj v4.0.3, remove Directory.Build.props
+    * [[#96231bc](https://github.com/nfdi4plants/ARCtrl/commit/96231bce5763421edde1d6dd0600ad35410956a9)] add ROCrateObject writer tests and fix accordingly
+    * [[#cc77790](https://github.com/nfdi4plants/ARCtrl/commit/cc77790d27c4466aed5af8b4bd781d8d989b1514)] hotfix ROCrateObject json writer writing internal keys as fields in json
+    * [[#63f8cdc](https://github.com/nfdi4plants/ARCtrl/commit/63f8cdc84547ff3badb50667711a73179c2c3747)] fix references in decode
+    * [[#cd3cdee](https://github.com/nfdi4plants/ARCtrl/commit/cd3cdee21ef685366919aa537e796d33d927dbe0)] fix cwl type naming
+    * [[#9c36d2d](https://github.com/nfdi4plants/ARCtrl/commit/9c36d2d8b0baf5aa94f99a6960e5126ec56e9bec)] fix test fsproj
+    * [[#bbc5a42](https://github.com/nfdi4plants/ARCtrl/commit/bbc5a4218825e40454898a5ee574cc95460fc415)] fix optional fields
+    * [[#86913f6](https://github.com/nfdi4plants/ARCtrl/commit/86913f6cdfa3cab39d552ee543ade062e4390557)] fix EnvVarRequirement
+    * [[#27c8037](https://github.com/nfdi4plants/ARCtrl/commit/27c8037c21f05ebd887d67414fe1052d5ea940df)] fix SchemaDefRequirement
+    * [[#f4a662d](https://github.com/nfdi4plants/ARCtrl/commit/f4a662d4008df4ace3727a9f2b9134d3e1bdeab8)] fix SoftwareRequirements
+    * [[#e44e736](https://github.com/nfdi4plants/ARCtrl/commit/e44e736bd8d8345cbf706d927dc91f475817fc60)] fix workdirReq and resourceReq
+    * [[#01a3c04](https://github.com/nfdi4plants/ARCtrl/commit/01a3c04161f392ae21a5659bf168f2b912532182)] fix direct map decode
+    * [[#17fabe8](https://github.com/nfdi4plants/ARCtrl/commit/17fabe8af66078f9f0834acb631c7a332a9ef4f0)] fix for new dynamic obj version
+    * [[#548b2b7](https://github.com/nfdi4plants/ARCtrl/commit/548b2b754913ab043763ecfd82bd76289f7f5856)] add metadata and dynobj testing (fix test runs)
+    * [[#cb87cba](https://github.com/nfdi4plants/ARCtrl/commit/cb87cbae068291812dabb43f7e0926ab7eb19973)] Implement review fix
+    * [[#b335ddc](https://github.com/nfdi4plants/ARCtrl/commit/b335ddcfc97ea873d95320ca343d2bc67ba21641)] test and fix ArcTable copy member deep copying ontology annotations
+    * [[#b71fb4b](https://github.com/nfdi4plants/ARCtrl/commit/b71fb4b68dd383da00d236d61991a1d8d8a26889)] minimal hotfix for writing bodyless tables
+
 ### 2.1.0+99b2659 (Released 2024-10-2)
 * Additions:
     * [[#28cfd13](https://github.com/nfdi4plants/ARCtrl/commit/28cfd133152fa3cdc6606b4ccb7cda3c340e8f62)] add rocrate project
