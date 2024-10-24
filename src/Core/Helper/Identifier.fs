@@ -54,7 +54,7 @@ module Assay =
         | Regex ValidAssayFileNamePattern m -> 
             let identifier = m.Groups.["identifier"].Value
             identifier
-        | _ -> failwith $"Cannot parse identifier from FileName `{fileName}`"
+        | _ -> failwith $"Cannot parse assay identifier from FileName `{fileName}`"
 
     /// <summary>
     /// On read-in the FileName can be any combination of "assays" (assay folder name), assayIdentifier and "isa.assay.xlsx" (the actual file name).
@@ -121,7 +121,7 @@ module Study =
         | Regex ValidStudyFileNamePattern m -> 
             let identifier = m.Groups.["identifier"].Value
             identifier
-        | _ -> failwith $"Cannot parse identifier from FileName `{fileName}`"
+        | _ -> failwith $"Cannot parse study identifier from FileName `{fileName}`"
 
     /// <summary>
     /// On read-in the FileName can be any combination of "studies" (study folder name), studyIdentifier and "isa.study.xlsx" (the actual file name).

@@ -1,4 +1,4 @@
-﻿module CompositeHeaderTests
+module CompositeHeaderTests
 
 open TestingUtils
 
@@ -22,8 +22,19 @@ let deprecatedDataHeaders =
             Expect.equal header (CompositeHeader.Output IOType.Data) "Should be Output [Image]" 
     ]
 
+let parameter_Tests =
+   testList "Parameter" [
+        testCase "onlyName WriteRead" <| fun _ ->
+            let oa = OntologyAnnotation ("Name")
+            let header = CompositeHeader.Parameter oa
+            let out = CompositeHeader.toStringCells false header
+            let inAgain,_ = CompositeHeader.fromStringCells out
+            Expect.equal header inAgain "Should be the same"
+    ]
+
 
 let main = 
     testList "CompositeHeader" [
         deprecatedDataHeaders
+        parameter_Tests
     ]

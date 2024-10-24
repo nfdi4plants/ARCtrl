@@ -5,9 +5,18 @@ open Fable.Core
 
 [<AttachMembers>]
 type OntologyAnnotation(?name,?tsr,?tan, ?comments) =
-    let mutable _name : string option = name
-    let mutable _termSourceREF : string option = tsr
-    let mutable _termAccessionNumber : string option = tan
+    let mutable _name : string option =
+        match name with
+        | Some "" | None -> None
+        | name -> name
+    let mutable _termSourceREF : string option =
+        match tsr with
+        | Some "" | None -> None
+        | tsr -> tsr
+    let mutable _termAccessionNumber : string option =
+        match tan with
+        | Some "" | Some ":" | None -> None
+        | tan -> tan
     let mutable _comments : ResizeArray<Comment> = defaultArg comments <| ResizeArray()
 
     member this.Name
