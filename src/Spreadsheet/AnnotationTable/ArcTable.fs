@@ -127,7 +127,7 @@ let toFsWorksheet (index : int option) (table : ArcTable) =
     let ws = FsWorksheet(table.Name)
 
     // Cancel if there are no columns
-    if table.Columns.Length = 0 then ws
+    if table.ColumnCount = 0 then ws
     else
 
     let columns = 
@@ -135,13 +135,16 @@ let toFsWorksheet (index : int option) (table : ArcTable) =
         |> List.ofArray
         |> List.sortBy classifyColumnOrder
         |> List.collect CompositeColumn.toStringCellColumns
-    let maxRow = columns.Head.Length
-    let maxCol = columns.Length
+    let tableRowCount =
+        let maxRow = columns |> Seq.fold (fun acc c -> max acc c.Length) 0
+        if maxRow = 1 then 2
+        else maxRow
+    let tableColumnCount = columns.Length
     let name =
         match index with
         | Some i -> $"{annotationTablePrefix}{i}"
         | None -> annotationTablePrefix
-    let fsTable = ws.Table(name,FsRangeAddress(FsAddress(1,1),FsAddress(maxRow,maxCol)))
+    let fsTable = ws.Table(name,FsRangeAddress(FsAddress(1,1),FsAddress(tableRowCount,tableColumnCount)))
     columns
     |> List.iteri (fun colI col ->         
         col
