@@ -20,23 +20,48 @@ module StudyContractExtensions =
 
     type ArcStudy with
 
-        member this.ToCreateContract (?WithFolder) =
+        member this.ToCreateContract (?WithFolder, ?datamapAsFile) =
             let withFolder = defaultArg WithFolder false
+            let dataMapAsFile = defaultArg datamapAsFile false
             let path = Identifier.Study.fileNameFromIdentifier this.Identifier
-            let c = Contract.createCreate(path, DTOType.ISA_Study, DTO.Spreadsheet (this |> ArcStudy.toFsWorkbook))
+            let dto = DTO.Spreadsheet (ArcStudy.toFsWorkbook(this, datamapSheet = not dataMapAsFile))
+            let c = Contract.createCreate(path, DTOType.ISA_Study, dto)
             
             [|
                 if withFolder then 
                     let folderFS = FileSystemTree.createStudiesFolder ([|FileSystemTree.createStudyFolder this.Identifier|])
                     for p in folderFS.ToFilePaths(false) do
-                        if p <> path && p <> "studies/.gitkeep" then Contract.createCreate(p, DTOType.PlainText)
-                c
+                        if p <> path && p <> "studies/.gitkeep" then yield Contract.createCreate(p, DTOType.PlainText)
+                match this.DataMap with
+                    | Some dm -> 
+                        dm.StaticHash <- dm.GetHashCode()
+                        if dataMapAsFile then
+                            yield dm.ToCreateContractForStudy(this.Identifier)
+                    | _ -> ()
+                yield c
             |]
 
-        member this.ToUpdateContract () =
+        member this.ToUpdateContract (?datamapAsFile) =
+            let datamapAsFile = defaultArg datamapAsFile false
             let path = Identifier.Study.fileNameFromIdentifier this.Identifier
-            let c = Contract.createUpdate(path, DTOType.ISA_Study, DTO.Spreadsheet (this |> ArcStudy.toFsWorkbook))
-            c
+            let hash = this.GetLightHashCode()
+            let datamapHasChanged = 
+                match this.DataMap with
+                | Some dm -> 
+                    let hc = dm.GetHashCode() <> dm.StaticHash
+                    dm.StaticHash <- dm.GetHashCode()
+                    hc
+                | _ -> false
+            let createStudyContract() =                 
+                let dto = DTO.Spreadsheet (ArcStudy.toFsWorkbook(this, datamapSheet = not datamapAsFile))
+                Contract.createUpdate(path, DTOType.ISA_Study, dto)                  
+            [|
+                if hash <> this.StaticHash || (datamapHasChanged && not datamapAsFile) then
+                    createStudyContract()
+                if datamapHasChanged && datamapAsFile then
+                    this.DataMap.Value.ToUpdateContractForStudy(this.Identifier)
+
+            |]
 
         member this.ToDeleteContract () =
             let path = getStudyFolderPath(this.Identifier)
@@ -49,7 +74,7 @@ module StudyContractExtensions =
         static member toCreateContract (study: ArcStudy, ?WithFolder) : Contract [] =
             study.ToCreateContract(?WithFolder = WithFolder)
 
-        static member toUpdateContract (study: ArcStudy) : Contract =
+        static member toUpdateContract (study: ArcStudy) : Contract [] =
             study.ToUpdateContract()           
 
         static member tryFromReadContract (c:Contract) =
