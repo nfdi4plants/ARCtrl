@@ -73,11 +73,18 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     member this.Columns 
         with get() = [|for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)|] 
 
-    member this.Copy() : ArcTable = 
+    member this.Copy() : ArcTable =
+        let nextHeaders = this.Headers |> ResizeArray.map (fun h -> h.Copy())
+        let nextValues = Dictionary<int*int,CompositeCell>()
+        this.Values.Keys
+        |> Seq.iter (fun (ci,ri) -> 
+            let newCell = this.Values.[ci,ri].Copy()
+            nextValues.Add((ci,ri),newCell)
+        )
         ArcTable.create(
             this.Name,
-            ResizeArray(this.Headers), 
-            Dictionary(this.Values)
+            nextHeaders, 
+            nextValues
         )
 
     /// Returns a cell at given position if it exists, else returns None.

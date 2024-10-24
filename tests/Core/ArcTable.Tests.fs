@@ -926,7 +926,7 @@ let private tests_AddColumn_Mutable =
     ]
 
 /// Exemplary tests to check non mutable implementation of mutability bases member function.
-let private tests_addColumn_Copy =
+let private tests_addColumn =
     let header_input = CompositeHeader.Input IOType.Source
     let header_chara = CompositeHeader.Characteristic oa_species
     let createCells_chara (count) = Array.init count (fun _ -> CompositeCell.createTerm oa_chlamy)
@@ -2539,6 +2539,131 @@ let private tests_equality = testList "equality" [
     ]
 ]
 
+let private tests_copy = testList "Copy" [
+    testCase "DefaultEquality"<| fun _ ->
+        let table = create_testTable()
+        let copy = table.Copy()
+        Expect.equal table copy "Tables should be equal"
+    testCase "StructuralEquality" <| fun _ ->
+        let table = create_testTable()
+        let copy = table.Copy()
+        let equals = table.StructurallyEquals(copy)
+        Expect.isTrue equals "Structural equality should be true"
+    testCase "ReferenceEquality" <| fun _ ->
+        let table = create_testTable()
+        let copy = table.Copy()
+        let equals = table.ReferenceEquals(copy)
+        Expect.isFalse equals "Reference equality should be false"
+    testCase "UpdateInputHeader" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(CompositeHeader.Input IOType.Sample)
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.UpdateHeader(0,CompositeHeader.Input IOType.Data)
+        Expect.equal (table.Headers.[0]) (CompositeHeader.Input IOType.Sample) "Header of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateParameterHeader" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("OldAnnotation")))
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.UpdateHeader(0,CompositeHeader.Parameter (OntologyAnnotation("NewAnnotation")))
+        Expect.equal (table.Headers.[0]) (CompositeHeader.Parameter (OntologyAnnotation("OldAnnotation"))) "Header of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateAnnotationOfParameterHeader" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("OldAnnotation")))
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        match copy.Headers.[0] with
+        | CompositeHeader.Parameter oa -> oa.Name <- Some "NewAnnotation"
+        | _ -> Expect.isTrue false "Header not parameter?"
+        Expect.equal (table.Headers.[0]) (CompositeHeader.Parameter (OntologyAnnotation("OldAnnotation"))) "Header of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateFreetextCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Input IOType.Sample,
+            [|CompositeCell.FreeText "OldFreetext"|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.SetCellAt(0,0,CompositeCell.FreeText "NewFreetext")
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.FreeText "OldFreetext") "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateDataCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Input IOType.Data,
+            [|CompositeCell.Data (Data(name = "OldData"))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.SetCellAt(0,0,CompositeCell.Data (Data(name = "NewData")))
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.Data (Data(name = "OldData"))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateNameOfDataCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Input IOType.Data,
+            [|CompositeCell.Data (Data(name = "OldData"))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        match copy.GetCellAt(0,0) with
+        | CompositeCell.Data d -> d.Name <- Some "NewData"
+        | _ -> Expect.isTrue false "Cell not data?"
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.Data (Data(name = "OldData"))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateTermCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Parameter (OntologyAnnotation("MyParameter")),
+            [|CompositeCell.createTerm (OntologyAnnotation("OldAnnotation"))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.SetCellAt(0,0,CompositeCell.createTerm (OntologyAnnotation("NewAnnotation")))
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createTerm (OntologyAnnotation("OldAnnotation"))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateAnnotationOfTermCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Parameter (OntologyAnnotation("MyParameter")),
+            [|CompositeCell.createTerm (OntologyAnnotation("OldAnnotation"))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        match copy.GetCellAt(0,0) with
+        | CompositeCell.Term oa -> oa.Name <- Some "NewAnnotation"
+        | _ -> Expect.isTrue false "Cell not term?"
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createTerm (OntologyAnnotation("OldAnnotation"))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateUnitCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Parameter (OntologyAnnotation("MyParameter")),
+            [|CompositeCell.createUnitized("OldValue",(OntologyAnnotation("OldAnnotation")))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        copy.SetCellAt(0,0,CompositeCell.createUnitized("NewValue",(OntologyAnnotation("NewAnnotation"))))
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createUnitized("OldValue",(OntologyAnnotation("OldAnnotation")))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+    testCase "UpdateAnnotationOfUnitCell" <| fun _ ->
+        let table = ArcTable.init("NewTable")
+        table.AddColumn(
+            CompositeHeader.Parameter (OntologyAnnotation("MyParameter")),
+            [|CompositeCell.createUnitized("OldValue",(OntologyAnnotation("OldAnnotation")))|]
+            )
+        let copy = table.Copy()
+        Expect.equal copy table "Should be equal before change"
+        match copy.GetCellAt(0,0) with
+        | CompositeCell.Unitized (v,oa) -> oa.Name <- Some "NewAnnotation"
+        | _ -> Expect.isTrue false "Cell not unit?"
+        Expect.equal (table.GetCellAt(0,0)) (CompositeCell.createUnitized("OldValue",(OntologyAnnotation("OldAnnotation")))) "Cell of old table should stay as is"
+        Expect.notEqual copy table "Should not be equal after change"
+]
 
 let private tests_fillMissing = testList "fillMissing" [
         testCase "OntologyAnnotationCopied" <| fun _ ->
@@ -2574,7 +2699,7 @@ let main =
         tests_UpdateCellsBy
         tests_UpdateColumn
         tests_AddColumn_Mutable
-        tests_addColumn_Copy
+        tests_addColumn
         tests_AddColumns
         tests_AddColumnFill
         tests_RemoveColumn
@@ -2591,5 +2716,6 @@ let main =
         tests_IterColumns
         tests_GetHashCode
         tests_equality
+        tests_copy
         tests_fillMissing
     ]

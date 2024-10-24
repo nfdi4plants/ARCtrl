@@ -432,6 +432,15 @@ type CompositeHeader =
         | ProtocolType | ProtocolREF | ProtocolDescription | ProtocolUri | ProtocolVersion | Performer | Date | Input _ | Output _ -> true
         | _ -> false
 
+    member this.Copy() =
+        match this with
+        | Parameter oa -> Parameter (oa.Copy())
+        | Factor oa -> Factor (oa.Copy())
+        | Characteristic oa -> Characteristic (oa.Copy())
+        | Component oa -> Component (oa.Copy())
+        | _ -> this
+        
+
 #if FABLE_COMPILER
     
     [<CompiledName("component")>]

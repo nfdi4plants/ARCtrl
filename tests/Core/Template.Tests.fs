@@ -1,4 +1,4 @@
-﻿module Template.Tests
+module Template.Tests
 
 open Thoth.Json.Core
 
@@ -182,8 +182,40 @@ let private tests_filters = testList "filters" [
     ]
 ]
 
+let private tests_copy = testList "Copy" [
+    testCase "DefaultEquality"<| fun _ ->
+        let template = create_TestTemplate()
+        let copy = template.Copy()
+        Expect.equal template copy "Templates should be equal"
+    testCase "StructuralEquality" <| fun _ ->
+        let template = create_TestTemplate()
+        let copy = template.Copy()
+        let equals = template.StructurallyEquals(copy)
+        Expect.isTrue equals "Structural equality should be true"
+    testCase "ReferenceEquality" <| fun _ ->
+        let template = create_TestTemplate()
+        let copy = template.Copy()
+        let equals = template.ReferenceEquals(copy)
+        Expect.isFalse equals "Reference equality should be false"
+    testCase "UpdatePerson" <| fun _ ->
+        let template = create_TestTemplate()
+        let copy = template.Copy()
+        Expect.equal template copy "Templates should be equal before change"
+        copy.Authors.[0].FirstName <- Some "Jane"
+        Expect.equal template.Authors.[0].FirstName (Some "John") "Name should not have been updated"
+        Expect.notEqual copy template "Templates should not be equal after change"
+    testCase "AddTableColumn" <| fun _ ->
+        let template = create_TestTemplate()
+        let copy = template.Copy()
+        Expect.equal template copy "Templates should be equal before change"
+        copy.Table.AddColumn(CompositeHeader.Parameter (OntologyAnnotation("VeryImportant")))
+        Expect.notEqual copy template "Templates should not be equal after change"
+]
+
+
 let main = testList "Templates" [
     tests_equality
     tests_HashCode
     tests_filters
+    tests_copy
 ]
