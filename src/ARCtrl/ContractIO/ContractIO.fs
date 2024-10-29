@@ -20,6 +20,17 @@ let fulfillReadContract basePath (c : Contract) =
     | _ -> 
         Error (sprintf "Contract %s is not an ISA contract" c.Path) 
 
+let fullfillReadContractBatch basePath (cs : Contract []) : Result<Contract [], string []>=
+    cs
+    |> Array.map (fulfillReadContract basePath)
+    |> Array.fold (fun acc cr ->
+        match acc, cr with
+        | Ok acc, Ok cr -> Ok (Array.append acc [|cr|])
+        | Error e, Ok _ -> Error e
+        | Error acc, Error e -> Error (Array.append acc [|e|])
+        | Ok _, Error e -> Error [|e|]
+    ) (Ok [||])
+
 let fulfillWriteContract basePath (c : Contract) =
     match c.DTO with
     | Some (DTO.Spreadsheet wb) ->
@@ -40,6 +51,17 @@ let fulfillWriteContract basePath (c : Contract) =
     | _ -> 
         Error (sprintf "Contract %s is not an ISA contract" c.Path)
 
+let fullfillWriteContractBatch basePath (cs : Contract []) : Result<unit, string []>=
+    cs
+    |> Array.map (fulfillWriteContract basePath)
+    |> Array.fold (fun acc cr ->
+        match acc, cr with
+        | Ok (), Ok _ -> Ok ()
+        | Error e, Ok _ -> Error e
+        | Error acc, Error e -> Error (Array.append acc [|e|])
+        | Ok _, Error e -> Error [|e|]
+    ) (Ok ())
+
 let fulfillUpdateContract basePath (c : Contract) =
     match c.DTO with
     | Some (DTO.Spreadsheet wb) ->
@@ -59,3 +81,14 @@ let fulfillUpdateContract basePath (c : Contract) =
         Ok ()
     | _ -> 
         Error (sprintf "Contract %s is not an ISA contract" c.Path)
+
+let fullfillUpdateContractBatch basePath (cs : Contract []) : Result<unit, string []>=
+    cs
+    |> Array.map (fulfillUpdateContract basePath)
+    |> Array.fold (fun acc cr ->
+        match acc, cr with
+        | Ok (), Ok _ -> Ok ()
+        | Error e, Ok _ -> Error e
+        | Error acc, Error e -> Error (Array.append acc [|e|])
+        | Ok _, Error e -> Error [|e|]
+    ) (Ok ())

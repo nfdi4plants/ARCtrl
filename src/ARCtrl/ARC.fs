@@ -88,6 +88,30 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         with get() = _fs
         and set(fs) = _fs <- fs
 
+    member this.Write(arcPath) =
+        this.GetWriteContracts()
+        |> fullfillWriteContractBatch arcPath
+
+    member this.Update(arcPath) =
+        this.GetUpdateContracts()
+        |> fullfillWriteContractBatch arcPath
+
+    static member load (arcPath : string) =
+        let paths = FileSystemHelper.getAllFilePaths arcPath
+        let arc = ARC.fromFilePaths (paths |> Seq.toArray)
+
+        let contracts = arc.GetReadContracts()
+
+        let fulFilledContracts = 
+            contracts 
+            |> fullfillReadContractBatch arcPath
+
+        match fulFilledContracts with
+        | Ok c -> 
+            arc.SetISAFromContracts(c)
+            Ok arc
+        | Error e -> Error e
+
     member this.RemoveAssay(assayIdentifier: string) =
         let isa = 
             match this.ISA with
