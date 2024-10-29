@@ -942,6 +942,150 @@ let tests_RenameStudy = testList "RenameStudy" [
 
 ] 
 
+
+let tests_load =
+
+    testList "Load" [
+        testCase "simpleARC" (fun () -> 
+            let p = TestObjects.IO.testSimpleARC
+            let result = ARC.load(p)
+            let result = Expect.wantOk result "ARC should load correctly"
+
+            Expect.isSome result.ISA "Should contain an ISA part"
+            Expect.isNone result.CWL "Should not contain a CWL part"
+
+            let isa = result.ISA.Value
+            Expect.equal isa.StudyCount 1 "Should contain 1 study"
+            Expect.equal isa.AssayCount 1 "Should contain 1 assay"
+            Expect.equal isa.RegisteredStudies.Count 1 "Should contain 1 registered study"
+            
+            let s = isa.Studies.[0]
+            Expect.equal s.RegisteredAssayCount 1 "Should contain 1 registered assay"
+            Expect.equal s.TableCount 3 "Study should contain 3 tables"
+
+            let a = s.RegisteredAssays.[0]
+            Expect.equal a.TableCount 4 "Assay should contain 4 tables"
+            
+        )
+    ]
+
+
+let tests_write =
+
+    testList "Write" [
+        testCase "empty" (fun () -> 
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
+            let a = ARC()
+            Expect.wantOk (a.Write(p)) "ARC should write correctly"
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/assays/.gitkeep";
+                    "/studies/.gitkeep";
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+
+            let paths = 
+                FileSystemHelper.getAllFilePaths p
+                |> Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        )
+        testCase "SimpleARC" (fun () -> 
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
+            let arc = ARC()
+
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+            Expect.wantOk (arc.Write(p)) "ARC should write correctly"
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{studyName}/isa.study.xlsx"
+                    $"/studies/{studyName}/README.md"
+                    $"/studies/{studyName}/protocols/.gitkeep";
+                    $"/studies/{studyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+
+            let paths = 
+                FileSystemHelper.getAllFilePaths p
+                |> Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        )
+        testCase "LoadSimpleARCAndAddAssay" (fun () -> 
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
+            let arc = Expect.wantOk (ARC.load(p)) "ARC should load correctly"
+
+            let i = arc.ISA.Value
+
+            let existingStudyName = "MyStudy"
+            let existingAssayName = "MyAssay"
+
+            let assayName = "YourAssay"
+            i.InitAssay(assayName) |> ignore
+            arc.ISA <- Some i
+
+            arc.UpdateFileSystem()
+            Expect.wantOk (arc.Write(p)) "ARC should write correctly"
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{existingStudyName}/isa.study.xlsx"
+                    $"/studies/{existingStudyName}/README.md"
+                    $"/studies/{existingStudyName}/protocols/.gitkeep";
+                    $"/studies/{existingStudyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{existingAssayName}/isa.assay.xlsx"
+                    $"/assays/{existingAssayName}/README.md"
+                    $"/assays/{existingAssayName}/protocols/.gitkeep"
+                    $"/assays/{existingAssayName}/dataset/.gitkeep"
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+
+            let paths = 
+                FileSystemHelper.getAllFilePaths p
+                |> Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        )
+        |> testSequenced
+    ]
+
+
+
+
 let main = testList "ARCtrl" [
     tests_create
     tests_fromFilePaths
@@ -953,6 +1097,8 @@ let main = testList "ARCtrl" [
     tests_RenameAssay
     tests_RenameStudy
     payload_file_filters
+    tests_load
+    tests_write
 ]
 
 
