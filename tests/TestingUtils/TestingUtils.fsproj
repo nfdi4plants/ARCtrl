@@ -33,7 +33,8 @@
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.InvestigationFile.fs" />
     <Compile Include="TestObjects.Spreadsheet\Spreadsheet.Template.fs" />
     <Compile Include="TestObjects.Contract\ISA.fs" />
-    <Compile Include="Library.fs" />
+    <Compile Include="TestObjects.IO.fs" />
+    <Compile Include="TestingUtils.fs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.Node" />
