@@ -1,11 +1,16 @@
 module TestObjects.IO
 
-let testResultsFolder = System.IO.Path.Combine(__SOURCE_DIRECTORY__,@"TestResults")
+open ARCtrl.ArcPathHelper
 
-let testInputFolder = System.IO.Path.Combine(__SOURCE_DIRECTORY__,@"TestObjects/Contracts")
-let testOutputFolder = System.IO.Path.Combine(__SOURCE_DIRECTORY__,@"TestResults/Contracts")
+let testObjectsBaseFolder = combine __SOURCE_DIRECTORY__ "TestObjects.IO"
+let testResultsFolder = combine __SOURCE_DIRECTORY__ "TestResults"
 
-let testSubPathsFolder = System.IO.Path.Combine(__SOURCE_DIRECTORY__,@"TestObjects/Path_findSubPaths")
+let testContractsFolder = combine testObjectsBaseFolder "Contracts"
 
-let testSimpleARC = System.IO.Path.Combine(__SOURCE_DIRECTORY__,@"TestObjects/SimpleARC")
-let testSimpleARC_Output = System.IO.Path.Combine(__SOURCE_DIRECTORY__,@"TestResults/SimpleARC")
+let testSubPathsFolder = combine testObjectsBaseFolder "Path_findSubPaths"
+
+let testSimpleARC = combine testObjectsBaseFolder "SimpleARC"
+let testSimpleARC_Output = combine testResultsFolder "TestResults/SimpleARC"
+
+
+let simpleTextFilePath = combine testObjectsBaseFolder "SimpleText.txt"

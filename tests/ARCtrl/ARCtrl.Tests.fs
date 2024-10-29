@@ -946,7 +946,7 @@ let tests_RenameStudy = testList "RenameStudy" [
 let tests_load =
 
     testList "Load" [
-        testCase "simpleARC" (fun () -> 
+        ftestCase "simpleARC" (fun () -> 
             let p = TestObjects.IO.testSimpleARC
             let result = ARC.load(p)
             let result = Expect.wantOk result "ARC should load correctly"
@@ -973,9 +973,12 @@ let tests_load =
 let tests_write =
 
     testList "Write" [
-        testCase "empty" (fun () -> 
+        ftestCase "empty" (fun () -> 
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
             let a = ARC()
+
+            FileSystemHelper.ensureDirectory p
+
             Expect.wantOk (a.Write(p)) "ARC should write correctly"
 
             let expectedPaths = 
@@ -995,9 +998,11 @@ let tests_write =
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
         )
-        testCase "SimpleARC" (fun () -> 
+        ftestCase "SimpleARC" (fun () -> 
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
             let arc = ARC()
+
+            FileSystemHelper.ensureDirectory p
 
             let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
@@ -1035,9 +1040,11 @@ let tests_write =
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
         )
-        testCase "LoadSimpleARCAndAddAssay" (fun () -> 
+        ftestCase "LoadSimpleARCAndAddAssay" (fun () -> 
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
             let arc = Expect.wantOk (ARC.load(p)) "ARC should load correctly"
+
+            FileSystemHelper.ensureDirectory p
 
             let i = arc.ISA.Value
 

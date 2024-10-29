@@ -35,17 +35,17 @@ let fulfillWriteContract basePath (c : Contract) =
     match c.DTO with
     | Some (DTO.Spreadsheet wb) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory path
+        FileSystemHelper.ensureDirectory basePath
         FileSystemHelper.writeFileXlsx path (wb :?> FsWorkbook)
         Ok ()
     | Some (DTO.Text t) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory path
+        FileSystemHelper.ensureDirectory basePath
         FileSystemHelper.writeFileText path t
         Ok ()
     | None -> 
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory path
+        FileSystemHelper.ensureDirectory basePath
         FileSystemHelper.writeFileText path ""
         Ok ()
     | _ -> 
@@ -66,17 +66,17 @@ let fulfillUpdateContract basePath (c : Contract) =
     match c.DTO with
     | Some (DTO.Spreadsheet wb) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory path
+        FileSystemHelper.ensureDirectory basePath
         FileSystemHelper.writeFileXlsx path (wb :?> FsWorkbook)
         Ok ()
     | Some (DTO.Text t) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory path
+        FileSystemHelper.ensureDirectory basePath
         FileSystemHelper.writeFileText path t
         Ok ()
     | None -> 
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory path
+        FileSystemHelper.ensureDirectory basePath
         FileSystemHelper.writeFileText path ""
         Ok ()
     | _ -> 

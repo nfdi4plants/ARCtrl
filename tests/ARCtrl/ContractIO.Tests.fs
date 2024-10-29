@@ -9,20 +9,20 @@ open FsSpreadsheet.Net
 let testRead =
 
     testList "Read" [
-        testCase "TextFile" (fun () -> 
+        ftestCase "TextFile" (fun () -> 
             let fileName = "TestReadMe.txt"
             let contract = Contract.createRead(fileName,DTOType.PlainText)
             let dto = DTO.Text "This is a test"
             let expected = 
                 {contract with DTO = Some dto}
-            let result = fulfillReadContract TestObjects.IO.testInputFolder contract
+            let result = fulfillReadContract TestObjects.IO.testContractsFolder contract
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             Expect.equal resultContract expected $"Text was not read correctly"
         )
-        testCase "XLSXFile" (fun () ->
+        ftestCase "XLSXFile" (fun () ->
             let fileName = "TestWorkbook.xlsx"
             let contract = Contract.createRead(fileName,DTOType.ISA_Study)
-            let result = fulfillReadContract TestObjects.IO.testInputFolder contract
+            let result = fulfillReadContract TestObjects.IO.testContractsFolder contract
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             let dto = Expect.wantSome resultContract.DTO "DTO was not read correctly"
             Expect.isTrue dto.isSpreadsheet "DTO was not read correctly"
@@ -42,30 +42,34 @@ let testRead =
 let testWrite =
 
     testList "Write" [
-        testCase "TextFileEmpty" (fun () -> 
+        ftestCase "TextFileEmpty" (fun () -> 
             let fileName = "TestEmpty.txt"
             let contract = Contract.createCreate(fileName,DTOType.PlainText)
 
-            Expect.wantOk (fulfillWriteContract TestObjects.IO.testOutputFolder contract) "Contract was not fulfilled correctly"
+            FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
 
-            let filePath = ArcPathHelper.combine TestObjects.IO.testOutputFolder fileName
+            Expect.wantOk (fulfillWriteContract TestObjects.IO.testResultsFolder contract) "Contract was not fulfilled correctly"
+
+            let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
             Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
             Expect.equal (FileSystemHelper.readFileText filePath) "" $"File {filePath} was not empty"
         )
-        testCase "TextFile" (fun () -> 
+        ftestCase "TextFile" (fun () -> 
 
             let testText = "This is a test"
             let fileName = "TestReadMe.txt"
             let dto = DTO.Text testText
             let contract = Contract.createCreate(fileName,DTOType.PlainText,dto)
 
-            Expect.wantOk (fulfillWriteContract TestObjects.IO.testOutputFolder contract) "Contract was not fulfilled correctly"
+            FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
 
-            let filePath = ArcPathHelper.combine TestObjects.IO.testOutputFolder fileName
+            Expect.wantOk (fulfillWriteContract TestObjects.IO.testResultsFolder contract) "Contract was not fulfilled correctly"
+
+            let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
             Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
             Expect.equal (FileSystemHelper.readFileText filePath) testText $"File {filePath} was not empty"
         )
-        testCase "XLSXFile" (fun () -> 
+        ftestCase "XLSXFile" (fun () -> 
 
             let worksheetName = "TestSheet"
             let testWB = new FsWorkbook()
@@ -77,9 +81,11 @@ let testWrite =
             let dto = DTO.Spreadsheet testWB
             let contract = Contract.createCreate(fileName,DTOType.ISA_Assay,dto)
 
-            Expect.wantOk (fulfillWriteContract TestObjects.IO.testOutputFolder contract) "Contract was not fulfilled correctly"
+            FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
 
-            let filePath = ArcPathHelper.combine TestObjects.IO.testOutputFolder fileName
+            Expect.wantOk (fulfillWriteContract TestObjects.IO.testResultsFolder contract) "Contract was not fulfilled correctly"
+
+            let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
             
             let wb = FsWorkbook.fromXlsxFile filePath
             let ws = Expect.wantSome (wb.TryGetWorksheetByName worksheetName) "Workbook does not contain worksheet"

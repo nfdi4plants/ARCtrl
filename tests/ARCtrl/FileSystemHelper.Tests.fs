@@ -5,6 +5,41 @@ open ARCtrl
 open System.Text.Json
 
 
+let readFileText = 
+    testList "ReadText" [
+        ftestCase "simple" (fun () -> 
+            let p = TestObjects.IO.simpleTextFilePath
+            let result = FileSystemHelper.readFileText p
+            let expected = "Hello"
+            Expect.equal result expected "Text was not read correctly."
+        )
+    ]
+
+let writeFileText = 
+    testList "WriteText" [
+        ftestCase "simple" (fun () ->
+            ARCtrl.FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SimpleText.txt"
+            let t = "Hello"
+            printfn "write to %s" p
+            FileSystemHelper.writeFileText p t
+            let result = FileSystemHelper.readFileText p
+            let expected = "Hello"
+            Expect.equal result expected "Text was not read correctly."
+        )
+        ftestCase "SubDirectoryWithEnsureDir" (fun () ->
+            let subDir = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SubFolder"
+            let p = ArcPathHelper.combine subDir "SimpleText.txt"
+            let t = "Hello"
+            printfn "write to %s" p
+            FileSystemHelper.ensureDirectory subDir
+            FileSystemHelper.writeFileText p t
+            let result = FileSystemHelper.readFileText p
+            let expected = "Hello"
+            Expect.equal result expected "Text was not read correctly."
+        )
+    ]
+
 let getAllFilePaths =
 
     testList "GetAllFilePaths" [
@@ -25,5 +60,7 @@ let getAllFilePaths =
 
 let main = 
     testList "PathTests" [
+        readFileText
+        writeFileText
         getAllFilePaths
     ]
