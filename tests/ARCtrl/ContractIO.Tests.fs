@@ -9,7 +9,7 @@ open FsSpreadsheet.Net
 let testRead =
 
     testList "Read" [
-        ftestCase "TextFile" (fun () -> 
+        testCase "TextFile" (fun () -> 
             let fileName = "TestReadMe.txt"
             let contract = Contract.createRead(fileName,DTOType.PlainText)
             let dto = DTO.Text "This is a test"
@@ -19,7 +19,7 @@ let testRead =
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             Expect.equal resultContract expected $"Text was not read correctly"
         )
-        ftestCase "XLSXFile" (fun () ->
+        testCase "XLSXFile" (fun () ->
             let fileName = "TestWorkbook.xlsx"
             let contract = Contract.createRead(fileName,DTOType.ISA_Study)
             let result = fulfillReadContract TestObjects.IO.testContractsFolder contract
@@ -42,7 +42,7 @@ let testRead =
 let testWrite =
 
     testList "Write" [
-        ftestCase "TextFileEmpty" (fun () -> 
+        testCase "TextFileEmpty" (fun () -> 
             let fileName = "TestEmpty.txt"
             let contract = Contract.createCreate(fileName,DTOType.PlainText)
 
@@ -54,7 +54,7 @@ let testWrite =
             Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
             Expect.equal (FileSystemHelper.readFileText filePath) "" $"File {filePath} was not empty"
         )
-        ftestCase "TextFile" (fun () -> 
+        testCase "TextFile" (fun () -> 
 
             let testText = "This is a test"
             let fileName = "TestReadMe.txt"
@@ -69,7 +69,7 @@ let testWrite =
             Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
             Expect.equal (FileSystemHelper.readFileText filePath) testText $"File {filePath} was not empty"
         )
-        ftestCase "XLSXFile" (fun () -> 
+        testCase "XLSXFile" (fun () -> 
 
             let worksheetName = "TestSheet"
             let testWB = new FsWorkbook()

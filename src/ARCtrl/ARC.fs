@@ -90,11 +90,11 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
 
     member this.Write(arcPath) =
         this.GetWriteContracts()
-        |> fullfillWriteContractBatch arcPath
+        |> fullFillContractBatch arcPath
 
     member this.Update(arcPath) =
         this.GetUpdateContracts()
-        |> fullfillWriteContractBatch arcPath
+        |> fullFillContractBatch arcPath
 
     static member load (arcPath : string) =
         let paths = FileSystemHelper.getAllFilePaths arcPath
@@ -104,7 +104,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
 
         let fulFilledContracts = 
             contracts 
-            |> fullfillReadContractBatch arcPath
+            |> fullFillContractBatch arcPath
 
         match fulFilledContracts with
         | Ok c -> 
@@ -112,7 +112,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             Ok arc
         | Error e -> Error e
 
-    member this.RemoveAssay(assayIdentifier: string) =
+    member this.GetAssayRemoveContracts(assayIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i when i.AssayIdentifiers |> Seq.contains assayIdentifier -> i
@@ -125,15 +125,18 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let assayFolderPath = getAssayFolderPath(assayIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
         this.SetFilePaths(filteredPaths)      
-        [
+        [|
             assay.ToDeleteContract()
             isa.ToUpdateContract()
             for s in studies do
                 s.ToUpdateContract()
-        ]
-        |> ResizeArray
+        |]
 
-    member this.RenameAssay(oldAssayIdentifier: string, newAssayIdentifier: string) =
+    member this.RemoveAssay(arcPath : string, assayIdentifier: string) =
+        this.GetAssayRemoveContracts(assayIdentifier)
+        |> fullFillContractBatch arcPath
+
+    member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i when i.AssayIdentifiers |> Seq.contains oldAssayIdentifier -> i
@@ -146,13 +149,16 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let newAssayFolderPath = getAssayFolderPath(newAssayIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldAssayFolderPath,newAssayFolderPath))
         this.SetFilePaths(renamedPaths)
-        [
+        [|
             yield Contract.createRename(oldAssayFolderPath,newAssayFolderPath)
             yield! this.GetUpdateContracts()
-        ]
-        |> ResizeArray
+        |]
 
-    member this.RemoveStudy(studyIdentifier: string) =
+    member this.RenameAssay(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
+        this.GetAssayRenameContracts(oldAssayIdentifier,newAssayIdentifier)
+        |> fullFillContractBatch arcPath
+
+    member this.GetStudyRemoveContracts(studyIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i -> i
@@ -162,13 +168,16 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let studyFolderPath = getStudyFolderPath(studyIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
         this.SetFilePaths(filteredPaths)
-        [
+        [|
             Contract.createDelete(studyFolderPath) // isa.GetStudy(studyIdentifier).ToDeleteContract()
             isa.ToUpdateContract()
-        ]
-        |> ResizeArray
+        |]
 
-    member this.RenameStudy(oldStudyIdentifier: string, newStudyIdentifier: string) =
+    member this.RemoveStudy(arcPath : string, studyIdentifier: string) =
+        this.GetStudyRemoveContracts(studyIdentifier)
+        |> fullFillContractBatch arcPath
+
+    member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i when i.StudyIdentifiers |> Seq.contains oldStudyIdentifier -> i
@@ -181,11 +190,14 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let newStudyFolderPath = getStudyFolderPath(newStudyIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldStudyFolderPath,newStudyFolderPath))
         this.SetFilePaths(renamedPaths)
-        [
+        [|
             yield Contract.createRename(oldStudyFolderPath,newStudyFolderPath)
             yield! this.GetUpdateContracts()
-        ]
-        |> ResizeArray
+        |]
+
+    member this.RenameStudy(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
+        this.GetStudyRenameContracts(oldStudyIdentifier,newStudyIdentifier)
+        |> fullFillContractBatch arcPath
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -268,7 +280,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     //    fs <- Some newFS
 
     // to-do: function that returns read contracts based on a list of paths.
-    member this.GetReadContracts () =
+    member this.GetReadContracts () : Contract [] =
         _fs.Tree.ToFilePaths() |> Array.choose Contract.ARC.tryISAReadContractFromPath 
 
     /// <summary>

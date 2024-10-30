@@ -59,7 +59,11 @@ let readFileXlsx path : FsWorkbook =
     FsWorkbook.fromXlsxFile path
 
 let renameFileOrDirectory oldPath newPath =
-    System.IO.File.Move(oldPath, newPath)
+    if fileExists oldPath then
+        System.IO.File.Move(oldPath, newPath)
+    elif directoryExists oldPath then
+        System.IO.Directory.Move(oldPath, newPath)
+    else ()
 
 let writeFileText path text =
     System.IO.File.WriteAllText(path, text)
@@ -69,3 +73,10 @@ let writeFileBinary path (bytes : byte []) =
 
 let writeFileXlsx path (wb : FsWorkbook) =
     FsWorkbook.toXlsxFile path wb
+
+let deleteFileOrDirectory path =
+    if fileExists path then
+        System.IO.File.Delete path
+    elif directoryExists path then
+        System.IO.Directory.Delete(path, true)
+    else ()

@@ -7,7 +7,7 @@ open System.Text.Json
 
 let readFileText = 
     testList "ReadText" [
-        ftestCase "simple" (fun () -> 
+        testCase "simple" (fun () -> 
             let p = TestObjects.IO.simpleTextFilePath
             let result = FileSystemHelper.readFileText p
             let expected = "Hello"
@@ -17,7 +17,7 @@ let readFileText =
 
 let writeFileText = 
     testList "WriteText" [
-        ftestCase "simple" (fun () ->
+        testCase "simple" (fun () ->
             ARCtrl.FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SimpleText.txt"
             let t = "Hello"
@@ -27,7 +27,7 @@ let writeFileText =
             let expected = "Hello"
             Expect.equal result expected "Text was not read correctly."
         )
-        ftestCase "SubDirectoryWithEnsureDir" (fun () ->
+        testCase "SubDirectoryWithEnsureDir" (fun () ->
             let subDir = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SubFolder"
             let p = ArcPathHelper.combine subDir "SimpleText.txt"
             let t = "Hello"
