@@ -977,8 +977,6 @@ let tests_write =
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
             let a = ARC()
 
-            FileSystemHelper.ensureDirectory p
-
             Expect.wantOk (a.Write(p)) "ARC should write correctly"
 
             let expectedPaths = 
@@ -1001,8 +999,6 @@ let tests_write =
         ftestCase "SimpleARC" (fun () -> 
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
             let arc = ARC()
-
-            FileSystemHelper.ensureDirectory p
 
             let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
@@ -1040,16 +1036,15 @@ let tests_write =
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
         )
+        // This test reads a preexisting assay with data and everything, data content is not copied though but just the 
         ftestCase "LoadSimpleARCAndAddAssay" (fun () -> 
-            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
-            let arc = Expect.wantOk (ARC.load(p)) "ARC should load correctly"
-
-            FileSystemHelper.ensureDirectory p
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithAssay"
+            let arc = Expect.wantOk (ARC.load(TestObjects.IO.testSimpleARC)) "ARC should load correctly"
 
             let i = arc.ISA.Value
 
-            let existingStudyName = "MyStudy"
-            let existingAssayName = "MyAssay"
+            let existingStudyName = "experiment1_material"
+            let existingAssayName = "measurement1"
 
             let assayName = "YourAssay"
             i.InitAssay(assayName) |> ignore
@@ -1066,11 +1061,29 @@ let tests_write =
                     $"/studies/{existingStudyName}/README.md"
                     $"/studies/{existingStudyName}/protocols/.gitkeep";
                     $"/studies/{existingStudyName}/resources/.gitkeep";
+                    $"/studies/{existingStudyName}/resources/Sample5_84c37b60-2342-4226-a36c-4b8dfe84ebe9.png"
+                    $"/studies/{existingStudyName}/resources/Sample6_208df064-4b1c-4da0-a1f8-6412e1fb2284.png"
+                    $"/studies/{existingStudyName}/resources/Sample1_e36ca6b8-19ba-4504-aa82-d4781765873d.png"
+                    $"/studies/{existingStudyName}/resources/Sample2_714ca2b7-22b7-4f69-b83d-9165f624da25.png"
+                    $"/studies/{existingStudyName}/resources/Sample3_66fac760-acc7-4ed4-ba21-2cb67fa36e4d.png"
+                    $"/studies/{existingStudyName}/resources/Sample4_cba5f40c-fc05-44d6-a589-b0e3dafaeefe.png"
                     "/assays/.gitkeep";
+                    $"/.arc/.gitkeep"
                     $"/assays/{existingAssayName}/isa.assay.xlsx"
                     $"/assays/{existingAssayName}/README.md"
+                    $"/assays/{existingAssayName}/isa.datamap.xlsx"
                     $"/assays/{existingAssayName}/protocols/.gitkeep"
+                    $"/assays/{existingAssayName}/protocols/extractionProtocol.txt"
                     $"/assays/{existingAssayName}/dataset/.gitkeep"
+                    $"/assays/{existingAssayName}/dataset/table.csv"
+                    $"/assays/{existingAssayName}/dataset/proteomics_result.csv"
+                    $"/assays/{existingAssayName}/dataset/sample1.raw"
+                    $"/assays/{existingAssayName}/dataset/sample2.raw"
+                    $"/assays/{existingAssayName}/dataset/sample3.raw"
+                    $"/assays/{existingAssayName}/dataset/sample4.raw"
+                    $"/assays/{existingAssayName}/dataset/sample5.raw"
+                    $"/assays/{existingAssayName}/dataset/sample6.raw"
+                    $"/assays/{existingAssayName}/dataset/sample7.raw"
                     $"/assays/{assayName}/isa.assay.xlsx"
                     $"/assays/{assayName}/README.md"
                     $"/assays/{assayName}/protocols/.gitkeep"

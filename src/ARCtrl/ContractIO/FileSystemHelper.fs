@@ -16,6 +16,10 @@ let ensureDirectory path =
     if not <| directoryExists path then
         createDirectory path
 
+let ensureDirectoryOfFile (filePath : string) =
+    let file = new System.IO.FileInfo(filePath);
+    file.Directory.Create()
+
 let fileExists path =
     System.IO.File.Exists path
 
@@ -25,12 +29,25 @@ let getSubDirectories path =
 let getSubFiles path =
     System.IO.Directory.GetFiles path
 
-let getAllFilePaths path =
+/// Return the absolute path relative to the directoryPath
+let makeRelative directoryPath (path : string) = 
+    if directoryPath = "." || directoryPath = "/" || directoryPath = "" then path
+    else
+        if path.StartsWith(directoryPath) then 
+            path.Substring(directoryPath.Length)
+        else path
+
+let standardizeSlashes (path : string) = 
+    path.Replace("\\","/")              
+
+let getAllFilePaths (directoryPath : string) =
     let rec allFiles dirs =
         if Seq.isEmpty dirs then Seq.empty else
             seq { yield! dirs |> Seq.collect getSubFiles
                   yield! dirs |> Seq.collect getSubDirectories |> allFiles }
-    allFiles [path]
+    
+    allFiles [directoryPath] |> Seq.toArray
+    |> Array.map (makeRelative directoryPath >> standardizeSlashes)
 
 let readFileText path : string =
     System.IO.File.ReadAllText path
@@ -40,6 +57,9 @@ let readFileBinary path : byte [] =
 
 let readFileXlsx path : FsWorkbook =
     FsWorkbook.fromXlsxFile path
+
+let renameFileOrDirectory oldPath newPath =
+    System.IO.File.Move(oldPath, newPath)
 
 let writeFileText path text =
     System.IO.File.WriteAllText(path, text)

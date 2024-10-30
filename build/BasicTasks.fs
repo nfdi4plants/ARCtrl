@@ -152,6 +152,7 @@ let clean = BuildTask.create "Clean" [] {
     ++ "src/**/obj"
     ++ "tests/**/bin"
     ++ "tests/**/obj"
+    ++ "tests/TestingUtils/TestResults"
     ++ "dist"
     ++ ProjectInfo.netPkgDir
     |> Shell.cleanDirs 

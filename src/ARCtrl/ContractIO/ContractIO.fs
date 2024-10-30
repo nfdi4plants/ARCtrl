@@ -31,21 +31,21 @@ let fullfillReadContractBatch basePath (cs : Contract []) : Result<Contract [], 
         | Ok _, Error e -> Error [|e|]
     ) (Ok [||])
 
-let fulfillWriteContract basePath (c : Contract) =
+let fulfillWriteContract basePath (c : Contract) =   
     match c.DTO with
     | Some (DTO.Spreadsheet wb) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory basePath
+        FileSystemHelper.ensureDirectoryOfFile path
         FileSystemHelper.writeFileXlsx path (wb :?> FsWorkbook)
         Ok ()
     | Some (DTO.Text t) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory basePath
+        FileSystemHelper.ensureDirectoryOfFile path
         FileSystemHelper.writeFileText path t
         Ok ()
     | None -> 
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory basePath
+        FileSystemHelper.ensureDirectoryOfFile path
         FileSystemHelper.writeFileText path ""
         Ok ()
     | _ -> 
@@ -66,17 +66,17 @@ let fulfillUpdateContract basePath (c : Contract) =
     match c.DTO with
     | Some (DTO.Spreadsheet wb) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory basePath
+        FileSystemHelper.ensureDirectoryOfFile path
         FileSystemHelper.writeFileXlsx path (wb :?> FsWorkbook)
         Ok ()
     | Some (DTO.Text t) ->
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory basePath
+        FileSystemHelper.ensureDirectoryOfFile path
         FileSystemHelper.writeFileText path t
         Ok ()
     | None -> 
         let path = ArcPathHelper.combine basePath c.Path
-        FileSystemHelper.ensureDirectory basePath
+        FileSystemHelper.ensureDirectoryOfFile path
         FileSystemHelper.writeFileText path ""
         Ok ()
     | _ -> 
