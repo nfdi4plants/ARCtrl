@@ -8,6 +8,12 @@ let testResultsFolder =
     #if !FABLE_COMPILER
     combineMany [| __SOURCE_DIRECTORY__;"TestResults";"NET"|]
     #endif
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+    combineMany [| __SOURCE_DIRECTORY__;"TestResults";"js"|]
+    #endif
+    #if FABLE_COMPILER_PYTHON
+    combineMany [| __SOURCE_DIRECTORY__;"TestResults";"py"|]
+    #endif
 
 let testContractsFolder = combine testObjectsBaseFolder "Contracts"
 

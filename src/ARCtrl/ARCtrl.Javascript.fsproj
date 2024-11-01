@@ -9,6 +9,8 @@
   <Import Project="ARCtrl.Common.props" />
 
   <ItemGroup>
+    <Compile Include="CrossAsync.fs" />
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -51,8 +53,9 @@
     <None Include="README.md" />
   </ItemGroup>
   
-  <ItemGroup>
-    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/"/>
+  <ItemGroup>  
+    <Compile Include="ContractIO\FileSystemHelper.js.fs" />
+    <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
@@ -61,9 +64,11 @@
     <Compile Include="Xlsx.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Fable.Fetch"/>
-    <PackageReference Include="Fable.SimpleHttp"/>
-    <PackageReference Include="Thoth.Json.Javascript"/>
+    <PackageReference Include="Fable.Fetch" />
+    <PackageReference Include="Fable.SimpleHttp" />
+    <PackageReference Include="Fable.Promise" />
+    <PackageReference Include="Thoth.Json.Javascript" />
+    <PackageReference Include="FsSpreadsheet.Js" />
   </ItemGroup>
 
   <PropertyGroup>

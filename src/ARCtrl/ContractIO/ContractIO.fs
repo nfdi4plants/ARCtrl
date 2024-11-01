@@ -4,37 +4,45 @@ open ARCtrl
 open ARCtrl.Contract
 open FsSpreadsheet
 
-let fulfillReadContract basePath (c : Contract) =
-    try 
-        match c.DTOType with
-        | Some DTOType.ISA_Assay 
-        | Some DTOType.ISA_Investigation
-        | Some DTOType.ISA_Study 
-        | Some DTOType.ISA_Datamap ->
-            let path = ArcPathHelper.combine basePath c.Path
-            let wb = FileSystemHelper.readFileXlsx path |> box |> DTO.Spreadsheet
-            Ok {c with DTO = Some wb}
-        | Some DTOType.PlainText ->
-            let path = ArcPathHelper.combine basePath c.Path
-            let text = FileSystemHelper.readFileText path |> DTO.Text
-            Ok {c with DTO = Some text}
-        | _ -> 
-            Error (sprintf "Contract %s is not an ISA contract" c.Path)
-    with
-    | e -> Error (sprintf "Error reading contract %s: %s" c.Path e.Message)
+let fulfillReadContract basePath (c : Async<Contract>) =
+    async {
+        let! c = c
+        try
+            match c.DTOType with
+            | Some DTOType.ISA_Assay 
+            | Some DTOType.ISA_Investigation
+            | Some DTOType.ISA_Study 
+            | Some DTOType.ISA_Datamap ->
+                let path = ArcPathHelper.combine basePath c.Path
+                let wb = FileSystemHelper.readFileXlsx path |> box |> DTO.Spreadsheet
+                return Ok {c with DTO = Some wb}
+            | Some DTOType.PlainText ->
+                let path = ArcPathHelper.combine basePath c.Path
+                let text = FileSystemHelper.readFileText path |> DTO.Text
+                return Ok {c with DTO = Some text}
+            | _ -> 
+                return Error (sprintf "Contract %s is not an ISA contract" c.Path)
+        with
+        | e -> return Error (sprintf "Error reading contract %s: %s" c.Path e.Message)
+    }
 
-let fullfillContractBatchBy contractF basePath (cs : Contract []) : Result<Contract [], string []>=
-    cs
-    |> Array.map (contractF basePath)
-    |> Array.fold (fun acc cr ->
-        match acc, cr with
-        | Ok acc, Ok cr -> Ok (Array.append acc [|cr|])
-        | Error e, Ok _ -> Error e
-        | Error acc, Error e -> Error (Array.append acc [|e|])
-        | Ok _, Error e -> Error [|e|]
-    ) (Ok [||])
+let fullfillContractBatchBy contractF basePath (cs : (Async<Contract>) []) : Async<Result<Contract [], string []>> =
+    async {
+        let! cs = Async.Sequential cs
+        let res = 
+            cs
+            |> Array.map (contractF basePath)
+            |> Array.fold (fun acc cr ->
+                match acc, cr with
+                | Ok acc, Ok cr -> Ok (Array.append acc [|cr|])
+                | Error e, Ok _ -> Error e
+                | Error acc, Error e -> Error (Array.append acc [|e|])
+                | Ok _, Error e -> Error [|e|]
+            ) (Ok [||])
+        return res
+    }
 
-let fulfillWriteContract basePath (c : Contract) =
+let fulfillWriteContract basePath (c : Async<Contract>) =
     try 
         match c.DTO with
         | Some (DTO.Spreadsheet wb) ->

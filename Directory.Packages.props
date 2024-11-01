@@ -19,6 +19,7 @@
     <PackageVersion Include="Fable.SimpleHttp"      Version="3.5.0" />
     <PackageVersion Include="Fable.Fetch"           Version="2.6.0" />
     <PackageVersion Include="Fable.Node"            Version="1.2.0" />
+    <PackageVersion Include="Fable.Promise"         Version="3.2.0" />
     <PackageVersion Include="Fable.Pyxpecto"        Version="1.2.0" />
     <PackageVersion Include="NJsonSchema"           Version="10.8.0" />
   </ItemGroup>

@@ -2,7 +2,7 @@ module ARCtrl.FileSystemHelper
 
 open FsSpreadsheet
 
-open FsSpreadsheet.Net
+open FsSpreadsheet.Js
 
 let directoryExists path =
     System.IO.Directory.Exists path

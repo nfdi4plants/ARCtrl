@@ -1,6 +1,5 @@
 module ARCtrl.WebRequestHelpers.NodeJs
 
-#if FABLE_COMPILER_JAVASCRIPT
 open Fable.Core
 open Fable.SimpleHttp
 
@@ -28,4 +27,3 @@ let downloadFile url =
         txt
     )
     |> Async.AwaitPromise
-#endif

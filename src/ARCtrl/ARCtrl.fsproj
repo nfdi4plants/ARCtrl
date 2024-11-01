@@ -51,7 +51,8 @@
     <Compile Include="JsonIO\ARC.fs" />
   </ItemGroup>
 
-  <ItemGroup>    
+  <ItemGroup>
+    <Compile Include ="CrossAsync.fs" />
     <Compile Include ="ContractIO\FileSystemHelper.fs" />
     <Compile Include ="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />

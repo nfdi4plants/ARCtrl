@@ -9,6 +9,7 @@
   <Import Project="ARCtrl.Common.props" />
 
   <ItemGroup>
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/"/>
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -52,7 +53,9 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/"/>
+    <Compile Include ="CrossAsync.fs" />
+    <Compile Include ="ContractIO\FileSystemHelper.fs" />
+    <Compile Include ="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Py.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
