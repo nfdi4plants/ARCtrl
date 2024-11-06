@@ -22,8 +22,8 @@ module ProcessInput =
 
         let decoder : Decoder<ProcessInput> =
             Decode.oneOf [
-                Decode.map ProcessInput.Source Source.ROCrate.decoder
                 Decode.map ProcessInput.Sample Sample.ROCrate.decoder
+                Decode.map ProcessInput.Source Source.ROCrate.decoder
                 Decode.map ProcessInput.Data Data.ROCrate.decoder
                 Decode.map ProcessInput.Material Material.ROCrate.decoder
             ]

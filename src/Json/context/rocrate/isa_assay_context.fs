@@ -19,7 +19,7 @@ module Assay =
     otherMaterials: string
     samples: string
     characteristicCategories: string
-    processSequences: string
+    processSequence: string
     unitCategories: string
 
     comments: string
@@ -38,7 +38,7 @@ module Assay =
       "technologyPlatform", Encode.string "sdo:measurementMethod"
       "dataFiles", Encode.string "sdo:hasPart"
       "performers", Encode.string "sdo:creator"
-      "processSequences", Encode.string "sdo:about"
+      "processSequence", Encode.string "sdo:about"
 
       "comments", Encode.string "sdo:comment"
       "filename", Encode.string "sdo:url"

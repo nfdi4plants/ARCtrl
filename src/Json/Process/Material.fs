@@ -20,6 +20,7 @@ module Material =
             [
                 "@id", Encode.string (oa |> genID) |> Some
                 "@type", (Encode.list [Encode.string "Material"]) |> Some
+                "additionalType", Encode.string "Material" |> Some
                 Encode.tryInclude "name" Encode.string oa.Name
                 Encode.tryInclude "type" MaterialType.ROCrate.encoder oa.MaterialType
                 Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder oa.Characteristics
@@ -31,7 +32,10 @@ module Material =
 
         let decoder : Decoder<Material> =       
             let rec decode() =
-                Decode.object (fun get -> 
+                Decode.object (fun get ->
+                    match get.Optional.Field "additionalType" Decode.uri with
+                    | Some "Material" | None -> ()
+                    | Some _ -> get.Required.Field "FailBecauseNotSample" Decode.unit
                     {                       
                         ID = get.Optional.Field "@id" Decode.uri
                         Name = get.Optional.Field "name" Decode.string
