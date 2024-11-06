@@ -24,6 +24,7 @@ module Sample =
             [
                 "@id", Encode.string (oa |> genID) |> Some
                 "@type", (Encode.list [ Encode.string "Sample"]) |> Some
+                "additionalType", Encode.string "Sample" |> Some
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryIncludeList "additionalProperties" id additionalProperties
                 "@context", ROCrateContext.Sample.context_jsonvalue |> Some
@@ -64,6 +65,9 @@ module Sample =
                         additionalProperties 
                         |> List.choose snd
                         |> Helper.Option.fromValueWithDefault []
+                match get.Optional.Field "additionalType" Decode.uri with
+                | Some "Sample" | None -> ()
+                | Some _ -> get.Required.Field "FailBecauseNotSample" Decode.unit
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string

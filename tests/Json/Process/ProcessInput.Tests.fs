@@ -1,4 +1,4 @@
-﻿module Tests.Process.ProcessInput
+module Tests.Process.ProcessInput
 
 open ARCtrl
 open ARCtrl.Process
@@ -22,7 +22,23 @@ let private tests_source =
             let actual =  o_out
             Expect.stringEqual actual expected "Written processInput does not match read process input"
         )
+        testCase "LD_WriteReadWithCharacteristics" (fun () ->
+            let charaHeader = Process.MaterialAttribute.create(CharacteristicType = OntologyAnnotation.create("MyAnnotation","NCIT","http://purl.obolibrary.org/obo/NCIT_C42781"))
+            let charaValue = OntologyAnnotation.create("MyAnnotationValue","NCIT","http://purl.obolibrary.org/obo/NCIT_C42782")
+            let chara = Process.MaterialAttributeValue.create(Category = charaHeader, Value = Value.Ontology charaValue)
+            let source = Source.create(Name = "#sample/sample-P-0.1-aliquot7", Characteristics = [chara])
+            let o_out = ProcessInput.ROCrate.encoder (ProcessInput.Source source) |> Encode.toJsonString 0
+            let inputPI = Decode.fromJsonString ProcessInput.ROCrate.decoder o_out
+            let inputSourceOpt = ProcessInput.trySource inputPI
+            let inputSource = Expect.wantSome inputSourceOpt "Input is not a sample"
+            Expect.equal inputSource.Name source.Name "Sample name did not match"
+            let characteristics = Expect.wantSome inputSource.Characteristics "No characteristics found"
+            Expect.hasLength characteristics 1 "Sample characteristics length did not match"
+            let inputChara = characteristics.[0]
+            Expect.equal inputChara chara "Sample characteristic did not match"
+        )
     ]
+
 let private tests_material =
     testList "Material" [
         testCase "ReaderSuccess" (fun () ->           
@@ -74,6 +90,21 @@ let private tests_sample =
             let expected = ProcessInput.sampleSimple
             let actual = o_out
             Expect.stringEqual actual expected "Written processInput does not match read process input"
+        )
+        testCase "LD_WriteReadWithCharacteristics" (fun () ->
+            let charaHeader = Process.MaterialAttribute.create(CharacteristicType = OntologyAnnotation.create("MyAnnotation","NCIT","http://purl.obolibrary.org/obo/NCIT_C42781"))
+            let charaValue = OntologyAnnotation.create("MyAnnotationValue","NCIT","http://purl.obolibrary.org/obo/NCIT_C42782")
+            let chara = Process.MaterialAttributeValue.create(Category = charaHeader, Value = Value.Ontology charaValue)
+            let sample = Sample.create(Name = "#sample/sample-P-0.1-aliquot7", Characteristics = [chara])
+            let o_out = ProcessInput.ROCrate.encoder (ProcessInput.Sample sample) |> Encode.toJsonString 0
+            let inputPI = Decode.fromJsonString ProcessInput.ROCrate.decoder o_out
+            let inputSampleOpt = ProcessInput.trySample inputPI
+            let inputSample = Expect.wantSome inputSampleOpt "Input is not a sample"
+            Expect.equal inputSample.Name sample.Name "Sample name did not match"
+            let characteristics = Expect.wantSome inputSample.Characteristics "No characteristics found"
+            Expect.hasLength characteristics 1 "Sample characteristics length did not match"
+            let inputChara = characteristics.[0]
+            Expect.equal inputChara chara "Sample characteristic did not match"
         )
     ]
 

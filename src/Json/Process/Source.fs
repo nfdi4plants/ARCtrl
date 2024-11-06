@@ -20,6 +20,7 @@ module Source =
             [
                 "@id", Encode.string (oa |> genID) |> Some
                 "@type", (Encode.list [ Encode.string "Source"]) |> Some
+                "additionalType", Encode.string "Source" |> Some
                 Encode.tryInclude "name" Encode.string (oa.Name)
                 Encode.tryIncludeListOpt "characteristics" MaterialAttributeValue.ROCrate.encoder (oa.Characteristics)      
                 "@context", ROCrateContext.Source.context_jsonvalue |> Some
@@ -29,7 +30,9 @@ module Source =
 
         let rec decoder : Decoder<Source> =     
             Decode.object (fun get ->
-           
+                match get.Optional.Field "additionalType" Decode.uri with
+                | Some "Source" | None -> ()
+                | Some _ -> get.Required.Field "FailBecauseNotSample" Decode.unit
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string
