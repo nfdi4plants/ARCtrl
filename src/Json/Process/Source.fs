@@ -33,6 +33,10 @@ module Source =
                 match get.Optional.Field "additionalType" Decode.uri with
                 | Some "Source" | None -> ()
                 | Some _ -> get.Required.Field "FailBecauseNotSample" Decode.unit
+                match get.Optional.Field "@type" (Decode.list Decode.string) with
+                | Some ["Source"] | None -> ()
+                | Some _ -> get.Required.Field "FailBecauseNotSample" Decode.unit
+
                 {
                     ID = get.Optional.Field "@id" Decode.uri
                     Name = get.Optional.Field "name" Decode.string

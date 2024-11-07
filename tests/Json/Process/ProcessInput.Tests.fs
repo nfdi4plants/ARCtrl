@@ -6,6 +6,70 @@ open ARCtrl.Json
 open TestingUtils
 open TestObjects.Json
 
+let deprecated_ROCrate_SourceObject = """{
+    "@id": "#Source_HOR_3369",
+    "@type": [
+        "Source"
+    ],
+    "name": "HOR 3369",
+    "characteristics": [
+        {
+            "@id": "#MaterialAttributeValue/Organism=Hordeum vulgare",
+            "@type": "PropertyValue",
+            "additionalType": "MaterialAttributeValue",
+            "category": "Organism",
+            "categoryCode": "MIAPPE:0041",
+            "value": "Hordeum vulgare",
+            "valueCode": "http://purl.obolibrary.org/obo/NCBITaxon_4513",
+            "@context": {
+                "sdo": "http://schema.org/",
+                "additionalType": "sdo:additionalType",
+                "alternateName": "sdo:alternateName",
+                "measurementMethod": "sdo:measurementMethod",
+                "description": "sdo:description",
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode",
+                "comments": "sdo:disambiguatingDescription"
+            }
+}]}"""
+
+let deprecated_ROCrate_SampleObject = """{
+    "@id": "#Sample_HOR_3369",
+    "@type": [
+        "Sample"
+    ],
+    "name": "HOR 3369",
+    "additionalProperties": [
+        {
+            "@id": "#MaterialAttributeValue/Organism=Hordeum vulgare",
+            "@type": "PropertyValue",
+            "additionalType": "MaterialAttributeValue",
+            "category": "Organism",
+            "categoryCode": "MIAPPE:0041",
+            "value": "Hordeum vulgare",
+            "valueCode": "http://purl.obolibrary.org/obo/NCBITaxon_4513",
+            "@context": {
+                "sdo": "http://schema.org/",
+                "additionalType": "sdo:additionalType",
+                "alternateName": "sdo:alternateName",
+                "measurementMethod": "sdo:measurementMethod",
+                "description": "sdo:description",
+                "category": "sdo:name",
+                "categoryCode": "sdo:propertyID",
+                "value": "sdo:value",
+                "valueCode": "sdo:valueReference",
+                "unit": "sdo:unitText",
+                "unitCode": "sdo:unitCode",
+                "comments": "sdo:disambiguatingDescription"
+            }
+}]}"""
+
+
+
 let private tests_source =
     testList "Source" [
         testCase "ReaderSuccess" (fun () -> 
@@ -37,6 +101,19 @@ let private tests_source =
             let inputChara = characteristics.[0]
             Expect.equal inputChara chara "Sample characteristic did not match"
         )
+        testCase "LD_ReadDeprecatedWithCharacteristics" (fun () ->
+            let inputPI = Decode.fromJsonString ProcessInput.ROCrate.decoder deprecated_ROCrate_SourceObject
+            let inputSourceOpt = ProcessInput.trySource inputPI
+            let inputSource = Expect.wantSome inputSourceOpt "Input is not a sample"
+            Expect.equal inputSource.Name.Value "HOR 3369" "Sample name did not match"
+            let characteristics = Expect.wantSome inputSource.Characteristics "No characteristics found"
+            Expect.hasLength characteristics 1 "Sample characteristics length did not match"
+            let inputChara = characteristics.[0]
+            Expect.equal inputChara.NameText "Organism" "Sample characteristic name did not match"
+            Expect.equal inputChara.ValueText "Hordeum vulgare" "Sample characteristic value did not match"
+        )
+
+        
     ]
 
 let private tests_material =
@@ -105,6 +182,18 @@ let private tests_sample =
             Expect.hasLength characteristics 1 "Sample characteristics length did not match"
             let inputChara = characteristics.[0]
             Expect.equal inputChara chara "Sample characteristic did not match"
+        )
+        testCase "LD_ReadDeprecatedWithCharacteristics" (fun () ->
+            let inputPI = Decode.fromJsonString ProcessInput.ROCrate.decoder deprecated_ROCrate_SampleObject
+            let inputSampleOpt = ProcessInput.trySample inputPI
+            let inputSample = Expect.wantSome inputSampleOpt "Input is not a sample"
+            Expect.equal inputSample.Name.Value "HOR 3369" "Sample name did not match"
+            let characteristics = Expect.wantSome inputSample.Characteristics "No characteristics found"
+            Expect.hasLength characteristics 1 "Sample characteristics length did not match"
+            let inputChara = characteristics.[0]
+            Expect.equal inputChara.NameText "Organism" "Sample characteristic name did not match"
+            Expect.equal inputChara.ValueText "Hordeum vulgare" "Sample characteristic value did not match"
+        
         )
     ]
 
