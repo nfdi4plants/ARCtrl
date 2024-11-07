@@ -1,3 +1,7 @@
+### 2.2.1+6f816b8 (Released 2024-11-6)
+* Bugfixes:
+    * [[#17d6e64](https://github.com/nfdi4plants/ARCtrl/commit/17d6e64c6b213ba9a0b7d7e09b88df0b19457126)] fix additionalProperties being lost in RO-Crate write read
+    * 
 ### 2.2.0+fd5eccc (Released 2024-10-24)
 * Additions:
     * [[#b8640a7](https://github.com/nfdi4plants/ARCtrl/commit/b8640a7519b1c50a2b48d6720a35949039ba3fa9)] small changes to build-chain according to PR review
