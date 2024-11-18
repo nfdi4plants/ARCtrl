@@ -1,4 +1,4 @@
-﻿module TestObjects.Spreadsheet.ArcTable
+module TestObjects.Spreadsheet.ArcTable
 
 open FsSpreadsheet
 open ARCtrl
@@ -256,11 +256,21 @@ module Output =
 
     let sampleValueV1 = "MySample"
 
-    let appendSimpleDataColumn l (c : FsCellsCollection) (t : FsTable) = 
+    let appendObsoleteDataColumn l (c : FsCellsCollection) (t : FsTable) = 
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs dataHeaderV1
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs dataValueV1
+
+    let appendSimpleDataColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs dataHeaderV1
+        t.Cell(FsAddress(1, colCount + 2),c).SetValueAs dataHeaderV2
+        t.Cell(FsAddress(1, colCount + 3),c).SetValueAs dataHeaderV3
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs dataValueV1
+            t.Cell(FsAddress(i, colCount + 2),c).SetValueAs ""
+            t.Cell(FsAddress(i, colCount + 3),c).SetValueAs ""
 
     let appendFullDataColumn l (c : FsCellsCollection) (t : FsTable) =
         let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()

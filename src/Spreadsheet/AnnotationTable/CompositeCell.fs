@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.CompositeCell
+module ARCtrl.Spreadsheet.CompositeCell
 
 open ARCtrl
 open ARCtrl.Helper
@@ -19,8 +19,8 @@ let freeTextFromStringCells (cellValues : array<string>) : CompositeCell =
     CompositeCell.createFreeText cellValues.[0]
 
 let dataFromStringCells (format : int option) (selectorFormat : int option) (cellValues : array<string>) : CompositeCell =
-    let format = Option.map (fun i -> cellValues.[i]) format
-    let selectorFormat = Option.map (fun i -> cellValues.[i]) selectorFormat
+    let format = Option.bind (fun i -> cellValues.[i] |> Option.fromValueWithDefault "") format
+    let selectorFormat = Option.bind (fun i -> cellValues.[i] |> Option.fromValueWithDefault "") selectorFormat
     CompositeCell.createDataFromString(cellValues.[0],?format = format, ?selectorFormat = selectorFormat)
 
 
