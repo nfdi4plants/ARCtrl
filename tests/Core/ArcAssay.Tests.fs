@@ -487,9 +487,11 @@ let private tests_updateTable_Copy =
 let private tests_technologyPlatform = 
     testList "technologyPlatformTests" [
         let name = "MyOntology"
+        let nameWithParentheses = "MyOntology (Mine)"
         let tsr = "ABC"
         let tan = "ABC:123"
         let tp_Term = OntologyAnnotation(name,tsr,tan)
+        let tp_TermWithParentheses = OntologyAnnotation(nameWithParentheses,tsr,tan)
         let tp_String = OntologyAnnotation(name)
         testCase "compose Term" (fun () ->
             let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_Term
@@ -499,6 +501,16 @@ let private tests_technologyPlatform =
             let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_Term
             let pt_new = Process.Conversion.JsonTypes.decomposeTechnologyPlatform s
             Expect.equal pt_new.NameText name "NameText should match"
+            Expect.equal pt_new.TermAccessionShort tan "ShortTan should match"
+        )
+        testCase "compose Term With Parentheses" (fun () ->
+            let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_TermWithParentheses
+            Expect.equal s $"{nameWithParentheses} ({tan})" "Term was not correctly composed as string."
+        )
+        testCase "decompose Term" (fun () ->
+            let s = Process.Conversion.JsonTypes.composeTechnologyPlatform tp_TermWithParentheses
+            let pt_new = Process.Conversion.JsonTypes.decomposeTechnologyPlatform s
+            Expect.equal pt_new.NameText nameWithParentheses "NameText should match"
             Expect.equal pt_new.TermAccessionShort tan "ShortTan should match"
         )
         testCase "compose String" (fun () ->
