@@ -1,4 +1,4 @@
-﻿module ARCtrl.Process.Conversion
+module ARCtrl.Process.Conversion
 
 open ARCtrl
 open ARCtrl.Helper
@@ -208,7 +208,7 @@ module JsonTypes =
     ///
     /// This function allows us, to parse them as an ontology term.
     let decomposeTechnologyPlatform (name : string) = 
-        let pattern = """(?<value>[^\(]+) \((?<ontology>[^(]*:[^)]*)\)"""        
+        let pattern = """^(?<value>.+) \((?<ontology>[^(]*:[^)]*)\)$"""        
 
         match name with 
         | Regex.ActivePatterns.Regex pattern r -> 
