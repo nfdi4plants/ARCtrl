@@ -2,7 +2,7 @@ module ARCtrl.Spreadsheet.Tests
 
 open Fable.Pyxpecto
 
-let all = testSequenced <| testList "ISA.Spreadsheet" [
+let all = testSequenced <| testList "Spreadsheet" [
     FableTests.main
     RegexTests.main
     ArcInvestigationTests.main

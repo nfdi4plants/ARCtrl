@@ -329,6 +329,71 @@ let private ioTable =
         )
     ]
 
+let private ioTable_obsoleteData = 
+    testList "ioTable_obsoleteData" [
+        let wsName = "MyWorksheet"
+        let ws_obsoleteData = 
+            initWorksheet wsName
+                [
+                    Input.appendSampleColumn                1
+                    Protocol.REF.appendLolColumn            1          
+                    Parameter.appendTemperatureColumn       1
+                    Characteristic.appendOrganismColumn     1
+                    Factor.appendTimeColumn                 1
+                    Output.appendObsoleteDataColumn         1
+                ]
+        let ws = 
+            initWorksheet wsName
+                [
+                    Input.appendSampleColumn                1
+                    Protocol.REF.appendLolColumn            1          
+                    Parameter.appendTemperatureColumn       1
+                    Characteristic.appendOrganismColumn     1
+                    Factor.appendTimeColumn                 1
+                    Output.appendSimpleDataColumn           1
+                ]
+        testCase "Read" (fun () -> 
+                    
+            let table = ArcTable.tryFromFsWorksheet ws_obsoleteData        
+        
+            Expect.isSome table "Table was not created"
+            let table = table.Value
+
+            Expect.equal table.Name wsName "Name did not match"
+            Expect.equal table.ColumnCount 6 "Wrong number of columns"
+            Expect.equal table.RowCount 1 "Wrong number of rows"
+
+            let expectedHeaders = 
+                [
+                    Input.sampleHeader 
+                    Protocol.REF.lolHeader        
+                    Parameter.temperatureHeader 
+                    Characteristic.organismHeader 
+                    Factor.timeHeader 
+                    Output.simpleDataHeader 
+                ]
+            Expect.sequenceEqual table.Headers expectedHeaders "Headers did not match"
+            let expectedCells = 
+                [
+                    Input.sampleValue 
+                    Protocol.REF.lolValue        
+                    Parameter.temperatureValue 
+                    Characteristic.organismValue 
+                    Factor.timeValue 
+                    Output.simpleDataValue 
+                ]
+            Expect.sequenceEqual (table.GetRow(0)) expectedCells "Cells did not match"
+        )
+        testCase "Write" (fun () -> 
+            
+            let table = ArcTable.tryFromFsWorksheet ws_obsoleteData        
+            Expect.isSome table "Table was not created"
+            let out = ArcTable.toFsWorksheet None table.Value
+            Expect.workSheetEqual out ws "Worksheet was not correctly written"
+           
+        )
+    ]
+
 let private fullDataTable = 
     testList "fullDataTable" [
         let wsName = "MyWorksheet"
@@ -530,6 +595,7 @@ let main =
         simpleTable
         mixedTable
         ioTable
+        ioTable_obsoleteData
         valuelessTable
         fullDataTable
         commentTable
