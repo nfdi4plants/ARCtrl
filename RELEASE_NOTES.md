@@ -1,3 +1,12 @@
+### 2.2.3+440a84e (Released 2024-11-18)
+* Additions:
+    * [[#4429911](https://github.com/nfdi4plants/ARCtrl/commit/442991174695e09ab897014d5de5d97e593f5b0a)] loosen constraint on python requests
+    * [[#852686c](https://github.com/nfdi4plants/ARCtrl/commit/852686cee17a3ede043215ae9827c45e3a2e2b0e)] update poetry.lock file
+* Bugfixes:
+    * [[#12e1a89](https://github.com/nfdi4plants/ARCtrl/commit/12e1a8969bb526a98dbe9db1a8d20df04c3e4bce)] fix data cells not being written as such in spreadsheets
+    * [[#f5cc507](https://github.com/nfdi4plants/ARCtrl/commit/f5cc5076ead55eb3cb1c96ce7334f2053c3ac420)] fix template variable names
+    * [[#d6ca1e7](https://github.com/nfdi4plants/ARCtrl/commit/d6ca1e7fe977922439b58880a8de25681c17e4cd)] fix python request dependency
+
 ### 2.2.2+4aaa6cf (Released 2024-11-7)
 * Bugfixes:
     * [[#5aae159](https://github.com/nfdi4plants/ARCtrl/commit/5aae159e074d5c6cc40c8b25072898e77d2fde16)] hotfix parsing of old json-ld samples and sources
