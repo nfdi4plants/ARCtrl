@@ -223,8 +223,15 @@ module Template =
     open Metadata
     open Template
 
+    [<System.Obsolete>]
     let [<Literal>] metaDataSheetName = "isa_template"
+
+    [<System.Obsolete>]
     let [<Literal>] obsoletemetaDataSheetName = "SwateTemplateMetadata"
+
+    let metadataSheetName = "isa_template"
+    let obsoleteMetadataSheetName = "SwateTemplateMetadata"
+
 
     let fromParts (templateInfo : TemplateInfo) (ers : OntologyAnnotation list) (tags : OntologyAnnotation list) (authors : Person list) (table : ArcTable) (lastUpdated : System.DateTime) =
         Template.make 
@@ -240,7 +247,7 @@ module Template =
             lastUpdated
 
     let isMetadataSheetName (name : string) =
-        name = metaDataSheetName || name = obsoletemetaDataSheetName
+        name = metadataSheetName || name = obsoleteMetadataSheetName
 
     let isMetadataSheet (sheet : FsWorksheet) =
         isMetadataSheetName sheet.Name
@@ -250,7 +257,7 @@ module Template =
         |> Seq.tryFind isMetadataSheet
 
     let toMetadataSheet (template : Template) : FsWorksheet =        
-        let sheet = FsWorksheet(metaDataSheetName)
+        let sheet = FsWorksheet(metadataSheetName)
         Template.toRows template
         |> Seq.iteri (fun rowI r -> SparseRow.writeToSheet (rowI + 1) r sheet)    
         sheet
