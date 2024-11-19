@@ -1,3 +1,7 @@
+### 2.2.4+05faa0d (Released 2024-11-19)
+* Bugfixes:
+    * [[#9d2ce07](https://github.com/nfdi4plants/ARCtrl/commit/9d2ce07368e0bb61e8c4dd4e2b7260c215cbc3dc)] fix technologyPlatform not handling parentheses
+
 ### 2.2.3+440a84e (Released 2024-11-18)
 * Additions:
     * [[#4429911](https://github.com/nfdi4plants/ARCtrl/commit/442991174695e09ab897014d5de5d97e593f5b0a)] loosen constraint on python requests
