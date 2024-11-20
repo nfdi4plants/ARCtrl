@@ -56,4 +56,19 @@ type LDObject(id:string, schemaType: string, ?additionalType) =
 
     member this.RemoveContext() = this.RemoveProperty("@context")
 
-    static member removeContext () = fun (roc: #LDObject) -> roc.RemoveContext() 
+    static member removeContext () = fun (roc: #LDObject) -> roc.RemoveContext()
+
+    static member tryFromDynamicObj (dynObj: DynamicObj) =
+        match
+            DynObj.tryGetTypedPropertyValue<string>("@type") dynObj,
+            DynObj.tryGetTypedPropertyValue<string>("@id") dynObj,
+            DynObj.tryGetTypedPropertyValue<string>("additionalType") dynObj
+        with
+        | (Some schemaType), (Some id), at ->
+            let roc = new LDObject(id, schemaType, ?additionalType = at)
+            match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
+            | Some context -> roc.SetContext(context)
+            | _ -> ()
+            Some roc
+        | _ -> None
+        
