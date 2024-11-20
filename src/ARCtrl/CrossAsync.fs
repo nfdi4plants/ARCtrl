@@ -23,3 +23,9 @@ let sequential =
     #else
     Async.Sequential   
     #endif
+
+let map f v =
+    crossAsync {
+        let! v = v
+        return f v
+    }

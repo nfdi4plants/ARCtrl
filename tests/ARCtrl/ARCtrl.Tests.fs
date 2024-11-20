@@ -9,6 +9,7 @@ open ARCtrl.Contract
 open ARCtrl.Spreadsheet
 open ARCtrl.Helper
 open FsSpreadsheet
+open CrossAsync
 
 let tests_create = testList "create" [
     testCase "empty" <| fun _ ->
@@ -946,9 +947,9 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
 let tests_load =
 
     testList "Load" [
-        testCase "simpleARC" (fun () -> 
+        testCaseAsync "simpleARC" (crossAsync {
             let p = TestObjects.IO.testSimpleARC
-            let result = ARC.load(p)
+            let! result = ARC.loadAsync(p)
             let result = Expect.wantOk result "ARC should load successfully"
 
             Expect.isSome result.ISA "Should contain an ISA part"
@@ -965,6 +966,7 @@ let tests_load =
 
             let a = s.RegisteredAssays.[0]
             Expect.equal a.TableCount 4 "Assay should contain 4 tables"
+            }
             
         )
     ]
@@ -973,11 +975,13 @@ let tests_load =
 let tests_write =
 
     testList "Write" [
-        testCase "empty" (fun () -> 
+        testCaseAsync "empty" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
             let a = ARC()
 
-            Expect.wantOk (a.Write(p)) "ARC should write successfully" |> ignore
+            let! result = a.WriteAsync(p)
+
+            Expect.wantOk result "ARC should write successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -990,13 +994,13 @@ let tests_write =
                 |> List.sort
 
 
-            let paths = 
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
-            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
-        )
-        testCase "SimpleARC" (fun () -> 
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."                  
+        })
+        testCaseAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
             let arc = ARC()
 
@@ -1009,7 +1013,9 @@ let tests_write =
             s.AddRegisteredAssay(a)
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! result = arc.WriteAsync(p)
+            Expect.wantOk result "ARC should write successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1030,16 +1036,18 @@ let tests_write =
                 |> List.sort
 
 
-            let paths = 
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
-        )
+        })
         // This test reads a preexisting assay with data and everything, data content is not copied though but just the 
-        testCase "LoadSimpleARCAndAddAssay" (fun () -> 
+        testCaseAsync "LoadSimpleARCAndAddAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithAssay"
-            let arc = Expect.wantOk (ARC.load(TestObjects.IO.testSimpleARC)) "ARC should load correctly"
+
+            let! readResult = ARC.loadAsync(TestObjects.IO.testSimpleARC)
+            let arc = Expect.wantOk readResult "ARC should load correctly"
 
             let i = arc.ISA.Value
 
@@ -1051,7 +1059,10 @@ let tests_write =
             arc.ISA <- Some i
 
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1094,18 +1105,18 @@ let tests_write =
                 |> List.sort
 
 
-            let paths = 
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
-        )
+        })
         |> testSequenced
     ]
 
 let tests_Update =
     testList "Update" [
-        testCase "AddedAssay" (fun () -> 
+        testCaseAsync "AddedAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Update_AddedAssay"
             let arc = ARC()
 
@@ -1119,14 +1130,20 @@ let tests_Update =
             s.AddRegisteredAssay(a)
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // add assay
             let newAssayName = "MyNewAssay"
             i.InitAssay(newAssayName) |> ignore
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Update(p)) "ARC should update successfully" |> ignore
+
+            let! updateResult = arc.UpdateAsync(p)
+
+            Expect.wantOk updateResult "ARC should update successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1150,19 +1167,19 @@ let tests_Update =
                 ]
                 |> List.sort
 
-            let paths =
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
-        )
+        })
 
 
     ]
 
 let tests_renameAssay =
     testList "RenameAssay" [
-        testCase "SimpleARC" (fun () -> 
+        testCaseAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameAssay_SimpleARC"
             let arc = ARC()
 
@@ -1176,11 +1193,16 @@ let tests_renameAssay =
             s.AddRegisteredAssay(a)
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! updateResult = arc.WriteAsync(p)
+
+            Expect.wantOk updateResult "ARC should write successfully" |> ignore
 
             // rename assay
             let newAssayName = "MyNewAssay"
-            Expect.wantOk (arc.RenameAssay(p,assayName, newAssayName)) "Assay should be renamed successfully" |> ignore
+
+            let! renameResult = arc.RenameAssayAsync(p,assayName, newAssayName)
+            Expect.wantOk renameResult "Assay should be renamed successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1200,17 +1222,17 @@ let tests_renameAssay =
                 ]
                 |> List.sort
 
-            let paths = 
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
-        )
+        })
     ]
 
 let tests_RenameStudy =
     testList "RenameStudy" [
-        testCase "SimpleARC" (fun () -> 
+        testCaseAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameStudy_SimpleARC"
             let arc = ARC()
 
@@ -1224,11 +1246,16 @@ let tests_RenameStudy =
             s.AddRegisteredAssay(a)
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // rename study
             let newStudyName = "MyNewStudy"
-            Expect.wantOk (arc.RenameStudy(p,studyName, newStudyName)) "Study should be renamed successfully" |> ignore
+
+            let! renameResult = arc.RenameStudyAsync(p,studyName, newStudyName)
+            Expect.wantOk renameResult "Study should be renamed successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1248,18 +1275,18 @@ let tests_RenameStudy =
                 ]
                 |> List.sort
 
-            let paths =
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
 
-        )
+        })
     ]
 
 let tests_RemoveAssay =
     testList "RemoveAssay" [
-        testCase "SimpleARC" (fun () -> 
+        testCaseAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveAssay_SimpleARC"
             let arc = ARC()
 
@@ -1273,10 +1300,15 @@ let tests_RemoveAssay =
             s.AddRegisteredAssay(a)
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // remove assay
-            Expect.wantOk (arc.RemoveAssay(p,assayName)) "Assay should be removed successfully" |> ignore
+
+            let! removeResult = arc.RemoveAssayAsync(p,assayName)
+            Expect.wantOk removeResult "Assay should be removed successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1292,17 +1324,17 @@ let tests_RemoveAssay =
                 ]
                 |> List.sort
 
-            let paths =
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
-        )
+        })
     ]
 
 let tests_RemoveStudy =
     testList "RemoveStudy" [
-        testCase "SimpleARC" (fun () -> 
+        testCaseAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveStudy_SimpleARC"
             let arc = ARC()
 
@@ -1316,10 +1348,15 @@ let tests_RemoveStudy =
             s.AddRegisteredAssay(a)
             arc.ISA <- Some i
             arc.UpdateFileSystem()
-            Expect.wantOk (arc.Write(p)) "ARC should write successfully" |> ignore
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // remove study
-            Expect.wantOk (arc.RemoveStudy(p,studyName)) "Study should be removed successfully" |> ignore
+
+            let! removeResult = arc.RemoveStudyAsync(p,studyName)
+            Expect.wantOk removeResult "Study should be removed successfully" |> ignore
 
             let expectedPaths = 
                 [
@@ -1335,12 +1372,12 @@ let tests_RemoveStudy =
                 ]
                 |> List.sort
 
-            let paths =
-                FileSystemHelper.getAllFilePaths p
-                |> Seq.sort
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
-        )
+        })
     ]
 
 

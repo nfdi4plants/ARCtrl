@@ -3,10 +3,11 @@ module ARCtrl.Contract
 open ARCtrl
 open ARCtrl.Contract
 open FsSpreadsheet
+open CrossAsync
 
-let fulfillReadContract basePath (c : Async<Contract>) =
-    async {
-        let! c = c
+
+let fulfillReadContractAsync basePath (c : Contract) =
+    crossAsync {
         try
             match c.DTOType with
             | Some DTOType.ISA_Assay 
@@ -14,24 +15,26 @@ let fulfillReadContract basePath (c : Async<Contract>) =
             | Some DTOType.ISA_Study 
             | Some DTOType.ISA_Datamap ->
                 let path = ArcPathHelper.combine basePath c.Path
-                let wb = FileSystemHelper.readFileXlsx path |> box |> DTO.Spreadsheet
-                return Ok {c with DTO = Some wb}
+                let! wb = FileSystemHelper.readFileXlsxAsync path
+                let dto = wb |> box |> DTO.Spreadsheet
+                return Ok {c with DTO = Some dto}
             | Some DTOType.PlainText ->
                 let path = ArcPathHelper.combine basePath c.Path
-                let text = FileSystemHelper.readFileText path |> DTO.Text
-                return Ok {c with DTO = Some text}
+                let! text = FileSystemHelper.readFileTextAsync path
+                let dto = text |> DTO.Text
+                return Ok {c with DTO = Some dto}
             | _ -> 
                 return Error (sprintf "Contract %s is not an ISA contract" c.Path)
         with
         | e -> return Error (sprintf "Error reading contract %s: %s" c.Path e.Message)
     }
 
-let fullfillContractBatchBy
-    (contractF : string -> Async<Contract> -> Async<Result<Contract, string>>)
+let fullfillContractBatchAsyncBy
+    (contractF : string -> Contract -> CrossAsync<Result<Contract, string>>)
     (basePath : string)
-    (cs : (Async<Contract>) [])
-    : Async<Result<Contract [], string []>> =
-        async {
+    (cs : (Contract) [])
+    : CrossAsync<Result<Contract [], string []>> =
+        crossAsync {
             let! seq = 
                 cs
                 |> Array.map (contractF basePath)
@@ -49,25 +52,24 @@ let fullfillContractBatchBy
             return res
         }
 
-let fulfillWriteContract basePath (c : Async<Contract>) =
-    async {
-        let! c = c
+let fulfillWriteContractAsync basePath (c : Contract) =
+    crossAsync {
         try 
             match c.DTO with
             | Some (DTO.Spreadsheet wb) ->
                 let path = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.ensureDirectoryOfFile path
-                FileSystemHelper.writeFileXlsx path (wb :?> FsWorkbook)
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
                 return Ok (c)
             | Some (DTO.Text t) ->
                 let path = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.ensureDirectoryOfFile path
-                FileSystemHelper.writeFileText path t
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileTextAsync path t
                 return Ok (c)
             | None -> 
                 let path = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.ensureDirectoryOfFile path
-                FileSystemHelper.writeFileText path ""
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileTextAsync path ""
                 return Ok (c)
             | _ -> 
                 return Error (sprintf "Contract %s is not an ISA contract" c.Path)
@@ -75,25 +77,24 @@ let fulfillWriteContract basePath (c : Async<Contract>) =
         | e -> return Error (sprintf "Error writing contract %s: %s" c.Path e.Message)
     }
 
-let fulfillUpdateContract basePath (c : Async<Contract>) =
-    async {
-        let! c = c
+let fulfillUpdateContractAsync basePath (c : Contract) =
+    crossAsync {
         try 
             match c.DTO with
             | Some (DTO.Spreadsheet wb) ->
                 let path = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.ensureDirectoryOfFile path
-                FileSystemHelper.writeFileXlsx path (wb :?> FsWorkbook)
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
                 return Ok (c)
             | Some (DTO.Text t) ->
                 let path = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.ensureDirectoryOfFile path
-                FileSystemHelper.writeFileText path t
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileTextAsync path t
                 return Ok (c)
             | None -> 
                 let path = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.ensureDirectoryOfFile path
-                FileSystemHelper.writeFileText path ""
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileTextAsync path ""
                 return Ok (c)
             | _ -> 
                 return Error (sprintf "Contract %s is not an ISA contract" c.Path)
@@ -101,9 +102,8 @@ let fulfillUpdateContract basePath (c : Async<Contract>) =
         | e -> return Error (sprintf "Error updating contract %s: %s" c.Path e.Message)
     }
 
-let fullfillRenameContract basePath (c : Async<Contract>) =
-    async {
-        let! c = c
+let fullfillRenameContractAsync basePath (c : Contract) =
+    crossAsync {
         try
             match c.DTO with
             | Some (DTO.Text t) when t = c.Path ->
@@ -111,35 +111,33 @@ let fullfillRenameContract basePath (c : Async<Contract>) =
             | Some (DTO.Text t) ->
                 let newPath = ArcPathHelper.combine basePath t
                 let oldPath = ArcPathHelper.combine basePath c.Path
-                FileSystemHelper.renameFileOrDirectory oldPath newPath
+                do! FileSystemHelper.renameFileOrDirectoryAsync oldPath newPath
                 return Ok (c)
             | _ -> return Error (sprintf "Rename Contract %s does not contain new Path" c.Path)
         with
         | e -> return Error (sprintf "Error renaming contract %s: %s" c.Path e.Message)
     }
 
-let fullfillDeleteContract basePath (c : Async<Contract>) =
-    async {
-        let! c = c
+let fullfillDeleteContractAsync basePath (c : Contract) =
+    crossAsync {
         try 
             let path = ArcPathHelper.combine basePath c.Path
-            FileSystemHelper.deleteFileOrDirectory path
+            do! FileSystemHelper.deleteFileOrDirectoryAsync path
             return Ok (c)
         with
         | e -> return Error (sprintf "Error deleting contract %s: %s" c.Path e.Message)
     }
 
-let fullFillContract basePath (c : Async<Contract>) =
-    async {
-        let! cSync = c
-        match cSync.Operation with
-        | Operation.READ -> return! fulfillReadContract basePath c
-        | Operation.CREATE -> return! fulfillWriteContract basePath c
-        | Operation.UPDATE -> return! fulfillUpdateContract basePath c
-        | Operation.DELETE -> return! fullfillDeleteContract basePath c
-        | Operation.RENAME -> return! fullfillRenameContract basePath c
-        | _ -> return Error (sprintf "Operation %A not supported" cSync.Operation)
+let fullFillContract basePath (c : Contract) =
+    crossAsync {
+        match c.Operation with
+        | Operation.READ -> return! fulfillReadContractAsync basePath c
+        | Operation.CREATE -> return! fulfillWriteContractAsync basePath c
+        | Operation.UPDATE -> return! fulfillUpdateContractAsync basePath c
+        | Operation.DELETE -> return! fullfillDeleteContractAsync basePath c
+        | Operation.RENAME -> return! fullfillRenameContractAsync basePath c
+        | _ -> return Error (sprintf "Operation %A not supported" c.Operation)
     }
 
-let fullFillContractBatch basePath (cs : (Async<Contract>) []) =
-    fullfillContractBatchBy fullFillContract basePath cs
+let fullFillContractBatchAsync basePath (cs : Contract []) =
+    fullfillContractBatchAsyncBy fullFillContract basePath cs

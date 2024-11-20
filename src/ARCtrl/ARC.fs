@@ -9,6 +9,7 @@ open ARCtrl.Spreadsheet
 open FsSpreadsheet
 open Fable.Core
 open ARCtrl.ArcPathHelper
+open CrossAsync
 
 module ARCAux =
 
@@ -88,29 +89,36 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         with get() = _fs
         and set(fs) = _fs <- fs
 
-    member this.Write(arcPath) =
+    member this.WriteAsync(arcPath) =
         this.GetWriteContracts()
-        |> fullFillContractBatch arcPath
+        |> fullFillContractBatchAsync arcPath
 
-    member this.Update(arcPath) =
+    member this.UpdateAsync(arcPath) =
         this.GetUpdateContracts()
-        |> fullFillContractBatch arcPath
+        |> fullFillContractBatchAsync arcPath
 
-    static member load (arcPath : string) =
-        let paths = FileSystemHelper.getAllFilePaths arcPath
-        let arc = ARC.fromFilePaths (paths |> Seq.toArray)
+    static member loadAsync (arcPath : string) =
+        crossAsync {
 
-        let contracts = arc.GetReadContracts()
+            let! paths = FileSystemHelper.getAllFilePathsAsync arcPath
+            let arc = ARC.fromFilePaths (paths |> Seq.toArray)
 
-        let fulFilledContracts = 
-            contracts 
-            |> fullFillContractBatch arcPath
+            let contracts = arc.GetReadContracts()
+      
+        
 
-        match fulFilledContracts with
-        | Ok c -> 
-            arc.SetISAFromContracts(c)
-            Ok arc
-        | Error e -> Error e
+            let! fulFilledContracts = 
+                contracts 
+                |> fullFillContractBatchAsync arcPath
+
+            match fulFilledContracts with
+            | Ok c -> 
+                arc.SetISAFromContracts(c)
+                return Ok arc
+            | Error e -> return Error e
+        }
+
+        
 
     member this.GetAssayRemoveContracts(assayIdentifier: string) =
         let isa = 
@@ -132,9 +140,9 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
                 s.ToUpdateContract()
         |]
 
-    member this.RemoveAssay(arcPath : string, assayIdentifier: string) =
+    member this.RemoveAssayAsync(arcPath : string, assayIdentifier: string) =
         this.GetAssayRemoveContracts(assayIdentifier)
-        |> fullFillContractBatch arcPath
+        |> fullFillContractBatchAsync arcPath
 
     member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         let isa = 
@@ -154,9 +162,9 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             yield! this.GetUpdateContracts()
         |]
 
-    member this.RenameAssay(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
+    member this.RenameAssayAsync(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
         this.GetAssayRenameContracts(oldAssayIdentifier,newAssayIdentifier)
-        |> fullFillContractBatch arcPath
+        |> fullFillContractBatchAsync arcPath
 
     member this.GetStudyRemoveContracts(studyIdentifier: string) =
         let isa = 
@@ -173,9 +181,9 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             isa.ToUpdateContract()
         |]
 
-    member this.RemoveStudy(arcPath : string, studyIdentifier: string) =
+    member this.RemoveStudyAsync(arcPath : string, studyIdentifier: string) =
         this.GetStudyRemoveContracts(studyIdentifier)
-        |> fullFillContractBatch arcPath
+        |> fullFillContractBatchAsync arcPath
 
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         let isa = 
@@ -195,9 +203,9 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             yield! this.GetUpdateContracts()
         |]
 
-    member this.RenameStudy(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
+    member this.RenameStudyAsync(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
         this.GetStudyRenameContracts(oldStudyIdentifier,newStudyIdentifier)
-        |> fullFillContractBatch arcPath
+        |> fullFillContractBatchAsync arcPath
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -281,7 +289,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
 
     // to-do: function that returns read contracts based on a list of paths.
     member this.GetReadContracts () : Contract [] =
-        _fs.Tree.ToFilePaths() |> Array.choose Contract.ARC.tryISAReadContractFromPath 
+        _fs.Tree.ToFilePaths()
+        |> Array.choose Contract.ARC.tryISAReadContractFromPath 
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.

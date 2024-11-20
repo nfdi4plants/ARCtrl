@@ -6,23 +6,25 @@ open ARCtrl.Contract
 open ARCtrl.FileSystemHelper
 open FsSpreadsheet
 open FsSpreadsheet.Net
+open CrossAsync
+
 let testRead =
 
     testList "Read" [
-        testCase "TextFile" (fun () -> 
+        testCaseAsync "TextFile" (crossAsync {
             let fileName = "TestReadMe.txt"
             let contract = Contract.createRead(fileName,DTOType.PlainText)
             let dto = DTO.Text "This is a test"
             let expected = 
                 {contract with DTO = Some dto}
-            let result = fulfillReadContract TestObjects.IO.testContractsFolder contract
+            let! result = fulfillReadContractAsync TestObjects.IO.testContractsFolder contract
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             Expect.equal resultContract expected $"Text was not read correctly"
-        )
-        testCase "XLSXFile" (fun () ->
+        })
+        testCaseAsync "XLSXFile" (crossAsync {
             let fileName = "TestWorkbook.xlsx"
             let contract = Contract.createRead(fileName,DTOType.ISA_Study)
-            let result = fulfillReadContract TestObjects.IO.testContractsFolder contract
+            let! result = fulfillReadContractAsync TestObjects.IO.testContractsFolder contract
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             let dto = Expect.wantSome resultContract.DTO "DTO was not read correctly"
             Expect.isTrue dto.isSpreadsheet "DTO was not read correctly"
@@ -35,41 +37,47 @@ let testRead =
             let row2 = Expect.wantSome (ws.TryGetRowValuesAt 2) "Worksheet does not contain row 2"
             let expected = ["A";"B";"C"] |> Seq.map box
             Expect.sequenceEqual row2 expected "Worksheet does not contain correct values"      
-        )
+        })
     ]
 
 
 let testWrite =
 
     testList "Write" [
-        testCase "TextFileEmpty" (fun () -> 
+        testCaseAsync "TextFileEmpty" (crossAsync {
             let fileName = "TestEmpty.txt"
             let contract = Contract.createCreate(fileName,DTOType.PlainText)
 
-            FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
+            do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
-            Expect.wantOk (fulfillWriteContract TestObjects.IO.testResultsFolder contract) "Contract was not fulfilled correctly"
+            let! resultContract = fulfillWriteContractAsync TestObjects.IO.testResultsFolder contract
+
+            Expect.isOk resultContract "Contract was not fulfilled correctly"
 
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
             Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
-            Expect.equal (FileSystemHelper.readFileText filePath) "" $"File {filePath} was not empty"
-        )
-        testCase "TextFile" (fun () -> 
-
+            let! resultText = FileSystemHelper.readFileTextAsync filePath
+            Expect.equal resultText "" $"File {filePath} was not empty"
+        })
+        testCaseAsync "TextFile" (crossAsync {
             let testText = "This is a test"
             let fileName = "TestReadMe.txt"
             let dto = DTO.Text testText
             let contract = Contract.createCreate(fileName,DTOType.PlainText,dto)
 
-            FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
+            do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
-            Expect.wantOk (fulfillWriteContract TestObjects.IO.testResultsFolder contract) "Contract was not fulfilled correctly"
+            let! resultContract = fulfillWriteContractAsync TestObjects.IO.testResultsFolder contract
+
+            Expect.isOk resultContract "Contract was not fulfilled correctly"
 
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
             Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
-            Expect.equal (FileSystemHelper.readFileText filePath) testText $"File {filePath} was not empty"
-        )
-        testCase "XLSXFile" (fun () -> 
+
+            let! resultText = FileSystemHelper.readFileTextAsync filePath
+            Expect.equal resultText testText $"File {filePath} was not empty"
+        })
+        testCaseAsync "XLSXFile" (crossAsync { 
 
             let worksheetName = "TestSheet"
             let testWB = new FsWorkbook()
@@ -81,18 +89,20 @@ let testWrite =
             let dto = DTO.Spreadsheet testWB
             let contract = Contract.createCreate(fileName,DTOType.ISA_Assay,dto)
 
-            FileSystemHelper.ensureDirectory TestObjects.IO.testResultsFolder
+            do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
-            Expect.wantOk (fulfillWriteContract TestObjects.IO.testResultsFolder contract) "Contract was not fulfilled correctly"
+            let! resultContract = fulfillWriteContractAsync TestObjects.IO.testResultsFolder contract
+
+            Expect.isOk resultContract "Contract was not fulfilled correctly"
 
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
             
-            let wb = FsWorkbook.fromXlsxFile filePath
+            let! wb = FileSystemHelper.readFileXlsxAsync filePath
             let ws = Expect.wantSome (wb.TryGetWorksheetByName worksheetName) "Workbook does not contain worksheet"
             let row1 = Expect.wantSome (ws.TryGetRowValuesAt 1) "Worksheet does not contain row 1"
             let expected = ["A1";"B1";"C1"] |> Seq.map box
             Expect.sequenceEqual row1 expected "Worksheet does not contain correct values"      
-        )
+        })
     ]
 
 let testExecute =
