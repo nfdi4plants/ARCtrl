@@ -32,15 +32,14 @@ module RunTests =
             Trace.traceImportant "Skipping JavaScript tests"
     )
 
-    let runTestsJs = BuildTask.createFn "runTestsJS" [clean; build] (fun tp ->
+    let runAllTestsJs = BuildTask.createFn "runTestsJS" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Js tests"
-            for path in ProjectInfo.testProjects do
-                // transpile js files from fsharp code
-                run dotnet $"fable {path} -o {path}/js --nocache" ""
-                // run mocha in target path to execute tests
-                // "--timeout 20000" is used, because json schema validation takes a bit of time.
-                run node $"{path}/js/Main.js" ""
+            // transpile js files from fsharp code
+            run dotnet $"fable {allTestsProject} -o {allTestsProject}/js --nocache" ""
+            // run mocha in target path to execute tests
+            // "--timeout 20000" is used, because json schema validation takes a bit of time.
+            run node $"{allTestsProject}/js/Main.js" ""
         else
             Trace.traceImportant "Skipping Js tests"
     )
@@ -57,25 +56,23 @@ module RunTests =
             Trace.traceImportant "Skipping Python tests"
     )
 
-    let runTestsPy = BuildTask.createFn "runTestsPy" [clean; build] (fun tp ->
+    let runAllTestsPy = BuildTask.createFn "runTestsPy" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Python tests"
-            for path in ProjectInfo.testProjects do
-                //transpile py files from fsharp code
-                run dotnet $"fable {path} -o {path}/py --lang python --nocache" ""
-                // run pyxpecto in target path to execute tests in python
-                run python $"{path}/py/main.py" ""
+            //transpile py files from fsharp code
+            run dotnet $"fable {allTestsProject} -o {allTestsProject}/py --lang python --nocache" ""
+            // run pyxpecto in target path to execute tests in python
+            run python $"{allTestsProject}/py/main.py" ""
         else
             Trace.traceImportant "Skipping Python tests"
 
     )
 
-    let runTestsDotnet = BuildTask.createFn "runTestsDotnet" [clean; build] (fun tp ->
+    let runAllTestsDotnet = BuildTask.createFn "runTestsDotnet" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start .NET tests"
             let dotnetRun = run dotnet "run"
-            testProjects
-            |> Seq.iter dotnetRun
+            dotnetRun allTestsProject
         else
             Trace.traceImportant "Skipping .NET tests"
     )
@@ -106,7 +103,10 @@ module RunTests =
         | _ -> failwith "Please provide a project name to run tests for as the single argument"
     )
     
-
-let runTests = BuildTask.create "RunTests" [clean; build; RunTests.runTestsJs; RunTests.runTestsJsNative; RunTests.runTestsPy; RunTests.runTestsPyNative; RunTests.runTestsDotnet] { 
-    ()
-}
+// default test target runs all tests
+let runTests = BuildTask.createEmpty "RunTests" [
+    clean; build;
+    RunTests.runAllTestsJs; RunTests.runTestsJsNative;
+    RunTests.runAllTestsPy; RunTests.runTestsPyNative;
+    RunTests.runAllTestsDotnet
+]
