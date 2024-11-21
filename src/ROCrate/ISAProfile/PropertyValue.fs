@@ -15,7 +15,11 @@ type PropertyValue(
     ?valueReference,
     ?additionalType
 ) as this =
-    inherit LDObject(id = id, schemaType = "schema.org/PropertyValue", ?additionalType = additionalType)
+    inherit LDObject(
+        id = id,
+        schemaType = ResizeArray[|"schema.org/PropertyValue"|],
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
 
         DynObj.setProperty (nameof name) name this
