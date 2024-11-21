@@ -1,6 +1,7 @@
 module ARCtrl.FileSystemHelper
 
 open FsSpreadsheet
+open CrossAsync
 
 open CrossAsync
 open Fable.Core
@@ -87,8 +88,109 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
     }
     #endif
 
+let readFileTextAsync (path : string) : CrossAsync<string> =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "readFileText" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        return System.IO.File.ReadAllText path
+    }
+    #endif
+
+let readFileBinaryAsync (path : string) : CrossAsync<byte []> =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "readFileBinary" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        return System.IO.File.ReadAllBytes path
+    }
+    #endif
+
+let readFileXlsxAsync (path : string) : CrossAsync<FsWorkbook> =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+    FsWorkbook.fromXlsxFile path
+    #else
+    crossAsync {
+        return FsWorkbook.fromXlsxFile path
+    }
+    #endif
+
+
+let moveFileAsync oldPath newPath =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "moveFile" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        System.IO.File.Move(oldPath, newPath)
+    }
+    #endif
+
+let moveDirectoryAsync oldPath newPath =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "moveDirectory" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        System.IO.Directory.Move(oldPath, newPath)
+    }
+    #endif
+
+let deleteFileAsync path =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "deleteFile" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        System.IO.File.Delete path
+    }
+    #endif
+
+let deleteDirectoryAsync path =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "deleteDirectory" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        System.IO.Directory.Delete(path, true)
+    }
+    #endif
+
+
+let writeFileTextAsync path text =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "writeFileText" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        System.IO.File.WriteAllText(path, text)
+    }
+    #endif
+
+let writeFileBinaryAsync path (bytes : byte []) =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        import "writeFileBinary" "./FileSystem.js"
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        System.IO.File.WriteAllBytes(path, bytes)
+    }
+    #endif
+
+let writeFileXlsxAsync path (wb : FsWorkbook) =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        FsWorkbook.toXlsxFile path wb
+    #else
+    crossAsync {
+        FsWorkbook.toXlsxFile path wb
+    }
+    #endif
+
+
 /// Return the absolute path relative to the directoryPath
-let makeRelative directoryPath (path : string) : string =
+let makeRelative directoryPath (path : string) =
     if directoryPath = "." || directoryPath = "/" || directoryPath = "" then
         path
     else
@@ -98,10 +200,10 @@ let makeRelative directoryPath (path : string) : string =
     
     
 
-let standardizeSlashes (path : string) : string =
+let standardizeSlashes (path : string) = 
     path.Replace("\\","/")              
 
-let getAllFilePathsAsync (directoryPath : string) : CrossAsync<string []> =
+let getAllFilePathsAsync (directoryPath : string) =
     crossAsync {
         let rec allFiles (dirs : string seq) : CrossAsync<string seq> =
             crossAsync {
@@ -124,63 +226,26 @@ let getAllFilePathsAsync (directoryPath : string) : CrossAsync<string []> =
         return allFilesRelative
     }
 
-let readFileTextAsync (path : string) : CrossAsync<string> =
-    crossAsync {
-        return System.IO.File.ReadAllText path
-    }
 
-let readFileBinaryAsync (path : string) : CrossAsync<byte []> =
-    crossAsync {
-        return System.IO.File.ReadAllBytes path
-    }
-
-let readFileXlsxAsync (path : string) : CrossAsync<FsWorkbook> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-    FsWorkbook.fromXlsxFile path
-    #else
-    crossAsync {
-        return FsWorkbook.fromXlsxFile path
-    }
-    #endif
-
-let renameFileOrDirectoryAsync oldPath newPath : CrossAsync<unit> =
+let renameFileOrDirectoryAsync oldPath newPath =
     crossAsync {
         let! fileExists = fileExistsAsync oldPath
         let! directoryExists = directoryExistsAsync oldPath
         if fileExists then
-            System.IO.File.Move(oldPath, newPath)
+            return! moveFileAsync oldPath newPath
         elif directoryExists then
-            System.IO.Directory.Move(oldPath, newPath)
+            return! moveDirectoryAsync oldPath newPath
         else ()
     }
 
-let writeFileTextAsync (path : string) text : CrossAsync<unit> =
-    crossAsync {
-        System.IO.File.WriteAllText(path, text)
-    } 
 
-let writeFileBinaryAsync (path : string) (bytes : byte []) : CrossAsync<unit> =
-    crossAsync {
-        System.IO.File.WriteAllBytes(path, bytes)
-    }
-
-let writeFileXlsxAsync (path : string) (wb : FsWorkbook) : CrossAsync<unit> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-    FsWorkbook.toXlsxFile path wb
-    #else
-    crossAsync {
-        return FsWorkbook.toXlsxFile path wb
-    }
-    #endif
-    
-
-let deleteFileOrDirectoryAsync (path : string) : CrossAsync<unit> =
+let deleteFileOrDirectoryAsync path =
     crossAsync {
         let! fileExists = fileExistsAsync path
         let! directoryExists = directoryExistsAsync path
         if fileExists then
-            System.IO.File.Delete path
+            return! deleteFileAsync path
         elif directoryExists then
-            System.IO.Directory.Delete(path, true)
+            return! deleteDirectoryAsync path
         else ()
     }

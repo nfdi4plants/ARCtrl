@@ -1,0 +1,50 @@
+import { fromString } from "../../fable_modules/Thoth.Json.JavaScript.0.3.0/Decode.fs.js";
+import { ROCrate_encoder, ROCrate_decoder, ISAJson_encoder, ISAJson_decoder } from "../../Json/Process/Sample.js";
+import { printf, toText } from "../../fable_modules/fable-library-js.4.22.0/String.js";
+import { unwrap, defaultArg } from "../../fable_modules/fable-library-js.4.22.0/Option.js";
+import { toString } from "../../fable_modules/Thoth.Json.JavaScript.0.3.0/Encode.fs.js";
+import { defaultSpaces } from "../../Json/Encode.js";
+
+export function ARCtrl_Process_Sample__Sample_fromISAJsonString_Static_Z721C83C5(s) {
+    const matchValue = fromString(ISAJson_decoder, s);
+    if (matchValue.tag === 1) {
+        throw new Error(toText(printf("Error decoding string: %O"))(matchValue.fields[0]));
+    }
+    else {
+        return matchValue.fields[0];
+    }
+}
+
+export function ARCtrl_Process_Sample__Sample_toISAJsonString_Static_Z3B036AA(spaces, useIDReferencing) {
+    const idMap = defaultArg(useIDReferencing, false) ? (new Map([])) : undefined;
+    return (f) => {
+        const value_1 = ISAJson_encoder(idMap, f);
+        return toString(defaultSpaces(spaces), value_1);
+    };
+}
+
+export function ARCtrl_Process_Sample__Sample_ToISAJsonString_Z3B036AA(this$, spaces, useIDReferencing) {
+    return ARCtrl_Process_Sample__Sample_toISAJsonString_Static_Z3B036AA(unwrap(spaces), unwrap(useIDReferencing))(this$);
+}
+
+export function ARCtrl_Process_Sample__Sample_fromROCrateString_Static_Z721C83C5(s) {
+    const matchValue = fromString(ROCrate_decoder, s);
+    if (matchValue.tag === 1) {
+        throw new Error(toText(printf("Error decoding string: %O"))(matchValue.fields[0]));
+    }
+    else {
+        return matchValue.fields[0];
+    }
+}
+
+export function ARCtrl_Process_Sample__Sample_toROCrateString_Static_71136F3F(spaces) {
+    return (f) => {
+        const value = ROCrate_encoder(f);
+        return toString(defaultSpaces(spaces), value);
+    };
+}
+
+export function ARCtrl_Process_Sample__Sample_ToROCrateString_71136F3F(this$, spaces) {
+    return ARCtrl_Process_Sample__Sample_toROCrateString_Static_71136F3F(unwrap(spaces))(this$);
+}
+
