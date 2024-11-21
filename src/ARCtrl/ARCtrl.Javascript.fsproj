@@ -54,7 +54,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="ContractIO\FilesSystem.js" Pack="true" />
+    <Content Include="ContractIO\FileSystem.js" Pack="true" />  
     <Compile Include="ContractIO\FileSystemHelper.fs" />
     <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
@@ -75,6 +75,9 @@
   <PropertyGroup>
     <NpmDependencies>
       <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+    <NpmDependencies>
+      <NpmPackage Name="@nfdi4plants/exceljs" Version="0.3.0" ResolutionStrategy="Max" />
     </NpmDependencies>
   </PropertyGroup>
   
