@@ -9,18 +9,18 @@ type LDContext() = inherit DynamicObj()
 
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
 type ILDObject =
-    abstract member SchemaType : string with get, set
+    abstract member SchemaType : ResizeArray<string> with get, set
     abstract member Id: string
-    abstract member AdditionalType: string option with get, set
+    abstract member AdditionalType: ResizeArray<string> with get, set
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
 /// Basically a DynamicObj that implements the ILDObject interface.
 [<AttachMembers>]
-type LDObject(id:string, schemaType: string, ?additionalType) =
+type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: ResizeArray<string>) =
     inherit DynamicObj()
 
     let mutable schemaType = schemaType
-    let mutable additionalType = additionalType
+    let mutable additionalType = defaultArg additionalType (ResizeArray [])
 
     member this.Id 
         with get() = id
@@ -60,15 +60,19 @@ type LDObject(id:string, schemaType: string, ?additionalType) =
 
     static member tryFromDynamicObj (dynObj: DynamicObj) =
         match
-            DynObj.tryGetTypedPropertyValue<string>("@type") dynObj,
+            DynObj.tryGetTypedPropertyValue<ResizeArray<string>>("@type") dynObj,
             DynObj.tryGetTypedPropertyValue<string>("@id") dynObj,
-            DynObj.tryGetTypedPropertyValue<string>("additionalType") dynObj
+            DynObj.tryGetTypedPropertyValue<ResizeArray<string>>("additionalType") dynObj
         with
-        | (Some schemaType), (Some id), at ->
-            let roc = new LDObject(id, schemaType, ?additionalType = at)
+        | (Some st), (Some id), (Some at) ->
+            // initialize with extracted static members only
+            let roc = new LDObject(id = id, schemaType = st, additionalType = at)
+
+            // copy dynamic properties!
             match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
             | Some context -> roc.SetContext(context)
             | _ -> ()
+            dynObj.CopyDynamicPropertiesTo(roc)
             Some roc
         | _ -> None
         

@@ -4,7 +4,7 @@ open DynamicObj
 
 type ArcROCrateMetadata(?about : LDObject) as this =
 
-    inherit LDObject(id = "ro-crate-metadata",schemaType = "CreativeWork")
+    inherit LDObject(id = "ro-crate-metadata",schemaType = ResizeArray([|"CreativeWork"|]))
 
     do DynObj.setOptionalProperty (nameof about) about this
 

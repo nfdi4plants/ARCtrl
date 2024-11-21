@@ -206,6 +206,12 @@ module GenericObjects =
     let onlyIDAndType =
         """{
             "@id": "MyIdentifier",
+            "@type": ["MyType"]
+        }"""
+        
+    let onlyIDAndTypeNoTypeArray =
+        """{
+            "@id": "MyIdentifier",
             "@type": "MyType"
         }"""
 
@@ -216,10 +222,23 @@ module GenericObjects =
 
     let onlyType =
         """{
+            "@type": ["MyType"]
+        }"""
+        
+    let onlyTypeNoTypeArray =
+        """{
             "@type": "MyType"
         }"""
 
     let withStringFields =
+        """{
+            "@id": "MyIdentifier",
+            "@type": ["MyType"],
+            "name": "MyName",
+            "description": "MyDescription"
+        }"""
+
+    let withStringFieldsNoTypeArray =
         """{
             "@id": "MyIdentifier",
             "@type": "MyType",
@@ -230,12 +249,27 @@ module GenericObjects =
     let withIntFields =
         """{
             "@id": "MyIdentifier",
+            "@type": ["MyType"],
+            "number": 42,
+            "anotherNumber": 1337
+        }"""
+        
+    let withIntFieldsNoTypeArray =
+        """{
+            "@id": "MyIdentifier",
             "@type": "MyType",
             "number": 42,
             "anotherNumber": 1337
         }"""
 
     let withStringArray =
+        """{
+            "@id": "MyIdentifier",
+            "@type": ["MyType"],
+            "names": ["MyName", "MySecondName"]           
+        }"""
+
+    let withStringArrayNoTypeArray =
         """{
             "@id": "MyIdentifier",
             "@type": "MyType",
@@ -245,20 +279,61 @@ module GenericObjects =
     let withNestedObject =
         sprintf """{
             "@id": "OuterIdentifier",
-            "@type": "MyType",
+            "@type": ["MyType"],
             "nested": %s
         }""" onlyIDAndType
+
+    let withNestedObjectNoTypeArray =
+        sprintf """{
+            "@id": "OuterIdentifier",
+            "@type": "MyType",
+            "nested": %s
+        }""" onlyIDAndTypeNoTypeArray
 
     let withObjectArray =
         sprintf """{
             "@id": "OuterIdentifier",
-            "@type": "MyType",
+            "@type": ["MyType"],
             "nested": [%s, %s]
         }""" onlyIDAndType onlyIDAndType
+
+    let withObjectArrayNoTypeArray =
+        sprintf """{
+            "@id": "OuterIdentifier",
+            "@type": "MyType",
+            "nested": [%s, %s]
+        }""" onlyIDAndTypeNoTypeArray onlyIDAndTypeNoTypeArray
 
     let withMixedArray =
         sprintf """{
             "@id": "OuterIdentifier",
-            "@type": "MyType",
+            "@type": ["MyType"],
             "nested": [%s, "Value2", 42]
         }""" onlyIDAndType
+
+    let withMixedArrayNoTypeArray =
+        sprintf """{
+            "@id": "OuterIdentifier",
+            "@type": "MyType",
+            "nested": [%s, "Value2", 42]
+        }""" onlyIDAndTypeNoTypeArray
+
+    let withAdditionalTypeString =
+        """{
+            "@id": "MyIdentifier",
+            "@type": ["MyType"],
+            "additionalType": "additionalType"
+        }"""
+
+    let withAdditionalTypeArray =
+        """{
+            "@id": "MyIdentifier",
+            "@type": ["MyType"],
+            "additionalType": ["additionalType"]
+        }"""
+    let withAddtionalTypeArrayMultipleEntries =
+        """{
+            "@id": "MyIdentifier",
+            "@type": ["MyType"],
+            "additionalType": ["additionalType1", "additionalType2"]
+        }"""

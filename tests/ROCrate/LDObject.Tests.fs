@@ -10,14 +10,14 @@ let context =
     new LDContext()
     |> DynObj.withProperty "more" "context"
 
-let mandatory_properties = LDObject("LDObject_mandatory_properties_id", "someType")
+let mandatory_properties = LDObject("LDObject_mandatory_properties_id", ResizeArray[|"someType"|])
 let mandatory_properties_with_context =
-    LDObject("LDObject_mandatory_properties_id", "someType")
+    LDObject("LDObject_mandatory_properties_id", ResizeArray[|"someType"|])
     |> DynObj.withProperty "@context" context
 
-let all_properties = LDObject("LDObject_all_properties_id", "someType", additionalType = "additionalType")
+let all_properties = LDObject("LDObject_all_properties_id", ResizeArray[|"someType"|], additionalType = ResizeArray[|"additionalType"|])
 let all_properties_with_context =
-    LDObject("LDObject_all_properties_id", "someType", additionalType = "additionalType")
+    LDObject("LDObject_all_properties_id", ResizeArray[|"someType"|], additionalType = ResizeArray[|"additionalType"|])
     |> DynObj.withProperty "@context" (context.CopyDynamicProperties())
 
 let tests_profile_object_is_valid = testList "constructed properties" [
@@ -33,8 +33,8 @@ let tests_profile_object_is_valid = testList "constructed properties" [
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "someType" "LDObject_mandatory_properties_id" None mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "someType" "LDObject_all_properties_id" (Some "additionalType") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"someType"|] "LDObject_mandatory_properties_id" [||] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"someType"|] "LDObject_all_properties_id" [|"additionalType"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (

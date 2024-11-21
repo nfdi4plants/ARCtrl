@@ -54,8 +54,8 @@ let tests_profile_object_is_valid = testList "constructed properties" [
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/Dataset" "study_mandatory_properties_id" (Some "Study") mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/Dataset" "study_all_properties_id" (Some "Study") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/Dataset"|] "study_mandatory_properties_id" [|"Study"|] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/Dataset"|] "study_all_properties_id" [|"Study"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (

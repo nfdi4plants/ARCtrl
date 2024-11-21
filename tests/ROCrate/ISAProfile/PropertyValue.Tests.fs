@@ -20,7 +20,7 @@ let all_properties = PropertyValue(
     unitCode = "unitCode",
     unitText = "unitText",
     valueReference = "valueReference",
-    additionalType = "additionalType"
+    additionalType = ResizeArray([|"additionalType"|])
 )
 
 let tests_profile_object_is_valid = testList "constructed properties" [
@@ -44,8 +44,8 @@ let tests_profile_object_is_valid = testList "constructed properties" [
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/PropertyValue" "propertyvalue_mandatory_properties_id" None mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/PropertyValue" "propertyvalue_all_properties_id" (Some "additionalType") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/PropertyValue"|] "propertyvalue_mandatory_properties_id" [||] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/PropertyValue"|] "propertyvalue_all_properties_id" [|"additionalType"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (
