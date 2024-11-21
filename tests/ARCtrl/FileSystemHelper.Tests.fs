@@ -2,7 +2,6 @@ module ARCtrl.FileSystemHelper.Tests
 
 open TestingUtils
 open ARCtrl
-open System.Text.Json
 open CrossAsync
 
 let readFileText = 

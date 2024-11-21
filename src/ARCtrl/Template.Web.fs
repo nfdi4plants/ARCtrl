@@ -8,7 +8,7 @@ let getTemplates(url: string option) =
     let defaultURL = @"https://github.com/nfdi4plants/Swate-templates/releases/download/latest/templates_v2.0.0.json"
 
     let url = defaultArg url defaultURL
-    crossAsync {
+    async {
         let! jsonString = ARCtrl.WebRequest.downloadFile url
         let mapResult = Json.Templates.fromJsonString jsonString
         return mapResult
