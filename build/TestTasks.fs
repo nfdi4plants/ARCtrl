@@ -32,7 +32,7 @@ module RunTests =
             Trace.traceImportant "Skipping JavaScript tests"
     )
 
-    let runAllTestsJs = BuildTask.createFn "runTestsJS" [clean; build] (fun tp ->
+    let runTestsJs = BuildTask.createFn "runTestsJS" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Js tests"
             // transpile js files from fsharp code
@@ -56,7 +56,7 @@ module RunTests =
             Trace.traceImportant "Skipping Python tests"
     )
 
-    let runAllTestsPy = BuildTask.createFn "runTestsPy" [clean; build] (fun tp ->
+    let runTestsPy = BuildTask.createFn "runTestsPy" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Python tests"
             //transpile py files from fsharp code
@@ -68,7 +68,7 @@ module RunTests =
 
     )
 
-    let runAllTestsDotnet = BuildTask.createFn "runTestsDotnet" [clean; build] (fun tp ->
+    let runTestsDotnet = BuildTask.createFn "runTestsDotnet" [clean; build] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start .NET tests"
             let dotnetRun = run dotnet "run"
@@ -106,7 +106,7 @@ module RunTests =
 // default test target runs all tests
 let runTests = BuildTask.createEmpty "RunTests" [
     clean; build;
-    RunTests.runAllTestsJs; RunTests.runTestsJsNative;
-    RunTests.runAllTestsPy; RunTests.runTestsPyNative;
-    RunTests.runAllTestsDotnet
+    RunTests.runTestsJs; RunTests.runTestsJsNative;
+    RunTests.runTestsPy; RunTests.runTestsPyNative;
+    RunTests.runTestsDotnet
 ]
