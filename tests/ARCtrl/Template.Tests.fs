@@ -9,7 +9,7 @@ open CrossAsync
 open TestingUtils
 
 let private tests_Web = testList "Web" [
-    testCaseAsync "getTemplates" <| crossAsync {
+    testCaseAsync "getTemplates" <| async {
         let! templatesMap = ARCtrl.Template.Web.getTemplates(None)
         Expect.isTrue (templatesMap.Length > 0) "Count > 0"
     }

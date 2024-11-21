@@ -5,13 +5,12 @@ open ARCtrl
 open ARCtrl.Contract
 open ARCtrl.FileSystemHelper
 open FsSpreadsheet
-open FsSpreadsheet.Net
 open CrossAsync
 
 let testRead =
 
     testList "Read" [
-        testCaseAsync "TextFile" (crossAsync {
+        testCaseCrossAsync "TextFile" (crossAsync {
             let fileName = "TestReadMe.txt"
             let contract = Contract.createRead(fileName,DTOType.PlainText)
             let dto = DTO.Text "This is a test"
@@ -21,7 +20,7 @@ let testRead =
             let resultContract = Expect.wantOk result "Contract was not fulfilled correctly"
             Expect.equal resultContract expected $"Text was not read correctly"
         })
-        testCaseAsync "XLSXFile" (crossAsync {
+        testCaseCrossAsync "XLSXFile" (crossAsync {
             let fileName = "TestWorkbook.xlsx"
             let contract = Contract.createRead(fileName,DTOType.ISA_Study)
             let! result = fulfillReadContractAsync TestObjects.IO.testContractsFolder contract
@@ -44,7 +43,7 @@ let testRead =
 let testWrite =
 
     testList "Write" [
-        testCaseAsync "TextFileEmpty" (crossAsync {
+        testCaseCrossAsync "TextFileEmpty" (crossAsync {
             let fileName = "TestEmpty.txt"
             let contract = Contract.createCreate(fileName,DTOType.PlainText)
 
@@ -55,11 +54,12 @@ let testWrite =
             Expect.isOk resultContract "Contract was not fulfilled correctly"
 
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
-            Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
+            let! fileExists = FileSystemHelper.fileExistsAsync filePath
+            Expect.isTrue fileExists $"File {filePath} was not created"
             let! resultText = FileSystemHelper.readFileTextAsync filePath
             Expect.equal resultText "" $"File {filePath} was not empty"
         })
-        testCaseAsync "TextFile" (crossAsync {
+        testCaseCrossAsync "TextFile" (crossAsync {
             let testText = "This is a test"
             let fileName = "TestReadMe.txt"
             let dto = DTO.Text testText
@@ -72,12 +72,13 @@ let testWrite =
             Expect.isOk resultContract "Contract was not fulfilled correctly"
 
             let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
-            Expect.isTrue (System.IO.File.Exists filePath) $"File {filePath} was not created"
+            let! fileExists = FileSystemHelper.fileExistsAsync filePath
+            Expect.isTrue fileExists $"File {filePath} was not created"
 
             let! resultText = FileSystemHelper.readFileTextAsync filePath
             Expect.equal resultText testText $"File {filePath} was not empty"
         })
-        testCaseAsync "XLSXFile" (crossAsync { 
+        testCaseCrossAsync "XLSXFile" (crossAsync { 
 
             let worksheetName = "TestSheet"
             let testWB = new FsWorkbook()

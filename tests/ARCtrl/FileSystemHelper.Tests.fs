@@ -6,7 +6,7 @@ open CrossAsync
 
 let readFileText = 
     testList "ReadText" [
-        testCaseAsync "simple" (crossAsync {
+        testCaseCrossAsync "simple" (crossAsync {
             let p = TestObjects.IO.simpleTextFilePath
             let! result = FileSystemHelper.readFileTextAsync p
             let expected = "Hello"
@@ -16,7 +16,7 @@ let readFileText =
 
 let writeFileText = 
     testList "WriteText" [
-        testCaseAsync "simple" (crossAsync {
+        testCaseCrossAsync "simple" (crossAsync {
             do! ARCtrl.FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SimpleText.txt"
             let t = "Hello"
@@ -26,7 +26,7 @@ let writeFileText =
             let expected = "Hello"
             Expect.equal result expected "Text was not read correctly."
         })
-        testCaseAsync "SubDirectoryWithEnsureDir" (crossAsync {
+        testCaseCrossAsync "SubDirectoryWithEnsureDir" (crossAsync {
             let subDir = ArcPathHelper.combine TestObjects.IO.testResultsFolder "SubFolder"
             let p = ArcPathHelper.combine subDir "SimpleText.txt"
             let t = "Hello"
@@ -42,7 +42,7 @@ let writeFileText =
 let getAllFilePaths =
 
     testList "GetAllFilePaths" [
-        testCaseAsync "simple" (crossAsync {
+        testCaseCrossAsync "simple" (crossAsync {
             let p = TestObjects.IO.testSubPathsFolder
             let! result =
                 FileSystemHelper.getAllFilePathsAsync p
