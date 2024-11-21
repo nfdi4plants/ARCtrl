@@ -241,6 +241,8 @@ module Expect =
 [<AutoOpen>]
 module Test =
 
+    open CrossAsync
+
     let test = test
     let testAsync = testAsync
     let testSequenced = testSequenced
@@ -248,10 +250,18 @@ module Test =
     let testCase = testCase
     let ptestCase = ptestCase
     let ftestCase = ftestCase
+
+
+    let testCaseCrossAsync (text : string) (ca : CrossAsync<unit>) =
+        testCaseAsync text (asAsync ca)
+    let ptestCaseCrossAsync (text : string) (ca : CrossAsync<unit>) = 
+        ptestCaseAsync text (asAsync ca)
+    let ftestCaseCrossAsync (text : string) (ca : CrossAsync<unit>) =
+        ftestCaseAsync text (asAsync ca)
+
     let testCaseAsync = testCaseAsync
     let ptestCaseAsync = ptestCaseAsync
     let ftestCaseAsync = ftestCaseAsync
-
 
     let testList = testList
     let ftestList = ftestList

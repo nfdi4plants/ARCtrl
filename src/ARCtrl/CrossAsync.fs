@@ -29,3 +29,10 @@ let map f v =
         let! v = v
         return f v
     }
+
+let asAsync (v:CrossAsync<'T>) =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+    Async.AwaitPromise v
+    #else
+    v
+    #endif

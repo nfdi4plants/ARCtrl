@@ -947,7 +947,7 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
 let tests_load =
 
     testList "Load" [
-        testCaseAsync "simpleARC" (crossAsync {
+        testCaseCrossAsync "simpleARC" (crossAsync {
             let p = TestObjects.IO.testSimpleARC
             let! result = ARC.loadAsync(p)
             let result = Expect.wantOk result "ARC should load successfully"
@@ -975,7 +975,7 @@ let tests_load =
 let tests_write =
 
     testList "Write" [
-        testCaseAsync "empty" (crossAsync {
+        testCaseCrossAsync "empty" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
             let a = ARC()
 
@@ -1000,7 +1000,7 @@ let tests_write =
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."                  
         })
-        testCaseAsync "SimpleARC" (crossAsync {
+        testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
             let arc = ARC()
 
@@ -1043,7 +1043,7 @@ let tests_write =
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
         })
         // This test reads a preexisting assay with data and everything, data content is not copied though but just the 
-        testCaseAsync "LoadSimpleARCAndAddAssay" (crossAsync {
+        testCaseCrossAsync "LoadSimpleARCAndAddAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithAssay"
 
             let! readResult = ARC.loadAsync(TestObjects.IO.testSimpleARC)
@@ -1116,7 +1116,7 @@ let tests_write =
 
 let tests_Update =
     testList "Update" [
-        testCaseAsync "AddedAssay" (crossAsync {
+        testCaseCrossAsync "AddedAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Update_AddedAssay"
             let arc = ARC()
 
@@ -1179,7 +1179,7 @@ let tests_Update =
 
 let tests_renameAssay =
     testList "RenameAssay" [
-        testCaseAsync "SimpleARC" (crossAsync {
+        testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameAssay_SimpleARC"
             let arc = ARC()
 
@@ -1232,7 +1232,7 @@ let tests_renameAssay =
 
 let tests_RenameStudy =
     testList "RenameStudy" [
-        testCaseAsync "SimpleARC" (crossAsync {
+        testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameStudy_SimpleARC"
             let arc = ARC()
 
@@ -1286,7 +1286,7 @@ let tests_RenameStudy =
 
 let tests_RemoveAssay =
     testList "RemoveAssay" [
-        testCaseAsync "SimpleARC" (crossAsync {
+        testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveAssay_SimpleARC"
             let arc = ARC()
 
@@ -1334,7 +1334,7 @@ let tests_RemoveAssay =
 
 let tests_RemoveStudy =
     testList "RemoveStudy" [
-        testCaseAsync "SimpleARC" (crossAsync {
+        testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveStudy_SimpleARC"
             let arc = ARC()
 
