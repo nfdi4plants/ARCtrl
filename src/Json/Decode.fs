@@ -93,9 +93,7 @@ module Decode =
                     decoder.Decode(helpers,value)
         }
 
-
-
-    let resizeArray (decoder: Decoder<'value>) : Decoder<ResizeArray<'value>> =
+    let resizeArrayOrSingleton (decoder: Decoder<'value>) : Decoder<ResizeArray<'value>> =
         { new Decoder<ResizeArray<'value>> with
             member _.Decode(helpers, value) =
                 if helpers.isArray value then
@@ -123,7 +121,7 @@ module Decode =
                                 Ok acc
                     )
                 else
-                    ("", BadPrimitive("an array", value)) |> Error
+                    decoder.Decode(helpers, value) |> Result.map (fun x -> ResizeArray[x])
         }
 
     let datetime: Decoder<System.DateTime> =
