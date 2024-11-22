@@ -68,25 +68,7 @@ let fileExistsAsync (path : string) : CrossAsync<bool> =
     }
     #endif
 
-let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "getSubDirectories" "./FileSystem.js"
-    #endif
-    #if !FABLE_COMPILER
-    crossAsync {
-        return System.IO.Directory.GetDirectories path
-    }
-    #endif
 
-let getSubFilesAsync (path : string) : CrossAsync<string []> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "getSubFiles" "./FileSystem.js"
-    #endif
-    #if !FABLE_COMPILER
-    crossAsync {
-        return System.IO.Directory.GetFiles path
-    }
-    #endif
 
 let readFileTextAsync (path : string) : CrossAsync<string> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
@@ -202,6 +184,35 @@ let makeRelative directoryPath (path : string) =
 
 let standardizeSlashes (path : string) = 
     path.Replace("\\","/")              
+
+let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        let f : string -> CrossAsync<string []> = import "getSubDirectories" "./FileSystem.js"
+        crossAsync {
+            let! paths = f path
+            return paths |> Array.map (standardizeSlashes >> makeRelative path)
+        }
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        return System.IO.Directory.GetDirectories path
+    }
+    #endif
+
+let getSubFilesAsync (path : string) : CrossAsync<string []> =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        let f : string -> CrossAsync<string []> = import "getSubFiles" "./FileSystem.js"
+        crossAsync {
+            let! paths = f path
+            return paths |> Array.map (standardizeSlashes >> makeRelative path)
+        }
+    #endif
+    #if !FABLE_COMPILER
+    crossAsync {
+        return System.IO.Directory.GetFiles path
+    }
+    #endif
+
 
 let getAllFilePathsAsync (directoryPath : string) =
     crossAsync {

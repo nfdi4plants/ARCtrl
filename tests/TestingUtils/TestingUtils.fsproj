@@ -41,7 +41,7 @@
     <PackageReference Include="Fable.Pyxpecto" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Condition="!('($(FABLE_COMPILER)' == 'true')" Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
+    <ProjectReference Condition="'$(FABLE_COMPILER)' != 'true'" Include="..\..\src\ARCtrl\ARCtrl.fsproj" />
     <ProjectReference Condition="'$(FABLE_COMPILER_JAVASCRIPT)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Javascript.fsproj" />
     <ProjectReference Condition="'$(FABLE_COMPILER_PYTHON)' == 'true'" Include="..\..\src\ARCtrl\ARCtrl.Python.fsproj" />
   </ItemGroup>
