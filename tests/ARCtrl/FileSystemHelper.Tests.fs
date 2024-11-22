@@ -39,6 +39,34 @@ let writeFileText =
         })
     ]
 
+let getSubFiles = 
+    testList "GetSubFiles" [
+        testCaseCrossAsync "simple" (crossAsync {
+            let p = TestObjects.IO.testSubPathsFolder
+            let! result = FileSystemHelper.getSubFilesAsync p
+            let expected = 
+                [
+                    $"{TestObjects.IO.testSubPathsFolder}/File1.txt" |> FileSystemHelper.standardizeSlashes
+                    $"{TestObjects.IO.testSubPathsFolder}/File2.csv" |> FileSystemHelper.standardizeSlashes
+                ]
+            Expect.sequenceEqual result expected "Files were not found correctly."
+        })
+    ]
+
+let getSubDirectories =
+    testList "GetSubDirectories" [
+        testCaseCrossAsync "simple" (crossAsync {
+            let p = TestObjects.IO.testSubPathsFolder
+            let! result = FileSystemHelper.getSubDirectoriesAsync p
+            let expected = 
+                [
+                    $"{TestObjects.IO.testSubPathsFolder}/SubFolder" |> FileSystemHelper.standardizeSlashes
+                ]
+            Expect.sequenceEqual result expected "Directories were not found correctly."
+        })
+    ]
+
+
 let getAllFilePaths =
 
     testList "GetAllFilePaths" [
@@ -63,5 +91,7 @@ let main =
     testList "PathTests" [
         readFileText
         writeFileText
+        getSubFiles
+        getSubDirectories
         getAllFilePaths
     ]

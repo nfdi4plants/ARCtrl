@@ -54,7 +54,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="ContractIO\FileSystem.js" Pack="true" />  
+    <Content Include="ContractIO\FileSystem.js" PackagePath="fable\" />  
     <Compile Include="ContractIO\FileSystemHelper.fs" />
     <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
@@ -64,6 +64,11 @@
     <Compile Include="Json.fs" />
     <Compile Include="Xlsx.fs" />
   </ItemGroup>
+
+  <!--<ItemGroup>
+    <Content Include="*.fsproj; *.fs; *.js;" Exclude="**\*.fs.js" PackagePath="fable\" />
+  </ItemGroup>-->
+  
   <ItemGroup>
     <PackageReference Include="Fable.Fetch" />
     <PackageReference Include="Fable.SimpleHttp" />
