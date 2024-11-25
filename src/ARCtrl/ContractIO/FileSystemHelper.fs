@@ -190,7 +190,7 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
         let f : string -> CrossAsync<string []> = import "getSubDirectories" "./FileSystem.js"
         crossAsync {
             let! paths = f path
-            return paths // |> Array.map (standardizeSlashes >> makeRelative path)
+            return paths |> Array.map standardizeSlashes
         }
     #endif
     #if !FABLE_COMPILER
@@ -205,7 +205,7 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
         let f : string -> CrossAsync<string []> = import "getSubFiles" "./FileSystem.js"
         crossAsync {
             let! paths = f path
-            return paths // |> Array.map (standardizeSlashes >> makeRelative path)
+            return paths |> Array.map standardizeSlashes
         }
     #endif
     #if !FABLE_COMPILER
