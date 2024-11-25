@@ -53,8 +53,8 @@
     <None Include="README.md" />
   </ItemGroup>
   
-  <ItemGroup>  
-    <None Include="contractio\FilesSystem.js" />  
+  <ItemGroup>
+    <Content Include="ContractIO\FilesSystem.js" Pack="true" />
     <Compile Include="ContractIO\FileSystemHelper.fs" />
     <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
