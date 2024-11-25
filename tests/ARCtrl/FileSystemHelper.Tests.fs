@@ -43,6 +43,7 @@ let getSubFiles =
     testList "GetSubFiles" [
         testCaseCrossAsync "simple" (crossAsync {
             let p = TestObjects.IO.testSubPathsFolder
+            printfn "getSubFiles %s" p
             let! result = FileSystemHelper.getSubFilesAsync p
             let expected = 
                 [
@@ -57,6 +58,7 @@ let getSubDirectories =
     testList "GetSubDirectories" [
         testCaseCrossAsync "simple" (crossAsync {
             let p = TestObjects.IO.testSubPathsFolder
+            printfn "getSubDirectories %s" p
             let! result = FileSystemHelper.getSubDirectoriesAsync p
             let expected = 
                 [
@@ -77,10 +79,10 @@ let getAllFilePaths =
                 |> map Seq.sort
             let expected = 
                 [
-                    "/File1.txt"
-                    "/File2.csv"
-                    "/SubFolder/File3.xlsx"
-                    "/SubFolder/SubSubFolder/File4"
+                    $"/File1.txt"
+                    $"/File2.csv"
+                    $"/SubFolder/File3.xlsx" |> FileSystemHelper.standardizeSlashes
+                    $"/SubFolder/SubSubFolder/File4" |> FileSystemHelper.standardizeSlashes
                 ]
             Expect.sequenceEqual result expected "File Paths were not found correctly."
             
