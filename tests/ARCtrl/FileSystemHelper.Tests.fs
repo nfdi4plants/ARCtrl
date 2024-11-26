@@ -39,6 +39,36 @@ let writeFileText =
         })
     ]
 
+let readFileXlsx = 
+    testList "ReadWorkbook" [
+        testCaseCrossAsync "simple" (crossAsync {
+            let p = TestObjects.IO.simpleWorkbookPath
+            let! result = FileSystemHelper.readFileXlsxAsync p
+            let ws = Expect.wantSome (result.TryGetWorksheetByName "TestSheet") "Workbook does not contain worksheet"
+            let row1 = Expect.wantSome (ws.TryGetRowValuesAt 1) "Worksheet does not contain row 1"
+            let row1AsInts = row1 |> Seq.map (string >> int)
+            let expected = [1;2;3]
+            Expect.sequenceEqual row1AsInts expected "Worksheet does not contain correct values"
+            let row2 = Expect.wantSome (ws.TryGetRowValuesAt 2) "Worksheet does not contain row 2"
+            let expected = ["A";"B";"C"] |> Seq.map box
+            Expect.sequenceEqual row2 expected "Worksheet does not contain correct values"
+
+        })
+    ]
+
+let writeFileXlsx = 
+    testList "WriteWorkbook" [
+        testCaseCrossAsync "simple" (crossAsync {
+            do! ARCtrl.FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "Workbook.xlsx"
+            let wb = TestObjects.Spreadsheet.Investigation.BII_I_1.fullInvestigation           
+            do! FileSystemHelper.writeFileXlsxAsync p wb
+            let! result = FileSystemHelper.readFileXlsxAsync p
+            Expect.workBookEqual wb result "Workbook was not read correctly."
+        })
+    ]
+
+
 let getSubFiles = 
     testList "GetSubFiles" [
         testCaseCrossAsync "simple" (crossAsync {
@@ -93,6 +123,8 @@ let main =
     testList "PathTests" [
         readFileText
         writeFileText
+        readFileXlsx
+        writeFileXlsx
         getSubFiles
         getSubDirectories
         getAllFilePaths

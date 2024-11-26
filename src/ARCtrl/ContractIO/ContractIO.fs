@@ -7,6 +7,7 @@ open CrossAsync
 
 
 let fulfillReadContractAsync basePath (c : Contract) =
+    try
     crossAsync {
         try
             match c.DTOType with
@@ -24,10 +25,12 @@ let fulfillReadContractAsync basePath (c : Contract) =
                 let dto = text |> DTO.Text
                 return Ok {c with DTO = Some dto}
             | _ -> 
-                return Error (sprintf "Contract %s is not an ISA contract" c.Path)
+                return Error (sprintf "Contract %s is neither an ISA nor a freetext contract" c.Path)
         with
         | e -> return Error (sprintf "Error reading contract %s: %s" c.Path e.Message)
     }
+    with
+    | e -> failwithf "Read contract failed unexpectedly for path %s: %s" c.Path e.Message
 
 let fullfillContractBatchAsyncBy
     (contractF : string -> Contract -> CrossAsync<Result<Contract, string>>)
@@ -56,17 +59,17 @@ let fulfillWriteContractAsync basePath (c : Contract) =
     crossAsync {
         try 
             match c.DTO with
-            | Some (DTO.Spreadsheet wb) ->
-                let path = ArcPathHelper.combine basePath c.Path
-                do! FileSystemHelper.ensureDirectoryOfFileAsync path
-                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
-                return Ok (c)
             | Some (DTO.Text t) ->
                 let path = ArcPathHelper.combine basePath c.Path
                 do! FileSystemHelper.ensureDirectoryOfFileAsync path
                 do! FileSystemHelper.writeFileTextAsync path t
                 return Ok (c)
-            | None -> 
+            | Some (DTO.Spreadsheet wb) ->
+                let path = ArcPathHelper.combine basePath c.Path
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
+                return Ok (c)           
+            | None ->
                 let path = ArcPathHelper.combine basePath c.Path
                 do! FileSystemHelper.ensureDirectoryOfFileAsync path
                 do! FileSystemHelper.writeFileTextAsync path ""

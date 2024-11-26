@@ -24,3 +24,4 @@ let testSimpleARC_Output = combine testResultsFolder "TestResults/SimpleARC"
 
 
 let simpleTextFilePath = combine testObjectsBaseFolder "SimpleText.txt"
+let simpleWorkbookPath = combine testObjectsBaseFolder "TestWorkbook.xlsx"

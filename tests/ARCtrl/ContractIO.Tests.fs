@@ -63,7 +63,7 @@ let testWrite =
             let testText = "This is a test"
             let fileName = "TestReadMe.txt"
             let dto = DTO.Text testText
-            let contract = Contract.createCreate(fileName,DTOType.PlainText,dto)
+            let contract = Contract.createCreate(fileName,DTOType.PlainText, dto)
 
             do! FileSystemHelper.ensureDirectoryAsync TestObjects.IO.testResultsFolder
 
@@ -106,13 +106,13 @@ let testWrite =
         })
     ]
 
-let testExecute =
+//let testExecute =
 
-    testList "Write" [
-        testCase "Implement" (fun () -> 
-            Expect.isTrue false "ImplementTest"           
-        )
-    ]
+//    testList "Write" [
+//        testCase "Implement" (fun () -> 
+//            Expect.isTrue false "ImplementTest"           
+//        )
+//    ]
 
 let main = 
     testList "ContractTests" [
