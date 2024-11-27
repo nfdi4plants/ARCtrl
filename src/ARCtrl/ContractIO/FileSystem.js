@@ -68,7 +68,12 @@ export async function moveDirectory(oldPath, newPath) {
 
 // Delete a file
 export async function deleteFile(path) {
-    await fs.unlink(path);
+    try {
+        await fs.unlink(path);
+    }
+    catch (err) {
+        if (err.code !== 'ENOENT') throw err;
+    }
 }
 
 // Delete a directory (and its contents)

@@ -253,7 +253,11 @@ module Test =
 
 
     let testCaseCrossAsync (text : string) (ca : CrossAsync<unit>) =
-        testCaseAsync text (asAsync ca)
+        ca
+        |> catchWith (fun exn -> failwithf "%s" exn.Message)
+        |> asAsync
+        |> testCaseAsync text
+        
     let ptestCaseCrossAsync (text : string) (ca : CrossAsync<unit>) = 
         ptestCaseAsync text (asAsync ca)
     let ftestCaseCrossAsync (text : string) (ca : CrossAsync<unit>) =

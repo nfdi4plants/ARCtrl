@@ -7,7 +7,6 @@ open CrossAsync
 
 
 let fulfillReadContractAsync basePath (c : Contract) =
-    try
     crossAsync {
         try
             match c.DTOType with
@@ -29,8 +28,7 @@ let fulfillReadContractAsync basePath (c : Contract) =
         with
         | e -> return Error (sprintf "Error reading contract %s: %s" c.Path e.Message)
     }
-    with
-    | e -> failwithf "Read contract failed unexpectedly for path %s: %s" c.Path e.Message
+    |> catchWith (fun e -> Error (sprintf "Error reading contract %s: %s" c.Path e.Message))
 
 let fullfillContractBatchAsyncBy
     (contractF : string -> Contract -> CrossAsync<Result<Contract, string>>)
@@ -79,20 +77,21 @@ let fulfillWriteContractAsync basePath (c : Contract) =
         with
         | e -> return Error (sprintf "Error writing contract %s: %s" c.Path e.Message)
     }
+    |> catchWith (fun e -> Error (sprintf "Error writing contract %s: %s" c.Path e.Message))
 
 let fulfillUpdateContractAsync basePath (c : Contract) =
     crossAsync {
         try 
             match c.DTO with
-            | Some (DTO.Spreadsheet wb) ->
-                let path = ArcPathHelper.combine basePath c.Path
-                do! FileSystemHelper.ensureDirectoryOfFileAsync path
-                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
-                return Ok (c)
             | Some (DTO.Text t) ->
                 let path = ArcPathHelper.combine basePath c.Path
                 do! FileSystemHelper.ensureDirectoryOfFileAsync path
                 do! FileSystemHelper.writeFileTextAsync path t
+                return Ok (c)
+            | Some (DTO.Spreadsheet wb) ->
+                let path = ArcPathHelper.combine basePath c.Path
+                do! FileSystemHelper.ensureDirectoryOfFileAsync path
+                do! FileSystemHelper.writeFileXlsxAsync path (wb :?> FsWorkbook)
                 return Ok (c)
             | None -> 
                 let path = ArcPathHelper.combine basePath c.Path
@@ -104,6 +103,7 @@ let fulfillUpdateContractAsync basePath (c : Contract) =
         with
         | e -> return Error (sprintf "Error updating contract %s: %s" c.Path e.Message)
     }
+    |> catchWith (fun e -> Error (sprintf "Error updating contract %s: %s" c.Path e.Message))
 
 let fullfillRenameContractAsync basePath (c : Contract) =
     crossAsync {
@@ -120,6 +120,7 @@ let fullfillRenameContractAsync basePath (c : Contract) =
         with
         | e -> return Error (sprintf "Error renaming contract %s: %s" c.Path e.Message)
     }
+    |> catchWith (fun e -> Error (sprintf "Error renaming contract %s: %s" c.Path e.Message))
 
 let fullfillDeleteContractAsync basePath (c : Contract) =
     crossAsync {
@@ -130,6 +131,7 @@ let fullfillDeleteContractAsync basePath (c : Contract) =
         with
         | e -> return Error (sprintf "Error deleting contract %s: %s" c.Path e.Message)
     }
+    |> catchWith (fun e -> Error (sprintf "Error deleting contract %s: %s" c.Path e.Message))
 
 let fullFillContract basePath (c : Contract) =
     crossAsync {
@@ -141,6 +143,7 @@ let fullFillContract basePath (c : Contract) =
         | Operation.RENAME -> return! fullfillRenameContractAsync basePath c
         | _ -> return Error (sprintf "Operation %A not supported" c.Operation)
     }
+    |> catchWith (fun e -> Error (sprintf "Error fulfilling contract %s: %s" c.Path e.Message))
 
 let fullFillContractBatchAsync basePath (cs : Contract []) =
     fullfillContractBatchAsyncBy fullFillContract basePath cs

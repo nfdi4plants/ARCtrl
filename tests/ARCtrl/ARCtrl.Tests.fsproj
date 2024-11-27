@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CrossAsync.Tests.fs" />
     <Compile Include="FileSystemHelper.Tests.fs" />
     <Compile Include="ContractIO.Tests.fs" />
     <Compile Include="SemVer.Tests.fs" />

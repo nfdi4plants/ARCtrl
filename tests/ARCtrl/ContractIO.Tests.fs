@@ -106,16 +106,59 @@ let testWrite =
         })
     ]
 
-//let testExecute =
+let testRename =
 
-//    testList "Write" [
-//        testCase "Implement" (fun () -> 
-//            Expect.isTrue false "ImplementTest"           
-//        )
-//    ]
+    testList "Rename" [
+        testCaseCrossAsync "Text" (crossAsync {
+            let oldFileName = "TestOld.txt"
+            let newFileName = "TestNew.txt"
+            let content = "This is a test"
+            let oldPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFileName
+            let newPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFileName
+            do! FileSystemHelper.writeFileTextAsync oldPath content
+
+            let contract = Contract.createRename(oldFileName,newFileName)
+
+            let! resultContract = fullfillRenameContractAsync TestObjects.IO.testResultsFolder contract
+
+            Expect.isOk resultContract "Contract was not fulfilled correctly"
+
+            let! oldFileExists = FileSystemHelper.fileExistsAsync oldPath
+            Expect.isFalse oldFileExists $"File {oldPath} was not deleted"
+
+            let! newFileExists = FileSystemHelper.fileExistsAsync newPath
+            Expect.isTrue newFileExists $"File {newPath} was not created"
+        })
+    ]
+
+let testRemove =
+
+    testList "Remove" [
+        testCaseCrossAsync "Text" (crossAsync {
+            let fileName = "TestRemove.txt"
+            let content = "This is a test"
+            let filePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder fileName
+            do! FileSystemHelper.writeFileTextAsync filePath content
+
+            let! fileExistsBeforeDelete = FileSystemHelper.fileExistsAsync filePath
+            Expect.isTrue fileExistsBeforeDelete $"File {filePath} was not created"
+
+            let contract = Contract.createDelete(fileName)
+
+            let! resultContract = fullfillDeleteContractAsync TestObjects.IO.testResultsFolder contract
+
+            Expect.isOk resultContract "Contract was not fulfilled correctly"
+
+            let! fileExistsAferDelete = FileSystemHelper.fileExistsAsync filePath
+            Expect.isFalse fileExistsAferDelete $"File {filePath} was not deleted"
+        })
+    ]
 
 let main = 
     testList "ContractTests" [
         testRead
         testWrite
+        testRename
+        testRemove
+
     ]

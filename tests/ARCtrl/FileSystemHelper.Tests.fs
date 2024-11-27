@@ -3,6 +3,51 @@ module ARCtrl.FileSystemHelper.Tests
 open TestingUtils
 open ARCtrl
 open CrossAsync
+open ARCtrl.ArcPathHelper
+
+let fileExists =
+    testList "FileExists" [
+        testCaseCrossAsync "simple" (crossAsync {
+            let p = TestObjects.IO.simpleTextFilePath
+            let! result = FileSystemHelper.fileExistsAsync p
+            Expect.isTrue result "File does not exist."
+        })
+        testCaseCrossAsync "nonExisting" (crossAsync {
+            let p = "bdlieihawdbawndfefnsefsfnse.dawd"
+            let! result = FileSystemHelper.fileExistsAsync p
+            Expect.isFalse result "File exists."
+        })
+    ]
+
+let directoryExists =
+    testList "DirectoryExists" [
+        testCaseCrossAsync "simple" (crossAsync {
+            let p = TestObjects.IO.testObjectsBaseFolder
+            let! result = FileSystemHelper.directoryExistsAsync p
+            Expect.isTrue result "Directory does not exist."
+        })
+        testCaseCrossAsync "nonExisting" (crossAsync {
+            let p = "bdlieihawdbawndfefnsefsfnse"
+            let! result = FileSystemHelper.directoryExistsAsync p
+            Expect.isFalse result "Directory exists."
+        })
+    ]
+
+let ensureDirectoryOfFile =
+    testList "EnsureDirectoryOfFile" [
+        testCaseCrossAsync "simple" (crossAsync {
+            let directoryPath = combine TestObjects.IO.testResultsFolder "EnsuredDirectory"
+            let filePath = combine directoryPath "EnsuredFile.txt"
+
+            let! directoryExistsBefore = FileSystemHelper.directoryExistsAsync directoryPath
+            Expect.isFalse directoryExistsBefore "Directory should not exist before."
+
+            do! FileSystemHelper.ensureDirectoryOfFileAsync filePath
+
+            let! directoryExistsAfter = FileSystemHelper.directoryExistsAsync directoryPath
+            Expect.isTrue directoryExistsAfter "Directory should exist after."
+        })
+    ]
 
 let readFileText = 
     testList "ReadText" [
@@ -121,6 +166,9 @@ let getAllFilePaths =
 
 let main = 
     testList "PathTests" [
+        fileExists
+        directoryExists
+        ensureDirectoryOfFile
         readFileText
         writeFileText
         readFileXlsx
