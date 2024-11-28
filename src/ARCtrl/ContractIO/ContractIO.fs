@@ -33,13 +33,12 @@ let fulfillReadContractAsync basePath (c : Contract) =
 let fullfillContractBatchAsyncBy
     (contractF : string -> Contract -> CrossAsync<Result<Contract, string>>)
     (basePath : string)
-    (cs : (Contract) [])
+    (cs : Contract [])
     : CrossAsync<Result<Contract [], string []>> =
         crossAsync {
             let! seq = 
-                cs
-                |> Array.map (contractF basePath)
-                |> CrossAsync.sequential
+                cs 
+                |> CrossAsync.startSequential (contractF basePath) 
             let res =
                 seq
                 |> Array.fold (fun acc cr ->

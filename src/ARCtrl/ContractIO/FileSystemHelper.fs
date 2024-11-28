@@ -226,10 +226,10 @@ let getAllFilePathsAsync (directoryPath : string) =
                 return Seq.empty
             else
                 
-                let! subFiles = dirs |> Seq.map getSubFilesAsync |> CrossAsync.sequential
+                let! subFiles = dirs |> Seq.map getSubFilesAsync |> CrossAsync.all
                 let subFiles = subFiles |> Seq.concat
-                let! subDirs = dirs |> Seq.map getSubDirectoriesAsync |> CrossAsync.sequential 
-                let! subDirContents = subDirs |> Seq.map allFiles |> CrossAsync.sequential
+                let! subDirs = dirs |> Seq.map getSubDirectoriesAsync |> CrossAsync.all 
+                let! subDirContents = subDirs |> Seq.map allFiles |> CrossAsync.all
                 let subDirContents = subDirContents |> Seq.concat
                 return subFiles |> Seq.append subDirContents
             }

@@ -18,11 +18,22 @@ type CrossAsync<'T> =
     Async<'T>
 #endif
 
-let sequential =
+let startSequential (starterF : 'T -> CrossAsync<'U>) (tasks : 'T seq) : CrossAsync<'U []> =
+    let rec loop (en : System.Collections.Generic.IEnumerator<'T>) =
+        crossAsync {
+            if en.MoveNext() then
+                let! r = starterF en.Current
+                let! following = loop en
+                return Array.append [|r|] following
+            else return [||]
+        }
+    loop (tasks.GetEnumerator())
+
+let all (tasks : CrossAsync<'T> seq) : CrossAsync<'T []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-    Promise.all
+    Promise.all tasks
     #else
-    Async.Sequential   
+    Async.Sequential tasks
     #endif
 
 let map f v =

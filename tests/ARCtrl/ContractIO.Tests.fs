@@ -110,8 +110,8 @@ let testRename =
 
     testList "Rename" [
         testCaseCrossAsync "Text" (crossAsync {
-            let oldFileName = "TestOld.txt"
-            let newFileName = "TestNew.txt"
+            let oldFileName = "ContractTestOld.txt"
+            let newFileName = "ContractTestNew.txt"
             let content = "This is a test"
             let oldPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFileName
             let newPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFileName

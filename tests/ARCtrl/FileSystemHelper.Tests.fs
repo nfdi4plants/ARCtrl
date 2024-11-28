@@ -113,7 +113,6 @@ let writeFileXlsx =
         })
     ]
 
-
 let getSubFiles = 
     testList "GetSubFiles" [
         testCaseCrossAsync "simple" (crossAsync {
@@ -143,7 +142,6 @@ let getSubDirectories =
         })
     ]
 
-
 let getAllFilePaths =
 
     testList "GetAllFilePaths" [
@@ -164,6 +162,45 @@ let getAllFilePaths =
         })
     ]
 
+let rename = 
+    testList "Rename" [
+        testCaseCrossAsync "simpleFile" (crossAsync {
+            let oldFileName = "OldFile.txt"
+            let newFileName = "NewFile.txt"
+            let oldFilePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFileName
+            let newFilePath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFileName
+            let text = "Hello"
+
+            do! FileSystemHelper.writeFileTextAsync oldFilePath text
+            do! FileSystemHelper.renameFileOrDirectoryAsync oldFilePath newFilePath
+
+            let! oldFileExists = FileSystemHelper.fileExistsAsync oldFilePath
+            Expect.isFalse oldFileExists "Old file still exists."
+            let! result = FileSystemHelper.fileExistsAsync newFilePath
+            Expect.isTrue result "File does not exist."
+        })
+        testCaseCrossAsync "simpleFolder" (crossAsync {
+            let oldFolderName = "OldFolder"
+            let newFolderName = "NewFolder"
+            let oldFolderPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder oldFolderName
+            let newFolderPath = ArcPathHelper.combine TestObjects.IO.testResultsFolder newFolderName
+            let oldFilePath = ArcPathHelper.combine oldFolderPath "File.txt"
+            let newFilePath = ArcPathHelper.combine newFolderPath "File.txt"
+            let text = "Hello"
+            do! FileSystemHelper.ensureDirectoryAsync oldFolderPath
+            do! FileSystemHelper.writeFileTextAsync oldFilePath text
+            do! FileSystemHelper.renameFileOrDirectoryAsync oldFolderPath newFolderPath
+
+            let! oldFolderExists = FileSystemHelper.directoryExistsAsync oldFolderPath
+            Expect.isFalse oldFolderExists "Old folder still exists."
+            let! newFolderExists = FileSystemHelper.directoryExistsAsync newFolderPath
+            Expect.isTrue newFolderExists "Folder does not exist."
+            let! result = FileSystemHelper.readFileTextAsync newFilePath
+            Expect.equal result text "Text was not read correctly."
+
+        })
+    ]
+
 let main = 
     testList "PathTests" [
         fileExists
@@ -176,4 +213,5 @@ let main =
         getSubFiles
         getSubDirectories
         getAllFilePaths
+        rename
     ]

@@ -20,7 +20,7 @@ module RunTests =
         run npx $"cypress run --component -P {path}" ""
     }
 
-    let runTestsJsNative = BuildTask.createFn "runTestsJSNative" [clean; build] (fun tp ->
+    let runTestsJsNative = BuildTask.createFn "runTestsJSNative" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start native JavaScript tests"
             for path in ProjectInfo.jsTestProjects do
@@ -32,10 +32,12 @@ module RunTests =
             Trace.traceImportant "Skipping JavaScript tests"
     )
 
-    let runTestsJs = BuildTask.createFn "runTestsJS" [clean; build] (fun tp ->
+    let runTestsJs = BuildTask.createFn "runTestsJS" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Js tests"
             for path in ProjectInfo.testProjects do
+                // Setup test results directory after clean
+                System.IO.Directory.CreateDirectory(@".\tests\TestingUtils\TestResults\js") |> ignore
                 // transpile js files from fsharp code
                 run dotnet $"fable {path} -o {path}/js --nocache" ""
                 // run mocha in target path to execute tests
@@ -45,7 +47,7 @@ module RunTests =
             Trace.traceImportant "Skipping Js tests"
     )
 
-    let runTestsPyNative = BuildTask.createFn "runTestsPyNative" [clean; build] (fun tp ->
+    let runTestsPyNative = BuildTask.createFn "runTestsPyNative" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start native Python tests"
             for path in ProjectInfo.pyTestProjects do
@@ -57,10 +59,12 @@ module RunTests =
             Trace.traceImportant "Skipping Python tests"
     )
 
-    let runTestsPy = BuildTask.createFn "runTestsPy" [clean; build] (fun tp ->
+    let runTestsPy = BuildTask.createFn "runTestsPy" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Python tests"
             for path in ProjectInfo.testProjects do
+                // Setup test results directory after clean
+                System.IO.Directory.CreateDirectory(@".\tests\TestingUtils\TestResults\py") |> ignore
                 //transpile py files from fsharp code
                 run dotnet $"fable {path} -o {path}/py --lang python --nocache" ""
                 // run pyxpecto in target path to execute tests in python
