@@ -2,8 +2,6 @@ module ARCtrl.FileSystemHelper
 
 open FsSpreadsheet
 open CrossAsync
-
-open CrossAsync
 open Fable.Core
 open Fable
 
@@ -11,6 +9,11 @@ open Fable
 open Fable.Core.JsInterop
 open FsSpreadsheet.Js
 #endif
+#if FABLE_COMPILER_PYTHON
+open FsSpreadsheet.Py
+open Fable.Core.PyInterop
+#endif
+
 #if !FABLE_COMPILER
 open FsSpreadsheet.Net
 #endif
@@ -18,6 +21,9 @@ open FsSpreadsheet.Net
 let directoryExistsAsync (path : string) : CrossAsync<bool> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "directoryExists" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "directoryExists" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -29,6 +35,9 @@ let createDirectoryAsync (path : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "createDirectory" "./FileSystem.js"
     #endif
+    #if FABLE_COMPILER_PYTHON
+        import "createDirectory" "./FileSystem.py"
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         System.IO.Directory.CreateDirectory path |> ignore
@@ -38,6 +47,9 @@ let createDirectoryAsync (path : string) : CrossAsync<unit> =
 let ensureDirectoryAsync (path : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "ensureDirectory" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "ensureDirectory" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -51,6 +63,9 @@ let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "ensureDirectoryOfFile" "./FileSystem.js"
     #endif
+    #if FABLE_COMPILER_PYTHON
+        import "ensureDirectoryOfFile" "./FileSystem.py"
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         let file = new System.IO.FileInfo(filePath);
@@ -61,6 +76,9 @@ let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
 let fileExistsAsync (path : string) : CrossAsync<bool> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "fileExists" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "fileExists" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -74,6 +92,9 @@ let readFileTextAsync (path : string) : CrossAsync<string> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "readFileText" "./FileSystem.js"
     #endif
+    #if FABLE_COMPILER_PYTHON
+        import "readFileText" "./FileSystem.py"
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         return System.IO.File.ReadAllText path
@@ -83,6 +104,9 @@ let readFileTextAsync (path : string) : CrossAsync<string> =
 let readFileBinaryAsync (path : string) : CrossAsync<byte []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "readFileBinary" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "readFileBinary" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -104,6 +128,9 @@ let moveFileAsync oldPath newPath =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "moveFile" "./FileSystem.js"
     #endif
+    #if FABLE_COMPILER_PYTHON
+        import "moveFile" "./FileSystem.py"
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         System.IO.File.Move(oldPath, newPath)
@@ -113,6 +140,9 @@ let moveFileAsync oldPath newPath =
 let moveDirectoryAsync oldPath newPath =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "moveDirectory" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "moveDirectory" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -124,6 +154,9 @@ let deleteFileAsync path =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "deleteFile" "./FileSystem.js"
     #endif
+    #if FABLE_COMPILER_PYTHON
+        import "deleteFile" "./FileSystem.py"
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         System.IO.File.Delete path
@@ -133,6 +166,9 @@ let deleteFileAsync path =
 let deleteDirectoryAsync path =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "deleteDirectory" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "deleteDirectory" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -145,6 +181,9 @@ let writeFileTextAsync path text =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "writeFileText" "./FileSystem.js"
     #endif
+    #if FABLE_COMPILER_PYTHON
+        import "writeFileText" "./FileSystem.py"
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         System.IO.File.WriteAllText(path, text)
@@ -154,6 +193,9 @@ let writeFileTextAsync path text =
 let writeFileBinaryAsync path (bytes : byte []) =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         import "writeFileBinary" "./FileSystem.js"
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        import "writeFileBinary" "./FileSystem.py"
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -193,6 +235,13 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
             return paths |> Array.map standardizeSlashes
         }
     #endif
+    #if FABLE_COMPILER_PYTHON
+        let f : string -> CrossAsync<string []> = import "getSubDirectories" "./FileSystem.py"
+        crossAsync {
+            let! paths = f path
+            return paths |> Array.map standardizeSlashes
+        }
+    #endif
     #if !FABLE_COMPILER
     crossAsync {
         let paths = System.IO.Directory.GetDirectories path
@@ -203,6 +252,13 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
 let getSubFilesAsync (path : string) : CrossAsync<string []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         let f : string -> CrossAsync<string []> = import "getSubFiles" "./FileSystem.js"
+        crossAsync {
+            let! paths = f path
+            return paths |> Array.map standardizeSlashes
+        }
+    #endif
+    #if FABLE_COMPILER_PYTHON
+        let f : string -> CrossAsync<string []> = import "getSubFiles" "./FileSystem.py"
         crossAsync {
             let! paths = f path
             return paths |> Array.map standardizeSlashes

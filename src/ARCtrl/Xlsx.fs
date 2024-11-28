@@ -6,12 +6,16 @@ open ARCtrl.Spreadsheet
 open Fable.Core
 open FsSpreadsheet
 
-#if !FABLE_COMPILER
-open FsSpreadsheet.Net
-#endif
 #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 open FsSpreadsheet.Js
 #endif
+#if FABLE_COMPILER_PYTHON
+open FsSpreadsheet.Py
+#endif
+#if !FABLE_COMPILER
+open FsSpreadsheet.Net
+#endif
+
 
 module XlsxHelper =
 
