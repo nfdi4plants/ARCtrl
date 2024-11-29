@@ -23,7 +23,10 @@ let directoryExistsAsync (path : string) : CrossAsync<bool> =
         import "directoryExists" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "directoryExists" "./FileSystem.py"
+        let f : string -> bool = import "directoryExists" "./file_system.py"
+        crossAsync {
+            return f path
+        }      
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -36,7 +39,10 @@ let createDirectoryAsync (path : string) : CrossAsync<unit> =
         import "createDirectory" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "createDirectory" "./FileSystem.py"
+        let f : string -> unit =import "createDirectory" "./file_system.py"
+        crossAsync {
+            f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -49,7 +55,10 @@ let ensureDirectoryAsync (path : string) : CrossAsync<unit> =
         import "ensureDirectory" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "ensureDirectory" "./FileSystem.py"
+        let f : string -> unit = import "ensureDirectory" "./file_system.py"
+        crossAsync {
+            f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -64,7 +73,10 @@ let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
         import "ensureDirectoryOfFile" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "ensureDirectoryOfFile" "./FileSystem.py"
+        let f : string -> unit = import "ensureDirectoryOfFile" "./file_system.py"
+        crossAsync {
+            f filePath
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -78,7 +90,10 @@ let fileExistsAsync (path : string) : CrossAsync<bool> =
         import "fileExists" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "fileExists" "./FileSystem.py"
+        let f : string -> bool = import "fileExists" "./file_system.py"
+        crossAsync {
+            return f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -93,7 +108,10 @@ let readFileTextAsync (path : string) : CrossAsync<string> =
         import "readFileText" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "readFileText" "./FileSystem.py"
+        let f : string -> string = import "readFileText" "./file_system.py"
+        crossAsync {
+            return f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -106,7 +124,10 @@ let readFileBinaryAsync (path : string) : CrossAsync<byte []> =
         import "readFileBinary" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "readFileBinary" "./FileSystem.py"
+        let f : string -> byte [] = import "readFileBinary" "./file_system.py"
+        crossAsync {
+            return f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -129,7 +150,10 @@ let moveFileAsync oldPath newPath =
         import "moveFile" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "moveFile" "./FileSystem.py"
+        let f : string * string -> unit = import "moveFile" "./file_system.py"
+        crossAsync {
+            f (oldPath,newPath)
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -142,7 +166,10 @@ let moveDirectoryAsync oldPath newPath =
         import "moveDirectory" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "moveDirectory" "./FileSystem.py"
+        let f : string * string -> unit = import "moveDirectory" "./file_system.py"
+        crossAsync {
+            f (oldPath,newPath)
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -155,7 +182,10 @@ let deleteFileAsync path =
         import "deleteFile" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "deleteFile" "./FileSystem.py"
+        let f : string -> unit = import "deleteFile" "./file_system.py"
+        crossAsync {
+            f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -168,7 +198,10 @@ let deleteDirectoryAsync path =
         import "deleteDirectory" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "deleteDirectory" "./FileSystem.py"
+        let f : string -> unit =import "deleteDirectory" "./file_system.py"
+        crossAsync {
+            f path
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -182,7 +215,10 @@ let writeFileTextAsync path text =
         import "writeFileText" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "writeFileText" "./FileSystem.py"
+        let f : string * string -> unit = import "writeFileText" "./file_system.py"
+        crossAsync {
+            f(path,text)
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -195,7 +231,10 @@ let writeFileBinaryAsync path (bytes : byte []) =
         import "writeFileBinary" "./FileSystem.js"
     #endif
     #if FABLE_COMPILER_PYTHON
-        import "writeFileBinary" "./FileSystem.py"
+        let f : string * byte [] -> unit = import "writeFileBinary" "./file_system.py"
+        crossAsync {
+            f (path,bytes)
+        }
     #endif
     #if !FABLE_COMPILER
     crossAsync {
@@ -236,9 +275,9 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
         }
     #endif
     #if FABLE_COMPILER_PYTHON
-        let f : string -> CrossAsync<string []> = import "getSubDirectories" "./FileSystem.py"
+        let f : string -> string [] = import "getSubDirectories" "./file_system.py"
         crossAsync {
-            let! paths = f path
+            let paths = f path
             return paths |> Array.map standardizeSlashes
         }
     #endif
@@ -258,9 +297,9 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
         }
     #endif
     #if FABLE_COMPILER_PYTHON
-        let f : string -> CrossAsync<string []> = import "getSubFiles" "./FileSystem.py"
+        let f : string -> string [] = import "getSubFiles" "./file_system.py"
         crossAsync {
-            let! paths = f path
+            let paths = f path
             return paths |> Array.map standardizeSlashes
         }
     #endif

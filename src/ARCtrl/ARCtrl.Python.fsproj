@@ -11,7 +11,7 @@
   <ItemGroup>
     <None Include="README.md" />
     <Compile Include="CrossAsync.fs" />
-    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/"/>
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -54,7 +54,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="ContractIO\FileSystem.py" PackagePath="fable\" />
+    <Content Include="ContractIO\file_system.py" PackagePath="fable\" />
     <Compile Include="ContractIO\FileSystemHelper.fs" />
     <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Py.fs" />
@@ -66,8 +66,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Thoth.Json.Python"/>
-    <PackageReference Include="FsSpreadsheet.Py"/>
+    <PackageReference Include="Thoth.Json.Python" />
+    <PackageReference Include="FsSpreadsheet.Py" />
   </ItemGroup>
   <PropertyGroup>
     <PythonDependencies>
