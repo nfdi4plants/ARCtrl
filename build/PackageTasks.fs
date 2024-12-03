@@ -71,6 +71,8 @@ module BundleJs =
         "" // "fable-library.**/**"
         |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
 
+        System.IO.File.Copy(ProjectInfo.jsHelperFilePath, $"{ProjectInfo.npmPkgDir}/FileSystem.js", true) |> ignore
+
         Fake.JavaScript.Npm.exec "pack" (fun o ->
             { o with
                 WorkingDirectory = ProjectInfo.npmPkgDir

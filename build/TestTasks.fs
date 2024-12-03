@@ -26,6 +26,7 @@ module RunTests =
             for path in ProjectInfo.jsTestProjects do
                 // transpile library for native access
                 run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ARCtrl --nocache" ""
+                System.IO.File.Copy(jsHelperFilePath, $"{path}/ARCtrl/{jsHelperFileName}") |> ignore
                 GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
                 run npx $"mocha {path} --timeout 20000" ""
         else
@@ -40,6 +41,8 @@ module RunTests =
                 System.IO.Directory.CreateDirectory(@".\tests\TestingUtils\TestResults\js") |> ignore
                 // transpile js files from fsharp code
                 run dotnet $"fable {path} -o {path}/js --nocache" ""
+
+                System.IO.File.Copy(jsHelperFilePath, $"{path}/js/{jsHelperFileName}") |> ignore
                 // run mocha in target path to execute tests
                 // "--timeout 20000" is used, because json schema validation takes a bit of time.
                 run node $"{path}/js/Main.js" ""
@@ -102,6 +105,7 @@ module RunTests =
                 run python $"{p}/py/main.py" ""
                 // transpile js files from fsharp code
                 run dotnet $"fable {p} -o {p}/js" ""
+                System.IO.File.Copy(jsHelperFilePath, $"{p}/js/{jsHelperFileName}") |> ignore
                 // run mocha in target path to execute tests
                 // "--timeout 20000" is used, because json schema validation takes a bit of time.
                 run node $"{p}/js/Main.js" ""
