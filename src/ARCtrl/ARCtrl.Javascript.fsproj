@@ -8,7 +8,8 @@
   
   <Import Project="ARCtrl.Common.props" />
 
-  <ItemGroup>
+  <ItemGroup>   
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -48,11 +49,14 @@
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
     <Compile Include="JsonIO\ARC.fs" />
+    <Compile Include="CrossAsync.fs" />
     <None Include="README.md" />
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/"/>
+    <Content Include="ContractIO\FileSystem.js" PackagePath="fable\" />  
+    <Compile Include="ContractIO\FileSystemHelper.fs" />
+    <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
@@ -60,15 +64,25 @@
     <Compile Include="Json.fs" />
     <Compile Include="Xlsx.fs" />
   </ItemGroup>
+
+  <!--<ItemGroup>
+    <Content Include="*.fsproj; *.fs; *.js;" Exclude="**\*.fs.js" PackagePath="fable\" />
+  </ItemGroup>-->
+  
   <ItemGroup>
-    <PackageReference Include="Fable.Fetch"/>
-    <PackageReference Include="Fable.SimpleHttp"/>
-    <PackageReference Include="Thoth.Json.Javascript"/>
+    <PackageReference Include="Fable.Fetch" />
+    <PackageReference Include="Fable.SimpleHttp" />
+    <PackageReference Include="Fable.Promise" />
+    <PackageReference Include="Thoth.Json.Javascript" />
+    <PackageReference Include="FsSpreadsheet.Js" />
   </ItemGroup>
 
   <PropertyGroup>
     <NpmDependencies>
       <NpmPackage Name="isomorphic-fetch" Version="gt 3.0.0 lt 3.0.0" ResolutionStrategy="Max" />
+    </NpmDependencies>
+    <NpmDependencies>
+      <NpmPackage Name="@nfdi4plants/exceljs" Version="0.3.0" ResolutionStrategy="Max" />
     </NpmDependencies>
   </PropertyGroup>
   

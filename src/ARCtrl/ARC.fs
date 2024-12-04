@@ -9,6 +9,7 @@ open ARCtrl.Spreadsheet
 open FsSpreadsheet
 open Fable.Core
 open ARCtrl.ArcPathHelper
+open CrossAsync
 
 module ARCAux =
 
@@ -88,7 +89,36 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         with get() = _fs
         and set(fs) = _fs <- fs
 
-    member this.RemoveAssay(assayIdentifier: string) =
+    member this.WriteAsync(arcPath) =
+        this.GetWriteContracts()
+        |> fullFillContractBatchAsync arcPath
+
+    member this.UpdateAsync(arcPath) =
+        this.GetUpdateContracts()
+        |> fullFillContractBatchAsync arcPath
+
+    static member loadAsync (arcPath : string) =
+        crossAsync {
+
+            let! paths = FileSystemHelper.getAllFilePathsAsync arcPath
+            let arc = ARC.fromFilePaths (paths |> Seq.toArray)
+
+            let contracts = arc.GetReadContracts()
+      
+        
+
+            let! fulFilledContracts = 
+                contracts 
+                |> fullFillContractBatchAsync arcPath
+
+            match fulFilledContracts with
+            | Ok c -> 
+                arc.SetISAFromContracts(c)
+                return Ok arc
+            | Error e -> return Error e
+        }      
+
+    member this.GetAssayRemoveContracts(assayIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i when i.AssayIdentifiers |> Seq.contains assayIdentifier -> i
@@ -101,15 +131,18 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let assayFolderPath = getAssayFolderPath(assayIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
         this.SetFilePaths(filteredPaths)      
-        [
+        [|
             assay.ToDeleteContract()
             isa.ToUpdateContract()
             for s in studies do
                 s.ToUpdateContract()
-        ]
-        |> ResizeArray
+        |]
 
-    member this.RenameAssay(oldAssayIdentifier: string, newAssayIdentifier: string) =
+    member this.RemoveAssayAsync(arcPath : string, assayIdentifier: string) =
+        this.GetAssayRemoveContracts(assayIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i when i.AssayIdentifiers |> Seq.contains oldAssayIdentifier -> i
@@ -122,13 +155,16 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let newAssayFolderPath = getAssayFolderPath(newAssayIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldAssayFolderPath,newAssayFolderPath))
         this.SetFilePaths(renamedPaths)
-        [
+        [|
             yield Contract.createRename(oldAssayFolderPath,newAssayFolderPath)
             yield! this.GetUpdateContracts()
-        ]
-        |> ResizeArray
+        |]
 
-    member this.RemoveStudy(studyIdentifier: string) =
+    member this.RenameAssayAsync(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
+        this.GetAssayRenameContracts(oldAssayIdentifier,newAssayIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.GetStudyRemoveContracts(studyIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i -> i
@@ -138,13 +174,16 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let studyFolderPath = getStudyFolderPath(studyIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
         this.SetFilePaths(filteredPaths)
-        [
+        [|
             Contract.createDelete(studyFolderPath) // isa.GetStudy(studyIdentifier).ToDeleteContract()
             isa.ToUpdateContract()
-        ]
-        |> ResizeArray
+        |]
 
-    member this.RenameStudy(oldStudyIdentifier: string, newStudyIdentifier: string) =
+    member this.RemoveStudyAsync(arcPath : string, studyIdentifier: string) =
+        this.GetStudyRemoveContracts(studyIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         let isa = 
             match this.ISA with
             | Some i when i.StudyIdentifiers |> Seq.contains oldStudyIdentifier -> i
@@ -157,11 +196,67 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         let newStudyFolderPath = getStudyFolderPath(newStudyIdentifier)
         let renamedPaths = paths |> Array.map (fun p -> p.Replace(oldStudyFolderPath,newStudyFolderPath))
         this.SetFilePaths(renamedPaths)
-        [
+        [|
             yield Contract.createRename(oldStudyFolderPath,newStudyFolderPath)
             yield! this.GetUpdateContracts()
-        ]
-        |> ResizeArray
+        |]
+
+    member this.RenameStudyAsync(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
+        this.GetStudyRenameContracts(oldStudyIdentifier,newStudyIdentifier)
+        |> fullFillContractBatchAsync arcPath
+
+    
+    #if FABLE_COMPILER_PYTHON || !FABLE_COMPILER
+    member this.Write(arcPath) =
+        match Async.RunSynchronously (this.WriteAsync(arcPath)) with
+        | Ok _ -> ()
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not write ARC, failed with the following errors %s" appended
+
+    member this.Update(arcPath) =
+        match Async.RunSynchronously (this.UpdateAsync(arcPath)) with
+        | Ok _ -> ()
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not update ARC, failed with the following errors %s" appended
+
+    member this.RemoveAssay(arcPath, assayIdentifier) =
+        match Async.RunSynchronously (this.RemoveAssayAsync(arcPath, assayIdentifier)) with
+        | Ok _ -> ()
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not remove assay, failed with the following errors %s" appended
+
+    member this.RenameAssay(arcPath, oldAssayIdentifier, newAssayIdentifier) =
+        match Async.RunSynchronously (this.RenameAssayAsync(arcPath, oldAssayIdentifier, newAssayIdentifier)) with
+        | Ok _ -> ()
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not rename assay, failed with the following errors %s" appended
+
+    member this.RemoveStudy(arcPath, studyIdentifier) =
+        match Async.RunSynchronously (this.RemoveStudyAsync(arcPath, studyIdentifier)) with
+        | Ok _ -> ()
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not remove study, failed with the following errors %s" appended
+
+    member this.RenameStudy(arcPath, oldStudyIdentifier, newStudyIdentifier) =
+        match Async.RunSynchronously (this.RenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier)) with
+        | Ok _ -> ()
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not rename study, failed with the following errors %s" appended
+
+    static member load (arcPath) =
+        match Async.RunSynchronously (ARC.loadAsync arcPath) with
+        | Ok arc -> arc
+        | Error errors ->
+            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+            failwithf "Could not load ARC, failed with the following errors %s" appended
+    #endif
+
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
@@ -244,8 +339,9 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     //    fs <- Some newFS
 
     // to-do: function that returns read contracts based on a list of paths.
-    member this.GetReadContracts () =
-        _fs.Tree.ToFilePaths() |> Array.choose Contract.ARC.tryISAReadContractFromPath 
+    member this.GetReadContracts () : Contract [] =
+        _fs.Tree.ToFilePaths()
+        |> Array.choose Contract.ARC.tryISAReadContractFromPath 
 
     /// <summary>
     /// This function creates the ARC-model from fullfilled READ contracts. The necessary READ contracts can be created with `ARC.getReadContracts`.

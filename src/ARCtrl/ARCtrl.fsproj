@@ -8,6 +8,8 @@
   <Import Project="ARCtrl.Common.props" />
 
   <ItemGroup>
+    <None Include="README.md" />
+    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -47,20 +49,22 @@
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
     <Compile Include="JsonIO\ARC.fs" />
-    <None Include="README.md" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
+    <Compile Include ="CrossAsync.fs" />
+    <Compile Include ="ContractIO\FileSystemHelper.fs" />
+    <Compile Include ="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.fs" />
     <Compile Include="Template.Web.fs" />
     <Compile Include="ARC.fs" />
     <Compile Include="Json.fs" />
-    <Compile Include="Xlsx.fs" />
+    <Compile Include="Xlsx.fs" /> 
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Fable.SimpleHttp" />
     <PackageReference Include="Thoth.Json.Newtonsoft" />
+    <PackageReference Include="FsSpreadsheet.NET" />
   </ItemGroup>
  
   

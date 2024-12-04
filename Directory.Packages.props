@@ -10,12 +10,16 @@
     <PackageVersion Include="Thoth.Json.JavaScript" Version="0.3.0" />
     <PackageVersion Include="Thoth.Json.Python"     Version="0.4.0" />
     <PackageVersion Include="Thoth.Json.Newtonsoft" Version="0.2.0" />
-    <PackageVersion Include="FsSpreadsheet"         Version="6.3.0-alpha.4" />
+    <PackageVersion Include="FsSpreadsheet"         Version="6.3.1" />
+    <PackageVersion Include="FsSpreadsheet.NET"     Version="6.3.1" />
+    <PackageVersion Include="FsSpreadsheet.Js"      Version="6.3.1" />
+    <PackageVersion Include="FsSpreadsheet.Py"      Version="6.3.1" />
     <PackageVersion Include="YAMLicious"            Version="0.0.3" />
     <PackageVersion Include="DynamicObj"            Version="4.0.3" />
     <PackageVersion Include="Fable.SimpleHttp"      Version="3.5.0" />
     <PackageVersion Include="Fable.Fetch"           Version="2.6.0" />
     <PackageVersion Include="Fable.Node"            Version="1.2.0" />
+    <PackageVersion Include="Fable.Promise"         Version="3.2.0" />
     <PackageVersion Include="Fable.Pyxpecto"        Version="1.2.0" />
     <PackageVersion Include="NJsonSchema"           Version="10.8.0" />
   </ItemGroup>

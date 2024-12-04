@@ -34,6 +34,10 @@ module Utils =
         Seq.mapi2 (fun i s p -> i,s,p) s1 s2
         |> Seq.find (function |_,Some s,Some p when s=p -> false |_-> true)
 
+    let trim (path : string) =
+        if path.StartsWith("./") then
+            path.Replace("./","").Trim('/')
+        else path.Trim('/')
 
 module Result =
 
@@ -95,6 +99,7 @@ module Expect =
 
     let inline equal actual expected message = Expect.equal actual expected message
     let notEqual actual expected message = Expect.notEqual actual expected message
+
 
     /// Trims whitespace and normalizes lineendings to "\n"
     let trimEqual (actual: string) (expected: string) message =
@@ -193,7 +198,11 @@ module Expect =
         failwithf "%s. Sequence actual longer than expected, at pos %i found item %O."
           message i a
 
-    
+    let pathSequenceEqual actual expected message = 
+        let actual = actual |> Seq.map trim
+        let expected = expected |> Seq.map trim
+        sequenceEqual actual expected message
+
     let workSheetEqual (actual : FsWorksheet) (expected : FsWorksheet) message =
         let f (ws : FsWorksheet) = 
             ws.RescanRows()
@@ -241,6 +250,8 @@ module Expect =
 [<AutoOpen>]
 module Test =
 
+    open CrossAsync
+
     let test = test
     let testAsync = testAsync
     let testSequenced = testSequenced
@@ -248,10 +259,22 @@ module Test =
     let testCase = testCase
     let ptestCase = ptestCase
     let ftestCase = ftestCase
+
+
+    let testCaseCrossAsync (text : string) (ca : CrossAsync<unit>) =
+        ca
+        |> catchWith (fun exn -> failwithf "%s" exn.Message)
+        |> asAsync
+        |> testCaseAsync text
+        
+    let ptestCaseCrossAsync (text : string) (ca : CrossAsync<unit>) = 
+        ptestCaseAsync text (asAsync ca)
+    let ftestCaseCrossAsync (text : string) (ca : CrossAsync<unit>) =
+        ftestCaseAsync text (asAsync ca)
+
     let testCaseAsync = testCaseAsync
     let ptestCaseAsync = ptestCaseAsync
     let ftestCaseAsync = ftestCaseAsync
-
 
     let testList = testList
     let ftestList = ftestList

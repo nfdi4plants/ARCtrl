@@ -1,8 +1,8 @@
-﻿module ARCtrl.Template.Web
+module ARCtrl.Template.Web
 
 open ARCtrl
 open Fable.Core
-
+open CrossAsync
 
 let getTemplates(url: string option) =
     let defaultURL = @"https://github.com/nfdi4plants/Swate-templates/releases/download/latest/templates_v2.0.0.json"

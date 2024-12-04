@@ -9,6 +9,7 @@ open ARCtrl.Contract
 open ARCtrl.Spreadsheet
 open ARCtrl.Helper
 open FsSpreadsheet
+open CrossAsync
 
 let tests_create = testList "create" [
     testCase "empty" <| fun _ ->
@@ -92,7 +93,7 @@ let private tests_read_contracts = testList "read_contracts" [
         Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
     
     )
-    testCase "StudyAssayOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
+    testCase "GetStudyRemoveContractsOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
         let arc = ARC()
         arc.SetISAFromContracts([|
             SimpleISA.Investigation.investigationReadContract
@@ -724,7 +725,7 @@ let private ``payload_file_filters`` =
         }
     ]
 
-let private tests_RemoveAssay = testList "RemoveAssay" [
+let private tests_GetAssayRemoveContracts = testList "GetAssayRemoveContracts" [
     ptestCase "not registered, fsworkbook equal" <| fun _ ->
         let arc = ARC()
         let i = ArcInvestigation.init("My Investigation")
@@ -732,7 +733,7 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         let assayIdentifier = "My Assay"
         i.InitAssay(assayIdentifier) |> ignore
         Expect.equal i.AssayCount 1 "ensure assay count"
-        let actual = arc.RemoveAssay(assayIdentifier)
+        let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         let expected = [
             Contract.createDelete (ArcPathHelper.getAssayFolderPath assayIdentifier)
             i.ToUpdateContract()
@@ -745,7 +746,7 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         let assayIdentifier = "My Assay"
         i.InitAssay(assayIdentifier) |> ignore
         Expect.equal i.AssayCount 1 "ensure assay count"
-        let actual = arc.RemoveAssay(assayIdentifier)
+        let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         Expect.hasLength actual 2 "contract count"
         Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
         Expect.equal actual.[0].Operation DELETE "assay contract cmd"
@@ -767,7 +768,7 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         Expect.equal i.AssayCount 1 "ensure assay count"
         Expect.equal i.StudyCount 2 "ensure study count"
         Expect.hasLength a.StudiesRegisteredIn 2 "ensure studies registered in - count"
-        let actual = arc.RemoveAssay(assayIdentifier)
+        let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         Expect.hasLength actual 4 "contract count"
         Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
         Expect.equal actual.[0].Operation DELETE "assay contract cmd"
@@ -779,14 +780,14 @@ let private tests_RemoveAssay = testList "RemoveAssay" [
         Expect.equal actual.[3].Operation UPDATE "study 2 contract cmd"
 ]
 
-let tests_RenameAssay = testList "RenameAssay" [
+let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
     testCase "not existing" <| fun _ ->
         let i = ArcInvestigation("MyInvestigation")
         i.InitAssay("OtherAssayName") |> ignore
         let arc = ARC(isa = i)
         
         let assayMoveF = 
-            fun () -> arc.RenameAssay("MyOldAssay","MyNewAssay") |> ignore
+            fun () -> arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay") |> ignore
 
         Expect.throws assayMoveF "Should fail as arc does not contan assay with given name"
     testCase "Basic" <| fun _ ->
@@ -794,7 +795,7 @@ let tests_RenameAssay = testList "RenameAssay" [
         i.InitAssay("MyOldAssay") |> ignore
         let arc = ARC(isa = i)
         arc.GetWriteContracts() |> ignore
-        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        let contracts = arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay")
         Expect.hasLength contracts 2 "Contract count is wrong"
         let renameContract = contracts.[0]
         Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
@@ -816,7 +817,7 @@ let tests_RenameAssay = testList "RenameAssay" [
         i.InitAssay("MyOldAssay") |> ignore
         let arc = ARC(isa = i)
         arc.GetWriteContracts() |> ignore
-        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        let contracts = arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay")
         Expect.hasLength contracts 2 "Contract count is wrong"
         let renameContract = contracts.[0]
         Expect.equal renameContract.Operation Operation.RENAME "Rename contract operation"
@@ -838,7 +839,7 @@ let tests_RenameAssay = testList "RenameAssay" [
         s.InitRegisteredAssay("MyOldAssay") |> ignore
         let arc = ARC(isa = i)
         arc.GetWriteContracts() |> ignore
-        let contracts = arc.RenameAssay("MyOldAssay","MyNewAssay")
+        let contracts = arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay")
         Expect.hasLength contracts 3 "Contract count is wrong"
         // Rename contract
         let renameContract = contracts.[0]
@@ -871,14 +872,14 @@ let tests_RenameAssay = testList "RenameAssay" [
 
 open ARCtrl.Spreadsheet
 
-let tests_RenameStudy = testList "RenameStudy" [
+let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
     testCase "not existing" <| fun _ ->
         let i = ArcInvestigation("MyInvestigation")
         i.InitStudy("OtherStudyName") |> ignore
         let arc = ARC(isa = i)
         
         let studyMoveF = 
-            fun () -> arc.RenameStudy("MyOldStudy","MyNewStudy") |> ignore
+            fun () -> arc.GetStudyRenameContracts("MyOldStudy","MyNewStudy") |> ignore
 
         Expect.throws studyMoveF "Should fail as arc does not contan study with given name"
     testCase "Basic" <| fun _ ->
@@ -886,7 +887,7 @@ let tests_RenameStudy = testList "RenameStudy" [
         i.InitStudy("MyOldStudy") |> ignore
         let arc = ARC(isa = i)
         arc.GetWriteContracts() |> ignore
-        let contracts = arc.RenameStudy("MyOldStudy","MyNewStudy")
+        let contracts = arc.GetStudyRenameContracts("MyOldStudy","MyNewStudy")
         Expect.hasLength contracts 2 "Contract count is wrong"
         // Rename contract
         let renameContract = contracts.[0]
@@ -910,7 +911,7 @@ let tests_RenameStudy = testList "RenameStudy" [
         i.RegisterStudy("MyOldStudy") |> ignore
         let arc = ARC(isa = i)
         arc.GetWriteContracts() |> ignore
-        let contracts = arc.RenameStudy("MyOldStudy","MyNewStudy")
+        let contracts = arc.GetStudyRenameContracts("MyOldStudy","MyNewStudy")
         Expect.hasLength contracts 3 "Contract count is wrong"
         // Rename contract
         let renameContract = contracts.[0]
@@ -942,6 +943,445 @@ let tests_RenameStudy = testList "RenameStudy" [
 
 ] 
 
+
+let tests_load =
+
+    testList "Load" [
+        testCaseCrossAsync "simpleARC" (crossAsync {
+            let p = TestObjects.IO.testSimpleARC
+            let! result = ARC.loadAsync(p)
+            let result = Expect.wantOk result "ARC should load successfully"
+
+            Expect.isSome result.ISA "Should contain an ISA part"
+            Expect.isNone result.CWL "Should not contain a CWL part"
+
+            let isa = result.ISA.Value
+            Expect.equal isa.StudyCount 1 "Should contain 1 study"
+            Expect.equal isa.AssayCount 1 "Should contain 1 assay"
+            Expect.equal isa.RegisteredStudies.Count 1 "Should contain 1 registered study"
+            
+            let s = isa.Studies.[0]
+            Expect.equal s.RegisteredAssayCount 1 "Should contain 1 registered assay"
+            Expect.equal s.TableCount 3 "Study should contain 3 tables"
+
+            let a = s.RegisteredAssays.[0]
+            Expect.equal a.TableCount 4 "Assay should contain 4 tables"
+            }
+            
+        )
+    ]
+
+
+let tests_write =
+
+    testList "Write" [
+        testCaseCrossAsync "empty" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
+            let a = ARC()
+
+            let! result = a.WriteAsync(p)
+
+            Expect.wantOk result "ARC should write successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/assays/.gitkeep";
+                    "/studies/.gitkeep";
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."                  
+        })
+        testCaseCrossAsync "SimpleARC" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
+            let arc = ARC()
+
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! result = arc.WriteAsync(p)
+            Expect.wantOk result "ARC should write successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{studyName}/isa.study.xlsx"
+                    $"/studies/{studyName}/README.md"
+                    $"/studies/{studyName}/protocols/.gitkeep";
+                    $"/studies/{studyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        })
+        // This test reads a preexisting assay with data and everything, data content is not copied though but just the 
+        testCaseCrossAsync "LoadSimpleARCAndAddAssay" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithAssay"
+
+            let! readResult = ARC.loadAsync(TestObjects.IO.testSimpleARC)
+            let arc = Expect.wantOk readResult "ARC should load correctly"
+
+            let i = arc.ISA.Value
+
+            let existingStudyName = "experiment1_material"
+            let existingAssayName = "measurement1"
+
+            let assayName = "YourAssay"
+            i.InitAssay(assayName) |> ignore
+            arc.ISA <- Some i
+
+            arc.UpdateFileSystem()
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{existingStudyName}/isa.study.xlsx"
+                    $"/studies/{existingStudyName}/README.md"
+                    $"/studies/{existingStudyName}/protocols/.gitkeep";
+                    $"/studies/{existingStudyName}/resources/.gitkeep";
+                    $"/studies/{existingStudyName}/resources/Sample5_84c37b60-2342-4226-a36c-4b8dfe84ebe9.png"
+                    $"/studies/{existingStudyName}/resources/Sample6_208df064-4b1c-4da0-a1f8-6412e1fb2284.png"
+                    $"/studies/{existingStudyName}/resources/Sample1_e36ca6b8-19ba-4504-aa82-d4781765873d.png"
+                    $"/studies/{existingStudyName}/resources/Sample2_714ca2b7-22b7-4f69-b83d-9165f624da25.png"
+                    $"/studies/{existingStudyName}/resources/Sample3_66fac760-acc7-4ed4-ba21-2cb67fa36e4d.png"
+                    $"/studies/{existingStudyName}/resources/Sample4_cba5f40c-fc05-44d6-a589-b0e3dafaeefe.png"
+                    "/assays/.gitkeep";
+                    $"/.arc/.gitkeep"
+                    $"/assays/{existingAssayName}/isa.assay.xlsx"
+                    $"/assays/{existingAssayName}/README.md"
+                    $"/assays/{existingAssayName}/isa.datamap.xlsx"
+                    $"/assays/{existingAssayName}/protocols/.gitkeep"
+                    $"/assays/{existingAssayName}/protocols/extractionProtocol.txt"
+                    $"/assays/{existingAssayName}/dataset/.gitkeep"
+                    $"/assays/{existingAssayName}/dataset/table.csv"
+                    $"/assays/{existingAssayName}/dataset/proteomics_result.csv"
+                    $"/assays/{existingAssayName}/dataset/sample1.raw"
+                    $"/assays/{existingAssayName}/dataset/sample2.raw"
+                    $"/assays/{existingAssayName}/dataset/sample3.raw"
+                    $"/assays/{existingAssayName}/dataset/sample4.raw"
+                    $"/assays/{existingAssayName}/dataset/sample5.raw"
+                    $"/assays/{existingAssayName}/dataset/sample6.raw"
+                    $"/assays/{existingAssayName}/dataset/sample7.raw"
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        })
+        |> testSequenced
+    ]
+
+let tests_Update =
+    testList "Update" [
+        testCaseCrossAsync "AddedAssay" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Update_AddedAssay"
+            let arc = ARC()
+
+            // setup arc
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+
+            // add assay
+            let newAssayName = "MyNewAssay"
+            i.InitAssay(newAssayName) |> ignore
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! updateResult = arc.UpdateAsync(p)
+
+            Expect.wantOk updateResult "ARC should update successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{studyName}/isa.study.xlsx"
+                    $"/studies/{studyName}/README.md"
+                    $"/studies/{studyName}/protocols/.gitkeep";
+                    $"/studies/{studyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    $"/assays/{newAssayName}/isa.assay.xlsx"
+                    $"/assays/{newAssayName}/README.md"
+                    $"/assays/{newAssayName}/protocols/.gitkeep"
+                    $"/assays/{newAssayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
+        })
+
+
+    ]
+
+let tests_renameAssay =
+    testList "RenameAssay" [
+        testCaseCrossAsync "SimpleARC" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameAssay_SimpleARC"
+            let arc = ARC()
+
+            // setup arc
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! updateResult = arc.WriteAsync(p)
+
+            Expect.wantOk updateResult "ARC should write successfully" |> ignore
+
+            // rename assay
+            let newAssayName = "MyNewAssay"
+
+            let! renameResult = arc.RenameAssayAsync(p,assayName, newAssayName)
+            Expect.wantOk renameResult "Assay should be renamed successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{studyName}/isa.study.xlsx"
+                    $"/studies/{studyName}/README.md"
+                    $"/studies/{studyName}/protocols/.gitkeep";
+                    $"/studies/{studyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{newAssayName}/isa.assay.xlsx"
+                    $"/assays/{newAssayName}/README.md"
+                    $"/assays/{newAssayName}/protocols/.gitkeep"
+                    $"/assays/{newAssayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        })
+    ]
+
+let tests_RenameStudy =
+    testList "RenameStudy" [
+        testCaseCrossAsync "SimpleARC" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameStudy_SimpleARC"
+            let arc = ARC()
+
+            // setup arc
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+
+            // rename study
+            let newStudyName = "MyNewStudy"
+
+            let! renameResult = arc.RenameStudyAsync(p,studyName, newStudyName)
+            Expect.wantOk renameResult "Study should be renamed successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{newStudyName}/isa.study.xlsx"
+                    $"/studies/{newStudyName}/README.md"
+                    $"/studies/{newStudyName}/protocols/.gitkeep";
+                    $"/studies/{newStudyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
+
+        })
+    ]
+
+let tests_RemoveAssay =
+    testList "RemoveAssay" [
+        testCaseCrossAsync "SimpleARC" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveAssay_SimpleARC"
+            let arc = ARC()
+
+            // setup arc
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+
+            // remove assay
+
+            let! removeResult = arc.RemoveAssayAsync(p,assayName)
+            Expect.wantOk removeResult "Assay should be removed successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{studyName}/isa.study.xlsx"
+                    $"/studies/{studyName}/README.md"
+                    $"/studies/{studyName}/protocols/.gitkeep";
+                    $"/studies/{studyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
+        })
+    ]
+
+let tests_RemoveStudy =
+    testList "RemoveStudy" [
+        testCaseCrossAsync "SimpleARC" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveStudy_SimpleARC"
+            let arc = ARC()
+
+            // setup arc
+            let i = ArcInvestigation("MyInvestigation")
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            i.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            arc.ISA <- Some i
+            arc.UpdateFileSystem()
+
+            let! writeResult = arc.WriteAsync(p)
+
+            Expect.wantOk writeResult "ARC should write successfully" |> ignore
+
+            // remove study
+
+            let! removeResult = arc.RemoveStudyAsync(p,studyName)
+            Expect.wantOk removeResult "Study should be removed successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    "/workflows/.gitkeep"          
+                ]
+                |> List.sort
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."
+        })
+    ]
+
+
+
 let main = testList "ARCtrl" [
     tests_create
     tests_fromFilePaths
@@ -949,10 +1389,17 @@ let main = testList "ARCtrl" [
     tests_read_contracts
     tests_writeContracts
     tests_updateContracts
-    tests_RemoveAssay
-    tests_RenameAssay
-    tests_RenameStudy
+    tests_GetAssayRemoveContracts
+    tests_GetAssayRenameContracts
+    tests_GetStudyRenameContracts
     payload_file_filters
+    tests_load
+    tests_write
+    tests_Update
+    tests_renameAssay
+    tests_RenameStudy
+    tests_RemoveAssay
+    tests_RemoveStudy
 ]
 
 
