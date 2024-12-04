@@ -1,5 +1,4 @@
 namespace ARCtrl
-namespace ARCtrl
 
 open Thoth.Json.Core
 open ARCtrl.Spreadsheet
