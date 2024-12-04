@@ -2,17 +2,25 @@ module TestObjects.IO
 
 open ARCtrl.ArcPathHelper
 
-let testObjectsBaseFolder = combine __SOURCE_DIRECTORY__ "TestObjects.IO"
+let testBaseFolder =
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+    "./tests/TestingUtils"
+    #else
+    //"../TestingUtils"
+    __SOURCE_DIRECTORY__
+    #endif
+
+let testObjectsBaseFolder = combine testBaseFolder "TestObjects.IO"
 
 let testResultsFolder =
     #if !FABLE_COMPILER
-    combineMany [| __SOURCE_DIRECTORY__;"TestResults";"NET"|]
+    combineMany [| testBaseFolder;"TestResults";"NET"|]
     #endif
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-    combineMany [| __SOURCE_DIRECTORY__;"TestResults";"js"|]
+    combineMany [| testBaseFolder;"TestResults";"js"|]
     #endif
     #if FABLE_COMPILER_PYTHON
-    combineMany [| __SOURCE_DIRECTORY__;"TestResults";"py"|]
+    combineMany [| testBaseFolder;"TestResults";"py"|]
     #endif
 
 let testContractsFolder = combine testObjectsBaseFolder "Contracts"

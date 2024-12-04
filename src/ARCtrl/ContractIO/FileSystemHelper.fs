@@ -254,11 +254,18 @@ let writeFileXlsxAsync path (wb : FsWorkbook) =
     #endif
 
 
+let trim (path : string) =
+    if path.StartsWith("./") then
+        path.Replace("./","").Trim('/')
+    else path.Trim('/')
+
 /// Return the absolute path relative to the directoryPath
 let makeRelative directoryPath (path : string) =
     if directoryPath = "." || directoryPath = "/" || directoryPath = "" then
         path
     else
+        let directoryPath = trim directoryPath
+        let path = trim path
         if path.StartsWith(directoryPath) then 
             path.Substring(directoryPath.Length)
         else path

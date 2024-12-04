@@ -124,7 +124,7 @@ let getSubFiles =
                     $"{TestObjects.IO.testSubPathsFolder}/File1.txt" |> FileSystemHelper.standardizeSlashes
                     $"{TestObjects.IO.testSubPathsFolder}/File2.csv" |> FileSystemHelper.standardizeSlashes
                 ]
-            Expect.sequenceEqual result expected "Files were not found correctly."
+            Expect.pathSequenceEqual result expected "Files were not found correctly."
         })
     ]
 
@@ -138,7 +138,7 @@ let getSubDirectories =
                 [
                     $"{TestObjects.IO.testSubPathsFolder}/SubFolder" |> FileSystemHelper.standardizeSlashes
                 ]
-            Expect.sequenceEqual result expected "Directories were not found correctly."
+            Expect.pathSequenceEqual result expected "Directories were not found correctly."
         })
     ]
 
@@ -157,7 +157,7 @@ let getAllFilePaths =
                     $"/SubFolder/File3.xlsx" |> FileSystemHelper.standardizeSlashes
                     $"/SubFolder/SubSubFolder/File4" |> FileSystemHelper.standardizeSlashes
                 ]
-            Expect.sequenceEqual result expected "File Paths were not found correctly."
+            Expect.pathSequenceEqual result expected "File Paths were not found correctly."
             
         })
     ]

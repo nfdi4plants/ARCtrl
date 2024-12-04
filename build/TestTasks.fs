@@ -38,7 +38,7 @@ module RunTests =
             Trace.traceImportant "Start Js tests"
             for path in ProjectInfo.testProjects do
                 // Setup test results directory after clean
-                System.IO.Directory.CreateDirectory(@".\tests\TestingUtils\TestResults\js") |> ignore
+                System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
                 // transpile js files from fsharp code
                 run dotnet $"fable {path} -o {path}/js --nocache" ""
 
@@ -67,7 +67,7 @@ module RunTests =
             Trace.traceImportant "Start Python tests"
             for path in ProjectInfo.testProjects do
                 // Setup test results directory after clean
-                System.IO.Directory.CreateDirectory(@".\tests\TestingUtils\TestResults\py") |> ignore
+                System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/py") |> ignore
                 //transpile py files from fsharp code
                 run dotnet $"fable {path} -o {path}/py --lang python --nocache" ""
                 // run pyxpecto in target path to execute tests in python
