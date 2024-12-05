@@ -1,6 +1,9 @@
-### 2.3.0+13842ba (Released 2024-12-4)
-Cross-language file access functionality is here!
+### 2.3.1+56da453 (Released 2024-12-5)
+* Additions:
+    * [[#51eb019](https://github.com/nfdi4plants/ARCtrl/commit/51eb019ae0dc8b3dc7adb1a9e7145b884cca74c1)] rename top-level ARC IO functions
 
+### 2.3.0+13842ba (Released 2024-12-4)
+    * Cross-language file access functionality is here!
 * Additions:
     * [[#94714ba](https://github.com/nfdi4plants/ARCtrl/commit/94714ba4e9c0d19ddb7524d9bdc6c56b804a60a4)] add level synchronous IO functions for dotnet and python
     * [[#5c1f99e](https://github.com/nfdi4plants/ARCtrl/commit/5c1f99ea046ee6634da97423ba35356e5dc92b23)] finish up basic cross language IO and tests
