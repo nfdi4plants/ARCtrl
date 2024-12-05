@@ -1,3 +1,28 @@
+### 2.3.0+13842ba (Released 2024-12-4)
+Cross-language file access functionality is here!
+
+* Additions:
+    * [[#94714ba](https://github.com/nfdi4plants/ARCtrl/commit/94714ba4e9c0d19ddb7524d9bdc6c56b804a60a4)] add level synchronous IO functions for dotnet and python
+    * [[#5c1f99e](https://github.com/nfdi4plants/ARCtrl/commit/5c1f99ea046ee6634da97423ba35356e5dc92b23)] finish up basic cross language IO and tests
+    * [[#8c6d20d](https://github.com/nfdi4plants/ARCtrl/commit/8c6d20d3a84775caf7b4b5411a8faa7b0fd53f21)] finish up python io
+    * [[#ac29af6](https://github.com/nfdi4plants/ARCtrl/commit/ac29af603dc48be54c1e3e62f720a3e574cc1e2e)] finish up first version python arc io
+    * [[#a6438eb](https://github.com/nfdi4plants/ARCtrl/commit/a6438eb834fee7724a364a2cf46d5361fbb23ce3)] start working on python arc IO
+    * [[#2b754f5](https://github.com/nfdi4plants/ARCtrl/commit/2b754f5ad5494bd3a3e052503f882bc96e5ad58f)] finish up first working version of javascript arc io
+    * [[#c20e8c1](https://github.com/nfdi4plants/ARCtrl/commit/c20e8c1cc99ace2c8730fc803aa33b96b011d591)] add preliminary promise catch mechanic for js io tests
+    * [[#a5c195b](https://github.com/nfdi4plants/ARCtrl/commit/a5c195bbac29df77ad7d0a5bba17a81108a8b3ba)] some cleanup for js fs IO
+    * [[#cca43e8](https://github.com/nfdi4plants/ARCtrl/commit/cca43e8158f96de22ecfb668320f0ebfeb5ee7d4)] add first wip version of js file system access
+    * [[#a4a991a](https://github.com/nfdi4plants/ARCtrl/commit/a4a991a6da568adcd837f4fba4965ef442f0f588)] switch all file system access to async/promise functionality
+* Deletions:
+    * [[#3934047](https://github.com/nfdi4plants/ARCtrl/commit/39340475d8c08859f9f7179811a7cef1a677aea8)] remove second namespace definition in xlsx controller file
+* Bugfixes:
+    * [[#ce001af](https://github.com/nfdi4plants/ARCtrl/commit/ce001afc2acafa9e9de3413df87c7771b7927fd8)] fix test file path handling for js in linux
+    * [[#4dd085a](https://github.com/nfdi4plants/ARCtrl/commit/4dd085a3bb3aaf626771e68d1b648565d8cf086e)] fix js io helpers aganst basic tests
+    * [[#2478640](https://github.com/nfdi4plants/ARCtrl/commit/24786403c5f7a88a91c4a7f9967341615ffba78c)] fix js base level IO tests
+    * [[#02384d8](https://github.com/nfdi4plants/ARCtrl/commit/02384d88f648ae0c6a8a79ea1b0ff1f3c5bf03c8)] fix tests for dotnet again
+    * [[#1929830](https://github.com/nfdi4plants/ARCtrl/commit/1929830192327704f2e72b250f61678b66ce16a0)] further fixes for js file io
+    * [[#7bc9e5a](https://github.com/nfdi4plants/ARCtrl/commit/7bc9e5aa2c75e325f2ec0946e68c58cb703007ea)] add exceljs requirement and fix fileysystem helper file name
+    * [[#e72c01e](https://github.com/nfdi4plants/ARCtrl/commit/e72c01e93e8640ba589ac93896927d4705078968)] some more fixes for js file io
+
 ### 2.2.4+05faa0d (Released 2024-11-19)
 * Bugfixes:
     * [[#9d2ce07](https://github.com/nfdi4plants/ARCtrl/commit/9d2ce07368e0bb61e8c4dd4e2b7260c215cbc3dc)] fix technologyPlatform not handling parentheses
