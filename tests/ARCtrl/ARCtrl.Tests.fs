@@ -949,7 +949,7 @@ let tests_load =
     testList "Load" [
         testCaseCrossAsync "simpleARC" (crossAsync {
             let p = TestObjects.IO.testSimpleARC
-            let! result = ARC.loadAsync(p)
+            let! result = ARC.tryLoadAsync(p)
             let result = Expect.wantOk result "ARC should load successfully"
 
             Expect.isSome result.ISA "Should contain an ISA part"
@@ -979,7 +979,7 @@ let tests_write =
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
             let a = ARC()
 
-            let! result = a.WriteAsync(p)
+            let! result = a.TryWriteAsync(p)
 
             Expect.wantOk result "ARC should write successfully" |> ignore
 
@@ -1014,7 +1014,7 @@ let tests_write =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! result = arc.WriteAsync(p)
+            let! result = arc.TryWriteAsync(p)
             Expect.wantOk result "ARC should write successfully" |> ignore
 
             let expectedPaths = 
@@ -1046,7 +1046,7 @@ let tests_write =
         testCaseCrossAsync "LoadSimpleARCAndAddAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithAssay"
 
-            let! readResult = ARC.loadAsync(TestObjects.IO.testSimpleARC)
+            let! readResult = ARC.tryLoadAsync(TestObjects.IO.testSimpleARC)
             let arc = Expect.wantOk readResult "ARC should load correctly"
 
             let i = arc.ISA.Value
@@ -1060,7 +1060,7 @@ let tests_write =
 
             arc.UpdateFileSystem()
 
-            let! writeResult = arc.WriteAsync(p)
+            let! writeResult = arc.TryWriteAsync(p)
 
             Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
@@ -1131,7 +1131,7 @@ let tests_Update =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! writeResult = arc.WriteAsync(p)
+            let! writeResult = arc.TryWriteAsync(p)
 
             Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
@@ -1141,7 +1141,7 @@ let tests_Update =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! updateResult = arc.UpdateAsync(p)
+            let! updateResult = arc.TryUpdateAsync(p)
 
             Expect.wantOk updateResult "ARC should update successfully" |> ignore
 
@@ -1194,14 +1194,14 @@ let tests_renameAssay =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! updateResult = arc.WriteAsync(p)
+            let! updateResult = arc.TryWriteAsync(p)
 
             Expect.wantOk updateResult "ARC should write successfully" |> ignore
 
             // rename assay
             let newAssayName = "MyNewAssay"
 
-            let! renameResult = arc.RenameAssayAsync(p,assayName, newAssayName)
+            let! renameResult = arc.TryRenameAssayAsync(p,assayName, newAssayName)
             Expect.wantOk renameResult "Assay should be renamed successfully" |> ignore
 
             let expectedPaths = 
@@ -1247,14 +1247,14 @@ let tests_RenameStudy =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! writeResult = arc.WriteAsync(p)
+            let! writeResult = arc.TryWriteAsync(p)
 
             Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // rename study
             let newStudyName = "MyNewStudy"
 
-            let! renameResult = arc.RenameStudyAsync(p,studyName, newStudyName)
+            let! renameResult = arc.TryRenameStudyAsync(p,studyName, newStudyName)
             Expect.wantOk renameResult "Study should be renamed successfully" |> ignore
 
             let expectedPaths = 
@@ -1301,13 +1301,13 @@ let tests_RemoveAssay =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! writeResult = arc.WriteAsync(p)
+            let! writeResult = arc.TryWriteAsync(p)
 
             Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // remove assay
 
-            let! removeResult = arc.RemoveAssayAsync(p,assayName)
+            let! removeResult = arc.TryRemoveAssayAsync(p,assayName)
             Expect.wantOk removeResult "Assay should be removed successfully" |> ignore
 
             let expectedPaths = 
@@ -1349,13 +1349,13 @@ let tests_RemoveStudy =
             arc.ISA <- Some i
             arc.UpdateFileSystem()
 
-            let! writeResult = arc.WriteAsync(p)
+            let! writeResult = arc.TryWriteAsync(p)
 
             Expect.wantOk writeResult "ARC should write successfully" |> ignore
 
             // remove study
 
-            let! removeResult = arc.RemoveStudyAsync(p,studyName)
+            let! removeResult = arc.TryRemoveStudyAsync(p,studyName)
             Expect.wantOk removeResult "Study should be removed successfully" |> ignore
 
             let expectedPaths = 
