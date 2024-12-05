@@ -89,15 +89,15 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         with get() = _fs
         and set(fs) = _fs <- fs
 
-    member this.WriteAsync(arcPath) =
+    member this.TryWriteAsync(arcPath) =
         this.GetWriteContracts()
         |> fullFillContractBatchAsync arcPath
 
-    member this.UpdateAsync(arcPath) =
+    member this.TryUpdateAsync(arcPath) =
         this.GetUpdateContracts()
         |> fullFillContractBatchAsync arcPath
 
-    static member loadAsync (arcPath : string) =
+    static member tryLoadAsync (arcPath : string) =
         crossAsync {
 
             let! paths = FileSystemHelper.getAllFilePathsAsync arcPath
@@ -138,7 +138,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
                 s.ToUpdateContract()
         |]
 
-    member this.RemoveAssayAsync(arcPath : string, assayIdentifier: string) =
+    member this.TryRemoveAssayAsync(arcPath : string, assayIdentifier: string) =
         this.GetAssayRemoveContracts(assayIdentifier)
         |> fullFillContractBatchAsync arcPath
 
@@ -160,7 +160,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             yield! this.GetUpdateContracts()
         |]
 
-    member this.RenameAssayAsync(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
+    member this.TryRenameAssayAsync(arcPath : string, oldAssayIdentifier: string, newAssayIdentifier: string) =
         this.GetAssayRenameContracts(oldAssayIdentifier,newAssayIdentifier)
         |> fullFillContractBatchAsync arcPath
 
@@ -179,7 +179,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             isa.ToUpdateContract()
         |]
 
-    member this.RemoveStudyAsync(arcPath : string, studyIdentifier: string) =
+    member this.TryRemoveStudyAsync(arcPath : string, studyIdentifier: string) =
         this.GetStudyRemoveContracts(studyIdentifier)
         |> fullFillContractBatchAsync arcPath
 
@@ -201,60 +201,103 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             yield! this.GetUpdateContracts()
         |]
 
-    member this.RenameStudyAsync(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
+    member this.TryRenameStudyAsync(arcPath : string, oldStudyIdentifier: string, newStudyIdentifier: string) =
         this.GetStudyRenameContracts(oldStudyIdentifier,newStudyIdentifier)
         |> fullFillContractBatchAsync arcPath
 
+
+    member this.WriteAsync(arcPath) =
+        crossAsync {
+            let! result = this.TryWriteAsync(arcPath)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not write ARC, failed with the following errors %s" appended
+        }
+
+    member this.UpdateAsync(arcPath) =
+        crossAsync {
+            let! result = this.TryUpdateAsync(arcPath)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not update ARC, failed with the following errors %s" appended
+        }
+
+    member this.RemoveAssayAsync(arcPath, assayIdentifier) =
+        crossAsync {
+            let! result = this.TryRemoveAssayAsync(arcPath, assayIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not remove assay, failed with the following errors %s" appended
+        }
+
+    member this.RenameAssayAsync(arcPath, oldAssayIdentifier, newAssayIdentifier) =
+        crossAsync {
+            let! result = this.TryRenameAssayAsync(arcPath, oldAssayIdentifier, newAssayIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not rename assay, failed with the following errors %s" appended
+        }
+
+    member this.RemoveStudyAsync(arcPath, studyIdentifier) =
+        crossAsync {
+            let! result = this.TryRemoveStudyAsync(arcPath, studyIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not remove study, failed with the following errors %s" appended
+        }
+
+    member this.RenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier) =
+        crossAsync {
+            let! result = this.TryRenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier)
+            match result with
+            | Ok _ -> ()
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not rename study, failed with the following errors %s" appended
+        }
+
+    static member loadAsync (arcPath) =
+        crossAsync {
+            let! result = ARC.tryLoadAsync arcPath
+            match result with
+            | Ok arc -> return arc
+            | Error errors ->
+                let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
+                failwithf "Could not load ARC, failed with the following errors %s" appended
+                return (ARC())
+        }
     
     #if FABLE_COMPILER_PYTHON || !FABLE_COMPILER
     member this.Write(arcPath) =
-        match Async.RunSynchronously (this.WriteAsync(arcPath)) with
-        | Ok _ -> ()
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not write ARC, failed with the following errors %s" appended
+        Async.RunSynchronously (this.WriteAsync(arcPath))
 
     member this.Update(arcPath) =
-        match Async.RunSynchronously (this.UpdateAsync(arcPath)) with
-        | Ok _ -> ()
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not update ARC, failed with the following errors %s" appended
+        Async.RunSynchronously (this.UpdateAsync(arcPath))
 
     member this.RemoveAssay(arcPath, assayIdentifier) =
-        match Async.RunSynchronously (this.RemoveAssayAsync(arcPath, assayIdentifier)) with
-        | Ok _ -> ()
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not remove assay, failed with the following errors %s" appended
+        Async.RunSynchronously (this.RemoveAssayAsync(arcPath, assayIdentifier))
 
     member this.RenameAssay(arcPath, oldAssayIdentifier, newAssayIdentifier) =
-        match Async.RunSynchronously (this.RenameAssayAsync(arcPath, oldAssayIdentifier, newAssayIdentifier)) with
-        | Ok _ -> ()
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not rename assay, failed with the following errors %s" appended
+        Async.RunSynchronously (this.RenameAssayAsync(arcPath, oldAssayIdentifier, newAssayIdentifier))
 
     member this.RemoveStudy(arcPath, studyIdentifier) =
-        match Async.RunSynchronously (this.RemoveStudyAsync(arcPath, studyIdentifier)) with
-        | Ok _ -> ()
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not remove study, failed with the following errors %s" appended
+        Async.RunSynchronously (this.RemoveStudyAsync(arcPath, studyIdentifier))
 
     member this.RenameStudy(arcPath, oldStudyIdentifier, newStudyIdentifier) =
-        match Async.RunSynchronously (this.RenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier)) with
-        | Ok _ -> ()
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not rename study, failed with the following errors %s" appended
+        Async.RunSynchronously (this.RenameStudyAsync(arcPath, oldStudyIdentifier, newStudyIdentifier))
 
     static member load (arcPath) =
-        match Async.RunSynchronously (ARC.loadAsync arcPath) with
-        | Ok arc -> arc
-        | Error errors ->
-            let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
-            failwithf "Could not load ARC, failed with the following errors %s" appended
+        Async.RunSynchronously (ARC.loadAsync arcPath)
     #endif
 
 
