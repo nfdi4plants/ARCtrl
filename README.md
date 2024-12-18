@@ -1,4 +1,7 @@
-﻿# ARCtrl
+﻿
+![logo](logos/ARCtrl_horizontal.png)
+
+# ARCtrl
 
 > **ARCtrl** the easy way to read, manipulate and write ARCs in __.NET__, __JavaScript__ and __Python__! ❤️
 
@@ -74,6 +77,14 @@ On windows you can use the `setup.cmd` to run the following steps automatically!
    3. `.\.venv\Scripts\python.exe -m poetry install --no-root`
 
 Verify correct setup with `./build.cmd runtests` ✨
+
+## Branding
+
+Feel free to reference `ARCtrl` on slides or elsewhere using our logos:
+
+|Square | Horizontal | Vertical |
+| - | - | - |
+| ![square](logos/ARCtrl_square.png) | ![horizontal](logos/ARCtrl_horizontal.png) |  ![vertical](logos/ARCtrl_vertical.png) |
 
 ## Performance
 
