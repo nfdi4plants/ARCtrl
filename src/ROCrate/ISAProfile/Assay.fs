@@ -17,7 +17,7 @@ type Assay(
     ?url,
     ?variableMeasured
 ) as this =
-    inherit Dataset(id, "Assay")
+    inherit Dataset(id = id, additionalType = ResizeArray[|"Assay"|])
     do
         DynObj.setProperty (nameof identifier) identifier this
 

@@ -12,7 +12,7 @@ let mandatory_properties = LabProtocol(
 
 let all_properties = LabProtocol(
     id = "labprotocol_all_properties_id",
-    additionalType = "additionalType",
+    additionalType = ResizeArray([|"additionalType"|]),
     name = "name",
     intendedUse = "intendedUse",
     description = "description",
@@ -46,8 +46,8 @@ let tests_profile_object_is_valid = testList "constructed properties" [
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "bioschemas.org/LabProtocol" "labprotocol_mandatory_properties_id" None mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "bioschemas.org/LabProtocol" "labprotocol_all_properties_id" (Some "additionalType") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"bioschemas.org/LabProtocol"|] "labprotocol_mandatory_properties_id" [||] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"bioschemas.org/LabProtocol"|] "labprotocol_all_properties_id" [|"additionalType"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (

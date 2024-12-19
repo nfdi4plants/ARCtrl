@@ -14,7 +14,7 @@ let mandatory_properties = Data(
 let all_properties = Data(
     id = "data_all_properties_id",
     name = "name",
-    additionalType = "additionalType",
+    additionalType = ResizeArray([|"additionalType"|]),
     comment = "comment",
     encodingFormat = "encodingFormat",
     disambiguatingDescription = "disambiguatingDescription"
@@ -38,8 +38,8 @@ let tests_profile_object_is_valid = testList "constructed properties" [
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/MediaObject" "data_mandatory_properties_id" None mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/MediaObject" "data_all_properties_id" (Some "additionalType") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/MediaObject"|] "data_mandatory_properties_id" [||] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/MediaObject"|] "data_all_properties_id" [|"additionalType"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (
