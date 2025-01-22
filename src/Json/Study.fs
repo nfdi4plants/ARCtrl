@@ -109,7 +109,7 @@ module Study =
             | "" -> "#EmptyStudy"
             | i -> 
                 let identifier = i.Replace(" ","_")
-                $"#study/{identifier}"
+                $"studies/{identifier}/"
     
         let encoder (assays: ArcAssay list option) (s : ArcStudy) = 
             let fileName = Identifier.Study.tryFileNameFromIdentifier s.Identifier

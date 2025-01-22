@@ -76,7 +76,7 @@ module Assay =
             | "" -> "#EmptyAssay"
             | i -> 
                 let identifier = i.Replace(" ","_")
-                $"#assay/{identifier}"
+                $"assays/{identifier}/"
 
         let encoder (studyName:string Option) (a : ArcAssay) = 
             let fileName = Identifier.Assay.fileNameFromIdentifier a.Identifier
