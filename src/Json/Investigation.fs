@@ -108,7 +108,7 @@ module Investigation =
                 Encode.tryInclude "title" Encode.string oa.Title
                 Encode.tryInclude "description" Encode.string oa.Description
                 Encode.tryInclude "submissionDate" Encode.string oa.SubmissionDate
-                Encode.tryInclude "publicReleaseDate" Encode.string oa.PublicReleaseDate
+                "publicReleaseDate", Encode.string (oa.PublicReleaseDate |> (Option.defaultValue (System.DateTime.Today.ToString "yyyy/MM/dd"))) |> Some
                 Encode.tryIncludeSeq "ontologySourceReferences" OntologySourceReference.ROCrate.encoder oa.OntologySourceReferences
                 Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder oa.Publications
                 Encode.tryIncludeSeq "people" Person.ROCrate.encoder oa.Contacts
