@@ -49,6 +49,7 @@ module Study =
       "publications", Encode.string "sdo:citation"
       "people", Encode.string "sdo:creator"
       "assays", Encode.string "sdo:hasPart"
+      "dataFiles",Encode.string "sdo:hasPart"
       "filename", Encode.string "sdo:alternateName"
       "comments", Encode.string "sdo:comment"
       "processSequence", Encode.string "sdo:about"
