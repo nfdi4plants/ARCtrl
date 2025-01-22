@@ -102,7 +102,7 @@ let private test_roCrateEmpty =
 let test_defaultDate = testList "ROCrate-defaultDate" [
     testCase "roundabout" <| fun _ ->
         let addPublicationDate (inv : ArcInvestigation) =
-            inv.PublicReleaseDate <- Some (System.DateTime.Today.ToString "yyyy/MM/dd")
+            inv.PublicReleaseDate <- Some (System.DateTime.Today.ToString "yyyy-MM-dd")
             inv
         let obj = create_empty()
         let json = ArcInvestigation.toROCrateJsonString () obj
