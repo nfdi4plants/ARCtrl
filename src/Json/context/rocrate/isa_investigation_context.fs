@@ -32,7 +32,7 @@ module Investigation =
       "Investigation", Encode.string "sdo:Dataset"
 
       "identifier", Encode.string "sdo:identifier"
-      "title", Encode.string "sdo:headline"
+      "title", Encode.string "sdo:name"
       "additionalType", Encode.string "sdo:additionalType"
       "description", Encode.string "sdo:description"
       "submissionDate", Encode.string "sdo:dateCreated"
@@ -55,7 +55,7 @@ module Investigation =
     "Investigation": "sdo:Dataset",
 
     "identifier" : "sdo:identifier",
-    "title": "sdo:headline",
+    "title": "sdo:name",
     "description": "sdo:description",
     "submissionDate": "sdo:dateCreated",
     "publicReleaseDate": "sdo:datePublished",
