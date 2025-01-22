@@ -27,5 +27,5 @@ module ROCrate =
       "CreativeWork", Encode.string "sdo:CreativeWork"
 
       "about", Encode.string "sdo:about"
-      "conformsTo", Encode.string "sdo:conformsTo"
+      "conformsTo", Encode.string "http://purl.org/dc/terms/conformsTo"
     ]
