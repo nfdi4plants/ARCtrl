@@ -3,7 +3,7 @@
 let studyWithIDTable =
     """
     {
-        "@id": "#study/Study1",
+        "@id": "studies/Study1/",
         "filename" : "studies/Study1/isa.study.xlsx",
         "identifier" : "Study1",
         "protocols" : [

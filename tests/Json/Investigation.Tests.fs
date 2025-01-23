@@ -88,13 +88,28 @@ let private test_isaEmpty =
         compareFields
 
 let private test_roCrateEmpty =
+    let removePublicationDate (inv : ArcInvestigation) =
+        inv.PublicReleaseDate <- None
+        inv
     createBaseJsonTests
         "ROCrate-empty"
         create_empty
         ArcInvestigation.toROCrateJsonString
-        ArcInvestigation.fromROCrateJsonString
+        (ArcInvestigation.fromROCrateJsonString >> removePublicationDate)
         None
         compareFields
+
+let test_defaultDate = testList "ROCrate-defaultDate" [
+    testCase "roundabout" <| fun _ ->
+        let addPublicationDate (inv : ArcInvestigation) =
+            inv.PublicReleaseDate <- Some (System.DateTime.Today.ToString "yyyy-MM-dd")
+            inv
+        let obj = create_empty()
+        let json = ArcInvestigation.toROCrateJsonString () obj
+        let res = ArcInvestigation.fromROCrateJsonString json
+        let inv = obj |> addPublicationDate
+        Expect.equal inv res ""
+]
 
 let private test_core =
     createBaseJsonTests
@@ -147,4 +162,5 @@ let main = testList "Investigation" [
     test_isa
     test_roCrateEmpty
     test_roCrate
+    test_defaultDate
 ]

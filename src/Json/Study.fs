@@ -109,7 +109,7 @@ module Study =
             | "" -> "#EmptyStudy"
             | i -> 
                 let identifier = i.Replace(" ","_")
-                $"#study/{identifier}"
+                $"studies/{identifier}/"
     
         let encoder (assays: ArcAssay list option) (s : ArcStudy) = 
             let fileName = Identifier.Study.tryFileNameFromIdentifier s.Identifier
@@ -129,7 +129,8 @@ module Study =
                 Encode.tryIncludeSeq "publications" Publication.ROCrate.encoder s.Publications
                 Encode.tryIncludeSeq "people" Person.ROCrate.encoder s.Contacts
                 Encode.tryIncludeList "processSequence" (Process.ROCrate.encoder (Some s.Identifier) None) processes
-                Encode.tryIncludeSeq "assays" (Assay.ROCrate.encoder (Some s.Identifier)) assays           
+                Encode.tryIncludeSeq "assays" (Assay.ROCrate.encoder (Some s.Identifier)) assays 
+                Encode.tryIncludeList "dataFiles" Data.ROCrate.encoder (ARCtrl.Process.ProcessSequence.getData processes)        
                 Encode.tryIncludeSeq "comments" Comment.ROCrate.encoder s.Comments
                 "@context", ROCrateContext.Study.context_jsonvalue |> Some
             ]
