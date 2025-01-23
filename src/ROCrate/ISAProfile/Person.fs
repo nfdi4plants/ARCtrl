@@ -20,7 +20,11 @@ type Person(
     ?faxNumber,
     ?disambiguatingDescription
 ) as this=
-    inherit LDObject(id = id, schemaType = "schema.org/Person", ?additionalType = additionalType)
+    inherit LDObject(
+        id = id,
+        schemaType = ResizeArray[|"schema.org/Person"|],
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
 
         DynObj.setProperty (nameof givenName) givenName this

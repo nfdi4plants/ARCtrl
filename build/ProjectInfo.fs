@@ -5,19 +5,22 @@ open Helpers
 
 let project = "ARCtrl"
 
+let allTestsProject = "tests/All"
+
 /// Dotnet and JS test paths
 let testProjects = 
     [
         "tests/All"
-        //"tests/Core"
-        //"tests/Json"
-        //"tests/Spreadsheet"
-        //"tests/FileSystem"
-        //"tests/ARCtrl"
-        //"tests/Yaml"
-        //"tests/ValidationPackages"
-        //"tests/Contract"
-        //"tests/ROCrate"
+        "tests/ARCtrl"
+        "tests/Contract"
+        "tests/Core"
+        "tests/CWL"
+        "tests/FileSystem"
+        "tests/Json"
+        "tests/ROCrate"
+        "tests/Spreadsheet"
+        "tests/ValidationPackages"
+        "tests/Yaml"
     ]
 
 /// Native JS test paths

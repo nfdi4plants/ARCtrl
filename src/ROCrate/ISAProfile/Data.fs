@@ -13,7 +13,11 @@ type Data(
     ?encodingFormat,
     ?disambiguatingDescription
 ) as this =
-    inherit LDObject(id = id, schemaType = "schema.org/MediaObject", ?additionalType = additionalType)
+    inherit LDObject(
+        id = id,
+        schemaType = ResizeArray[|"schema.org/MediaObject"|],
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
         DynObj.setProperty (nameof name) name this
 

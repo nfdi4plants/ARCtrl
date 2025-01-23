@@ -7,7 +7,6 @@ open Thoth.Json.Core
 open DynamicObj
 
 module rec LDObject =
-
     #if !FABLE_COMPILER
     let (|SomeObj|_|) =
         // create generalized option type
@@ -45,21 +44,17 @@ module rec LDObject =
         | _ -> failwith "Unknown type"
 
     let rec encoder(obj: LDObject) =
-        obj.GetProperties true
-        |> Seq.choose (fun kv ->
-            let l = kv.Key.ToLower()
-            if l <> "id" && l <> "schematype" && l <> "additionaltype" then
-                Some(kv.Key, genericEncoder kv.Value)
-            else
-                None
-         
-        )
-        |> Seq.append [
-            "@id", Encode.string obj.Id
-            "@type", Encode.string obj.SchemaType
-            if obj.AdditionalType.IsSome then
-                "additionalType", Encode.string obj.AdditionalType.Value
+
+        [
+            yield "@id", Encode.string obj.Id |> Some
+            yield "@type", Encode.seq (obj.SchemaType |> Seq.map Encode.string) |> Some
+            yield Encode.tryIncludeSeq "additionalType" Encode.string obj.AdditionalType
+            for kv in (obj.GetProperties true) do
+                let l = kv.Key.ToLower()
+                if l <> "id" && l <> "schematype" && l <> "additionaltype" then 
+                    yield kv.Key, Some (genericEncoder kv.Value)
         ]
+        |> Encode.choose
         |> Encode.object
 
     /// Returns a decoder
@@ -75,11 +70,12 @@ module rec LDObject =
                             let properties = helpers.getProperties value
                             let builder =
                                 fun (get : Decode.IGetters) ->
-                                    let t = get.Required.Field "@type" Decode.string
+                                    let t = get.Required.Field "@type" (Decode.resizeArrayOrSingleton Decode.string)
                                     let id = get.Required.Field "@id" Decode.string
-                                    let o = LDObject(id,t)
+                                    let at = get.Optional.Field "additionalType" (Decode.resizeArrayOrSingleton Decode.string)
+                                    let o = LDObject(id, t, ?additionalType = at)
                                     for property in properties do
-                                        if property <> "@id" && property <> "@type" then
+                                        if property <> "@id" && property <> "@type" && property <> "additionalType" then
                                             o.SetProperty(property,get.Required.Field property (decode(false)))
                                     o
                             let result = builder getters               
