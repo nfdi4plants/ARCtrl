@@ -18,6 +18,10 @@ let private test_read = testList "Read" [
     testCase "onlyType" <| fun _ ->
         let f = fun _ -> LDObject.fromROCrateJsonString(GenericObjects.onlyType) |> ignore
         Expect.throws f "Should fail if ID is missing"
+    testCase "twoTypesAndID" <| fun _ ->
+        let json = LDObject.fromROCrateJsonString(GenericObjects.twoTypesAndID)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"; "MySecondType"] "type was not parsed correctly"
     testCase "withStringFields" <| fun _ ->
         let json = LDObject.fromROCrateJsonString(GenericObjects.withStringFields)
         Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
@@ -104,6 +108,12 @@ let test_write = testList "write" [
         let output = LDObject.toROCrateJsonString() object
         Expect.stringEqual output GenericObjects.onlyIDAndType "Output string is not correct"
 
+    testCase "twoTypesAndID" <| fun _ ->
+        let json = GenericObjects.twoTypesAndID
+        let object = LDObject.fromROCrateJsonString(json)
+        let output = LDObject.toROCrateJsonString() object
+        Expect.stringEqual output json "Output string is not correct"
+
     testCase "withStringFields" <| fun _ ->
         let json = GenericObjects.withStringFields
         let object = LDObject.fromROCrateJsonString(json)
@@ -172,9 +182,10 @@ let test_write = testList "write" [
 
     testCase "withAddtionalTypeArray" <| fun _ ->
         let json = GenericObjects.withAdditionalTypeArray
+        let jsonOut = GenericObjects.withAdditionalTypeString
         let object = LDObject.fromROCrateJsonString(json)
         let output = LDObject.toROCrateJsonString() object
-        Expect.stringEqual output json "Output string is not correct"
+        Expect.stringEqual output jsonOut "Output string is not correct"
     testCase "withAddtionalTypeArrayMultipleEntries" <| fun _ ->
         let json = GenericObjects.withAddtionalTypeArrayMultipleEntries
         let object = LDObject.fromROCrateJsonString(json)
@@ -185,7 +196,7 @@ let test_write = testList "write" [
         let json = GenericObjects.withAdditionalTypeString
         let object = LDObject.fromROCrateJsonString(json)
         let output = LDObject.toROCrateJsonString() object
-        Expect.stringEqual output GenericObjects.withAdditionalTypeArray "Output string is not correct"
+        Expect.stringEqual output json "Output string is not correct"
 ]
 
 let main = testList "LDObject" [

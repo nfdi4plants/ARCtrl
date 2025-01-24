@@ -206,7 +206,7 @@ module GenericObjects =
     let onlyIDAndType =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"]
+            "@type": "MyType"
         }"""
         
     let onlyIDAndTypeNoTypeArray =
@@ -222,9 +222,15 @@ module GenericObjects =
 
     let onlyType =
         """{
-            "@type": ["MyType"]
+            "@type": "MyType"
         }"""
-        
+
+    let twoTypesAndID =
+        """{
+            "@id": "MyIdentifier",
+            "@type": ["MyType" , "MySecondType"]
+        }"""
+
     let onlyTypeNoTypeArray =
         """{
             "@type": "MyType"
@@ -233,7 +239,7 @@ module GenericObjects =
     let withStringFields =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "name": "MyName",
             "description": "MyDescription"
         }"""
@@ -249,7 +255,7 @@ module GenericObjects =
     let withIntFields =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "number": 42,
             "anotherNumber": 1337
         }"""
@@ -265,7 +271,7 @@ module GenericObjects =
     let withStringArray =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "names": ["MyName", "MySecondName"]           
         }"""
 
@@ -279,7 +285,7 @@ module GenericObjects =
     let withNestedObject =
         sprintf """{
             "@id": "OuterIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "nested": %s
         }""" onlyIDAndType
 
@@ -293,7 +299,7 @@ module GenericObjects =
     let withObjectArray =
         sprintf """{
             "@id": "OuterIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "nested": [%s, %s]
         }""" onlyIDAndType onlyIDAndType
 
@@ -307,7 +313,7 @@ module GenericObjects =
     let withMixedArray =
         sprintf """{
             "@id": "OuterIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "nested": [%s, "Value2", 42]
         }""" onlyIDAndType
 
@@ -321,19 +327,19 @@ module GenericObjects =
     let withAdditionalTypeString =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "additionalType": "additionalType"
         }"""
 
     let withAdditionalTypeArray =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "additionalType": ["additionalType"]
         }"""
     let withAddtionalTypeArrayMultipleEntries =
         """{
             "@id": "MyIdentifier",
-            "@type": ["MyType"],
+            "@type": "MyType",
             "additionalType": ["additionalType1", "additionalType2"]
         }"""

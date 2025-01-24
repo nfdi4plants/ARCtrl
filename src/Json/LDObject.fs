@@ -6,6 +6,38 @@ open ARCtrl.ROCrate
 open Thoth.Json.Core
 open DynamicObj
 
+module LDContext =
+
+    let decoder : Decoder<LDContext> =
+        { new Decoder<LDContext> with
+            member _.Decode(helpers, value) =     
+                if helpers.isObject value then
+                    let getters = Decode.Getters(helpers, value)
+                    let properties = helpers.getProperties value
+                    let builder =
+                        fun (get : Decode.IGetters) ->
+                            let o = LDContext()
+                            for property in properties do
+                                if property <> "@id" && property <> "@type" then
+                                    o.SetProperty(property,get.Required.Field property Decode.string)
+                            o
+                    let result = builder getters               
+                    match getters.Errors with
+                    | [] -> Ok result
+                    | fst :: _ as errors ->
+                        if errors.Length > 1 then
+                            ("", BadOneOf errors) |> Error
+                        else
+                            Error fst                
+                else 
+                    ("", BadPrimitive("an object", value)) |> Error
+        }
+
+    let encoder (ctx: LDContext) =
+        ctx.GetProperties true
+        |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )
+        |> Encode.object
+
 module rec LDObject =
     #if !FABLE_COMPILER
     let (|SomeObj|_|) =
@@ -44,17 +76,37 @@ module rec LDObject =
         | _ -> failwith "Unknown type"
 
     let rec encoder(obj: LDObject) =
-
+        //obj.GetProperties true
+        //|> Seq.choose (fun kv ->
+        //    let l = kv.Key.ToLower()
+        //    if l <> "id" && l <> "schematype" && l <> "additionaltype" && l <> "@context" then
+        //        Some(kv.Key, genericEncoder kv.Value)
+        //    else
+        //        None
+         
+        //)
+        //|> Seq.append [
+        //    "@id", Encode.string obj.Id
+        //    "@type", LDType.encoder obj.SchemaType
+        //    if obj.AdditionalType.IsSome then
+        //        "additionalType", Encode.string obj.AdditionalType.Value
+        //    match obj.TryGetContext() with
+        //    | Some ctx -> "@context", LDContext.encoder ctx
+        //    | _ -> ()
+        //]
         [
-            yield "@id", Encode.string obj.Id |> Some
-            yield "@type", Encode.seq (obj.SchemaType |> Seq.map Encode.string) |> Some
-            yield Encode.tryIncludeSeq "additionalType" Encode.string obj.AdditionalType
+            yield "@id", Encode.string obj.Id
+            yield "@type", Encode.resizeArrayOrSingleton Encode.string obj.SchemaType
+            if obj.AdditionalType.Count <> 0 then
+                yield "additionalType", Encode.resizeArrayOrSingleton Encode.string obj.AdditionalType
+            match obj.TryGetContext() with
+            | Some ctx -> yield "@context", LDContext.encoder ctx
+            | _ -> ()
             for kv in (obj.GetProperties true) do
                 let l = kv.Key.ToLower()
-                if l <> "id" && l <> "schematype" && l <> "additionaltype" then 
-                    yield kv.Key, Some (genericEncoder kv.Value)
+                if l <> "id" && l <> "schematype" && l <> "additionaltype" && l <> "@context" then 
+                    yield kv.Key, genericEncoder kv.Value
         ]
-        |> Encode.choose
         |> Encode.object
 
     /// Returns a decoder
@@ -72,11 +124,13 @@ module rec LDObject =
                                 fun (get : Decode.IGetters) ->
                                     let t = get.Required.Field "@type" (Decode.resizeArrayOrSingleton Decode.string)
                                     let id = get.Required.Field "@id" Decode.string
+                                    let context = get.Optional.Field "@context" LDContext.decoder
                                     let at = get.Optional.Field "additionalType" (Decode.resizeArrayOrSingleton Decode.string)
                                     let o = LDObject(id, t, ?additionalType = at)
                                     for property in properties do
-                                        if property <> "@id" && property <> "@type" && property <> "additionalType" then
+                                        if property <> "@id" && property <> "@type" && property <> "@context" then
                                             o.SetProperty(property,get.Required.Field property (decode(false)))
+                                    if context.IsSome then o.SetContext context.Value
                                     o
                             let result = builder getters               
                             match getters.Errors with

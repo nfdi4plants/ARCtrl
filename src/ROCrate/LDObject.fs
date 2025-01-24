@@ -50,7 +50,7 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
 
     static member setContext (context: LDContext) = fun (roc: #LDObject) -> roc.SetContext(context)
 
-    member this.TryGetContext() = DynObj.tryGetTypedPropertyValue<DynamicObj>("@context") this
+    member this.TryGetContext() = DynObj.tryGetTypedPropertyValue<LDContext>("@context") this
 
     static member tryGetContext () = fun (roc: #LDObject) -> roc.TryGetContext()
 
@@ -59,14 +59,19 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
     static member removeContext () = fun (roc: #LDObject) -> roc.RemoveContext()
 
     static member tryFromDynamicObj (dynObj: DynamicObj) =
+        let tryGetResizeArrayOrSingleton (name : string) (obj : DynamicObj) =
+            match obj.TryGetPropertyValue(name) with
+            | Some (:? ResizeArray<string> as ra) -> Some ra
+            | Some (:?string as s) -> Some (ResizeArray [s])
+            | _ -> None
         match
-            DynObj.tryGetTypedPropertyValue<ResizeArray<string>>("@type") dynObj,
-            DynObj.tryGetTypedPropertyValue<string>("@id") dynObj,
-            DynObj.tryGetTypedPropertyValue<ResizeArray<string>>("additionalType") dynObj
+            tryGetResizeArrayOrSingleton "@type" dynObj,
+            DynObj.tryGetTypedPropertyValue<string>("@id") dynObj
         with
-        | (Some st), (Some id), (Some at) ->
+        | (Some st), (Some id)->
             // initialize with extracted static members only
-            let roc = new LDObject(id = id, schemaType = st, additionalType = at)
+            let at = tryGetResizeArrayOrSingleton "additionalType" dynObj
+            let roc = new LDObject(id = id, schemaType = st, ?additionalType = at)
 
             // copy dynamic properties!
             match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
