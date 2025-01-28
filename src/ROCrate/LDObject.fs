@@ -59,25 +59,22 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
     static member removeContext () = fun (roc: #LDObject) -> roc.RemoveContext()
 
     static member tryFromDynamicObj (dynObj: DynamicObj) =
-        let tryGetResizeArrayOrSingleton (name : string) (obj : DynamicObj) =
-            match obj.TryGetPropertyValue(name) with
-            | Some (:? ResizeArray<string> as ra) -> Some ra
-            | Some (:?string as s) -> Some (ResizeArray [s])
-            | _ -> None
-        match
-            tryGetResizeArrayOrSingleton "@type" dynObj,
-            DynObj.tryGetTypedPropertyValue<string>("@id") dynObj
-        with
-        | (Some st), (Some id)->
-            // initialize with extracted static members only
-            let at = tryGetResizeArrayOrSingleton "additionalType" dynObj
-            let roc = new LDObject(id = id, schemaType = st, ?additionalType = at)
+
+        let original_id = DynObj.tryGetTypedPropertyValue<string> "@id" dynObj
+        let original_type = DynObj.tryGetTypedPropertyValueAsResizeArray<string> "@type" dynObj
+        let original_additionalType = DynObj.tryGetTypedPropertyValueAsResizeArray<string> "additionalType" dynObj
+
+        match (original_type, original_id, original_additionalType) with
+        | (Some ot), (Some oid), _->
+            let roc = new LDObject(id = oid, schemaType = ot, ?additionalType = original_additionalType)
 
             // copy dynamic properties!
             match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
             | Some context -> roc.SetContext(context)
             | _ -> ()
-            dynObj.CopyDynamicPropertiesTo(roc)
+
+            dynObj.DeepCopyPropertiesTo(roc, overWrite = false, includeInstanceProperties = true)
+
             Some roc
+
         | _ -> None
-        
