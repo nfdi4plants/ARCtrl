@@ -62,19 +62,23 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
 
         let original_id = DynObj.tryGetTypedPropertyValue<string> "@id" dynObj
         let original_type = DynObj.tryGetTypedPropertyValueAsResizeArray<string> "@type" dynObj
-        let original_additionalType = DynObj.tryGetTypedPropertyValueAsResizeArray<string> "additionalType" dynObj
+        match original_id, original_type with
+        | (Some id), (Some st)->
+            // initialize with extracted static members only
+            let at = DynObj.tryGetTypedPropertyValueAsResizeArray<string> "additionalType" dynObj
+            let roc = new LDObject(id = id, schemaType = st, ?additionalType = at)
 
-        match (original_type, original_id, original_additionalType) with
-        | (Some ot), (Some oid), _->
-            let roc = new LDObject(id = oid, schemaType = ot, ?additionalType = original_additionalType)
+
+            // Currently commented out, as @context is set as a dynamic property
+            //match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
+            //| Some context -> roc.SetContext(context)
+            //| _ -> ()
 
             // copy dynamic properties!
-            match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
-            | Some context -> roc.SetContext(context)
-            | _ -> ()
-
-            dynObj.DeepCopyPropertiesTo(roc, overWrite = false, includeInstanceProperties = true)
-
+            dynObj.DeepCopyPropertiesTo(roc)
+            roc.TryGetDynamicPropertyHelper("@id").Value.RemoveValue()
+            roc.TryGetDynamicPropertyHelper("@type").Value.RemoveValue()
+            if at.IsSome then roc.TryGetDynamicPropertyHelper("additionalType").Value.RemoveValue()
             Some roc
 
         | _ -> None

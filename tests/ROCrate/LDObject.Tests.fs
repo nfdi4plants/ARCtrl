@@ -18,7 +18,7 @@ let mandatory_properties_with_context =
 let all_properties = LDObject("LDObject_all_properties_id", ResizeArray[|"someType"|], additionalType = ResizeArray[|"additionalType"|])
 let all_properties_with_context =
     LDObject("LDObject_all_properties_id", ResizeArray[|"someType"|], additionalType = ResizeArray[|"additionalType"|])
-    |> DynObj.withProperty "@context" (context.CopyDynamicProperties())
+    |> DynObj.withProperty "@context" (context.DeepCopyProperties())
 
 let tests_profile_object_is_valid = testList "constructed properties" [
     testList "mandatory properties" [
