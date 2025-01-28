@@ -13,3 +13,9 @@ module DynObj =
             | None -> raise (System.InvalidCastException($"Property '{propertyName}' is set on this '{className}' object but cannot be cast to '{(typeof<'TPropertyValue>).Name}'"))
         else
             raise (System.MissingMemberException($"No property '{propertyName}' set on this '{className}' object although it is mandatory. Was it created correctly?"))
+
+    let inline tryGetTypedPropertyValueAsResizeArray<'T> (name : string) (obj : DynamicObj) =
+        match obj.TryGetPropertyValue(name) with
+        | Some (:? ResizeArray<'T> as ra) -> Some ra
+        | Some (:? 'T as singleton) -> Some (ResizeArray [singleton])
+        | _ -> None
