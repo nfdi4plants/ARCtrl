@@ -75,10 +75,29 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
             //| _ -> ()
 
             // copy dynamic properties!
-            dynObj.DeepCopyPropertiesTo(roc)
-            roc.TryGetDynamicPropertyHelper("@id").Value.RemoveValue()
-            roc.TryGetDynamicPropertyHelper("@type").Value.RemoveValue()
-            if at.IsSome then roc.TryGetDynamicPropertyHelper("additionalType").Value.RemoveValue()
+            dynObj.DeepCopyPropertiesTo(roc, includeInstanceProperties = false)
+
+
+            // ----- Commented out as implementation has not been finalized -----
+            //printfn "dynobj"
+            //dynObj.GetPropertyHelpers(true)           
+            //|> Seq.iter (fun p -> printfn "isDynamic:%b, Name: %s" p.IsDynamic p.Name)
+            //printfn "roc"
+            //roc.GetPropertyHelpers(true)           
+            //|> Seq.iter (fun p -> printfn "isDynamic:%b, Name: %s" p.IsDynamic p.Name)      
+            //roc.TryGetDynamicPropertyHelper("@id").Value.RemoveValue()
+            //roc.TryGetDynamicPropertyHelper("@type").Value.RemoveValue()
+            //if at.IsSome then roc.TryGetDynamicPropertyHelper("additionalType").Value.RemoveValue()
+
+            roc.GetPropertyHelpers(true)
+            |> Seq.iter (fun ph ->
+                if ph.IsDynamic && (ph.Name = "@id" || ph.Name = "@type" || ph.Name = "additionalType"(* || ph.Name = "id"*)) then
+                    ph.RemoveValue(roc)
+            )
+
+
+
+
             Some roc
 
         | _ -> None
