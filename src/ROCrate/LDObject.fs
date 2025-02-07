@@ -4,8 +4,14 @@ open DynamicObj
 open Thoth.Json.Core
 open Fable.Core
 open System
+[<AutoOpen>]
+module DynamicObjExtensions =
 
-type LDContext() = inherit DynamicObj()
+    type DynamicObj with
+
+        member this.HasProperty(propertyName : string) =
+            this.TryGetPropertyValue(propertyName) |> Option.isSome
+
 
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
 type ILDObject =
@@ -44,6 +50,28 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
         member this.AdditionalType
             with get() = additionalType
             and set(value) = additionalType <- value
+
+    member this.TryGetContextualizedProperty(propertyName : string, ?context : LDContext) =
+        match this.TryGetPropertyValue(propertyName) with
+        | Some value -> Some value
+        | None ->                       
+            match LDContext.tryCombineOptional context (this.TryGetContext()) with
+            | Some ctx ->
+                match ctx.TryResolveTerm propertyName with
+                | Some term -> this.TryGetPropertyValue term
+                | None -> None
+            | None -> None
+
+    member this.SetContextualizedPropertyValue(propertyName : string, value : obj, ?context : LDContext) =
+        this.RemoveProperty(propertyName) |> ignore
+        let propertyName =
+            match LDContext.tryCombineOptional context (this.TryGetContext()) with
+            | Some ctx ->
+                match ctx.TryResolveTerm propertyName with
+                | Some term -> term
+                | None -> propertyName
+            | None -> propertyName
+        this.SetProperty(propertyName,value)
 
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)
