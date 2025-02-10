@@ -37,9 +37,7 @@ pip install arctrl
 
 ## Docs
 
-Currently we provide some documentation in form of markdown files in the `/docs` folder of this repository!
-
-[Check it out!](/docs)
+Documentation can be found [here](https://nfdi4plants.github.io/nfdi4plants.knowledgebase/arctrl/)
 
 ## Development
 
