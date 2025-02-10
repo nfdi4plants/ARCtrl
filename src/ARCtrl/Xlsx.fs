@@ -22,30 +22,50 @@ module XlsxHelper =
     type DatamapXlsx() =
         member _.fromFsWorkbook (fswb: FsWorkbook) = DataMap.fromFsWorkbook fswb
         member _.toFsWorkbook (datamap: DataMap) = DataMap.toFsWorkbook datamap
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map DataMap.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, datamap: DataMap) = DataMap.toFsWorkbook datamap |> FsWorkbook.toXlsxFile path
+        #else
         member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> DataMap.fromFsWorkbook
         member _.toXlsxFile (path: string, datamap: DataMap) = DataMap.toFsWorkbook datamap |> FsWorkbook.toXlsxFile path
+        #endif
 
     [<AttachMembers>]
     type AssayXlsx() =
         member _.fromFsWorkbook (fswb: FsWorkbook) = ArcAssay.fromFsWorkbook fswb
         member _.toFsWorkbook (assay: ArcAssay) = ArcAssay.toFsWorkbook assay
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map ArcAssay.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, assay: ArcAssay) = ArcAssay.toFsWorkbook assay |> FsWorkbook.toXlsxFile path
+        #else
         member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> ArcAssay.fromFsWorkbook
         member _.toXlsxFile (path: string, assay: ArcAssay) = ArcAssay.toFsWorkbook assay |> FsWorkbook.toXlsxFile path
+        #endif
 
     [<AttachMembers>]
     type StudyXlsx() =
         member _.fromFsWorkbook (fswb: FsWorkbook) = ArcStudy.fromFsWorkbook fswb
         member _.toFsWorkbook (study: ArcStudy, ?assays: ResizeArray<ArcAssay>) = ArcStudy.toFsWorkbook(study,?assays=Option.map List.ofSeq assays)
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map ArcStudy.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, study: ArcStudy, ?assays: ResizeArray<ArcAssay>) = ArcStudy.toFsWorkbook(study,?assays=Option.map List.ofSeq assays) |> (FsWorkbook.toXlsxFile path)
+        #else
         member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> ArcStudy.fromFsWorkbook
         member _.toXlsxFile (path: string, study: ArcStudy, ?assays: ResizeArray<ArcAssay>) = ArcStudy.toFsWorkbook(study,?assays=Option.map List.ofSeq assays) |> FsWorkbook.toXlsxFile path
+        #endif
 
 
     [<AttachMembers>]
     type InvestigationXlsx() =
         member _.fromFsWorkbook (fswb: FsWorkbook) = ArcInvestigation.fromFsWorkbook fswb
         member _.toFsWorkbook (investigation: ArcInvestigation) = ArcInvestigation.toFsWorkbook(investigation)
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        member _.fromXlsxFileAsync (path: string) = FsWorkbook.fromXlsxFile path |> CrossAsync.map ArcInvestigation.fromFsWorkbook
+        member _.toXlsxFileAsync (path: string, investigation: ArcInvestigation) = ArcInvestigation.toFsWorkbook(investigation) |> FsWorkbook.toXlsxFile path
+        #else
         member _.fromXlsxFile (path: string) = FsWorkbook.fromXlsxFile path |> ArcInvestigation.fromFsWorkbook
         member _.toXlsxFile (path: string, investigation: ArcInvestigation) = ArcInvestigation.toFsWorkbook(investigation) |> FsWorkbook.toXlsxFile path
+        #endif
 
 open XlsxHelper
 
