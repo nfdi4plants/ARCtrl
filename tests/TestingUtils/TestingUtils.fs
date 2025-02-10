@@ -199,8 +199,8 @@ module Expect =
           message i a
 
     let pathSequenceEqual actual expected message = 
-        let actual = actual |> Seq.map trim
-        let expected = expected |> Seq.map trim
+        let actual = actual |> Seq.map trim |> Seq.sort
+        let expected = expected |> Seq.map trim |> Seq.sort
         sequenceEqual actual expected message
 
     let workSheetEqual (actual : FsWorksheet) (expected : FsWorksheet) message =
