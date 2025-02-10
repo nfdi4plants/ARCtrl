@@ -20,7 +20,7 @@ type Study(
     ?headline,
     ?url
 ) as this = 
-    inherit Dataset(id, "Study")
+    inherit Dataset(id = id, additionalType = ResizeArray[|"Study"|])
     do
         DynObj.setProperty (nameof identifier) identifier this
         DynObj.setOptionalProperty (nameof about) about                 this 

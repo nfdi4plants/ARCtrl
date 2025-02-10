@@ -20,7 +20,7 @@ type Investigation(
     ?url,
     ?description
 ) as this =
-    inherit Dataset(id, "Investigation")
+    inherit Dataset(id = id, additionalType = ResizeArray[|"Investigation"|])
     do 
         DynObj.setProperty (nameof identifier) identifier this
 

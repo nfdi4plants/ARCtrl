@@ -14,7 +14,7 @@ let mandatory_properties = Person(
 let all_properties = Person(
     id = "person_all_properties_id",
     givenName = "givenName",
-    additionalType = "additionalType",
+    additionalType = ResizeArray([|"additionalType"|]),
     familyName = "familyName",
     email = "email",
     identifier = "identifier",
@@ -52,8 +52,8 @@ let tests_profile_object_is_valid = testList "constructed properties" [
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/Person" "person_mandatory_properties_id" None mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers "schema.org/Person" "person_all_properties_id" (Some "additionalType") all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/Person"|] "person_mandatory_properties_id" [||] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/Person"|] "person_all_properties_id" [|"additionalType"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (

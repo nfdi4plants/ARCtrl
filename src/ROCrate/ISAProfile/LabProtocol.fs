@@ -18,7 +18,11 @@ type LabProtocol(
     ?reagent,
     ?computationalTool
 ) as this =
-    inherit LDObject(id = id, schemaType = "bioschemas.org/LabProtocol", ?additionalType = additionalType)
+    inherit LDObject(
+        id = id,
+        schemaType = ResizeArray[|"bioschemas.org/LabProtocol"|],
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
         DynObj.setOptionalProperty (nameof name) name                            this
         DynObj.setOptionalProperty (nameof intendedUse) intendedUse              this

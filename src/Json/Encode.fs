@@ -64,3 +64,11 @@ module Encode =
         match obj with
         | Json.Object kvs -> Json.Object (Seq.append kvs [name, value] )
         | _ -> failwith "Expected object"
+
+    let resizeArrayOrSingleton (encoder : 'T -> IEncodable) (values: ResizeArray<'T>) =
+        if values.Count = 1 then
+            values.[0] |> encoder
+        else
+            values
+            |> Seq.map encoder
+            |> Encode.seq
