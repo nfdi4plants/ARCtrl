@@ -17,7 +17,7 @@ type LabProcess(
     ?endTime,
     ?disambiguatingDescription
 ) as this =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"bioschemas.org/LabProcess"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

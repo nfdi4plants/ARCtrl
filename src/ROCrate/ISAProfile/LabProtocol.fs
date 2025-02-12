@@ -18,7 +18,7 @@ type LabProtocol(
     ?reagent,
     ?computationalTool
 ) as this =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"bioschemas.org/LabProtocol"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

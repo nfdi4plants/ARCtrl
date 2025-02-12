@@ -20,7 +20,7 @@ type Person(
     ?faxNumber,
     ?disambiguatingDescription
 ) as this=
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"schema.org/Person"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

@@ -27,6 +27,12 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) 
         | Some m -> m
         | None -> Dictionary()
 
+    let reverseMappings : Dictionary<string,string> =
+        let dict = Dictionary()
+        for kvp in mappings do
+            dict.Add(kvp.Value,kvp.Key)
+        dict
+
     let tryFindTerm (term : string) =
         match Dictionary.tryFind term mappings with
         | Some v -> Some v
@@ -35,6 +41,17 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) 
             | Some ctx -> ctx.TryResolveTerm term
             | None -> None
 
+    let tryFindIri (iri : string) =
+        match Dictionary.tryFind iri reverseMappings with
+        | Some v -> Some v
+        | None -> 
+            match baseContext with
+            | Some ctx -> ctx.TryGetTerm iri
+            | None -> None
+
+    let tryCompactIRI (iri : string) =
+        failwith "TryCompactIRI is Not implemented yet"
+
     member this.BaseContext
         with get() = baseContext
         and internal set(value) = baseContext <- value
@@ -42,10 +59,13 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) 
     member this.AddMapping(term,definition) =
         if mappings.ContainsKey(term) then
             mappings.[term] <- definition
+            reverseMappings.[definition] <- term
         else
             mappings.Add(term,definition)
+            reverseMappings.Add(definition,term)
         
     member this.TryResolveTerm(term : string) =
+        // Handle compact IRI
         if term.Contains(":") then
             term.Split(':')
             |> Seq.map tryFindTerm
@@ -56,6 +76,9 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) 
                 | _ -> None)
         else
             tryFindTerm term
+
+    member this.TryGetTerm(iri : string) =
+        tryFindIri iri
 
     static member fromMappingSeq(mappings : seq<string*string>) =
         LDContext(Dictionary.ofSeq mappings)

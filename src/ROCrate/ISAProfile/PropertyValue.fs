@@ -15,7 +15,7 @@ type PropertyValue(
     ?valueReference,
     ?additionalType
 ) as this =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"schema.org/PropertyValue"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

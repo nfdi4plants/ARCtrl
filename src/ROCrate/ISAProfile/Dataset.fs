@@ -6,7 +6,7 @@ open Fable.Core
 ///
 [<AttachMembers>]
 type Dataset (id: string, ?additionalType: ResizeArray<string>) =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"schema.org/Dataset"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

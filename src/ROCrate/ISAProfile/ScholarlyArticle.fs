@@ -16,7 +16,7 @@ type ScholarlyArticle(
     ?disambiguatingDescription
 
 ) as this =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"schema.org/ScholarlyArticle"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

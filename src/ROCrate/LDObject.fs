@@ -19,10 +19,44 @@ type ILDObject =
     abstract member Id: string
     abstract member AdditionalType: ResizeArray<string> with get, set
 
+
+type LDValue(value : obj, ?valueType : string) =
+    
+    let mutable valueType = defaultArg valueType "string"
+    let mutable value = value
+
+    member this.Value
+        with get() = value
+        and set(v) = value <- v
+
+    member this.ValueType
+        with get() = valueType
+        and set(v) = valueType <- v
+
+
+and [<AttachMembers>] LDRef(id : string) =
+    let mutable id = id
+
+    member this.Id
+        with get() = id
+        and set(v) = id <- v
+
+and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?context : LDContext) =
+
+    let mutable id = id
+    let mutable nodes = defaultArg nodes (ResizeArray [])
+
+    member this.Id
+        with get() = id
+        and set(v) = id <- v
+
+    member this.Nodes
+        with get() = nodes
+        and set(v) = nodes <- v
+
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
-/// Basically a DynamicObj that implements the ILDObject interface.
-[<AttachMembers>]
-type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: ResizeArray<string>) =
+/// Basically a DynamicObj that implements the ILDNode interface.
+and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?additionalType: ResizeArray<string>) =
     inherit DynamicObj()
 
     let mutable schemaType = schemaType
@@ -38,18 +72,6 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
     member this.AdditionalType
         with get() = additionalType
         and set(value) = additionalType <- value
-
-    interface ILDObject with
-
-        member this.SchemaType
-            with get() = schemaType
-            and set(value) = schemaType <- value
-
-        member this.Id = id
-
-        member this.AdditionalType
-            with get() = additionalType
-            and set(value) = additionalType <- value
 
     member this.TryGetContextualizedProperty(propertyName : string, ?context : LDContext) =
         match this.TryGetPropertyValue(propertyName) with
@@ -76,15 +98,34 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)
 
-    static member setContext (context: LDContext) = fun (roc: #LDObject) -> roc.SetContext(context)
+    static member setContext (context: LDContext) = fun (roc: #LDNode) -> roc.SetContext(context)
 
     member this.TryGetContext() = DynObj.tryGetTypedPropertyValue<LDContext>("@context") this
 
-    static member tryGetContext () = fun (roc: #LDObject) -> roc.TryGetContext()
+    static member tryGetContext () = fun (roc: #LDNode) -> roc.TryGetContext()
 
     member this.RemoveContext() = this.RemoveProperty("@context")
 
-    static member removeContext () = fun (roc: #LDObject) -> roc.RemoveContext()
+    member this.Compact_InPlace(?context : LDContext) =
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        this.GetPropertyHelpers(true)
+        |> Seq.iter (fun ph ->
+            let newKey =
+                match context with
+                | Some ctx ->
+                    match ctx.TryResolveTerm ph.Name with
+                    | Some term -> term
+                    | None -> ph.Name
+                | None -> ph.Name
+            let newValue =
+                match ph.GetValue with
+                | :? LDNode as n -> n.Compact_InPlace(context)
+                | :? System.IEnu
+        )
+
+    //member this.Flatten
+
+    static member removeContext () = fun (roc: #LDNode) -> roc.RemoveContext()
 
     static member tryFromDynamicObj (dynObj: DynamicObj) =
 
@@ -94,13 +135,7 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
         | (Some id), (Some st)->
             // initialize with extracted static members only
             let at = DynObj.tryGetTypedPropertyValueAsResizeArray<string> "additionalType" dynObj
-            let roc = new LDObject(id = id, schemaType = st, ?additionalType = at)
-
-
-            // Currently commented out, as @context is set as a dynamic property
-            //match DynObj.tryGetTypedPropertyValue<LDContext>("@context") dynObj with
-            //| Some context -> roc.SetContext(context)
-            //| _ -> ()
+            let roc = new LDNode(id = id, schemaType = st, ?additionalType = at)
 
             // copy dynamic properties!
             dynObj.DeepCopyPropertiesTo(roc, includeInstanceProperties = false)
@@ -122,10 +157,6 @@ type LDObject(id: string, schemaType: ResizeArray<string>, ?additionalType: Resi
                 if ph.IsDynamic && (ph.Name = "@id" || ph.Name = "@type" || ph.Name = "additionalType"(* || ph.Name = "id"*)) then
                     ph.RemoveValue(roc)
             )
-
-
-
-
             Some roc
 
         | _ -> None

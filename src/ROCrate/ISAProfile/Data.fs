@@ -13,7 +13,7 @@ type Data(
     ?encodingFormat,
     ?disambiguatingDescription
 ) as this =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"schema.org/MediaObject"|],
         additionalType = defaultArg additionalType (ResizeArray[||])

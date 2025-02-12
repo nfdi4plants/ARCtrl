@@ -2,9 +2,9 @@ namespace ARCtrl.ROCrate
 
 open DynamicObj
 
-type ArcROCrateMetadata(?about : LDObject) as this =
+type ArcROCrateMetadata(?about : LDNode) as this =
 
-    inherit LDObject(id = "ro-crate-metadata",schemaType = ResizeArray([|"CreativeWork"|]))
+    inherit LDNode(id = "ro-crate-metadata",schemaType = ResizeArray([|"CreativeWork"|]))
 
     do DynObj.setOptionalProperty (nameof about) about this
 

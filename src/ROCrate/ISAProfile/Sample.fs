@@ -12,7 +12,7 @@ type Sample(
     ?additionalProperty,
     ?derivesFrom
 ) as this =
-    inherit LDObject(
+    inherit LDNode(
         id = id,
         schemaType = ResizeArray[|"bioschemas.org/Sample"|], 
         additionalType = defaultArg additionalType (ResizeArray[||])

@@ -29,33 +29,33 @@ let all_properties = Investigation(
 
 let tests_profile_object_is_valid = testList "constructed properties" [
     testList "mandatory properties" [
-        testCase "Id" <| fun _ -> Expect.LDObjectHasId "investigation_mandatory_properties_id" mandatory_properties
-        testCase "SchemaType" <| fun _ -> Expect.LDObjectHasType "schema.org/Dataset" mandatory_properties
-        testCase "AdditionalType" <| fun _ -> Expect.LDObjectHasAdditionalType "Investigation" mandatory_properties
-        testCase "identifier" <| fun _ -> Expect.LDObjectHasDynamicProperty "identifier" "identifier" mandatory_properties
+        testCase "Id" <| fun _ -> Expect.LDNodeHasId "investigation_mandatory_properties_id" mandatory_properties
+        testCase "SchemaType" <| fun _ -> Expect.LDNodeHasType "schema.org/Dataset" mandatory_properties
+        testCase "AdditionalType" <| fun _ -> Expect.LDNodeHasAdditionalType "Investigation" mandatory_properties
+        testCase "identifier" <| fun _ -> Expect.LDNodeHasDynamicProperty "identifier" "identifier" mandatory_properties
     ]
     testList "all properties" [
-        testCase "Id" <| fun _ -> Expect.LDObjectHasId "investigation_all_properties_id" all_properties
-        testCase "SchemaType" <| fun _ -> Expect.LDObjectHasType "schema.org/Dataset" all_properties
-        testCase "AdditionalType" <| fun _ -> Expect.LDObjectHasAdditionalType "Investigation" all_properties
-        testCase "identifier" <| fun _ -> Expect.LDObjectHasDynamicProperty "identifier" "identifier" all_properties
-        testCase "citation" <| fun _ -> Expect.LDObjectHasDynamicProperty "citation" "citation" all_properties
-        testCase "comment" <| fun _ -> Expect.LDObjectHasDynamicProperty "comment" "comment" all_properties
-        testCase "creator" <| fun _ -> Expect.LDObjectHasDynamicProperty "creator" "creator" all_properties
-        testCase "dateCreated" <| fun _ -> Expect.LDObjectHasDynamicProperty "dateCreated" "dateCreated" all_properties
-        testCase "dateModified" <| fun _ -> Expect.LDObjectHasDynamicProperty "dateModified" "dateModified" all_properties
-        testCase "datePublished" <| fun _ -> Expect.LDObjectHasDynamicProperty "datePublished" "datePublished" all_properties
-        testCase "hasPart" <| fun _ -> Expect.LDObjectHasDynamicProperty "hasPart" "hasPart" all_properties
-        testCase "headline" <| fun _ -> Expect.LDObjectHasDynamicProperty "headline" "headline" all_properties
-        testCase "mentions" <| fun _ -> Expect.LDObjectHasDynamicProperty "mentions" "mentions" all_properties
-        testCase "url" <| fun _ -> Expect.LDObjectHasDynamicProperty "url" "url" all_properties
-        testCase "description" <| fun _ -> Expect.LDObjectHasDynamicProperty "description" "description" all_properties
+        testCase "Id" <| fun _ -> Expect.LDNodeHasId "investigation_all_properties_id" all_properties
+        testCase "SchemaType" <| fun _ -> Expect.LDNodeHasType "schema.org/Dataset" all_properties
+        testCase "AdditionalType" <| fun _ -> Expect.LDNodeHasAdditionalType "Investigation" all_properties
+        testCase "identifier" <| fun _ -> Expect.LDNodeHasDynamicProperty "identifier" "identifier" all_properties
+        testCase "citation" <| fun _ -> Expect.LDNodeHasDynamicProperty "citation" "citation" all_properties
+        testCase "comment" <| fun _ -> Expect.LDNodeHasDynamicProperty "comment" "comment" all_properties
+        testCase "creator" <| fun _ -> Expect.LDNodeHasDynamicProperty "creator" "creator" all_properties
+        testCase "dateCreated" <| fun _ -> Expect.LDNodeHasDynamicProperty "dateCreated" "dateCreated" all_properties
+        testCase "dateModified" <| fun _ -> Expect.LDNodeHasDynamicProperty "dateModified" "dateModified" all_properties
+        testCase "datePublished" <| fun _ -> Expect.LDNodeHasDynamicProperty "datePublished" "datePublished" all_properties
+        testCase "hasPart" <| fun _ -> Expect.LDNodeHasDynamicProperty "hasPart" "hasPart" all_properties
+        testCase "headline" <| fun _ -> Expect.LDNodeHasDynamicProperty "headline" "headline" all_properties
+        testCase "mentions" <| fun _ -> Expect.LDNodeHasDynamicProperty "mentions" "mentions" all_properties
+        testCase "url" <| fun _ -> Expect.LDNodeHasDynamicProperty "url" "url" all_properties
+        testCase "description" <| fun _ -> Expect.LDNodeHasDynamicProperty "description" "description" all_properties
     ]
 ]
 
 let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/Dataset"|] "investigation_mandatory_properties_id" [|"Investigation"|] mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDObjectHasExpectedInterfaceMembers [|"schema.org/Dataset"|] "investigation_all_properties_id" [|"Investigation"|] all_properties
+    testCase "mandatoryProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"schema.org/Dataset"|] "investigation_mandatory_properties_id" [|"Investigation"|] mandatory_properties
+    testCase "allProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"schema.org/Dataset"|] "investigation_all_properties_id" [|"Investigation"|] all_properties
 ]
 
 let tests_dynamic_members = testSequenced (
@@ -63,7 +63,7 @@ let tests_dynamic_members = testSequenced (
         testCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
         testCase "Set dynamic property" <| fun _ ->
             mandatory_properties.SetProperty("yes",42)
-            Expect.LDObjectHasDynamicProperty "yes" 42 mandatory_properties
+            Expect.LDNodeHasDynamicProperty "yes" 42 mandatory_properties
         testCase "Remove dynamic property" <| fun _ ->
             mandatory_properties.RemoveProperty("yes") |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be removed"
@@ -78,7 +78,7 @@ let tests_instance_methods = testSequenced (
 
         testCase "can set context" <| fun _ ->
             mandatory_properties.SetContext context
-            Expect.LDObjectHasDynamicProperty "@context" context mandatory_properties
+            Expect.LDNodeHasDynamicProperty "@context" context mandatory_properties
         testCase "can get context" <| fun _ ->
             let ctx = mandatory_properties.TryGetContext()
             Expect.equal ctx (Some context) "context was not set correctly"
@@ -114,13 +114,13 @@ let tests_static_methods = testSequenced (
         context.SetProperty("more", "context")
 
         testCase "can set context" <| fun _ ->
-            LDObject.setContext context mandatory_properties
-            Expect.LDObjectHasDynamicProperty "@context" context mandatory_properties
+            LDNode.setContext context mandatory_properties
+            Expect.LDNodeHasDynamicProperty "@context" context mandatory_properties
         testCase "can get context" <| fun _ ->
-            let ctx = LDObject.tryGetContext() mandatory_properties
+            let ctx = LDNode.tryGetContext() mandatory_properties
             Expect.equal ctx (Some context) "context was not set correctly"
         testCase "can remove context" <| fun _ ->
-            LDObject.removeContext() mandatory_properties |> ignore
+            LDNode.removeContext() mandatory_properties |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
     ]
 )
