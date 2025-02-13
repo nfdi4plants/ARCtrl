@@ -123,6 +123,32 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 | None -> None
             | None -> None
 
+    member this.GetPropertyValues(propertyName : string, ?filter : obj -> LDContext option -> bool, ?context) =
+        let filter = defaultArg filter (fun _ _ -> true)
+        match this.TryGetContextualizedProperty(propertyName, ?context = context) with
+        | Some (:? System.Collections.IEnumerable as e) ->
+            let en = e.GetEnumerator()
+            [
+                while en.MoveNext() do
+                    if filter en.Current context then
+                        yield en.Current
+            ]
+            |> ResizeArray
+        | Some o when filter o context->
+            ResizeArray [o]
+        | _ ->
+            ResizeArray []
+
+    member this.GetPropertyNodes(propertyName : string, ?filter : LDNode -> LDContext option -> bool, ?context) =
+        let filter (o : obj) context =
+            match o with
+            | :? LDNode as n ->
+                match filter with
+                | Some f -> f n context
+                | None -> true
+            | _ -> false
+        this.GetPropertyValues(propertyName, filter = filter, ?context = context)
+
     member this.SetContextualizedPropertyValue(propertyName : string, value : obj, ?context : LDContext) =
         this.RemoveProperty(propertyName) |> ignore
         let propertyName =
