@@ -44,23 +44,50 @@ and [<AttachMembers>] LDRef(id : string) =
 and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?context : LDContext) =
 
     let mutable id = id
-    let mutable nodes = defaultArg nodes (ResizeArray [])
+    let mappings = System.Collections.Generic.Dictionary()
 
+    do
+        match nodes with
+        | Some nodes ->
+            nodes
+            |> Seq.iter (fun node ->
+                mappings.Add(node.Id, node)
+            )              
+        | None -> ()
+      
     member this.Id
         with get() = id
         and set(v) = id <- v
 
     member this.Nodes
-        with get() = nodes
-        and set(v) = nodes <- v
+        with get() = mappings.Values |> ResizeArray
+
+    member this.ContainsNode(id : string) =
+        mappings.ContainsKey(id)
+
+    member this.GetNode(id : string) =
+        mappings.Item(id)
+
+    member this.TryGetNode(id : string) =
+        match mappings.TryGetValue(id) with
+        | true, node -> Some node
+        | _ -> None
+
+    member this.AddNode(node : LDNode) =
+        mappings.Add(node.Id, node)
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
 /// Basically a DynamicObj that implements the ILDNode interface.
-and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?additionalType: ResizeArray<string>) =
+and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?additionalType: ResizeArray<string>, ?context : LDContext) as this =
     inherit DynamicObj()
 
     let mutable schemaType = schemaType
     let mutable additionalType = defaultArg additionalType (ResizeArray [])
+
+    do
+        match context with
+        | Some ctx -> this.SetContext(ctx)
+        | None -> ()
 
     member this.Id 
         with get() = id
@@ -72,6 +99,18 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
     member this.AdditionalType
         with get() = additionalType
         and set(value) = additionalType <- value
+
+    member this.ContainsContextualizedType(schemaType:string, ?context : LDContext) =
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        this.SchemaType
+        |> Seq.exists (fun st ->
+            if st = schemaType then true
+            else
+                match context with
+                | Some ctx ->
+                    ctx.TryResolveTerm st = Some schemaType
+                | None -> false
+        ) 
 
     member this.TryGetContextualizedProperty(propertyName : string, ?context : LDContext) =
         match this.TryGetPropertyValue(propertyName) with
@@ -95,6 +134,15 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | None -> propertyName
         this.SetProperty(propertyName,value)
 
+    member this.ContainsContextualizedPropertyValue(propertyName : string, ?context : LDContext) =
+        let v = this.TryGetContextualizedProperty(propertyName, ?context = context)
+        match v with
+        | None -> false
+        | Some v when v = null -> false
+        //| Some (:? string as s) -> s <> "" // Caught by next rule?
+        | Some (:? System.Collections.IEnumerable as e) -> e.GetEnumerator().MoveNext()
+        | _ -> true
+
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)
 
@@ -108,22 +156,83 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
 
     member this.Compact_InPlace(?context : LDContext) =
         let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        let rec compactValue_inPlace (o : obj) : obj =
+            match o with
+            | :? LDNode as n ->
+                n.Compact_InPlace(?context = context)
+                n
+            | :? System.Collections.IEnumerable as e ->
+                let en = e.GetEnumerator()
+                let l = ResizeArray [
+                    while en.MoveNext() do
+                        compactValue_inPlace en.Current
+                ]
+                if l.Count = 1 then l.[0] else l
+            | :? LDValue as v -> v.Value
+            | x -> x
         this.GetPropertyHelpers(true)
         |> Seq.iter (fun ph ->
             let newKey =
                 match context with
                 | Some ctx ->
-                    match ctx.TryResolveTerm ph.Name with
-                    | Some term -> term
-                    | None -> ph.Name
-                | None -> ph.Name
+                    match ctx.TryGetTerm ph.Name with
+                    | Some term -> Some term
+                    | None -> None
+                | None -> None
             let newValue =
-                match ph.GetValue with
-                | :? LDNode as n -> n.Compact_InPlace(context)
-                | :? System.IEnu
+                compactValue_inPlace (ph.GetValue(this))
+            match newKey with
+            | Some key when key <> ph.Name ->
+                this.RemoveProperty(ph.Name) |> ignore
+                this.SetProperty(key, newValue)
+            | _ -> ph.SetValue this newValue
         )
 
-    //member this.Flatten
+    member this.Flatten(?graph : LDGraph) : LDGraph =
+        let graph = defaultArg graph (new LDGraph(?context = this.TryGetContext()))
+        let rec flattenValue (o : obj) : obj =
+            match o with
+            | :? LDNode as n ->
+                n.Flatten(graph) |> ignore
+                LDRef(n.Id)
+            | :? System.Collections.IEnumerable as e ->
+                let en = e.GetEnumerator()
+                let l = ResizeArray [
+                    while en.MoveNext() do
+                        flattenValue en.Current
+                ]
+                l
+            | x -> x
+        this.GetPropertyHelpers(true)
+        |> Seq.iter (fun ph ->
+            let newValue = flattenValue (ph.GetValue(this))
+            ph.SetValue this newValue
+        )
+        graph
+
+    member this.Unflatten(graph : LDGraph) =
+        let rec unflattenValue (o : obj) : obj =
+            match o with
+            | :? LDRef as r ->
+                match graph.TryGetNode(r.Id) with
+                | Some n -> n
+                | None -> r
+            | :? LDNode as n ->
+                n.Unflatten(graph)
+                n
+            | :? System.Collections.IEnumerable as e ->
+                let en = e.GetEnumerator()
+                let l = ResizeArray [
+                    while en.MoveNext() do
+                        unflattenValue en.Current
+                ]
+                l
+            | x -> x
+        this.GetPropertyHelpers(true)
+        |> Seq.iter (fun ph ->
+            let newValue = unflattenValue (ph.GetValue(this))
+            ph.SetValue this newValue
+        )
 
     static member removeContext () = fun (roc: #LDNode) -> roc.RemoveContext()
 

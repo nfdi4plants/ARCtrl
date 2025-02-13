@@ -18,9 +18,9 @@ module Dictionary =
 
 // Add second dictionary which maps from definition to term?
 // Make LDContext to be nested hierarchical tree? Like this you can iterate through the tree and stop at the first match, kind of like a shadowing mechanism
-type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) =
+type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArray<LDContext>) =
 
-    let mutable baseContext = baseContext
+    let mutable baseContexts = Option.defaultValue (ResizeArray []) baseContexts
 
     let mappings : Dictionary<string,string> =
         match mappings with
@@ -36,25 +36,23 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) 
     let tryFindTerm (term : string) =
         match Dictionary.tryFind term mappings with
         | Some v -> Some v
-        | None -> 
-            match baseContext with
-            | Some ctx -> ctx.TryResolveTerm term
-            | None -> None
+        | None ->
+            baseContexts
+            |> Seq.tryPick (fun ctx -> ctx.TryResolveTerm term)
 
     let tryFindIri (iri : string) =
         match Dictionary.tryFind iri reverseMappings with
         | Some v -> Some v
         | None -> 
-            match baseContext with
-            | Some ctx -> ctx.TryGetTerm iri
-            | None -> None
+            baseContexts
+            |> Seq.tryPick (fun ctx -> ctx.TryGetTerm iri)
 
     let tryCompactIRI (iri : string) =
         failwith "TryCompactIRI is Not implemented yet"
 
-    member this.BaseContext
-        with get() = baseContext
-        and internal set(value) = baseContext <- value
+    member this.BaseContexts
+        with get() = baseContexts
+        and internal set(value) = baseContexts <- value
 
     member this.AddMapping(term,definition) =
         if mappings.ContainsKey(term) then
@@ -83,16 +81,15 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContext : LDContext) 
     static member fromMappingSeq(mappings : seq<string*string>) =
         LDContext(Dictionary.ofSeq mappings)
 
-    // Find a way to do this without mutable state
-    static member combine (first : LDContext) (second : LDContext) : LDContext =
-        let rec combine (current : LDContext) =
-            match current.BaseContext with
-            | Some baseContext -> combine baseContext
-            | None -> current.BaseContext <- Some second
-        combine first
+    // Append second context to the first one inplace
+    static member combine_InPlace (first : LDContext) (second : LDContext) : LDContext =
+        first.BaseContexts.Add second
         first
 
- 
+    // Create new context with the the two given contexts as baseContexts
+    static member combine (first : LDContext) (second : LDContext) : LDContext =
+        LDContext(baseContexts = ResizeArray([first;second]))
+
     static member tryCombineOptional (first : LDContext option) (second : LDContext option) : LDContext option =
         match first,second with
         | Some f, Some s -> Some (LDContext.combine f s)
