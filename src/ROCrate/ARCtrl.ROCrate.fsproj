@@ -31,4 +31,7 @@
     <PackageReference Include="DynamicObj" />
     <PackageReference Include="Thoth.Json.Core" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />
+  </ItemGroup>
 </Project>

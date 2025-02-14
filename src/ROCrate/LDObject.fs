@@ -148,6 +148,9 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 | None -> true
             | _ -> false
         this.GetPropertyValues(propertyName, filter = filter, ?context = context)
+        |> Seq.cast<LDNode>
+        |> ResizeArray
+        
 
     member this.SetContextualizedPropertyValue(propertyName : string, value : obj, ?context : LDContext) =
         this.RemoveProperty(propertyName) |> ignore

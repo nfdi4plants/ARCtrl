@@ -19,7 +19,7 @@ module LDContext =
                             let o = LDContext()
                             for property in properties do
                                 if property <> "@id" && property <> "@type" then
-                                    o.SetProperty(property,get.Required.Field property Decode.string)
+                                    o.AddMapping(property,get.Required.Field property Decode.string)
                             o
                     let result = builder getters               
                     match getters.Errors with
@@ -34,7 +34,7 @@ module LDContext =
         }
 
     let encoder (ctx: LDContext) =
-        ctx.GetProperties true
+        ctx.Mappings
         |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )
         |> Encode.object
 

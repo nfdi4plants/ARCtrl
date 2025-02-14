@@ -15,6 +15,34 @@ module Dictionary =
         if b then Some v 
         else None
 
+module IRIHelper =
+
+    open ARCtrl.Helper.Regex
+
+    let compactIRIRegex = """(?<prefix>.*):(?<suffix>[^\/][^\/].*)"""
+
+    let (|CompactIri|_|) (termDefition : string) =
+        match termDefition with
+        | ActivePatterns.Regex compactIRIRegex result ->
+            let prefix = result.Groups.["prefix"].Value
+            let suffix = result.Groups.["suffix"].Value
+            Some(prefix,suffix)
+        | _ -> None
+
+    let combine (baseIRI : string) (relative : string) =
+        if relative.StartsWith("http://") || relative.StartsWith("https://") then
+            relative
+        else
+            let baseUri = new System.Uri(baseIRI)
+            let relativeUri = new System.Uri(baseUri,relative)
+            relativeUri.ToString()
+
+    let combineOptional (baseIRI : string option) (relative : string option) =
+        match baseIRI, relative with
+        | Some b, Some r -> Some (combine b r)
+        | Some b, None -> Some b
+        | None, Some r -> Some r
+        | _ -> None
 
 // Add second dictionary which maps from definition to term?
 // Make LDContext to be nested hierarchical tree? Like this you can iterate through the tree and stop at the first match, kind of like a shadowing mechanism
@@ -33,12 +61,21 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
             dict.Add(kvp.Value,kvp.Key)
         dict
 
-    let tryFindTerm (term : string) =
-        match Dictionary.tryFind term mappings with
-        | Some v -> Some v
-        | None ->
-            baseContexts
-            |> Seq.tryPick (fun ctx -> ctx.TryResolveTerm term)
+    let rec tryFindTerm (term : string) : string option =
+        let definition = 
+            match Dictionary.tryFind term mappings with
+            | Some v -> Some v
+            | None ->
+                baseContexts
+                |> Seq.tryPick (fun ctx -> ctx.TryResolveTerm term)
+        match definition with
+        | Some (IRIHelper.CompactIri (prefix,suffix)) ->
+            let prefix = if prefix = term then prefix else tryFindTerm prefix |> Option.defaultValue prefix
+            let suffix = if suffix = term then suffix else tryFindTerm suffix |> Option.defaultValue suffix
+            IRIHelper.combine prefix suffix
+            |> Some
+        | Some d -> Some d
+        | None -> None
 
     let tryFindIri (iri : string) =
         match Dictionary.tryFind iri reverseMappings with
@@ -49,6 +86,9 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
 
     let tryCompactIRI (iri : string) =
         failwith "TryCompactIRI is Not implemented yet"
+
+    member this.Mappings
+        with get() = mappings
 
     member this.BaseContexts
         with get() = baseContexts
@@ -67,11 +107,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         if term.Contains(":") then
             term.Split(':')
             |> Seq.map tryFindTerm
-            |> Seq.reduce (fun acc x ->
-                match acc,x with
-                | Some v1, Some v2 ->
-                    Some (v1 + "/" + v2)
-                | _ -> None)
+            |> Seq.reduce IRIHelper.combineOptional
         else
             tryFindTerm term
 
@@ -96,3 +132,22 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         | Some f, None -> Some f
         | None, Some s -> Some s
         | _ -> None
+
+    member this.ShallowCopy() =
+        let newMappings = Dictionary()
+        for kvp in mappings do
+            newMappings.Add(kvp.Key,kvp.Value)
+        LDContext(mappings = newMappings, baseContexts = baseContexts)
+
+    member this.DeepCopy() =
+        let newMappings = Dictionary()
+        for kvp in mappings do
+            newMappings.Add(kvp.Key,kvp.Value)
+        let newBaseContexts = ResizeArray()
+        for ctx in baseContexts do
+            newBaseContexts.Add(ctx.DeepCopy())
+        LDContext(mappings = newMappings, baseContexts = newBaseContexts)
+
+    interface System.ICloneable with
+        member this.Clone() =
+            this.DeepCopy()

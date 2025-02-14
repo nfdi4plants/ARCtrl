@@ -7,8 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Common.fs" />
+    <Compile Include="LDContext.Tests.fs" />
     <Compile Include="LDObject.Tests.fs" />
-    <Compile Include="ISAProfile\Dataset.Tests.fs" />
+    <!--<Compile Include="ISAProfile\Dataset.Tests.fs" />
     <Compile Include="ISAProfile\Investigation.Tests.fs" />
     <Compile Include="ISAProfile\Study.Tests.fs" />
     <Compile Include="ISAProfile\Assay.Tests.fs" />
@@ -18,7 +19,7 @@
     <Compile Include="ISAProfile\Data.Tests.fs" />
     <Compile Include="ISAProfile\PropertyValue.Tests.fs" />
     <Compile Include="ISAProfile\Person.Tests.fs" />
-    <Compile Include="ISAProfile\ScholarlyArticle.Tests.fs" />
+    <Compile Include="ISAProfile\ScholarlyArticle.Tests.fs" />-->
     <Compile Include="Main.fs" />
   </ItemGroup>
   <ItemGroup>

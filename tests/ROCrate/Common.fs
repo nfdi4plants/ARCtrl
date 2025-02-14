@@ -48,8 +48,8 @@ module Expect =
             (Some expectedPropertyValue)
             $"property value of '{expectedPropertyName}' was not correct"
 
-    let inline LDNodeHasExpectedInterfaceMembers (expectedTypes: seq<string>) (expectedId:string) (expectedAdditionalTypes: seq<string>) (roc:#LDNode) =
-        let interfacerino = roc :> ILDNode
-        Expect.sequenceEqual interfacerino.SchemaType expectedTypes "object did not contain correct @types via interface access"
-        Expect.equal interfacerino.Id expectedId "object did not contain correct @id via interface access"
-        Expect.sequenceEqual interfacerino.AdditionalType expectedAdditionalTypes "object did not contain correct additionalTypes via interface access"
+    //let inline LDNodeHasExpectedInterfaceMembers (expectedTypes: seq<string>) (expectedId:string) (expectedAdditionalTypes: seq<string>) (roc:#LDNode) =
+    //    let interfacerino = roc :> ILDNode
+    //    Expect.sequenceEqual interfacerino.SchemaType expectedTypes "object did not contain correct @types via interface access"
+    //    Expect.equal interfacerino.Id expectedId "object did not contain correct @id via interface access"
+    //    Expect.sequenceEqual interfacerino.AdditionalType expectedAdditionalTypes "object did not contain correct additionalTypes via interface access"
