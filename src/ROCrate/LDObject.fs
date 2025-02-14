@@ -112,7 +112,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 | None -> false
         ) 
 
-    member this.TryGetContextualizedProperty(propertyName : string, ?context : LDContext) =
+    member this.TryGetProperty(propertyName : string, ?context : LDContext) =
         match this.TryGetPropertyValue(propertyName) with
         | Some value -> Some value
         | None ->                       
@@ -125,7 +125,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
 
     member this.GetPropertyValues(propertyName : string, ?filter : obj -> LDContext option -> bool, ?context) =
         let filter = defaultArg filter (fun _ _ -> true)
-        match this.TryGetContextualizedProperty(propertyName, ?context = context) with
+        match this.TryGetProperty(propertyName, ?context = context) with
         | Some (:? System.Collections.IEnumerable as e) ->
             let en = e.GetEnumerator()
             [
@@ -152,7 +152,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         |> ResizeArray
         
 
-    member this.SetContextualizedPropertyValue(propertyName : string, value : obj, ?context : LDContext) =
+    member this.SetProperty(propertyName : string, value : obj, ?context : LDContext) =
         this.RemoveProperty(propertyName) |> ignore
         let propertyName =
             match LDContext.tryCombineOptional context (this.TryGetContext()) with
@@ -163,8 +163,8 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | None -> propertyName
         this.SetProperty(propertyName,value)
 
-    member this.ContainsContextualizedPropertyValue(propertyName : string, ?context : LDContext) =
-        let v = this.TryGetContextualizedProperty(propertyName, ?context = context)
+    member this.ContainsProperty(propertyName : string, ?context : LDContext) =
+        let v = this.TryGetProperty(propertyName, ?context = context)
         match v with
         | None -> false
         | Some v when v = null -> false

@@ -6,6 +6,7 @@ open DynamicObj
 open TestingUtils
 open Common
 
+
 let context =
     new LDContext()
     //|> DynObj.withProperty "more" "context"
@@ -117,6 +118,20 @@ let tests_static_methods = testSequenced (
         ]
     ]
 )
+
+let tests_GetProperty = testList "GetProperty" [
+    testCase "null" <| fun _ -> 
+        let node = new LDNode("MyNode",ResizeArray ["https://schema.org/Thing"])
+        let v = node.TryGetProperty("MyProperty")
+        Expect.isNone v "missing property was resolved"
+    testCase "fullIRI" <| fun _ ->
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        let nameKey = "https://schema.org/name"
+        let nameValue = "MyName"
+        node.SetProperty(nameKey, nameValue)
+
+]
+
 
 let main = testList "LDNode" [
     tests_profile_object_is_valid
