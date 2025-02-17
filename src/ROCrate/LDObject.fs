@@ -109,7 +109,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             else
                 match context with
                 | Some ctx ->
-                    ctx.TryResolveTerm st = Some schemaType
+                    match ctx.TryResolveTerm st, ctx.TryResolveTerm schemaType with
+                    | Some st, Some schemaType -> st = schemaType
+                    | Some st, None -> st = schemaType
+                    | None, Some schemaType -> st = schemaType
+                    | _ -> false
                 | None -> false
         ) 
 
@@ -121,12 +125,21 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | Some ctx ->
                 match ctx.TryResolveTerm propertyName with
                 | Some term -> this.TryGetPropertyValue term
-                | None -> None
+                | None ->
+                    // Or instead of compact search term
+                    match ctx.TryGetTerm propertyName with
+                    | Some term -> this.TryGetPropertyValue term
+                    | None -> None
             | None -> None
 
     member this.GetPropertyValues(propertyName : string, ?filter : obj -> LDContext option -> bool, ?context) =
         let filter = defaultArg filter (fun _ _ -> true)
         match this.TryGetProperty(propertyName, ?context = context) with
+        | Some (:? string as s) ->
+            if filter s context then
+                ResizeArray [box s]
+            else
+                ResizeArray []
         | Some (:? System.Collections.IEnumerable as e) ->
             let en = e.GetEnumerator()
             [
