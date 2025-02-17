@@ -4,6 +4,7 @@ open DynamicObj
 open Thoth.Json.Core
 open Fable.Core
 open System
+ 
 [<AutoOpen>]
 module DynamicObjExtensions =
 
@@ -100,7 +101,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         with get() = additionalType
         and set(value) = additionalType <- value
 
-    member this.ContainsContextualizedType(schemaType:string, ?context : LDContext) =
+    member this.HasType(schemaType:string, ?context : LDContext) =
         let context = LDContext.tryCombineOptional context (this.TryGetContext())
         this.SchemaType
         |> Seq.exists (fun st ->
@@ -163,7 +164,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | None -> propertyName
         this.SetProperty(propertyName,value)
 
-    member this.ContainsProperty(propertyName : string, ?context : LDContext) =
+    member this.HasProperty(propertyName : string, ?context : LDContext) =
         let v = this.TryGetProperty(propertyName, ?context = context)
         match v with
         | None -> false
