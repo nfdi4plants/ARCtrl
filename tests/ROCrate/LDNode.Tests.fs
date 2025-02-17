@@ -330,6 +330,89 @@ let tests_GetPropertyNodes = testList "GetPropertyNodes" [
     ]
 ]
 
+let tests_Compact_InPlace = testList "Compact_InPlace" [
+        ftestCase "Type_ContextIsUsedAndSet" <| fun _ ->
+            let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+            let context = new LDContext()
+            context.AddMapping("thing", "https://schema.org/Thing")
+            node.Compact_InPlace(context)
+            let ctx = Expect.wantSome (node.TryGetContext()) "context was not set"
+            Expect.equal (ctx.TryResolveTerm("thing")) (Some "https://schema.org/Thing") "context was not set correctly"
+        ftestCase "Type" <| fun _ ->
+            let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+            let context = new LDContext()
+            context.AddMapping("thing", "https://schema.org/Thing")
+            node.Compact_InPlace(context)
+            Expect.sequenceEqual node.SchemaType ["thing"] "type was not compacted"
+        ftestCase "StringValue" <| fun _ ->
+            let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+            let value = LDValue("MyValue")
+            node.SetProperty("https://schema.org/name", value)
+            let context = new LDContext()
+            context.AddMapping("name", "https://schema.org/name")
+            node.Compact_InPlace(context)
+            // Check compaction of value object to value
+            let v = Expect.wantSome (node.TryGetProperty("name")) "property does not exist anymore"
+            Expect.equal v "MyValue" "property value was not compacted"
+            // Check compaction of property name
+            Expect.isTrue ((node :> DynamicObj).HasProperty("name")) "compacted property was not found"
+            Expect.isFalse((node :> DynamicObj).HasProperty("https://schema.org/name")) "property name was not compacted"
+        ftestCase "IntValue" <| fun _ ->
+            let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+            let value = LDValue(42)
+            node.SetProperty("https://schema.org/age", value)
+            let context = new LDContext()
+            context.AddMapping("age", "https://schema.org/age")
+            node.Compact_InPlace(context)
+            // Check compaction of value object to value
+            let v = Expect.wantSome (node.TryGetProperty("age")) "property does not exist anymore"
+            Expect.equal v 42 "property value was not compacted"
+            // Check compaction of property name
+            Expect.isTrue ((node :> DynamicObj).HasProperty("age")) "compacted property was not found"
+            Expect.isFalse((node :> DynamicObj).HasProperty("https://schema.org/age")) "property name was not compacted"
+        ftestCase "NodeValue_Recursive" <| fun _ ->
+            let internalNode = new LDNode("MyInternalNode", ResizeArray ["https://schema.org/Thing"])
+            let internalValue = LDValue("MyName")
+            internalNode.SetProperty("https://schema.org/name", internalValue)
+            let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+            node.SetProperty("https://schema.org/about", internalNode)
+            let context = new LDContext()
+            context.AddMapping("about", "https://schema.org/about")
+            context.AddMapping("name", "https://schema.org/name")
+            node.Compact_InPlace(context)
+            // Check compaction of outer node
+            let internalNode = Expect.wantSome (node.TryGetProperty("about")) "outer property does not exist anymore"
+            Expect.isTrue ((node :> DynamicObj).HasProperty("about")) "outer compacted property was not found"
+            Expect.isFalse((node :> DynamicObj).HasProperty("https://schema.org/about")) "outer property name was not compacted"
+            // Check compaction of outer node
+            let internalNode = internalNode :?> LDNode
+            let v = Expect.wantSome (internalNode.TryGetProperty("name")) "inner property does not exist anymore"
+            Expect.equal v "MyName" "inner property value was not compacted"
+            Expect.isTrue ((internalNode :> DynamicObj).HasProperty("name")) "inner compacted property was not found"
+            Expect.isFalse((internalNode :> DynamicObj).HasProperty("https://schema.org/name")) "inner property name was not compacted"
+    ]
+
+let tests_Flatten = testList "Flatten" [
+    ftestCase "EmptyNode" <| fun _ ->
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        let graph = node.Flatten()
+        Expect.sequenceEqual graph.Nodes [node] "graph was not flattened"
+    ftestCase "SingleNodeValue_Recursive" <| fun _ ->
+        let internalNode = new LDNode("MyInternalNode", ResizeArray ["https://schema.org/Thing"])
+        let internalValue = LDValue("MyName")
+        internalNode.SetProperty("https://schema.org/name", internalValue)
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("https://schema.org/about", internalNode)
+        let graph = node.Flatten()
+        Expect.equal graph.Nodes.Count 2 "Graph should have two nodes"
+        let oNode = Expect.wantSome (graph.TryGetNode("MyNode")) "outer node was not found"
+        let nodeRef = Expect.wantSome (oNode.TryGetProperty("https://schema.org/about")) "outer property should still reference inner node"
+        Expect.equal nodeRef (LDRef("MyInternalNode")) "property value was not replaced by id reference"
+        let iNode = Expect.wantSome (graph.TryGetNode("MyInternalNode")) "inner node was not found"
+        let v = Expect.wantSome (iNode.TryGetProperty("https://schema.org/name")) "inner property does not exist anymore"
+        Expect.equal v "MyName" "inner property value was not found"
+]
+
 let main = testList "LDNode" [
     tests_profile_object_is_valid
     //tests_interface_members
@@ -340,4 +423,6 @@ let main = testList "LDNode" [
     tests_HasType
     tests_GetPropertyValues
     tests_GetPropertyNodes
+    tests_Compact_InPlace
+    tests_Flatten
 ]

@@ -42,6 +42,15 @@ and [<AttachMembers>] LDRef(id : string) =
         with get() = id
         and set(v) = id <- v
 
+    override this.Equals(other : obj) =
+        match other with
+        | :? LDRef as other ->            
+            this.Id = other.Id
+        | _ -> false
+
+    override this.GetHashCode() =
+       HashCodes.mergeHashes (123) (this.Id.GetHashCode())
+
 and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?context : LDContext) =
 
     let mutable id = id
@@ -167,15 +176,18 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         
 
     member this.SetProperty(propertyName : string, value : obj, ?context : LDContext) =
-        this.RemoveProperty(propertyName) |> ignore
-        let propertyName =
-            match LDContext.tryCombineOptional context (this.TryGetContext()) with
-            | Some ctx ->
-                match ctx.TryResolveTerm propertyName with
-                | Some term -> term
-                | None -> propertyName
-            | None -> propertyName
-        this.SetProperty(propertyName,value)
+        (this :> DynamicObj).SetProperty(propertyName, value)
+
+
+        //this.RemoveProperty(propertyName) |> ignore
+        //let propertyName =
+        //    match LDContext.tryCombineOptional context (this.TryGetContext()) with
+        //    | Some ctx ->
+        //        match ctx.TryResolveTerm propertyName with
+        //        | Some term -> term
+        //        | None -> propertyName
+        //    | None -> propertyName
+        //this.SetProperty(propertyName,value)
 
     member this.HasProperty(propertyName : string, ?context : LDContext) =
         let v = this.TryGetProperty(propertyName, ?context = context)
@@ -199,11 +211,23 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
 
     member this.Compact_InPlace(?context : LDContext) =
         let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        if context.IsSome then
+            let context = context.Value
+            this.SetContext(context)
+            let newTypes = ResizeArray [
+                for st in this.SchemaType do
+                    match context.TryGetTerm st with
+                    | Some term -> term
+                    | None -> st
+            ]
+            this.SchemaType <- newTypes
         let rec compactValue_inPlace (o : obj) : obj =
             match o with
             | :? LDNode as n ->
                 n.Compact_InPlace(?context = context)
                 n
+            | :? string as s ->
+                s
             | :? System.Collections.IEnumerable as e ->
                 let en = e.GetEnumerator()
                 let l = ResizeArray [
@@ -213,7 +237,8 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 if l.Count = 1 then l.[0] else l
             | :? LDValue as v -> v.Value
             | x -> x
-        this.GetPropertyHelpers(true)
+
+        this.GetPropertyHelpers(false)
         |> Seq.iter (fun ph ->
             let newKey =
                 match context with
@@ -246,11 +271,12 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 ]
                 l
             | x -> x
-        this.GetPropertyHelpers(true)
+        this.GetPropertyHelpers(false)
         |> Seq.iter (fun ph ->
             let newValue = flattenValue (ph.GetValue(this))
             ph.SetValue this newValue
         )
+        graph.AddNode this
         graph
 
     member this.Unflatten(graph : LDGraph) =
