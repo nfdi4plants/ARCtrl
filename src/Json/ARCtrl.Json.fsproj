@@ -35,6 +35,10 @@
     <Compile Include="ConverterOptions.fs" />
     <Compile Include="Decode.fs" />
     <Compile Include="Encode.fs" />
+    <Compile Include="ROCrate\LDRef.fs" />
+    <Compile Include="ROCrate\LDValue.fs" />
+    <Compile Include="ROCrate\LDContext.fs" />
+    <Compile Include="ROCrate\LDNode.fs" />
     <Compile Include="IDTable.fs" />
     <Compile Include="StringTable.fs" />
     <Compile Include="Comment.fs" />
@@ -75,7 +79,6 @@
     <Compile Include="Assay.fs" />
     <Compile Include="Study.fs" />
     <Compile Include="Investigation.fs" />
-    <Compile Include="LDObject.fs" />
     <Compile Include="ARC.fs" />
   </ItemGroup>
   <ItemGroup>

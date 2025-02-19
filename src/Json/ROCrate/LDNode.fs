@@ -6,37 +6,6 @@ open ARCtrl.ROCrate
 open Thoth.Json.Core
 open DynamicObj
 
-module LDContext =
-
-    let decoder : Decoder<LDContext> =
-        { new Decoder<LDContext> with
-            member _.Decode(helpers, value) =     
-                if helpers.isObject value then
-                    let getters = Decode.Getters(helpers, value)
-                    let properties = helpers.getProperties value
-                    let builder =
-                        fun (get : Decode.IGetters) ->
-                            let o = LDContext()
-                            for property in properties do
-                                if property <> "@id" && property <> "@type" then
-                                    o.AddMapping(property,get.Required.Field property Decode.string)
-                            o
-                    let result = builder getters               
-                    match getters.Errors with
-                    | [] -> Ok result
-                    | fst :: _ as errors ->
-                        if errors.Length > 1 then
-                            ("", BadOneOf errors) |> Error
-                        else
-                            Error fst                
-                else 
-                    ("", BadPrimitive("an object", value)) |> Error
-        }
-
-    let encoder (ctx: LDContext) =
-        ctx.Mappings
-        |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )
-        |> Encode.object
 
 module rec LDNode =
     #if !FABLE_COMPILER
@@ -67,6 +36,8 @@ module rec LDNode =
         | :? bool as b -> Encode.bool b
         | :? float as f -> Encode.float f
         | :? DateTime as d -> Encode.dateTime d
+        | :? LDValue as v -> LDValue.encoder v
+        | :? LDRef as r -> LDRef.encoder r
         | :? LDNode as o -> encoder o
         #if !FABLE_COMPILER
         | SomeObj o -> genericEncoder o
@@ -177,12 +148,13 @@ module rec LDNode =
                 Decode.map box (decodeObject)
             else
                 Decode.oneOf [
+                    Decode.map box (LDValue.decoder)
                     Decode.map box (decodeObject)
+                    Decode.map box (LDRef.decoder)
                     Decode.map box (resizeArray)
                     Decode.map box (Decode.string)
                     Decode.map box (Decode.int)
                     Decode.map box (Decode.decimal)
-
                 ]
         decode(expectObject)
 

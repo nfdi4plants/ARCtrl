@@ -399,7 +399,7 @@ let tests_Flatten = testList "Flatten" [
         Expect.sequenceEqual graph.Nodes [node] "graph was not flattened"
     ftestCase "SingleNodeValue_Recursive" <| fun _ ->
         let internalNode = new LDNode("MyInternalNode", ResizeArray ["https://schema.org/Thing"])
-        let internalValue = LDValue("MyName")
+        let internalValue = "MyName"
         internalNode.SetProperty("https://schema.org/name", internalValue)
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         node.SetProperty("https://schema.org/about", internalNode)

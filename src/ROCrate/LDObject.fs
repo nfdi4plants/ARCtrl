@@ -263,6 +263,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | :? LDNode as n ->
                 n.Flatten(graph) |> ignore
                 LDRef(n.Id)
+            | :? string as s -> s
             | :? System.Collections.IEnumerable as e ->
                 let en = e.GetEnumerator()
                 let l = ResizeArray [
