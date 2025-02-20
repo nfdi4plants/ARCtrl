@@ -46,6 +46,34 @@ let private test_read = testList "Read" [
         Expect.equal names.Count 2 "ResizeArray length is wrong"
         Expect.equal names.[0] "MyName" "First name was not parsed correctly"
         Expect.equal names.[1] "MySecondName" "Second name was not parsed correctly"
+    testCase "withExpandedStringFieldNoType" <| fun _ -> 
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withExpandedStringFieldNoType)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        let name = Expect.wantSome (json.TryGetProperty "name") "field name was not parsed"
+        let expected = LDValue("MyName")
+        Expect.equal name expected "field name was not parsed correctly"
+    testCase "withExpandedStringFieldWithType" <| fun _ ->
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withExpandedStringFieldWithType)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        let name = Expect.wantSome (json.TryGetProperty "name") "field name was not parsed"
+        let expected = LDValue("MyName", valueType = "http://www.w3.org/2001/XMLSchema#string")
+        Expect.equal name expected "field name was not parsed correctly"
+    testCase "withExpandedIntFieldWithType" <| fun _ ->
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withExpandedIntFieldWithType)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        let number = Expect.wantSome (json.TryGetProperty "number") "field number was not parsed"
+        let expected = LDValue(42, valueType = "http://www.w3.org/2001/XMLSchema#int")
+        Expect.equal number expected "field number was not parsed correctly"
+    testCase "withLDRefObject" <| fun _ ->
+        let json = LDNode.fromROCrateJsonString(GenericObjects.withLDRefObject)
+        Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
+        Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
+        let ref = Expect.wantSome (json.TryGetProperty "nested") "field ref was not parsed"
+        let expected = LDRef("MyRefIdentifier")
+        Expect.equal ref expected "ref id was not parsed correctly"
     testCase "withNestedObject" <| fun _ ->
         let json = LDNode.fromROCrateJsonString(GenericObjects.withNestedObject)
         Expect.equal json.Id "OuterIdentifier" "id was not parsed correctly"

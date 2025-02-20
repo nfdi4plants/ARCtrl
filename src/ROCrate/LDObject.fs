@@ -34,6 +34,14 @@ type LDValue(value : obj, ?valueType : string) =
         with get() = valueType
         and set(v) = valueType <- v
 
+    override this.Equals(other : obj) =
+        match other with
+        | :? LDValue as other ->            
+            this.Value = other.Value
+        | _ -> false
+
+    override this.GetHashCode() =
+        HashCodes.mergeHashes (123) (this.Value.GetHashCode())
 
 and [<AttachMembers>] LDRef(id : string) =
     let mutable id = id

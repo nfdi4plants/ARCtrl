@@ -1,24 +1,29 @@
 /// All json objects tested against offical validator: https://validator.schema.org
 module TestObjects.Json.ROCrate
 
-let definedTerm = """{
-  "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
-  "@type": "OntologyAnnotation",
-  "annotationValue": "Peptidase",
-  "termSource": "MS",
-  "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
-  "comments": [
-    "Comment {Name = \"comment\", Value= \"This is a comment\"}"
-  ],
-  "@context": {
-    "sdo": "http://schema.org/",
-    "OntologyAnnotation": "sdo:DefinedTerm",
-    "annotationValue": "sdo:name",
-    "termSource": "sdo:inDefinedTermSet",
-    "termAccession": "sdo:termCode",
-    "comments": "sdo:disambiguatingDescription"
-  }
-}"""
+let context_DefinedTerm =
+    """{
+        "sdo": "http://schema.org/",
+        "OntologyAnnotation": "sdo:DefinedTerm",
+        "annotationValue": "sdo:name",
+        "termSource": "sdo:inDefinedTermSet",
+        "termAccession": "sdo:termCode",
+        "comments": "sdo:disambiguatingDescription"
+    }"""
+
+let definedTerm =
+    context_DefinedTerm
+    |> sprintf """{
+      "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
+      "@type": "OntologyAnnotation",
+      "annotationValue": "Peptidase",
+      "termSource": "MS",
+      "termAccession": "http://purl.obolibrary.org/obo/NCIT_C16965",
+      "comments": [
+        "Comment {Name = \"comment\", Value= \"This is a comment\"}"
+      ],
+      "@context": %s
+    }""" 
 
 let propertyValue = """{
   "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
@@ -280,6 +285,42 @@ module GenericObjects =
             "@id": "MyIdentifier",
             "@type": "MyType",
             "names": ["MyName", "MySecondName"]           
+        }"""
+
+    let withExpandedStringFieldNoType =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "name": {
+                "@value": "MyName"
+            }
+        }"""
+
+    let withExpandedStringFieldWithType = """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "name": {
+                "@value": "MyName",
+                "@type": "http://www.w3.org/2001/XMLSchema#string"
+            }
+        }"""
+
+    let withExpandedIntFieldWithType = """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "number": {
+                "@value": 42,
+                "@type": "http://www.w3.org/2001/XMLSchema#integer"
+            }
+        }"""
+
+    let withLDRefObject =
+        """{
+            "@id": "MyIdentifier",
+            "@type": "MyType",
+            "nested": {
+                "@id": "RefIdentifier"
+            }
         }"""
 
     let withNestedObject =

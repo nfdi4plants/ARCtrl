@@ -17,24 +17,24 @@ let nameIRIAlternative = "http://fantasy-site.org/name"
 
 
 let tests_resolveTerm = testList "resolveTerm" [
-    ftestCase "null" <| fun _ -> 
+    testCase "null" <| fun _ -> 
         let context = new LDContext()
         let resolved = context.TryResolveTerm(nameTerm)
         Expect.isNone resolved "missing term was resolved"
-    ftestCase "fullIRI" <| fun _ ->
+    testCase "fullIRI" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameIRI)
         let resolved = context.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "compactIRI" <| fun _ ->
+    testCase "compactIRI" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameCompactIRI)
         context.AddMapping(schemaTerm, schemaIRI)
         let resolved = context.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "Nested_Shadowed" <| fun _ ->
+    testCase "Nested_Shadowed" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -42,7 +42,7 @@ let tests_resolveTerm = testList "resolveTerm" [
         let resolved = outerContext.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRIAlternative "term was not resolved correctly"
-    ftestCase "Nested" <| fun _ ->
+    testCase "Nested" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -52,24 +52,24 @@ let tests_resolveTerm = testList "resolveTerm" [
 ]
 
 let tests_getTerm = testList "getTerm" [
-    ftestCase "null" <| fun _ -> 
+    testCase "null" <| fun _ -> 
         let context = new LDContext()
         let resolved = context.TryGetTerm(nameIRI)
         Expect.isNone resolved "missing term was resolved"
-    ftestCase "fullIRI" <| fun _ ->
+    testCase "fullIRI" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameIRI)
         let resolved = context.TryGetTerm(nameIRI)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameTerm "term was not resolved correctly"
-    ftestCase "compactIRI" <| fun _ ->
+    testCase "compactIRI" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameCompactIRI)
         context.AddMapping(schemaTerm, schemaIRI)
         let resolved = context.TryGetTerm(nameIRI)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameTerm "term was not resolved correctly"
-    ftestCase "Nested_Shadowed" <| fun _ ->
+    testCase "Nested_Shadowed" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -77,7 +77,7 @@ let tests_getTerm = testList "getTerm" [
         let resolved = outerContext.TryGetTerm(nameIRI)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameTerm "term was not resolved correctly"
-    ftestCase "Nested" <| fun _ ->
+    testCase "Nested" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -87,23 +87,23 @@ let tests_getTerm = testList "getTerm" [
 ] 
 
 let tests_shallowCopy = testList "shallowCopy" [
-    ftestCase "empty" <| fun _ -> 
+    testCase "empty" <| fun _ -> 
         let context = new LDContext()
         let copy = context.ShallowCopy()
         Expect.isEmpty copy.Mappings "shallow copy was not empty"
-    ftestCase "empty_immutable" <| fun _ -> 
+    testCase "empty_immutable" <| fun _ -> 
         let context = new LDContext()
         let copy = context.ShallowCopy()
         context.AddMapping(nameTerm, nameIRI)
         Expect.isEmpty copy.Mappings "shallow copy was not empty"
-    ftestCase "withMapping" <| fun _ ->
+    testCase "withMapping" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameIRI)
         let copy = context.ShallowCopy()
         let resolved = copy.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "withMapping_immutable" <| fun _ ->
+    testCase "withMapping_immutable" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameIRI)
         let copy = context.ShallowCopy()
@@ -111,7 +111,7 @@ let tests_shallowCopy = testList "shallowCopy" [
         let resolved = copy.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "withBaseContext" <| fun _ ->
+    testCase "withBaseContext" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -119,7 +119,7 @@ let tests_shallowCopy = testList "shallowCopy" [
         let resolved = copy.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "withBaseContext_mutable" <| fun _ ->
+    testCase "withBaseContext_mutable" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -131,23 +131,23 @@ let tests_shallowCopy = testList "shallowCopy" [
 ]
 
 let tests_deepCopy = testList "deepCopy" [
-    ftestCase "empty" <| fun _ -> 
+    testCase "empty" <| fun _ -> 
         let context = new LDContext()
         let copy = context.DeepCopy()
         Expect.isEmpty copy.Mappings "deep copy was not empty"
-    ftestCase "empty_immutable" <| fun _ -> 
+    testCase "empty_immutable" <| fun _ -> 
         let context = new LDContext()
         let copy = context.DeepCopy()
         context.AddMapping(nameTerm, nameIRI)
         Expect.isEmpty copy.Mappings "deep copy was not empty"
-    ftestCase "withMapping" <| fun _ ->
+    testCase "withMapping" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameIRI)
         let copy = context.DeepCopy()
         let resolved = copy.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "withMapping_immutable" <| fun _ ->
+    testCase "withMapping_immutable" <| fun _ ->
         let context = new LDContext()
         context.AddMapping(nameTerm, nameIRI)
         let copy = context.DeepCopy()
@@ -155,7 +155,7 @@ let tests_deepCopy = testList "deepCopy" [
         let resolved = copy.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "withBaseContext" <| fun _ ->
+    testCase "withBaseContext" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])
@@ -163,7 +163,7 @@ let tests_deepCopy = testList "deepCopy" [
         let resolved = copy.TryResolveTerm(nameTerm)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameIRI "term was not resolved correctly"
-    ftestCase "withBaseContext_immutable" <| fun _ ->
+    testCase "withBaseContext_immutable" <| fun _ ->
         let innerContext = new LDContext()
         innerContext.AddMapping(nameTerm, nameIRI)
         let outerContext = new LDContext(baseContexts = ResizeArray [innerContext])

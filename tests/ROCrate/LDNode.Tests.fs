@@ -25,28 +25,28 @@ let all_properties_with_context =
 
 let tests_profile_object_is_valid = testList "constructed properties" [
     testList "mandatory properties" [
-        ftestCase "Id" <| fun _ -> Expect.LDNodeHasId "LDNode_mandatory_properties_id" mandatory_properties
-        ftestCase "SchemaType" <| fun _ -> Expect.LDNodeHasType "someType" mandatory_properties
+        testCase "Id" <| fun _ -> Expect.LDNodeHasId "LDNode_mandatory_properties_id" mandatory_properties
+        testCase "SchemaType" <| fun _ -> Expect.LDNodeHasType "someType" mandatory_properties
     ]
     testList "all properties" [
-        ftestCase "Id" <| fun _ -> Expect.LDNodeHasId "LDNode_all_properties_id" all_properties
-        ftestCase "SchemaType" <| fun _ -> Expect.LDNodeHasType "someType" all_properties
-        ftestCase "AdditionalType" <| fun _ -> Expect.LDNodeHasAdditionalType "additionalType" all_properties
+        testCase "Id" <| fun _ -> Expect.LDNodeHasId "LDNode_all_properties_id" all_properties
+        testCase "SchemaType" <| fun _ -> Expect.LDNodeHasType "someType" all_properties
+        testCase "AdditionalType" <| fun _ -> Expect.LDNodeHasAdditionalType "additionalType" all_properties
     ]
 ]
 
 //let tests_interface_members = testList "interface members" [
-//    ftestCase "mandatoryProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"someType"|] "LDNode_mandatory_properties_id" [||] mandatory_properties
-//    ftestCase "allProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"someType"|] "LDNode_all_properties_id" [|"additionalType"|] all_properties
+//    testCase "mandatoryProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"someType"|] "LDNode_mandatory_properties_id" [||] mandatory_properties
+//    testCase "allProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"someType"|] "LDNode_all_properties_id" [|"additionalType"|] all_properties
 //]
 
 let tests_dynamic_members = testSequenced (
     testList "dynamic members" [
-        ftestCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
-        ftestCase "Set dynamic property" <| fun _ ->
+        testCase "property not present before setting" <| fun _ -> Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be set"
+        testCase "Set dynamic property" <| fun _ ->
             mandatory_properties.SetProperty("yes",42)
             Expect.LDNodeHasDynamicProperty "yes" 42 mandatory_properties
-        ftestCase "Remove dynamic property" <| fun _ ->
+        testCase "Remove dynamic property" <| fun _ ->
             mandatory_properties.RemoveProperty("yes") |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<int> "yes" mandatory_properties) "dynamic property 'yes' was set although it was expected not to be removed"
     ]
@@ -58,13 +58,13 @@ let tests_instance_methods = testSequenced (
         let context = new LDContext()
         context.AddMapping("more", "context")
 
-        ftestCase "can set context" <| fun _ ->
+        testCase "can set context" <| fun _ ->
             mandatory_properties.SetContext context
             Expect.LDNodeHasDynamicProperty "@context" context mandatory_properties
-        ftestCase "can get context" <| fun _ ->
+        testCase "can get context" <| fun _ ->
             let ctx = mandatory_properties.TryGetContext()
             Expect.equal ctx (Some context) "context was not set correctly"
-        ftestCase "can remove context" <| fun _ ->
+        testCase "can remove context" <| fun _ ->
             mandatory_properties.RemoveContext() |> ignore
             Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
     ]
@@ -76,13 +76,13 @@ let tests_static_methods = testSequenced (
             let context = new LDContext()
             context.AddMapping("more", "context")
 
-            ftestCase "can set context" <| fun _ ->
+            testCase "can set context" <| fun _ ->
                 LDNode.setContext context mandatory_properties
                 Expect.LDNodeHasDynamicProperty "@context" context mandatory_properties
-            ftestCase "can get context" <| fun _ ->
+            testCase "can get context" <| fun _ ->
                 let ctx = LDNode.tryGetContext() mandatory_properties
                 Expect.equal ctx (Some context) "context was not set correctly"
-            ftestCase "can remove context" <| fun _ ->
+            testCase "can remove context" <| fun _ ->
                 LDNode.removeContext() mandatory_properties |> ignore
                 Expect.isNone (DynObj.tryGetTypedPropertyValue<DynamicObj> "@context" mandatory_properties) "context was not removed correctly"
         ]
@@ -107,13 +107,13 @@ let tests_static_methods = testSequenced (
                 tmp
                 |> DynObj.withProperty "@type" "someType"
 
-            ftestCase "can convert compatible DynObj to LDNode" <| fun _ ->
+            testCase "can convert compatible DynObj to LDNode" <| fun _ ->
                 let roc = Expect.wantSome (LDNode.tryFromDynamicObj compatibleDynObj) "LDNode.tryFromDynamicObj did not return Some"
                 Expect.equal roc all_properties "LDNode was not created correctly from compatible DynamicObj"
-            ftestCase "can convert compatible DynObj with context to LDNode" <| fun _ ->
+            testCase "can convert compatible DynObj with context to LDNode" <| fun _ ->
                 let roc = Expect.wantSome (LDNode.tryFromDynamicObj compatibleDynObjWithContext) "LDNode.tryFromDynamicObj did not return Some"
                 Expect.equal roc all_properties_with_context "LDNode was not created correctly from compatible DynamicObj"
-            ftestCase "cannot convert incompatible DynObj to LDNode" <| fun _ ->
+            testCase "cannot convert incompatible DynObj to LDNode" <| fun _ ->
                 Expect.isNone (LDNode.tryFromDynamicObj incompatibleDynObj) "LDNode.tryFromDynamicObj did not return None"
         ]
     ]
@@ -121,11 +121,11 @@ let tests_static_methods = testSequenced (
 
 let tests_TryGetProperty = testList "TryGetProperty" [
     testList "NoContext" [
-        ftestCase "null" <| fun _ -> 
+        testCase "null" <| fun _ -> 
             let node = new LDNode("MyNode",ResizeArray ["https://schema.org/Thing"])
             let v = node.TryGetProperty("MyProperty")
             Expect.isNone v "missing property was resolved"
-        ftestCase "fullIRI" <| fun _ ->
+        testCase "fullIRI" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let nameKey = "https://schema.org/name"
             let nameValue = "MyName"
@@ -133,7 +133,7 @@ let tests_TryGetProperty = testList "TryGetProperty" [
             let v = node.TryGetProperty(nameKey)
             let v = Expect.wantSome v "property was not resolved"
             Expect.equal v nameValue "property was not resolved correctly"
-        ftestCase "Term" <| fun _ ->
+        testCase "Term" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let nameKey = "name"
             let nameValue = "MyName"
@@ -143,13 +143,13 @@ let tests_TryGetProperty = testList "TryGetProperty" [
             Expect.equal v nameValue "property was not resolved correctly"
     ]
     testList "SimpleContext" [
-        ftestCase "null" <| fun _ ->
+        testCase "null" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("name", "https://schema.org/name")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
             let v = node.TryGetProperty("name")
             Expect.isNone v "missing property was resolved"
-        ftestCase "IRISet_TermGet" <| fun _ ->
+        testCase "IRISet_TermGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("name", "https://schema.org/name")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
@@ -159,7 +159,7 @@ let tests_TryGetProperty = testList "TryGetProperty" [
             let v = node.TryGetProperty("name")
             let v = Expect.wantSome v "property was not resolved"
             Expect.equal v nameValue "property was not resolved correctly"
-        ftestCase "TermSet_TermGet" <| fun _ ->
+        testCase "TermSet_TermGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("name", "https://schema.org/name")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
@@ -169,7 +169,7 @@ let tests_TryGetProperty = testList "TryGetProperty" [
             let v = node.TryGetProperty("name")
             let v = Expect.wantSome v "property was not resolved"
             Expect.equal v nameValue "property was not resolved correctly"
-        ftestCase "IRISet_IRIGet" <| fun _ ->
+        testCase "IRISet_IRIGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("name", "https://schema.org/name")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
@@ -179,7 +179,7 @@ let tests_TryGetProperty = testList "TryGetProperty" [
             let v = node.TryGetProperty(nameKey)
             let v = Expect.wantSome v "property was not resolved"
             Expect.equal v nameValue "property was not resolved correctly"
-        ftestCase "TermSet_IRIGet" <| fun _ ->
+        testCase "TermSet_IRIGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("name", "https://schema.org/name")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
@@ -194,51 +194,51 @@ let tests_TryGetProperty = testList "TryGetProperty" [
 
 let tests_HasType = testList "HasType" [
     testList "NoContext" [
-        ftestCase "null" <| fun _ -> 
+        testCase "null" <| fun _ -> 
             let node = new LDNode("MyNode",ResizeArray ["https://schema.org/Thing"])
             let v = node.HasType("https://schema.org/Person")
             Expect.isFalse v "missing type was resolved"
-        ftestCase "fullIRI" <| fun _ ->
+        testCase "fullIRI" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let v = node.HasType("https://schema.org/Thing")
             Expect.isTrue v "type was not resolved"
-        ftestCase "Term" <| fun _ ->
+        testCase "Term" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["Thing"])
             let v = node.HasType("Thing")
             Expect.isTrue v "type was not resolved"
     ]
     testList "SimpleContext" [
-        ftestCase "null" <| fun _ ->
+        testCase "null" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("Thing", "https://schema.org/Thing")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
             let v = node.HasType("https://schema.org/Person")
             Expect.isFalse v "missing type was resolved"
-        ftestCase "IRISet_IRIGet" <| fun _ ->
+        testCase "IRISet_IRIGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("Thing", "https://schema.org/Thing")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
             let v = node.HasType("https://schema.org/Thing")
             Expect.isTrue v "type was not resolved"
-        ftestCase "TermSet_TermGet" <| fun _ ->
+        testCase "TermSet_TermGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("Thing", "https://schema.org/Thing")
             let node = new LDNode("MyNode", ResizeArray ["Thing"],context = context)
             let v = node.HasType("Thing")
             Expect.isTrue v "type was not resolved"
-        ftestCase "IRISet_TermGet" <| fun _ ->
+        testCase "IRISet_TermGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("Thing", "https://schema.org/Thing")
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"],context = context)
             let v = node.HasType("Thing")
             Expect.isTrue v "type was not resolved"
-        ftestCase "TermSet_IRIGet" <| fun _ ->
+        testCase "TermSet_IRIGet" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("Thing", "https://schema.org/Thing")
             let node = new LDNode("MyNode", ResizeArray ["Thing"],context = context)
             let v = node.HasType("https://schema.org/Thing")
             Expect.isTrue v "type was not resolved"
-        ftestCase "MultiType" <| fun _ ->
+        testCase "MultiType" <| fun _ ->
             let context = new LDContext()
             context.AddMapping("Thing", "https://schema.org/Thing")
             context.AddMapping("Person", "https://schema.org/Person")
@@ -257,36 +257,36 @@ let tests_HasType = testList "HasType" [
 
 
 let tests_GetPropertyValues = testList "GetPropertyValues" [
-    ftestCase "null" <| fun _ ->
+    testCase "null" <| fun _ ->
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         let v = node.GetPropertyValues("https://schema.org/name")
         Expect.isEmpty v "missing type was resolved"
-    ftestCase "StringSequence" <| fun _ ->
+    testCase "StringSequence" <| fun _ ->
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         let values = seq {"Name1";"Name2"}
         node.SetProperty("https://schema.org/name", values)
         let v = node.GetPropertyValues("https://schema.org/name") |> ResizeArray.map (fun x -> x :?> string)
         Expect.sequenceEqual v values "values were not resolved"
-    ftestCase "StringArray" <| fun _ ->
+    testCase "StringArray" <| fun _ ->
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         let values = ResizeArray ["Name1";"Name2"]
         node.SetProperty("https://schema.org/name", values)
         let v = node.GetPropertyValues("https://schema.org/name") |> ResizeArray.map (fun x -> x :?> string)
         Expect.sequenceEqual v values "values were not resolved"
-    ftestCase "SingleString" <| fun _ ->
+    testCase "SingleString" <| fun _ ->
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         let value = "Name1"
         node.SetProperty("https://schema.org/name", value)
         let v = node.GetPropertyValues("https://schema.org/name") |> ResizeArray.map (fun x -> x :?> string)
         Expect.sequenceEqual v (ResizeArray [value]) "values were not resolved"
-    ftestCase "SingleNode" <| fun _ ->
+    testCase "SingleNode" <| fun _ ->
         let internalNode1 = new LDNode("MyNode1", ResizeArray ["https://schema.org/Thing"])
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         node.SetProperty("https://schema.org/about", internalNode1)
         let v = node.GetPropertyValues("https://schema.org/about") |> ResizeArray.map (fun x -> x :?> LDNode)
         Expect.sequenceEqual v (ResizeArray [internalNode1]) "values were not resolved"
     testList "Filter" [
-        ftestCase "OnlyRetrieveNumbers" <| fun _ ->
+        testCase "OnlyRetrieveNumbers" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let values : ResizeArray<obj> = ResizeArray [box "Name1";3;4;"Name2"]
             node.SetProperty("https://schema.org/name", values)
@@ -297,11 +297,11 @@ let tests_GetPropertyValues = testList "GetPropertyValues" [
 ]
 
 let tests_GetPropertyNodes = testList "GetPropertyNodes" [
-    ftestCase "null" <| fun _ ->
+    testCase "null" <| fun _ ->
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         let v = node.GetPropertyNodes("https://schema.org/name")
         Expect.isEmpty v "missing type was resolved"
-    ftestCase "SequenceSet" <| fun _ ->
+    testCase "SequenceSet" <| fun _ ->
         let internalNode1 = new LDNode("MyNode1",ResizeArray ["https://schema.org/Thing"])
         let internalNode2 = new LDNode("MyNode2",ResizeArray ["https://schema.org/Thing"])
         let values = seq {internalNode1;internalNode2}
@@ -309,7 +309,7 @@ let tests_GetPropertyNodes = testList "GetPropertyNodes" [
         node.SetProperty("https://schema.org/about", values)
         let v = node.GetPropertyNodes("https://schema.org/about")
         Expect.sequenceEqual v (ResizeArray [internalNode1;internalNode2]) "values were not resolved"
-    ftestCase "IgnoreNonNodes" <| fun _ ->
+    testCase "IgnoreNonNodes" <| fun _ ->
         let internalNode1 = new LDNode("MyNode1",ResizeArray ["https://schema.org/Thing"])
         let internalNode2 = new LDNode("MyNode2",ResizeArray ["https://schema.org/Thing"])
         let values : seq<obj> = seq {internalNode1 |> box;5;internalNode2;"NotANode"}
@@ -318,7 +318,7 @@ let tests_GetPropertyNodes = testList "GetPropertyNodes" [
         let v = node.GetPropertyNodes("https://schema.org/about")
         Expect.sequenceEqual v (ResizeArray [internalNode1;internalNode2]) "values were not resolved"
     testList "Filter" [
-        ftestCase "FilterForType" <| fun _ ->
+        testCase "FilterForType" <| fun _ ->
             let internalNode1 = new LDNode("MyNode1", ResizeArray ["https://schema.org/Person"])
             let internalNode2 = new LDNode("MyNode2", ResizeArray ["https://schema.org/CreativeWork"])
             let values = ResizeArray [internalNode1;internalNode2]
@@ -331,20 +331,20 @@ let tests_GetPropertyNodes = testList "GetPropertyNodes" [
 ]
 
 let tests_Compact_InPlace = testList "Compact_InPlace" [
-        ftestCase "Type_ContextIsUsedAndSet" <| fun _ ->
+        testCase "Type_ContextIsUsedAndSet" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let context = new LDContext()
             context.AddMapping("thing", "https://schema.org/Thing")
             node.Compact_InPlace(context)
             let ctx = Expect.wantSome (node.TryGetContext()) "context was not set"
             Expect.equal (ctx.TryResolveTerm("thing")) (Some "https://schema.org/Thing") "context was not set correctly"
-        ftestCase "Type" <| fun _ ->
+        testCase "Type" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let context = new LDContext()
             context.AddMapping("thing", "https://schema.org/Thing")
             node.Compact_InPlace(context)
             Expect.sequenceEqual node.SchemaType ["thing"] "type was not compacted"
-        ftestCase "StringValue" <| fun _ ->
+        testCase "StringValue" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let value = LDValue("MyValue")
             node.SetProperty("https://schema.org/name", value)
@@ -357,7 +357,7 @@ let tests_Compact_InPlace = testList "Compact_InPlace" [
             // Check compaction of property name
             Expect.isTrue ((node :> DynamicObj).HasProperty("name")) "compacted property was not found"
             Expect.isFalse((node :> DynamicObj).HasProperty("https://schema.org/name")) "property name was not compacted"
-        ftestCase "IntValue" <| fun _ ->
+        testCase "IntValue" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let value = LDValue(42)
             node.SetProperty("https://schema.org/age", value)
@@ -370,7 +370,7 @@ let tests_Compact_InPlace = testList "Compact_InPlace" [
             // Check compaction of property name
             Expect.isTrue ((node :> DynamicObj).HasProperty("age")) "compacted property was not found"
             Expect.isFalse((node :> DynamicObj).HasProperty("https://schema.org/age")) "property name was not compacted"
-        ftestCase "NodeValue_Recursive" <| fun _ ->
+        testCase "NodeValue_Recursive" <| fun _ ->
             let internalNode = new LDNode("MyInternalNode", ResizeArray ["https://schema.org/Thing"])
             let internalValue = LDValue("MyName")
             internalNode.SetProperty("https://schema.org/name", internalValue)
@@ -393,11 +393,11 @@ let tests_Compact_InPlace = testList "Compact_InPlace" [
     ]
 
 let tests_Flatten = testList "Flatten" [
-    ftestCase "EmptyNode" <| fun _ ->
+    testCase "EmptyNode" <| fun _ ->
         let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
         let graph = node.Flatten()
         Expect.sequenceEqual graph.Nodes [node] "graph was not flattened"
-    ftestCase "SingleNodeValue_Recursive" <| fun _ ->
+    testCase "SingleNodeValue_Recursive" <| fun _ ->
         let internalNode = new LDNode("MyInternalNode", ResizeArray ["https://schema.org/Thing"])
         let internalValue = "MyName"
         internalNode.SetProperty("https://schema.org/name", internalValue)
