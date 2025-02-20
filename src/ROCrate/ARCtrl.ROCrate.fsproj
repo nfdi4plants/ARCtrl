@@ -11,8 +11,15 @@
     <Compile Include="LDContext.fs" />
     <Compile Include="ROCrateContext.fs" />
     <Compile Include="LDObject.fs" />
+    <Compile Include="Generic\Comment.fs" />
+    <Compile Include="Generic\DefinedTerm.fs" />
     <Compile Include="Generic\PropertyValue.fs" />
     <Compile Include="Generic\Sample.fs" />
+    <Compile Include="Generic\Data.fs" />
+    <Compile Include="Generic\PostalAddress.fs" />
+    <Compile Include="Generic\Organization.fs" />
+    <Compile Include="Generic\Person.fs" />
+    <Compile Include="Generic\ScholarlyArticle.fs" />
     <Compile Include="ISAProfile\Dataset.fs" />
     <Compile Include="ISAProfile\Investigation.fs" />
     <Compile Include="ISAProfile\Study.fs" />

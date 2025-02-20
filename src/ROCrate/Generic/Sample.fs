@@ -15,12 +15,12 @@ type Sample =
     static member additionalProperty = "http://schema.org/additionalProperty"
 
     static member tryGetNameAsString(s : LDNode, ?context : LDContext) =
-        match s.TryGetProperty(Sample.name, ?context = context) with
+        match s.TryGetPropertyAsSingleton(Sample.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
 
     static member getNameAsString(s : LDNode, ?context : LDContext) =
-        match s.TryGetProperty(Sample.name, ?context = context) with
+        match s.TryGetPropertyAsSingleton(Sample.name, ?context = context) with
         | Some (:? string as n) -> n
         | _ -> failwith $"Could not access property `name` of object with @id `{s.Id}`"
 

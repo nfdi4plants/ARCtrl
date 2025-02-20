@@ -168,6 +168,15 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                     | None -> None
             | None -> None
 
+    member this.TryGetPropertyAsSingleton(propertyName : string, ?context : LDContext) : obj option =
+        match this.TryGetProperty(propertyName, ?context = context) with
+        | Some (:? string as s) -> Some s
+        | Some (:? System.Collections.IEnumerable as e) ->
+            let en = e.GetEnumerator()
+            if en.MoveNext() then Some en.Current else None
+        | Some o -> Some o
+        | _ -> None
+
     member this.GetPropertyValues(propertyName : string, ?filter : obj -> LDContext option -> bool, ?context) =
         let filter = defaultArg filter (fun _ _ -> true)
         match this.TryGetProperty(propertyName, ?context = context) with
@@ -205,7 +214,10 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
     member this.SetProperty(propertyName : string, value : obj, ?context : LDContext) =
         (this :> DynamicObj).SetProperty(propertyName, value)
 
-
+    member this.SetOptionalProperty(propertyName : string, value : #obj option, ?context : LDContext) =
+        match value with
+        | Some v -> this.SetProperty(propertyName, v, ?context = context)
+        | None -> ()
         //this.RemoveProperty(propertyName) |> ignore
         //let propertyName =
         //    match LDContext.tryCombineOptional context (this.TryGetContext()) with

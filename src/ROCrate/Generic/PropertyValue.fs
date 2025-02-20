@@ -23,33 +23,35 @@ type PropertyValue =
     static member valueReference = "http://schema.org/valueReference"
 
     static member tryGetNameAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.name, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
 
     static member getNameAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.name, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.name, ?context = context) with
         | Some (:? string as n) -> n
+        | Some _ -> failwith $"Property of `name` of object with @id `{pv.Id}` was not a string"
         | _ -> failwith $"Could not access property `name` of object with @id `{pv.Id}`"
 
     static member setNameAsString(pv : LDNode, name : string, ?context : LDContext) =
         pv.SetProperty(PropertyValue.name, name, ?context = context)
 
     static member tryGetValueAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.value, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.value, ?context = context) with
         | Some (:? string as v) -> Some v
         | _ -> None
 
     static member getValueAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.value, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.value, ?context = context) with
         | Some (:? string as v) -> v
+        | Some _ -> failwith $"Property of `value` of object with @id `{pv.Id}` was not a string"
         | _ -> failwith $"Could not access property `value` of object with @id `{pv.Id}`"
 
     static member setValueAsString(pv : LDNode, value : string, ?context : LDContext) =
         pv.SetProperty(PropertyValue.value, value, ?context = context)
 
     static member tryGetPropertyIDAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.propertyID, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.propertyID, ?context = context) with
         | Some (:? string as pid) -> Some pid
         | _ -> None
 
@@ -57,7 +59,7 @@ type PropertyValue =
         pv.SetProperty(PropertyValue.propertyID, propertyID, ?context = context)
 
     static member tryGetUnitCodeAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.unitCode, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.unitCode, ?context = context) with
         | Some (:? string as uc) -> Some uc
         | _ -> None
 
@@ -65,7 +67,7 @@ type PropertyValue =
         pv.SetProperty(PropertyValue.unitCode, unitCode, ?context = context)
 
     static member tryGetUnitTextAsString(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.unitText, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.unitText, ?context = context) with
         | Some (:? string as ut) -> Some ut
         | _ -> None
 
@@ -73,7 +75,7 @@ type PropertyValue =
         pv.SetProperty(PropertyValue.unitText, unitText, ?context = context)
 
     static member tryGetValueReference(pv : LDNode, ?context : LDContext) =
-        match pv.TryGetProperty(PropertyValue.valueReference, ?context = context) with
+        match pv.TryGetPropertyAsSingleton(PropertyValue.valueReference, ?context = context) with
         | Some (:? LDNode as vr) -> Some vr
         | _ -> None
 
