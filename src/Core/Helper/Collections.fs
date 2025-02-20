@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Helper
+namespace ARCtrl.Helper
 
 module Seq = 
     let inline compare (a: seq<'a>) (b: seq<'a>) =
@@ -43,6 +43,12 @@ module internal List =
 module Dictionary = 
 
     open System.Collections.Generic
+
+    let addOrUpdate (key : 'Key) (value : 'T) (dict : Dictionary<'Key,'T>) =
+        if dict.ContainsKey key then
+            dict.[key] <- value
+        else
+            dict.Add(key,value)
 
     let ofSeq (s : seq<'Key*'T>) = 
         let dict = Dictionary()

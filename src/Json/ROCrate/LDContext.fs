@@ -28,12 +28,24 @@ module LDContext =
                         if errors.Length > 1 then
                             ("", BadOneOf errors) |> Error
                         else
-                            Error fst                
+                            Error fst
+                elif helpers.isString value then
+                    let s = helpers.asString value
+                    if s = Context.proxy_V1_2DRAFT then
+                        Ok (Context.initV1_2DRAFT())
+                    elif s = Context.proxy_V1_1 then
+                        Ok (Context.initV1_1())
+                    else
+                        ("", BadPrimitive("an object", value)) |> Error                     
                 else 
                     ("", BadPrimitive("an object", value)) |> Error
         }
 
     let encoder (ctx: LDContext) =
-        ctx.Mappings
-        |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )
-        |> Encode.object
+        match ctx.Name with
+        | Some Context.proxy_V1_2DRAFT -> Encode.string Context.proxy_V1_2DRAFT
+        | Some Context.proxy_V1_1 -> Encode.string Context.proxy_V1_1
+        | _ ->
+            ctx.Mappings
+            |> Seq.map (fun kv -> kv.Key, kv.Value |> string |> Encode.string )
+            |> Encode.object

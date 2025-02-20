@@ -1,6 +1,7 @@
 namespace ARCtrl.ROCrate
 
 open System.Collections.Generic
+open ARCtrl.Helper
 
 module Dictionary = 
 
@@ -49,6 +50,7 @@ module IRIHelper =
 type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArray<LDContext>) =
 
     let mutable baseContexts = Option.defaultValue (ResizeArray []) baseContexts
+    let mutable name : string option = None
 
     let mappings : Dictionary<string,string> =
         match mappings with
@@ -58,7 +60,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     let reverseMappings : Dictionary<string,string> =
         let dict = Dictionary()
         for kvp in mappings do
-            dict.Add(kvp.Value,kvp.Key)
+            Dictionary.addOrUpdate kvp.Value kvp.Key dict
         dict
 
     let rec tryFindTerm (term : string) : string option =
@@ -94,13 +96,13 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
         with get() = baseContexts
         and internal set(value) = baseContexts <- value
 
+    member this.Name
+        with get() = name
+        and set(value) = name <- value
+
     member this.AddMapping(term,definition) =
-        if mappings.ContainsKey(term) then
-            mappings.[term] <- definition
-            reverseMappings.[definition] <- term
-        else
-            mappings.Add(term,definition)
-            reverseMappings.Add(definition,term)
+        Dictionary.addOrUpdate term definition mappings
+        Dictionary.addOrUpdate definition term reverseMappings
         
     member this.TryResolveTerm(term : string) =
         // Handle compact IRI

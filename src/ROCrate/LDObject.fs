@@ -59,10 +59,17 @@ and [<AttachMembers>] LDRef(id : string) =
     override this.GetHashCode() =
        HashCodes.mergeHashes (123) (this.Id.GetHashCode())
 
-and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?context : LDContext) =
+and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?context : LDContext) as this =
+
+    inherit DynamicObj()
 
     let mutable id = id
     let mappings = System.Collections.Generic.Dictionary()
+
+    do
+        match context with
+        | Some ctx -> this.SetContext(ctx)
+        | None -> ()
 
     do
         match nodes with
@@ -93,6 +100,18 @@ and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?conte
 
     member this.AddNode(node : LDNode) =
         mappings.Add(node.Id, node)
+
+
+    member this.SetContext (context: LDContext) =
+        this.SetProperty("@context", context)
+
+    static member setContext (context: LDContext) = fun (roc: #LDNode) -> roc.SetContext(context)
+
+    member this.TryGetContext() = DynObj.tryGetTypedPropertyValue<LDContext>("@context") this
+
+    static member tryGetContext () = fun (roc: #LDNode) -> roc.TryGetContext()
+
+    member this.RemoveContext() = this.RemoveProperty("@context")
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
 /// Basically a DynamicObj that implements the ILDNode interface.

@@ -23,6 +23,7 @@ let all = testSequenced <| testList "Json" [
     Tests.Process.Process.main
     Tests.LDContext.main
     Tests.LDNode.main
+    Tests.LDGraph.main
     Tests.SchemaValidation.main
 ]
 

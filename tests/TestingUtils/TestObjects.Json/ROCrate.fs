@@ -25,6 +25,26 @@ let definedTerm =
       "@context": %s
     }""" 
 
+
+let roCrate_minimal = """{
+      "@context": "https://w3id.org/ro/crate/1.2-DRAFT/context", 
+      "@graph": [
+        {
+            "@id": "ro-crate-metadata.json",
+            "@type": "CreativeWork",
+            "about": {"@id": "./"},
+            "conformsTo": {"@id": "https://w3id.org/ro/crate/1.2-DRAFT"}
+        },   
+        {
+          "@id": "./",
+          "@type": "Dataset"
+        }
+      ]
+    }"""
+
+
+
+
 let propertyValue = """{
   "@id": "http://purl.obolibrary.org/obo/NCIT_C16965",
   "@type": "PropertyValue",
