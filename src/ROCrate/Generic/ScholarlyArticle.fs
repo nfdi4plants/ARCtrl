@@ -5,15 +5,6 @@ open Fable.Core
 open ARCtrl.ROCrate
 ///
 
-//@id	MUST	Text or URL	
-//@type	MUST	Text	must be 'schema.org/ScholarlyArticle'
-//headline	MUST	Text	
-//identifier	MUST	Text or URL or schema.org/PropertyValue	One or many identifiers for this article like a DOI or PubMedID. Can be of type PropertyValue to indicate the kind of reference.
-//author	SHOULD	schema.org/Person	
-//url	SHOULD	URL	
-//creativeWorkStatus	COULD	schema.org/DefinedTerm	The status of the publication in terms of its stage in a lifecycle.
-//disambiguatingDescription	COULD	Text	
-
 [<AttachMembers>]
 type ScholarlyArticle =
 
@@ -51,9 +42,9 @@ type ScholarlyArticle =
     static member setIdentifiers(s : LDNode, identifiers : ResizeArray<obj>) =
         s.SetProperty(ScholarlyArticle.identifier, identifiers)
 
-    static member tryGetAuthors(s : LDNode, ?context : LDContext) =
+    static member tryGetAuthors(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = Person.validate(ldObject, ?context = context)
-        s.GetPropertyNodes(ScholarlyArticle.author, filter = filter, ?context = context)
+        s.GetPropertyNodes(ScholarlyArticle.author, filter = filter, ?graph = graph, ?context = context)
 
     static member setAuthors(s : LDNode, authors : ResizeArray<LDNode>, ?context : LDContext) =
         s.SetProperty(ScholarlyArticle.author, authors, ?context = context)
@@ -66,9 +57,9 @@ type ScholarlyArticle =
     static member setUrl(s : LDNode, u : string, ?context : LDContext) =
         s.SetProperty(ScholarlyArticle.url, u, ?context = context)
 
-    static member tryGetCreativeWorkStatus(s : LDNode, ?context : LDContext) =
-        match s.TryGetPropertyAsSingleton(ScholarlyArticle.creativeWorkStatus, ?context = context) with
-        | Some (:? LDNode as cws) when DefinedTerm.validate cws -> Some cws
+    static member tryGetCreativeWorkStatus(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match s.TryGetPropertyAsSingleNode(ScholarlyArticle.creativeWorkStatus, ?graph  = graph, ?context = context) with
+        | Some cws when DefinedTerm.validate cws -> Some cws
         | _ -> None
 
     static member setCreativeWorkStatus(s : LDNode, cws : LDNode, ?context : LDContext) =

@@ -198,9 +198,25 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         | _ ->
             ResizeArray []
 
-    member this.GetPropertyNodes(propertyName : string, ?filter : LDNode -> LDContext option -> bool, ?context) =
+    member this.TryGetPropertyAsSingleNode(propertyName : string, ?graph : LDGraph, ?context : LDContext) =
+        match this.TryGetPropertyAsSingleton(propertyName, ?context = context) with
+        | Some (:? LDNode as n) -> Some n
+        | Some (:? LDRef as r) when graph.IsSome ->
+            match graph.Value.TryGetNode(r.Id) with
+            | Some n -> Some n
+            | None -> None
+        | _ -> None
+
+    member this.GetPropertyNodes(propertyName : string, ?filter : LDNode -> LDContext option -> bool, ?graph : LDGraph, ?context) =
         let filter (o : obj) context =
             match o with
+            | :? LDRef as r when graph.IsSome ->
+                match graph.Value.TryGetNode(r.Id) with
+                | Some n ->
+                    match filter with
+                    | Some f -> f n context
+                    | None -> true
+                | None -> false
             | :? LDNode as n ->
                 match filter with
                 | Some f -> f n context

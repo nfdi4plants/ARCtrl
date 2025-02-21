@@ -27,6 +27,18 @@ type Sample =
     static member setNameAsString(s : LDNode, n : string) =
         s.SetProperty(Sample.name, n)
 
-    static member getAdditionalProperties(s : LDNode, ?context : LDContext) : ResizeArray<LDNode> =
+    static member getAdditionalProperties(s : LDNode, ?graph : LDGraph, ?context : LDContext) : ResizeArray<LDNode> =
         let filter ldObject context = PropertyValue.validate(ldObject, ?context = context)
-        s.GetPropertyNodes(Sample.additionalProperty, filter = filter, ?context = context)
+        s.GetPropertyNodes(Sample.additionalProperty, filter = filter, ?graph = graph, ?context = context)
+
+    static member setAdditionalProperties(s : LDNode, additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        s.SetProperty(Sample.additionalProperty, additionalProperties, ?context = context)
+
+    static member validate(s : LDNode, ?context : LDContext) =
+        s.HasType(Sample.schemaType, ?context = context)
+        && s.HasProperty(Sample.name, ?context = context)
+
+    static member create(id : string, name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let s = LDNode(id, ResizeArray [Sample.schemaType], ?context = context)
+        s.SetProperty(Sample.name, name, ?context = context)
+        s.SetOptionalProperty(Sample.additionalProperty, additionalProperties, ?context = context)

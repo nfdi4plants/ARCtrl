@@ -112,9 +112,9 @@ type Person =
         | Some (:? string as s) -> Some s
         | _ -> None
 
-    static member tryGetAddressAsPostalAddress(p : LDNode, ?context : LDContext) =
-        match p.TryGetPropertyAsSingleton(Person.address, ?context = context) with
-        | Some (:? LDNode as a) when PostalAddress.validate a -> Some a
+    static member tryGetAddressAsPostalAddress(p : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match p.TryGetPropertyAsSingleNode(Person.address, ?graph = graph, ?context = context) with
+        | Some n when PostalAddress.validate n -> Some n
         | _ -> None
 
     static member tryGetAddressAsString(p : LDNode, ?context : LDContext) =

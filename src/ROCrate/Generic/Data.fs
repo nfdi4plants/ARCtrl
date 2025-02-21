@@ -32,9 +32,9 @@ type Data =
     static member setNameAsString(dt : LDNode, name : string, ?context : LDContext) =
         dt.SetProperty(Data.name, name, ?context = context)
 
-    static member getComments(dt : LDNode, ?context : LDContext) =
+    static member getComments(dt : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = Comment.validate(ldObject, ?context = context)
-        dt.GetPropertyNodes(Data.comment, filter = filter, ?context = context)
+        dt.GetPropertyNodes(Data.comment, filter = filter, ?graph = graph, ?context = context)
 
     static member setComments(dt : LDNode, comment : ResizeArray<LDNode>, ?context : LDContext) =
         dt.SetProperty(Data.comment, comment, ?context = context)
