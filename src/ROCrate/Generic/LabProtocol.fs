@@ -1,4 +1,4 @@
-namespace ARCtrl.ROCrate.Generic
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core

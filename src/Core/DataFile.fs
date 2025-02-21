@@ -1,4 +1,4 @@
-﻿namespace ARCtrl
+namespace ARCtrl
 
 open ARCtrl
 
@@ -18,6 +18,13 @@ type DataFile =
         | RawDataFile       -> "RawDataFileJson"
         | DerivedDataFile   -> "DerivedDataFileJson"
         | ImageFile         -> "ImageFileJson"
+
+    static member fromString (dt : string) =
+        match dt with
+        | "RawDataFileJson"     -> RawDataFile
+        | "DerivedDataFileJson" -> DerivedDataFile
+        | "ImageFileJson"       -> ImageFile
+        | _ -> failwith $"Invalid DataFile type: {dt}"
 
     member this.IsDerivedData =
         match this with

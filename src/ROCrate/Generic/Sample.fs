@@ -1,4 +1,4 @@
-namespace ARCtrl.ROCrate.Generic
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
@@ -38,7 +38,41 @@ type Sample =
         s.HasType(Sample.schemaType, ?context = context)
         && s.HasProperty(Sample.name, ?context = context)
 
+    static member validateSample (s : LDNode, ?context : LDContext) =
+        Sample.validate(s, ?context = context)
+        && s.HasType("Sample", ?context = context)
+        && s.AdditionalType.Contains("Sample")
+
+    static member validateSource (s : LDNode, ?context : LDContext) =
+        Sample.validate(s, ?context = context)
+        && s.HasType("Source", ?context = context)
+        && s.AdditionalType.Contains("Source")
+
+    static member validateMaterial (s : LDNode, ?context : LDContext) =
+        Sample.validate(s, ?context = context)
+        && s.HasType("Material", ?context = context)
+        && s.AdditionalType.Contains("Material")
+
     static member create(id : string, name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
         let s = LDNode(id, ResizeArray [Sample.schemaType], ?context = context)
         s.SetProperty(Sample.name, name, ?context = context)
         s.SetOptionalProperty(Sample.additionalProperty, additionalProperties, ?context = context)
+        s
+
+    static member createSample (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = $"Sample_{name}"
+        let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
+        s.AdditionalType <- ResizeArray ["Sample"]
+        s
+
+    static member createSource (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = $"Source_{name}"
+        let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
+        s.AdditionalType <- ResizeArray ["Source"]
+        s
+
+    static member createMaterial (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = $"Material_{name}"
+        let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
+        s.AdditionalType <- ResizeArray ["Material"]
+        s

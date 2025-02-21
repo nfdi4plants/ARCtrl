@@ -1,4 +1,4 @@
-namespace ARCtrl.ROCrate.Generic
+namespace ARCtrl.ROCrate
 
 open DynamicObj
 open Fable.Core
@@ -76,10 +76,10 @@ type PropertyValue =
 
     static member tryGetValueReference(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(PropertyValue.valueReference, ?context = context) with
-        | Some (:? LDNode as vr) -> Some vr
+        | Some (:? string as vr) -> Some vr
         | _ -> None
 
-    static member setValueReference(pv : LDNode, valueReference : LDNode, ?context : LDContext) =
+    static member setValueReference(pv : LDNode, valueReference : string, ?context : LDContext) =
         pv.SetProperty(PropertyValue.valueReference, valueReference, ?context = context)
 
     static member validate(pv : LDNode, ?context : LDContext) =
@@ -96,3 +96,27 @@ type PropertyValue =
         unitText |> Option.iter (fun ut -> PropertyValue.setUnitTextAsString(pv, ut, ?context = context))
         valueReference |> Option.iter (fun vr -> PropertyValue.setValueReference(pv, vr, ?context = context))
         pv
+
+    static member createComponent(name, value, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+        let id = $"Component_{name}_{value}"
+        let c = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+        c.AdditionalType <- ResizeArray ["Component"]
+        c
+
+    static member createParameterValue(name, value, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+        let id = $"ParameterValue_{name}_{value}"
+        let pv = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+        pv.AdditionalType <- ResizeArray ["ParameterValue"]
+        pv
+
+    static member createCharacteristicValue(name, value, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+        let id = $"CharacteristicValue_{name}_{value}"
+        let cv = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+        cv.AdditionalType <- ResizeArray ["CharacteristicValue"]
+        cv
+
+    static member createFactorValue(name, value, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+        let id = $"FactorValue_{name}_{value}"
+        let fv = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+        fv.AdditionalType <- ResizeArray ["FactorValue"]
+        fv
