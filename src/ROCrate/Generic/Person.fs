@@ -169,3 +169,4 @@ type Person =
         person.SetOptionalProperty(Person.disambiguatingDescription, disambiguatingDescription, ?context = context)
         person.SetOptionalProperty(Person.faxNumber, faxNumber, ?context = context)
         person.SetOptionalProperty(Person.telephone, telephone, ?context = context)
+        person

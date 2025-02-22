@@ -3,6 +3,7 @@ namespace ARCtrl.ROCrate
 open DynamicObj
 open Fable.Core
 open ARCtrl.ROCrate
+open ARCtrl.Helper
 //Has the new Bioschemas DRAFT bioschemas.org/LabProcess type and maps to the ISA-JSON Process
 
 //Property	Required	Expected Type	Description
@@ -76,7 +77,7 @@ type LabProcess =
         lp.GetPropertyNodes(LabProcess.object_, filter = filter, ?graph = graph, ?context = context)
 
     static member getObjectsAsData(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = Data.validate(ldObject, ?context = context)
+        let filter ldObject context = File.validate(ldObject, ?context = context)
         lp.GetPropertyNodes(LabProcess.object_, filter = filter, ?graph = graph, ?context = context)
 
     static member setObjects(lp : LDNode, objects : ResizeArray<LDNode>, ?context : LDContext) =
@@ -90,7 +91,7 @@ type LabProcess =
         lp.GetPropertyNodes(LabProcess.result, filter = filter, ?graph = graph, ?context = context)
 
     static member getResultsAsData(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = Data.validate(ldObject, ?context = context)
+        let filter ldObject context = File.validate(ldObject, ?context = context)
         lp.GetPropertyNodes(LabProcess.result, filter = filter, ?graph = graph, ?context = context)
 
     static member setResults(lp : LDNode, results : ResizeArray<LDNode>, ?context : LDContext) =
@@ -120,13 +121,14 @@ type LabProcess =
     static member setEndTime(lp : LDNode, endTime : System.DateTime, ?context : LDContext) =
         lp.SetProperty(LabProcess.endTime, endTime, ?context = context)
 
-    static member tryGetDisambiguatingDescriptionAsString(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(LabProcess.disambiguatingDescription, ?context = context) with
-        | Some (:? string as dd) -> Some dd
-        | _ -> None
 
-    static member setDisambiguatingDescriptionAsString(lp : LDNode, disambiguatingDescription : string, ?context : LDContext) =
-        lp.SetProperty(LabProcess.disambiguatingDescription, disambiguatingDescription, ?context = context)
+    static member getDisambiguatingDescriptionsAsString(lp : LDNode, ?context : LDContext) =
+        let filter = fun (o : obj) context -> o :? string
+        lp.GetPropertyValues(LabProcess.disambiguatingDescription, filter = filter, ?context = context)
+        |> ResizeArray.map (fun (o : obj) -> o :?> string)
+
+    static member setDisambiguatingDescriptionsAsString(lp : LDNode, disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
+        lp.SetProperty(LabProcess.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
 
     static member validate(lp : LDNode, ?context : LDContext) =
         lp.HasType(LabProcess.schemaType, ?context = context)
@@ -135,14 +137,14 @@ type LabProcess =
         && lp.HasProperty(LabProcess.object_, ?context = context)
         && lp.HasProperty(LabProcess.result, ?context = context)
 
-    static member create(id : string, name : string, agent : LDNode, objects : ResizeArray<LDNode>, results : ResizeArray<LDNode>, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescription : string, ?context : LDContext) =
+    static member create(id : string, name : string, objects : ResizeArray<LDNode>, results : ResizeArray<LDNode>, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
         let lp = LDNode(id, ResizeArray [LabProcess.schemaType], ?context = context)
         lp.SetProperty(LabProcess.name, name, ?context = context)
-        lp.SetProperty(LabProcess.agent, agent, ?context = context)
+        lp.SetOptionalProperty(LabProcess.agent, agent, ?context = context) // Optional?
         lp.SetProperty(LabProcess.object_, objects, ?context = context)
         lp.SetProperty(LabProcess.result, results, ?context = context)
         lp.SetOptionalProperty(LabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
         lp.SetOptionalProperty(LabProcess.parameterValue, parameterValues, ?context = context)
         lp.SetOptionalProperty(LabProcess.endTime, endTime, ?context = context)
-        lp.SetOptionalProperty(LabProcess.disambiguatingDescription, disambiguatingDescription, ?context = context)
+        lp.SetOptionalProperty(LabProcess.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
         lp

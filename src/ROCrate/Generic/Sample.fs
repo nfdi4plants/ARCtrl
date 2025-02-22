@@ -34,6 +34,14 @@ type Sample =
     static member setAdditionalProperties(s : LDNode, additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
         s.SetProperty(Sample.additionalProperty, additionalProperties, ?context = context)
 
+    static member getCharacteristics(s : LDNode, ?graph : LDGraph, ?context : LDContext) : ResizeArray<LDNode> =
+        let filter ldObject context = PropertyValue.validateCharacteristicValue(ldObject, ?context = context)
+        s.GetPropertyNodes("https://bioschemas.org/characteristics", filter = filter, ?graph = graph, ?context = context)
+
+    static member getFactors(s : LDNode, ?graph : LDGraph, ?context : LDContext) : ResizeArray<LDNode> =
+        let filter ldObject context = PropertyValue.validateFactorValue(ldObject, ?context = context)
+        s.GetPropertyNodes("https://bioschemas.org/factors", filter = filter, ?graph = graph, ?context = context)
+
     static member validate(s : LDNode, ?context : LDContext) =
         s.HasType(Sample.schemaType, ?context = context)
         && s.HasProperty(Sample.name, ?context = context)

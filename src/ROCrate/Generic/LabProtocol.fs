@@ -107,6 +107,12 @@ type LabProtocol =
     static member setReagents(lp : LDNode, reagents : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(LabProtocol.reagent, reagents, ?context = context)
 
+    static member getComponents(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        LabProtocol.getLabEquipments(lp, ?graph = graph, ?context = context)
+        |> Seq.append (LabProtocol.getReagents(lp, ?graph = graph, ?context = context))
+        |> Seq.append (LabProtocol.getComputationalTools(lp, ?graph = graph, ?context = context))
+        |> ResizeArray
+
     static member tryGetUrl(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(LabProtocol.url, ?context = context) with
         | Some (:? string as u) -> Some u
@@ -127,7 +133,7 @@ type LabProtocol =
         lp.HasType(LabProtocol.schemaType, ?context = context)
         //&& lp.HasProperty(LabProtocol.name, ?context = context)
 
-    static member create(id : string, ?name : string, ?description : string, ?intendedUse : string, ?comments : ResizeArray<LDNode>, ?computationalTools : ResizeArray<LDNode>, ?labEquipments : ResizeArray<LDNode>, ?reagents : ResizeArray<LDNode>, ?url : string, ?version : string, ?context : LDContext) =
+    static member create(id : string, ?name : string, ?description : string, ?intendedUse : LDNode, ?comments : ResizeArray<LDNode>, ?computationalTools : ResizeArray<LDNode>, ?labEquipments : ResizeArray<LDNode>, ?reagents : ResizeArray<LDNode>, ?url : string, ?version : string, ?context : LDContext) =
         let lp = LDNode(id, ResizeArray [LabProtocol.schemaType], ?context = context)
         lp.SetOptionalProperty(LabProtocol.name, name, ?context = context)
         lp.SetOptionalProperty(LabProtocol.description, description, ?context = context)

@@ -46,10 +46,10 @@ module Person =
     let AssayIdentifierPrefix = "performer (ARC:00000168)"
     let createAssayIdentifierKey = sprintf "%s %s" AssayIdentifierPrefix// TODO: Replace with ISA ontology term for assay
 
-    let setSourceAssayComment (person : Person) (assayIdentifier: string): Person =
+    let setSourceAssayComment (person : ARCtrl.Person) (assayIdentifier: string): ARCtrl.Person =
         let person = person.Copy()
         let k = createAssayIdentifierKey assayIdentifier
-        let comment = Comment(k, assayIdentifier)
+        let comment = ARCtrl.Comment(k, assayIdentifier)
         person.Comments.Add(comment)
         person
 
@@ -57,7 +57,7 @@ module Person =
     /// This functions helps encoding/decoding ISA-JSON. It returns a sequence of ArcAssay-Identifiers.
     /// </summary>
     /// <param name="person"></param>
-    let getSourceAssayIdentifiersFromComments (person : Person) =
+    let getSourceAssayIdentifiersFromComments (person : ARCtrl.Person) =
         person.Comments 
         |> Seq.choose (fun c -> 
             let isAssaySource = 
@@ -69,12 +69,12 @@ module Person =
             if isAssaySource then c.Value else None
         )
 
-    let removeSourceAssayComments (person: Person) : ResizeArray<Comment> =
+    let removeSourceAssayComments (person: ARCtrl.Person) : ResizeArray<ARCtrl.Comment> =
         person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix |> not)
 
-    let setOrcidFromComments (person : Person) =
+    let setOrcidFromComments (person : ARCtrl.Person) =
         let person = person.Copy()
-        let isOrcidComment (c : Comment) = 
+        let isOrcidComment (c : ARCtrl.Comment) = 
             c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(orcidKey))
         let orcid,comments = 
             let orcid = 
@@ -88,17 +88,27 @@ module Person =
         person.Comments <- comments
         person
 
-    let setCommentFromORCID (person : Person) =
+    let setCommentFromORCID (person : ARCtrl.Person) =
         let person = person.Copy()
         match person.ORCID with
         | Some orcid -> 
-            let comment = Comment.create (name = orcidKey, value = orcid)
+            let comment = ARCtrl.Comment.create (name = orcidKey, value = orcid)
             person.Comments.Add comment
         | None -> ()
         person
 
 /// Functions for transforming base level ARC Table and ISA Json Objects
 module JsonTypes = 
+
+    let composeDefinedTerm (term : OntologyAnnotation) =
+        let tan = term.TermAccessionOntobeeUrl |> Option.fromValueWithDefault ""
+        let id = sprintf "oa_%s" term.NameText
+        DefinedTerm.create(id, name = term.NameText, ?termCode = tan)
+
+    let decomposeDefinedTerm (term : LDNode) =
+        let name = DefinedTerm.getNameAsString term
+        let tan = DefinedTerm.tryGetTermCodeAsString term
+        OntologyAnnotation.create(name = name, ?tan = tan)
 
     /// Convert a CompositeCell to a ISA Value and Unit tuple.
     let valuesOfCell (value : CompositeCell) =
@@ -259,7 +269,15 @@ module JsonTypes =
         | s when Sample.validate s -> CompositeHeader.Input IOType.Sample, CompositeCell.FreeText (Sample.getNameAsString s)
         | d when File.validate d -> CompositeHeader.Input IOType.Data, CompositeCell.Data (decomposeFile d)
         | n -> CompositeHeader.Input (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (Sample.getNameAsString n)            
-            
+
+
+    let decomposeProcessOutput (pn : LDNode) : CompositeHeader*CompositeCell =
+        match pn with
+        | m when Sample.validateMaterial m -> CompositeHeader.Output IOType.Material, CompositeCell.FreeText (Sample.getNameAsString m)
+        | s when Sample.validate s -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (Sample.getNameAsString s)
+        | d when File.validate d -> CompositeHeader.Output IOType.Data, CompositeCell.Data (decomposeFile d)
+        | n -> CompositeHeader.Output (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (Sample.getNameAsString n)
+
     /// This function creates a string containing the name and the ontology short-string of the given ontology annotation term
     ///
     /// TechnologyPlatforms are plain strings in ISA-JSON.
@@ -289,18 +307,41 @@ module JsonTypes =
             OntologyAnnotation.create(name = name)
 
 
+
+    
+open ColumnIndex
+open ARCtrl.Helper.Regex.ActivePatterns
+
 /// Functions for parsing ArcTables to ISA json Processes and vice versa
-module ProcessParsing = 
+type ProcessParsing = 
 
-    open ColumnIndex
+    static member tryGetProtocolType (pv : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match LabProtocol.tryGetIntendedUseAsDefinedTerm(pv,?graph = graph, ?context = context) with
+        | Some dt ->
+            Some (JsonTypes.decomposeDefinedTerm dt)
+        | None ->
+            match LabProtocol.tryGetIntendedUseAsString(pv, ?context = context) with
+            | Some s -> Some (OntologyAnnotation.create(name = s))
+            | None -> None
 
+    static member composeProcessName (processNameRoot : string) (i : int) =
+        $"{processNameRoot}_{i}"
+
+    static member decomposeProcessName (name : string) =
+        let pattern = """(?<name>.+)_(?<num>\d+)"""
+
+        match name with 
+        | Regex pattern r ->
+            (r.Groups.Item "name").Value, Some ((r.Groups.Item "num").Value |> int)
+        | _ ->
+            name, None
     // Explanation of the Getter logic:
     // The getter logic is used to treat every value of the table only once
     // First, the headers are checked for what getter applies to the respective column. E.g. a ProtocolType getter will only return a function for parsing protocolType cells if the header depicts a protocolType.
     // The appropriate getters are then applied in the context of the processGetter, parsing the cells of the matrix
 
     /// If the given headers depict a component, returns a function for parsing the values of the matrix to the values of this component
-    let tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+    static member tryComponentGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Component oa ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -311,7 +352,7 @@ module ProcessParsing =
         | _ -> None    
             
     /// If the given headers depict a parameter, returns a function for parsing the values of the matrix to the values of this type
-    let tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+    static member tryParameterGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Parameter oa ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -322,7 +363,7 @@ module ProcessParsing =
         | _ -> None 
 
     /// If the given headers depict a factor, returns a function for parsing the values of the matrix to the values of this type
-    let tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+    static member tryFactorGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Factor oa ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -333,7 +374,7 @@ module ProcessParsing =
         | _ -> None 
 
     /// If the given headers depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
-    let tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
+    static member tryCharacteristicGetter (generalI : int) (valueI : int) (valueHeader : CompositeHeader) =
         match valueHeader with
         | CompositeHeader.Characteristic oa ->        
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -344,17 +385,17 @@ module ProcessParsing =
         | _ -> None 
 
     /// If the given headers depict a protocolType, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetProtocolTypeGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolType ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsTerm
+                matrix.[generalI,i].AsTerm |> JsonTypes.composeDefinedTerm
             |> Some
         | _ -> None 
 
 
     /// If the given headers depict a protocolREF, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetProtocolREFGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolREF ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -363,7 +404,7 @@ module ProcessParsing =
         | _ -> None
 
     /// If the given headers depict a protocolDescription, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetProtocolDescriptionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolDescription ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -372,7 +413,7 @@ module ProcessParsing =
         | _ -> None
    
     /// If the given headers depict a protocolURI, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetProtocolURIGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolUri ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -381,7 +422,7 @@ module ProcessParsing =
         | _ -> None
 
     /// If the given headers depict a protocolVersion, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetProtocolVersionGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.ProtocolVersion ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -390,7 +431,7 @@ module ProcessParsing =
         | _ -> None
 
     /// If the given headers depict an input, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetInputGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetInputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Input io ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -399,7 +440,7 @@ module ProcessParsing =
         | _ -> None
 
     /// If the given headers depict an output, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetOutputGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Output io ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -408,16 +449,27 @@ module ProcessParsing =
         | _ -> None
 
     /// If the given headers depict a comment, returns a function for parsing the values of the matrix to the values of this type
-    let tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
+    static member tryGetCommentGetter (generalI : int) (header : CompositeHeader) =
         match header with
         | CompositeHeader.Comment c ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                Comment.create(c,matrix.[generalI,i].AsFreeText)
+                //Comment.create(c,matrix.[generalI,i].AsFreeText)
+                ARCtrl.Comment(c,matrix.[generalI,i].AsFreeText).ToString()
+            |> Some
+        | _ -> None
+
+    static member tryGetPerformerGetter (generalI : int) (header : CompositeHeader) =
+        match header with
+        | CompositeHeader.Performer ->
+            fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                let performer = matrix.[generalI,i].AsFreeText
+                let person = Person.create(performer,performer)
+                person
             |> Some
         | _ -> None
 
     /// Given the header sequence of an ArcTable, returns a function for parsing each row of the table to a process
-    let getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
+    static member getProcessGetter (processNameRoot : string) (headers : CompositeHeader seq) =
     
         let headers = 
             headers
@@ -431,433 +483,418 @@ module ProcessParsing =
 
         let charGetters =
             valueHeaders 
-            |> List.choose (fun (valueI,(generalI,header)) -> tryCharacteristicGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryCharacteristicGetter generalI valueI header)
 
         let factorValueGetters =
             valueHeaders
-            |> List.choose (fun (valueI,(generalI,header)) -> tryFactorGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryFactorGetter generalI valueI header)
 
         let parameterValueGetters =
             valueHeaders
-            |> List.choose (fun (valueI,(generalI,header)) -> tryParameterGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryParameterGetter generalI valueI header)
 
         let componentGetters =
             valueHeaders
-            |> List.choose (fun (valueI,(generalI,header)) -> tryComponentGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryComponentGetter generalI valueI header)
 
         let protocolTypeGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolTypeGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolTypeGetter generalI header)
 
         let protocolREFGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolREFGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolREFGetter generalI header)
 
         let protocolDescriptionGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolDescriptionGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolDescriptionGetter generalI header)
 
         let protocolURIGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolURIGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolURIGetter generalI header)
 
         let protocolVersionGetter =
             headers
-            |> Seq.tryPick (fun (generalI,header) -> tryGetProtocolVersionGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolVersionGetter generalI header)
+
+        let performerGetter = 
+            headers
+            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetPerformerGetter generalI header)
 
         let commentGetters = 
             headers
-            |> Seq.choose (fun (generalI,header) -> tryGetCommentGetter generalI header)
+            |> Seq.choose (fun (generalI,header) -> ProcessParsing.tryGetCommentGetter generalI header)
             |> Seq.toList
 
         // This is a little more complex, as data and material objects can't contain characteristics. So in the case where the input of the table is a data object but characteristics exist. An additional sample object with the same name is created to contain the characteristics.
         let inputGetter =
-            match headers |> Seq.tryPick (fun (generalI,header) -> tryGetInputGetter generalI header) with
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetInputGetter generalI header) with
             | Some inputGetter ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
                     let input = inputGetter matrix i
 
-                    if ((input.isSample() || input.isSource())|> not) && (chars.IsEmpty |> not) then
-                        [
-                        input
-                        ProcessInput.createSample(input.Name, characteristics = chars)
-                        ]
-                    else
-                        if chars.Length > 0 then
-                            input
-                            |> ProcessInput.setCharacteristicValues chars
-                        else
-                            input                           
-                        |> List.singleton
+                    if chars.Count > 0 then
+                        Sample.setAdditionalProperties(input,chars)
+                    input
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
-                    ProcessInput.Source (Source.create(Name = $"{processNameRoot}_Input_{i}", Characteristics = chars))
-                    |> List.singleton
+                    let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
+                    Sample.createSample(name = $"{processNameRoot}_Input_{i}", additionalProperties = chars)
             
         // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
         let outputGetter =
-            match headers |> Seq.tryPick (fun (generalI,header) -> tryGetOutputGetter generalI header) with
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetOutputGetter generalI header) with
             | Some outputGetter ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
+                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
                     let output = outputGetter matrix i
-                    if (output.isSample() |> not) && (factors.IsEmpty |> not) then
-                        [
-                        output
-                        ProcessOutput.createSample(output.Name, factors = factors)
-                        ]
-                    else
-                        if factors.Length > 0 then
-                            output
-                            |> ProcessOutput.setFactorValues factors
-                        else
-                            output
-                        |> List.singleton
+                    if factors.Count > 0 then
+                        Sample.setAdditionalProperties(output,factors)
+                    output
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> Seq.toList
-                    ProcessOutput.Sample (Sample.create(Name = $"{processNameRoot}_Output_{i}", FactorValues = factors))
-                    |> List.singleton
+                    let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
+                    Sample.createSample(name = $"{processNameRoot}_Output_{i}", additionalProperties = factors)
 
         fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
 
-            let pn = processNameRoot |> Option.fromValueWithDefault "" |> Option.map (fun p -> Process.composeName p i)
+            let pn = ProcessParsing.composeProcessName processNameRoot i
 
-            let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] 
-            let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
+            let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
+            //let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
 
-            let comments = commentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault []
+            let comments = commentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
-            let protocol : Protocol option = 
-                Protocol.make 
-                    None
-                    (protocolREFGetter |> Option.map (fun f -> f matrix i))
-                    (protocolTypeGetter |> Option.map (fun f -> f matrix i))
-                    (protocolDescriptionGetter |> Option.map (fun f -> f matrix i))
-                    (protocolURIGetter |> Option.map (fun f -> f matrix i))
-                    (protocolVersionGetter |> Option.map (fun f -> f matrix i))
-                    (parameters)
-                    (componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [])
-                    None
-                |> fun p ->     
-                    match p with
-                    | {       
-                            Name            = None
-                            ProtocolType    = None
-                            Description     = None
-                            Uri             = None
-                            Version         = None
-                            Components      = None
-                        } -> None
-                    | _ -> Some p
+            let components = componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
-            let inputs,outputs = 
-                let inputs = inputGetter matrix i
-                let outputs = outputGetter matrix i
-                if inputs.Length = 1 && outputs.Length = 2 then 
-                    [inputs.[0];inputs.[0]],outputs
-                elif inputs.Length = 2 && outputs.Length = 1 then
-                    inputs,[outputs.[0];outputs.[0]]
-                else
-                    inputs,outputs
+            let protocol : LDNode option =
+                let protocolId = ""
+                LabProtocol.create(
+                    id = protocolId,
+                    ?name = (protocolREFGetter |> Option.map (fun f -> f matrix i)),
+                    ?description = (protocolDescriptionGetter |> Option.map (fun f -> f matrix i)),
+                    ?intendedUse = (protocolTypeGetter |> Option.map (fun f -> f matrix i)),
+                    //?comments = comments,
+                    ?url = (protocolURIGetter |> Option.map (fun f -> f matrix i)),
+                    ?version = (protocolVersionGetter |> Option.map (fun f -> f matrix i)),
+                    ?labEquipments = components
+                )
+                |> Some
 
-            Process.make 
-                None 
-                pn 
-                (protocol) 
-                (paramvalues)
-                None
-                None
-                None
-                None          
-                (Some inputs)
-                (Some outputs)
-                comments
+            let input,output = inputGetter matrix i, outputGetter matrix i
+
+            let agent = performerGetter |> Option.map (fun f -> f matrix i)
+
+            let id = $"Process_{pn}"
+
+            LabProcess.create(
+                id = id,
+                name = pn,
+                objects = ResizeArray [input],
+                results = ResizeArray [output],
+                ?agent = agent,
+                ?executesLabProtocol = protocol,
+                ?parameterValues = paramvalues,
+                ?disambiguatingDescriptions = comments
+
+                )
 
     /// Groups processes by their name, or by the name of the protocol they execute
     ///
     /// Process names are taken from the Worksheet name and numbered: SheetName_1, SheetName_2, etc.
     /// 
     /// This function decomposes this name into a root name and a number, and groups processes by root name.
-    let groupProcesses (ps : Process list) = 
-        ps
-        |> List.groupBy (fun x -> 
-            if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
-                (x.Name.Value |> Process.decomposeName |> fst)
-            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value 
-            elif x.Name.IsSome && x.Name.Value.Contains "_" then
-                let lastUnderScoreIndex = x.Name.Value.LastIndexOf '_'
-                x.Name.Value.Remove lastUnderScoreIndex
-            elif x.Name.IsSome then
-                x.Name.Value
-            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.ID.IsSome then 
-                x.ExecutesProtocol.Value.ID.Value              
-            else
-                Identifier.createMissingIdentifier()        
+    static member groupProcesses (processes : LDNode list, ?graph : LDGraph, ?context : LDContext) = 
+        processes
+        |> List.groupBy (fun p ->
+            match LabProcess.tryGetNameAsString p, LabProcess.tryGetExecutesLabProtocol(p,?graph = graph, ?context = context) with
+            | Some name, _ when ProcessParsing.decomposeProcessName name |> snd |> Option.isSome ->
+                ProcessParsing.decomposeProcessName name |> fst
+            | _, Some protocol when LabProtocol.tryGetNameAsString protocol |> Option.isSome ->
+                LabProtocol.tryGetNameAsString protocol |> Option.defaultValue ""
+            | Some name, _ when name.Contains "_" ->
+                let lastUnderScoreIndex = name.LastIndexOf '_'
+                name.Remove lastUnderScoreIndex
+            | Some name, _ ->
+                name
+            | _, Some protocol  ->
+                protocol.Id
+            | _ ->
+                Identifier.createMissingIdentifier()  
         )
 
     /// Merges processes with the same name, protocol and param values
-    let mergeIdenticalProcesses (processes : list<Process>) =
-        processes
-        |> List.groupBy (fun x -> 
-            if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
-                (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
-            elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
-                x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
-            else
-                Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
-        )
-        |> fun l ->
-            l
-            |> List.mapi (fun i ((n,_,_,_),processes) -> 
-                let pVs = processes.[0].ParameterValues
-                let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
-                let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
-                let n = if l.Length > 1 then Process.composeName n i else n
-                Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs,?Comments = processes.[0].Comments)
-            )
+    //let mergeIdenticalProcesses (processes : list<Process>) =
+    //    processes
+    //    |> List.groupBy (fun x -> 
+    //        if x.Name.IsSome && (x.Name.Value |> Process.decomposeName |> snd).IsSome then
+    //            (x.Name.Value |> Process.decomposeName |> fst), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
+    //        elif x.ExecutesProtocol.IsSome && x.ExecutesProtocol.Value.Name.IsSome then
+    //            x.ExecutesProtocol.Value.Name.Value, HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
+    //        else
+    //            Identifier.createMissingIdentifier(), HashCodes.boxHashOption x.ExecutesProtocol, x.ParameterValues |> Option.map HashCodes.boxHashSeq, x.Comments |> Option.map HashCodes.boxHashSeq
+    //    )
+    //    |> fun l ->
+    //        l
+    //        |> List.mapi (fun i ((n,_,_,_),processes) -> 
+    //            let pVs = processes.[0].ParameterValues
+    //            let inputs = processes |> List.collect (fun p -> p.Inputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
+    //            let outputs = processes |> List.collect (fun p -> p.Outputs |> Option.defaultValue []) |> Option.fromValueWithDefault []
+    //            let n = if l.Length > 1 then Process.composeName n i else n
+    //            Process.create(Name = n,?ExecutesProtocol = processes.[0].ExecutesProtocol,?ParameterValues = pVs,?Inputs = inputs,?Outputs = outputs,?Comments = processes.[0].Comments)
+    //        )
 
 
     // Transform a isa json process into a isa tab row, where each row is a header+value list
-    let processToRows (p : Process) =
-        let pvs = p.ParameterValues |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeParameterValue ppv, ColumnIndex.tryGetParameterColumnIndex ppv)
+    static member processToRows (p : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let pvs =
+            LabProcess.getParameterValues(p, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun ppv -> JsonTypes.decomposeParameterValue ppv, ColumnIndex.tryGetIndex ppv)
         // Get the component
         let components = 
-            match p.ExecutesProtocol with
+            match LabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
             | Some prot ->
-                prot.Components |> Option.defaultValue [] |> List.map (fun ppv -> JsonTypes.decomposeComponent ppv, ColumnIndex.tryGetComponentIndex ppv)
-            | None -> []
+                LabProtocol.getComponents(prot, ?graph = graph, ?context = context)
+                |> ResizeArray.map (fun ppv -> JsonTypes.decomposeComponent ppv, ColumnIndex.tryGetIndex ppv)
+            | None -> ResizeArray []
         // Get the values of the protocol
         let protVals = 
-            match p.ExecutesProtocol with
+            match LabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
             | Some prot ->
                 [
-                    if prot.Name.IsSome then CompositeHeader.ProtocolREF, CompositeCell.FreeText prot.Name.Value
-                    if prot.ProtocolType.IsSome then CompositeHeader.ProtocolType, CompositeCell.Term prot.ProtocolType.Value
-                    if prot.Description.IsSome then CompositeHeader.ProtocolDescription, CompositeCell.FreeText prot.Description.Value
-                    if prot.Uri.IsSome then CompositeHeader.ProtocolUri, CompositeCell.FreeText prot.Uri.Value
-                    if prot.Version.IsSome then CompositeHeader.ProtocolVersion, CompositeCell.FreeText prot.Version.Value
+                    match LabProtocol.tryGetNameAsString prot with | Some name -> yield (CompositeHeader.ProtocolREF, CompositeCell.FreeText name) | None -> ()
+                    match LabProtocol.tryGetDescriptionAsString prot with | Some desc -> yield (CompositeHeader.ProtocolDescription, CompositeCell.FreeText desc) | None -> ()
+                    match LabProtocol.tryGetUrl prot with | Some uri -> yield (CompositeHeader.ProtocolUri, CompositeCell.FreeText uri) | None -> ()
+                    match LabProtocol.tryGetVersionAsString prot with | Some version -> yield (CompositeHeader.ProtocolVersion, CompositeCell.FreeText version) | None -> ()
+                    match ProcessParsing.tryGetProtocolType(prot, ?graph = graph, ?context = context) with
+                    | Some intendedUse -> yield (CompositeHeader.ProtocolType, CompositeCell.Term intendedUse)
+                    | None -> ()
                 ]
             | None -> []
         let comments = 
-            p.Comments 
-            |> Option.defaultValue [] 
-            |> List.map (fun c -> 
+            LabProcess.getDisambiguatingDescriptionsAsString(p, ?context = context)
+            |> ResizeArray.map (fun c ->
+                let c = Comment.fromString c
                 CompositeHeader.Comment (Option.defaultValue "" c.Name),
                 CompositeCell.FreeText (Option.defaultValue "" c.Value)
             )
         // zip the inputs and outpus so they are aligned as rows
-        p.Outputs |> Option.defaultValue []
-        |> List.zip (p.Inputs |> Option.defaultValue [])
+        LabProcess.getResults(p, ?graph = graph, ?context = context)
+        |> ResizeArray.zip (LabProcess.getObjects(p, ?graph = graph, ?context = context))
         // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
-        |> List.groupBy (fun (i,o) ->
-            i.Name,o.Name
-        )
-        |> List.map (fun ((i,o),ios) ->
-            let inputForCharas = 
-                ios
-                |> List.tryPick (fun (i,o) -> if i.isSource() || i.isSample() then Some i else None)
-                |> Option.defaultValue (ios.Head |> fst)
-            let inputForType =
-                ios
-                |> List.tryPick (fun (i,o) -> if i.isData() || i.isMaterial() then Some i  else None)
-                |> Option.defaultValue (ios.Head |> fst)
+        |> ResizeArray.map (fun (i,o) ->
             let chars = 
-                inputForCharas |> ProcessInput.getCharacteristicValues |> List.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetCharacteristicColumnIndex cv)
-            let outputForFactors = 
-                ios
-                |> List.tryPick (fun (i,o) -> if o.isSample() then Some o else None)
-                |> Option.defaultValue (ios.Head |> snd)
-            let outputForType = 
-                ios
-                |> List.tryPick (fun (i,o) -> if o.isData() || o.isMaterial() then Some o else None)
-                |> Option.defaultValue (ios.Head |> snd)
-            let factors = outputForFactors |> ProcessOutput.getFactorValues |> List.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetFactorColumnIndex fv)
-            let vals = 
-                (chars @ components @ pvs @ factors)
+                Sample.getCharacteristics(i, ?graph = graph, ?context = context)
+                |> ResizeArray.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetIndex cv)            
+            let factors =
+                Sample.getFactors(i, ?graph = graph, ?context = context)
+                |> ResizeArray.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetIndex fv)
+
+            let vals =
+                [
+                    yield! chars
+                    yield! components
+                    yield! pvs
+                    yield! factors
+                ]
                 |> List.sortBy (snd >> Option.defaultValue 10000)
                 |> List.map fst
             [
-                yield JsonTypes.decomposeProcessInput inputForType
+                yield JsonTypes.decomposeProcessInput i
                 yield! protVals
                 yield! vals
                 yield! comments
-                yield JsonTypes.decomposeProcessOutput outputForType
+                yield JsonTypes.decomposeProcessOutput o
             ]
         )
-  
-type CompositeHeader with
 
-    member this.TryParameter() = 
-        match this with 
-        | CompositeHeader.Parameter oa -> Some (ProtocolParameter.create(ParameterName = oa))
-        | _ -> None
+//[<AutoOpen>]
+//module CoreTypeExtensions = 
 
-    member this.TryFactor() =
-        match this with
-        | CompositeHeader.Factor oa -> Some (Factor.create(FactorType = oa))
-        | _ -> None
+//    type CompositeHeader with
 
-    member this.TryCharacteristic() =
-        match this with
-        | CompositeHeader.Characteristic oa -> Some (MaterialAttribute.create(CharacteristicType = oa))
-        | _ -> None
+//        member this.TryParameter() = 
+//            match this with 
+//            | CompositeHeader.Parameter oa -> Some (DefinedTerm.create (ParameterName = oa))
+//            | _ -> None
 
-    member this.TryComponent() =
-        match this with
-        | CompositeHeader.Component oa -> Some (Component.create(componentType = oa))
-        | _ -> None
+//        member this.TryFactor() =
+//            match this with
+//            | CompositeHeader.Factor oa -> Some (Factor.create(FactorType = oa))
+//            | _ -> None
 
-type CompositeCell with
+//        member this.TryCharacteristic() =
+//            match this with
+//            | CompositeHeader.Characteristic oa -> Some (MaterialAttribute.create(CharacteristicType = oa))
+//            | _ -> None
 
-    /// <summary>
-    /// This function is used to improve interoperability with ISA-JSON types. It is not recommended for default ARCtrl usage.
-    /// </summary>
-    /// <param name="value"></param>
-    /// <param name="unit"></param>
-    static member fromValue(value : Value, ?unit : OntologyAnnotation) =
-        JsonTypes.cellOfValue (Some value) unit
+//        member this.TryComponent() =
+//            match this with
+//            | CompositeHeader.Component oa -> Some (Component.create(componentType = oa))
+//            | _ -> None
+
+//    type CompositeCell with
+
+//        /// <summary>
+//        /// This function is used to improve interoperability with ISA-JSON types. It is not recommended for default ARCtrl usage.
+//        /// </summary>
+//        /// <param name="value"></param>
+//        /// <param name="unit"></param>
+//        static member fromValue(value : Value, ?unit : OntologyAnnotation) =
+//            JsonTypes.cellOfValue (Some value) unit
 
 
 module CompositeRow =
 
     let toProtocol (tableName : string) (row : (CompositeHeader*CompositeCell) seq) =
+        let id = tableName
         row
         |> Seq.fold (fun p hc ->
             match hc with
             | CompositeHeader.ProtocolType, CompositeCell.Term oa -> 
-                Protocol.setProtocolType p oa
-            | CompositeHeader.ProtocolVersion, CompositeCell.FreeText v -> Protocol.setVersion p v
-            | CompositeHeader.ProtocolUri, CompositeCell.FreeText v -> Protocol.setUri p v
-            | CompositeHeader.ProtocolDescription, CompositeCell.FreeText v -> Protocol.setDescription p v
-            | CompositeHeader.ProtocolREF, CompositeCell.FreeText v -> Protocol.setName p v
-            | CompositeHeader.Parameter oa, _ -> 
-                let pp = ProtocolParameter.create(ParameterName = oa)
-                Protocol.addParameter (pp) p
-            | CompositeHeader.Component oa, CompositeCell.Unitized(v,unit) -> 
-                let c = Component.create(componentType = oa, value = Value.fromString v, unit = unit)
-                Protocol.addComponent c p        
-            | CompositeHeader.Component oa, CompositeCell.Term t -> 
-                let c = Component.create(componentType = oa, value = Value.Ontology t)
-                Protocol.addComponent c p     
-            | _ -> p
-        ) (Protocol.create(Name = tableName))
+                LabProtocol.setIntendedUseAsDefinedTerm(p, JsonTypes.composeDefinedTerm oa)
+                
+            | CompositeHeader.ProtocolVersion, CompositeCell.FreeText v ->
+                LabProtocol.setVersionAsString(p,v)
+                
+            | CompositeHeader.ProtocolUri, CompositeCell.FreeText v ->
+                LabProtocol.setUrl(p,v)
+                
+            | CompositeHeader.ProtocolDescription, CompositeCell.FreeText v ->
+                LabProtocol.setDescriptionAsString(p,v)
+                
+            | CompositeHeader.ProtocolREF, CompositeCell.FreeText v ->
+                LabProtocol.setNameAsString(p,v)             
+            //| CompositeHeader.Parameter oa, _ ->
+            //    DefinedTerm.create
+            //    let pp = ProtocolParameter.create(ParameterName = oa)
+            //    Protocol.addParameter (pp) p
+            | CompositeHeader.Component _, CompositeCell.Term _
+            | CompositeHeader.Component _, CompositeCell.Unitized _ ->            
+                let c = JsonTypes.composeComponent (fst hc) (snd hc)
+                let newC = ResizeArray.appendSingleton c (LabProtocol.getLabEquipments(p))
+                LabProtocol.setLabEquipments(p,newC)  
+            | _ -> ()
+            p
+        ) (LabProtocol.create(id = id, name = tableName))
 
-type ArcTable with
+[<AutoOpen>]
+module TypeExtensions = 
 
-    /// Create a new table from an ISA protocol.
-    ///
-    /// The table will have at most one row, with the protocol information and the component values
-    static member fromProtocol (p : Protocol) : ArcTable = 
-        
-        let t = ArcTable.init (p.Name |> Option.defaultValue (Identifier.createMissingIdentifier()))
+    type ArcTable with
 
-        for pp in p.Parameters |> Option.defaultValue [] do
+        /// Create a new table from an ISA protocol.
+        ///
+        /// The table will have at most one row, with the protocol information and the component values
+        static member fromProtocol (p : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcTable = 
 
-            //t.AddParameterColumn(pp, ?index = pp.TryGetColumnIndex())
+            let name = LabProtocol.getNameAsString(p, ?context = context)
+            let t = ArcTable.init name
 
-            t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
+            //for pp in LabProtocol.getPa p.Parameters |> Option.defaultValue [] do
 
-        for c in p.Components |> Option.defaultValue [] do
-            let v = c.ComponentValue |> Option.map ((fun v -> CompositeCell.fromValue(v,?unit = c.ComponentUnit)) >> Array.singleton)
-            t.AddColumn(
-                CompositeHeader.Parameter c.ComponentType.Value, 
-                ?cells = v,
-                ?index = c.TryGetColumnIndex())
-        p.Description   |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
-        p.Version       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
-        p.ProtocolType  |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
-        p.Uri           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
-        p.Name          |> Option.map (fun d -> t.AddProtocolNameColumn([|d|]))         |> ignore
-        t
+            //    //t.AddParameterColumn(pp, ?index = pp.TryGetColumnIndex())
 
-    /// Returns the list of protocols executed in this ArcTable
-    member this.GetProtocols() : Protocol list = 
+            //    t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
 
-        if this.RowCount = 0 then
-            this.Headers
-            |> Seq.fold (fun (p : Protocol) h -> 
-                match h with
-                | CompositeHeader.ProtocolType -> 
-                    Protocol.setProtocolType p (OntologyAnnotation())
-                | CompositeHeader.ProtocolVersion -> Protocol.setVersion p ""
-                | CompositeHeader.ProtocolUri -> Protocol.setUri p ""
-                | CompositeHeader.ProtocolDescription -> Protocol.setDescription p ""
-                | CompositeHeader.ProtocolREF -> Protocol.setName p ""
-                | CompositeHeader.Parameter oa -> 
-                    let pp = ProtocolParameter.create(ParameterName = oa)
-                    Protocol.addParameter (pp) p
-                | CompositeHeader.Component oa -> 
-                    let c = Component.create(componentType = oa)
-                    Protocol.addComponent c p
-                | _ -> p
-            ) (Protocol.create(Name = this.Name))
-            |> List.singleton
-        else
-            List.init this.RowCount (fun i ->
-                this.GetRow(i, SkipValidation = true) 
-                |> Seq.zip this.Headers
-                |> CompositeRow.toProtocol this.Name                   
-            )
-            |> List.distinct
+            for c in LabProtocol.getComponents(p, ?graph = graph, ?context = context) do
+                let h,v = JsonTypes.decomposeComponent c
+                t.AddColumn(
+                    h, 
+                    cells = Array.singleton v,
+                    ?index = c.TryGetColumnIndex())
+            LabProtocol.tryGetDescriptionAsString(p, ?context = context)  |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
+            LabProtocol.tryGetVersionAsString(p, ?context = context)       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
+            ProcessParsing.tryGetProtocolType(p, ?context =context) |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
+            LabProtocol.tryGetUrl(p, ?context = context)           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
+            t.AddProtocolNameColumn([|name|])
+            t
 
-    /// Returns the list of processes specidified in this ArcTable
-    member this.GetProcesses() : Process list = 
-        if this.RowCount = 0 then 
-            Process.create(Name = this.Name)
-            |> List.singleton
-        else
-            let getter = ProcessParsing.getProcessGetter this.Name this.Headers          
-            [
-                for i in 0..this.RowCount-1 do
-                    yield getter this.Values i        
-            ]
-            |> ProcessParsing.mergeIdenticalProcesses
+        /// Returns the list of protocols executed in this ArcTable
+        member this.GetProtocols() : LDNode list = 
+
+            if this.RowCount = 0 then
+                this.Headers
+                |> Seq.fold (fun (p : LDNode) h -> 
+                    match h with
+                    //| CompositeHeader.Parameter oa -> 
+                    //    let pp = ProtocolParameter.create(ParameterName = oa)
+                    //    Protocol.addParameter (pp) p
+                    | CompositeHeader.Component oa ->
+                        let n, na = oa.NameText, oa.TermAccessionOntobeeUrl
+                        let c = PropertyValue.createComponent(n, "Empty Component Value", propertyID = na)
+                        let newC = ResizeArray.appendSingleton c (LabProtocol.getLabEquipments p)
+                        LabProtocol.setLabEquipments(p,newC)
+                    | _ -> ()
+                    p
+                ) (LabProtocol.create(id = Identifier.createMissingIdentifier(), name = this.Name))
+                |> List.singleton
+            else
+                List.init this.RowCount (fun i ->
+                    this.GetRow(i, SkipValidation = true) 
+                    |> Seq.zip this.Headers
+                    |> CompositeRow.toProtocol this.Name                   
+                )
+                |> List.distinct
+
+        /// Returns the list of processes specidified in this ArcTable
+        member this.GetProcesses() : LDNode list = 
+            if this.RowCount = 0 then
+                let id = $"Process_{this.Name}"
+                let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
+                let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
+                LabProcess.create(id = id, name = this.Name, objects = input, results = output)
+                |> List.singleton
+            else
+                let getter = ProcessParsing.getProcessGetter this.Name this.Headers          
+                [
+                    for i in 0..this.RowCount-1 do
+                        yield getter this.Values i        
+                ]
+                //|> ProcessParsing.mergeIdenticalProcesses
 
 
-    /// Create a new table from a list of processes
-    ///
-    /// The name will be used as the sheet name
-    /// 
-    /// The processes SHOULD have the same headers, or even execute the same protocol
-    static member fromProcesses name (ps : Process list) : ArcTable = 
-        ps
-        |> List.collect (fun p -> ProcessParsing.processToRows p)
-        |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
-        |> fun (headers, rows) -> ArcTable.create(name,headers,rows)    
-
-type ArcTables with
-
-    /// Return a list of all the processes in all the tables.
-    member this.GetProcesses() : Process list = 
-        this.Tables
-        |> Seq.toList
-        |> List.collect (fun t -> t.GetProcesses())
-
-    /// Create a collection of tables from a list of processes.
-    ///
-    /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
-    ///
-    /// Then each group is converted to a table with this nameroot as sheetname
-    static member fromProcesses (ps : Process list) : ArcTables = 
-        ps
-        |> ProcessParsing.groupProcesses
-        //|> fun x -> printfn "fromProcesses 1"; x
-        |> List.map (fun (name,ps) ->
-            //printfn "fromProcesses-%s 0" name
+        /// Create a new table from a list of processes
+        ///
+        /// The name will be used as the sheet name
+        /// 
+        /// The processes SHOULD have the same headers, or even execute the same protocol
+        static member fromProcesses(name,ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTable = 
             ps
-            |> List.collect (fun p -> ProcessParsing.processToRows p)
-            //|> fun x -> printfn "fromProcesses-%s 1" name; x
-            |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
-            //|> fun x -> printfn "fromProcesses-%s 2" name; x
-            |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
-            //|> fun x -> printfn "fromProcesses-%s 3" name; x
-        )
-        |> ResizeArray
-        |> ArcTables
+            |> List.collect (fun p -> ProcessParsing.processToRows(p,?context = context,?graph = graph) |> List.ofSeq)
+            |> ArcTableAux.Unchecked.alignByHeaders true
+            |> fun (headers, rows) -> ArcTable.create(name,headers,rows)    
+
+    type ArcTables with
+
+        /// Return a list of all the processes in all the tables.
+        member this.GetProcesses() : LDNode list = 
+            this.Tables
+            |> Seq.toList
+            |> List.collect (fun t -> t.GetProcesses())
+
+        /// Create a collection of tables from a list of processes.
+        ///
+        /// For this, the processes are grouped by nameroot ("nameroot_1", "nameroot_2" ...) or exectued protocol if no name exists
+        ///
+        /// Then each group is converted to a table with this nameroot as sheetname
+        static member fromProcesses (ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTables = 
+            ps
+            |> ProcessParsing.groupProcesses
+            //|> fun x -> printfn "fromProcesses 1"; x
+            |> List.map (fun (name,ps) ->
+                //printfn "fromProcesses-%s 0" name
+                ps
+                |> List.collect (fun p -> ProcessParsing.processToRows(p,?graph = graph, ?context = context) |> List.ofSeq)
+                //|> fun x -> printfn "fromProcesses-%s 1" name; x
+                |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
+                //|> fun x -> printfn "fromProcesses-%s 2" name; x
+                |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
+                //|> fun x -> printfn "fromProcesses-%s 3" name; x
+            )
+            |> ResizeArray
+            |> ArcTables
 
 
     ///// Copies ArcAssay object without the pointer to the parent ArcInvestigation

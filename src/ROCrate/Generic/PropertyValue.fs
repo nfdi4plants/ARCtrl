@@ -87,6 +87,22 @@ type PropertyValue =
         && pv.HasProperty(PropertyValue.name, ?context = context)
         && pv.HasProperty(PropertyValue.value, ?context = context)
 
+    static member validateComponent (pv : LDNode, ?context : LDContext) =
+        PropertyValue.validate(pv, ?context = context)
+        && pv.AdditionalType.Contains("Component")
+
+    static member validateParameterValue (pv : LDNode, ?context : LDContext) =
+        PropertyValue.validate(pv, ?context = context)
+        && pv.AdditionalType.Contains("ParameterValue")
+
+    static member validateCharacteristicValue (pv : LDNode, ?context : LDContext) =
+        PropertyValue.validate(pv, ?context = context)
+        && pv.AdditionalType.Contains("CharacteristicValue")
+
+    static member validateFactorValue (pv : LDNode, ?context : LDContext) =
+        PropertyValue.validate(pv, ?context = context)
+        && pv.AdditionalType.Contains("FactorValue")
+
     static member create(id, name, value, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let pv = LDNode(id, schemaType = ResizeArray [PropertyValue.schemaType], ?context = context)
         PropertyValue.setNameAsString(pv, name, ?context = context)

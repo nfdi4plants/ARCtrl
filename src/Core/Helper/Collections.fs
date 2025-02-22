@@ -85,6 +85,8 @@ module Dictionary =
 
 module ResizeArray =  
 
+    open System.Collections.Generic
+
     let map  f (a : ResizeArray<_>) =
         let b = ResizeArray<_>()
         for i in a do
@@ -164,4 +166,27 @@ module ResizeArray =
         for i in a do
             c.Add(i)
         c.Add(b)
+        c
+
+
+    // Make sure that output type matches
+    let groupBy (f : 'T -> 'a) (a : ResizeArray<'T>) : ResizeArray<'a*ResizeArray<'T>> =
+        Seq.groupBy f a
+        |> Seq.map (fun (k,v) -> k, ResizeArray v)
+        |> ResizeArray
+
+    let tryPick f (a : ResizeArray<'T>) =
+        let rec loop i =
+            if i < a.Count then
+                match f a.[i] with
+                | Some v -> Some v
+                | None -> loop (i + 1)
+            else None
+        loop 0
+
+    let zip (a : ResizeArray<'T>) (b : ResizeArray<'U>) =
+        let c = ResizeArray<_>()
+        let n = min a.Count b.Count
+        for i in 0 .. n - 1 do
+            c.Add(a.[i], b.[i])
         c
