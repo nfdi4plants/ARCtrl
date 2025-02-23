@@ -137,7 +137,18 @@ type LabProcess =
         && lp.HasProperty(LabProcess.object_, ?context = context)
         && lp.HasProperty(LabProcess.result, ?context = context)
 
-    static member create(id : string, name : string, objects : ResizeArray<LDNode>, results : ResizeArray<LDNode>, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
+    static member genId(name, ?assayName, ?studyName) =
+        match assayName, studyName with
+        | Some assay, Some study -> $"Process_{study}_{assay}_{name}"
+        | Some assay, None -> $"Process_{assay}_{name}"
+        | None, Some study -> $"Process_{study}_{name}"
+        | _ -> $"Process_{name}"
+
+
+    static member create(name : string, objects : ResizeArray<LDNode>, results : ResizeArray<LDNode>, ?id : string, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> LabProcess.genId(name)
         let lp = LDNode(id, ResizeArray [LabProcess.schemaType], ?context = context)
         lp.SetProperty(LabProcess.name, name, ?context = context)
         lp.SetOptionalProperty(LabProcess.agent, agent, ?context = context) // Optional?

@@ -3,6 +3,7 @@ module ARCtrl.ARC.Tests
 open Fable.Pyxpecto
 
 let all = testSequenced <| testList "ARCtrl" [
+    ARCtrl.ROCrateConversion.Tests.main
     ARCtrl.CrossAsync.Tests.main
     ARCtrl.FileSystemHelper.Tests.main
     ARCtrl.ContractIO.Tests.main

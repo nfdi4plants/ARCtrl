@@ -102,8 +102,7 @@ module JsonTypes =
 
     let composeDefinedTerm (term : OntologyAnnotation) =
         let tan = term.TermAccessionOntobeeUrl |> Option.fromValueWithDefault ""
-        let id = sprintf "oa_%s" term.NameText
-        DefinedTerm.create(id, name = term.NameText, ?termCode = tan)
+        DefinedTerm.create(name = term.NameText, ?termCode = tan)
 
     let decomposeDefinedTerm (term : LDNode) =
         let name = DefinedTerm.getNameAsString term
@@ -841,10 +840,9 @@ module TypeExtensions =
         /// Returns the list of processes specidified in this ArcTable
         member this.GetProcesses() : LDNode list = 
             if this.RowCount = 0 then
-                let id = $"Process_{this.Name}"
                 let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
                 let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
-                LabProcess.create(id = id, name = this.Name, objects = input, results = output)
+                LabProcess.create(name = this.Name, objects = input, results = output)
                 |> List.singleton
             else
                 let getter = ProcessParsing.getProcessGetter this.Name this.Headers          

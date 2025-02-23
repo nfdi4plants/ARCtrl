@@ -42,11 +42,19 @@ type DefinedTerm =
     static member setNameAsString(dt : LDNode, name : string, ?context : LDContext) =
         dt.SetProperty(DefinedTerm.name, name, ?context = context)
 
+    static member genID(name : string, ?termCode : string) =
+        match termCode with
+        | Some tc -> $"OA_{name}_{tc}"
+        | None -> $"OA_{name}"
+
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(DefinedTerm.schemaType, ?context = context)
         && dt.HasProperty(DefinedTerm.name, ?context = context)
 
-    static member create(id : string, name : string, ?termCode : string, ?context : LDContext) =
+    static member create(name : string, ?id : string, ?termCode : string, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> DefinedTerm.genID(name, ?termCode = termCode)
         let dt = LDNode(id, ResizeArray [DefinedTerm.schemaType], ?context = context)
         dt.SetProperty(DefinedTerm.name, name, ?context = context)
         dt.SetOptionalProperty(DefinedTerm.termCode, termCode, ?context = context)
