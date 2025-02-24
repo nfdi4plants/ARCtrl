@@ -22,6 +22,7 @@
     <Compile Include="Generic\File.fs" />
     <Compile Include="Generic\LabProtocol.fs" />
     <Compile Include="Generic\LabProcess.fs" />
+    <Compile Include="Generic\Dataset.fs" />
     <Compile Include="ArcROCrateMetadata.fs" />
     <None Include="playground.fsx" />
   </ItemGroup>

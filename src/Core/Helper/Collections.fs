@@ -87,6 +87,13 @@ module ResizeArray =
 
     open System.Collections.Generic
 
+    let create (i : int) (v : 'T) =
+        let a = ResizeArray<_>()
+        if i > 0 then
+            for _ in 1 .. i do
+                a.Add(v)
+        a
+
     let singleton (a : 'T) =
         let b = ResizeArray<_>()
         b.Add(a)

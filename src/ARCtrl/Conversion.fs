@@ -687,35 +687,73 @@ type ProcessParsing =
                 CompositeHeader.Comment (Option.defaultValue "" c.Name),
                 CompositeCell.FreeText (Option.defaultValue "" c.Value)
             )
-        // zip the inputs and outpus so they are aligned as rows
-        LabProcess.getResults(p, ?graph = graph, ?context = context)
-        |> ResizeArray.zip (LabProcess.getObjects(p, ?graph = graph, ?context = context))
-        // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
-        |> ResizeArray.map (fun (i,o) ->
-            let chars = 
-                Sample.getCharacteristics(i, ?graph = graph, ?context = context)
-                |> ResizeArray.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetIndex cv)            
-            let factors =
-                Sample.getFactors(o, ?graph = graph, ?context = context)
-                |> ResizeArray.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetIndex fv)
 
+        let inputs = LabProcess.getObjects(p, ?graph = graph, ?context = context)
+        let outputs = LabProcess.getResults(p, ?graph = graph, ?context = context)
+
+        let inputs,outputs =
+            if inputs.Count = 0 && outputs.Count <> 0 then
+                ResizeArray.create outputs.Count None,
+                ResizeArray.map Option.Some outputs
+            elif inputs.Count <> 0 && outputs.Count = 0 then
+                 ResizeArray.map Option.Some inputs,
+                 ResizeArray.create inputs.Count None
+            else               
+                ResizeArray.map Option.Some inputs,
+                ResizeArray.map Option.Some outputs
+
+
+        if inputs.Count = 0 && outputs.Count = 0 then
             let vals =
                 [
-                    yield! chars
                     yield! components
                     yield! pvs
-                    yield! factors
                 ]
                 |> List.sortBy (snd >> Option.defaultValue 10000)
                 |> List.map fst
             [
-                yield JsonTypes.decomposeProcessInput i
                 yield! protVals
                 yield! vals
                 yield! comments
-                yield JsonTypes.decomposeProcessOutput o
             ]
-        )
+            |> ResizeArray.singleton
+        else
+        // zip the inputs and outpus so they are aligned as rows
+            outputs
+            |> ResizeArray.zip inputs
+            // This grouping here and the picking of the "inputForCharas" etc is done, so there can be rows where data do have characteristics, which is not possible in isa json
+            |> ResizeArray.map (fun (i,o) ->
+                let chars =
+                    match i with
+                    | Some i -> 
+                        Sample.getCharacteristics(i, ?graph = graph, ?context = context)
+                        |> ResizeArray.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetIndex cv)
+                    | None -> ResizeArray []            
+                let factors =
+                    match o with
+                    | Some o -> 
+                        Sample.getFactors(o, ?graph = graph, ?context = context)
+                        |> ResizeArray.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetIndex fv)
+                    | None -> ResizeArray []
+
+
+                let vals =
+                    [
+                        yield! chars
+                        yield! components
+                        yield! pvs
+                        yield! factors
+                    ]
+                    |> List.sortBy (snd >> Option.defaultValue 10000)
+                    |> List.map fst
+                [
+                    if i.IsSome then yield JsonTypes.decomposeProcessInput i.Value
+                    yield! protVals
+                    yield! vals
+                    yield! comments
+                    if o.IsSome then yield JsonTypes.decomposeProcessOutput o.Value
+                ]
+            )
 
 //[<AutoOpen>]
 //module CoreTypeExtensions = 

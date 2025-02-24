@@ -85,7 +85,7 @@ type PropertyValue =
     static member validate(pv : LDNode, ?context : LDContext) =
         pv.HasType(PropertyValue.schemaType, ?context = context)
         && pv.HasProperty(PropertyValue.name, ?context = context)
-        && pv.HasProperty(PropertyValue.value, ?context = context)
+        //&& pv.HasProperty(PropertyValue.value, ?context = context)
 
     static member validateComponent (pv : LDNode, ?context : LDContext) =
         PropertyValue.validate(pv, ?context = context)

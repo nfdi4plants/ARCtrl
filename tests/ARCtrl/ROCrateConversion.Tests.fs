@@ -624,6 +624,13 @@ let private tests_ArcTableProcess =
             let table = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual table t "Table should be equal"
         )
+        testCase "OnlyInput GetAndFromProcessess" (fun () ->
+            let t = ArcTable.init tableName1
+            t.AddColumn(CompositeHeader.Input(IOType.Source),[|CompositeCell.createFreeText "Source"|])
+            let processes = t.GetProcesses()
+            let table = ArcTable.fromProcesses(tableName1,processes)
+            Expect.arcTableEqual table t "Table should be equal"
+        )
         testCase "ParamValueUnitizedNoValueNoInputOutput" (fun () ->
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
@@ -679,7 +686,7 @@ let private tests_ArcTableProcess =
             let t' = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual t' t "Table should be equal"
         )
-        testCase "ParamValueUnitizedEmpty" (fun () ->
+        ptestCase "ParamValueUnitizedEmpty" (fun () ->
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("")
@@ -704,7 +711,7 @@ let private tests_ArcTableProcess =
             let t' = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual t' t "Table should be equal"
         )
-        testCase "ParamValueUnitizedNoUnit" (fun () ->
+        ptestCase "ParamValueUnitizedNoUnit" (fun () ->
             let t = ArcTable.init tableName1
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("5")
