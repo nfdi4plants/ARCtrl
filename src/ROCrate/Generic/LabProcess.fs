@@ -4,19 +4,6 @@ open DynamicObj
 open Fable.Core
 open ARCtrl.ROCrate
 open ARCtrl.Helper
-//Has the new Bioschemas DRAFT bioschemas.org/LabProcess type and maps to the ISA-JSON Process
-
-//Property	Required	Expected Type	Description
-//@type	MUST	Text	must be 'bioschemas.org/LabProcess'
-//@id	MUST	Text or URL	Could identify the process using the isa metadata filename and the protocol reference or process name.
-//name	MUST	Text	-
-//agent	MUST	schema.org/Person	The performer
-//object	MUST	bioschemas.org/Sample or File	The input
-//result	MUST	bioschemas.org/Sample or File	The output
-//executesLabProtocol	SHOULD	bioschemas.org/LabProtocol	The protocol executed
-//parameterValue	SHOULD	schema.org/PropertyValue	A parameter value of the experimental process, usually a key-value pair using ontology terms
-//endTime	SHOULD	DateTime	
-//disambiguatingDescription	COULD	Text	Comments
 
 [<AttachMembers>]
 type LabProcess =

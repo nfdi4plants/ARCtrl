@@ -40,63 +40,6 @@ module ColumnIndex =
 
             member this.SetColumnIndex (index : int) = setIndex this index
 
-module Person = 
-
-    let orcidKey = "ORCID"
-    let AssayIdentifierPrefix = "performer (ARC:00000168)"
-    let createAssayIdentifierKey = sprintf "%s %s" AssayIdentifierPrefix// TODO: Replace with ISA ontology term for assay
-
-    let setSourceAssayComment (person : ARCtrl.Person) (assayIdentifier: string): ARCtrl.Person =
-        let person = person.Copy()
-        let k = createAssayIdentifierKey assayIdentifier
-        let comment = ARCtrl.Comment(k, assayIdentifier)
-        person.Comments.Add(comment)
-        person
-
-    /// <summary>
-    /// This functions helps encoding/decoding ISA-JSON. It returns a sequence of ArcAssay-Identifiers.
-    /// </summary>
-    /// <param name="person"></param>
-    let getSourceAssayIdentifiersFromComments (person : ARCtrl.Person) =
-        person.Comments 
-        |> Seq.choose (fun c -> 
-            let isAssaySource = 
-                c.Name 
-                |> Option.map (fun n -> 
-                    n.StartsWith AssayIdentifierPrefix
-                )
-                |> Option.defaultValue false
-            if isAssaySource then c.Value else None
-        )
-
-    let removeSourceAssayComments (person: ARCtrl.Person) : ResizeArray<ARCtrl.Comment> =
-        person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix |> not)
-
-    let setOrcidFromComments (person : ARCtrl.Person) =
-        let person = person.Copy()
-        let isOrcidComment (c : ARCtrl.Comment) = 
-            c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(orcidKey))
-        let orcid,comments = 
-            let orcid = 
-                person.Comments
-                |> Seq.tryPick (fun c -> if isOrcidComment c then c.Value else None)
-            let comments = 
-                person.Comments
-                |> ResizeArray.filter (isOrcidComment >> not)
-            orcid, comments
-        person.ORCID <- orcid
-        person.Comments <- comments
-        person
-
-    let setCommentFromORCID (person : ARCtrl.Person) =
-        let person = person.Copy()
-        match person.ORCID with
-        | Some orcid -> 
-            let comment = ARCtrl.Comment.create (name = orcidKey, value = orcid)
-            person.Comments.Add comment
-        | None -> ()
-        person
-
 /// Functions for transforming base level ARC Table and ISA Json Objects
 module JsonTypes = 
 
@@ -940,6 +883,125 @@ module TypeExtensions =
             )
             |> ResizeArray
             |> ArcTables
+
+
+
+module Person = 
+
+    let orcidKey = "ORCID"
+    let AssayIdentifierPrefix = "performer (ARC:00000168)"
+    let createAssayIdentifierKey = sprintf "%s %s" AssayIdentifierPrefix// TODO: Replace with ISA ontology term for assay
+
+    let setSourceAssayComment (person : ARCtrl.Person) (assayIdentifier: string): ARCtrl.Person =
+        let person = person.Copy()
+        let k = createAssayIdentifierKey assayIdentifier
+        let comment = ARCtrl.Comment(k, assayIdentifier)
+        person.Comments.Add(comment)
+        person
+
+    /// <summary>
+    /// This functions helps encoding/decoding ISA-JSON. It returns a sequence of ArcAssay-Identifiers.
+    /// </summary>
+    /// <param name="person"></param>
+    let getSourceAssayIdentifiersFromComments (person : ARCtrl.Person) =
+        person.Comments 
+        |> Seq.choose (fun c -> 
+            let isAssaySource = 
+                c.Name 
+                |> Option.map (fun n -> 
+                    n.StartsWith AssayIdentifierPrefix
+                )
+                |> Option.defaultValue false
+            if isAssaySource then c.Value else None
+        )
+
+    let removeSourceAssayComments (person: ARCtrl.Person) : ResizeArray<ARCtrl.Comment> =
+        person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix |> not)
+
+    let setOrcidFromComments (person : ARCtrl.Person) =
+        let person = person.Copy()
+        let isOrcidComment (c : ARCtrl.Comment) = 
+            c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(orcidKey))
+        let orcid,comments = 
+            let orcid = 
+                person.Comments
+                |> Seq.tryPick (fun c -> if isOrcidComment c then c.Value else None)
+            let comments = 
+                person.Comments
+                |> ResizeArray.filter (isOrcidComment >> not)
+            orcid, comments
+        person.ORCID <- orcid
+        person.Comments <- comments
+        person
+
+    let setCommentFromORCID (person : ARCtrl.Person) =
+        let person = person.Copy()
+        match person.ORCID with
+        | Some orcid -> 
+            let comment = ARCtrl.Comment.create (name = orcidKey, value = orcid)
+            person.Comments.Add comment
+        | None -> ()
+        person
+
+    let composeAddress (address : string) : obj =
+        try 
+            ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder address
+            |> box
+        with
+        | _ -> address
+
+    let decomposeAddress (address : obj) : string =
+        match address with
+        | :? string as s -> s
+        | :? LDNode as n -> 
+            Json.LDNode.encoder n
+            |> ARCtrl.Json.Encode.toJsonString 0
+        | _ -> failwith "Address must be a string or a Json.LDNode"
+
+    let composePerson (person : ARCtrl.Person) =
+        let givenName =
+            match person.FirstName with
+            | Some fn -> fn
+            | None -> failwith "Person must have a given name"
+        let jobTitles = 
+            person.Roles
+            |> ResizeArray.map JsonTypes.composeDefinedTerm
+            |> Option.fromValueWithDefault (ResizeArray [])
+        let disambiguatingDescriptions = 
+            person.Comments
+            |> ResizeArray.map (fun c -> c.ToString())
+            |> Option.fromValueWithDefault (ResizeArray [])
+        let address =
+            person.Address
+            |> Option.map composeAddress
+        Person.create(givenName, ?orcid = person.ORCID, ?affiliation = person.Affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
+
+    let decomposePerson (person : Person) =
+        let orcid = 
+            //match Person.tryGetOrcid with
+            //| Some orcid -> ARCtrl.Person.ORCID orcid
+            //| None -> ARCtrl.Person.ORCID ""
+            None
+        let address = 
+            match Person.tryGetAddress(person, with
+            | Some address -> 
+                ARCtrl.Json.Encode.toString Json.LDNode.encoder address
+            | None -> ""
+        ARCtrl.Person.create(
+            FirstName = person.GivenName,
+            ?LastName = person.FamilyName,
+            ?MidInitials = person.AdditionalName,
+            ?EMail = person.Email,
+            ?Fax = person.FaxNumber,
+            ?Phone = person.Telephone,
+            ?ORCID = orcid,
+            ?Affiliation = person.Affiliation,
+            ?Roles = person.JobTitles |> ResizeArray.map JsonTypes.decomposeDefinedTerm,
+            ?Address = address,
+            ?Comments = person.DisambiguatingDescriptions |> ResizeArray.map ARCtrl.Comment.fromString
+        )
+        
+
 
 
     ///// Copies ArcAssay object without the pointer to the parent ArcInvestigation

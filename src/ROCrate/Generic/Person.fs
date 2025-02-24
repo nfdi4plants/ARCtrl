@@ -3,24 +3,7 @@ namespace ARCtrl.ROCrate
 open DynamicObj
 open Fable.Core
 open ARCtrl.ROCrate
-
-///
-//Property	Required	Expected Type	Description
-//@id	MUST	Text or URL	
-//@type	MUST	Text	must be 'schema.org/Person'
-//givenName	MUST	Text	Given name of a person. Can be used for any type of name.
-//affiliation	SHOULD	schema.org/Organization	
-//email	SHOULD	Text	
-//familyName	SHOULD	Text	Family name of a person.
-//identifier	SHOULD	Text or URL or schema.org/PropertyValue	One or many identifiers for this person, e.g. an ORCID. Can be of type PropertyValue to indicate the kind of reference.
-//jobTitle	SHOULD	schema.org/DefinedTerm	
-//additionalName	COULD	Text	
-//address	COULD	PostalAddress or Text	
-//disambiguatingDescription	COULD	Text	
-//faxNumber	COULD	Text	
-//telephone	COULD	Text	
-
-
+open ARCtrl.Helper
 
 [<AttachMembers>]
 type Person =
@@ -90,12 +73,12 @@ type Person =
     static member setIdentifier(p : LDNode, i : LDNode, ?context : LDContext) =
         p.SetProperty(Person.identifier, i, ?context = context)
 
-    static member tryGetJobTitleAsDefinedTerm(p : LDNode, ?context : LDContext) =
-        match p.TryGetPropertyAsSingleton(Person.jobTitle, ?context = context) with
-        | Some (:? LDNode as j) when DefinedTerm.validate j-> Some j
-        | _ -> None
+    static member getJobTitlesAsDefinedTerm(p : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let filter ldObject context = DefinedTerm.validate(ldObject, ?context = context)
+        p.GetPropertyNodes(Person.jobTitle, filter = filter, ?graph = graph, ?context = context)
 
-    static member setJobTitleAsDefinedTerm(p : LDNode, j : LDNode, ?context : LDContext) =
+
+    static member setJobTitleAsDefinedTerm(p : LDNode, j : ResizeArray<LDNode>, ?context : LDContext) =
         p.SetProperty(Person.jobTitle, j, ?context = context)
 
     static member tryGetAdditionalNameAsString(p : LDNode, ?context : LDContext) =
@@ -128,12 +111,12 @@ type Person =
     static member setAddressAsString(p : LDNode, a : string, ?context : LDContext) =
         p.SetProperty(Person.address, a, ?context = context)
 
-    static member tryGetDisambiguatingDescriptionAsString(p : LDNode, ?context : LDContext) =
-        match p.TryGetPropertyAsSingleton(Person.disambiguatingDescription, ?context = context) with
-        | Some (:? string as d) -> Some d
-        | _ -> None
+    static member tryGetDisambiguatingDescriptionsAsString(p : LDNode, ?context : LDContext) =
+        let filter (value : obj) context = value :? string
+        p.GetPropertyValues(Person.disambiguatingDescription, filter = filter, ?context = context)
+        |> ResizeArray.map (fun v -> v :?> string)
 
-    static member setDisambiguatingDescriptionAsString(p : LDNode, d : string, ?context : LDContext) =
+    static member setDisambiguatingDescriptionsAsString(p : LDNode, d : ResizeArray<string>, ?context : LDContext) =
         p.SetProperty(Person.disambiguatingDescription, d, ?context = context)
 
     static member tryGetFaxNumberAsString(p : LDNode, ?context : LDContext) =
@@ -152,21 +135,32 @@ type Person =
     static member setTelephoneAsString(p : LDNode, t : string, ?context : LDContext) =
         p.SetProperty(Person.telephone, t, ?context = context)
 
+    static member genId(givenName, ?orcid, ?familyName) =
+        match orcid with
+        | Some o -> $"Person_{o}"
+        | None ->
+            match familyName with
+            | Some f -> $"Person_{givenName}_{familyName}"
+            | None -> $"Person_{givenName}"
+
     static member validate(p : LDNode, ?context : LDContext) =
         p.HasType(Person.schemaType, ?context = context)
         && p.HasProperty(Person.givenName, ?context = context)
 
-    static member create(id : string, givenName : string, ?affiliation : obj, ?email : string, ?familyName : string, ?identifier, ?jobTitle : LDNode, ?additionalName : string, ?address : obj, ?disambiguatingDescription : string, ?faxNumber : string, ?telephone : string, ?context : LDContext) =
+    static member create(givenName : string, ?orcid : string, ?id : string, ?affiliation : #obj, ?email : string, ?familyName : string, ?identifier, ?jobTitles : ResizeArray<LDNode>, ?additionalName : string, ?address : #obj, ?disambiguatingDescriptions : ResizeArray<string>, ?faxNumber : string, ?telephone : string, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> Person.genId(givenName, ?orcid = orcid, ?familyName = familyName)
         let person = LDNode(id, ResizeArray [Person.schemaType], ?context = context)
         person.SetProperty(Person.givenName, givenName, ?context = context)
         person.SetOptionalProperty(Person.affiliation, affiliation, ?context = context)
         person.SetOptionalProperty(Person.email, email, ?context = context)
         person.SetOptionalProperty(Person.familyName, familyName, ?context = context)
         person.SetOptionalProperty(Person.identifier, identifier, ?context = context)
-        person.SetOptionalProperty(Person.jobTitle, jobTitle, ?context = context)
+        person.SetOptionalProperty(Person.jobTitle, jobTitles, ?context = context)
         person.SetOptionalProperty(Person.additionalName, additionalName, ?context = context)
         person.SetOptionalProperty(Person.address, address, ?context = context)
-        person.SetOptionalProperty(Person.disambiguatingDescription, disambiguatingDescription, ?context = context)
+        person.SetOptionalProperty(Person.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
         person.SetOptionalProperty(Person.faxNumber, faxNumber, ?context = context)
         person.SetOptionalProperty(Person.telephone, telephone, ?context = context)
         person
