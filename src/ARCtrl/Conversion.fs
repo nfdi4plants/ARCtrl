@@ -115,7 +115,8 @@ module JsonTypes =
         | CompositeCell.FreeText ("") -> None, None, None, None
         | CompositeCell.FreeText (text) -> Some text, None, None, None        
         | CompositeCell.Term (term) when term.isEmpty() -> None, None, None, None
-        | CompositeCell.Term (term) -> term.Name, Some term.TermAccessionOntobeeUrl, None, None
+        | CompositeCell.Term (term) when term.TANInfo.IsSome -> term.Name, Some term.TermAccessionOntobeeUrl, None, None
+        | CompositeCell.Term (term) -> term.Name, None, None, None
         | CompositeCell.Unitized (text,unit) ->
             let unitName, unitAccession = if unit.isEmpty() then None, None else unit.Name, Some unit.TermAccessionOntobeeUrl
             (if text = "" then None else Some text),
@@ -129,36 +130,33 @@ module JsonTypes =
         | CompositeHeader.Component oa 
         | CompositeHeader.Parameter oa 
         | CompositeHeader.Factor oa 
-        | CompositeHeader.Characteristic oa -> oa.NameText, Some oa.TermAccessionOntobeeUrl
+        | CompositeHeader.Characteristic oa ->
+            oa.NameText, if oa.TANInfo.IsSome then Some oa.TermAccessionOntobeeUrl else None
         | h -> failwithf "header %O should not be parsed to isa value" h
 
     /// Convert a CompositeHeader and Cell tuple to a ISA Component
     let composeComponent (header : CompositeHeader) (value : CompositeCell) : LDNode =
         let v,va,u,ua = valuesOfCell value
         let n, na = termOfHeader header
-        let v = match v with | Some v -> v | None -> failwithf "Component value of %s is missing" n
-        PropertyValue.createComponent(n, v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        PropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
     let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
         let v,va,u,ua = valuesOfCell value
         let n, na = termOfHeader header
-        let v = match v with | Some v -> v | None -> failwithf "ParameterValue value of %s is missing" n
-        PropertyValue.createParameterValue(n, v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        PropertyValue.createParameterValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA FactorValue
     let composeFactorValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
         let v,va,u,ua = valuesOfCell value
         let n, na = termOfHeader header
-        let v = match v with | Some v -> v | None -> failwithf "FactorValue value of %s is missing" n
-        PropertyValue.createFactorValue(n, v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        PropertyValue.createFactorValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA MaterialAttributeValue
     let composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : LDNode  =
         let v,va,u,ua = valuesOfCell value
         let n, na = termOfHeader header
-        let v = match v with | Some v -> v | None -> failwithf "CharacteristicValue value of %s is missing" n
-        PropertyValue.createCharacteristicValue(n, v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        PropertyValue.createCharacteristicValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     let composeFreetextMaterialName (headerFT : string) (name : string) =
         $"{headerFT}={name}"
@@ -199,6 +197,7 @@ module JsonTypes =
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessOutput
     let composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : LDNode =
         match header with
+        | CompositeHeader.Output IOType.Source 
         | CompositeHeader.Output IOType.Sample -> Sample.createSample(value.AsFreeText)
         | CompositeHeader.Output IOType.Material -> Sample.createMaterial(value.AsFreeText)
         | CompositeHeader.Output IOType.Data ->
@@ -222,19 +221,21 @@ module JsonTypes =
 
     /// Convert an ISA Value and Unit tuple to a CompositeCell
     let cellOfPropertyValue (pv : LDNode) =
-        let v = PropertyValue.getValueAsString pv
+        let v = PropertyValue.tryGetValueAsString pv
         let vRef = PropertyValue.tryGetValueReference pv
         let u = PropertyValue.tryGetUnitTextAsString pv
         let uRef = PropertyValue.tryGetUnitCodeAsString pv
         match vRef,u,uRef with
         | Some vr, None, None ->
-            CompositeCell.Term (OntologyAnnotation.fromTermAnnotation(vr,name = v))
+            CompositeCell.Term (OntologyAnnotation.fromTermAnnotation(vr,?name = v))
         | None, Some u, None ->
-            CompositeCell.Unitized (v,OntologyAnnotation(name = u))
+            CompositeCell.Unitized ((Option.defaultValue "" v),OntologyAnnotation(name = u))
         | None, _, Some uRef ->
-            CompositeCell.Unitized (v,OntologyAnnotation.fromTermAnnotation(uRef, ?name = u))
+            CompositeCell.Unitized ((Option.defaultValue "" v),OntologyAnnotation.fromTermAnnotation(uRef, ?name = u))
+        | None, None, None ->
+            CompositeCell.Term (OntologyAnnotation(?name = v))
         | _ ->
-            failwithf "Could not parse value %s with unit %O and unit reference %O" v u uRef
+            failwithf "Could not parse value %s with unit %O and unit reference %O" (Option.defaultValue "" v) u uRef
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple
     let decomposeComponent (c : LDNode) : CompositeHeader*CompositeCell =
@@ -525,7 +526,6 @@ type ProcessParsing =
             |> Seq.choose (fun (generalI,header) -> ProcessParsing.tryGetCommentGetter generalI header)
             |> Seq.toList
 
-        // This is a little more complex, as data and material objects can't contain characteristics. So in the case where the input of the table is a data object but characteristics exist. An additional sample object with the same name is created to contain the characteristics.
         let inputGetter =
             match headers |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetInputGetter generalI header) with
             | Some inputGetter ->
@@ -536,10 +536,15 @@ type ProcessParsing =
                     if chars.Count > 0 then
                         Sample.setAdditionalProperties(input,chars)
                     input
-            | None ->
+                    |> ResizeArray.singleton
+            | None when charGetters.Length <> 0 ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
                     Sample.createSample(name = $"{processNameRoot}_Input_{i}", additionalProperties = chars)
+                    |> ResizeArray.singleton
+            | None ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    ResizeArray []
             
         // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
         let outputGetter =
@@ -551,14 +556,21 @@ type ProcessParsing =
                     if factors.Count > 0 then
                         Sample.setAdditionalProperties(output,factors)
                     output
-            | None ->
+                    |> ResizeArray.singleton
+            | None when factorValueGetters.Length <> 0 ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
                     Sample.createSample(name = $"{processNameRoot}_Output_{i}", additionalProperties = factors)
-
+                    |> ResizeArray.singleton
+            | None ->
+                fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
+                    ResizeArray []
         fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
 
-            let pn = ProcessParsing.composeProcessName processNameRoot i
+            let rowCount = matrix.Keys |> Seq.map snd |> Seq.max |> (+) 1
+            let pn =
+                if rowCount = 1 then processNameRoot
+                else ProcessParsing.composeProcessName processNameRoot i
 
             let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
             //let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
@@ -585,13 +597,10 @@ type ProcessParsing =
 
             let agent = performerGetter |> Option.map (fun f -> f matrix i)
 
-            let id = $"Process_{pn}"
-
             LabProcess.create(
-                id = id,
                 name = pn,
-                objects = ResizeArray [input],
-                results = ResizeArray [output],
+                objects = input,
+                results = output,
                 ?agent = agent,
                 ?executesLabProtocol = protocol,
                 ?parameterValues = paramvalues,
@@ -687,7 +696,7 @@ type ProcessParsing =
                 Sample.getCharacteristics(i, ?graph = graph, ?context = context)
                 |> ResizeArray.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetIndex cv)            
             let factors =
-                Sample.getFactors(i, ?graph = graph, ?context = context)
+                Sample.getFactors(o, ?graph = graph, ?context = context)
                 |> ResizeArray.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetIndex fv)
 
             let vals =
@@ -840,9 +849,9 @@ module TypeExtensions =
         /// Returns the list of processes specidified in this ArcTable
         member this.GetProcesses() : LDNode list = 
             if this.RowCount = 0 then
-                let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
-                let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
-                LabProcess.create(name = this.Name, objects = input, results = output)
+                //let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
+                //let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
+                LabProcess.create(name = this.Name(*, objects = input, results = output*))
                 |> List.singleton
             else
                 let getter = ProcessParsing.getProcessGetter this.Name this.Headers          

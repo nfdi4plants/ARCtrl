@@ -36,11 +36,11 @@ type Sample =
 
     static member getCharacteristics(s : LDNode, ?graph : LDGraph, ?context : LDContext) : ResizeArray<LDNode> =
         let filter ldObject context = PropertyValue.validateCharacteristicValue(ldObject, ?context = context)
-        s.GetPropertyNodes("https://bioschemas.org/characteristics", filter = filter, ?graph = graph, ?context = context)
+        s.GetPropertyNodes(Sample.additionalProperty, filter = filter, ?graph = graph, ?context = context)
 
     static member getFactors(s : LDNode, ?graph : LDGraph, ?context : LDContext) : ResizeArray<LDNode> =
         let filter ldObject context = PropertyValue.validateFactorValue(ldObject, ?context = context)
-        s.GetPropertyNodes("https://bioschemas.org/factors", filter = filter, ?graph = graph, ?context = context)
+        s.GetPropertyNodes(Sample.additionalProperty, filter = filter, ?graph = graph, ?context = context)
 
     static member validate(s : LDNode, ?context : LDContext) =
         s.HasType(Sample.schemaType, ?context = context)
@@ -48,17 +48,14 @@ type Sample =
 
     static member validateSample (s : LDNode, ?context : LDContext) =
         Sample.validate(s, ?context = context)
-        && s.HasType("Sample", ?context = context)
         && s.AdditionalType.Contains("Sample")
 
     static member validateSource (s : LDNode, ?context : LDContext) =
         Sample.validate(s, ?context = context)
-        && s.HasType("Source", ?context = context)
         && s.AdditionalType.Contains("Source")
 
     static member validateMaterial (s : LDNode, ?context : LDContext) =
         Sample.validate(s, ?context = context)
-        && s.HasType("Material", ?context = context)
         && s.AdditionalType.Contains("Material")
 
     static member create(id : string, name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =

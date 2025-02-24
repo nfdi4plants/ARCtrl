@@ -165,7 +165,7 @@ let private tests_ProcessInput =
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Sample" (fun () ->
-            let header = CompositeHeader.Output(IOType.Sample)
+            let header = CompositeHeader.Input(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
             let input = JsonTypes.composeProcessInput header cell
 
@@ -177,7 +177,22 @@ let private tests_ProcessInput =
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
-        testCase "Data" (fun () ->
+        testCase "Data_Data" (fun () ->
+            let header = CompositeHeader.Input(IOType.Data)
+            let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
+            let cell = CompositeCell.createData data
+            let input = JsonTypes.composeProcessInput header cell
+    
+            Expect.isTrue (File.validate input) "Should be a valid data"
+            let name = File.getNameAsString input
+            Expect.equal name "MyData" "Name should match"
+    
+            let header',cell' = JsonTypes.decomposeProcessInput input
+            Expect.equal header header' "Header should match"
+            data.ID <- Some input.Id
+            Expect.equal cell cell' "Cell should match"
+        )
+        testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Input(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
             let input = JsonTypes.composeProcessInput header cell
@@ -187,8 +202,9 @@ let private tests_ProcessInput =
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = JsonTypes.decomposeProcessInput input
+            let expectedCell = CompositeCell.createData (Data (id = input.Id, name = "MyData"))
             Expect.equal header header' "Header should match"
-            Expect.equal cell cell' "Cell should match"
+            Expect.equal expectedCell cell' "Cell should match"
         )
         testCase "Material" (fun () ->
             let header = CompositeHeader.Input(IOType.Material)
@@ -235,7 +251,22 @@ let private tests_ProcessOutput =
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
-        testCase "Data" (fun () ->
+        testCase "Data_Data" (fun () ->
+            let header = CompositeHeader.Output(IOType.Data)
+            let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
+            let cell = CompositeCell.createData data
+            let output = JsonTypes.composeProcessOutput header cell
+    
+            Expect.isTrue (File.validate output) "Should be a valid data"
+            let name = File.getNameAsString output
+            Expect.equal name "MyData" "Name should match"
+    
+            let header',cell' = JsonTypes.decomposeProcessOutput output
+            Expect.equal header header' "Header should match"
+            data.ID <- Some output.Id
+            Expect.equal cell cell' "Cell should match"
+        )
+        testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Output(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
             let output = JsonTypes.composeProcessOutput header cell
@@ -245,8 +276,9 @@ let private tests_ProcessOutput =
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = JsonTypes.decomposeProcessOutput output
+            let expectedCell = CompositeCell.createData (Data (id = output.Id, name = "MyData"))
             Expect.equal header header' "Header should match"
-            Expect.equal cell cell' "Cell should match"
+            Expect.equal expectedCell cell' "Cell should match"
         )
         testCase "Material" (fun () ->
             let header = CompositeHeader.Output(IOType.Material)
@@ -278,6 +310,116 @@ let private tests_ProcessOutput =
         )
     ]
 
+let private tests_PropertyValue =
+    testList "PropertyValue" [
+        testCase "Characteristic_Ontology" (fun () ->
+            let header = CompositeHeader.Characteristic oa_species
+            let cell = CompositeCell.createTerm oa_chlamy
+            let pv = JsonTypes.composeCharacteristicValue header cell
+
+            let name = PropertyValue.getNameAsString pv
+            Expect.equal name oa_species.NameText "Name should match"
+
+            let value = PropertyValue.getValueAsString pv
+            Expect.equal value oa_chlamy.NameText "Value should match"
+
+            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            Expect.equal propertyID oa_species.TermAccessionOntobeeUrl "Property ID should match"
+
+            let valueReference = Expect.wantSome (PropertyValue.tryGetValueReference pv) "Should have value reference"
+            Expect.equal valueReference oa_chlamy.TermAccessionOntobeeUrl "Value reference should match"
+
+            let header',cell' = JsonTypes.decomposeCharacteristicValue pv
+            Expect.equal header header' "Header should match"
+            Expect.equal cell cell' "Cell should match"
+        )
+        testCase "Parameter_Unitized" (fun () ->
+            let header = CompositeHeader.Parameter oa_temperature
+            let cell = CompositeCell.createUnitized ("5",oa_degreeCel)
+            let pv = JsonTypes.composeParameterValue header cell
+
+            let name = PropertyValue.getNameAsString pv
+            Expect.equal name oa_temperature.NameText "Name should match"
+
+            let value = PropertyValue.getValueAsString pv
+            Expect.equal value "5" "Value should match"
+
+            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            Expect.equal propertyID oa_temperature.TermAccessionOntobeeUrl "Property ID should match"
+
+            let unit = Expect.wantSome (PropertyValue.tryGetUnitTextAsString pv) "Should have unit"
+            Expect.equal unit oa_degreeCel.NameText "Unit should match"
+
+            let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
+            Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
+
+            let header',cell' = JsonTypes.decomposeParameterValue pv
+            Expect.equal header header' "Header should match"
+            Expect.equal cell cell' "Cell should match"
+        )
+        testCase "Parameter_Unitized_Valueless" (fun () ->
+            let header = CompositeHeader.Parameter oa_temperature
+            let cell = CompositeCell.createUnitized ("",oa_degreeCel)
+            let pv = JsonTypes.composeParameterValue header cell
+
+            let name = PropertyValue.getNameAsString pv
+            Expect.equal name oa_temperature.NameText "Name should match"
+
+            Expect.isNone (PropertyValue.tryGetValueAsString pv) "Should not have value"
+
+            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            Expect.equal propertyID oa_temperature.TermAccessionOntobeeUrl "Property ID should match"
+
+            let unit = Expect.wantSome (PropertyValue.tryGetUnitTextAsString pv) "Should have unit"
+            Expect.equal unit oa_degreeCel.NameText "Unit should match"
+
+            let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
+            Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
+
+            let header',cell' = JsonTypes.decomposeParameterValue pv
+            Expect.equal header header' "Header should match"
+            Expect.equal cell cell' "Cell should match"
+        )
+        testCase "FactorValue_Valueless" (fun () ->
+            let header = CompositeHeader.Factor oa_temperature
+            let cell = CompositeCell.createTerm (OntologyAnnotation.create())
+            let pv = JsonTypes.composeFactorValue header cell
+
+            let name = PropertyValue.getNameAsString pv
+            Expect.equal name oa_temperature.NameText "Name should match"
+
+            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            Expect.equal propertyID oa_temperature.TermAccessionOntobeeUrl "Property ID should match"
+
+            Expect.isNone (PropertyValue.tryGetValueAsString pv) "Should not have value"
+
+            let header',cell' = JsonTypes.decomposeFactorValue pv
+            Expect.equal header header' "Header should match"
+            Expect.equal cell cell' "Cell should match"
+        )
+        testCase "Component_Freetexts" (fun () ->
+            let header = CompositeHeader.Component (OntologyAnnotation.create(name = "MyComponentHeader"))
+            let cell = CompositeCell.createTerm (OntologyAnnotation.create(name = "MyComponentValue"))
+            let pv = JsonTypes.composeComponent header cell
+
+            let name = PropertyValue.getNameAsString pv
+            Expect.equal name "MyComponentHeader" "Name should match"
+
+            let value = PropertyValue.getValueAsString pv
+            Expect.equal value "MyComponentValue" "Value should match"
+
+            Expect.isNone (PropertyValue.tryGetPropertyIDAsString pv) "Should not have property ID"
+            Expect.isNone (PropertyValue.tryGetValueReference pv) "Should not have value reference"
+            Expect.isNone (PropertyValue.tryGetUnitTextAsString pv) "Should not have unit"
+            Expect.isNone (PropertyValue.tryGetUnitCodeAsString pv) "Should not have unit code"
+
+            let header',cell' = JsonTypes.decomposeComponent pv
+            Expect.equal header header' "Header should match"
+            Expect.equal cell cell' "Cell should match"
+        )
+    ]
+
+
 let private tests_ArcTableProcess = 
     testList "ARCTableProcess" [
         testCase "SingleRowSingleParam GetProcesses" (fun () ->
@@ -290,6 +432,7 @@ let private tests_ArcTableProcess =
                     propertyID = oa_species.TermAccessionOntobeeUrl,
                     valueReference = oa_chlamy.TermAccessionOntobeeUrl
                 )
+            ColumnIndex.setIndex expectedPPV 0
             let expectedInput = Sample.createSource(name = "Source_0")
             let expectedOutput = Sample.createSample(name = "Sample_0")
             Expect.equal processes.Length 1 "Should have 1 process"
@@ -335,8 +478,12 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()           
             Expect.equal processes.Length 1 "Should have 1 process"
             Expect.equal (LabProcess.getParameterValues processes.[0]).Count 1 "Process should have 1 parameter values"
-            Expect.equal (LabProcess.getObjects processes.[0]).Count 1 "Process should have 1 input"
-            Expect.equal (LabProcess.getResults processes.[0]).Count 1 "Process should have 1 output"
+            let input = Expect.wantSome ((LabProcess.getObjects processes.[0]) |> Seq.tryExactlyOne) "Process should have 1 input"
+            let output = Expect.wantSome ((LabProcess.getResults processes.[0]) |> Seq.tryExactlyOne) "Process should have 1 output"
+            let charas = Sample.getCharacteristics input
+            Expect.hasLength charas 1 "Input should have the charactersitic"
+            let factors = Sample.getFactors output
+            Expect.hasLength factors 1 "Output should have the factor value"
         )
 
         testCase "SingleRowMixedValues GetAndFromProcesses" (fun () ->
@@ -366,6 +513,10 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses(tableName1,processes)
             let expectedTable = t
+            let expectedInputData = CompositeCell.Data(Data(id = "RData_0", name = "RData_0"))
+            let expectedOutputData = CompositeCell.Data(Data(id = "DData_0", name = "DData_0"))
+            expectedTable.SetCellAt(0,0,expectedInputData)
+            expectedTable.SetCellAt(t.ColumnCount - 1,0,expectedOutputData)
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -389,6 +540,10 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses(tableName1,processes)
             let expectedTable = t
+            let expectedInputData = CompositeCell.Data(Data(id = "RData_0", name = "RData_0"))
+            let expectedOutputData = CompositeCell.Data(Data(id = "DData_0", name = "DData_0"))
+            expectedTable.SetCellAt(0,0,expectedInputData)
+            expectedTable.SetCellAt(t.ColumnCount - 1,0,expectedOutputData)
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
@@ -815,6 +970,7 @@ let private tests_ArcTablesProcessSeq =
 
 let main = 
     testList "ArcROCrateConversion" [
+        tests_PropertyValue
         tests_ProcessInput
         tests_ProcessOutput
         //tests_ProtocolTransformation

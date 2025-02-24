@@ -145,10 +145,12 @@ type LabProcess =
         | _ -> $"Process_{name}"
 
 
-    static member create(name : string, objects : ResizeArray<LDNode>, results : ResizeArray<LDNode>, ?id : string, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
+    static member create(name : string, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?id : string, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LabProcess.genId(name)
+        let objects = Option.defaultValue (ResizeArray []) objects
+        let results = Option.defaultValue (ResizeArray []) results
         let lp = LDNode(id, ResizeArray [LabProcess.schemaType], ?context = context)
         lp.SetProperty(LabProcess.name, name, ?context = context)
         lp.SetOptionalProperty(LabProcess.agent, agent, ?context = context) // Optional?

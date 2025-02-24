@@ -103,72 +103,68 @@ type PropertyValue =
         PropertyValue.validate(pv, ?context = context)
         && pv.AdditionalType.Contains("FactorValue")
 
-    static member genId(name : string, value : string, ?propertyID : string) =
-        match propertyID with
-        | Some pid -> $"PV_{name}_{value}_{pid}"
-        | None -> $"PV_{name}_{value}"
+    static member genId(name : string, ?value : string, ?propertyID : string, ?prefix) =
+        let prefix = Option.defaultValue "PV" prefix
+        match value,propertyID with
+        | Some value, Some pid -> $"{prefix}_{name}_{value}_{pid}"
+        | Some value, None -> $"{prefix}_{name}_{value}"
+        | None, Some pid -> $"{prefix}_{name}_{pid}"
+        | _ -> $"{prefix}_{name}"
 
-    static member genIdComponent(name : string, value : string, ?propertyID : string) =
-        match propertyID with
-        | Some pid -> $"Component_{name}_{value}_{pid}"
-        | None -> $"Component_{name}_{value}"
+    static member genIdComponent(name : string, ?value : string, ?propertyID : string) =
+        PropertyValue.genId(name, ?value = value, ?propertyID = propertyID, prefix = "Component")
 
-    static member genIdParameterValue(name : string, value : string, ?propertyID : string) =
-        match propertyID with
-        | Some pid -> $"ParameterValue_{name}_{value}_{pid}"
-        | None -> $"ParameterValue_{name}_{value}"
+    static member genIdParameterValue(name : string, ?value : string, ?propertyID : string) =
+        PropertyValue.genId(name, ?value = value, ?propertyID = propertyID, prefix = "ParameterValue")
 
-    static member genIdCharacteristicValue(name : string, value : string, ?propertyID : string) =
-        match propertyID with
-        | Some pid -> $"CharacteristicValue_{name}_{value}_{pid}"
-        | None -> $"CharacteristicValue_{name}_{value}"
+    static member genIdCharacteristicValue(name : string, ?value : string, ?propertyID : string) =
+        PropertyValue.genId(name, ?value = value, ?propertyID = propertyID, prefix = "CharacteristicValue")
 
-    static member genIdFactorValue(name : string, value : string, ?propertyID : string) =
-        match propertyID with
-        | Some pid -> $"FactorValue_{name}_{value}_{pid}"
-        | None -> $"FactorValue_{name}_{value}"
+    static member genIdFactorValue(name : string, ?value : string, ?propertyID : string) =
+        PropertyValue.genId(name, ?value = value, ?propertyID = propertyID, prefix = "FactorValue")
 
-    static member create(name, value, ?id : string, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+    static member create(name, ?value, ?id : string, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
-                 | None -> PropertyValue.genId(name, value, ?propertyID = propertyID)
+                 | None -> PropertyValue.genId(name, ?value  = value, ?propertyID = propertyID)
         let pv = LDNode(id, schemaType = ResizeArray [PropertyValue.schemaType], ?context = context)
         PropertyValue.setNameAsString(pv, name, ?context = context)
-        PropertyValue.setValueAsString(pv, value, ?context = context)
+        //PropertyValue.setValueAsString(pv, value, ?context = context)
+        pv.SetOptionalProperty(PropertyValue.value, value, ?context = context)
         propertyID |> Option.iter (fun pid -> PropertyValue.setPropertyIDAsString(pv, pid, ?context = context))
         unitCode |> Option.iter (fun uc -> PropertyValue.setUnitCodeAsString(pv, uc, ?context = context))
         unitText |> Option.iter (fun ut -> PropertyValue.setUnitTextAsString(pv, ut, ?context = context))
         valueReference |> Option.iter (fun vr -> PropertyValue.setValueReference(pv, vr, ?context = context))
         pv
 
-    static member createComponent(name, value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+    static member createComponent(name, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
-                 | None -> PropertyValue.genIdComponent(name, value, ?propertyID = propertyID)
-        let c = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+                 | None -> PropertyValue.genIdComponent(name, ?value = value, ?propertyID = propertyID)
+        let c = PropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         c.AdditionalType <- ResizeArray ["Component"]
         c
 
-    static member createParameterValue(name, value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+    static member createParameterValue(name, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
-                 | None -> PropertyValue.genIdParameterValue(name, value, ?propertyID = propertyID)
-        let pv = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+                 | None -> PropertyValue.genIdParameterValue(name, ?value = value, ?propertyID = propertyID)
+        let pv = PropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         pv.AdditionalType <- ResizeArray ["ParameterValue"]
         pv
 
-    static member createCharacteristicValue(name, value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+    static member createCharacteristicValue(name, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
-                 | None -> PropertyValue.genIdCharacteristicValue(name, value, ?propertyID = propertyID)
-        let cv = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+                 | None -> PropertyValue.genIdCharacteristicValue(name, ?value = value, ?propertyID = propertyID)
+        let cv = PropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         cv.AdditionalType <- ResizeArray ["CharacteristicValue"]
         cv
 
-    static member createFactorValue(name, value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
+    static member createFactorValue(name, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
-                 | None -> PropertyValue.genIdFactorValue(name, value, ?propertyID = propertyID)
-        let fv = PropertyValue.create(id, name, value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+                 | None -> PropertyValue.genIdFactorValue(name, ?value = value, ?propertyID = propertyID)
+        let fv = PropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         fv.AdditionalType <- ResizeArray ["FactorValue"]
         fv
