@@ -62,6 +62,16 @@ type BaseTypes =
         | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
         | None -> OntologyAnnotation.create(name = name)
 
+    static member composePropertyValueFromOA (term : OntologyAnnotation) =
+        let tan = term.TermAccessionOntobeeUrl |> Option.fromValueWithDefault ""
+        PropertyValue.create(name = term.NameText, ?propertyID = tan)
+
+    static member decomposePropertyValueToOA (term : LDNode) =
+        let name = PropertyValue.getNameAsString term
+        match PropertyValue.tryGetPropertyIDAsString term with
+        | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
+        | None -> OntologyAnnotation.create(name = name)
+
     /// Convert a CompositeCell to a ISA Value and Unit tuple.
     static member valuesOfCell (value : CompositeCell) =
         match value with
@@ -779,7 +789,7 @@ module CompositeRow =
         ) (LabProtocol.create(id = id, name = tableName))
 
 [<AutoOpen>]
-module TypeExtensions = 
+module TableTypeExtensions = 
 
     type ArcTable with
 
@@ -1091,9 +1101,262 @@ type ScholarlyArticle =
             ?doi = ScholarlyArticle.tryGetUrl(sa, ?context = context)
         )
 
-//type Assay =
+type Assay =
 
-//    static member composeAssay
+    static member composeAssay (assay : ArcAssay) =
+        let id = ARCtrl.Helper.Identifier.Assay.fileNameFromIdentifier assay.Identifier
+        let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
+        let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
+        let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
+        let creators = 
+            assay.Performers
+            |> ResizeArray.map (fun c -> Person.composePerson c)
+            |> Option.fromSeq
+        let dataFiles = 
+            ResizeArray [] // TODO
+            |> ResizeArray.map (fun df -> BaseTypes.composeFile df)
+            |> Option.fromSeq
+        let processSequence = 
+            ArcTables(assay.Tables).GetProcesses()
+            |> ResizeArray
+            |> Option.fromSeq
+        let comments = 
+            assay.Comments
+            |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
+            |> Option.fromSeq
+        Dataset.createAssay(
+            identifier = assay.Identifier,
+            id = id,
+            ?description = None, // TODO
+            ?creators = creators,
+            ?hasParts = dataFiles,
+            ?measurementMethod = measurementMethod,
+            ?measurementTechnique = measurementTechnique,
+            ?variableMeasured = variableMeasured,
+            ?abouts = processSequence,
+            ?comments = comments
+        )
+
+    static member decomposeAssay (assay : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let measurementMethod = 
+            Dataset.tryGetVariableMeasuredAsPropertyValue(assay, ?graph = graph, ?context = context)
+            |> Option.map BaseTypes.decomposeDefinedTerm
+        let measurementTechnique = 
+            Dataset.tryGetMeasurementTechniqueAsDefinedTerm(assay, ?graph = graph, ?context = context)
+            |> Option.map BaseTypes.decomposeDefinedTerm
+        let variableMeasured = 
+            Dataset.tryGetVariableMeasuredAsPropertyValue(assay, ?graph = graph, ?context = context)
+            |> Option.map BaseTypes.decomposePropertyValueToOA
+        let perfomers = 
+            Dataset.getCreators(assay, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> Person.decomposePerson(c, ?graph = graph, ?context = context))
+        //let dataFiles = 
+        //    Assay.getHasParts(assay, ?graph = graph, ?context = context)
+        //    |> Option.fromSeq
+        //    |> Option.map (fun df -> BaseTypes.decomposeFile(df, ?graph = graph, ?context = context))
+        let tables = 
+            Dataset.getAboutsAsLabProcess(assay, ?graph = graph, ?context = context)
+            |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
+        let comments =
+            Dataset.getComments(assay, ?graph = graph, ?context = context)
+            |> ResizeArray.map BaseTypes.decomposeComment
+        ArcAssay.create(
+            identifier = Dataset.getIdentifierAsString(assay, ?context = context),
+            ?measurementType = variableMeasured,
+            ?technologyType = measurementMethod,
+            ?technologyPlatform = measurementTechnique,
+            tables = tables.Tables,
+            performers = perfomers,
+            comments = comments
+        )
+
+type Study = 
+
+    static member composeStudy (study : ArcStudy) =
+        let id = ARCtrl.Helper.Identifier.Study.fileNameFromIdentifier study.Identifier
+        let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryParse
+        let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryParse
+        let dateModified = System.DateTime.Now
+        let publications = 
+            study.Publications
+            |> ResizeArray.map (fun p -> ScholarlyArticle.composeScholarlyArticle p)
+            |> Option.fromSeq
+        let creators =
+            study.Contacts
+            |> ResizeArray.map (fun c -> Person.composePerson c)
+            |> Option.fromSeq
+        let dataFiles = 
+            ResizeArray [] // TODO
+            |> ResizeArray.map (fun df -> BaseTypes.composeFile df)
+            |> Option.fromSeq
+        let processSequence = 
+            ArcTables(study.Tables).GetProcesses()
+            |> ResizeArray
+            |> Option.fromSeq
+        let comments = 
+            study.Comments
+            |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
+            |> Option.fromSeq
+        Dataset.createStudy(
+            identifier = study.Identifier,
+            id = id,
+            ?name = study.Title,
+            ?description = study.Description,
+            ?dateCreated = dateCreated,
+            ?datePublished = datePublished,
+            dateModified = dateModified,
+            ?creators = creators,
+            ?citations = publications,
+            ?hasParts = dataFiles,
+            ?abouts = processSequence,
+            ?comments = comments
+        )
+
+    static member decomposeStudy (study : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let dateCreated = 
+            Dataset.tryGetDateCreatedAsDateTime(study, ?context = context)
+            |> Option.map (fun d -> d.ToString())
+        let datePublished = 
+            Dataset.tryGetDatePublishedAsDateTime(study, ?context = context)
+            |> Option.map (fun d -> d.ToString())
+        let publications = 
+            Dataset.getCitations(study, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun p -> ScholarlyArticle.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
+        let creators = 
+            Dataset.getCreators(study, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> Person.decomposePerson(c, ?graph = graph, ?context = context))
+        //let dataFiles = 
+        //    Study.getHasParts(study, ?graph = graph, ?context = context)
+        //    |> Option.fromSeq
+        //    |> Option.map (fun df -> BaseTypes.decomposeFile(df, ?graph = graph, ?context = context))
+        let tables = 
+            Dataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
+            |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
+        let comments =
+            Dataset.getComments(study, ?graph = graph, ?context = context)
+            |> ResizeArray.map BaseTypes.decomposeComment
+        ArcStudy.create(
+            identifier = Dataset.getIdentifierAsString(study, ?context = context),
+            ?title = Dataset.tryGetNameAsString(study, ?context = context),
+            ?description = Dataset.tryGetDescriptionAsString(study, ?context = context),
+            ?submissionDate = dateCreated,
+            ?publicReleaseDate = datePublished,
+            contacts = creators,
+            publications = publications,
+            tables = tables.Tables,
+            comments = comments
+        )
+
+type Investigation =
+
+    static member composeInvestigation (investigation : ArcInvestigation) =
+        let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
+        let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryParse
+        let datePublished = investigation.PublicReleaseDate |> Option.bind DateTime.tryParse
+        let dateModified = System.DateTime.Now
+        let publications = 
+            investigation.Publications
+            |> ResizeArray.map (fun p -> ScholarlyArticle.composeScholarlyArticle p)
+            |> Option.fromSeq
+        let creators =
+            investigation.Contacts
+            |> ResizeArray.map (fun c -> Person.composePerson c)
+            |> Option.fromSeq
+        let comments = 
+            investigation.Comments
+            |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
+            |> Option.fromSeq
+        let hasParts =
+            investigation.Assays
+            |> ResizeArray.map (fun a -> Assay.composeAssay a)
+            |> ResizeArray.append (investigation.Studies |> ResizeArray.map (fun s -> Study.composeStudy s))
+            |> Option.fromSeq
+        let mentions =
+            ResizeArray [] // TODO
+            |> Option.fromSeq
+        Dataset.createInvestigation(
+            identifier = investigation.Identifier,
+            name = name,
+            ?description = investigation.Description,
+            ?dateCreated = dateCreated,
+            ?datePublished = datePublished,
+            dateModified = dateModified,
+            ?creators = creators,
+            ?citations = publications,
+            ?hasParts = hasParts,
+            ?mentions = mentions,
+            ?comments = comments
+        )
+
+    static member decomposeInvestigation (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let dateCreated = 
+            Dataset.tryGetDateCreatedAsDateTime(investigation, ?context = context)
+            |> Option.map (fun d -> d.ToString())
+        let datePublished = 
+            Dataset.tryGetDatePublishedAsDateTime(investigation, ?context = context)
+            |> Option.map (fun d -> d.ToString())
+        let publications = 
+            Dataset.getCitations(investigation, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun p -> ScholarlyArticle.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
+        let creators = 
+            Dataset.getCreators(investigation, ?graph = graph, ?context = context)
+            |> ResizeArray.map (fun c -> Person.decomposePerson(c, ?graph = graph, ?context = context))
+        let datasets = 
+            Dataset.getHasPartsAsDataset  (investigation, ?graph = graph, ?context = context)
+        let studies = 
+            datasets
+            |> ResizeArray.filter (fun d -> Dataset.validateStudy(d, ?context = context))
+            |> ResizeArray.map (fun d -> Study.decomposeStudy(d, ?graph = graph, ?context = context))
+        let assays = 
+            datasets
+            |> ResizeArray.filter (fun d -> Dataset.validateAssay(d, ?context = context))
+            |> ResizeArray.map (fun d -> Assay.decomposeAssay(d, ?graph = graph, ?context = context))
+        let comments =
+            Dataset.getComments(investigation, ?graph = graph, ?context = context)
+            |> ResizeArray.map BaseTypes.decomposeComment
+        ArcInvestigation.create(
+            identifier = Dataset.getIdentifierAsString(investigation, ?context = context),
+            ?title = Dataset.tryGetNameAsString(investigation, ?context = context),
+            ?description = Dataset.tryGetDescriptionAsString(investigation, ?context = context),
+            ?submissionDate = dateCreated,
+            ?publicReleaseDate = datePublished,
+            contacts = creators,
+            publications = publications,
+            studies = studies,
+            assays = assays,
+            comments = comments
+        )
+
+[<AutoOpen>]
+module TypeExtensions =
+
+    type ArcAssay with
+         member this.ToROCrateAssay() = Assay.composeAssay this
+
+         static member fromROCrateAssay (a : LDNode, ?graph : LDGraph, ?context : LDContext) = Assay.decomposeAssay(a, ?graph = graph, ?context = context)
+
+    type ArcStudy with
+         member this.ToROCrateStudy() = Study.composeStudy this
+
+         static member fromROCrateStudy (a : LDNode, ?graph : LDGraph, ?context : LDContext) = Study.decomposeStudy(a, ?graph = graph, ?context = context)
+
+    type ArcInvestigation with
+        member this.ToROCrateInvestigation() = Investigation.composeInvestigation this
+    
+        static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = Investigation.decomposeInvestigation(a, ?graph = graph, ?context = context)
+
+    type Dataset with
+        static member toArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) = Assay.decomposeAssay(a, ?graph = graph, ?context = context)
+
+        static member fromArcAssay (a : ArcAssay) = Assay.composeAssay a
+
+        static member toArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) = Study.decomposeStudy(a, ?graph = graph, ?context = context)
+
+        static member fromArcStudy (a : ArcStudy) = Study.composeStudy a
+
+        static member toArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) = Investigation.decomposeInvestigation(a, ?graph = graph, ?context = context)
+
+        static member fromArcInvestigation (a : ArcInvestigation) = Investigation.composeInvestigation a
 
     ///// Copies ArcAssay object without the pointer to the parent ArcInvestigation
     /////

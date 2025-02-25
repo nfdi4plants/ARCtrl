@@ -9,6 +9,7 @@
   
   <ItemGroup>
     <Compile Include="Helper\Collections.fs" />
+    <Compile Include="Helper\DateTime.fs" />
     <Compile Include="Helper\Url.fs" />
     <Compile Include="Helper\Regex.fs" />
     <Compile Include="Helper\Identifier.fs" />

@@ -121,18 +121,18 @@ type Dataset =
     static member setHasParts(lp : LDNode, hasParts : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(Dataset.hasPart, hasParts, ?context = context)
 
-    static member tryGetnameAsString(lp : LDNode, ?context : LDContext) =
+    static member tryGetNameAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(Dataset.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
 
-    static member getnameAsString(lp : LDNode, ?context : LDContext) =
+    static member getNameAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(Dataset.name, ?context = context) with
         | Some (:? string as n) -> n
         | Some _ -> failwith $"property `name` of object with @id `{lp.Id}` was not a string"
         | _ -> failwith $"Could not access property `name` of object with @id `{lp.Id}`"
 
-    static member setnameAsString(lp : LDNode, name : string, ?context : LDContext) =
+    static member setNameAsString(lp : LDNode, name : string, ?context : LDContext) =
         lp.SetProperty(Dataset.name, name, ?context = context)
 
     static member getCitations(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
@@ -218,9 +218,9 @@ type Dataset =
         | Some (:? string as n) -> Some n
         | _ -> None
 
-    static member tryGetVariableMeasuredAsPropertyValue(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(Dataset.variableMeasured, ?context = context) with
-        | Some (:? LDNode as n) -> Some n
+    static member tryGetVariableMeasuredAsPropertyValue(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleNode(Dataset.variableMeasured, ?graph = graph, ?context = context) with
+        | Some n when PropertyValue.validate(n, ?context = context) -> Some n
         | _ -> None
 
     static member setVariableMeasuredAsString(lp : LDNode, variableMeasured : string, ?context : LDContext) =
@@ -253,7 +253,7 @@ type Dataset =
         Dataset.validate(lp, ?context = context)
         && lp.AdditionalType.Contains("Assay")
 
-    static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?variableMeasured : string, ?context : LDContext) =
+    static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasured : LDNode, ?context : LDContext) =
         let s = LDNode(id, ResizeArray [Dataset.schemaType], ?context = context)
         s.SetOptionalProperty(Dataset.identifier, identier, ?context = context)
         s.SetOptionalProperty(Dataset.creator, creators, ?context = context)
@@ -273,20 +273,26 @@ type Dataset =
         s.SetOptionalProperty(Dataset.variableMeasured, variableMeasured, ?context = context)
         s
 
-    static member createInvestigation(identifier : string, name : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?context : LDContext) =
-        let id = Dataset.genIDInvesigation()
+    static member createInvestigation(identifier : string, name : string, ?id : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> Dataset.genIDInvesigation()
         let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, name = name, ?citations = citations, ?comments = comments, ?mentions = mentions, ?url = url, ?context = context)
         s.AdditionalType <- ResizeArray ["Investigation"]
         s
 
-    static member createStudy(identifier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?variableMeasured : string, ?context : LDContext) =
-        let id = Dataset.genIDStudy(identifier)
-        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, ?name = name, ?citations = citations, ?comments = comments, ?mentions = mentions, ?url = url, ?abouts = abouts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasured = variableMeasured, ?context = context)
+    static member createStudy(identifier : string, ?id : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> Dataset.genIDStudy(identifier)
+        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, ?name = name, ?citations = citations, ?comments = comments, ?url = url, ?abouts = abouts, ?context = context)
         s.AdditionalType <- ResizeArray ["Study"]
         s
 
-    static member createAssay(identifier : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?context : LDContext) =
-        let id = Dataset.genIDAssay(identifier)
-        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?context = context)
+    static member createAssay(identifier : string, ?id : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasured : LDNode, ?abouts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> Dataset.genIDAssay(identifier)
+        let s = Dataset.create(id, identier = identifier, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasured = variableMeasured, ?abouts = abouts, ?comments = comments, ?context = context)
         s.AdditionalType <- ResizeArray ["Assay"]
         s
