@@ -35,9 +35,9 @@ type Person =
     static member setGivenNameAsString(p : LDNode, n : string, ?context : LDContext) =
         p.SetProperty(Person.givenName, n, ?context = context)
 
-    static member tryGetAffiliation(p : LDNode, ?context : LDContext) =
-        match p.TryGetPropertyAsSingleton(Person.affiliation, ?context = context) with
-        | Some (:? LDNode as a) -> Some a
+    static member tryGetAffiliation(p : LDNode, ?graph :LDGraph, ?context : LDContext) =
+        match p.TryGetPropertyAsSingleNode(Person.affiliation, ?graph = graph, ?context = context) with
+        | Some n when Organization.validate n -> Some n
         | _ -> None
 
     static member setAffiliation(p : LDNode, a : LDNode, ?context : LDContext) =
@@ -89,8 +89,9 @@ type Person =
     static member setAdditionalNameAsString(p : LDNode, n : string, ?context : LDContext) =
         p.SetProperty(Person.additionalName, n, ?context = context)
 
-    static member tryGetAddress(p : LDNode, ?context : LDContext) : obj option =
+    static member tryGetAddress(p : LDNode, ?graph : LDGraph, ?context : LDContext) : obj option =
         match p.TryGetPropertyAsSingleton(Person.address, ?context = context) with
+        | Some (:? LDRef as r) when graph.IsSome -> graph.Value.TryGetNode(r.Id) |> Option.map box
         | Some (:? LDNode as a) -> Some a
         | Some (:? string as s) -> Some s
         | _ -> None
@@ -111,7 +112,7 @@ type Person =
     static member setAddressAsString(p : LDNode, a : string, ?context : LDContext) =
         p.SetProperty(Person.address, a, ?context = context)
 
-    static member tryGetDisambiguatingDescriptionsAsString(p : LDNode, ?context : LDContext) =
+    static member getDisambiguatingDescriptionsAsString(p : LDNode, ?context : LDContext) =
         let filter (value : obj) context = value :? string
         p.GetPropertyValues(Person.disambiguatingDescription, filter = filter, ?context = context)
         |> ResizeArray.map (fun v -> v :?> string)

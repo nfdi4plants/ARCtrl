@@ -5,61 +5,6 @@ open Fable.Core
 open ARCtrl.ROCrate
 open ARCtrl.Helper
 
-//Investigation
-//Is based upon schema.org/Dataset and maps to the ISA-JSON Investigation
-
-//Property	Required	Expected Type	Description
-//@id	MUST	Text or URL	Should be “./”, the investigation object represents the root data entity.
-//@type	MUST	Text	must be 'schema.org/Dataset'
-//additionalType	MUST	Text or URL	‘Investigation’ or ontology term to identify it as an Investigation
-//identifier	MUST	Text or URL	Identifying descriptor of the investigation (e.g. repository name).
-//creator	SHOULD	schema.org/Person	The creator(s)/authors(s)/owner(s)/PI(s) of the investigation.
-//dateCreated	SHOULD	DateTime	When the Investigation was created
-//datePublished	SHOULD	DateTime	When the Investigation was published
-//description	SHOULD	Text	A description of the investigation (e.g. an abstract).
-//hasPart	SHOULD	schema.org/Dataset (Study)	An Investigation object should contain other datasets representing the studies of the investigation. They must follow the Study profile.
-//headline	SHOULD	Text	A title of the investigation (e.g. a paper title).
-//citation	COULD	schema.org/ScholarlyArticle	Publications corresponding with this investigation.
-//comment	COULD	schema.org/Comment	Comment
-//dateModified	COULD	DateTime	When the Investigation was last modified
-//mentions	COULD	schema.org/DefinedTermSet	Ontologies referenced in this investigation.
-//url	COULD	URL	The filename or path of the metadata file describing the investigation. Optional, since in some contexts like an ARC the filename is implicit.
-//Study
-//Is based upon schema.org/Dataset and maps to the ISA-JSON Study
-
-//Property	Required	Expected Type	Description
-//@id	MUST	Text or URL	Should be a subdirectory corresponding to this study.
-//@type	MUST	Text	must be 'schema.org/Dataset'
-//additionalType	MUST	Text or URL	‘Study’ or ontology term to identify it as a Study
-//identifier	MUST	Text or URL	Identifying descriptor of the study.
-//about	SHOULD	bioschemas.org/LabProcess	The experimental processes performed in this study.
-//creator	SHOULD	schema.org/Person	The performer of the study.
-//dateCreated	SHOULD	DateTime	When the Study was created
-//datePublished	SHOULD	DateTime	When the Study was published
-//description	SHOULD	Text	A short description of the study (e.g. an abstract).
-//hasPart	SHOULD	schema.org/Dataset (Assay) or File	Assays contained in this study or actual data files resulting from the process sequence.
-//headline	SHOULD	Text	A title of the study.
-//citation	COULD	schema.org/ScholarlyArticle	A publication corresponding to the study.
-//comment	COULD	schema.org/Comment	Comment
-//dateModified	COULD	DateTime	When the Study was last modified
-//url	COULD	URL	The filename or path of the metadata file describing the study. Optional, since in some contexts like an ARC the filename is implicit.
-//Assay
-//Is based upon schema.org/Dataset and maps to the ISA-JSON Assay
-
-//Property	Required	Expected Type	Description
-//@id	MUST	Text or URL	Should be a subdirectory corresponding to this assay.
-//@type	MUST	Text	must be 'schema.org/Dataset'
-//additionalType	MUST	Text or URL	‘Assay’ or ontology term to identify it as an Assay
-//identifier	MUST	Text or URL	Identifying descriptor of the assay.
-//about	SHOULD	bioschemas.org/LabProcess	The experimental processes performed in this assay.
-//creator	SHOULD	schema.org/Person	The performer of the experiments.
-//hasPart	SHOULD	File	The data files resulting from the process sequence
-//measurementMethod	SHOULD	URL or schema.org/DefinedTerm	Describes the type measurement e.g Complexomics or transcriptomics as an ontology term
-//measurementTechnique	SHOULD	URL or schema.org/DefinedTerm	Describes the type of technology used to take the measurement, e.g mass spectrometry or deep sequencing
-//comment	COULD	schema.org/Comment	Comment
-//url	COULD	URL	The filename or path of the metadata file describing the assay. Optional, since in some contexts like an ARC the filename is implicit.
-//variableMeasured	COULD	Text or schema.org/PropertyValue	The target variable being measured E.g protein concentration
-
 [<AttachMembers>]
 type Dataset =
 
@@ -81,7 +26,7 @@ type Dataset =
 
     static member hasPart = "http://schema.org/hasPart"
 
-    static member headline = "http://schema.org/headline"
+    static member name = "http://schema.org/name"
 
     static member citation = "http://schema.org/citation"
 
@@ -176,19 +121,19 @@ type Dataset =
     static member setHasParts(lp : LDNode, hasParts : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(Dataset.hasPart, hasParts, ?context = context)
 
-    static member tryGetHeadlineAsString(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(Dataset.headline, ?context = context) with
+    static member tryGetnameAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(Dataset.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
 
-    static member getHeadlineAsString(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(Dataset.headline, ?context = context) with
+    static member getnameAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(Dataset.name, ?context = context) with
         | Some (:? string as n) -> n
-        | Some _ -> failwith $"property `headline` of object with @id `{lp.Id}` was not a string"
-        | _ -> failwith $"Could not access property `headline` of object with @id `{lp.Id}`"
+        | Some _ -> failwith $"property `name` of object with @id `{lp.Id}` was not a string"
+        | _ -> failwith $"Could not access property `name` of object with @id `{lp.Id}`"
 
-    static member setHeadlineAsString(lp : LDNode, headline : string, ?context : LDContext) =
-        lp.SetProperty(Dataset.headline, headline, ?context = context)
+    static member setnameAsString(lp : LDNode, name : string, ?context : LDContext) =
+        lp.SetProperty(Dataset.name, name, ?context = context)
 
     static member getCitations(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = ScholarlyArticle.validate(ldObject, ?context = context)
@@ -308,7 +253,7 @@ type Dataset =
         Dataset.validate(lp, ?context = context)
         && lp.AdditionalType.Contains("Assay")
 
-    static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?headline : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?variableMeasured : string, ?context : LDContext) =
+    static member create(id : string, ?identier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?variableMeasured : string, ?context : LDContext) =
         let s = LDNode(id, ResizeArray [Dataset.schemaType], ?context = context)
         s.SetOptionalProperty(Dataset.identifier, identier, ?context = context)
         s.SetOptionalProperty(Dataset.creator, creators, ?context = context)
@@ -317,7 +262,7 @@ type Dataset =
         s.SetOptionalProperty(Dataset.dateModified, dateModified, ?context = context)
         s.SetOptionalProperty(Dataset.description, description, ?context = context)
         s.SetOptionalProperty(Dataset.hasPart, hasParts, ?context = context)
-        s.SetOptionalProperty(Dataset.headline, headline, ?context = context)
+        s.SetOptionalProperty(Dataset.name, name, ?context = context)
         s.SetOptionalProperty(Dataset.citation, citations, ?context = context)
         s.SetOptionalProperty(Dataset.comment, comments, ?context = context)
         s.SetOptionalProperty(Dataset.mentions, mentions, ?context = context)
@@ -328,15 +273,15 @@ type Dataset =
         s.SetOptionalProperty(Dataset.variableMeasured, variableMeasured, ?context = context)
         s
 
-    static member createInvestigation(identifier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?headline : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?context : LDContext) =
+    static member createInvestigation(identifier : string, name : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?context : LDContext) =
         let id = Dataset.genIDInvesigation()
-        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, ?headline = headline, ?citations = citations, ?comments = comments, ?mentions = mentions, ?url = url, ?context = context)
+        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, name = name, ?citations = citations, ?comments = comments, ?mentions = mentions, ?url = url, ?context = context)
         s.AdditionalType <- ResizeArray ["Investigation"]
         s
 
-    static member createStudy(identifier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?headline : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?variableMeasured : string, ?context : LDContext) =
+    static member createStudy(identifier : string, ?creators : ResizeArray<LDNode>, ?dateCreated : System.DateTime, ?datePublished : System.DateTime, ?dateModified : System.DateTime, ?description : string, ?hasParts : ResizeArray<LDNode>, ?name : string, ?citations : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?mentions : ResizeArray<LDNode>, ?url : string, ?abouts : ResizeArray<LDNode>, ?measurementMethod : string, ?measurementTechnique : string, ?variableMeasured : string, ?context : LDContext) =
         let id = Dataset.genIDStudy(identifier)
-        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, ?headline = headline, ?citations = citations, ?comments = comments, ?mentions = mentions, ?url = url, ?abouts = abouts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasured = variableMeasured, ?context = context)
+        let s = Dataset.create(id, identier = identifier, ?creators = creators, ?dateCreated = dateCreated, ?datePublished = datePublished, ?dateModified = dateModified, ?description = description, ?hasParts = hasParts, ?name = name, ?citations = citations, ?comments = comments, ?mentions = mentions, ?url = url, ?abouts = abouts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasured = variableMeasured, ?context = context)
         s.AdditionalType <- ResizeArray ["Study"]
         s
 

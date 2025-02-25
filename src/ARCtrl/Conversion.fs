@@ -886,71 +886,35 @@ module TypeExtensions =
 
 
 
-module Person = 
+type Person = 
 
-    let orcidKey = "ORCID"
-    let AssayIdentifierPrefix = "performer (ARC:00000168)"
-    let createAssayIdentifierKey = sprintf "%s %s" AssayIdentifierPrefix// TODO: Replace with ISA ontology term for assay
+    static member orcidKey = "ORCID"   
 
-    let setSourceAssayComment (person : ARCtrl.Person) (assayIdentifier: string): ARCtrl.Person =
-        let person = person.Copy()
-        let k = createAssayIdentifierKey assayIdentifier
-        let comment = ARCtrl.Comment(k, assayIdentifier)
-        person.Comments.Add(comment)
-        person
+    static member composeAffiliation (affiliation : string) : LDNode =
+        try 
+            ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder affiliation
+        with
+        | _ -> Organization.create(name = affiliation)
 
-    /// <summary>
-    /// This functions helps encoding/decoding ISA-JSON. It returns a sequence of ArcAssay-Identifiers.
-    /// </summary>
-    /// <param name="person"></param>
-    let getSourceAssayIdentifiersFromComments (person : ARCtrl.Person) =
-        person.Comments 
-        |> Seq.choose (fun c -> 
-            let isAssaySource = 
-                c.Name 
-                |> Option.map (fun n -> 
-                    n.StartsWith AssayIdentifierPrefix
-                )
-                |> Option.defaultValue false
-            if isAssaySource then c.Value else None
-        )
+    static member decomposeAffiliation (affiliation : LDNode, ?context : LDContext) : string =
+        let hasOnlyName = 
+            affiliation.GetPropertyNames(?context = context)
+            |> Seq.filter(fun n -> n <> Organization.name)
+            |> Seq.isEmpty
+        if hasOnlyName then
+            Organization.getNameAsString(affiliation, ?context = context)
+        else
+            Json.LDNode.encoder affiliation
+            |> ARCtrl.Json.Encode.toJsonString 0
 
-    let removeSourceAssayComments (person: ARCtrl.Person) : ResizeArray<ARCtrl.Comment> =
-        person.Comments |> ResizeArray.filter (fun c -> c.Name.IsSome && c.Name.Value.StartsWith AssayIdentifierPrefix |> not)
-
-    let setOrcidFromComments (person : ARCtrl.Person) =
-        let person = person.Copy()
-        let isOrcidComment (c : ARCtrl.Comment) = 
-            c.Name.IsSome && (c.Name.Value.ToUpper().EndsWith(orcidKey))
-        let orcid,comments = 
-            let orcid = 
-                person.Comments
-                |> Seq.tryPick (fun c -> if isOrcidComment c then c.Value else None)
-            let comments = 
-                person.Comments
-                |> ResizeArray.filter (isOrcidComment >> not)
-            orcid, comments
-        person.ORCID <- orcid
-        person.Comments <- comments
-        person
-
-    let setCommentFromORCID (person : ARCtrl.Person) =
-        let person = person.Copy()
-        match person.ORCID with
-        | Some orcid -> 
-            let comment = ARCtrl.Comment.create (name = orcidKey, value = orcid)
-            person.Comments.Add comment
-        | None -> ()
-        person
-
-    let composeAddress (address : string) : obj =
+    static member composeAddress (address : string) : obj =
         try 
             ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder address
             |> box
         with
         | _ -> address
 
-    let decomposeAddress (address : obj) : string =
+    static member decomposeAddress (address : obj) : string =
         match address with
         | :? string as s -> s
         | :? LDNode as n -> 
@@ -958,7 +922,10 @@ module Person =
             |> ARCtrl.Json.Encode.toJsonString 0
         | _ -> failwith "Address must be a string or a Json.LDNode"
 
-    let composePerson (person : ARCtrl.Person) =
+    static member isORCID (id : string) =
+        id.StartsWith("http://orcid.org/")
+
+    static member composePerson (person : ARCtrl.Person) =
         let givenName =
             match person.FirstName with
             | Some fn -> fn
@@ -973,32 +940,47 @@ module Person =
             |> Option.fromValueWithDefault (ResizeArray [])
         let address =
             person.Address
-            |> Option.map composeAddress
-        Person.create(givenName, ?orcid = person.ORCID, ?affiliation = person.Affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
+            |> Option.map Person.composeAddress
+        let affiliation = 
+            person.Affiliation
+            |> Option.map Person.composeAffiliation
+        Person.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
 
-    let decomposePerson (person : Person) =
+    static member decomposePerson (person : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let orcid = 
-            //match Person.tryGetOrcid with
-            //| Some orcid -> ARCtrl.Person.ORCID orcid
-            //| None -> ARCtrl.Person.ORCID ""
-            None
+            if person.Id |> Person.isORCID then
+                Some person.Id
+            else
+                None
         let address = 
-            match Person.tryGetAddress(person, with
-            | Some address -> 
-                ARCtrl.Json.Encode.toString Json.LDNode.encoder address
-            | None -> ""
+            match Person.tryGetAddressAsString(person, ?context = context) with
+            | Some s -> 
+                Some s
+            | None ->
+                match Person.tryGetAddressAsPostalAddress(person, ?graph = graph, ?context = context) with
+                | Some a -> Some (Person.decomposeAddress a)
+                | None -> None
+        let roles = 
+            Person.getJobTitlesAsDefinedTerm(person, ?graph = graph, ?context = context)
+            |> ResizeArray.map JsonTypes.decomposeDefinedTerm
+        let comments =
+            Person.getDisambiguatingDescriptionsAsString(person, ?context = context)
+            |> ResizeArray.map ARCtrl.Comment.fromString
+        let affiliation =
+            Person.tryGetAffiliation(person, ?graph = graph, ?context = context)
+            |> Option.map (Person.decomposeAffiliation)
         ARCtrl.Person.create(
-            FirstName = person.GivenName,
-            ?LastName = person.FamilyName,
-            ?MidInitials = person.AdditionalName,
-            ?EMail = person.Email,
-            ?Fax = person.FaxNumber,
-            ?Phone = person.Telephone,
-            ?ORCID = orcid,
-            ?Affiliation = person.Affiliation,
-            ?Roles = person.JobTitles |> ResizeArray.map JsonTypes.decomposeDefinedTerm,
-            ?Address = address,
-            ?Comments = person.DisambiguatingDescriptions |> ResizeArray.map ARCtrl.Comment.fromString
+            firstName = Person.getGivenNameAsString(person, ?context = context),
+            ?lastName = Person.tryGetGivenNameAsString(person, ?context = context),
+            ?midInitials = Person.tryGetAdditionalNameAsString(person, ?context = context),
+            ?email = Person.tryGetEmailAsString(person, ?context = context),
+            ?fax = Person.tryGetFaxNumberAsString(person, ?context = context),
+            ?phone = Person.tryGetTelephoneAsString(person, ?context = context),
+            ?orcid = orcid,
+            ?affiliation = affiliation,
+            roles = roles,
+            ?address = address,
+            comments = comments
         )
         
 

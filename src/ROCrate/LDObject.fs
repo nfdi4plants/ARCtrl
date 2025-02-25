@@ -225,7 +225,20 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         this.GetPropertyValues(propertyName, filter = filter, ?context = context)
         |> Seq.cast<LDNode>
         |> ResizeArray
-        
+
+    member this.GetPropertyNames(?context : LDContext) =
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        this.GetPropertyHelpers(false)
+        |> Seq.choose (fun ph ->
+            let name = 
+                match context with
+                | Some ctx ->
+                    match ctx.TryResolveTerm ph.Name with
+                    | Some term -> term
+                    | None -> ph.Name
+                | None -> ph.Name
+            if name = "@context" then None else Some name
+        )
 
     member this.SetProperty(propertyName : string, value : obj, ?context : LDContext) =
         (this :> DynamicObj).SetProperty(propertyName, value)

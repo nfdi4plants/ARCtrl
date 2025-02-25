@@ -413,6 +413,28 @@ let tests_Flatten = testList "Flatten" [
         Expect.equal v "MyName" "inner property value was not found"
 ]
 
+let tests_getPropertyNames = testList "GetPropertyNames" [
+    testCase "EmptyNode" <| fun _ ->
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        let names = node.GetPropertyNames()
+        Expect.isEmpty names "Empty node should have no properties"
+    testCase "NoContext" <| fun _ ->
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("https://schema.org/name", "MyName")
+        let names = node.GetPropertyNames()
+        Expect.sequenceEqual names ["https://schema.org/name"] "Property name was not found"
+    testCase "WithContext" <| fun _ ->
+        let context = new LDContext()
+        context.AddMapping("name", "https://schema.org/name")
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"], context = context)
+        node.SetProperty("https://schema.org/name", "MyName")
+        let names = node.GetPropertyNames()
+        Expect.sequenceEqual names ["https://schema.org/name"] "Property name was not found"
+    testCase "Fail" <| fun _ ->
+        Expect.isTrue (false) "Test not implemented"
+]
+
+
 let main = testList "LDNode" [
     tests_profile_object_is_valid
     //tests_interface_members
@@ -425,4 +447,5 @@ let main = testList "LDNode" [
     tests_GetPropertyNodes
     tests_Compact_InPlace
     tests_Flatten
+    tests_getPropertyNames
 ]

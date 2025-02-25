@@ -975,6 +975,46 @@ let private tests_ArcTablesProcessSeq =
     //]
 
 
+let tests_Person =
+    testList "Person" [
+        testCase "Person_Full_FromScaffold" (fun () ->
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
+            let p = ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+            let ro_Person = Person.composePerson p
+            let p' = Person.decomposePerson ro_Person
+            Expect.equal p p' "Person should match"
+        )
+        testCase "Person_AddressAsObject_FromROCrate" (fun () ->
+            let address = PostalAddress.create(addressCountry = "Germoney", postalCode = "6969", streetAddress = "I think I'm funny street 69")
+            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
+            let ro_Person = Person.decomposePerson p
+            let p' = Person.composePerson ro_Person
+            Expect.equal p p' "Person should match"
+        )
+        testCase "Person_AddressAsString_FromROCrate" (fun () ->
+            let address = "Germoney, 6969, I think I'm funny street 69"
+            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
+            let ro_Person = Person.decomposePerson p
+            let p' = Person.composePerson ro_Person
+            Expect.equal p p' "Person should match"
+        )
+        testCase "Person_AffiliationOnlyName_FromROCrate" (fun () ->
+            let affiliation = Organization.create(name = "My University")
+            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
+            let ro_Person = Person.decomposePerson p
+            let p' = Person.composePerson ro_Person
+            Expect.equal p p' "Person should match"
+        )
+        testCase "Person_AffiliationMoreFields_FromROCrate" (fun () ->
+            let affiliation = Organization.create(name = "My University")
+            affiliation.SetProperty("address","123 Main St")
+            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
+            let ro_Person = Person.decomposePerson p
+            let p' = Person.composePerson ro_Person
+            Expect.equal p p' "Person should match"
+        )
+    ]
+
 let main = 
     testList "ArcROCrateConversion" [
         tests_PropertyValue
@@ -983,4 +1023,5 @@ let main =
         //tests_ProtocolTransformation
         tests_ArcTableProcess
         tests_ArcTablesProcessSeq
+        tests_Person
     ]

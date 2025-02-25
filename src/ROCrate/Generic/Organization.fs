@@ -25,11 +25,17 @@ type Organization =
     static member setNameAsString(o : LDNode, n : string, ?context : LDContext) =
         o.SetProperty(Organization.name, n, ?context = context)
 
+    static member genID(name : string) =
+        $"Organization_{name}"
+
     static member validate(o : LDNode, ?context : LDContext) =
         o.HasType(Organization.schemaType, ?context = context)
         && o.HasProperty(Organization.name, ?context = context)
 
-    static member create(id : string, name : string, ?context : LDContext) =
+    static member create(name : string, ?id : string,  ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> Organization.genID name
         let o = LDNode(id, ResizeArray [Organization.schemaType], ?context = context)
         o.SetProperty(Organization.name, name, ?context = context)
         o
