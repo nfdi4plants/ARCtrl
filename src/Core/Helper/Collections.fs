@@ -28,6 +28,11 @@ module Option =
         | Some v -> Some (f v)
         | None   -> d
 
+    /// If the value matches the default, a None is returned, else a Some is returned
+    let fromSeq (v : 'T when 'T :> System.Collections.IEnumerable) =
+        if Seq.isEmpty v then None
+        else Some v
+
 module internal List = 
     
     let tryPickAndRemove (f : 'T -> 'U option) (lst : 'T list) =

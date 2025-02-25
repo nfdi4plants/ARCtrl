@@ -138,7 +138,7 @@ type Person =
 
     static member genId(givenName, ?orcid, ?familyName) =
         match orcid with
-        | Some o -> $"Person_{o}"
+        | Some o -> $"https://orcid.org/{o}"
         | None ->
             match familyName with
             | Some f -> $"Person_{givenName}_{familyName}"

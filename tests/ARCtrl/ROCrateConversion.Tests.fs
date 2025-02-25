@@ -149,31 +149,39 @@ module Helper =
 open Helper
 
 
+let tests_DefinedTerm =
+    testList "DefinedTerm_Full" [
+        let oa = OntologyAnnotation("species", "GO", "GO:0123456")
+        let dt = BaseTypes.composeDefinedTerm oa
+        let oa' = BaseTypes.decomposeDefinedTerm dt
+        Expect.equal oa' oa "OntologyAnnotation should match"
+    ]
+
 let private tests_ProcessInput =
     testList "ProcessInput" [
         testCase "Source" (fun () ->
             let header = CompositeHeader.Input(IOType.Source)
             let cell = CompositeCell.createFreeText "MySource"
-            let input = JsonTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell
 
             Expect.isTrue (Sample.validateSource input) "Should be a valid source"
             let name = Sample.getNameAsString input
             Expect.equal name "MySource" "Name should match"
 
-            let header',cell' = JsonTypes.decomposeProcessInput input
+            let header',cell' = BaseTypes.decomposeProcessInput input
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Sample" (fun () ->
             let header = CompositeHeader.Input(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
-            let input = JsonTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell
 
             Expect.isTrue (Sample.validateSample input) "Should be a valid sample"
             let name = Sample.getNameAsString input
             Expect.equal name "MySample" "Name should match"
 
-            let header',cell' = JsonTypes.decomposeProcessInput input
+            let header',cell' = BaseTypes.decomposeProcessInput input
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
@@ -181,13 +189,13 @@ let private tests_ProcessInput =
             let header = CompositeHeader.Input(IOType.Data)
             let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
             let cell = CompositeCell.createData data
-            let input = JsonTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell
     
             Expect.isTrue (File.validate input) "Should be a valid data"
             let name = File.getNameAsString input
             Expect.equal name "MyData" "Name should match"
     
-            let header',cell' = JsonTypes.decomposeProcessInput input
+            let header',cell' = BaseTypes.decomposeProcessInput input
             Expect.equal header header' "Header should match"
             data.ID <- Some input.Id
             Expect.equal cell cell' "Cell should match"
@@ -195,13 +203,13 @@ let private tests_ProcessInput =
         testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Input(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
-            let input = JsonTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell
     
             Expect.isTrue (File.validate input) "Should be a valid data"
             let name = File.getNameAsString input
             Expect.equal name "MyData" "Name should match"
     
-            let header',cell' = JsonTypes.decomposeProcessInput input
+            let header',cell' = BaseTypes.decomposeProcessInput input
             let expectedCell = CompositeCell.createData (Data (id = input.Id, name = "MyData"))
             Expect.equal header header' "Header should match"
             Expect.equal expectedCell cell' "Cell should match"
@@ -209,20 +217,20 @@ let private tests_ProcessInput =
         testCase "Material" (fun () ->
             let header = CompositeHeader.Input(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
-            let input = JsonTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell
     
             Expect.isTrue (Sample.validateMaterial input) "Should be a valid material"
             let name = Sample.getNameAsString input
             Expect.equal name "MyMaterial" "Name should match"
     
-            let header',cell' = JsonTypes.decomposeProcessInput input
+            let header',cell' = BaseTypes.decomposeProcessInput input
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "FreeType" (fun () ->
             let header = CompositeHeader.Input (IOType.FreeText "MyInputType")
             let cell = CompositeCell.createFreeText "MyFreeText"
-            let input = JsonTypes.composeProcessInput header cell
+            let input = BaseTypes.composeProcessInput header cell
 
             let name = Sample.getNameAsString input
             Expect.equal name "MyFreeText" "Name should match"
@@ -231,7 +239,7 @@ let private tests_ProcessInput =
             Expect.hasLength schemaType 1 "Should have 1 schema type"
             Expect.equal schemaType.[0] "MyInputType" "Schema type should be FreeText"
 
-            let header',cell' = JsonTypes.decomposeProcessInput input
+            let header',cell' = BaseTypes.decomposeProcessInput input
             Expect.equal header header' "Header should match"
         )
     ]
@@ -241,13 +249,13 @@ let private tests_ProcessOutput =
         testCase "Sample" (fun () ->
             let header = CompositeHeader.Output(IOType.Sample)
             let cell = CompositeCell.createFreeText "MySample"
-            let output = JsonTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell
 
             Expect.isTrue (Sample.validateSample output) "Should be a valid sample"
             let name = Sample.getNameAsString output
             Expect.equal name "MySample" "Name should match"
 
-            let header',cell' = JsonTypes.decomposeProcessOutput output
+            let header',cell' = BaseTypes.decomposeProcessOutput output
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
@@ -255,13 +263,13 @@ let private tests_ProcessOutput =
             let header = CompositeHeader.Output(IOType.Data)
             let data = Data(name = "MyData", format = "text/csv", selectorFormat = "MySelector")
             let cell = CompositeCell.createData data
-            let output = JsonTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell
     
             Expect.isTrue (File.validate output) "Should be a valid data"
             let name = File.getNameAsString output
             Expect.equal name "MyData" "Name should match"
     
-            let header',cell' = JsonTypes.decomposeProcessOutput output
+            let header',cell' = BaseTypes.decomposeProcessOutput output
             Expect.equal header header' "Header should match"
             data.ID <- Some output.Id
             Expect.equal cell cell' "Cell should match"
@@ -269,13 +277,13 @@ let private tests_ProcessOutput =
         testCase "Data_Freetext" (fun () ->
             let header = CompositeHeader.Output(IOType.Data)
             let cell = CompositeCell.createFreeText "MyData"
-            let output = JsonTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell
     
             Expect.isTrue (File.validate output) "Should be a valid data"
             let name = File.getNameAsString output
             Expect.equal name "MyData" "Name should match"
     
-            let header',cell' = JsonTypes.decomposeProcessOutput output
+            let header',cell' = BaseTypes.decomposeProcessOutput output
             let expectedCell = CompositeCell.createData (Data (id = output.Id, name = "MyData"))
             Expect.equal header header' "Header should match"
             Expect.equal expectedCell cell' "Cell should match"
@@ -283,20 +291,20 @@ let private tests_ProcessOutput =
         testCase "Material" (fun () ->
             let header = CompositeHeader.Output(IOType.Material)
             let cell = CompositeCell.createFreeText "MyMaterial"
-            let output = JsonTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell
     
             Expect.isTrue (Sample.validateMaterial output) "Should be a valid material"
             let name = Sample.getNameAsString output
             Expect.equal name "MyMaterial" "Name should match"
     
-            let header',cell' = JsonTypes.decomposeProcessOutput output
+            let header',cell' = BaseTypes.decomposeProcessOutput output
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "FreeType" (fun () ->
             let header = CompositeHeader.Output (IOType.FreeText "MyOutputType")
             let cell = CompositeCell.createFreeText "MyFreeText"
-            let output = JsonTypes.composeProcessOutput header cell
+            let output = BaseTypes.composeProcessOutput header cell
 
             let name = Sample.getNameAsString output
             Expect.equal name "MyFreeText" "Name should match"
@@ -305,7 +313,7 @@ let private tests_ProcessOutput =
             Expect.hasLength schemaType 1 "Should have 1 schema type"
             Expect.equal schemaType.[0] "MyOutputType" "Schema type should be FreeText"
 
-            let header',cell' = JsonTypes.decomposeProcessOutput output
+            let header',cell' = BaseTypes.decomposeProcessOutput output
             Expect.equal header header' "Header should match"
         )
     ]
@@ -315,7 +323,7 @@ let private tests_PropertyValue =
         testCase "Characteristic_Ontology" (fun () ->
             let header = CompositeHeader.Characteristic oa_species
             let cell = CompositeCell.createTerm oa_chlamy
-            let pv = JsonTypes.composeCharacteristicValue header cell
+            let pv = BaseTypes.composeCharacteristicValue header cell
 
             let name = PropertyValue.getNameAsString pv
             Expect.equal name oa_species.NameText "Name should match"
@@ -329,14 +337,14 @@ let private tests_PropertyValue =
             let valueReference = Expect.wantSome (PropertyValue.tryGetValueReference pv) "Should have value reference"
             Expect.equal valueReference oa_chlamy.TermAccessionOntobeeUrl "Value reference should match"
 
-            let header',cell' = JsonTypes.decomposeCharacteristicValue pv
+            let header',cell' = BaseTypes.decomposeCharacteristicValue pv
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Parameter_Unitized" (fun () ->
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("5",oa_degreeCel)
-            let pv = JsonTypes.composeParameterValue header cell
+            let pv = BaseTypes.composeParameterValue header cell
 
             let name = PropertyValue.getNameAsString pv
             Expect.equal name oa_temperature.NameText "Name should match"
@@ -353,14 +361,14 @@ let private tests_PropertyValue =
             let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
             Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
 
-            let header',cell' = JsonTypes.decomposeParameterValue pv
+            let header',cell' = BaseTypes.decomposeParameterValue pv
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Parameter_Unitized_Valueless" (fun () ->
             let header = CompositeHeader.Parameter oa_temperature
             let cell = CompositeCell.createUnitized ("",oa_degreeCel)
-            let pv = JsonTypes.composeParameterValue header cell
+            let pv = BaseTypes.composeParameterValue header cell
 
             let name = PropertyValue.getNameAsString pv
             Expect.equal name oa_temperature.NameText "Name should match"
@@ -376,14 +384,14 @@ let private tests_PropertyValue =
             let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
             Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
 
-            let header',cell' = JsonTypes.decomposeParameterValue pv
+            let header',cell' = BaseTypes.decomposeParameterValue pv
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "FactorValue_Valueless" (fun () ->
             let header = CompositeHeader.Factor oa_temperature
             let cell = CompositeCell.createTerm (OntologyAnnotation.create())
-            let pv = JsonTypes.composeFactorValue header cell
+            let pv = BaseTypes.composeFactorValue header cell
 
             let name = PropertyValue.getNameAsString pv
             Expect.equal name oa_temperature.NameText "Name should match"
@@ -393,14 +401,14 @@ let private tests_PropertyValue =
 
             Expect.isNone (PropertyValue.tryGetValueAsString pv) "Should not have value"
 
-            let header',cell' = JsonTypes.decomposeFactorValue pv
+            let header',cell' = BaseTypes.decomposeFactorValue pv
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Component_Freetexts" (fun () ->
             let header = CompositeHeader.Component (OntologyAnnotation.create(name = "MyComponentHeader"))
             let cell = CompositeCell.createTerm (OntologyAnnotation.create(name = "MyComponentValue"))
-            let pv = JsonTypes.composeComponent header cell
+            let pv = BaseTypes.composeComponent header cell
 
             let name = PropertyValue.getNameAsString pv
             Expect.equal name "MyComponentHeader" "Name should match"
@@ -413,7 +421,7 @@ let private tests_PropertyValue =
             Expect.isNone (PropertyValue.tryGetUnitTextAsString pv) "Should not have unit"
             Expect.isNone (PropertyValue.tryGetUnitCodeAsString pv) "Should not have unit code"
 
-            let header',cell' = JsonTypes.decomposeComponent pv
+            let header',cell' = BaseTypes.decomposeComponent pv
             Expect.equal header header' "Header should match"
             Expect.equal cell cell' "Cell should match"
         )
@@ -982,41 +990,65 @@ let tests_Person =
             let p = ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
             let ro_Person = Person.composePerson p
             let p' = Person.decomposePerson ro_Person
-            Expect.equal p p' "Person should match"
+            Expect.equal p' p "Person should match"
         )
         testCase "Person_AddressAsObject_FromROCrate" (fun () ->
             let address = PostalAddress.create(addressCountry = "Germoney", postalCode = "6969", streetAddress = "I think I'm funny street 69")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
-            let ro_Person = Person.decomposePerson p
-            let p' = Person.composePerson ro_Person
-            Expect.equal p p' "Person should match"
+            let scaffold_Person = Person.decomposePerson p
+            let p' = Person.composePerson scaffold_Person
+            Expect.equal p' p "Person should match"
         )
         testCase "Person_AddressAsString_FromROCrate" (fun () ->
             let address = "Germoney, 6969, I think I'm funny street 69"
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
-            let ro_Person = Person.decomposePerson p
-            let p' = Person.composePerson ro_Person
-            Expect.equal p p' "Person should match"
+            let scaffold_Person = Person.decomposePerson p
+            let p' = Person.composePerson scaffold_Person
+            Expect.equal p' p "Person should match"
         )
         testCase "Person_AffiliationOnlyName_FromROCrate" (fun () ->
             let affiliation = Organization.create(name = "My University")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
-            let ro_Person = Person.decomposePerson p
-            let p' = Person.composePerson ro_Person
-            Expect.equal p p' "Person should match"
+            let scaffold_Person = Person.decomposePerson p
+            let p' = Person.composePerson scaffold_Person
+            Expect.equal p' p "Person should match"
         )
         testCase "Person_AffiliationMoreFields_FromROCrate" (fun () ->
             let affiliation = Organization.create(name = "My University")
             affiliation.SetProperty("address","123 Main St")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
-            let ro_Person = Person.decomposePerson p
-            let p' = Person.composePerson ro_Person
-            Expect.equal p p' "Person should match"
+            let scaffold_Person = Person.decomposePerson p
+            let p' = Person.composePerson scaffold_Person
+            Expect.equal p' p "Person should match"
         )
     ]
 
+let tests_Publication =
+    testList "Publication" [
+        testCase "Publication_Full_FromScaffold" (fun () ->
+            let authors = "Lukas Weil, John Doe"
+            let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
+            let commentOnlyKey = ARCtrl.Comment("MyEmptyKey")
+            let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
+            let ro_Publication = ScholarlyArticle.composeScholarlyArticle p
+            let p' = ScholarlyArticle.decomposeScholarlyArticle ro_Publication
+            Expect.equal p' p "Publication should match"
+        )
+        testCase "Publication_FullAuthors_FromROCrate" (fun () ->
+            let author1 = ARCtrl.ROCrate.Person.create(givenName = "Lukas",familyName = "Weil", orcid = "0000-0002-1825-0097")
+            let author2 = ARCtrl.ROCrate.Person.create(givenName = "John",familyName = "Doe", orcid = "0000-0002-1325-0077")
+            let scholarlyArticle = ARCtrl.ROCrate.ScholarlyArticle.create(headline = "My Paper", identifiers = ResizeArray [], url = "10.1234/5678", authors = ResizeArray [author1;author2])
+            let scaffold_Publication = ScholarlyArticle.decomposeScholarlyArticle scholarlyArticle
+            let p = ScholarlyArticle.composeScholarlyArticle scaffold_Publication
+            Expect.equal p scholarlyArticle "Publication should match"
+        )
+    ]
+
+
 let main = 
     testList "ArcROCrateConversion" [
+        tests_DefinedTerm
         tests_PropertyValue
         tests_ProcessInput
         tests_ProcessOutput
@@ -1024,4 +1056,5 @@ let main =
         tests_ArcTableProcess
         tests_ArcTablesProcessSeq
         tests_Person
+        tests_Publication
     ]

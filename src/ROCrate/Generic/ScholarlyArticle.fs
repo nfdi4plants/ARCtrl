@@ -20,7 +20,7 @@ type ScholarlyArticle =
 
     static member creativeWorkStatus = "http://schema.org/creativeWorkStatus"
 
-    static member disambiguatingDescription = "http://schema.org/disambiguatingDescription"
+    static member comment = "http://schema.org/comment"
 
     static member tryGetHeadlineAsString(s : LDNode, ?context : LDContext) =
         match s.TryGetPropertyAsSingleton(ScholarlyArticle.headline, ?context = context) with
@@ -42,7 +42,7 @@ type ScholarlyArticle =
     static member setIdentifiers(s : LDNode, identifiers : ResizeArray<obj>) =
         s.SetProperty(ScholarlyArticle.identifier, identifiers)
 
-    static member tryGetAuthors(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
+    static member getAuthors(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let filter ldObject context = Person.validate(ldObject, ?context = context)
         s.GetPropertyNodes(ScholarlyArticle.author, filter = filter, ?graph = graph, ?context = context)
 
@@ -65,27 +65,34 @@ type ScholarlyArticle =
     static member setCreativeWorkStatus(s : LDNode, cws : LDNode, ?context : LDContext) =
         s.SetProperty(ScholarlyArticle.creativeWorkStatus, cws, ?context = context)
 
-    static member tryGetDisambiguatingDescriptionAsString(s : LDNode, ?context : LDContext) =
-        match s.TryGetPropertyAsSingleton(ScholarlyArticle.disambiguatingDescription, ?context = context) with
-        | Some (:? string as dd) -> Some dd
-        | _ -> None
+    static member getComments(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let filter = fun ldObject context -> Comment.validate(ldObject, ?context = context)
+        s.GetPropertyNodes(ScholarlyArticle.comment, filter = filter, ?graph = graph, ?context = context)
 
-    static member setDisambiguatingDescriptionAsString(s : LDNode, dd : string, ?context : LDContext) =
-        s.SetProperty(ScholarlyArticle.disambiguatingDescription, dd, ?context = context)
+    static member setcomments(s : LDNode, comments : ResizeArray<LDNode>, ?context : LDContext) =
+        s.SetProperty(ScholarlyArticle.comment, comments, ?context = context)
+
+    static member genID(headline : string, ?url : string) =
+        match url with
+        | Some u -> u
+        | None -> headline
 
     static member validate(s : LDNode, ?context : LDContext) =
         s.HasType(ScholarlyArticle.schemaType, ?context = context)
         && s.HasProperty(ScholarlyArticle.headline, ?context = context)
         && s.HasProperty(ScholarlyArticle.identifier, ?context = context)
 
-    static member create(id : string, headline : string, identifiers : ResizeArray<obj>, ?authors : ResizeArray<LDNode>, ?url : string, ?creativeWorkStatus : LDNode, ?disambiguatingDescription : string, ?context : LDContext) =
+    static member create(headline : string, identifiers : ResizeArray<obj>, ?id : string, ?authors : ResizeArray<LDNode>, ?url : string, ?creativeWorkStatus : LDNode, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> ScholarlyArticle.genID(headline, ?url = url)
         let s = LDNode(id, ResizeArray [ScholarlyArticle.schemaType], ?context = context)
         s.SetProperty(ScholarlyArticle.headline, headline, ?context = context)
         s.SetProperty(ScholarlyArticle.identifier, identifiers, ?context = context)
         s.SetOptionalProperty(ScholarlyArticle.author, authors, ?context = context)
         s.SetOptionalProperty(ScholarlyArticle.url, url, ?context = context)
         s.SetOptionalProperty(ScholarlyArticle.creativeWorkStatus, creativeWorkStatus, ?context = context)
-        s.SetOptionalProperty(ScholarlyArticle.disambiguatingDescription, disambiguatingDescription, ?context = context)
+        s.SetOptionalProperty(ScholarlyArticle.comment, comments, ?context = context)
         s
         
         

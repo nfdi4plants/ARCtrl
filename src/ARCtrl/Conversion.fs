@@ -41,19 +41,29 @@ module ColumnIndex =
             member this.SetColumnIndex (index : int) = setIndex this index
 
 /// Functions for transforming base level ARC Table and ISA Json Objects
-module JsonTypes = 
+type BaseTypes = 
 
-    let composeDefinedTerm (term : OntologyAnnotation) =
+    static member composeComment (comment : ARCtrl.Comment) =
+        let name = match comment.Name with | Some n -> n | None -> failwith "Comment must have a name"
+        Comment.create(name = name, ?text = comment.Value)
+
+    static member decomposeComment (comment : LDNode, ?context : LDContext) =
+        let name = Comment.getNameAsString comment
+        let text = Comment.tryGetTextAsString comment
+        ARCtrl.Comment(name = name,?value = text)
+
+    static member composeDefinedTerm (term : OntologyAnnotation) =
         let tan = term.TermAccessionOntobeeUrl |> Option.fromValueWithDefault ""
         DefinedTerm.create(name = term.NameText, ?termCode = tan)
 
-    let decomposeDefinedTerm (term : LDNode) =
+    static member decomposeDefinedTerm (term : LDNode) =
         let name = DefinedTerm.getNameAsString term
-        let tan = DefinedTerm.tryGetTermCodeAsString term
-        OntologyAnnotation.create(name = name, ?tan = tan)
+        match DefinedTerm.tryGetTermCodeAsString term with
+        | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
+        | None -> OntologyAnnotation.create(name = name)
 
     /// Convert a CompositeCell to a ISA Value and Unit tuple.
-    let valuesOfCell (value : CompositeCell) =
+    static member valuesOfCell (value : CompositeCell) =
         match value with
         | CompositeCell.FreeText ("") -> None, None, None, None
         | CompositeCell.FreeText (text) -> Some text, None, None, None        
@@ -68,7 +78,7 @@ module JsonTypes =
             unitAccession          
         | CompositeCell.Data (data) -> failwith "Data cell should not be parsed to isa value"
 
-    let termOfHeader (header : CompositeHeader) =
+    static member termOfHeader (header : CompositeHeader) =
         match header with
         | CompositeHeader.Component oa 
         | CompositeHeader.Parameter oa 
@@ -78,38 +88,38 @@ module JsonTypes =
         | h -> failwithf "header %O should not be parsed to isa value" h
 
     /// Convert a CompositeHeader and Cell tuple to a ISA Component
-    let composeComponent (header : CompositeHeader) (value : CompositeCell) : LDNode =
-        let v,va,u,ua = valuesOfCell value
-        let n, na = termOfHeader header
+    static member composeComponent (header : CompositeHeader) (value : CompositeCell) : LDNode =
+        let v,va,u,ua = BaseTypes.valuesOfCell value
+        let n, na = BaseTypes.termOfHeader header
         PropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
-    let composeParameterValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
-        let v,va,u,ua = valuesOfCell value
-        let n, na = termOfHeader header
+    static member composeParameterValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
+        let v,va,u,ua = BaseTypes.valuesOfCell value
+        let n, na = BaseTypes.termOfHeader header
         PropertyValue.createParameterValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA FactorValue
-    let composeFactorValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
-        let v,va,u,ua = valuesOfCell value
-        let n, na = termOfHeader header
+    static member composeFactorValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
+        let v,va,u,ua = BaseTypes.valuesOfCell value
+        let n, na = BaseTypes.termOfHeader header
         PropertyValue.createFactorValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA MaterialAttributeValue
-    let composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : LDNode  =
-        let v,va,u,ua = valuesOfCell value
-        let n, na = termOfHeader header
+    static member composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : LDNode  =
+        let v,va,u,ua = BaseTypes.valuesOfCell value
+        let n, na = BaseTypes.termOfHeader header
         PropertyValue.createCharacteristicValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
-    let composeFreetextMaterialName (headerFT : string) (name : string) =
+    static member composeFreetextMaterialName (headerFT : string) (name : string) =
         $"{headerFT}={name}"
         
 
-    let composeFile (d : Data) : LDNode =
+    static member composeFile (d : Data) : LDNode =
         let dataType = d.DataType |> Option.map (fun dt -> dt.AsString) 
         File.create(d.NameText,d.NameText,?disambiguatingDescription = dataType, ?encodingFormat = d.Format, ?usageInfo = d.SelectorFormat)
 
-    let decomposeFile (f : LDNode) : Data =
+    static member decomposeFile (f : LDNode) : Data =
         let dataType = File.tryGetDisambiguatingDescriptionAsString f |> Option.map DataFile.fromString
         let format = File.tryGetEncodingFormatAsString f
         let selectorFormat = File.tryGetUsageInfoAsString f
@@ -117,7 +127,7 @@ module JsonTypes =
         data
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
-    let composeProcessInput (header : CompositeHeader) (value : CompositeCell) : LDNode =
+    static member composeProcessInput (header : CompositeHeader) (value : CompositeCell) : LDNode =
         match header with
         | CompositeHeader.Input IOType.Source -> Sample.createSource(value.AsFreeText)
         | CompositeHeader.Input IOType.Sample -> Sample.createSample(value.AsFreeText)
@@ -127,10 +137,10 @@ module JsonTypes =
             | CompositeCell.FreeText ft ->
                 File.create(ft,ft)
             | CompositeCell.Data od ->
-                composeFile od
+                BaseTypes.composeFile od
             | _ -> failwithf "Could not parse input data %O" value
         | CompositeHeader.Input (IOType.FreeText ft) ->
-            let n = LDNode(id = composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
+            let n = LDNode(id = BaseTypes.composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
             n.SetProperty(Sample.name, value.AsFreeText)
             n
         | _ ->
@@ -138,7 +148,7 @@ module JsonTypes =
 
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessOutput
-    let composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : LDNode =
+    static member composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : LDNode =
         match header with
         | CompositeHeader.Output IOType.Source 
         | CompositeHeader.Output IOType.Sample -> Sample.createSample(value.AsFreeText)
@@ -148,22 +158,22 @@ module JsonTypes =
             | CompositeCell.FreeText ft ->
                 File.create(ft,ft)
             | CompositeCell.Data od ->
-                composeFile od
+                BaseTypes.composeFile od
             | _ -> failwithf "Could not parse output data %O" value
         | CompositeHeader.Output (IOType.FreeText ft) ->
-            let n = LDNode(id = composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
+            let n = LDNode(id = BaseTypes.composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
             n.SetProperty(Sample.name, value.AsFreeText)
             n
         | _ -> failwithf "Could not parse output header %O" header
 
-    let headerOntologyOfPropertyValue (pv : LDNode) =
+    static member headerOntologyOfPropertyValue (pv : LDNode) =
         let n = PropertyValue.getNameAsString pv
         match PropertyValue.tryGetPropertyIDAsString pv with
         | Some nRef -> OntologyAnnotation.fromTermAnnotation(tan = nRef, name = n)
         | None -> OntologyAnnotation(name = n)
 
     /// Convert an ISA Value and Unit tuple to a CompositeCell
-    let cellOfPropertyValue (pv : LDNode) =
+    static member cellOfPropertyValue (pv : LDNode) =
         let v = PropertyValue.tryGetValueAsString pv
         let vRef = PropertyValue.tryGetValueReference pv
         let u = PropertyValue.tryGetUnitTextAsString pv
@@ -181,44 +191,44 @@ module JsonTypes =
             failwithf "Could not parse value %s with unit %O and unit reference %O" (Option.defaultValue "" v) u uRef
 
     /// Convert an ISA Component to a CompositeHeader and Cell tuple
-    let decomposeComponent (c : LDNode) : CompositeHeader*CompositeCell =
-        let header = headerOntologyOfPropertyValue c |> CompositeHeader.Component
-        let bodyCell = cellOfPropertyValue c
+    static member decomposeComponent (c : LDNode) : CompositeHeader*CompositeCell =
+        let header = BaseTypes.headerOntologyOfPropertyValue c |> CompositeHeader.Component
+        let bodyCell = BaseTypes.cellOfPropertyValue c
         header, bodyCell
 
     /// Convert an ISA ProcessParameterValue to a CompositeHeader and Cell tuple
-    let decomposeParameterValue (c : LDNode) : CompositeHeader*CompositeCell =
-        let header = headerOntologyOfPropertyValue c |> CompositeHeader.Parameter
-        let bodyCell = cellOfPropertyValue c
+    static member decomposeParameterValue (c : LDNode) : CompositeHeader*CompositeCell =
+        let header = BaseTypes.headerOntologyOfPropertyValue c |> CompositeHeader.Parameter
+        let bodyCell = BaseTypes.cellOfPropertyValue c
         header, bodyCell
 
     /// Convert an ISA FactorValue to a CompositeHeader and Cell tuple
-    let decomposeFactorValue (c : LDNode) : CompositeHeader*CompositeCell =
-        let header = headerOntologyOfPropertyValue c |> CompositeHeader.Factor
-        let bodyCell = cellOfPropertyValue c
+    static member decomposeFactorValue (c : LDNode) : CompositeHeader*CompositeCell =
+        let header = BaseTypes.headerOntologyOfPropertyValue c |> CompositeHeader.Factor
+        let bodyCell = BaseTypes.cellOfPropertyValue c
         header, bodyCell
 
     /// Convert an ISA MaterialAttributeValue to a CompositeHeader and Cell tuple
-    let decomposeCharacteristicValue (c : LDNode) : CompositeHeader*CompositeCell =
-        let header = headerOntologyOfPropertyValue c |> CompositeHeader.Characteristic
-        let bodyCell = cellOfPropertyValue c
+    static member decomposeCharacteristicValue (c : LDNode) : CompositeHeader*CompositeCell =
+        let header = BaseTypes.headerOntologyOfPropertyValue c |> CompositeHeader.Characteristic
+        let bodyCell = BaseTypes.cellOfPropertyValue c
         header, bodyCell
     
     /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
-    let decomposeProcessInput (pn : LDNode) : CompositeHeader*CompositeCell =
+    static member decomposeProcessInput (pn : LDNode) : CompositeHeader*CompositeCell =
         match pn with
         | s when Sample.validateSource s -> CompositeHeader.Input IOType.Source, CompositeCell.FreeText (Sample.getNameAsString s)
         | m when Sample.validateMaterial m -> CompositeHeader.Input IOType.Material, CompositeCell.FreeText (Sample.getNameAsString m)
         | s when Sample.validate s -> CompositeHeader.Input IOType.Sample, CompositeCell.FreeText (Sample.getNameAsString s)
-        | d when File.validate d -> CompositeHeader.Input IOType.Data, CompositeCell.Data (decomposeFile d)
+        | d when File.validate d -> CompositeHeader.Input IOType.Data, CompositeCell.Data (BaseTypes.decomposeFile d)
         | n -> CompositeHeader.Input (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (Sample.getNameAsString n)            
 
 
-    let decomposeProcessOutput (pn : LDNode) : CompositeHeader*CompositeCell =
+    static member decomposeProcessOutput (pn : LDNode) : CompositeHeader*CompositeCell =
         match pn with
         | m when Sample.validateMaterial m -> CompositeHeader.Output IOType.Material, CompositeCell.FreeText (Sample.getNameAsString m)
         | s when Sample.validate s -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (Sample.getNameAsString s)
-        | d when File.validate d -> CompositeHeader.Output IOType.Data, CompositeCell.Data (decomposeFile d)
+        | d when File.validate d -> CompositeHeader.Output IOType.Data, CompositeCell.Data (BaseTypes.decomposeFile d)
         | n -> CompositeHeader.Output (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (Sample.getNameAsString n)
 
     /// This function creates a string containing the name and the ontology short-string of the given ontology annotation term
@@ -226,7 +236,7 @@ module JsonTypes =
     /// TechnologyPlatforms are plain strings in ISA-JSON.
     ///
     /// This function allows us, to parse them as an ontology term.
-    let composeTechnologyPlatform (tp : OntologyAnnotation) = 
+    static member composeTechnologyPlatform (tp : OntologyAnnotation) = 
         match tp.TANInfo with
         | Some _ ->
             $"{tp.NameText} ({tp.TermAccessionShort})"
@@ -238,7 +248,7 @@ module JsonTypes =
     /// TechnologyPlatforms are plain strings in ISA-JSON.
     ///
     /// This function allows us, to parse them as an ontology term.
-    let decomposeTechnologyPlatform (name : string) = 
+    static member decomposeTechnologyPlatform (name : string) = 
         let pattern = """^(?<value>.+) \((?<ontology>[^(]*:[^)]*)\)$"""        
 
         match name with 
@@ -261,7 +271,7 @@ type ProcessParsing =
     static member tryGetProtocolType (pv : LDNode, ?graph : LDGraph, ?context : LDContext) =
         match LabProtocol.tryGetIntendedUseAsDefinedTerm(pv,?graph = graph, ?context = context) with
         | Some dt ->
-            Some (JsonTypes.decomposeDefinedTerm dt)
+            Some (BaseTypes.decomposeDefinedTerm dt)
         | None ->
             match LabProtocol.tryGetIntendedUseAsString(pv, ?context = context) with
             | Some s -> Some (OntologyAnnotation.create(name = s))
@@ -288,7 +298,7 @@ type ProcessParsing =
         match valueHeader with
         | CompositeHeader.Component oa ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let c = JsonTypes.composeComponent valueHeader matrix.[generalI,i]
+                let c = BaseTypes.composeComponent valueHeader matrix.[generalI,i]
                 c.SetColumnIndex valueI
                 c
             |> Some
@@ -299,7 +309,7 @@ type ProcessParsing =
         match valueHeader with
         | CompositeHeader.Parameter oa ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let p = JsonTypes.composeParameterValue valueHeader matrix.[generalI,i]
+                let p = BaseTypes.composeParameterValue valueHeader matrix.[generalI,i]
                 p.SetColumnIndex valueI
                 p
             |> Some
@@ -310,7 +320,7 @@ type ProcessParsing =
         match valueHeader with
         | CompositeHeader.Factor oa ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let f = JsonTypes.composeFactorValue valueHeader matrix.[generalI,i]
+                let f = BaseTypes.composeFactorValue valueHeader matrix.[generalI,i]
                 f.SetColumnIndex valueI
                 f
             |> Some
@@ -321,7 +331,7 @@ type ProcessParsing =
         match valueHeader with
         | CompositeHeader.Characteristic oa ->        
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                let c = JsonTypes.composeCharacteristicValue valueHeader matrix.[generalI,i]
+                let c = BaseTypes.composeCharacteristicValue valueHeader matrix.[generalI,i]
                 c.SetColumnIndex valueI
                 c
             |> Some
@@ -332,7 +342,7 @@ type ProcessParsing =
         match header with
         | CompositeHeader.ProtocolType ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                matrix.[generalI,i].AsTerm |> JsonTypes.composeDefinedTerm
+                matrix.[generalI,i].AsTerm |> BaseTypes.composeDefinedTerm
             |> Some
         | _ -> None 
 
@@ -378,7 +388,7 @@ type ProcessParsing =
         match header with
         | CompositeHeader.Input io ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeProcessInput header matrix.[generalI,i]
+                BaseTypes.composeProcessInput header matrix.[generalI,i]
             |> Some
         | _ -> None
 
@@ -387,7 +397,7 @@ type ProcessParsing =
         match header with
         | CompositeHeader.Output io ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
-                JsonTypes.composeProcessOutput header matrix.[generalI,i]
+                BaseTypes.composeProcessOutput header matrix.[generalI,i]
             |> Some
         | _ -> None
 
@@ -601,13 +611,13 @@ type ProcessParsing =
     static member processToRows (p : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let pvs =
             LabProcess.getParameterValues(p, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun ppv -> JsonTypes.decomposeParameterValue ppv, ColumnIndex.tryGetIndex ppv)
+            |> ResizeArray.map (fun ppv -> BaseTypes.decomposeParameterValue ppv, ColumnIndex.tryGetIndex ppv)
         // Get the component
         let components = 
             match LabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
             | Some prot ->
                 LabProtocol.getComponents(prot, ?graph = graph, ?context = context)
-                |> ResizeArray.map (fun ppv -> JsonTypes.decomposeComponent ppv, ColumnIndex.tryGetIndex ppv)
+                |> ResizeArray.map (fun ppv -> BaseTypes.decomposeComponent ppv, ColumnIndex.tryGetIndex ppv)
             | None -> ResizeArray []
         // Get the values of the protocol
         let protVals = 
@@ -670,13 +680,13 @@ type ProcessParsing =
                     match i with
                     | Some i -> 
                         Sample.getCharacteristics(i, ?graph = graph, ?context = context)
-                        |> ResizeArray.map (fun cv -> JsonTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetIndex cv)
+                        |> ResizeArray.map (fun cv -> BaseTypes.decomposeCharacteristicValue cv, ColumnIndex.tryGetIndex cv)
                     | None -> ResizeArray []            
                 let factors =
                     match o with
                     | Some o -> 
                         Sample.getFactors(o, ?graph = graph, ?context = context)
-                        |> ResizeArray.map (fun fv -> JsonTypes.decomposeFactorValue fv, ColumnIndex.tryGetIndex fv)
+                        |> ResizeArray.map (fun fv -> BaseTypes.decomposeFactorValue fv, ColumnIndex.tryGetIndex fv)
                     | None -> ResizeArray []
 
 
@@ -690,11 +700,11 @@ type ProcessParsing =
                     |> List.sortBy (snd >> Option.defaultValue 10000)
                     |> List.map fst
                 [
-                    if i.IsSome then yield JsonTypes.decomposeProcessInput i.Value
+                    if i.IsSome then yield BaseTypes.decomposeProcessInput i.Value
                     yield! protVals
                     yield! vals
                     yield! comments
-                    if o.IsSome then yield JsonTypes.decomposeProcessOutput o.Value
+                    if o.IsSome then yield BaseTypes.decomposeProcessOutput o.Value
                 ]
             )
 
@@ -731,7 +741,7 @@ type ProcessParsing =
 //        /// <param name="value"></param>
 //        /// <param name="unit"></param>
 //        static member fromValue(value : Value, ?unit : OntologyAnnotation) =
-//            JsonTypes.cellOfValue (Some value) unit
+//            BaseTypes.cellOfValue (Some value) unit
 
 
 module CompositeRow =
@@ -742,7 +752,7 @@ module CompositeRow =
         |> Seq.fold (fun p hc ->
             match hc with
             | CompositeHeader.ProtocolType, CompositeCell.Term oa -> 
-                LabProtocol.setIntendedUseAsDefinedTerm(p, JsonTypes.composeDefinedTerm oa)
+                LabProtocol.setIntendedUseAsDefinedTerm(p, BaseTypes.composeDefinedTerm oa)
                 
             | CompositeHeader.ProtocolVersion, CompositeCell.FreeText v ->
                 LabProtocol.setVersionAsString(p,v)
@@ -761,7 +771,7 @@ module CompositeRow =
             //    Protocol.addParameter (pp) p
             | CompositeHeader.Component _, CompositeCell.Term _
             | CompositeHeader.Component _, CompositeCell.Unitized _ ->            
-                let c = JsonTypes.composeComponent (fst hc) (snd hc)
+                let c = BaseTypes.composeComponent (fst hc) (snd hc)
                 let newC = ResizeArray.appendSingleton c (LabProtocol.getLabEquipments(p))
                 LabProtocol.setLabEquipments(p,newC)  
             | _ -> ()
@@ -788,7 +798,7 @@ module TypeExtensions =
             //    t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
 
             for c in LabProtocol.getComponents(p, ?graph = graph, ?context = context) do
-                let h,v = JsonTypes.decomposeComponent c
+                let h,v = BaseTypes.decomposeComponent c
                 t.AddColumn(
                     h, 
                     cells = Array.singleton v,
@@ -922,8 +932,16 @@ type Person =
             |> ARCtrl.Json.Encode.toJsonString 0
         | _ -> failwith "Address must be a string or a Json.LDNode"
 
-    static member isORCID (id : string) =
-        id.StartsWith("http://orcid.org/")
+    static member orcidRegex = System.Text.RegularExpressions.Regex("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]")
+
+    static member tryGetOrcidNumber (orcid : string) =
+        let m = Person.orcidRegex.Match(orcid)
+        if m.Success then
+            Some m.Value
+        else
+            None
+
+    static member orcidPrefix = "http://orcid.org/"
 
     static member composePerson (person : ARCtrl.Person) =
         let givenName =
@@ -932,12 +950,12 @@ type Person =
             | None -> failwith "Person must have a given name"
         let jobTitles = 
             person.Roles
-            |> ResizeArray.map JsonTypes.composeDefinedTerm
-            |> Option.fromValueWithDefault (ResizeArray [])
+            |> ResizeArray.map BaseTypes.composeDefinedTerm
+            |> Option.fromSeq
         let disambiguatingDescriptions = 
             person.Comments
             |> ResizeArray.map (fun c -> c.ToString())
-            |> Option.fromValueWithDefault (ResizeArray [])
+            |> Option.fromSeq
         let address =
             person.Address
             |> Option.map Person.composeAddress
@@ -947,11 +965,7 @@ type Person =
         Person.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
 
     static member decomposePerson (person : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let orcid = 
-            if person.Id |> Person.isORCID then
-                Some person.Id
-            else
-                None
+        let orcid = Person.tryGetOrcidNumber person.Id
         let address = 
             match Person.tryGetAddressAsString(person, ?context = context) with
             | Some s -> 
@@ -962,7 +976,7 @@ type Person =
                 | None -> None
         let roles = 
             Person.getJobTitlesAsDefinedTerm(person, ?graph = graph, ?context = context)
-            |> ResizeArray.map JsonTypes.decomposeDefinedTerm
+            |> ResizeArray.map BaseTypes.decomposeDefinedTerm
         let comments =
             Person.getDisambiguatingDescriptionsAsString(person, ?context = context)
             |> ResizeArray.map ARCtrl.Comment.fromString
@@ -971,7 +985,7 @@ type Person =
             |> Option.map (Person.decomposeAffiliation)
         ARCtrl.Person.create(
             firstName = Person.getGivenNameAsString(person, ?context = context),
-            ?lastName = Person.tryGetGivenNameAsString(person, ?context = context),
+            ?lastName = Person.tryGetFamilyNameAsString(person, ?context = context),
             ?midInitials = Person.tryGetAdditionalNameAsString(person, ?context = context),
             ?email = Person.tryGetEmailAsString(person, ?context = context),
             ?fax = Person.tryGetFaxNumberAsString(person, ?context = context),
@@ -984,7 +998,102 @@ type Person =
         )
         
 
+type ScholarlyArticle =
 
+
+    static member composeAuthor (author : string) : LDNode =
+        try 
+            ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder author
+        with
+        | _ -> Person.create(givenName = author)
+
+    static member splitAuthors (a : string) =
+        let mutable bracketCount = 0
+        let authors = ResizeArray<string>()
+        let sb = System.Text.StringBuilder()
+        for c in a do
+            if c = '{' then 
+                bracketCount <- bracketCount + 1
+                sb.Append(c) |> ignore
+            elif c = '}' then 
+                bracketCount <- bracketCount - 1
+                sb.Append(c) |> ignore
+            elif c = ',' && bracketCount = 0 then
+                authors.Add(sb.ToString())
+                sb.Clear() |> ignore
+            else 
+                sb.Append(c) |> ignore
+        authors.Add(sb.ToString())
+        authors
+
+    static member composeAuthors (authors : string) : ResizeArray<LDNode> =
+        ScholarlyArticle.splitAuthors authors
+        |> Seq.map ScholarlyArticle.composeAuthor
+        |> ResizeArray
+
+    static member decomposeAuthor (author : LDNode, ?context : LDContext) : string =
+        let hasOnlyGivenName = 
+            author.GetPropertyNames(?context = context)
+            |> Seq.filter(fun n -> n <> Person.givenName)
+            |> Seq.isEmpty
+        if hasOnlyGivenName then
+            Person.getGivenNameAsString(author, ?context = context)
+        else
+            Json.LDNode.encoder author
+            |> ARCtrl.Json.Encode.toJsonString 0
+
+    static member decomposeAuthors (authors : ResizeArray<LDNode>, ?context : LDContext) : string =
+        authors
+        |> ResizeArray.map (fun a -> ScholarlyArticle.decomposeAuthor (a,?context = context))
+        |> String.concat ","
+
+    static member composeScholarlyArticle (publication : Publication) =
+        let title = match publication.Title with | Some t -> t | None -> failwith "Publication must have a title"
+        let authors = 
+            publication.Authors
+            |> Option.map ScholarlyArticle.composeAuthors
+        let comments = 
+            publication.Comments
+            |> ResizeArray.map (BaseTypes.composeComment)
+            |> Option.fromSeq
+        let identifiers = ResizeArray []
+        let status = publication.Status |> Option.map BaseTypes.composeDefinedTerm
+        let scholarlyArticle = 
+            ScholarlyArticle.create(
+                headline = title,
+                identifiers = identifiers,
+                ?authors = authors,
+                ?url = publication.DOI,
+                ?creativeWorkStatus = status,
+                ?comments = comments            
+            )
+        scholarlyArticle
+
+    static member decomposeScholarlyArticle (sa : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let title = ScholarlyArticle.getHeadlineAsString(sa, ?context = context)
+        let authors = 
+            ScholarlyArticle.getAuthors(sa, ?graph = graph, ?context = context)
+            |> Option.fromSeq
+            |> Option.map (fun a -> ScholarlyArticle.decomposeAuthors(a, ?context = context))
+        let comments = 
+            ScholarlyArticle.getComments(sa, ?context = context)
+            |> ResizeArray.map BaseTypes.decomposeComment
+        let status = 
+            ScholarlyArticle.tryGetCreativeWorkStatus(sa, ?graph = graph, ?context = context)
+            |> Option.map BaseTypes.decomposeDefinedTerm
+        //let pubMedID =
+        //    ScholarlyArticle.getIdentifiers(sa, ?graph = graph, ?context = context)
+        ARCtrl.Publication.create(
+            title = title,
+            ?authors = authors,
+            ?status = status,
+            comments = comments,
+            ?doi = ScholarlyArticle.tryGetUrl(sa, ?context = context)
+        )
+
+//type Assay =
+
+//    static member composeAssay
 
     ///// Copies ArcAssay object without the pointer to the parent ArcInvestigation
     /////

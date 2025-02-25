@@ -430,8 +430,6 @@ let tests_getPropertyNames = testList "GetPropertyNames" [
         node.SetProperty("https://schema.org/name", "MyName")
         let names = node.GetPropertyNames()
         Expect.sequenceEqual names ["https://schema.org/name"] "Property name was not found"
-    testCase "Fail" <| fun _ ->
-        Expect.isTrue (false) "Test not implemented"
 ]
 
 

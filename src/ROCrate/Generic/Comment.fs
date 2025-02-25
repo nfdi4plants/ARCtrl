@@ -42,11 +42,19 @@ type Comment =
     static member setNameAsString(dt : LDNode, name : string, ?context : LDContext) =
         dt.SetProperty(Comment.name, name, ?context = context)
 
+    static member genID(name : string, ?text : string) =
+        match text with
+        | Some t -> $"Comment_{name}_{t}"
+        | None -> $"Comment_{name}"
+
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(Comment.schemaType, ?context = context)
         && dt.HasProperty(Comment.name, ?context = context)
 
-    static member create(id : string, name : string, ?text : string, ?context : LDContext) =
+    static member create(name : string, ?id : string, ?text : string, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> Comment.genID(name, ?text = text)
         let dt = LDNode(id, ResizeArray [Comment.schemaType], ?context = context)
         dt.SetProperty(Comment.name, name, ?context = context)
         dt.SetOptionalProperty(Comment.text, text, ?context = context)
