@@ -13,7 +13,6 @@ module DynamicObjExtensions =
         member this.HasProperty(propertyName : string) =
             this.TryGetPropertyValue(propertyName) |> Option.isSome
 
-
 /// Base interface implemented by all explicitly known objects in our ROCrate profiles.
 type ILDObject =
     abstract member SchemaType : ResizeArray<string> with get, set
@@ -230,9 +229,17 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         )
         |> ResizeArray
 
+    member this.GetDynamicPropertyHelpers() =
+        
+        this.GetPropertyHelpers(false)
+        |> Seq.filter (fun ph ->
+            (ph.Name.StartsWith "init@" || ph.Name.Equals("id"))
+            |> not
+        )
+
     member this.GetPropertyNames(?context : LDContext) =
         let context = LDContext.tryCombineOptional context (this.TryGetContext())
-        this.GetPropertyHelpers(false)
+        this.GetDynamicPropertyHelpers()
         |> Seq.choose (fun ph ->
             let name = 
                 match context with
@@ -245,7 +252,13 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         )
 
     member this.SetProperty(propertyName : string, value : obj, ?context : LDContext) =
+        
+        #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+        Fable.Core.JsInterop.emitJsStatement (propertyName, value)  "super.SetProperty($0,$1)"
+        #else
         (this :> DynamicObj).SetProperty(propertyName, value)
+        #endif        
+        //DynObj.setProperty propertyName value this 
 
     member this.SetOptionalProperty(propertyName : string, value : #obj option, ?context : LDContext) =
         match value with

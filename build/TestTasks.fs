@@ -6,6 +6,8 @@ open Fake.DotNet
 open ProjectInfo
 open BasicTasks
 open Fake.Core
+open Fake.IO
+open Fake.IO.Globbing.Operators
 
 module RunTests = 
 
@@ -32,6 +34,15 @@ module RunTests =
         else
             Trace.traceImportant "Skipping JavaScript tests"
     )
+
+    let prePareJsTests = BuildTask.create "PrepareJsTests" [] {
+        !! "tests/TestingUtils/TestResults"
+        |> Shell.cleanDirs
+        System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
+        //System.IO.File.Copy(jsHelperFilePath, $"{allTestsProject}/js/{jsHelperFileName}") |> ignore
+
+    }
+
 
     let runTestsJs = BuildTask.createFn "runTestsJS" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
