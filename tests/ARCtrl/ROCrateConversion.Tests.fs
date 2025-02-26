@@ -1,9 +1,9 @@
 module ARCtrl.ROCrateConversion.Tests
 
-open ARCtrl
-open ARCtrl.Process
-open ARCtrl.Conversion
 open ARCtrl.ROCrate
+open ARCtrl
+open ARCtrl.Conversion
+open ARCtrl.Process
 open TestingUtils
 
 module Helper =
@@ -781,8 +781,8 @@ let private tests_ArcTableProcess =
             Expect.hasLength processes 1 "Should have 1 process"
             let comments = LabProcess.getDisambiguatingDescriptionsAsString(processes.[0])
             Expect.hasLength comments 1 "Should have 1 comment"
-            let comment = ARCtrl.Comment.fromString comments.[0]
-            Expect.equal comment (ARCtrl.Comment(commentKey,commentValue)) ""
+            let comment = Comment.fromString comments.[0]
+            Expect.equal comment (Comment(commentKey,commentValue)) ""
             let table = ArcTable.fromProcesses(tableName1,processes)
             let expectedTable = t
             Expect.arcTableEqual table expectedTable "Table should be equal"
@@ -1040,8 +1040,8 @@ let tests_Publication =
     testList "Publication" [
         testCase "Full_FromScaffold" (fun () ->
             let authors = "Lukas Weil, John Doe"
-            let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
-            let commentOnlyKey = ARCtrl.Comment("MyEmptyKey")
+            let comment = Comment("MyCommentKey","MyCommentValue")
+            let commentOnlyKey = Comment("MyEmptyKey")
             let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
             let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
             let ro_Publication = ScholarlyArticle.composeScholarlyArticle p
@@ -1050,8 +1050,8 @@ let tests_Publication =
         )
         testCase "Full_FromScaffold_Flattened" (fun () ->
             let authors = "Lukas Weil, John Doe"
-            let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
-            let commentOnlyKey = ARCtrl.Comment("MyEmptyKey")
+            let comment = Comment("MyCommentKey","MyCommentValue")
+            let commentOnlyKey = Comment("MyEmptyKey")
             let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
             let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
             let ro_Publication = ScholarlyArticle.composeScholarlyArticle p
@@ -1122,14 +1122,14 @@ let tests_Investigation =
         testCase "TopLevel_FromScaffold" (fun () ->
             let publication =
                 let authors = "Lukas Weil, John Doe"
-                let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
-                let commentOnlyKey = ARCtrl.Comment("MyEmptyKey")
+                let comment = Comment("MyCommentKey","MyCommentValue")
+                let commentOnlyKey = Comment("MyEmptyKey")
                 let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
                 ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
             let person =
                 let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
                 ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
+            let comment = Comment("MyCommentKey","MyCommentValue")
             let p = ArcInvestigation(
                 identifier = "My Investigation",
                 title = "My Best Investigation",
@@ -1147,14 +1147,14 @@ let tests_Investigation =
         testCase "TopLevel_FromScaffold_Flattened" (fun () ->
             let publication =
                 let authors = "Lukas Weil, John Doe"
-                let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
-                let commentOnlyKey = ARCtrl.Comment("MyEmptyKey")
+                let comment = Comment("MyCommentKey","MyCommentValue")
+                let commentOnlyKey = Comment("MyEmptyKey")
                 let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
                 ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
             let person =
                 let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
                 ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let comment = ARCtrl.Comment("MyCommentKey2","MyCommentValue2")
+            let comment = Comment("MyCommentKey2","MyCommentValue2")
             let p = ArcInvestigation(
                 identifier = "My Investigation",
                 title = "My Best Investigation",
