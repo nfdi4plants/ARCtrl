@@ -1045,6 +1045,92 @@ let tests_Publication =
         )
     ]
 
+let tests_Assay =
+    testList "Assay" [
+        testCase "Empty_FromScaffold" (fun () ->
+            let p = ArcAssay.init("My Assay")
+            let ro_Assay = Assay.composeAssay p
+            let p' = Assay.decomposeAssay ro_Assay
+            Expect.equal p' p "Assay should match"
+        )
+        testCase "Full_FromScaffold" (fun () ->
+            let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+            let technologyType = OntologyAnnotation(name = "Photometry", tsr = "NCIT", tan = "NCIT:C65109")
+            let technologyPlatform = OntologyAnnotation(name = "Infinite M200 plate reader (Tecan)", tsr = "DPBO", tan = "DPBO:0000116")
+            let person =
+                let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
+                ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+            let table2 = ArcTable.init("Table2")
+            table2.Headers <- Helper.twoRowsDifferentParamValue.Headers
+            table2.Values <- Helper.twoRowsDifferentParamValue.Values
+            let p =
+                ArcAssay(
+                    identifier = "My Assay",
+                    measurementType = measurementType,
+                    technologyType = technologyType,
+                    technologyPlatform = technologyPlatform,
+                    performers = ResizeArray [person],
+                    tables = ResizeArray [Helper.singleRowMixedValues; table2]
+                )
+            let ro_Assay = Assay.composeAssay p
+            let p' = Assay.decomposeAssay ro_Assay
+            Expect.equal p' p "Assay should match"
+        )
+    ]
+
+
+let tests_Investigation = 
+    testList "Investigation" [
+        testCase "Empty_FromScaffold" (fun () ->
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation"
+                )
+            let ro_Investigation = Investigation.composeInvestigation p
+            let p' = Investigation.decomposeInvestigation ro_Investigation
+            Expect.equal p' p "Investigation should match"
+        )
+        testCase "TopLevel_FromScaffold" (fun () ->
+            let publication =
+                let authors = "Lukas Weil, John Doe"
+                let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
+                let commentOnlyKey = ARCtrl.Comment("MyEmptyKey")
+                let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
+                ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
+            let person =
+                let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
+                ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+            let comment = ARCtrl.Comment("MyCommentKey","MyCommentValue")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                description = "My Description is very good and such",
+                publicReleaseDate = System.DateTime.Now.ToString(),
+                submissionDate = System.DateTime.Now.ToString(),
+                publications = ResizeArray [publication],
+                contacts = ResizeArray [person],
+                comments = ResizeArray [comment]
+                )
+            let ro_Investigation = Investigation.composeInvestigation p
+            let p' = Investigation.decomposeInvestigation ro_Investigation
+            Expect.equal p' p "Investigation should match"
+        )
+        testCase "AssayAndStudy_FromScaffold" (fun () ->
+            let assay = ArcAssay.init("My Assay")
+            let study = ArcStudy.init("My Study")
+            let p = ArcInvestigation(
+                identifier = "My Investigation",
+                title = "My Best Investigation",
+                assays = ResizeArray [assay],
+                studies = ResizeArray [study]
+                )
+            let ro_Investigation = Investigation.composeInvestigation p
+            let p' = Investigation.decomposeInvestigation ro_Investigation
+            Expect.equal p' p "Investigation should match"
+        )
+    ]
+
+
 
 let main = 
     testList "ArcROCrateConversion" [
@@ -1057,4 +1143,6 @@ let main =
         tests_ArcTablesProcessSeq
         tests_Person
         tests_Publication
+        tests_Assay
+        tests_Investigation
     ]

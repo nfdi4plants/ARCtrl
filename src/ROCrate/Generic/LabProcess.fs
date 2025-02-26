@@ -120,9 +120,9 @@ type LabProcess =
     static member validate(lp : LDNode, ?context : LDContext) =
         lp.HasType(LabProcess.schemaType, ?context = context)
         && lp.HasProperty(LabProcess.name, ?context = context)
-        && lp.HasProperty(LabProcess.agent, ?context = context)
-        && lp.HasProperty(LabProcess.object_, ?context = context)
-        && lp.HasProperty(LabProcess.result, ?context = context)
+        //&& lp.HasProperty(LabProcess.agent, ?context = context)
+        //&& lp.HasProperty(LabProcess.object_, ?context = context)
+        //&& lp.HasProperty(LabProcess.result, ?context = context)
 
     static member genId(name, ?assayName, ?studyName) =
         match assayName, studyName with

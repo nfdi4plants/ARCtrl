@@ -80,7 +80,7 @@ type ScholarlyArticle =
     static member validate(s : LDNode, ?context : LDContext) =
         s.HasType(ScholarlyArticle.schemaType, ?context = context)
         && s.HasProperty(ScholarlyArticle.headline, ?context = context)
-        && s.HasProperty(ScholarlyArticle.identifier, ?context = context)
+        //&& s.HasProperty(ScholarlyArticle.identifier, ?context = context)
 
     static member create(headline : string, identifiers : ResizeArray<obj>, ?id : string, ?authors : ResizeArray<LDNode>, ?url : string, ?creativeWorkStatus : LDNode, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
         let id = match id with

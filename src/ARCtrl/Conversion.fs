@@ -1139,7 +1139,7 @@ type Assay =
 
     static member decomposeAssay (assay : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let measurementMethod = 
-            Dataset.tryGetVariableMeasuredAsPropertyValue(assay, ?graph = graph, ?context = context)
+            Dataset.tryGetMeasurementMethodAsDefinedTerm(assay, ?graph = graph, ?context = context)
             |> Option.map BaseTypes.decomposeDefinedTerm
         let measurementTechnique = 
             Dataset.tryGetMeasurementTechniqueAsDefinedTerm(assay, ?graph = graph, ?context = context)
