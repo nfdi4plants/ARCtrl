@@ -72,7 +72,7 @@ let private test_read = testList "Read" [
         Expect.equal json.Id "MyIdentifier" "id was not parsed correctly"
         Expect.sequenceEqual json.SchemaType ResizeArray["MyType"] "type was not parsed correctly"
         let ref = Expect.wantSome (json.TryGetProperty "nested") "field ref was not parsed"
-        let expected = LDRef("MyRefIdentifier")
+        let expected = LDRef("RefIdentifier")
         Expect.equal ref expected "ref id was not parsed correctly"
     testCase "withNestedObject" <| fun _ ->
         let json = LDNode.fromROCrateJsonString(GenericObjects.withNestedObject)

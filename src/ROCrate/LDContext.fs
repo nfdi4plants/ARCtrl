@@ -153,3 +153,32 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     interface System.ICloneable with
         member this.Clone() =
             this.DeepCopy()
+
+    member this.StructurallyEquals(other : LDContext) =
+        this.GetHashCode() = other.GetHashCode()
+
+    member this.ReferenceEquals(other : LDContext) =
+        System.Object.ReferenceEquals(this,other)
+
+    override this.Equals(other : obj) =
+        match other with
+        | :? LDContext as other -> this.StructurallyEquals(other)
+        | _ -> false
+
+    override this.GetHashCode() =
+        let mappingsHash = 
+            this.Mappings
+            |> Seq.sortBy (fun kvp -> kvp.Key)
+            |> DynamicObj.HashCodes.boxHashKeyValSeq
+            |> fun v -> v :?> int
+        let nameHash = 
+            match this.Name with
+            | Some n -> n.GetHashCode()
+            | None -> 0
+        let baseContextsHash =
+            if baseContexts.Count = 0 then 0
+            else
+                baseContexts
+                |> Seq.map (fun ctx -> ctx.GetHashCode())
+                |> Seq.reduce HashCodes.mergeHashes
+        HashCodes.mergeHashes (HashCodes.mergeHashes mappingsHash nameHash) baseContextsHash
