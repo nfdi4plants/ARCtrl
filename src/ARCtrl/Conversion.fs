@@ -1086,7 +1086,7 @@ type ScholarlyArticle =
             |> Option.fromSeq
             |> Option.map (fun a -> ScholarlyArticle.decomposeAuthors(a, ?context = context))
         let comments = 
-            ScholarlyArticle.getComments(sa, ?context = context)
+            ScholarlyArticle.getComments(sa, ?graph = graph, ?context = context)
             |> ResizeArray.map BaseTypes.decomposeComment
         let status = 
             ScholarlyArticle.tryGetCreativeWorkStatus(sa, ?graph = graph, ?context = context)

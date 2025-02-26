@@ -317,6 +317,24 @@ let tests_GetPropertyNodes = testList "GetPropertyNodes" [
         node.SetProperty("https://schema.org/about", values)
         let v = node.GetPropertyNodes("https://schema.org/about")
         Expect.sequenceEqual v (ResizeArray [internalNode1;internalNode2]) "values were not resolved"
+    ptestCase "Flattened_NoGraph" <| fun _ ->
+        let internalNode1 = new LDNode("MyNode1",ResizeArray ["https://schema.org/Thing"])
+        let internalNode2 = new LDNode("MyNode2",ResizeArray ["https://schema.org/Thing"])
+        let values = seq {internalNode1;internalNode2}
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("https://schema.org/about", values)
+        let graph = node.Flatten()
+        let f () = node.GetPropertyNodes("https://schema.org/about") |> ignore
+        Expect.throws f "Should fail, as LDRefs can't be resolved" // Or maybe not? Setting this to pending for now
+    testCase "Flattened_WithGraph" <| fun _ ->
+        let internalNode1 = new LDNode("MyNode1",ResizeArray ["https://schema.org/Thing"])
+        let internalNode2 = new LDNode("MyNode2",ResizeArray ["https://schema.org/Thing"])
+        let values = seq {internalNode1;internalNode2}
+        let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("https://schema.org/about", values)
+        let graph = node.Flatten()
+        let v = node.GetPropertyNodes("https://schema.org/about", graph = graph)
+        Expect.sequenceEqual v (ResizeArray [internalNode1;internalNode2]) "values were not resolved"
     testList "Filter" [
         testCase "FilterForType" <| fun _ ->
             let internalNode1 = new LDNode("MyNode1", ResizeArray ["https://schema.org/Person"])
@@ -329,6 +347,37 @@ let tests_GetPropertyNodes = testList "GetPropertyNodes" [
             Expect.sequenceEqual v (ResizeArray [internalNode1]) "values were not resolved"
     ]
 ]
+
+let tests_TryGetPropertyAsSingleNode = testList "TryGetPropertyAsSingleNode" [
+    testCase "PropertyDoesNotExist" <| fun _ ->
+        let node = new LDNode(id = "MyNode", schemaType = ResizeArray ["https://schema.org/Thing"])
+        let v = node.TryGetPropertyAsSingleNode("name")
+        Expect.isNone v "property was resolved"
+    testCase "PropertyIsNotNode" <| fun _ ->
+        let node = new LDNode(id = "MyNode", schemaType = ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("name", "MyName")
+        let v = node.TryGetPropertyAsSingleNode("name")
+        Expect.isNone v "property was resolved"
+    testCase "PropertyIsNode" <| fun _ ->
+        let internalNode = new LDNode(id = "MyInternal", schemaType = ResizeArray ["https://schema.org/Thing"])
+        let node = new LDNode(id = "MyNode", schemaType = ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("about", internalNode)
+        let v = Expect.wantSome (node.TryGetPropertyAsSingleNode("about")) "property was not resolved"
+        Expect.equal v internalNode "property was not resolved correctly"
+    testCase "PropertyIsLDRef_NoGraph" <| fun _ ->
+        let node = new LDNode(id = "MyNode", schemaType = ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("about", LDRef("MyInternal"))
+        let v = node.TryGetPropertyAsSingleNode("about")
+        Expect.isNone v "property was resolved"
+    testCase "PropertyIsLDRef_WithGraph" <| fun _ ->
+        let internalNode = new LDNode(id = "MyInternal", schemaType = ResizeArray ["https://schema.org/Thing"])
+        let graph = new LDGraph()
+        graph.AddNode(internalNode)
+        let node = new LDNode(id = "MyNode", schemaType = ResizeArray ["https://schema.org/Thing"])
+        node.SetProperty("about", LDRef("MyInternal"))
+        let v = Expect.wantSome (node.TryGetPropertyAsSingleNode("about", graph = graph)) "property was not resolved"
+        Expect.equal v internalNode "property was not resolved correctly"
+    ]
 
 let tests_Compact_InPlace = testList "Compact_InPlace" [
         testCase "Type_ContextIsUsedAndSet" <| fun _ ->
@@ -443,6 +492,7 @@ let main = testList "LDNode" [
     tests_HasType
     tests_GetPropertyValues
     tests_GetPropertyNodes
+    tests_TryGetPropertyAsSingleNode
     tests_Compact_InPlace
     tests_Flatten
     tests_getPropertyNames

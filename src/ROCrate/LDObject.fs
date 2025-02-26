@@ -208,22 +208,26 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         | _ -> None
 
     member this.GetPropertyNodes(propertyName : string, ?filter : LDNode -> LDContext option -> bool, ?graph : LDGraph, ?context) =
-        let filter (o : obj) context =
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        this.GetPropertyValues(propertyName, ?context = context)
+        |> Seq.choose (fun o ->
             match o with
             | :? LDRef as r when graph.IsSome ->
                 match graph.Value.TryGetNode(r.Id) with
                 | Some n ->
                     match filter with
-                    | Some f -> f n context
-                    | None -> true
-                | None -> false
+                    | Some f when f n context -> Some n
+                    | None -> Some n
+                    | _ -> None
+                | None -> None
             | :? LDNode as n ->
                 match filter with
-                | Some f -> f n context
-                | None -> true
-            | _ -> false
-        this.GetPropertyValues(propertyName, filter = filter, ?context = context)
-        |> Seq.cast<LDNode>
+                | Some f when f n context -> Some n
+                | None -> Some n
+                | _ -> None
+            | _ -> None
+
+        )
         |> ResizeArray
 
     member this.GetPropertyNames(?context : LDContext) =
