@@ -39,6 +39,10 @@ type ScholarlyArticle =
     static member getIdentifiers(s : LDNode, ?context : LDContext) =
         s.GetPropertyValues(ScholarlyArticle.identifier, ?context = context)
 
+    static member getIdentifiersAsPropertyValue(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let filter = fun ldObject context -> PropertyValue.validate(ldObject, ?context = context)
+        s.GetPropertyNodes(ScholarlyArticle.identifier, filter = filter, ?graph = graph, ?context = context)
+
     static member setIdentifiers(s : LDNode, identifiers : ResizeArray<obj>) =
         s.SetProperty(ScholarlyArticle.identifier, identifiers)
 
@@ -82,7 +86,7 @@ type ScholarlyArticle =
         && s.HasProperty(ScholarlyArticle.headline, ?context = context)
         //&& s.HasProperty(ScholarlyArticle.identifier, ?context = context)
 
-    static member create(headline : string, identifiers : ResizeArray<obj>, ?id : string, ?authors : ResizeArray<LDNode>, ?url : string, ?creativeWorkStatus : LDNode, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+    static member create(headline : string, identifiers : ResizeArray<#obj>, ?id : string, ?authors : ResizeArray<LDNode>, ?url : string, ?creativeWorkStatus : LDNode, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> ScholarlyArticle.genID(headline, ?url = url)

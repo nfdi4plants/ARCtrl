@@ -1048,6 +1048,14 @@ let tests_Publication =
             let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
             Expect.equal p' p "Publication should match"
         )
+        testCase "DOI_PubMedID_FromScaffold" (fun () ->
+            let doi = "10.1234/5678"
+            let pubMedID = "12345678"
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = doi, pubMedID = pubMedID)
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
+            Expect.equal p' p "Publication should match"
+        )
         testCase "Full_FromScaffold_Flattened" (fun () ->
             let authors = "Lukas Weil, John Doe"
             let comment = Comment("MyCommentKey","MyCommentValue")
@@ -1067,7 +1075,7 @@ let tests_Publication =
         testCase "FullAuthors_FromROCrate" (fun () ->
             let author1 = ARCtrl.ROCrate.Person.create(givenName = "Lukas",familyName = "Weil", orcid = "0000-0002-1825-0097")
             let author2 = ARCtrl.ROCrate.Person.create(givenName = "John",familyName = "Doe", orcid = "0000-0002-1325-0077")
-            let scholarlyArticle = ARCtrl.ROCrate.ScholarlyArticle.create(headline = "My Paper", identifiers = ResizeArray [], url = "10.1234/5678", authors = ResizeArray [author1;author2])
+            let scholarlyArticle = ARCtrl.ROCrate.ScholarlyArticle.create(headline = "My Paper", identifiers = ResizeArray [], authors = ResizeArray [author1;author2])
             let scaffold_Publication = ScholarlyArticleConversion.decomposeScholarlyArticle scholarlyArticle
             let p = ScholarlyArticleConversion.composeScholarlyArticle scaffold_Publication
             Expect.equal p scholarlyArticle "Publication should match"

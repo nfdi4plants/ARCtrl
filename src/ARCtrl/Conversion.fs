@@ -1013,6 +1013,40 @@ type PersonConversion =
 type ScholarlyArticleConversion =
 
 
+    static member doiKey = "DOI"
+
+    static member doiURL = "http://purl.obolibrary.org/obo/OBI_0002110"
+
+    static member pubmedIDKey = "PubMedID"
+
+    static member pubmedIDURL = "http://purl.obolibrary.org/obo/OBI_0001617"
+
+    static member composeDOI (doi : string) : LDNode =
+        PropertyValue.create(name = ScholarlyArticleConversion.doiKey, value = doi, propertyID = ScholarlyArticleConversion.doiURL)
+
+    static member tryDecomposeDOI (doi : LDNode, ?context : LDContext) : string option =
+        match
+            PropertyValue.tryGetNameAsString(doi, ?context = context),
+            PropertyValue.tryGetValueAsString(doi, ?context = context),
+            PropertyValue.tryGetPropertyIDAsString(doi, ?context = context)
+        with
+        | Some name, Some value, Some id when name = ScholarlyArticleConversion.doiKey && id = ScholarlyArticleConversion.doiURL ->
+            Some value
+        | _ -> None
+
+    static member composePubMedID (pubMedID : string) : LDNode =
+        PropertyValue.create(name = ScholarlyArticleConversion.pubmedIDKey, value = pubMedID, propertyID = ScholarlyArticleConversion.pubmedIDURL)
+
+    static member tryDecomposePubMedID (pubMedID : LDNode, ?context : LDContext) : string option =
+        match
+            PropertyValue.tryGetNameAsString(pubMedID, ?context = context),
+            PropertyValue.tryGetValueAsString(pubMedID, ?context = context),
+            PropertyValue.tryGetPropertyIDAsString(pubMedID, ?context = context)
+        with
+        | Some name, Some value, Some id when name = ScholarlyArticleConversion.pubmedIDKey && id = ScholarlyArticleConversion.pubmedIDURL ->
+            Some value
+        | _ -> None
+
     static member composeAuthor (author : string) : LDNode =
         try 
             ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder author
@@ -1068,14 +1102,19 @@ type ScholarlyArticleConversion =
             publication.Comments
             |> ResizeArray.map (BaseTypes.composeComment)
             |> Option.fromSeq
-        let identifiers = ResizeArray []
+        let identifiers = ResizeArray [
+            if publication.DOI.IsSome && publication.DOI.Value <> "" then
+                ScholarlyArticleConversion.composeDOI publication.DOI.Value
+            if publication.PubMedID.IsSome && publication.PubMedID.Value <> "" then
+                ScholarlyArticleConversion.composePubMedID publication.PubMedID.Value
+        ]
         let status = publication.Status |> Option.map BaseTypes.composeDefinedTerm
         let scholarlyArticle = 
             ScholarlyArticle.create(
                 headline = title,
                 identifiers = identifiers,
                 ?authors = authors,
-                ?url = publication.DOI,
+                //?url = publication.DOI,
                 ?creativeWorkStatus = status,
                 ?comments = comments            
             )
@@ -1093,14 +1132,16 @@ type ScholarlyArticleConversion =
         let status = 
             ScholarlyArticle.tryGetCreativeWorkStatus(sa, ?graph = graph, ?context = context)
             |> Option.map (fun s -> BaseTypes.decomposeDefinedTerm(s, ?context = context))
-        //let pubMedID =
-        //    ScholarlyArticle.getIdentifiers(sa, ?graph = graph, ?context = context)
+        let identifiers = ScholarlyArticle.getIdentifiersAsPropertyValue(sa, ?graph = graph, ?context = context)
+        let pubMedID = identifiers |> ResizeArray.tryPick (fun i -> ScholarlyArticleConversion.tryDecomposePubMedID(i, ?context = context))
+        let doi = identifiers |> ResizeArray.tryPick (fun i -> ScholarlyArticleConversion.tryDecomposeDOI(i, ?context = context))
         ARCtrl.Publication.create(
             title = title,
             ?authors = authors,
             ?status = status,
             comments = comments,
-            ?doi = ScholarlyArticle.tryGetUrl(sa, ?context = context)
+            ?doi = doi,
+            ?pubMedID = pubMedID
         )
 
 type AssayConversion =
@@ -1360,163 +1401,3 @@ module TypeExtensions =
 
         static member fromArcInvestigation (a : ArcInvestigation) = InvestigationConversion.composeInvestigation a
 
-    ///// Copies ArcAssay object without the pointer to the parent ArcInvestigation
-    /////
-    ///// In order to copy the pointer to the parent ArcInvestigation as well, use the Copy() method of the ArcInvestigation instead.
-    //member this.ToAssay() : Assay = 
-    //    let processSeq = ArcTables(this.Tables).GetProcesses()
-    //    let assayMaterials =
-    //        AssayMaterials.create(
-    //            ?Samples = (ProcessSequence.getSamples processSeq |> Option.fromValueWithDefault []),
-    //            ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
-    //        )
-    //        |> Option.fromValueWithDefault AssayMaterials.empty
-    //    let fileName = 
-    //        if Identifier.isMissingIdentifier this.Identifier then
-    //            None
-    //        else 
-    //            Some (Identifier.Assay.fileNameFromIdentifier this.Identifier)
-    //    Assay.create(
-    //        ?FileName = fileName,
-    //        ?MeasurementType = this.MeasurementType,
-    //        ?TechnologyType = this.TechnologyType,
-    //        ?TechnologyPlatform = (this.TechnologyPlatform |> Option.map ArcAssay.composeTechnologyPlatform),
-    //        ?DataFiles = (ProcessSequence.getData processSeq |> Option.fromValueWithDefault []),
-    //        ?Materials = assayMaterials,
-    //        ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
-    //        ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
-    //        ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
-    //        ?Comments = (this.Comments |> List.ofArray |> Option.fromValueWithDefault [])
-    //        )
-
-    //// Create an ArcAssay from an ISA Json Assay.
-    //static member fromAssay (a : Assay) : ArcAssay = 
-    //    let tables = (a.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
-    //    let identifer = 
-    //        match a.FileName with
-    //        | Some fn -> Identifier.Assay.identifierFromFileName fn
-    //        | None -> Identifier.createMissingIdentifier()
-    //    ArcAssay.create(
-    //        identifer,
-    //        ?measurementType = (a.MeasurementType |> Option.map (fun x -> x.Copy())),
-    //        ?technologyType = (a.TechnologyType |> Option.map (fun x -> x.Copy())),
-    //        ?technologyPlatform = (a.TechnologyPlatform |> Option.map ArcAssay.decomposeTechnologyPlatform),
-    //        ?tables = tables,
-    //        ?comments = (a.Comments |> Option.map Array.ofList)
-    //        )
-
-
-
-    ///// <summary>
-    ///// Creates an ISA-Json compatible Study from ArcStudy.
-    ///// </summary>
-    ///// <param name="arcAssays">If this parameter is given, will transform these ArcAssays to Assays and include them as children of the Study. If not, tries to get them from the parent ArcInvestigation instead. If ArcStudy has no parent ArcInvestigation either, initializes new ArcAssay from registered Identifiers.</param>
-    //member this.ToStudy(?arcAssays: ResizeArray<ArcAssay>) : Study = 
-    //    let processSeq = ArcTables(this.Tables).GetProcesses()
-    //    let protocols = ProcessSequence.getProtocols processSeq |> Option.fromValueWithDefault []
-    //    let studyMaterials =
-    //        StudyMaterials.create(
-    //            ?Sources = (ProcessSequence.getSources processSeq |> Option.fromValueWithDefault []),
-    //            ?Samples = (ProcessSequence.getSamples processSeq |> Option.fromValueWithDefault []),
-    //            ?OtherMaterials = (ProcessSequence.getMaterials processSeq |> Option.fromValueWithDefault [])
-    //        )
-    //        |> Option.fromValueWithDefault StudyMaterials.empty
-    //    let identifier,fileName = 
-    //        if Identifier.isMissingIdentifier this.Identifier then
-    //            None, None
-    //        else
-    //            Some this.Identifier, Some (Identifier.Study.fileNameFromIdentifier this.Identifier)
-    //    let assays = 
-    //        arcAssays |> Option.defaultValue (this.GetRegisteredAssaysOrIdentifier())
-    //        |> List.ofSeq |> List.map (fun a -> a.ToAssay())
-    //    Study.create(
-    //        ?FileName = fileName,
-    //        ?Identifier = identifier,
-    //        ?Title = this.Title,
-    //        ?Description = this.Description,
-    //        ?SubmissionDate = this.SubmissionDate,
-    //        ?PublicReleaseDate = this.PublicReleaseDate,
-    //        ?Publications = (this.Publications |> List.ofArray |> Option.fromValueWithDefault []),
-    //        ?Contacts = (this.Contacts |> List.ofArray |> Option.fromValueWithDefault []),
-    //        ?StudyDesignDescriptors = (this.StudyDesignDescriptors |> List.ofArray |> Option.fromValueWithDefault []),
-    //        ?Protocols = protocols,
-    //        ?Materials = studyMaterials,
-    //        ?ProcessSequence = (processSeq |> Option.fromValueWithDefault []),
-    //        ?Assays = (assays |> Option.fromValueWithDefault []),
-    //        ?CharacteristicCategories = (ProcessSequence.getCharacteristics processSeq |> Option.fromValueWithDefault []),
-    //        ?UnitCategories = (ProcessSequence.getUnits processSeq |> Option.fromValueWithDefault []),
-    //        ?Comments = (this.Comments |> List.ofArray |> Option.fromValueWithDefault [])
-    //        )
-
-    //// Create an ArcStudy from an ISA Json Study.
-    //static member fromStudy (s : Study) : (ArcStudy * ResizeArray<ArcAssay>) = 
-    //    let tables = (s.ProcessSequence |> Option.map (ArcTables.fromProcesses >> fun t -> t.Tables))
-    //    let identifer = 
-    //        match s.FileName with
-    //        | Some fn -> Identifier.Study.identifierFromFileName fn
-    //        | None -> Identifier.createMissingIdentifier()
-    //    let assays = s.Assays |> Option.map (List.map ArcAssay.fromAssay >> ResizeArray) |> Option.defaultValue (ResizeArray())
-    //    let assaysIdentifiers = assays |> Seq.map (fun a -> a.Identifier) |> ResizeArray
-    //    ArcStudy.create(
-    //        identifer,
-    //        ?title = s.Title,
-    //        ?description = s.Description,
-    //        ?submissionDate = s.SubmissionDate,
-    //        ?publicReleaseDate = s.PublicReleaseDate,
-    //        ?publications = (s.Publications |> Option.map Array.ofList),
-    //        ?contacts = (s.Contacts|> Option.map Array.ofList),
-    //        ?studyDesignDescriptors = (s.StudyDesignDescriptors |> Option.map Array.ofList),
-    //        ?tables = tables,
-    //        ?registeredAssayIdentifiers = Some assaysIdentifiers,
-    //        ?comments = (s.Comments |> Option.map Array.ofList)
-    //        ),
-    //    assays
-
-
-    ///// Transform an ArcInvestigation to an ISA Json Investigation.
-    //member this.ToInvestigation() : Investigation = 
-    //    let studies = this.RegisteredStudies |> Seq.toList |> List.map (fun a -> a.ToStudy()) |> Option.fromValueWithDefault []
-    //    let identifier =
-    //        if Identifier.isMissingIdentifier this.Identifier then None
-    //        else Some this.Identifier
-    //    Investigation.create(
-    //        FileName = ARCtrl.Path.InvestigationFileName,
-    //        ?Identifier = identifier,
-    //        ?Title = this.Title,
-    //        ?Description = this.Description,
-    //        ?SubmissionDate = this.SubmissionDate,
-    //        ?PublicReleaseDate = this.PublicReleaseDate,
-    //        ?Publications = (this.Publications |> List.ofArray |> Option.fromValueWithDefault []),
-    //        ?Contacts = (this.Contacts |> List.ofArray |> Option.fromValueWithDefault []),
-    //        ?Studies = studies,
-    //        ?Comments = (this.Comments |> List.ofArray |> Option.fromValueWithDefault [])
-    //        )
-
-    //// Create an ArcInvestigation from an ISA Json Investigation.
-    //static member fromInvestigation (i : Investigation) : ArcInvestigation = 
-    //    let identifer = 
-    //        match i.Identifier with
-    //        | Some i -> i
-    //        | None -> Identifier.createMissingIdentifier()
-    //    let studiesRaw, assaysRaw = 
-    //        i.Studies 
-    //        |> Option.defaultValue []
-    //        |> List.map ArcStudy.fromStudy
-    //        |> List.unzip
-    //    let studies = ResizeArray(studiesRaw)
-    //    let studyIdentifiers = studiesRaw |> Seq.map (fun a -> a.Identifier) |> ResizeArray
-    //    let assays = assaysRaw |> Seq.concat |> Seq.distinctBy (fun a -> a.Identifier) |> ResizeArray
-    //    let i = ArcInvestigation.create(
-    //        identifer,
-    //        ?title = i.Title,
-    //        ?description = i.Description,
-    //        ?submissionDate = i.SubmissionDate,
-    //        ?publicReleaseDate = i.PublicReleaseDate,
-    //        ?publications = (i.Publications |> Option.map Array.ofList),
-    //        studies = studies,
-    //        assays = assays,
-    //        registeredStudyIdentifiers = studyIdentifiers,
-    //        ?contacts = (i.Contacts |> Option.map Array.ofList),            
-    //        ?comments = (i.Comments |> Option.map Array.ofList)
-    //        )      
-    //    i
