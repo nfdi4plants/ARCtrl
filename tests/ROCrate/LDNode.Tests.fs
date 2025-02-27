@@ -382,13 +382,19 @@ let tests_TryGetPropertyAsSingleNode = testList "TryGetPropertyAsSingleNode" [
     ]
 
 let tests_Compact_InPlace = testList "Compact_InPlace" [
-        testCase "Type_ContextIsUsedAndSet" <| fun _ ->
+        testCase "Type_SetContextTrue" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let context = new LDContext()
             context.AddMapping("thing", "https://schema.org/Thing")
-            node.Compact_InPlace(context)
+            node.Compact_InPlace(context,setContext=true)
             let ctx = Expect.wantSome (node.TryGetContext()) "context was not set"
             Expect.equal (ctx.TryResolveTerm("thing")) (Some "https://schema.org/Thing") "context was not set correctly"
+        testCase "Type_SetContextFalse" <| fun _ ->
+            let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
+            let context = new LDContext()
+            context.AddMapping("thing", "https://schema.org/Thing")
+            node.Compact_InPlace(context,setContext=false)
+            Expect.isNone (node.TryGetContext()) "context was set"
         testCase "Type" <| fun _ ->
             let node = new LDNode("MyNode", ResizeArray ["https://schema.org/Thing"])
             let context = new LDContext()

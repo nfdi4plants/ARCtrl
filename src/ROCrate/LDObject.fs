@@ -519,10 +519,14 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         )
 
     member this.Flatten(?graph : LDGraph) : LDGraph =      
-        let graph, graphContext =
+        //let graph, graphContext =
+        //    match graph with
+        //    | Some g -> g, g.TryGetContext()
+        //    | None -> new LDGraph(?context = this.TryGetContext()), None
+        let graph =
             match graph with
-            | Some g -> g, g.TryGetContext()
-            | None -> new LDGraph(?context = this.TryGetContext()), None
+            | Some g -> g
+            | None -> new LDGraph(?context = this.TryGetContext())
         let rec flattenValue (o : obj) : obj =
             match o with
             | :? LDNode as n ->
