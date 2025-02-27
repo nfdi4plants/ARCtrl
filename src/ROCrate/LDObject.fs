@@ -132,6 +132,11 @@ and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?conte
         | Some existingNode -> node.MergeAppendInto_InPlace(existingNode, flattenTo = this)
         | None -> mappings.Add(id, node)
 
+    member this.Compact_InPlace(?context : LDContext) =
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        this.Nodes
+        |> Seq.iter (fun node -> node.Compact_InPlace(?context = context))
+
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)
 
@@ -512,8 +517,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | _ -> ph.SetValue this newValue
         )
 
-    member this.Flatten(?graph : LDGraph) : LDGraph =
-        let graph = defaultArg graph (new LDGraph(?context = this.TryGetContext()))
+    member this.Flatten(?graph : LDGraph) : LDGraph =      
+        let graph, graphContext =
+            match graph with
+            | Some g -> g, g.TryGetContext()
+            | None -> new LDGraph(?context = this.TryGetContext()), None
         let rec flattenValue (o : obj) : obj =
             match o with
             | :? LDNode as n ->

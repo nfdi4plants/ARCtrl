@@ -27,17 +27,17 @@ type LabProtocol =
 
     static member description = "http://schema.org/description"
 
-    static member intendedUse = "http://schema.org/intendedUse"
+    static member intendedUse = "http://bioschemas.org/intendedUse"
 
     static member name = "http://schema.org/name"
 
     static member comment = "http://schema.org/comment"
 
-    static member computationalTool = "http://schema.org/computationalTool"
+    static member computationalTool = "http://bioschemas.org/computationalTool"
 
-    static member labEquipment = "http://schema.org/labEquipment"
+    static member labEquipment = "http://bioschemas.org/labEquipment"
 
-    static member reagent = "http://schema.org/reagent"
+    static member reagent = "http://bioschemas.org/reagent"
 
     static member url = "http://schema.org/url"
 

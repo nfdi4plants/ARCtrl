@@ -20,7 +20,7 @@ type Dataset =
 
     static member datePublished = "http://schema.org/datePublished"
 
-    static member dateModified = "http://schema.org/datemodified"
+    static member dateModified = "http://schema.org/dateModified"
 
     static member description = "http://schema.org/description"
 

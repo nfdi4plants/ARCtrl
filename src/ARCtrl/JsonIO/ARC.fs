@@ -3,7 +3,9 @@ namespace ARCtrl.Json
 open Thoth.Json.Core
 
 open ARCtrl
+open ARCtrl.ROCrate
 open ARCtrl.Helper
+open ARCtrl.Conversion
 
 module ARC =
     
@@ -11,17 +13,21 @@ module ARC =
     ///
     /// See https://www.researchobject.org/ro-crate/1.1/root-data-entity.html for more information
     module ROCrate = 
-        
-        let encoder (isa : ArcInvestigation) = 
-            [
-                Encode.tryInclude "@type" Encode.string (Some "CreativeWork")
-                Encode.tryInclude "@id" Encode.string (Some "ro-crate-metadata.json")
-                Encode.tryInclude "about" Investigation.ROCrate.encoder (Some isa)
-                "conformsTo", ROCrateContext.ROCrate.conformsTo_jsonvalue |> Some
-                "@context", ROCrateContext.ROCrate.context_jsonvalue |> Some
-                ]
-            |> Encode.choose
-            |> Encode.object
+       
+        let metadataFileDescriptor =
+            let id = "ro-crate-metadata.json"
+            let schemaType = ResizeArray ["https://schema.org/CreativeWork"]
+            let node = LDNode(id, schemaType)
+            node.SetProperty("https://schema.org/conformsTo", LDRef("https://w3id.org/ro/crate/1.1"))
+            node.SetProperty("https://schema.org/about", LDRef("./"))
+            node
+
+        let encoder (isa : ArcInvestigation) =         
+            let isa = isa.ToROCrateInvestigation()
+            let graph = isa.Flatten()
+            graph.AddNode(metadataFileDescriptor)
+            graph.Compact_InPlace()
+            LDGraph.encoder graph
 
         let decoder : Decoder<ArcInvestigation option> = 
             Decode.object (fun get ->
