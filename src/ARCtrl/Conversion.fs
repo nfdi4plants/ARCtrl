@@ -282,7 +282,7 @@ open ColumnIndex
 open ARCtrl.Helper.Regex.ActivePatterns
 
 /// Functions for parsing ArcTables to ISA json Processes and vice versa
-type ProcessParsing = 
+type ProcessConversion = 
 
     static member tryGetProtocolType (pv : LDNode, ?graph : LDGraph, ?context : LDContext) =
         match LabProtocol.tryGetIntendedUseAsDefinedTerm(pv,?graph = graph, ?context = context) with
@@ -452,51 +452,51 @@ type ProcessParsing =
 
         let charGetters =
             valueHeaders 
-            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryCharacteristicGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryCharacteristicGetter generalI valueI header)
 
         let factorValueGetters =
             valueHeaders
-            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryFactorGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryFactorGetter generalI valueI header)
 
         let parameterValueGetters =
             valueHeaders
-            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryParameterGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryParameterGetter generalI valueI header)
 
         let componentGetters =
             valueHeaders
-            |> List.choose (fun (valueI,(generalI,header)) -> ProcessParsing.tryComponentGetter generalI valueI header)
+            |> List.choose (fun (valueI,(generalI,header)) -> ProcessConversion.tryComponentGetter generalI valueI header)
 
         let protocolTypeGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolTypeGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolTypeGetter generalI header)
 
         let protocolREFGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolREFGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolREFGetter generalI header)
 
         let protocolDescriptionGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolDescriptionGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolDescriptionGetter generalI header)
 
         let protocolURIGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolURIGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolURIGetter generalI header)
 
         let protocolVersionGetter =
             headers
-            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetProtocolVersionGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetProtocolVersionGetter generalI header)
 
         let performerGetter = 
             headers
-            |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetPerformerGetter generalI header)
+            |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetPerformerGetter generalI header)
 
         let commentGetters = 
             headers
-            |> Seq.choose (fun (generalI,header) -> ProcessParsing.tryGetCommentGetter generalI header)
+            |> Seq.choose (fun (generalI,header) -> ProcessConversion.tryGetCommentGetter generalI header)
             |> Seq.toList
 
         let inputGetter =
-            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetInputGetter generalI header) with
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetInputGetter generalI header) with
             | Some inputGetter ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
@@ -517,7 +517,7 @@ type ProcessParsing =
             
         // This is a little more complex, as data and material objects can't contain factors. So in the case where the output of the table is a data object but factors exist. An additional sample object with the same name is created to contain the factors.
         let outputGetter =
-            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessParsing.tryGetOutputGetter generalI header) with
+            match headers |> Seq.tryPick (fun (generalI,header) -> ProcessConversion.tryGetOutputGetter generalI header) with
             | Some outputGetter ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
@@ -539,7 +539,7 @@ type ProcessParsing =
             let rowCount = matrix.Keys |> Seq.map snd |> Seq.max |> (+) 1
             let pn =
                 if rowCount = 1 then processNameRoot
-                else ProcessParsing.composeProcessName processNameRoot i
+                else ProcessConversion.composeProcessName processNameRoot i
 
             let paramvalues = parameterValueGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
             //let parameters = paramvalues |> Option.map (List.map (fun pv -> pv.Category.Value))
@@ -586,8 +586,8 @@ type ProcessParsing =
         processes
         |> List.groupBy (fun p ->
             match LabProcess.tryGetNameAsString (p, ?context = context), LabProcess.tryGetExecutesLabProtocol(p,?graph = graph, ?context = context) with
-            | Some name, _ when ProcessParsing.decomposeProcessName name |> snd |> Option.isSome ->
-                ProcessParsing.decomposeProcessName name |> fst
+            | Some name, _ when ProcessConversion.decomposeProcessName name |> snd |> Option.isSome ->
+                ProcessConversion.decomposeProcessName name |> fst
             | _, Some protocol when LabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
                 LabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
             | Some name, _ when name.Contains "_" ->
@@ -644,7 +644,7 @@ type ProcessParsing =
                     match LabProtocol.tryGetDescriptionAsString (prot, ?context = context) with | Some desc -> yield (CompositeHeader.ProtocolDescription, CompositeCell.FreeText desc) | None -> ()
                     match LabProtocol.tryGetUrl (prot, ?context = context) with | Some uri -> yield (CompositeHeader.ProtocolUri, CompositeCell.FreeText uri) | None -> ()
                     match LabProtocol.tryGetVersionAsString(prot, ?context = context) with | Some version -> yield (CompositeHeader.ProtocolVersion, CompositeCell.FreeText version) | None -> ()
-                    match ProcessParsing.tryGetProtocolType(prot, ?graph = graph, ?context = context) with
+                    match ProcessConversion.tryGetProtocolType(prot, ?graph = graph, ?context = context) with
                     | Some intendedUse -> yield (CompositeHeader.ProtocolType, CompositeCell.Term intendedUse)
                     | None -> ()
                 ]
@@ -821,7 +821,7 @@ module TableTypeExtensions =
                     ?index = c.TryGetColumnIndex())
             LabProtocol.tryGetDescriptionAsString(p, ?context = context)  |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
             LabProtocol.tryGetVersionAsString(p, ?context = context)       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
-            ProcessParsing.tryGetProtocolType(p, ?context =context) |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
+            ProcessConversion.tryGetProtocolType(p, ?context =context) |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
             LabProtocol.tryGetUrl(p, ?context = context)           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
             t.AddProtocolNameColumn([|name|])
             t
@@ -861,12 +861,12 @@ module TableTypeExtensions =
                 LabProcess.create(name = this.Name(*, objects = input, results = output*))
                 |> List.singleton
             else
-                let getter = ProcessParsing.getProcessGetter this.Name this.Headers          
+                let getter = ProcessConversion.getProcessGetter this.Name this.Headers          
                 [
                     for i in 0..this.RowCount-1 do
                         yield getter this.Values i        
                 ]
-                //|> ProcessParsing.mergeIdenticalProcesses
+                //|> ProcessConversion.mergeIdenticalProcesses
 
 
         /// Create a new table from a list of processes
@@ -876,7 +876,7 @@ module TableTypeExtensions =
         /// The processes SHOULD have the same headers, or even execute the same protocol
         static member fromProcesses(name,ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTable = 
             ps
-            |> List.collect (fun p -> ProcessParsing.processToRows(p,?context = context,?graph = graph) |> List.ofSeq)
+            |> List.collect (fun p -> ProcessConversion.processToRows(p,?context = context,?graph = graph) |> List.ofSeq)
             |> ArcTableAux.Unchecked.alignByHeaders true
             |> fun (headers, rows) -> ArcTable.create(name,headers,rows)    
 
@@ -895,10 +895,10 @@ module TableTypeExtensions =
         /// Then each group is converted to a table with this nameroot as sheetname
         static member fromProcesses (ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTables = 
             ps
-            |> ProcessParsing.groupProcesses
+            |> ProcessConversion.groupProcesses
             |> List.map (fun (name,ps) ->
                 ps
-                |> List.collect (fun p -> ProcessParsing.processToRows(p,?graph = graph, ?context = context) |> List.ofSeq)
+                |> List.collect (fun p -> ProcessConversion.processToRows(p,?graph = graph, ?context = context) |> List.ofSeq)
                 |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
                 |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
             )
@@ -907,7 +907,7 @@ module TableTypeExtensions =
 
 
 
-type Person = 
+type PersonConversion = 
 
     static member orcidKey = "ORCID"   
 
@@ -946,7 +946,7 @@ type Person =
     static member orcidRegex = System.Text.RegularExpressions.Regex("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]")
 
     static member tryGetOrcidNumber (orcid : string) =
-        let m = Person.orcidRegex.Match(orcid)
+        let m = PersonConversion.orcidRegex.Match(orcid)
         if m.Success then
             Some m.Value
         else
@@ -969,21 +969,21 @@ type Person =
             |> Option.fromSeq
         let address =
             person.Address
-            |> Option.map Person.composeAddress
+            |> Option.map PersonConversion.composeAddress
         let affiliation = 
             person.Affiliation
-            |> Option.map Person.composeAffiliation
+            |> Option.map PersonConversion.composeAffiliation
         ARCtrl.ROCrate.Person.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
 
     static member decomposePerson (person : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let orcid = Person.tryGetOrcidNumber person.Id
+        let orcid = PersonConversion.tryGetOrcidNumber person.Id
         let address = 
             match Person.tryGetAddressAsString(person, ?context = context) with
             | Some s -> 
                 Some s
             | None ->
                 match Person.tryGetAddressAsPostalAddress(person, ?graph = graph, ?context = context) with
-                | Some a -> Some (Person.decomposeAddress a)
+                | Some a -> Some (PersonConversion.decomposeAddress a)
                 | None -> None
         let roles = 
             Person.getJobTitlesAsDefinedTerm(person, ?graph = graph, ?context = context)
@@ -993,7 +993,7 @@ type Person =
             |> ResizeArray.map Comment.fromString
         let affiliation =
             Person.tryGetAffiliation(person, ?graph = graph, ?context = context)
-            |> Option.map (fun a -> Person.decomposeAffiliation(a, ?context = context))
+            |> Option.map (fun a -> PersonConversion.decomposeAffiliation(a, ?context = context))
         ARCtrl.Person.create(
             firstName = Person.getGivenNameAsString(person, ?context = context),
             ?lastName = Person.tryGetFamilyNameAsString(person, ?context = context),
@@ -1009,7 +1009,7 @@ type Person =
         )
         
 
-type ScholarlyArticle =
+type ScholarlyArticleConversion =
 
 
     static member composeAuthor (author : string) : LDNode =
@@ -1038,8 +1038,8 @@ type ScholarlyArticle =
         authors
 
     static member composeAuthors (authors : string) : ResizeArray<LDNode> =
-        ScholarlyArticle.splitAuthors authors
-        |> Seq.map ScholarlyArticle.composeAuthor
+        ScholarlyArticleConversion.splitAuthors authors
+        |> Seq.map ScholarlyArticleConversion.composeAuthor
         |> ResizeArray
 
     static member decomposeAuthor (author : LDNode, ?context : LDContext) : string =
@@ -1055,14 +1055,14 @@ type ScholarlyArticle =
 
     static member decomposeAuthors (authors : ResizeArray<LDNode>, ?context : LDContext) : string =
         authors
-        |> ResizeArray.map (fun a -> ScholarlyArticle.decomposeAuthor (a,?context = context))
+        |> ResizeArray.map (fun a -> ScholarlyArticleConversion.decomposeAuthor (a,?context = context))
         |> String.concat ","
 
     static member composeScholarlyArticle (publication : Publication) =
         let title = match publication.Title with | Some t -> t | None -> failwith "Publication must have a title"
         let authors = 
             publication.Authors
-            |> Option.map ScholarlyArticle.composeAuthors
+            |> Option.map ScholarlyArticleConversion.composeAuthors
         let comments = 
             publication.Comments
             |> ResizeArray.map (BaseTypes.composeComment)
@@ -1085,7 +1085,7 @@ type ScholarlyArticle =
         let authors = 
             ScholarlyArticle.getAuthors(sa, ?graph = graph, ?context = context)
             |> Option.fromSeq
-            |> Option.map (fun a -> ScholarlyArticle.decomposeAuthors(a, ?context = context))
+            |> Option.map (fun a -> ScholarlyArticleConversion.decomposeAuthors(a, ?context = context))
         let comments = 
             ScholarlyArticle.getComments(sa, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
@@ -1102,7 +1102,7 @@ type ScholarlyArticle =
             ?doi = ScholarlyArticle.tryGetUrl(sa, ?context = context)
         )
 
-type Assay =
+type AssayConversion =
 
     static member composeAssay (assay : ArcAssay) =
         let id = ARCtrl.Helper.Identifier.Assay.fileNameFromIdentifier assay.Identifier
@@ -1111,7 +1111,7 @@ type Assay =
         let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
         let creators = 
             assay.Performers
-            |> ResizeArray.map (fun c -> Person.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let dataFiles = 
             ResizeArray [] // TODO
@@ -1150,7 +1150,7 @@ type Assay =
             |> Option.map (fun v -> BaseTypes.decomposePropertyValueToOA(v, ?context = context))
         let perfomers = 
             Dataset.getCreators(assay, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun c -> Person.decomposePerson(c, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         //let dataFiles = 
         //    Assay.getHasParts(assay, ?graph = graph, ?context = context)
         //    |> Option.fromSeq
@@ -1171,7 +1171,7 @@ type Assay =
             comments = comments
         )
 
-type Study = 
+type StudyConversion = 
 
     static member composeStudy (study : ArcStudy) =
         let id = ARCtrl.Helper.Identifier.Study.fileNameFromIdentifier study.Identifier
@@ -1180,11 +1180,11 @@ type Study =
         let dateModified = System.DateTime.Now
         let publications = 
             study.Publications
-            |> ResizeArray.map (fun p -> ScholarlyArticle.composeScholarlyArticle p)
+            |> ResizeArray.map (fun p -> ScholarlyArticleConversion.composeScholarlyArticle p)
             |> Option.fromSeq
         let creators =
             study.Contacts
-            |> ResizeArray.map (fun c -> Person.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let dataFiles = 
             ResizeArray [] // TODO
@@ -1222,10 +1222,10 @@ type Study =
             |> Option.map DateTime.toString
         let publications = 
             Dataset.getCitations(study, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun p -> ScholarlyArticle.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun p -> ScholarlyArticleConversion.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
         let creators = 
             Dataset.getCreators(study, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun c -> Person.decomposePerson(c, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         //let dataFiles = 
         //    Study.getHasParts(study, ?graph = graph, ?context = context)
         //    |> Option.fromSeq
@@ -1248,7 +1248,7 @@ type Study =
             comments = comments
         )
 
-type Investigation =
+type InvestigationConversion =
 
     static member composeInvestigation (investigation : ArcInvestigation) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
@@ -1257,11 +1257,11 @@ type Investigation =
         let dateModified = System.DateTime.Now
         let publications = 
             investigation.Publications
-            |> ResizeArray.map (fun p -> ScholarlyArticle.composeScholarlyArticle p)
+            |> ResizeArray.map (fun p -> ScholarlyArticleConversion.composeScholarlyArticle p)
             |> Option.fromSeq
         let creators =
             investigation.Contacts
-            |> ResizeArray.map (fun c -> Person.composePerson c)
+            |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
         let comments = 
             investigation.Comments
@@ -1269,8 +1269,8 @@ type Investigation =
             |> Option.fromSeq
         let hasParts =
             investigation.Assays
-            |> ResizeArray.map (fun a -> Assay.composeAssay a)
-            |> ResizeArray.append (investigation.Studies |> ResizeArray.map (fun s -> Study.composeStudy s))
+            |> ResizeArray.map (fun a -> AssayConversion.composeAssay a)
+            |> ResizeArray.append (investigation.Studies |> ResizeArray.map (fun s -> StudyConversion.composeStudy s))
             |> Option.fromSeq
         let mentions =
             ResizeArray [] // TODO
@@ -1298,20 +1298,20 @@ type Investigation =
             |> Option.map DateTime.toString
         let publications = 
             Dataset.getCitations(investigation, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun p -> ScholarlyArticle.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun p -> ScholarlyArticleConversion.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
         let creators = 
             Dataset.getCreators(investigation, ?graph = graph, ?context = context)
-            |> ResizeArray.map (fun c -> Person.decomposePerson(c, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         let datasets = 
             Dataset.getHasPartsAsDataset  (investigation, ?graph = graph, ?context = context)
         let studies = 
             datasets
             |> ResizeArray.filter (fun d -> Dataset.validateStudy(d, ?context = context))
-            |> ResizeArray.map (fun d -> Study.decomposeStudy(d, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun d -> StudyConversion.decomposeStudy(d, ?graph = graph, ?context = context))
         let assays = 
             datasets
             |> ResizeArray.filter (fun d -> Dataset.validateAssay(d, ?context = context))
-            |> ResizeArray.map (fun d -> Assay.decomposeAssay(d, ?graph = graph, ?context = context))
+            |> ResizeArray.map (fun d -> AssayConversion.decomposeAssay(d, ?graph = graph, ?context = context))
         let comments =
             Dataset.getComments(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
@@ -1332,32 +1332,32 @@ type Investigation =
 module TypeExtensions =
 
     type ArcAssay with
-         member this.ToROCrateAssay() = Assay.composeAssay this
+         member this.ToROCrateAssay() = AssayConversion.composeAssay this
 
-         static member fromROCrateAssay (a : LDNode, ?graph : LDGraph, ?context : LDContext) = Assay.decomposeAssay(a, ?graph = graph, ?context = context)
+         static member fromROCrateAssay (a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
     type ArcStudy with
-         member this.ToROCrateStudy() = Study.composeStudy this
+         member this.ToROCrateStudy() = StudyConversion.composeStudy this
 
-         static member fromROCrateStudy (a : LDNode, ?graph : LDGraph, ?context : LDContext) = Study.decomposeStudy(a, ?graph = graph, ?context = context)
+         static member fromROCrateStudy (a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
     type ArcInvestigation with
-        member this.ToROCrateInvestigation() = Investigation.composeInvestigation this
+        member this.ToROCrateInvestigation() = InvestigationConversion.composeInvestigation this
     
-        static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = Investigation.decomposeInvestigation(a, ?graph = graph, ?context = context)
+        static member fromROCrateInvestigation (a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
     type Dataset with
-        static member toArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) = Assay.decomposeAssay(a, ?graph = graph, ?context = context)
+        static member toArcAssay(a : LDNode, ?graph : LDGraph, ?context : LDContext) = AssayConversion.decomposeAssay(a, ?graph = graph, ?context = context)
 
-        static member fromArcAssay (a : ArcAssay) = Assay.composeAssay a
+        static member fromArcAssay (a : ArcAssay) = AssayConversion.composeAssay a
 
-        static member toArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) = Study.decomposeStudy(a, ?graph = graph, ?context = context)
+        static member toArcStudy(a : LDNode, ?graph : LDGraph, ?context : LDContext) = StudyConversion.decomposeStudy(a, ?graph = graph, ?context = context)
 
-        static member fromArcStudy (a : ArcStudy) = Study.composeStudy a
+        static member fromArcStudy (a : ArcStudy) = StudyConversion.composeStudy a
 
-        static member toArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) = Investigation.decomposeInvestigation(a, ?graph = graph, ?context = context)
+        static member toArcInvestigation(a : LDNode, ?graph : LDGraph, ?context : LDContext) = InvestigationConversion.decomposeInvestigation(a, ?graph = graph, ?context = context)
 
-        static member fromArcInvestigation (a : ArcInvestigation) = Investigation.composeInvestigation a
+        static member fromArcInvestigation (a : ArcInvestigation) = InvestigationConversion.composeInvestigation a
 
     ///// Copies ArcAssay object without the pointer to the parent ArcInvestigation
     /////

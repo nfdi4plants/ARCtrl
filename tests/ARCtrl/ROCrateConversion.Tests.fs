@@ -988,50 +988,50 @@ let tests_Person =
         testCase "Full_FromScaffold" (fun () ->
             let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
             let p = ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let ro_Person = Person.composePerson p
-            let p' = Person.decomposePerson ro_Person
+            let ro_Person = PersonConversion.composePerson p
+            let p' = PersonConversion.decomposePerson ro_Person
             Expect.equal p' p "Person should match"
         )
         testCase "Full_FromScaffold_Flattened" (fun () ->
             let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
             let p = ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let ro_Person = Person.composePerson p
+            let ro_Person = PersonConversion.composePerson p
             let graph = ro_Person.Flatten()
             // Test that flattened worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
             let roleRef = Expect.wantSome (ro_Person.TryGetPropertyAsSingleton(Person.jobTitle)) "Person should still have jobTitle"
             Expect.isTrue (roleRef :? LDRef) "Person should be flattened correctly"
             //
-            let p' = Person.decomposePerson(ro_Person, graph = graph)
+            let p' = PersonConversion.decomposePerson(ro_Person, graph = graph)
             Expect.equal p' p "Person should match"
         )
         testCase "AddressAsObject_FromROCrate" (fun () ->
             let address = PostalAddress.create(addressCountry = "Germoney", postalCode = "6969", streetAddress = "I think I'm funny street 69")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
-            let scaffold_Person = Person.decomposePerson p
-            let p' = Person.composePerson scaffold_Person
+            let scaffold_Person = PersonConversion.decomposePerson p
+            let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
         testCase "AddressAsString_FromROCrate" (fun () ->
             let address = "Germoney, 6969, I think I'm funny street 69"
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
-            let scaffold_Person = Person.decomposePerson p
-            let p' = Person.composePerson scaffold_Person
+            let scaffold_Person = PersonConversion.decomposePerson p
+            let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
         testCase "AffiliationOnlyName_FromROCrate" (fun () ->
             let affiliation = Organization.create(name = "My University")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
-            let scaffold_Person = Person.decomposePerson p
-            let p' = Person.composePerson scaffold_Person
+            let scaffold_Person = PersonConversion.decomposePerson p
+            let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
         testCase "AffiliationMoreFields_FromROCrate" (fun () ->
             let affiliation = Organization.create(name = "My University")
             affiliation.SetProperty("address","123 Main St")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
-            let scaffold_Person = Person.decomposePerson p
-            let p' = Person.composePerson scaffold_Person
+            let scaffold_Person = PersonConversion.decomposePerson p
+            let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
     ]
@@ -1044,8 +1044,8 @@ let tests_Publication =
             let commentOnlyKey = Comment("MyEmptyKey")
             let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
             let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
-            let ro_Publication = ScholarlyArticle.composeScholarlyArticle p
-            let p' = ScholarlyArticle.decomposeScholarlyArticle ro_Publication
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
+            let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
             Expect.equal p' p "Publication should match"
         )
         testCase "Full_FromScaffold_Flattened" (fun () ->
@@ -1054,22 +1054,22 @@ let tests_Publication =
             let commentOnlyKey = Comment("MyEmptyKey")
             let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
             let p = ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
-            let ro_Publication = ScholarlyArticle.composeScholarlyArticle p
+            let ro_Publication = ScholarlyArticleConversion.composeScholarlyArticle p
             let graph = ro_Publication.Flatten()
             // Test that flattened worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
             let statusRef = Expect.wantSome (ro_Publication.TryGetPropertyAsSingleton(ScholarlyArticle.creativeWorkStatus)) "Publication should still have status"
             Expect.isTrue (statusRef :? LDRef) "Publication should be flattened correctly"
             //
-            let p' = ScholarlyArticle.decomposeScholarlyArticle(ro_Publication,graph = graph)
+            let p' = ScholarlyArticleConversion.decomposeScholarlyArticle(ro_Publication,graph = graph)
             Expect.equal p' p "Publication should match"
         )
         testCase "FullAuthors_FromROCrate" (fun () ->
             let author1 = ARCtrl.ROCrate.Person.create(givenName = "Lukas",familyName = "Weil", orcid = "0000-0002-1825-0097")
             let author2 = ARCtrl.ROCrate.Person.create(givenName = "John",familyName = "Doe", orcid = "0000-0002-1325-0077")
             let scholarlyArticle = ARCtrl.ROCrate.ScholarlyArticle.create(headline = "My Paper", identifiers = ResizeArray [], url = "10.1234/5678", authors = ResizeArray [author1;author2])
-            let scaffold_Publication = ScholarlyArticle.decomposeScholarlyArticle scholarlyArticle
-            let p = ScholarlyArticle.composeScholarlyArticle scaffold_Publication
+            let scaffold_Publication = ScholarlyArticleConversion.decomposeScholarlyArticle scholarlyArticle
+            let p = ScholarlyArticleConversion.composeScholarlyArticle scaffold_Publication
             Expect.equal p scholarlyArticle "Publication should match"
         )
     ]
@@ -1078,8 +1078,8 @@ let tests_Assay =
     testList "Assay" [
         testCase "Empty_FromScaffold" (fun () ->
             let p = ArcAssay.init("My Assay")
-            let ro_Assay = Assay.composeAssay p
-            let p' = Assay.decomposeAssay ro_Assay
+            let ro_Assay = AssayConversion.composeAssay p
+            let p' = AssayConversion.decomposeAssay ro_Assay
             Expect.equal p' p "Assay should match"
         )
         testCase "Full_FromScaffold" (fun () ->
@@ -1101,8 +1101,8 @@ let tests_Assay =
                     performers = ResizeArray [person],
                     tables = ResizeArray [Helper.singleRowMixedValues; table2]
                 )
-            let ro_Assay = Assay.composeAssay p
-            let p' = Assay.decomposeAssay ro_Assay
+            let ro_Assay = AssayConversion.composeAssay p
+            let p' = AssayConversion.decomposeAssay ro_Assay
             Expect.equal p' p "Assay should match"
         )
     ]
@@ -1115,8 +1115,8 @@ let tests_Investigation =
                 identifier = "My Investigation",
                 title = "My Best Investigation"
                 )
-            let ro_Investigation = Investigation.composeInvestigation p
-            let p' = Investigation.decomposeInvestigation ro_Investigation
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
             Expect.equal p' p "Investigation should match"
         )
         testCase "TopLevel_FromScaffold" (fun () ->
@@ -1140,8 +1140,8 @@ let tests_Investigation =
                 contacts = ResizeArray [person],
                 comments = ResizeArray [comment]
                 )
-            let ro_Investigation = Investigation.composeInvestigation p
-            let p' = Investigation.decomposeInvestigation ro_Investigation
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
             Expect.equal p' p "Investigation should match"
         )
         testCase "TopLevel_FromScaffold_Flattened" (fun () ->
@@ -1165,14 +1165,14 @@ let tests_Investigation =
                 contacts = ResizeArray [person],
                 comments = ResizeArray [comment]
                 )
-            let ro_Investigation = Investigation.composeInvestigation p
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
             let graph = ro_Investigation.Flatten()
             // Test that flatten worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
             let personRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(Dataset.creator)) "Investigation should still have creator"
             Expect.isTrue (personRef :? LDRef) "Investigation should be flattened correctly"
             //
-            let p' = Investigation.decomposeInvestigation(ro_Investigation, graph = graph)
+            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
             Expect.equal p' p "Investigation should match"
         )
         testCase "AssayAndStudy_FromScaffold" (fun () ->
@@ -1184,8 +1184,8 @@ let tests_Investigation =
                 assays = ResizeArray [assay],
                 studies = ResizeArray [study]
                 )
-            let ro_Investigation = Investigation.composeInvestigation p
-            let p' = Investigation.decomposeInvestigation ro_Investigation
+            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
             Expect.equal p' p "Investigation should match"
         )
     ]
