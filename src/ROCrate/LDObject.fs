@@ -4,7 +4,36 @@ open DynamicObj
 open Thoth.Json.Core
 open Fable.Core
 open System
- 
+
+module ActivePattern = 
+    #if !FABLE_COMPILER
+    let (|SomeObj|_|) =
+        // create generalized option type
+        let ty = typedefof<option<_>>
+        fun (a:obj) ->
+            // Check for nulls otherwise 'a.GetType()' would fail
+            if isNull a 
+            then 
+                None 
+            else
+                let aty = a.GetType()
+                // Get option'.Value
+                let v = aty.GetProperty("Value")
+                if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
+                    // return value if existing
+                    Some(v.GetValue(a, [| |]))
+                else 
+                    None
+    #endif
+    let (|NonStringEnumerable|_|) (o : obj) =
+        match o with
+        | :? string as s -> None
+        | :? System.Collections.IEnumerable as e -> Some e
+        | _ -> None
+        
+
+
+
 [<AutoOpen>]
 module DynamicObjExtensions =
 
@@ -98,8 +127,10 @@ and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?conte
         | _ -> None
 
     member this.AddNode(node : LDNode) =
-        mappings.Add(node.Id, node)
-
+        let id = node.Id
+        match this.TryGetNode(id) with
+        | Some existingNode -> node.MergeAppendInto_InPlace(existingNode, flattenTo = this)
+        | None -> mappings.Add(id, node)
 
     member this.SetContext (context: LDContext) =
         this.SetProperty("@context", context)
@@ -336,31 +367,46 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
 
     member this.RemoveContext() = this.RemoveProperty("@context")
 
-    member this.MergeAppendInto_InPlace(other : LDNode) =
-        #if !FABLE_COMPILER
-        let (|SomeObj|_|) =
-            // create generalized option type
-            let ty = typedefof<option<_>>
-            fun (a:obj) ->
-                // Check for nulls otherwise 'a.GetType()' would fail
-                if isNull a 
-                then 
-                    None 
-                else
-                    let aty = a.GetType()
-                    // Get option'.Value
-                    let v = aty.GetProperty("Value")
-                    if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
-                        // return value if existing
-                        Some(v.GetValue(a, [| |]))
-                    else 
-                        None
-        #endif
-
+    member this.MergeAppendInto_InPlace(other : LDNode, ?flattenTo : LDGraph) =
+        let flattenTo_Singleton : obj -> obj =
+            match flattenTo with
+            | Some graph ->
+                let rec f (o : obj) : obj =
+                    match o with
+                    #if !FABLE_COMPILER
+                    | ActivePattern.SomeObj o -> f o
+                    #endif
+                    | :? LDNode as n ->
+                        n.Flatten(graph) |> ignore
+                        LDRef(n.Id)
+                    | _ -> o
+                f
+            | None -> Operators.id
+        let flattenTo_RA : ResizeArray<obj> -> ResizeArray<obj>=
+            match flattenTo with
+            | Some graph ->
+                ARCtrl.Helper.ResizeArray.map flattenTo_Singleton
+            | None -> Operators.id
+        let flattenToAny : obj -> obj =
+            match flattenTo with
+            | Some graph ->
+                let rec f (o : obj) : obj =
+                    match o with
+                    #if !FABLE_COMPILER
+                    | ActivePattern.SomeObj o -> f o
+                    #endif
+                    | :? LDNode as n ->
+                        n.Flatten(graph) |> ignore
+                        LDRef(n.Id)
+                    | ActivePattern.NonStringEnumerable e ->
+                        [for v in e do f v] |> ResizeArray |> box
+                    | _ -> o
+                f
+            | None -> Operators.id
         let rec toEqualitor (o : obj) : obj =
             match o with
             #if !FABLE_COMPILER
-            | SomeObj o -> toEqualitor o
+            | ActivePattern.SomeObj o -> toEqualitor o
             #endif
             | :? LDNode as n -> n.Id
             | :? LDRef as r -> r.Id
@@ -371,30 +417,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | Some otherVal ->
                 let thisVal = this.TryGetProperty(pn).Value
                 match (thisVal, otherVal) with
-                | (:? string as s1), (:? string as s2) ->
-                    if s1 = s2 then () else
-                        let l = ResizeArray [s1; s2]
-                        other.SetProperty(pn, l)
-                | (:? string as s), (:? System.Collections.IEnumerable as e)
-                | (:? System.Collections.IEnumerable as e), (:? string as s) ->
-                    let mutable isContained = false
-                    let en = e.GetEnumerator()
-                    let l = ResizeArray [
-                        while en.MoveNext() do
-                            let v = en.Current
-                            if toEqualitor v = s then
-                                isContained <- true
-                            v
-                    ]
-                    if not isContained then
-                        l.Add(s)                   
-                        other.SetProperty(pn, l)
-                | _, (:? string as _)
-                | (:? string as _), _ ->
-                    if toEqualitor thisVal = toEqualitor otherVal then () else
-                        let l = ResizeArray [thisVal; otherVal]
-                        other.SetProperty(pn, l)
-                | (:? System.Collections.IEnumerable as e1), (:? System.Collections.IEnumerable as e2) ->
+                | ActivePattern.NonStringEnumerable e1, ActivePattern.NonStringEnumerable e2 ->
                     let l =
                         [
                             for v in e2 do
@@ -404,29 +427,39 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                         ]
                         |> List.distinctBy toEqualitor
                         |> ResizeArray
+                        |> flattenTo_RA
                     other.SetProperty(pn, l)
-                | o, (:? System.Collections.IEnumerable as e)
-                | (:? System.Collections.IEnumerable as e), o ->
+                | ActivePattern.NonStringEnumerable theseVals, otherVal ->
                     let mutable isContained = false
-                    let en = e.GetEnumerator()
                     let l = ResizeArray [
-                        while en.MoveNext() do
-                            let v = en.Current
-                            if toEqualitor v = toEqualitor o then
+                        for thisVal in theseVals do
+                            if toEqualitor thisVal = toEqualitor otherVal then
                                 isContained <- true
-                            v
+                                flattenTo_Singleton thisVal
+                            else thisVal
                     ]
                     if not isContained then
-                        l.Add(o)                   
+                        l.Add(otherVal)                   
                         other.SetProperty(pn, l)
-                | o1, o2 ->
-                    if toEqualitor o1 = toEqualitor o2 then () else
-                        let l = ResizeArray [o1; o2]
+                | thisVal, ActivePattern.NonStringEnumerable otherVals ->
+                    let mutable isContained = false
+                    let l = ResizeArray [
+                        for otherVal in otherVals do
+                            if toEqualitor thisVal = toEqualitor otherVal then
+                                isContained <- true
+                            otherVal
+                    ]
+                    if not isContained then
+                        l.Add(flattenTo_Singleton thisVal)                   
+                        other.SetProperty(pn, l)            
+                | thisVal, otherVal ->
+                    if toEqualitor thisVal = toEqualitor otherVal then ()
+                    else
+                        let l = ResizeArray [flattenTo_Singleton thisVal; otherVal]
                         other.SetProperty(pn, l)
-
-
             | None ->
-                other.SetProperty(pn, this.TryGetProperty(pn).Value)
+                let v = this.TryGetProperty(pn).Value |> flattenToAny 
+                other.SetProperty(pn, v)
 
         )
         
