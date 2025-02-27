@@ -10,7 +10,9 @@ open DynamicObj
 let private test_read = testList "Read" [
     testCase "Minimal_ROCrate" <| fun _ ->
         let graph = LDGraph.fromROCrateJsonString roCrate_minimal
-        Expect.sequenceEqual graph.Properties.Keys ["@context"] "only context property should exist"
+        // Expect.sequenceEqual graph.Properties.Keys ["@context"] "only context property should exist"
+        Expect.isSome (graph.TryGetContext()) "context should exist"
+        Expect.isEmpty (graph.GetDynamicPropertyNames()) "only context property should exist"
         Expect.hasLength graph.Nodes 2 "should have 2 nodes"
         let firstExpectedObject = LDNode("ro-crate-metadata.json", ResizeArray ["CreativeWork"])
         firstExpectedObject.SetProperty("about", LDRef("./"))

@@ -16,7 +16,7 @@ module rec LDGraph =
             Encode.tryInclude "@context" LDContext.encoder (obj.TryGetContext())
             for kv in (obj.GetProperties true) do
                 let l = kv.Key.ToLower()
-                if l <> "id" && l <> "@context" && l <> "nodes" then 
+                if l <> "id" && l <> "@context" && l <> "nodes" && l <> "mappings" then 
                     kv.Key, Some (LDNode.genericEncoder kv.Value)
             "@graph", obj.Nodes |> Seq.map LDNode.encoder |> Encode.seq |> Some
         ]

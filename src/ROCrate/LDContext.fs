@@ -2,6 +2,7 @@ namespace ARCtrl.ROCrate
 
 open System.Collections.Generic
 open ARCtrl.Helper
+open Fable.Core
 
 module Dictionary = 
 
@@ -47,6 +48,7 @@ module IRIHelper =
 
 // Add second dictionary which maps from definition to term?
 // Make LDContext to be nested hierarchical tree? Like this you can iterate through the tree and stop at the first match, kind of like a shadowing mechanism
+[<AttachMembers>]
 type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArray<LDContext>) =
 
     let mutable baseContexts = Option.defaultValue (ResizeArray []) baseContexts
@@ -167,9 +169,10 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
 
     override this.GetHashCode() =
         let mappingsHash = 
-            this.Mappings
-            |> Seq.sortBy (fun kvp -> kvp.Key)
-            |> DynamicObj.HashCodes.boxHashKeyValSeq
+            this.Mappings.Keys
+            |> Seq.sort
+            |> Seq.map (fun k -> HashCodes.mergeHashes (HashCodes.hash k) (HashCodes.hash this.Mappings.[k]))
+            |> HashCodes.boxHashSeq
             |> fun v -> v :?> int
         let nameHash = 
             match this.Name with

@@ -75,7 +75,7 @@ module rec LDNode =
             | _ -> ()
             for kv in (obj.GetProperties true) do
                 let l = kv.Key.ToLower()
-                if l <> "id" && l <> "schematype" && l <> "additionaltype" && l <> "@context" then 
+                if l <> "id" && l <> "schematype" && l <> "additionaltype" && l <> "@context" && (l.StartsWith("init@") |> not) && (l.StartsWith("init_") |> not)then 
                     yield kv.Key, genericEncoder kv.Value
         ]
         |> Encode.object

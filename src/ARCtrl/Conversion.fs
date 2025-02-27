@@ -6,6 +6,15 @@ open ARCtrl.Helper
 open System.Collections.Generic
 //open ColumnIndex
 
+module DateTime =
+
+    let tryFromString (s : string) =
+        try Json.Decode.fromJsonString Json.Decode.datetime s |> Some
+        with _ -> None
+
+    let toString (d : System.DateTime) =
+        Json.Encode.dateTime d
+        |> Json.Encode.toJsonString 0
 
 module ColumnIndex = 
 
@@ -887,16 +896,11 @@ module TableTypeExtensions =
         static member fromProcesses (ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTables = 
             ps
             |> ProcessParsing.groupProcesses
-            //|> fun x -> printfn "fromProcesses 1"; x
             |> List.map (fun (name,ps) ->
-                //printfn "fromProcesses-%s 0" name
                 ps
                 |> List.collect (fun p -> ProcessParsing.processToRows(p,?graph = graph, ?context = context) |> List.ofSeq)
-                //|> fun x -> printfn "fromProcesses-%s 1" name; x
                 |> fun rows -> ArcTableAux.Unchecked.alignByHeaders true rows
-                //|> fun x -> printfn "fromProcesses-%s 2" name; x
                 |> fun (headers, rows) -> ArcTable.create(name,headers,rows)
-                //|> fun x -> printfn "fromProcesses-%s 3" name; x
             )
             |> ResizeArray
             |> ArcTables
@@ -1171,8 +1175,8 @@ type Study =
 
     static member composeStudy (study : ArcStudy) =
         let id = ARCtrl.Helper.Identifier.Study.fileNameFromIdentifier study.Identifier
-        let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryParse
-        let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryParse
+        let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryFromString
+        let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryFromString
         let dateModified = System.DateTime.Now
         let publications = 
             study.Publications
@@ -1212,10 +1216,10 @@ type Study =
     static member decomposeStudy (study : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let dateCreated = 
             Dataset.tryGetDateCreatedAsDateTime(study, ?context = context)
-            |> Option.map (fun d -> d.ToString())
+            |> Option.map DateTime.toString
         let datePublished = 
             Dataset.tryGetDatePublishedAsDateTime(study, ?context = context)
-            |> Option.map (fun d -> d.ToString())
+            |> Option.map DateTime.toString
         let publications = 
             Dataset.getCitations(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun p -> ScholarlyArticle.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
@@ -1248,8 +1252,8 @@ type Investigation =
 
     static member composeInvestigation (investigation : ArcInvestigation) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
-        let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryParse
-        let datePublished = investigation.PublicReleaseDate |> Option.bind DateTime.tryParse
+        let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryFromString
+        let datePublished = investigation.PublicReleaseDate |> Option.bind DateTime.tryFromString
         let dateModified = System.DateTime.Now
         let publications = 
             investigation.Publications
@@ -1288,10 +1292,10 @@ type Investigation =
     static member decomposeInvestigation (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let dateCreated = 
             Dataset.tryGetDateCreatedAsDateTime(investigation, ?context = context)
-            |> Option.map (fun d -> d.ToString())
+            |> Option.map DateTime.toString
         let datePublished = 
             Dataset.tryGetDatePublishedAsDateTime(investigation, ?context = context)
-            |> Option.map (fun d -> d.ToString())
+            |> Option.map DateTime.toString
         let publications = 
             Dataset.getCitations(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun p -> ScholarlyArticle.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))

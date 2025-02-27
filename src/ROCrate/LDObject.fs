@@ -19,7 +19,7 @@ type ILDObject =
     abstract member Id: string
     abstract member AdditionalType: ResizeArray<string> with get, set
 
-
+[<AttachMembers>]
 type LDValue(value : obj, ?valueType : string) =
     
     let mutable valueType = defaultArg valueType "string"
@@ -111,6 +111,28 @@ and [<AttachMembers>] LDGraph(?id : string, ?nodes : ResizeArray<LDNode>, ?conte
     static member tryGetContext () = fun (roc: #LDNode) -> roc.TryGetContext()
 
     member this.RemoveContext() = this.RemoveProperty("@context")
+
+    member this.GetDynamicPropertyHelpers() =
+        
+        this.GetPropertyHelpers(false)
+        |> Seq.filter (fun ph ->
+            (ph.Name.StartsWith "init@" || ph.Name.Equals("mappings"))
+            |> not
+        )
+
+    member this.GetDynamicPropertyNames(?context : LDContext) =
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        this.GetDynamicPropertyHelpers()
+        |> Seq.choose (fun ph ->
+            let name = 
+                match context with
+                | Some ctx ->
+                    match ctx.TryResolveTerm ph.Name with
+                    | Some term -> term
+                    | None -> ph.Name
+                | None -> ph.Name
+            if name = "@context" then None else Some name
+        )
 
 /// Base class for all explicitly known objects in our ROCrate profiles to inherit from.
 /// Basically a DynamicObj that implements the ILDNode interface.
@@ -229,12 +251,20 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         )
         |> ResizeArray
 
-    member this.GetDynamicPropertyHelpers() =
-        
+    member this.GetDynamicPropertyHelpers() =       
         this.GetPropertyHelpers(false)
         |> Seq.filter (fun ph ->
+            #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
             (ph.Name.StartsWith "init@" || ph.Name.Equals("id"))
             |> not
+            #endif
+            #if FABLE_COMPILER_PYTHON
+            (ph.Name.StartsWith "init_" || ph.Name.Equals("id"))
+            |> not
+            #endif
+            #if !FABLE_COMPILER
+            true
+            #endif
         )
 
     member this.GetPropertyNames(?context : LDContext) =
@@ -255,7 +285,11 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         
         #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         Fable.Core.JsInterop.emitJsStatement (propertyName, value)  "super.SetProperty($0,$1)"
-        #else
+        #endif
+        #if FABLE_COMPILER_PYTHON
+        Fable.Core.PyInterop.emitPyStatement (propertyName, value)  "super().SetProperty($0,$1)"
+        #endif
+        #if !FABLE_COMPILER
         (this :> DynamicObj).SetProperty(propertyName, value)
         #endif        
         //DynObj.setProperty propertyName value this 
@@ -323,7 +357,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             | :? LDValue as v -> v.Value
             | x -> x
 
-        this.GetPropertyHelpers(false)
+        this.GetDynamicPropertyHelpers()
         |> Seq.iter (fun ph ->
             let newKey =
                 match context with
@@ -357,7 +391,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 ]
                 l
             | x -> x
-        this.GetPropertyHelpers(false)
+        this.GetDynamicPropertyHelpers()
         |> Seq.iter (fun ph ->
             let newValue = flattenValue (ph.GetValue(this))
             ph.SetValue this newValue
@@ -383,7 +417,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
                 ]
                 l
             | x -> x
-        this.GetPropertyHelpers(true)
+        this.GetDynamicPropertyHelpers()
         |> Seq.iter (fun ph ->
             let newValue = unflattenValue (ph.GetValue(this))
             ph.SetValue this newValue
@@ -416,7 +450,7 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
             //roc.TryGetDynamicPropertyHelper("@type").Value.RemoveValue()
             //if at.IsSome then roc.TryGetDynamicPropertyHelper("additionalType").Value.RemoveValue()
 
-            roc.GetPropertyHelpers(true)
+            roc.GetDynamicPropertyHelpers()
             |> Seq.iter (fun ph ->
                 if ph.IsDynamic && (ph.Name = "@id" || ph.Name = "@type" || ph.Name = "additionalType"(* || ph.Name = "id"*)) then
                     ph.RemoveValue(roc)
