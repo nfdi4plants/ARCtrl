@@ -118,6 +118,17 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     member this.TryGetTerm(iri : string) =
         tryFindIri iri
 
+    member this.PropertyNamesMatch(p1 : string,p2 : string) =
+        if p1 = p2 then true
+        else 
+            let p1Def = this.TryResolveTerm p1
+            let p2Def = this.TryResolveTerm p2
+            match p1Def,p2Def with
+            | Some p1Def, Some p2Def -> p1Def = p2Def
+            | Some p1Def, None -> p1Def = p2
+            | None, Some p2Def -> p1 = p2Def
+            | _ -> false
+
     static member fromMappingSeq(mappings : seq<string*string>) =
         LDContext(Dictionary.ofSeq mappings)
 

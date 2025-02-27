@@ -282,7 +282,15 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         )
 
     member this.SetProperty(propertyName : string, value : obj, ?context : LDContext) =
-        
+        let context = LDContext.tryCombineOptional context (this.TryGetContext())
+        let propertyName =
+            this.GetPropertyNames()
+            |> Seq.tryFind (fun pn ->
+                match context with
+                | Some c -> c.PropertyNamesMatch(pn,propertyName)
+                | None -> pn = propertyName
+            )
+            |> Option.defaultValue propertyName
         #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         Fable.Core.JsInterop.emitJsStatement (propertyName, value)  "super.SetProperty($0,$1)"
         #endif
@@ -327,6 +335,102 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
     static member tryGetContext () = fun (roc: #LDNode) -> roc.TryGetContext()
 
     member this.RemoveContext() = this.RemoveProperty("@context")
+
+    member this.MergeAppendInto_InPlace(other : LDNode) =
+        #if !FABLE_COMPILER
+        let (|SomeObj|_|) =
+            // create generalized option type
+            let ty = typedefof<option<_>>
+            fun (a:obj) ->
+                // Check for nulls otherwise 'a.GetType()' would fail
+                if isNull a 
+                then 
+                    None 
+                else
+                    let aty = a.GetType()
+                    // Get option'.Value
+                    let v = aty.GetProperty("Value")
+                    if aty.IsGenericType && aty.GetGenericTypeDefinition() = ty then
+                        // return value if existing
+                        Some(v.GetValue(a, [| |]))
+                    else 
+                        None
+        #endif
+
+        let rec toEqualitor (o : obj) : obj =
+            match o with
+            #if !FABLE_COMPILER
+            | SomeObj o -> toEqualitor o
+            #endif
+            | :? LDNode as n -> n.Id
+            | :? LDRef as r -> r.Id
+            | _ -> o
+        this.GetPropertyNames()
+        |> Seq.iter (fun pn -> 
+            match other.TryGetProperty(pn) with
+            | Some otherVal ->
+                let thisVal = this.TryGetProperty(pn).Value
+                match (thisVal, otherVal) with
+                | (:? string as s1), (:? string as s2) ->
+                    if s1 = s2 then () else
+                        let l = ResizeArray [s1; s2]
+                        other.SetProperty(pn, l)
+                | (:? string as s), (:? System.Collections.IEnumerable as e)
+                | (:? System.Collections.IEnumerable as e), (:? string as s) ->
+                    let mutable isContained = false
+                    let en = e.GetEnumerator()
+                    let l = ResizeArray [
+                        while en.MoveNext() do
+                            let v = en.Current
+                            if toEqualitor v = s then
+                                isContained <- true
+                            v
+                    ]
+                    if not isContained then
+                        l.Add(s)                   
+                        other.SetProperty(pn, l)
+                | _, (:? string as _)
+                | (:? string as _), _ ->
+                    if toEqualitor thisVal = toEqualitor otherVal then () else
+                        let l = ResizeArray [thisVal; otherVal]
+                        other.SetProperty(pn, l)
+                | (:? System.Collections.IEnumerable as e1), (:? System.Collections.IEnumerable as e2) ->
+                    let l =
+                        [
+                            for v in e2 do
+                                v
+                            for v in e1 do
+                                v
+                        ]
+                        |> List.distinctBy toEqualitor
+                        |> ResizeArray
+                    other.SetProperty(pn, l)
+                | o, (:? System.Collections.IEnumerable as e)
+                | (:? System.Collections.IEnumerable as e), o ->
+                    let mutable isContained = false
+                    let en = e.GetEnumerator()
+                    let l = ResizeArray [
+                        while en.MoveNext() do
+                            let v = en.Current
+                            if toEqualitor v = toEqualitor o then
+                                isContained <- true
+                            v
+                    ]
+                    if not isContained then
+                        l.Add(o)                   
+                        other.SetProperty(pn, l)
+                | o1, o2 ->
+                    if toEqualitor o1 = toEqualitor o2 then () else
+                        let l = ResizeArray [o1; o2]
+                        other.SetProperty(pn, l)
+
+
+            | None ->
+                other.SetProperty(pn, this.TryGetProperty(pn).Value)
+
+        )
+        
+
 
     member this.Compact_InPlace(?context : LDContext) =
         let context = LDContext.tryCombineOptional context (this.TryGetContext())

@@ -11,6 +11,8 @@ let context =
     new LDContext()
     //|> DynObj.withProperty "more" "context"
 
+let thingType() = ResizeArray ["https://schema.org/Thing"]
+
 context.AddMapping("more","context")
 
 let mandatory_properties = LDNode("LDNode_mandatory_properties_id", ResizeArray[|"someType"|])
@@ -482,6 +484,251 @@ let tests_getPropertyNames = testList "GetPropertyNames" [
 ]
 
 
+let tests_mergeAppendInto_InPlace = testList "mergeAppendInto_InPlace" [
+    ftestCase "EmptyNodes" <| fun _ ->
+        let getNode1() = new LDNode("MyNode1", thingType())
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.isEmpty (node2.GetPropertyNames()) "Should have no properties"
+
+    ftestCase "DifferentKeys" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "MyName")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/age", 42)
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/age"; "https://schema.org/name"] "Should have both Properties"
+        Expect.equal (node2.TryGetProperty("https://schema.org/age").Value) 42 "Property value was not copied"
+        Expect.equal (node2.TryGetProperty("https://schema.org/name").Value) "MyName" "Property value was not copied"
+
+    ftestCase "SameKeys_SamePropertyValue" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "MyName")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", "MyName")
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        Expect.equal (node2.TryGetProperty("https://schema.org/name").Value) "MyName" "Property value should not have been modified"
+
+    ftestCase "SameKeys_DifferentStringValue" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "MyName")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", "MyOtherName")
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["MyName";"MyOtherName"] "Property value should have been modified"
+
+    ftestCase "SameKeys_StringVsInt" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "MyName")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", 50)
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["MyName" |> box ;50] "Property value should have been modified"
+
+    ftestCase "SameKeys_DifferentPropertyValue" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "MyName")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", "MyOtherName")
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["MyName";"MyOtherName"] "Property value should have been modified"
+
+    ftestCase "SameKeys_ArrayVsString_NotExisting" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "MyOtherName")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", ["Name1";"Name2"])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["Name1";"Name2";"MyOtherName"] "Property value should have been modified"
+
+    ftestCase "SameKeys_ArrayVsString_Existing" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", "Name1")
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", ["Name1";"Name2"])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["Name1";"Name2"] "Property value should have been modified"
+
+    ftestCase "SameKeys_ArrayVsInt_NotExisting" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", 3)
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", [1;2])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value [1;2;3] "Property value should have been modified"
+
+    ftestCase "SameKeys_ArrayVsInt_Existing" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", 1)
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", [1;2])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value [1;2] "Property value should have been modified"
+
+    ftestCase "SameKeys_ArraysWithDifferentValues" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", ["Name1";"Name2"])
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", ["Name3";"Name4"])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["Name3";"Name4";"Name1";"Name2"] "Property value should have been modified"
+
+    ftestCase "SameKeys_ArraysWithSameValues" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", ["Name1";"Name2"])
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", ["Name1";"Name2"])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["Name1";"Name2"] "Property value should not have been modified"
+
+    ftestCase "SameKeys_ArraysWithOverlappingValues" <| fun _ ->
+        let getNode1() =
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/name", ["Name1";"Name2"])
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/name", ["Name2";"Name3"])
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/name"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/name").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value ["Name2";"Name3";"Name1"] "Property value should not have been modified"
+
+    ftestCase "SameKeys_LDNode_NotExisting" <| fun _ ->
+        let getNode1() =
+            let internalNode = new LDNode("MyInternalNode", thingType())
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/about", internalNode)
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/about", "String54")
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/about"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/about").Value
+        Expect.isTrue (value :? System.Collections.IEnumerable) "Property value should now be sequence"
+        let value = (value :?> System.Collections.IEnumerable)
+        Expect.genericSequenceEqual value [new LDNode("MyInternalNode", thingType()) |> box;"String54"] "Property value should have been modified"
+
+    ftestCase "SameKeys_LDNode_AlreadyExisting" <| fun _ ->
+        let getNode1() =
+            let internalNode = new LDNode("MyInternalNode", thingType())
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/about", internalNode)
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/about", new LDNode("MyInternalNode", thingType()))
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/about"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/about").Value
+        Expect.equal value (new LDNode("MyInternalNode", thingType())) "Property value should have been modified"
+
+    ftestCase "SameKeys_LDNodeLDRefExisting" <| fun _ ->
+        let getNode1() =
+            let internalNode = new LDNode("MyInternalNode", thingType())
+            let n = new LDNode("MyNode1", thingType())
+            n.SetProperty("https://schema.org/about", internalNode)
+            n
+        let node1 = getNode1()
+        let node2 = new LDNode("MyNode2", thingType())
+        node2.SetProperty("https://schema.org/about", new LDRef("MyInternalNode"))
+        node1.MergeAppendInto_InPlace(node2)
+        Expect.equal node1 (getNode1()) "Node1 should not have changed modified"
+        Expect.sequenceEqual (node2.GetPropertyNames()) ["https://schema.org/about"] "Should have the Property"
+        let value = node2.TryGetProperty("https://schema.org/about").Value
+        Expect.equal value (new LDRef("MyInternalNode")) "Property value should have been modified"
+
+    ]
+
 let main = testList "LDNode" [
     tests_profile_object_is_valid
     //tests_interface_members
@@ -496,4 +743,5 @@ let main = testList "LDNode" [
     tests_Compact_InPlace
     tests_Flatten
     tests_getPropertyNames
+    tests_mergeAppendInto_InPlace
 ]
