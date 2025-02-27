@@ -50,7 +50,7 @@
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
     <Compile Include="Conversion.fs" />
-    <Compile Include="JsonIO\ARC.fs" />
+    <Compile Include="ROCrateIO.fs" />
   </ItemGroup>
 
   <ItemGroup>

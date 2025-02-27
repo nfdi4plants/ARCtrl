@@ -549,10 +549,11 @@ type ProcessConversion =
             let components = componentGetters |> List.map (fun f -> f matrix i) |> Option.fromValueWithDefault [] |> Option.map ResizeArray
 
             let protocol : LDNode option =
-                let protocolId = ""
+                let name = (protocolREFGetter |> Option.map (fun f -> f matrix i))
+                let protocolId = LabProtocol.genId(?name = name, processName = processNameRoot)
                 LabProtocol.create(
                     id = protocolId,
-                    ?name = (protocolREFGetter |> Option.map (fun f -> f matrix i)),
+                    ?name = name,
                     ?description = (protocolDescriptionGetter |> Option.map (fun f -> f matrix i)),
                     ?intendedUse = (protocolTypeGetter |> Option.map (fun f -> f matrix i)),
                     //?comments = comments,

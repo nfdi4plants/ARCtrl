@@ -4,22 +4,6 @@ open DynamicObj
 open Fable.Core
 open ARCtrl.ROCrate
 
-//Is based on the Bioschemas bioschemas.org/LabProtocol type and maps to the ISA-JSON Protocol
-
-//Property	Required	Expected Type	Description
-//@id	MUST	Text or URL	Could be the url pointing to the protocol resource.
-//@type	MUST	Text	must be 'bioschemas.org/LabProtocol'
-//description	SHOULD	Text	A short description of the protocol (e.g. an abstract)
-//intendedUse	SHOULD	schema.org/DefinedTerm or Text or URL	The protocol type as an ontology term
-//name	SHOULD	Text	Main title of the LabProtocol.
-//comment	COULD	schema.org/Comment	Comment
-//computationalTool	COULD	schema.org/DefinedTerm or schema.org/PropertyValue or schema.org/SoftwareApplication	Software or tool used as part of the lab protocol to complete a part of it.
-//labEquipment	COULD	schema.org/DefinedTerm or schema.org/PropertyValue or Text or URL	For LabProtocols it would be a laboratory equipment use by a person to follow one or more steps described in this LabProtocol.
-//reagent	COULD	schema.org/BioChemEntity or schema.org/DefinedTerm or schema.org/PropertyValue or Text or URL	Reagents used in the protocol.
-//url	COULD	URL	Pointer to protocol resources external to the ISA-Tab that can be accessed by their Uniform Resource Identifier (URI).
-//version	COULD	Number or Text	An identifier for the version to ensure protocol tracking.
-
-
 [<AttachMembers>]
 type LabProtocol =
 
@@ -27,17 +11,17 @@ type LabProtocol =
 
     static member description = "http://schema.org/description"
 
-    static member intendedUse = "http://bioschemas.org/intendedUse"
+    static member intendedUse = "https://bioschemas.org/intendedUse"
 
     static member name = "http://schema.org/name"
 
     static member comment = "http://schema.org/comment"
 
-    static member computationalTool = "http://bioschemas.org/computationalTool"
+    static member computationalTool = "https://bioschemas.org/computationalTool"
 
-    static member labEquipment = "http://bioschemas.org/labEquipment"
+    static member labEquipment = "https://bioschemas.org/labEquipment"
 
-    static member reagent = "http://bioschemas.org/reagent"
+    static member reagent = "https://bioschemas.org/reagent"
 
     static member url = "http://schema.org/url"
 
@@ -132,6 +116,19 @@ type LabProtocol =
     static member validate(lp : LDNode, ?context : LDContext) =
         lp.HasType(LabProtocol.schemaType, ?context = context)
         //&& lp.HasProperty(LabProtocol.name, ?context = context)
+
+    static member genId(?name : string, ?processName : string, ?assayName : string, ?studyName : string) =
+        [
+            if name.IsSome then name.Value
+            if processName.IsSome then processName.Value
+            if assayName.IsSome then assayName.Value
+            if studyName.IsSome then studyName.Value
+        ]
+        |> fun vals ->
+            if vals.IsEmpty then [ARCtrl.Helper.Identifier.createMissingIdentifier()]
+            else vals
+        |> List.append ["Protocol"]
+        |> String.concat "_"
 
     static member create(id : string, ?name : string, ?description : string, ?intendedUse : LDNode, ?comments : ResizeArray<LDNode>, ?computationalTools : ResizeArray<LDNode>, ?labEquipments : ResizeArray<LDNode>, ?reagents : ResizeArray<LDNode>, ?url : string, ?version : string, ?context : LDContext) =
         let lp = LDNode(id, ResizeArray [LabProtocol.schemaType], ?context = context)

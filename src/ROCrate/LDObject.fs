@@ -470,11 +470,12 @@ and [<AttachMembers>] LDNode(id: string, schemaType: ResizeArray<string>, ?addit
         
 
 
-    member this.Compact_InPlace(?context : LDContext) =
+    member this.Compact_InPlace(?context : LDContext,?setContext : bool) =
+        let setContext = defaultArg setContext false
         let context = LDContext.tryCombineOptional context (this.TryGetContext())
         if context.IsSome then
             let context = context.Value
-            this.SetContext(context)
+            if setContext then this.SetContext(context)
             let newTypes = ResizeArray [
                 for st in this.SchemaType do
                     match context.TryGetTerm st with

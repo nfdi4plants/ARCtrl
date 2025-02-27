@@ -5541,6 +5541,23 @@ module Context =
     [<Literal>]
     let proxy_V1_2DRAFT = "https://w3id.org/ro/crate/1.2-DRAFT/context"
 
+    let initBioschemasContext() =
+        let terms =
+            [
+                "Sample","https://bioschemas.org/Sample"
+                "additionalProperty","http://schema.org/additionalProperty"
+                "intendedUse","https://bioschemas.org/intendedUse"
+                "computationalTool","https://bioschemas.org/computationalTool"
+                "labEquipment","https://bioschemas.org/labEquipment"
+                "reagent","https://bioschemas.org/reagent"
+                "LabProtocol","https://bioschemas.org/LabProtocol"
+                "executesLabProtocol", "https://bioschemas.org/executesLabProtocol"
+                "parameterValue", "https://bioschemas.org/parameterValue"
+                "LabProcess","https://bioschemas.org/LabProcess"
+            ]
+        let c = LDContext.fromMappingSeq terms
+        c
+
     let initV1_1 () =
         let terms =
             termsV1_1.Split('\n')

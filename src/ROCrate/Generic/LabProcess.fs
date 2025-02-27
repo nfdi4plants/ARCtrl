@@ -18,9 +18,9 @@ type LabProcess =
 
     static member result = "http://schema.org/result"
 
-    static member executesLabProtocol = "http://bioschemas.org/executesLabProtocol"
+    static member executesLabProtocol = "https://bioschemas.org/executesLabProtocol"
 
-    static member parameterValue = "http://bioschemas.org/parameterValue"
+    static member parameterValue = "https://bioschemas.org/parameterValue"
 
     static member endTime = "http://schema.org/endTime"
 
