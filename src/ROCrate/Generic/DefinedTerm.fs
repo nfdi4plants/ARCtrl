@@ -44,8 +44,8 @@ type DefinedTerm =
 
     static member genID(name : string, ?termCode : string) =
         match termCode with
-        | Some tc -> $"OA_{name}_{tc}"
-        | None -> $"OA_{name}"
+        | Some tc -> $"#OA_{name}_{tc}"
+        | None -> $"#OA_{name}"
 
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(DefinedTerm.schemaType, ?context = context)

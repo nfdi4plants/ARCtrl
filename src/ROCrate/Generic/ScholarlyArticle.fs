@@ -79,7 +79,7 @@ type ScholarlyArticle =
     static member genID(headline : string, ?url : string) =
         match url with
         | Some u -> u
-        | None -> headline
+        | None -> $"#{headline}"
 
     static member validate(s : LDNode, ?context : LDContext) =
         s.HasType(ScholarlyArticle.schemaType, ?context = context)

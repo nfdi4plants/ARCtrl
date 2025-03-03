@@ -127,7 +127,7 @@ type LabProtocol =
         |> fun vals ->
             if vals.IsEmpty then [ARCtrl.Helper.Identifier.createMissingIdentifier()]
             else vals
-        |> List.append ["Protocol"]
+        |> List.append ["#Protocol"]
         |> String.concat "_"
 
     static member create(id : string, ?name : string, ?description : string, ?intendedUse : LDNode, ?comments : ResizeArray<LDNode>, ?computationalTools : ResizeArray<LDNode>, ?labEquipments : ResizeArray<LDNode>, ?reagents : ResizeArray<LDNode>, ?url : string, ?version : string, ?context : LDContext) =

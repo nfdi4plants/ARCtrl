@@ -106,10 +106,10 @@ type PropertyValue =
     static member genId(name : string, ?value : string, ?propertyID : string, ?prefix) =
         let prefix = Option.defaultValue "PV" prefix
         match value,propertyID with
-        | Some value, Some pid -> $"{prefix}_{name}_{value}_{pid}"
-        | Some value, None -> $"{prefix}_{name}_{value}"
-        | None, Some pid -> $"{prefix}_{name}_{pid}"
-        | _ -> $"{prefix}_{name}"
+        | Some value, Some pid -> $"#{prefix}_{name}_{value}_{pid}"
+        | Some value, None -> $"#{prefix}_{name}_{value}"
+        | None, Some pid -> $"#{prefix}_{name}_{pid}"
+        | _ -> $"#{prefix}_{name}"
 
     static member genIdComponent(name : string, ?value : string, ?propertyID : string) =
         PropertyValue.genId(name, ?value = value, ?propertyID = propertyID, prefix = "Component")

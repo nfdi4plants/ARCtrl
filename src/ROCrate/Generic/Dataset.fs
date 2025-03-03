@@ -261,10 +261,10 @@ type Dataset =
         "./"
 
     static member genIDStudy(identifier : string) =
-        $"Study_{identifier}"
+        $"studies/{identifier}/"
 
     static member genIDAssay(identifier : string) =
-        $"Assay_{identifier}"
+        $"assay/{identifier}/"
     
     static member validate(lp : LDNode, ?context : LDContext) =
         lp.HasType(Dataset.schemaType, ?context = context)

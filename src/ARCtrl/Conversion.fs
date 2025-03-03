@@ -1147,7 +1147,6 @@ type ScholarlyArticleConversion =
 type AssayConversion =
 
     static member composeAssay (assay : ArcAssay) =
-        let id = ARCtrl.Helper.Identifier.Assay.fileNameFromIdentifier assay.Identifier
         let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
         let variableMeasured = assay.MeasurementType |> Option.map BaseTypes.composePropertyValueFromOA
@@ -1169,7 +1168,6 @@ type AssayConversion =
             |> Option.fromSeq
         Dataset.createAssay(
             identifier = assay.Identifier,
-            id = id,
             ?description = None, // TODO
             ?creators = creators,
             ?hasParts = dataFiles,
@@ -1216,7 +1214,6 @@ type AssayConversion =
 type StudyConversion = 
 
     static member composeStudy (study : ArcStudy) =
-        let id = ARCtrl.Helper.Identifier.Study.fileNameFromIdentifier study.Identifier
         let dateCreated = study.SubmissionDate |> Option.bind DateTime.tryFromString
         let datePublished = study.PublicReleaseDate |> Option.bind DateTime.tryFromString
         let dateModified = System.DateTime.Now
@@ -1242,7 +1239,6 @@ type StudyConversion =
             |> Option.fromSeq
         Dataset.createStudy(
             identifier = study.Identifier,
-            id = id,
             ?name = study.Title,
             ?description = study.Description,
             ?dateCreated = dateCreated,

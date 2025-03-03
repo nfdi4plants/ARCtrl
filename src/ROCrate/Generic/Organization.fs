@@ -26,7 +26,7 @@ type Organization =
         o.SetProperty(Organization.name, n, ?context = context)
 
     static member genID(name : string) =
-        $"Organization_{name}"
+        $"#Organization_{name}"
 
     static member validate(o : LDNode, ?context : LDContext) =
         o.HasType(Organization.schemaType, ?context = context)

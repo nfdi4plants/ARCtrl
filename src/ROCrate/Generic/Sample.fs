@@ -65,19 +65,19 @@ type Sample =
         s
 
     static member createSample (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
-        let id = $"Sample_{name}"
+        let id = $"#Sample_{name}"
         let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
         s.AdditionalType <- ResizeArray ["Sample"]
         s
 
     static member createSource (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
-        let id = $"Source_{name}"
+        let id = $"#Source_{name}"
         let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
         s.AdditionalType <- ResizeArray ["Source"]
         s
 
     static member createMaterial (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
-        let id = $"Material_{name}"
+        let id = $"#Material_{name}"
         let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
         s.AdditionalType <- ResizeArray ["Material"]
         s

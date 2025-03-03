@@ -44,8 +44,8 @@ type Comment =
 
     static member genID(name : string, ?text : string) =
         match text with
-        | Some t -> $"Comment_{name}_{t}"
-        | None -> $"Comment_{name}"
+        | Some t -> $"#Comment_{name}_{t}"
+        | None -> $"#Comment_{name}"
 
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(Comment.schemaType, ?context = context)

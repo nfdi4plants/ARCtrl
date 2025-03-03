@@ -141,8 +141,8 @@ type Person =
         | Some o -> $"https://orcid.org/{o}"
         | None ->
             match familyName with
-            | Some f -> $"Person_{givenName}_{familyName}"
-            | None -> $"Person_{givenName}"
+            | Some familyName -> $"#Person_{givenName}_{familyName}"
+            | None -> $"#Person_{givenName}"
 
     static member validate(p : LDNode, ?context : LDContext) =
         p.HasType(Person.schemaType, ?context = context)
