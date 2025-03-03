@@ -10,6 +10,7 @@ module DataAux =
         sprintf "%s#%s" path selector
 
     let pathAndSelectorFromName (name : string) =
+        let name = name.Trim('#')
         let parts = name.Split('#')
         if parts.Length = 2 then
             parts.[0], Some parts.[1]
@@ -87,6 +88,28 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
     member this.NameText =
         this.Name
         |> Option.defaultValue ""
+
+    member this.GetAbsolutePathForAssay(assayIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+        let folderPath = $"assays/{assayIdentifier}/"
+        let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
+        match this.FilePath with
+        | Some p -> 
+            if checkExistenceFromRoot p || p.StartsWith("assays/") || p.StartsWith("studies/") || p.StartsWith("http:") || p.StartsWith("https:") then
+                p
+            else
+                folderPath + p.TrimStart('/')
+        | None -> failwith "Data does not have a file path"
+
+    member this.GetAbsolutePathForStudy(studyIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+        let folderPath = $"studies/{studyIdentifier}/"
+        let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
+        match this.FilePath with
+        | Some p -> 
+            if checkExistenceFromRoot p || p.StartsWith("assays/") || p.StartsWith("studies/") || p.StartsWith("http:") || p.StartsWith("https:") then
+                p
+            else
+                folderPath + p.TrimStart('/')
+        | None -> failwith "Data does not have a file path"
 
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())

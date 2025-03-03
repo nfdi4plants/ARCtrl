@@ -301,6 +301,59 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     #endif
 
 
+    member this.MakeDataFilesAbsolute() =
+        let filesPaths = this.FileSystem.Tree.ToFilePaths() |> set
+        let checkExistenceFromRoot = fun p -> filesPaths |> Set.contains p
+        match this.ISA with
+        | Some inv -> 
+            inv.Studies |> Seq.iter (fun s ->
+                s.Tables |> Seq.iter (fun t ->
+                    match t.TryGetInputColumn() with
+                    | Some col when col.Header.IsDataColumn -> 
+                        col.Cells |> Array.iter (fun c ->
+                            if c.AsData.FilePath.IsSome then
+                            
+                                let newFilePath =
+                                    c.AsData.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
+                                c.AsData.FilePath <- Some newFilePath
+                        )
+                    | _ -> ()
+                    match t.TryGetOutputColumn() with
+                    | Some col when col.Header.IsDataColumn -> 
+                        col.Cells |> Array.iter (fun c ->
+                            if c.AsData.FilePath.IsSome then
+                                let newFilePath =
+                                    c.AsData.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
+                                c.AsData.FilePath <- Some newFilePath
+                        )
+                    | _ -> ()
+                )
+            )
+            inv.Assays |> Seq.iter (fun a ->
+                a.Tables |> Seq.iter (fun t ->
+                    match t.TryGetInputColumn() with
+                    | Some col when col.Header.IsDataColumn -> 
+                        col.Cells |> Array.iter (fun c ->
+                            if c.AsData.FilePath.IsSome then
+                                let newFilePath =
+                                    c.AsData.GetAbsolutePathForAssay (a.Identifier,checkExistenceFromRoot)
+                                c.AsData.FilePath <- Some newFilePath
+                        )
+                    | _ -> ()
+                    match t.TryGetOutputColumn() with
+                    | Some col when col.Header.IsDataColumn -> 
+                        col.Cells |> Array.iter (fun c ->
+                            if c.AsData.FilePath.IsSome then
+                                let newFilePath =
+                                    c.AsData.GetAbsolutePathForAssay (a.Identifier,checkExistenceFromRoot)
+                                c.AsData.FilePath <- Some newFilePath
+                        )
+                    | _ -> ()
+                )
+            )
+        | None -> ()
+
+
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
     //    raise (System.NotImplementedException())
 
@@ -706,6 +759,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         ARC(?isa = isa)
 
     member this.ToROCrateJsonString(?spaces) =
+        this.MakeDataFilesAbsolute()
         ARCtrl.Json.ARC.ROCrate.encoder (Option.get _isa)
         |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
 
