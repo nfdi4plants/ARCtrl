@@ -1295,8 +1295,11 @@ type InvestigationConversion =
     static member composeInvestigation (investigation : ArcInvestigation) =
         let name = match investigation.Title with | Some t -> t | None -> failwith "Investigation must have a title"
         let dateCreated = investigation.SubmissionDate |> Option.bind DateTime.tryFromString
-        let datePublished = investigation.PublicReleaseDate |> Option.bind DateTime.tryFromString
-        let dateModified = System.DateTime.Now
+        let datePublished =
+            investigation.PublicReleaseDate
+            |> Option.bind DateTime.tryFromString
+            |> Option.defaultValue (System.DateTime.Now)
+        //let dateModified = System.DateTime.Now
         let publications = 
             investigation.Publications
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.composeScholarlyArticle p)
@@ -1322,8 +1325,8 @@ type InvestigationConversion =
             name = name,
             ?description = investigation.Description,
             ?dateCreated = dateCreated,
-            ?datePublished = datePublished,
-            dateModified = dateModified,
+            datePublished = datePublished,
+            //dateModified = dateModified,
             ?creators = creators,
             ?citations = publications,
             ?hasParts = hasParts,

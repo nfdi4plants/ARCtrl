@@ -12,9 +12,16 @@ module ARC =
     /// Functions for serializing and deserializing ARC objects to RO-Crate Root Data Entity
     ///
     /// See https://www.researchobject.org/ro-crate/1.1/root-data-entity.html for more information
-    module ROCrate = 
-       
-        let metadataFileDescriptor =
+    type ROCrate =
+
+        static member getDefaultLicense() =
+            //let cw = LDNode("License", ResizeArray ["https://schema.org/CreativeWork"])
+            //cw.SetProperty("https://schema.org/name", "ALL RIGHTS RESERVED BY THE AUTHORS")
+            //cw.SetProperty("https://schema.org/about",LDRef "./")
+            //cw
+            "ALL RIGHTS RESERVED BY THE AUTHORS"
+            
+        static member metadataFileDescriptor =
             let id = "ro-crate-metadata.json"
             let schemaType = ResizeArray ["http://schema.org/CreativeWork"]
             let node = LDNode(id, schemaType)
@@ -22,16 +29,21 @@ module ARC =
             node.SetProperty("http://schema.org/about", LDRef("./"))
             node
 
-        let encoder (isa : ArcInvestigation) =         
+        static member encoder (isa : ArcInvestigation, ?license : obj) =
+            let license = match license with
+                          | Some license -> license
+                          | None -> ROCrate.getDefaultLicense()
             let isa = isa.ToROCrateInvestigation()
+            Dataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
+            Dataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()
             let context = LDContext(baseContexts=ResizeArray[Context.initV1_1();Context.initBioschemasContext()])
             graph.SetContext(context)
-            graph.AddNode(metadataFileDescriptor)
+            graph.AddNode(ROCrate.metadataFileDescriptor)
             graph.Compact_InPlace()
             LDGraph.encoder graph
 
-        let decoder : Decoder<ArcInvestigation option> =
+        static member decoder : Decoder<ArcInvestigation option> =
             LDGraph.decoder
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with

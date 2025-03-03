@@ -1125,6 +1125,8 @@ let tests_Investigation =
                 )
             let ro_Investigation = InvestigationConversion.composeInvestigation p
             let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
         )
         testCase "TopLevel_FromScaffold" (fun () ->
@@ -1194,6 +1196,8 @@ let tests_Investigation =
                 )
             let ro_Investigation = InvestigationConversion.composeInvestigation p
             let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            Expect.isSome p'.PublicReleaseDate "PublicReleaseDate default value should be set"
+            p'.PublicReleaseDate <- None // As a default value is used otherwise
             Expect.equal p' p "Investigation should match"
         )
     ]

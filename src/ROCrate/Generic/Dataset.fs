@@ -20,6 +20,10 @@ type Dataset =
 
     static member datePublished = "http://schema.org/datePublished"
 
+    static member sdDatePublished = "http://schema.org/datePublished"
+
+    static member license = "http://schema.org/license"
+
     static member dateModified = "http://schema.org/dateModified"
 
     static member description = "http://schema.org/description"
@@ -84,6 +88,30 @@ type Dataset =
 
     static member setDatePublishedAsDateTime(lp : LDNode, datePublished : System.DateTime, ?context : LDContext) =
         lp.SetProperty(Dataset.datePublished, datePublished, ?context = context)
+
+    static member tryGetSDDatePublishedAsDateTime(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(Dataset.sdDatePublished, ?context = context) with
+        | Some (:? System.DateTime as n) -> Some n
+        | _ -> None
+
+    static member setSDDatePublishedAsDateTime(lp : LDNode, sdDatePublished : System.DateTime, ?context : LDContext) =
+        lp.SetProperty(Dataset.sdDatePublished, sdDatePublished, ?context = context)
+
+    static member tryGetLicenseAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(Dataset.license, ?context = context) with
+        | Some (:? string as n) -> Some n
+        | _ -> None
+
+    //static member tryGetLicenseAsCreativeWork(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
+    //    match lp.TryGetPropertyAsSingleNode(Dataset.license, ?graph = graph, ?context = context) with
+    //    | Some n when CreativeWork.validate(n, ?context = context) -> Some n
+    //    | _ -> None
+
+    static member setLicenseAsString(lp : LDNode, license : string, ?context : LDContext) =
+        lp.SetProperty(Dataset.license, license, ?context = context)
+
+    static member setLicenseAsCreativeWork(lp : LDNode, license : obj, ?context : LDContext) =
+        lp.SetProperty(Dataset.license, license, ?context = context)
 
     static member tryGetDateModifiedAsDateTime(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(Dataset.dateModified, ?context = context) with
