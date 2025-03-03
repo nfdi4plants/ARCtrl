@@ -1146,6 +1146,49 @@ type ScholarlyArticleConversion =
 
 type AssayConversion =
 
+    static member getDataFilesFromProcesses (processes : LDNode ResizeArray, ?graph : LDGraph, ?context : LDContext) =
+        let data = 
+            processes
+            |> ResizeArray.collect (fun p -> 
+                let inputs = LabProcess.getObjectsAsData(p, ?graph = graph, ?context = context)
+                let outputs = LabProcess.getResultsAsData(p, ?graph = graph, ?context = context)
+                ResizeArray.append inputs outputs
+            )
+            |> ResizeArray.distinct
+        let files =
+            data
+            |> ResizeArray.filter (fun d -> 
+                DataAux.pathAndSelectorFromName d.Id |> snd |> Option.isNone
+            )
+        let filesFromfragments = 
+            data
+            |> ResizeArray.filter (fun d -> 
+                DataAux.pathAndSelectorFromName d.Id |> snd |> Option.isSome
+            )
+            |> ResizeArray.groupBy (fun d ->
+                DataAux.pathAndSelectorFromName d.Id |> fst
+            )
+            |> ResizeArray.map (fun (path,fragments) ->
+                let file =
+                    match files |> ResizeArray.tryFind (fun d -> d.Id = path) with
+                    | Some f -> f
+                    | None ->
+                        let comments = 
+                            File.getComments(fragments.[0], ?graph = graph, ?context = context)
+                            |> Option.fromSeq
+                        File.create(
+                            id = path,
+                            name = path,
+                            ?comments = comments,
+                            ?disambiguatingDescription = File.tryGetDisambiguatingDescriptionAsString(fragments.[0], ?context = context),
+                            ?encodingFormat = File.tryGetEncodingFormatAsString(fragments.[0], ?context = context),
+                            ?context = fragments.[0].TryGetContext()
+                        )
+                Dataset.setHasParts(file, fragments,?context = context)
+                file            
+            )
+        ResizeArray.append files filesFromfragments
+
     static member composeAssay (assay : ArcAssay) =
         let measurementMethod = assay.TechnologyType |> Option.map BaseTypes.composeDefinedTerm
         let measurementTechnique = assay.TechnologyPlatform |> Option.map BaseTypes.composeDefinedTerm
@@ -1154,14 +1197,13 @@ type AssayConversion =
             assay.Performers
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
-        let dataFiles = 
-            ResizeArray [] // TODO
-            |> ResizeArray.map (fun df -> BaseTypes.composeFile df)
-            |> Option.fromSeq
         let processSequence = 
             ArcTables(assay.Tables).GetProcesses()
             |> ResizeArray
             |> Option.fromSeq
+        let dataFiles = 
+            processSequence
+            |> Option.map AssayConversion.getDataFilesFromProcesses
         let comments = 
             assay.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
@@ -1225,14 +1267,13 @@ type StudyConversion =
             study.Contacts
             |> ResizeArray.map (fun c -> PersonConversion.composePerson c)
             |> Option.fromSeq
-        let dataFiles = 
-            ResizeArray [] // TODO
-            |> ResizeArray.map (fun df -> BaseTypes.composeFile df)
-            |> Option.fromSeq
         let processSequence = 
             ArcTables(study.Tables).GetProcesses()
             |> ResizeArray
             |> Option.fromSeq
+        let dataFiles = 
+            processSequence
+            |> Option.map AssayConversion.getDataFilesFromProcesses
         let comments = 
             study.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)

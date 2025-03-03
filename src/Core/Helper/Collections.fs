@@ -207,3 +207,13 @@ module ResizeArray =
         for i in 0 .. n - 1 do
             c.Add(a.[i], b.[i])
         c
+
+    let tryFind f (a : ResizeArray<'T>) =
+        let rec loop i =
+            if i < a.Count then
+                if f a.[i] then
+                    Some a.[i]
+                else
+                   loop (i + 1)
+            else None
+        loop 0

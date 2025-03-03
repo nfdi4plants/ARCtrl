@@ -1082,6 +1082,122 @@ let tests_Publication =
         )
     ]
 
+let tests_GetDataFilesFromProcesses =
+    testList "GetDataFilesFromProcesses" [
+        testCase "EmptyArray" (fun () ->
+            let processes = ResizeArray []
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.isEmpty dataFiles "Should have no data files"
+        )
+        testCase "SingleProcessNoDataFiles" (fun () ->
+            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let processes = ResizeArray [p]
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.isEmpty dataFiles "Should have no data files"
+        )
+        testCase "InputAndOutputFile" (fun () -> 
+            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let input = File.create(name = "InputFile")
+            let output = File.create(name = "OutputFile")
+            LabProcess.setObjects(p, ResizeArray [input])
+            LabProcess.setResults(p, ResizeArray [output])
+            let processes = ResizeArray [p]
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.hasLength dataFiles 2 "Should have 2 data files"
+            Expect.equal dataFiles.[0] input "First data file should be input"
+            Expect.equal dataFiles.[1] output "Second data file should be output"
+        )
+        testCase "FragmentCorrectFieldCopies" (fun () ->
+            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let encodingFormat = "text/csv"
+            let comment = ROCrate.Comment.create(name = "MyCommentKey", text = "MyCommentValue")
+            let input = File.create(name = "InputFile#Fragment1", encodingFormat = encodingFormat, comments = ResizeArray [comment])
+            LabProcess.setObjects(p, ResizeArray [input])
+            let processes = ResizeArray [p]
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.hasLength dataFiles 1 "Should have 1 data file"
+            let first = dataFiles.[0]
+            Expect.equal (File.getNameAsString first) "InputFile" "First data file should be input"
+            let encodFormat' = Expect.wantSome (File.tryGetEncodingFormatAsString first) "Encoding format was not copied"
+            Expect.equal encodFormat' encodingFormat "Encoding format should be copied"
+            let comments = File.getComments first
+            Expect.hasLength comments 1 "Should have 1 comment"
+            Expect.equal comments.[0] comment "Comment should be copied"
+            let fragments = Dataset.getHasPartsAsFile first
+            Expect.hasLength fragments 1 "Should have 1 fragment"
+            Expect.equal fragments.[0] input "Fragment should be input"
+        )
+        testCase "FragmentsOfDifferentFiles" (fun () ->
+            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let input1 = File.create(name = "InputFile1#Fragment1")
+            let output2 = File.create(name = "InputFile2#Fragment2")
+            LabProcess.setObjects(p, ResizeArray [input1])
+            LabProcess.setResults(p, ResizeArray [output2])
+            let processes = ResizeArray [p]
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.hasLength dataFiles 2 "Should have 2 data files"
+            let first = dataFiles.[0]
+            Expect.equal (File.getNameAsString first) "InputFile1" "First data file should be input1"
+            let second = dataFiles.[1]
+            Expect.equal (File.getNameAsString second) "InputFile2" "Second data file should be input2"
+            let firstFragments = Dataset.getHasPartsAsFile(first)
+            Expect.hasLength firstFragments 1 "First data file should have 1 fragment"
+            Expect.equal firstFragments.[0] input1 "First fragment should be Fragment1"
+            let secondFragments = Dataset.getHasPartsAsFile(second)
+            Expect.hasLength secondFragments 1 "Second data file should have 1 fragment"
+            Expect.equal secondFragments.[0] output2 "Second fragment should be Fragment2"
+        )
+        testCase "FragmentsOfSameFile" (fun () ->
+            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let input1 = File.create(name = "InputFile#Fragment1")
+            let output2 = File.create(name = "InputFile#Fragment2")
+            LabProcess.setObjects(p, ResizeArray [input1])
+            LabProcess.setResults(p, ResizeArray [output2])
+            let processes = ResizeArray [p]
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.hasLength dataFiles 1 "Should have 1 data file"
+            let first = dataFiles.[0]
+            Expect.equal (File.getNameAsString first) "InputFile" "First data file should be input1"
+            let firstFragments = Dataset.getHasPartsAsFile first
+            Expect.hasLength firstFragments 2 "First data file should have 2 fragments"
+            Expect.equal firstFragments.[0] input1 "First fragment should be Fragment1"
+            Expect.equal firstFragments.[1] output2 "Second fragment should be Fragment2"
+        )
+        testCase "ComplexMix" (fun () ->
+            let p1 = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let p1_input = File.create(name = "InputFile")
+            let p1_output1 = File.create(name = "MiddleFile#Fragment1")
+            let p1_output2 = File.create(name = "MiddleFile#Fragment2")
+            LabProcess.setObjects(p1, ResizeArray [p1_input])
+            LabProcess.setResults(p1, ResizeArray [p1_output1;p1_output2])
+            let p2_output1 = File.create(name = "OutFile1#Fragment1")
+            let p2_output2 = File.create(name = "OutFile2#Fragment2")
+            let p2 = LabProcess.create(name = Identifier.createMissingIdentifier())
+            LabProcess.setObjects(p2, ResizeArray [p1_output1;p1_output2])
+            LabProcess.setResults(p2, ResizeArray [p2_output1;p2_output2])
+            let processes = ResizeArray [p1;p2]
+            let dataFiles = AssayConversion.getDataFilesFromProcesses processes
+            Expect.hasLength dataFiles 4 "Should have 4 data files"
+            Expect.equal dataFiles.[0] p1_input "First data file should be input"
+            let middleFile = dataFiles.[1]
+            Expect.equal (File.getNameAsString middleFile) "MiddleFile" "Second data file should be middle file"
+            let middleFragments = Dataset.getHasPartsAsFile middleFile
+            Expect.hasLength middleFragments 2 "Middle file should have 2 fragments"
+            Expect.equal middleFragments.[0] p1_output1 "First fragment should be Fragment1"
+            Expect.equal middleFragments.[1] p1_output2 "Second fragment should be Fragment2"
+            let out1 = dataFiles.[2]
+            Expect.equal (File.getNameAsString out1) "OutFile1" "Third data file should be output1"
+            let out1_Fragments = Dataset.getHasPartsAsFile out1
+            Expect.hasLength out1_Fragments 1 "Output1 should have 1 fragment"
+            Expect.equal out1_Fragments.[0] p2_output1 "First fragment should be Fragment1"
+            let out2 = dataFiles.[3]
+            Expect.equal (File.getNameAsString out2) "OutFile2" "Fourth data file should be output2"
+            let out2_Fragments = Dataset.getHasPartsAsFile out2
+            Expect.hasLength out2_Fragments 1 "Output2 should have 1 fragment"
+            Expect.equal out2_Fragments.[0] p2_output2 "First fragment should be Fragment2"
+        )
+    ]
+
 let tests_Assay =
     testList "Assay" [
         testCase "Empty_FromScaffold" (fun () ->
@@ -1215,6 +1331,7 @@ let main =
         tests_ArcTablesProcessSeq
         tests_Person
         tests_Publication
+        tests_GetDataFilesFromProcesses
         tests_Assay
         tests_Investigation
     ]

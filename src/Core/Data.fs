@@ -90,7 +90,7 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         |> Option.defaultValue ""
 
     member this.GetAbsolutePathForAssay(assayIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
-        let folderPath = $"assays/{assayIdentifier}/"
+        let folderPath = $"assays/{assayIdentifier}/dataset/"
         let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
         match this.FilePath with
         | Some p -> 
@@ -101,7 +101,7 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         | None -> failwith "Data does not have a file path"
 
     member this.GetAbsolutePathForStudy(studyIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
-        let folderPath = $"studies/{studyIdentifier}/"
+        let folderPath = $"studies/{studyIdentifier}/resources/"
         let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
         match this.FilePath with
         | Some p -> 

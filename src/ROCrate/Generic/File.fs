@@ -65,11 +65,17 @@ type File =
     static member setUsageInfoAsString(dt : LDNode, usageInfo : string, ?context : LDContext) =
         dt.SetProperty(File.usageInfo, usageInfo, ?context = context)
 
+    static member genId(name : string) =
+        $"{name}"
+
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(File.schemaType, ?context = context)
         && dt.HasProperty(File.name, ?context = context)
 
-    static member create(id : string, name : string, ?comments : ResizeArray<LDNode>, ?disambiguatingDescription : string, ?encodingFormat : string, ?usageInfo : string, ?context : LDContext) =
+    static member create(name : string, ?id : string, ?comments : ResizeArray<LDNode>, ?disambiguatingDescription : string, ?encodingFormat : string, ?usageInfo : string, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> File.genId(name)
         let dt = LDNode(id, ResizeArray [File.schemaType], ?context = context)
         dt.SetProperty(File.name, name, ?context = context)
         dt.SetOptionalProperty(File.comment, comments, ?context = context)
