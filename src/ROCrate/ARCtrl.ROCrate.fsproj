@@ -7,6 +7,7 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup>
+    <Compile Include="Helper.fs" />
     <Compile Include="DynObjExtensions.fs" />
     <Compile Include="LDContext.fs" />
     <Compile Include="ROCrateContext.fs" />

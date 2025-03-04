@@ -46,6 +46,7 @@ type Comment =
         match text with
         | Some t -> $"#Comment_{name}_{t}"
         | None -> $"#Comment_{name}"
+        |> Helper.ID.clean
 
     static member validate(dt : LDNode, ?context : LDContext) =
         dt.HasType(Comment.schemaType, ?context = context)

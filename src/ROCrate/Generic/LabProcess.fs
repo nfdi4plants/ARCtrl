@@ -130,6 +130,7 @@ type LabProcess =
         | Some assay, None -> $"#Process_{assay}_{name}"
         | None, Some study -> $"#Process_{study}_{name}"
         | _ -> $"#Process_{name}"
+        |> Helper.ID.clean
 
 
     static member create(name : string, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?id : string, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =

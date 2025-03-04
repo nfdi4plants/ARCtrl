@@ -70,6 +70,7 @@ type PostalAddress =
             items
             |> List.reduce (fun acc x -> $"{acc}_{x}")
             |> sprintf "#%s"
+        |> Helper.ID.clean
         
     static member validate(o : LDNode, ?context : LDContext) =
         o.HasType(PostalAddress.schemaType, ?context = context)

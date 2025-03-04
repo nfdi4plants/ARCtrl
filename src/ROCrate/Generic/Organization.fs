@@ -27,6 +27,7 @@ type Organization =
 
     static member genID(name : string) =
         $"#Organization_{name}"
+        |> Helper.ID.clean
 
     static member validate(o : LDNode, ?context : LDContext) =
         o.HasType(Organization.schemaType, ?context = context)

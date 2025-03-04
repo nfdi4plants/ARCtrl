@@ -143,6 +143,7 @@ type Person =
             match familyName with
             | Some familyName -> $"#Person_{givenName}_{familyName}"
             | None -> $"#Person_{givenName}"
+        |> Helper.ID.clean
 
     static member validate(p : LDNode, ?context : LDContext) =
         p.HasType(Person.schemaType, ?context = context)

@@ -80,6 +80,7 @@ type ScholarlyArticle =
         match url with
         | Some u -> u
         | None -> $"#{headline}"
+        |> Helper.ID.clean
 
     static member validate(s : LDNode, ?context : LDContext) =
         s.HasType(ScholarlyArticle.schemaType, ?context = context)

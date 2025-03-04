@@ -46,6 +46,18 @@ type Sample =
         s.HasType(Sample.schemaType, ?context = context)
         && s.HasProperty(Sample.name, ?context = context)
 
+    static member genIDSample(name : string) =
+        $"#Sample_{name}"
+        |> Helper.ID.clean
+
+    static member genIDSource(name : string) =
+        $"#Source_{name}"
+        |> Helper.ID.clean
+
+    static member genIDMaterial(name : string) =
+        $"#Material_{name}"
+        |> Helper.ID.clean
+
     static member validateSample (s : LDNode, ?context : LDContext) =
         Sample.validate(s, ?context = context)
         && s.AdditionalType.Contains("Sample")
@@ -64,20 +76,26 @@ type Sample =
         s.SetOptionalProperty(Sample.additionalProperty, additionalProperties, ?context = context)
         s
 
-    static member createSample (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
-        let id = $"#Sample_{name}"
+    static member createSample (name : string, ?id : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some id -> id
+                 | None -> Sample.genIDSample name
         let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
         s.AdditionalType <- ResizeArray ["Sample"]
         s
 
-    static member createSource (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
-        let id = $"#Source_{name}"
+    static member createSource (name : string, ?id : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some id -> id
+                 | None -> Sample.genIDSource name
         let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
         s.AdditionalType <- ResizeArray ["Source"]
         s
 
-    static member createMaterial (name : string, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
-        let id = $"#Material_{name}"
+    static member createMaterial (name : string, ?id, ?additionalProperties : ResizeArray<LDNode>, ?context : LDContext) =
+        let id = match id with
+                 | Some id -> id
+                 | None -> Sample.genIDMaterial name
         let s = Sample.create(id, name, ?additionalProperties = additionalProperties, ?context = context)
         s.AdditionalType <- ResizeArray ["Material"]
         s

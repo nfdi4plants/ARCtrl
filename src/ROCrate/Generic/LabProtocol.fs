@@ -129,6 +129,7 @@ type LabProtocol =
             else vals
         |> List.append ["#Protocol"]
         |> String.concat "_"
+        |> Helper.ID.clean
 
     static member create(id : string, ?name : string, ?description : string, ?intendedUse : LDNode, ?comments : ResizeArray<LDNode>, ?computationalTools : ResizeArray<LDNode>, ?labEquipments : ResizeArray<LDNode>, ?reagents : ResizeArray<LDNode>, ?url : string, ?version : string, ?context : LDContext) =
         let lp = LDNode(id, ResizeArray [LabProtocol.schemaType], ?context = context)

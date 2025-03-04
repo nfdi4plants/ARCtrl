@@ -59,7 +59,7 @@ type BaseTypes =
         Comment(name = name,?value = text)
 
     static member composeDefinedTerm (term : OntologyAnnotation) =
-        let tan = term.TermAccessionOntobeeUrl |> Option.fromValueWithDefault ""
+        let tan = term.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
         DefinedTerm.create(name = term.NameText, ?termCode = tan)
 
     static member decomposeDefinedTerm (term : LDNode, ?context : LDContext) =
@@ -69,7 +69,7 @@ type BaseTypes =
         | None -> OntologyAnnotation.create(name = name)
 
     static member composePropertyValueFromOA (term : OntologyAnnotation) =
-        let tan = term.TermAccessionOntobeeUrl |> Option.fromValueWithDefault ""
+        let tan = term.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
         PropertyValue.create(name = term.NameText, ?propertyID = tan)
 
     static member decomposePropertyValueToOA (term : LDNode, ?context : LDContext) =
@@ -84,10 +84,10 @@ type BaseTypes =
         | CompositeCell.FreeText ("") -> None, None, None, None
         | CompositeCell.FreeText (text) -> Some text, None, None, None        
         | CompositeCell.Term (term) when term.isEmpty() -> None, None, None, None
-        | CompositeCell.Term (term) when term.TANInfo.IsSome -> term.Name, Some term.TermAccessionOntobeeUrl, None, None
+        | CompositeCell.Term (term) when term.TANInfo.IsSome -> term.Name, Some term.TermAccessionAndOntobeeUrlIfShort, None, None
         | CompositeCell.Term (term) -> term.Name, None, None, None
         | CompositeCell.Unitized (text,unit) ->
-            let unitName, unitAccession = if unit.isEmpty() then None, None else unit.Name, Some unit.TermAccessionOntobeeUrl
+            let unitName, unitAccession = if unit.isEmpty() then None, None else unit.Name, Some unit.TermAccessionAndOntobeeUrlIfShort
             (if text = "" then None else Some text),
             None,
             unitName,
@@ -100,7 +100,7 @@ type BaseTypes =
         | CompositeHeader.Parameter oa 
         | CompositeHeader.Factor oa 
         | CompositeHeader.Characteristic oa ->
-            oa.NameText, if oa.TANInfo.IsSome then Some oa.TermAccessionOntobeeUrl else None
+            oa.NameText, if oa.TANInfo.IsSome then Some oa.TermAccessionAndOntobeeUrlIfShort else None
         | h -> failwithf "header %O should not be parsed to isa value" h
 
     /// Convert a CompositeHeader and Cell tuple to a ISA Component
