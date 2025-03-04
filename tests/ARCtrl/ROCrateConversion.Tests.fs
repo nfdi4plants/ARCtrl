@@ -1275,7 +1275,7 @@ let tests_Investigation =
                 let authors = "Lukas Weil, John Doe"
                 let comment = Comment("MyCommentKey","MyCommentValue")
                 let commentOnlyKey = Comment("MyEmptyKey")
-                let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
+                let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:456")
                 ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
             let person =
                 let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
