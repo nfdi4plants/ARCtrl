@@ -18,7 +18,7 @@ let orcidPrefix = "http://orcid.org/"
 
 let (|ORCID|_|) input = 
     match input with
-    | Regex orcidPattern r -> Some r
+    | Regex orcidPattern r -> Some r.Value
     | _ -> None
 
 let tryGetOrcidURL (orcid : string) =

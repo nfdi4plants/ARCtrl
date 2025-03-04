@@ -755,7 +755,8 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     |]
 
     static member fromDeprecatedROCrateJsonString (s:string) =
-        try 
+        try
+            let s = s.Replace("bio:additionalProperty","sdo:additionalProperty")
             let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoderDeprecated s
             ARC(isa = isa)
         with

@@ -37,7 +37,7 @@ type Person =
 
     static member tryGetAffiliation(p : LDNode, ?graph :LDGraph, ?context : LDContext) =
         match p.TryGetPropertyAsSingleNode(Person.affiliation, ?graph = graph, ?context = context) with
-        | Some n when Organization.validate n -> Some n
+        | Some n when Organization.validate(n, ?context = context) -> Some n
         | _ -> None
 
     static member setAffiliation(p : LDNode, a : LDNode, ?context : LDContext) =
@@ -98,7 +98,7 @@ type Person =
 
     static member tryGetAddressAsPostalAddress(p : LDNode, ?graph : LDGraph, ?context : LDContext) =
         match p.TryGetPropertyAsSingleNode(Person.address, ?graph = graph, ?context = context) with
-        | Some n when PostalAddress.validate n -> Some n
+        | Some n when PostalAddress.validate(n, ?context = context) -> Some n
         | _ -> None
 
     static member tryGetAddressAsString(p : LDNode, ?context : LDContext) =

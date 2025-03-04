@@ -63,7 +63,7 @@ type ScholarlyArticle =
 
     static member tryGetCreativeWorkStatus(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
         match s.TryGetPropertyAsSingleNode(ScholarlyArticle.creativeWorkStatus, ?graph  = graph, ?context = context) with
-        | Some cws when DefinedTerm.validate cws -> Some cws
+        | Some cws when DefinedTerm.validate(cws,?context = context) -> Some cws
         | _ -> None
 
     static member setCreativeWorkStatus(s : LDNode, cws : LDNode, ?context : LDContext) =

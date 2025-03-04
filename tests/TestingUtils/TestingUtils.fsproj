@@ -13,8 +13,8 @@
     <Compile Include="TestObjects.CWL\Outputs.fs" />
     <Compile Include="TestObjects.CWL\Inputs.fs" />
     <Compile Include="TestObjects.CWL\Requirements.fs" />
-    <Compile Include="TestObjects.ROCrate\ArcPrototype%40ed123499.fs" />
-    <Compile Include="TestObjects.ROCrate\ArcPrototype%40ed123499_deprecated.fs" />
+    <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499.fs" />
+    <Compile Include="TestObjects.ROCrate\ArcPrototype_ed123499_deprecated.fs" />
     <Compile Include="TestObjects.Json\Study.fs" />
     <Compile Include="TestObjects.Json\ROCrate.fs" />
     <Content Include="TestObjects.Json\MinimalJson.json" />

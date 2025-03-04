@@ -895,8 +895,7 @@ module TableTypeExtensions =
         ///
         /// Then each group is converted to a table with this nameroot as sheetname
         static member fromProcesses (ps : LDNode list, ?graph : LDGraph, ?context : LDContext) : ArcTables = 
-            ps
-            |> ProcessConversion.groupProcesses
+            ProcessConversion.groupProcesses(ps, ?graph = graph, ?context = context)
             |> List.map (fun (name,ps) ->
                 ps
                 |> List.collect (fun p -> ProcessConversion.processToRows(p,?graph = graph, ?context = context) |> List.ofSeq)

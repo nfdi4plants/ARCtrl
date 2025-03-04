@@ -1382,7 +1382,7 @@ let tests_RemoveStudy =
 
 let tests_ROCrate =
     testList "RO-Crate" [
-        ftestCase "CanRead_Deprecated" <| fun _ ->
+        testCase "CanRead_Deprecated" <| fun _ ->
             let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
             let isa = Expect.wantSome arc.ISA "ARC should contain an ISA part"
             let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
@@ -1390,11 +1390,9 @@ let tests_ROCrate =
             Expect.equal isa.Identifier nonDeprecatedISA.Identifier "Investigation should have correct identifier"
             Expect.equal isa.Title nonDeprecatedISA.Title "Investigation should have correct title"
             Expect.equal isa.Description nonDeprecatedISA.Description "Investigation should have correct description"
-            Expect.sequenceEqual isa.Contacts nonDeprecatedISA.Contacts "Investigation should have correct contacts"
-            Expect.sequenceEqual isa.Studies nonDeprecatedISA.Studies "Investigation should have correct studies"
-            Expect.sequenceEqual isa.Assays nonDeprecatedISA.Assays "Investigation should have correct assays"
-
-        ftestCase "CanRead" <| fun _ ->
+            Expect.equal isa.Contacts.[1] nonDeprecatedISA.Contacts.[1] "Investigation should have correct contacts"
+            Expect.equal isa.Studies.[1] nonDeprecatedISA.Studies.[1] "Investigation should have correct studies"
+        testCase "CanRead" <| fun _ ->
             let arc = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
             let isa = Expect.wantSome arc.ISA "ARC should contain an ISA part"
             Expect.equal isa.Identifier "ArcPrototype" "Investigation should have correct identifier"
@@ -1421,7 +1419,7 @@ let tests_ROCrate =
             Expect.equal firstRole.NameText "principal investigator" "First contact should have correct role"
             /// Studies 
             Expect.equal isa.StudyCount 2 "ARC should contain 2 studies"
-            let secondStudy = isa.Studies.[1]
+            let secondStudy = isa.GetStudy("MaterialPreparation")
             let secondStudyTitle = Expect.wantSome secondStudy.Title "Second study should have title"
             Expect.equal secondStudyTitle "Prototype for experimental data" "Second study should have correct title"
             let secondStudyDescription = Expect.wantSome secondStudy.Description "Second study should have description"

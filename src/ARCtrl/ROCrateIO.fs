@@ -59,5 +59,5 @@ module ARC =
                 ldnode
                 |> Dataset.getAbouts
                 |> Seq.exactlyOne
-                |> ArcInvestigation.fromROCrateInvestigation
+                |> fun node -> ArcInvestigation.fromROCrateInvestigation(node, context = Context.initV1_1())
             )

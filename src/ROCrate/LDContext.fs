@@ -153,17 +153,20 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     static member fromMappingSeq(mappings : seq<string*string>) =
         LDContext(Dictionary.ofSeq mappings)
 
-    // Append second context to the first one inplace
-    static member combine_InPlace (first : LDContext) (second : LDContext) : LDContext =
-        first.BaseContexts.Add second
-        first
+    /// Append first context as base context to the second one inplace
+    static member combine_InPlace (baseContext : LDContext) (specificContext : LDContext) : LDContext =
+        specificContext.BaseContexts.Add baseContext
+        specificContext
 
-    // Create new context with the the two given contexts as baseContexts
-    static member combine (first : LDContext) (second : LDContext) : LDContext =
-        LDContext(baseContexts = ResizeArray([first;second]))
+    /// Create new context with the the two given contexts as baseContexts
+    static member combine (baseContext : LDContext) (specificContext : LDContext) : LDContext =
+        LDContext(baseContexts = ResizeArray([specificContext;baseContext]))
 
-    static member tryCombineOptional (first : LDContext option) (second : LDContext option) : LDContext option =
-        match first,second with
+    /// Try to combine two optional contexts
+    ///
+    /// Create new context with the the two given contexts as baseContexts
+    static member tryCombineOptional (baseContext : LDContext option) (specificContext : LDContext option) : LDContext option =
+        match baseContext,specificContext with
         | Some f, Some s -> Some (LDContext.combine f s)
         | Some f, None -> Some f
         | None, Some s -> Some s

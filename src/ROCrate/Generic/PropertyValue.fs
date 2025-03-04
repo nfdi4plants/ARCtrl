@@ -93,11 +93,11 @@ type PropertyValue =
 
     static member validateParameterValue (pv : LDNode, ?context : LDContext) =
         PropertyValue.validate(pv, ?context = context)
-        && pv.AdditionalType.Contains("ParameterValue")
+        && (pv.AdditionalType.Contains("ParameterValue") || pv.AdditionalType.Contains("ProcessParameterValue"))
 
     static member validateCharacteristicValue (pv : LDNode, ?context : LDContext) =
         PropertyValue.validate(pv, ?context = context)
-        && pv.AdditionalType.Contains("CharacteristicValue")
+        && (pv.AdditionalType.Contains("CharacteristicValue") || pv.AdditionalType.Contains("MaterialAttributeValue"))
 
     static member validateFactorValue (pv : LDNode, ?context : LDContext) =
         PropertyValue.validate(pv, ?context = context)
