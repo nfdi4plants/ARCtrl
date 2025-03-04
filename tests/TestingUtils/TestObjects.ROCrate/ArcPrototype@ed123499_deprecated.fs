@@ -1,4 +1,7 @@
-{
+module TestObjects.ROCrate.ArcPrototypeDeprecated
+
+/// https://git.nfdi4plants.org/muehlhaus/ArcPrototype/-/tree/ed12349933062b4440ed2d1e0dc05482853d752d
+let ed123499 = """{
   "@type": "CreativeWork",
   "@id": "ro-crate-metadata.json",
   "about": {
@@ -2950,4 +2953,4 @@
     "about": "sdo:about",
     "conformsTo": "sdo:conformsTo"
   }
-}
+}"""

@@ -1,4 +1,7 @@
-{
+module TestObjects.ROCrate.ArcPrototype
+
+/// https://git.nfdi4plants.org/muehlhaus/ArcPrototype/-/tree/ed12349933062b4440ed2d1e0dc05482853d752d
+let ed123499 = """{
   "@context": [
     "https://w3id.org/ro/crate/1.1/context",
     {
@@ -1691,4 +1694,4 @@
       }
     }
   ]
-}
+}"""

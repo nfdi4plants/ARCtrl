@@ -1005,6 +1005,21 @@ let tests_Person =
             let p' = PersonConversion.decomposePerson(ro_Person, graph = graph)
             Expect.equal p' p "Person should match"
         )
+        testCase "ORCIDHandling_Number" (fun () ->
+            let p = ARCtrl.Person(firstName = "MyDude", orcid = "0000-0002-1825-0097")
+            let ro_Person = PersonConversion.composePerson p
+            Expect.equal ro_Person.Id "http://orcid.org/0000-0002-1825-0097" "ORCID should be correct"
+            let p' = PersonConversion.decomposePerson ro_Person
+            Expect.equal p' p "Person should match"
+        )
+        testCase "ORCIDHandling_URL" (fun () ->
+            let p = ARCtrl.Person(firstName = "MyDude", orcid = "http://orcid.org/0000-0002-1825-0097")
+            let ro_Person = PersonConversion.composePerson p
+            Expect.equal ro_Person.Id "http://orcid.org/0000-0002-1825-0097" "ORCID should be correct"
+            let p' = PersonConversion.decomposePerson ro_Person
+            p.ORCID <- Some "0000-0002-1825-0097"
+            Expect.equal p' p "Person should match"
+        )
         testCase "AddressAsObject_FromROCrate" (fun () ->
             let address = PostalAddress.create(addressCountry = "Germoney", postalCode = "6969", streetAddress = "I think I'm funny street 69")
             let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
