@@ -43,12 +43,21 @@ module ARC =
             graph.Compact_InPlace()
             LDGraph.encoder graph
 
-        static member decoder : Decoder<ArcInvestigation option> =
+        static member decoder : Decoder<ArcInvestigation> =
             LDGraph.decoder
             |> Decode.map (fun graph ->
                 match graph.TryGetNode("./") with
                 | Some node ->
-                    let isa = ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext())
-                    Some isa
-                | None -> None
+                    ArcInvestigation.fromROCrateInvestigation(node, graph = graph, ?context = graph.TryGetContext())
+                | None ->
+                    failwith "RO-Crate graph did not contain root data Entity"
+            )
+
+        static member decoderDeprecated : Decoder<ArcInvestigation> =
+            LDNode.decoder
+            |> Decode.map (fun ldnode ->
+                ldnode
+                |> Dataset.getAbouts
+                |> Seq.exactlyOne
+                |> ArcInvestigation.fromROCrateInvestigation
             )

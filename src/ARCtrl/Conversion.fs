@@ -944,17 +944,6 @@ type PersonConversion =
             |> ARCtrl.Json.Encode.toJsonString 0
         | _ -> failwith "Address must be a string or a Json.LDNode"
 
-    static member orcidRegex = System.Text.RegularExpressions.Regex("[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]")
-
-    static member tryGetOrcidNumber (orcid : string) =
-        let m = PersonConversion.orcidRegex.Match(orcid)
-        if m.Success then
-            Some m.Value
-        else
-            None
-
-    static member orcidPrefix = "http://orcid.org/"
-
     static member composePerson (person : ARCtrl.Person) =
         let givenName =
             match person.FirstName with
@@ -977,7 +966,7 @@ type PersonConversion =
         ARCtrl.ROCrate.Person.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
 
     static member decomposePerson (person : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let orcid = PersonConversion.tryGetOrcidNumber person.Id
+        let orcid = ORCID.tryGetOrcidNumber person.Id
         let address = 
             match Person.tryGetAddressAsString(person, ?context = context) with
             | Some s -> 
@@ -1372,6 +1361,10 @@ type InvestigationConversion =
         )
 
     static member decomposeInvestigation (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        let title =
+            match Dataset.tryGetNameAsString(investigation, ?context = context) with
+            | Some t -> Some t
+            | None -> Dataset.tryGetHeadlineAsString(investigation, ?context = context)
         let dateCreated = 
             Dataset.tryGetDateCreatedAsDateTime(investigation, ?context = context)
             |> Option.map DateTime.toString
@@ -1399,7 +1392,7 @@ type InvestigationConversion =
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
         ArcInvestigation.create(
             identifier = Dataset.getIdentifierAsString(investigation, ?context = context),
-            ?title = Dataset.tryGetNameAsString(investigation, ?context = context),
+            ?title = title,
             ?description = Dataset.tryGetDescriptionAsString(investigation, ?context = context),
             ?submissionDate = dateCreated,
             ?publicReleaseDate = datePublished,

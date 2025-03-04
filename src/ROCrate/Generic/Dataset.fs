@@ -30,6 +30,8 @@ type Dataset =
 
     static member hasPart = "http://schema.org/hasPart"
 
+    static member headline = "http://schema.org/headline"
+
     static member name = "http://schema.org/name"
 
     static member citation = "http://schema.org/citation"
@@ -148,6 +150,11 @@ type Dataset =
 
     static member setHasParts(lp : LDNode, hasParts : ResizeArray<LDNode>, ?context : LDContext) =
         lp.SetProperty(Dataset.hasPart, hasParts, ?context = context)
+
+    static member tryGetHeadlineAsString(lp : LDNode, ?context : LDContext) =
+        match lp.TryGetPropertyAsSingleton(Dataset.headline, ?context = context) with
+        | Some (:? string as n) -> Some n
+        | _ -> None
 
     static member tryGetNameAsString(lp : LDNode, ?context : LDContext) =
         match lp.TryGetPropertyAsSingleton(Dataset.name, ?context = context) with

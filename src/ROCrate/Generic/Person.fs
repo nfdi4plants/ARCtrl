@@ -137,8 +137,8 @@ type Person =
         p.SetProperty(Person.telephone, t, ?context = context)
 
     static member genId(givenName, ?orcid, ?familyName) =
-        match orcid with
-        | Some o -> $"https://orcid.org/{o}"
+        match orcid |> Option.bind ORCID.tryGetOrcidURL with
+        | Some orcid -> orcid
         | None ->
             match familyName with
             | Some familyName -> $"#Person_{givenName}_{familyName}"

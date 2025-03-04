@@ -12,6 +12,7 @@
     <Compile Include="Helper\DateTime.fs" />
     <Compile Include="Helper\Url.fs" />
     <Compile Include="Helper\Regex.fs" />
+    <Compile Include="Helper\ORCID.fs" />
     <Compile Include="Helper\Identifier.fs" />
     <Compile Include="Helper\HashCodes.fs" />
     <Compile Include="Helper\Printer.fs" />

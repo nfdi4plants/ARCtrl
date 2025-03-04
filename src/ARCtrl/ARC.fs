@@ -754,9 +754,21 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         ARCtrl.Contract.Git.gitattributesFileName, ARCtrl.Contract.Git.gitattributesContract
     |]
 
-    static member fromROCrateJsonString (s:string) = 
-        let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
-        ARC(?isa = isa)
+    static member fromDeprecatedROCrateJsonString (s:string) =
+        try 
+            let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoderDeprecated s
+            ARC(isa = isa)
+        with
+        | ex -> 
+            failwithf "Could not parse deprecated ARC-RO-Crate metadata: \n%s" ex.Message
+
+    static member fromROCrateJsonString (s:string) =
+        try 
+            let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
+            ARC(isa = isa)
+        with
+        | ex -> 
+            failwithf "Could not parse ARC-RO-Crate metadata: \n%s" ex.Message
 
     member this.ToROCrateJsonString(?spaces) =
         this.MakeDataFilesAbsolute()
