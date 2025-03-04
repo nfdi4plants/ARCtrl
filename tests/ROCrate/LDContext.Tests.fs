@@ -86,10 +86,17 @@ let tests_getTerm = testList "getTerm" [
         let resolved = context.TryGetTerm(nameIRI)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameTerm "term was not resolved correctly"
-    ptestCase "compactIRI" <| fun _ -> // Not sure how to solve this test failing, not sure if it's necessary either
+    testCase "compactIRI" <| fun _ -> 
         let context = new LDContext()
         context.AddMapping(nameTerm, nameCompactIRI)
         context.AddMapping(schemaTerm, schemaIRI)
+        let resolved = context.TryGetTerm(nameIRI)
+        let resolved = Expect.wantSome resolved "term was not resolved"
+        Expect.equal resolved nameTerm "term was not resolved correctly"
+    testCase "compactIRI_reverseOrder" <| fun _ ->
+        let context = new LDContext()
+        context.AddMapping(schemaTerm, schemaIRI)
+        context.AddMapping(nameTerm, nameCompactIRI)
         let resolved = context.TryGetTerm(nameIRI)
         let resolved = Expect.wantSome resolved "term was not resolved"
         Expect.equal resolved nameTerm "term was not resolved correctly"

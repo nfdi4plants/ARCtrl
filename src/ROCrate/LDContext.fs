@@ -54,16 +54,37 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
     let mutable baseContexts = Option.defaultValue (ResizeArray []) baseContexts
     let mutable name : string option = None
 
+    /// Dictionary<term, definition>
     let mappings : Dictionary<string,string> =
         match mappings with
         | Some m -> m
         | None -> Dictionary()
 
-    let reverseMappings : Dictionary<string,string> =
-        let dict = Dictionary()
-        for kvp in mappings do
-            Dictionary.addOrUpdate kvp.Value kvp.Key dict
-        dict
+    /// Dictionary<definition, term>
+    let reverseMappings : Dictionary<string,string> = Dictionary()
+
+    /// Dictionary<definition_prefix, (definition_suffix, term)>
+    let compactReverseMappings : Dictionary<string,string*string> = Dictionary()
+
+    let addReverseMapping (key : string) (value : string) =
+        Dictionary.addOrUpdate value key reverseMappings
+        match value with
+        | IRIHelper.CompactIri (prefix,suffix) ->
+            Dictionary.addOrUpdate prefix (suffix,key) compactReverseMappings
+            match Dictionary.tryFind prefix mappings with
+            | Some prefix ->
+                let iri = IRIHelper.combine prefix suffix
+                Dictionary.addOrUpdate iri key reverseMappings
+            | None -> ()
+        | _ ->
+            match Dictionary.tryFind key compactReverseMappings with
+            | Some (suffix,term) ->
+                let iri = IRIHelper.combine value suffix
+                Dictionary.addOrUpdate iri term reverseMappings
+            | None -> ()
+
+    do for kvp in mappings do
+        addReverseMapping kvp.Key kvp.Value
 
     let rec tryFindTerm (term : string) : string option =
         let definition = 
@@ -104,7 +125,7 @@ type LDContext(?mappings : Dictionary<string,string>, ?baseContexts : ResizeArra
 
     member this.AddMapping(term,definition) =
         Dictionary.addOrUpdate term definition mappings
-        Dictionary.addOrUpdate definition term reverseMappings
+        addReverseMapping term definition
         
     member this.TryResolveTerm(term : string) =
         // Handle compact IRI
