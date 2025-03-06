@@ -67,8 +67,12 @@ type ArcTable(name: string, headers: ResizeArray<CompositeHeader>, values: Syste
     member this.ColumnCount 
         with get() = ArcTableAux.getColumnCount this.Headers
 
+    static member columnCount (table:ArcTable) = table.ColumnCount
+
     member this.RowCount 
         with get() = ArcTableAux.getRowCount this.Values
+
+    static member rowCount (table:ArcTable) = table.RowCount
 
     member this.Columns 
         with get() = [|for i = 0 to this.ColumnCount - 1 do this.GetColumn(i)|] 
