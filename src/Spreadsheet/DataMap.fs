@@ -7,12 +7,18 @@ open FsSpreadsheet
 /// Reads an datamap from a spreadsheet
 let fromFsWorkbook (doc : FsWorkbook) = 
     try
+        let worksheets = doc.GetWorksheets()
+        let sheetIsEmpty (sheet : FsWorksheet) = sheet.CellCollection.Count = 0
         let dataMapTable = 
-            doc.GetWorksheets()
+            worksheets
             |> Seq.tryPick DataMapTable.tryFromFsWorksheet
         match dataMapTable with
         | Some table -> table
-        | None -> failwith "No DataMapTable found in workbook"
+        | None -> 
+            if worksheets |> Seq.forall sheetIsEmpty then
+                DataMap.init()
+            else
+                failwith "No DataMapTable was found in any of the sheets of the workbook"
     with
     | err -> failwithf "Could not parse datamap: \n%s" err.Message
             
