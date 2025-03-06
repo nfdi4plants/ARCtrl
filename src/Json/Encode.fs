@@ -64,3 +64,8 @@ module Encode =
         match obj with
         | Json.Object kvs -> Json.Object (Seq.append kvs [name, value] )
         | _ -> failwith "Expected object"
+
+    let delay (f : unit -> IEncodable) = 
+        { new IEncodable with
+            member _.Encode(helpers) = f().Encode(helpers)
+        }

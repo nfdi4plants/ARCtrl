@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Process
+namespace ARCtrl.Process
 
 open ARCtrl
 open ARCtrl.Helper 
@@ -12,7 +12,7 @@ type Sample =
         DerivesFrom : Source list option
     }
 
-    static member make id name characteristics factorValues derivesFrom : Sample=
+    static member make id name characteristics factorValues derivesFrom : Sample =
         {
             ID              = id
             Name            = name

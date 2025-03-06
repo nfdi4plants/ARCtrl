@@ -137,7 +137,6 @@ module Assay =
                 let encocedDataFiles = 
                     ProcessSequence.getData processes
                     |> Encode.tryIncludeList "dataFiles" (Data.ISAJson.encoder idMap) 
-                let units = ProcessSequence.getUnits processes
                 [
                     "filename", Encode.string fileName |> Some
                     Encode.tryInclude "@id" Encode.string (ROCrate.genID a |> Some)

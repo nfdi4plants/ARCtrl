@@ -102,7 +102,23 @@ let private test_compressed =
 
 open TestObjects.Json
 
-let private test_isa =
+let private test_isa = testList "ISA" [
+    ptestCase "IDReferencing_SameSamples" <| fun _ ->
+        let a = ArcAssay.init("MyAssay")
+        let oaHeader = OntologyAnnotation("organism", "OBI", "OBI:0100026")
+        let oaValue = OntologyAnnotation("Chlamydomonas rheinhardtii", "NCBITaxon", "NCBITaxon:3055")
+        let t1 = ArcTable.init("Table1")
+        t1.AddColumn(CompositeHeader.Input IOType.Source, [|CompositeCell.FreeText "MySource"|])
+        t1.AddColumn(CompositeHeader.Output IOType.Sample, [|CompositeCell.FreeText "MySample"|])
+        let t2 = ArcTable.init("Table2")
+        t2.AddColumn(CompositeHeader.Input IOType.Sample, [|CompositeCell.FreeText "MySample"|])
+        t2.AddColumn(CompositeHeader.Characteristic oaHeader, [|CompositeCell.Term oaValue|])
+        t2.AddColumn(CompositeHeader.Output IOType.Sample, [|CompositeCell.FreeText "MyOutputSample"|])
+        a.Tables.Add(t1)
+        a.Tables.Add(t2)
+        let json = ArcAssay.toISAJsonString(0, useIDReferencing = true) a
+        let a' = ArcAssay.fromISAJsonString json
+        Expect.equal a' a "Assay"      
     createBaseJsonTests
         "isa"
         (fun () -> 
@@ -117,7 +133,7 @@ let private test_isa =
         None
         #endif
         compare
-
+    ]
 let private test_roCrate = testList "ROCrate" [
     // Wait for some issues to be resolved: https://github.com/nfdi4plants/isa-ro-crate-profile/issues
     // Mainly: #12, #9, #10, #13
