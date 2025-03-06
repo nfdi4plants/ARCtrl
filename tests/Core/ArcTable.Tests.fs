@@ -66,9 +66,17 @@ let private tests_member =
             let table = create_testTable()
             Expect.equal table.ColumnCount 5 ""
         )
+        testCase "ColumnCount Static member" (fun () ->
+            let table = create_testTable()
+            Expect.equal (ArcTable.columnCount table) 5 ""
+        )
         testCase "RowCount" (fun () ->
             let table = create_testTable()
             Expect.equal table.RowCount 5 ""
+        )
+        testCase "RowCount Static member" (fun () ->
+            let table = create_testTable()
+            Expect.equal (ArcTable.rowCount table) 5 ""
         )
         testCase "Custom equality" (fun () ->
             let table1 = create_testTable()

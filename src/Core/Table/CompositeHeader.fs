@@ -439,7 +439,19 @@ type CompositeHeader =
         | Characteristic oa -> Characteristic (oa.Copy())
         | Component oa -> Component (oa.Copy())
         | _ -> this
-        
+
+    /// <summary>
+    /// Returns the term of the column if it is a term column. Otherwise returns None.
+    ///
+    /// Term columns are Parameter, Factor, Characteristic and Component.
+    /// </summary>
+    member this.TryGetTerm() =
+        match this with
+        | Parameter oa -> Some oa
+        | Factor oa -> Some oa
+        | Characteristic oa -> Some oa
+        | Component oa -> Some oa
+        | _ -> None
 
 #if FABLE_COMPILER
     

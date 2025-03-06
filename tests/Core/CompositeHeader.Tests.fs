@@ -332,6 +332,25 @@ let tests_ToTerm = testList "ToTerm" [
     yield! allHeaders |> List.map testToTerm
 ]
 
+let tests_TryGetTerm = testList "TryGetTerm" [
+    testCase "Parameter" (fun () ->
+        let oa = OntologyAnnotation.fromTermAnnotation("LOL:123", name = "MyTerm")
+        let p1 = CompositeHeader.Parameter(oa)
+        let term = Expect.wantSome (p1.TryGetTerm()) "Parameter should have term"
+        Expect.equal term oa "Parameter term should be equal to oa"
+    )
+    testCase "FreeText" (fun () ->
+        let ft1 = CompositeHeader.FreeText("MyText")
+        let term = ft1.TryGetTerm()
+        Expect.isNone term "FreeText should not have term"
+    )
+    testCase "Input" (fun () ->
+        let i1 = CompositeHeader.Input(IOType.Source)
+        let term = i1.TryGetTerm()
+        Expect.isNone term "Input should not have term"
+    )
+]
+
 let tests_GetHashCode = testList "GetHashCode" [
     testCase "SimpleParamEqual" (fun () ->
         let oa1 = OntologyAnnotation("MyTerm",tan = "LOL:123")
@@ -473,6 +492,7 @@ let main =
         tests_jsHelper
         tests_compositeHeader
         tests_ToTerm
+        tests_TryGetTerm
         tests_GetHashCode
         tests_comparison
     ]
