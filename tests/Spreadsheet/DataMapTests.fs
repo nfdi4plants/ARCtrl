@@ -1,4 +1,4 @@
-﻿module DataMapTests
+module DataMapTests
 
 
 open ARCtrl
@@ -102,7 +102,7 @@ let private emptyTable =
         testCase "Write" (fun () -> 
             let sheet = DataMapTable.toFsWorksheet t
             Expect.equal "isa_datamap" sheet.Name "Worksheet name did not match"
-            Expect.equal 0 sheet.Rows.Count "Row count should be 0"
+            Expect.equal 0 sheet.Rows.Count "Row count should be 0"           
         )
         testCase "Read" (fun () ->
             let sheet = DataMapTable.toFsWorksheet t
@@ -168,10 +168,20 @@ let private simpleFile =
         )
     ]
 
+let private emptyDatamap = 
+    testList "emptyDatamap" [       
+        testCase "WriteAndRead" (fun () ->
+            let t = DataMap.init()
+            let wb = DataMap.toFsWorkbook t
+            let datamap = DataMap.fromFsWorkbook wb
+            Expect.equal datamap t "DataMap was not correctly written and read"
+        )
+    ]
 let main = 
     testList "DataMapTableTests" [
         simpleTable
         valuelessTable
         emptyTable
         simpleFile
+        emptyDatamap
     ]
