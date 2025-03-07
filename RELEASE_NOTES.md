@@ -1,3 +1,24 @@
+### 2.4.0+4a309c7 (Released 2025-3-7)
+
+
+* Additions:
+    * [[#d2e1f99](https://github.com/nfdi4plants/ARCtrl/commit/d2e1f99e2652583396491664921f3610e36830c5)] add ArcTable related helper functions
+    * [[#c1a34d6](https://github.com/nfdi4plants/ARCtrl/commit/c1a34d64566ada818ed7ba1d8a9473835eaeb203)] Update documentation link in README.md
+    * [[#921594e](https://github.com/nfdi4plants/ARCtrl/commit/921594e637cd540943550f19a0618c24dd1d8b8a)] make xlsx controller use async calls in javascript
+    * [[#8e78499](https://github.com/nfdi4plants/ARCtrl/commit/8e784996f6d9554c6a232e59db3b1aef0d18b76c)] add some missing XlsxHelper functions
+    * [[#5ce39f9](https://github.com/nfdi4plants/ARCtrl/commit/5ce39f9565bb60dc6d52bb6ab82b170b8d565fba)] RO-Crate export: added default publication date
+    * [[#5d498cb](https://github.com/nfdi4plants/ARCtrl/commit/5d498cb3dc1850bc36d83ac567eae9fb277fc570)] RO-Crate context: changed headline to name
+    * [[#b047349](https://github.com/nfdi4plants/ARCtrl/commit/b0473491018c6b78ff6cfc5101df97f413755ba1)] Added dataFiles to Study RO-Crate export
+    * [[#7cfcece](https://github.com/nfdi4plants/ARCtrl/commit/7cfceceea9b05eeaa98fdd8bb7c032d2492c12e6)] add logo references to ReadMe
+    * [[#5369bad](https://github.com/nfdi4plants/ARCtrl/commit/5369badb0aaa3aee31ceee8d529e26530c7afa59)] small changes to logos - make hand lighter - higher quality
+    * [[#d95455d](https://github.com/nfdi4plants/ARCtrl/commit/d95455dd63d8ecb7bb07f76840f4c39c4af676b0)] added ARCtrl logos
+* Bugfixes:
+    * [[#e4f9b91](https://github.com/nfdi4plants/ARCtrl/commit/e4f9b911f0a2d6e7583e378db07db8856910e0ef)] fix datamap reader failing for empty datamap files
+    * [[#651fd8e](https://github.com/nfdi4plants/ARCtrl/commit/651fd8ed0ef0571760fa89516ff28f3d3cfc67a2)] fix filesystem access related tests failing in linux CI
+    * [[#134caf8](https://github.com/nfdi4plants/ARCtrl/commit/134caf89aa544223a3d10948b085d2344f194284)] RO-Crate export: fixed default publication date
+    * [[#d353a43](https://github.com/nfdi4plants/ARCtrl/commit/d353a43cdd1f4b1b7ae79757189c4197421dd21c)] RO-Crate export: fixed paths/ids for directories
+    * [[#4813991](https://github.com/nfdi4plants/ARCtrl/commit/4813991595a013f0e5c52e7b22c7edb5fd4f249b)] RO-Crate context: fixed conformsTo mapping
+
 ### 2.3.1+56da453 (Released 2024-12-5)
 * Additions:
     * [[#51eb019](https://github.com/nfdi4plants/ARCtrl/commit/51eb019ae0dc8b3dc7adb1a9e7145b884cca74c1)] rename top-level ARC IO functions
