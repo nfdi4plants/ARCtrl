@@ -10,21 +10,21 @@ module Helper =
     let tableName1 = "Test1"
     let tableName2 = "Test2"
     let oa_species = OntologyAnnotation("species", "GO", "GO:0123456")
-    let dt_species = DefinedTerm.create(name = "species", termCode = oa_species.TermAccessionOntobeeUrl)
+    let dt_species = LDDefinedTerm.create(name = "species", termCode = oa_species.TermAccessionOntobeeUrl)
     let oa_chlamy = OntologyAnnotation("Chlamy", "NCBI", "NCBI:0123456")
-    let dt_chlamy = DefinedTerm.create(name = "Chlamy", termCode = oa_chlamy.TermAccessionOntobeeUrl)
+    let dt_chlamy = LDDefinedTerm.create(name = "Chlamy", termCode = oa_chlamy.TermAccessionOntobeeUrl)
     let oa_instrumentModel = OntologyAnnotation("instrument model", "MS", "MS:0123456")
-    let dt_instrumentModel = DefinedTerm.create(name = "instrument model", termCode = oa_instrumentModel.TermAccessionOntobeeUrl)
+    let dt_instrumentModel = LDDefinedTerm.create(name = "instrument model", termCode = oa_instrumentModel.TermAccessionOntobeeUrl)
     let oa_SCIEXInstrumentModel = OntologyAnnotation("SCIEX instrument model", "MS", "MS:654321")
-    let dt_SCIEXInstrumentModel = DefinedTerm.create(name = "SCIEX instrument model", termCode = oa_SCIEXInstrumentModel.TermAccessionOntobeeUrl)
+    let dt_SCIEXInstrumentModel = LDDefinedTerm.create(name = "SCIEX instrument model", termCode = oa_SCIEXInstrumentModel.TermAccessionOntobeeUrl)
     let oa_time = OntologyAnnotation("time", "UO", "UO:0000010")
-    let dt_time = DefinedTerm.create(name = "time", termCode = oa_time.TermAccessionOntobeeUrl)
+    let dt_time = LDDefinedTerm.create(name = "time", termCode = oa_time.TermAccessionOntobeeUrl)
     let oa_hour = OntologyAnnotation("hour", "UO", "UO:0000032")
-    let dt_hour = DefinedTerm.create(name = "hour", termCode = oa_hour.TermAccessionOntobeeUrl)
+    let dt_hour = LDDefinedTerm.create(name = "hour", termCode = oa_hour.TermAccessionOntobeeUrl)
     let oa_temperature = OntologyAnnotation("temperature","NCIT","NCIT:0123210")
-    let dt_temperature = DefinedTerm.create(name = "temperature", termCode = oa_temperature.TermAccessionOntobeeUrl)
+    let dt_temperature = LDDefinedTerm.create(name = "temperature", termCode = oa_temperature.TermAccessionOntobeeUrl)
     let oa_degreeCel =  OntologyAnnotation("degree celsius","UO","UO:0000027")
-    let dt_degreeCel = DefinedTerm.create(name = "degree celsius", termCode = oa_degreeCel.TermAccessionOntobeeUrl)
+    let dt_degreeCel = LDDefinedTerm.create(name = "degree celsius", termCode = oa_degreeCel.TermAccessionOntobeeUrl)
 
     /// This function can be used to put ArcTable.Values into a nice format for printing/writing to IO
     let tableValues_printable (table:ArcTable) = 
@@ -164,8 +164,8 @@ let private tests_ProcessInput =
             let cell = CompositeCell.createFreeText "MySource"
             let input = BaseTypes.composeProcessInput header cell
 
-            Expect.isTrue (Sample.validateSource input) "Should be a valid source"
-            let name = Sample.getNameAsString input
+            Expect.isTrue (LDSample.validateSource input) "Should be a valid source"
+            let name = LDSample.getNameAsString input
             Expect.equal name "MySource" "Name should match"
 
             let header',cell' = BaseTypes.decomposeProcessInput input
@@ -177,8 +177,8 @@ let private tests_ProcessInput =
             let cell = CompositeCell.createFreeText "MySample"
             let input = BaseTypes.composeProcessInput header cell
 
-            Expect.isTrue (Sample.validateSample input) "Should be a valid sample"
-            let name = Sample.getNameAsString input
+            Expect.isTrue (LDSample.validateSample input) "Should be a valid sample"
+            let name = LDSample.getNameAsString input
             Expect.equal name "MySample" "Name should match"
 
             let header',cell' = BaseTypes.decomposeProcessInput input
@@ -191,8 +191,8 @@ let private tests_ProcessInput =
             let cell = CompositeCell.createData data
             let input = BaseTypes.composeProcessInput header cell
     
-            Expect.isTrue (File.validate input) "Should be a valid data"
-            let name = File.getNameAsString input
+            Expect.isTrue (LDFile.validate input) "Should be a valid data"
+            let name = LDFile.getNameAsString input
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessInput input
@@ -205,8 +205,8 @@ let private tests_ProcessInput =
             let cell = CompositeCell.createFreeText "MyData"
             let input = BaseTypes.composeProcessInput header cell
     
-            Expect.isTrue (File.validate input) "Should be a valid data"
-            let name = File.getNameAsString input
+            Expect.isTrue (LDFile.validate input) "Should be a valid data"
+            let name = LDFile.getNameAsString input
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessInput input
@@ -219,8 +219,8 @@ let private tests_ProcessInput =
             let cell = CompositeCell.createFreeText "MyMaterial"
             let input = BaseTypes.composeProcessInput header cell
     
-            Expect.isTrue (Sample.validateMaterial input) "Should be a valid material"
-            let name = Sample.getNameAsString input
+            Expect.isTrue (LDSample.validateMaterial input) "Should be a valid material"
+            let name = LDSample.getNameAsString input
             Expect.equal name "MyMaterial" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessInput input
@@ -232,7 +232,7 @@ let private tests_ProcessInput =
             let cell = CompositeCell.createFreeText "MyFreeText"
             let input = BaseTypes.composeProcessInput header cell
 
-            let name = Sample.getNameAsString input
+            let name = LDSample.getNameAsString input
             Expect.equal name "MyFreeText" "Name should match"
 
             let schemaType = input.SchemaType
@@ -251,8 +251,8 @@ let private tests_ProcessOutput =
             let cell = CompositeCell.createFreeText "MySample"
             let output = BaseTypes.composeProcessOutput header cell
 
-            Expect.isTrue (Sample.validateSample output) "Should be a valid sample"
-            let name = Sample.getNameAsString output
+            Expect.isTrue (LDSample.validateSample output) "Should be a valid sample"
+            let name = LDSample.getNameAsString output
             Expect.equal name "MySample" "Name should match"
 
             let header',cell' = BaseTypes.decomposeProcessOutput output
@@ -265,8 +265,8 @@ let private tests_ProcessOutput =
             let cell = CompositeCell.createData data
             let output = BaseTypes.composeProcessOutput header cell
     
-            Expect.isTrue (File.validate output) "Should be a valid data"
-            let name = File.getNameAsString output
+            Expect.isTrue (LDFile.validate output) "Should be a valid data"
+            let name = LDFile.getNameAsString output
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessOutput output
@@ -279,8 +279,8 @@ let private tests_ProcessOutput =
             let cell = CompositeCell.createFreeText "MyData"
             let output = BaseTypes.composeProcessOutput header cell
     
-            Expect.isTrue (File.validate output) "Should be a valid data"
-            let name = File.getNameAsString output
+            Expect.isTrue (LDFile.validate output) "Should be a valid data"
+            let name = LDFile.getNameAsString output
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessOutput output
@@ -293,8 +293,8 @@ let private tests_ProcessOutput =
             let cell = CompositeCell.createFreeText "MyMaterial"
             let output = BaseTypes.composeProcessOutput header cell
     
-            Expect.isTrue (Sample.validateMaterial output) "Should be a valid material"
-            let name = Sample.getNameAsString output
+            Expect.isTrue (LDSample.validateMaterial output) "Should be a valid material"
+            let name = LDSample.getNameAsString output
             Expect.equal name "MyMaterial" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessOutput output
@@ -306,7 +306,7 @@ let private tests_ProcessOutput =
             let cell = CompositeCell.createFreeText "MyFreeText"
             let output = BaseTypes.composeProcessOutput header cell
 
-            let name = Sample.getNameAsString output
+            let name = LDSample.getNameAsString output
             Expect.equal name "MyFreeText" "Name should match"
 
             let schemaType = output.SchemaType
@@ -325,16 +325,16 @@ let private tests_PropertyValue =
             let cell = CompositeCell.createTerm oa_chlamy
             let pv = BaseTypes.composeCharacteristicValue header cell
 
-            let name = PropertyValue.getNameAsString pv
+            let name = LDPropertyValue.getNameAsString pv
             Expect.equal name oa_species.NameText "Name should match"
 
-            let value = PropertyValue.getValueAsString pv
+            let value = LDPropertyValue.getValueAsString pv
             Expect.equal value oa_chlamy.NameText "Value should match"
 
-            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            let propertyID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
             Expect.equal propertyID oa_species.TermAccessionOntobeeUrl "Property ID should match"
 
-            let valueReference = Expect.wantSome (PropertyValue.tryGetValueReference pv) "Should have value reference"
+            let valueReference = Expect.wantSome (LDPropertyValue.tryGetValueReference pv) "Should have value reference"
             Expect.equal valueReference oa_chlamy.TermAccessionOntobeeUrl "Value reference should match"
 
             let header',cell' = BaseTypes.decomposeCharacteristicValue pv
@@ -346,19 +346,19 @@ let private tests_PropertyValue =
             let cell = CompositeCell.createUnitized ("5",oa_degreeCel)
             let pv = BaseTypes.composeParameterValue header cell
 
-            let name = PropertyValue.getNameAsString pv
+            let name = LDPropertyValue.getNameAsString pv
             Expect.equal name oa_temperature.NameText "Name should match"
 
-            let value = PropertyValue.getValueAsString pv
+            let value = LDPropertyValue.getValueAsString pv
             Expect.equal value "5" "Value should match"
 
-            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            let propertyID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
             Expect.equal propertyID oa_temperature.TermAccessionOntobeeUrl "Property ID should match"
 
-            let unit = Expect.wantSome (PropertyValue.tryGetUnitTextAsString pv) "Should have unit"
+            let unit = Expect.wantSome (LDPropertyValue.tryGetUnitTextAsString pv) "Should have unit"
             Expect.equal unit oa_degreeCel.NameText "Unit should match"
 
-            let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
+            let unitCode = Expect.wantSome (LDPropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
             Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
 
             let header',cell' = BaseTypes.decomposeParameterValue pv
@@ -370,18 +370,18 @@ let private tests_PropertyValue =
             let cell = CompositeCell.createUnitized ("",oa_degreeCel)
             let pv = BaseTypes.composeParameterValue header cell
 
-            let name = PropertyValue.getNameAsString pv
+            let name = LDPropertyValue.getNameAsString pv
             Expect.equal name oa_temperature.NameText "Name should match"
 
-            Expect.isNone (PropertyValue.tryGetValueAsString pv) "Should not have value"
+            Expect.isNone (LDPropertyValue.tryGetValueAsString pv) "Should not have value"
 
-            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            let propertyID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
             Expect.equal propertyID oa_temperature.TermAccessionOntobeeUrl "Property ID should match"
 
-            let unit = Expect.wantSome (PropertyValue.tryGetUnitTextAsString pv) "Should have unit"
+            let unit = Expect.wantSome (LDPropertyValue.tryGetUnitTextAsString pv) "Should have unit"
             Expect.equal unit oa_degreeCel.NameText "Unit should match"
 
-            let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
+            let unitCode = Expect.wantSome (LDPropertyValue.tryGetUnitCodeAsString pv) "Should have unit code"
             Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
 
             let header',cell' = BaseTypes.decomposeParameterValue pv
@@ -393,13 +393,13 @@ let private tests_PropertyValue =
             let cell = CompositeCell.createTerm (OntologyAnnotation.create())
             let pv = BaseTypes.composeFactorValue header cell
 
-            let name = PropertyValue.getNameAsString pv
+            let name = LDPropertyValue.getNameAsString pv
             Expect.equal name oa_temperature.NameText "Name should match"
 
-            let propertyID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
+            let propertyID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
             Expect.equal propertyID oa_temperature.TermAccessionOntobeeUrl "Property ID should match"
 
-            Expect.isNone (PropertyValue.tryGetValueAsString pv) "Should not have value"
+            Expect.isNone (LDPropertyValue.tryGetValueAsString pv) "Should not have value"
 
             let header',cell' = BaseTypes.decomposeFactorValue pv
             Expect.equal header header' "Header should match"
@@ -410,16 +410,16 @@ let private tests_PropertyValue =
             let cell = CompositeCell.createTerm (OntologyAnnotation.create(name = "MyComponentValue"))
             let pv = BaseTypes.composeComponent header cell
 
-            let name = PropertyValue.getNameAsString pv
+            let name = LDPropertyValue.getNameAsString pv
             Expect.equal name "MyComponentHeader" "Name should match"
 
-            let value = PropertyValue.getValueAsString pv
+            let value = LDPropertyValue.getValueAsString pv
             Expect.equal value "MyComponentValue" "Value should match"
 
-            Expect.isNone (PropertyValue.tryGetPropertyIDAsString pv) "Should not have property ID"
-            Expect.isNone (PropertyValue.tryGetValueReference pv) "Should not have value reference"
-            Expect.isNone (PropertyValue.tryGetUnitTextAsString pv) "Should not have unit"
-            Expect.isNone (PropertyValue.tryGetUnitCodeAsString pv) "Should not have unit code"
+            Expect.isNone (LDPropertyValue.tryGetPropertyIDAsString pv) "Should not have property ID"
+            Expect.isNone (LDPropertyValue.tryGetValueReference pv) "Should not have value reference"
+            Expect.isNone (LDPropertyValue.tryGetUnitTextAsString pv) "Should not have unit"
+            Expect.isNone (LDPropertyValue.tryGetUnitCodeAsString pv) "Should not have unit code"
 
             let header',cell' = BaseTypes.decomposeComponent pv
             Expect.equal header header' "Header should match"
@@ -434,27 +434,27 @@ let private tests_ArcTableProcess =
             let t = singleRowSingleParam.Copy()
             let processes = t.GetProcesses()
             let expectedPPV =
-                PropertyValue.createParameterValue(
+                LDPropertyValue.createParameterValue(
                     name = oa_species.NameText,
                     value = oa_chlamy.NameText,
                     propertyID = oa_species.TermAccessionOntobeeUrl,
                     valueReference = oa_chlamy.TermAccessionOntobeeUrl
                 )
             ColumnIndex.setIndex expectedPPV 0
-            let expectedInput = Sample.createSource(name = "Source_0")
-            let expectedOutput = Sample.createSample(name = "Sample_0")
+            let expectedInput = LDSample.createSource(name = "Source_0")
+            let expectedOutput = LDSample.createSample(name = "Sample_0")
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let paramValues = LabProcess.getParameterValues(p)
+            let paramValues = LDLabProcess.getParameterValues(p)
             Expect.equal paramValues.Count 1 "Process should have 1 parameter values"
             Expect.equal paramValues.[0] expectedPPV "Param value does not match"
-            let inputs = LabProcess.getObjects(p)
+            let inputs = LDLabProcess.getObjects(p)
             Expect.equal inputs.Count 1 "Process should have 1 input"
             Expect.equal inputs.[0] expectedInput "Input value does not match"
-            let outputs = LabProcess.getResults(p)
+            let outputs = LDLabProcess.getResults(p)
             Expect.equal outputs.Count 1 "Process should have 1 output"
             Expect.equal outputs.[0] expectedOutput "Output value does not match"
-            let name = LabProcess.getNameAsString p
+            let name = LDLabProcess.getNameAsString p
             Expect.equal name tableName1 "Process name should match table name"
         )
         testCase "SingleRowSingleParam GetAndFromProcesses" (fun () ->
@@ -467,17 +467,17 @@ let private tests_ArcTableProcess =
         testCase "SingleRowOutputSource GetProcesses" (fun () ->
             let t = singleRowOutputSource.Copy()
             let processes = t.GetProcesses()           
-            let expectedInput = Sample.createSource(name = "Source_0")
-            let expectedOutput = Sample.createSample(name = "Sample_0")
+            let expectedInput = LDSample.createSource(name = "Source_0")
+            let expectedOutput = LDSample.createSample(name = "Sample_0")
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let inputs = LabProcess.getObjects(p)
+            let inputs = LDLabProcess.getObjects(p)
             Expect.equal inputs.Count 1 "Process should have 1 input"
             Expect.equal inputs.[0] expectedInput "Input value does not match"
-            let outputs = LabProcess.getResults(p)
+            let outputs = LDLabProcess.getResults(p)
             Expect.equal outputs.Count 1 "Process should have 1 output"
             Expect.equal outputs.[0] expectedOutput "Output value does not match"
-            let name = LabProcess.getNameAsString p
+            let name = LDLabProcess.getNameAsString p
             Expect.equal name tableName1 "Process name should match table name"
         )
 
@@ -485,12 +485,12 @@ let private tests_ArcTableProcess =
             let t = singleRowMixedValues.Copy()          
             let processes = t.GetProcesses()           
             Expect.equal processes.Length 1 "Should have 1 process"
-            Expect.equal (LabProcess.getParameterValues processes.[0]).Count 1 "Process should have 1 parameter values"
-            let input = Expect.wantSome ((LabProcess.getObjects processes.[0]) |> Seq.tryExactlyOne) "Process should have 1 input"
-            let output = Expect.wantSome ((LabProcess.getResults processes.[0]) |> Seq.tryExactlyOne) "Process should have 1 output"
-            let charas = Sample.getCharacteristics input
+            Expect.equal (LDLabProcess.getParameterValues processes.[0]).Count 1 "Process should have 1 parameter values"
+            let input = Expect.wantSome ((LDLabProcess.getObjects processes.[0]) |> Seq.tryExactlyOne) "Process should have 1 input"
+            let output = Expect.wantSome ((LDLabProcess.getResults processes.[0]) |> Seq.tryExactlyOne) "Process should have 1 output"
+            let charas = LDSample.getCharacteristics input
             Expect.hasLength charas 1 "Input should have the charactersitic"
-            let factors = Sample.getFactors output
+            let factors = LDSample.getFactors output
             Expect.hasLength factors 1 "Output should have the factor value"
         )
 
@@ -507,12 +507,12 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let inputs = LabProcess.getObjects(p)
+            let inputs = LDLabProcess.getObjects(p)
             Expect.equal inputs.Count 1 "Process should have 1 input"
-            let outputs = LabProcess.getResults(p)
+            let outputs = LDLabProcess.getResults(p)
             Expect.equal outputs.Count 1 "Process should have 1 output"
-            Expect.isTrue (File.validate(inputs.[0])) "First input should be data"
-            let charas = Sample.getCharacteristics(inputs.[0])
+            Expect.isTrue (LDFile.validate(inputs.[0])) "First input should be data"
+            let charas = LDSample.getCharacteristics(inputs.[0])
             Expect.hasLength charas 1 "Input should have the charactersitic"
         )
 
@@ -533,13 +533,13 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let inputs = LabProcess.getObjects(p)
+            let inputs = LDLabProcess.getObjects(p)
             Expect.equal inputs.Count 1 "Process should have 1 input"
-            Expect.isTrue (File.validate inputs.[0]) "input should be data"
-            let outputs = LabProcess.getResults(p)
+            Expect.isTrue (LDFile.validate inputs.[0]) "input should be data"
+            let outputs = LDLabProcess.getResults(p)
             Expect.equal outputs.Count 1 "Process should have 1 output"
-            Expect.isTrue (File.validate outputs.[0]) "output should be data"
-            let factors = Sample.getFactors(outputs.[0])
+            Expect.isTrue (LDFile.validate outputs.[0]) "output should be data"
+            let factors = LDSample.getFactors(outputs.[0])
             Expect.hasLength factors 1 "output should have 1 factor value"
         )
 
@@ -582,10 +582,10 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let prot = Expect.wantSome (LabProcess.tryGetExecutesLabProtocol(p)) "Process should have protocol"
-            let protName = Expect.wantSome (LabProtocol.tryGetNameAsString(prot)) "Protocol should have name"
+            let prot = Expect.wantSome (LDLabProcess.tryGetExecutesLabProtocol(p)) "Process should have protocol"
+            let protName = Expect.wantSome (LDLabProtocol.tryGetNameAsString(prot)) "Protocol should have name"
             Expect.equal protName "MyProtocol" "Protocol name should match"
-            let pName = Expect.wantSome (LabProcess.tryGetNameAsString(p)) "Process should have name"
+            let pName = Expect.wantSome (LDLabProcess.tryGetNameAsString(p)) "Process should have name"
             Expect.equal pName tableName1 "Process name should match table name"
         )
 
@@ -601,12 +601,12 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let name = LabProcess.getNameAsString p
+            let name = LDLabProcess.getNameAsString p
             Expect.equal name tableName1 "Process name should match table name"
-            Expect.isEmpty (LabProcess.getObjects(p)) "Process should have no inputs"
-            Expect.isEmpty (LabProcess.getResults(p)) "Process should have no outputs"
-            Expect.isEmpty (LabProcess.getParameterValues(p)) "Process should have no parameter values"
-            Expect.isNone (LabProcess.tryGetExecutesLabProtocol(p)) "Process should have no protocol"
+            Expect.isEmpty (LDLabProcess.getObjects(p)) "Process should have no inputs"
+            Expect.isEmpty (LDLabProcess.getResults(p)) "Process should have no outputs"
+            Expect.isEmpty (LDLabProcess.getParameterValues(p)) "Process should have no parameter values"
+            Expect.isNone (LDLabProcess.tryGetExecutesLabProtocol(p)) "Process should have no protocol"
         )
 
         // Currently only checks for function failing which it did in python
@@ -649,17 +649,17 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
             let p = processes.[0]
-            let pvs = LabProcess.getParameterValues p
+            let pvs = LDLabProcess.getParameterValues p
             Expect.hasLength pvs 1 "Should have 1 parameter value"
             let pv = pvs.[0]
-            Expect.isNone (PropertyValue.tryGetValueAsString(pv)) "Should have no value"
-            let categoryName = Expect.wantSome (PropertyValue.tryGetNameAsString(pv)) "Should have category name"
+            Expect.isNone (LDPropertyValue.tryGetValueAsString(pv)) "Should have no value"
+            let categoryName = Expect.wantSome (LDPropertyValue.tryGetNameAsString(pv)) "Should have category name"
             Expect.equal categoryName oa_temperature.NameText "Category name should match"
-            let categoryID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
+            let categoryID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
             Expect.equal categoryID oa_temperature.TermAccessionOntobeeUrl "Category ID should match"
-            let unitName = Expect.wantSome (PropertyValue.tryGetUnitTextAsString(pv)) "Should have unit name"
+            let unitName = Expect.wantSome (LDPropertyValue.tryGetUnitTextAsString(pv)) "Should have unit name"
             Expect.equal unitName oa_degreeCel.NameText "Unit name should match"
-            let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString(pv)) "Should have unit code"
+            let unitCode = Expect.wantSome (LDPropertyValue.tryGetUnitCodeAsString(pv)) "Should have unit code"
             Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
 
             let t' = ArcTable.fromProcesses(tableName1,processes)
@@ -678,17 +678,17 @@ let private tests_ArcTableProcess =
             Expect.equal 1 processes.Length "Should have 1 process"
             let p = processes.[0]
 
-            let pvs = LabProcess.getParameterValues p
+            let pvs = LDLabProcess.getParameterValues p
             Expect.hasLength pvs 1 "Should have 1 parameter value"
             let pv = pvs.[0]
-            Expect.isNone (PropertyValue.tryGetValueAsString(pv)) "Should have no value"
-            let categoryName = Expect.wantSome (PropertyValue.tryGetNameAsString(pv)) "Should have category name"
+            Expect.isNone (LDPropertyValue.tryGetValueAsString(pv)) "Should have no value"
+            let categoryName = Expect.wantSome (LDPropertyValue.tryGetNameAsString(pv)) "Should have category name"
             Expect.equal categoryName oa_temperature.NameText "Category name should match"
-            let categoryID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
+            let categoryID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
             Expect.equal categoryID oa_temperature.TermAccessionOntobeeUrl "Category ID should match"
-            let unitName = Expect.wantSome (PropertyValue.tryGetUnitTextAsString(pv)) "Should have unit name"
+            let unitName = Expect.wantSome (LDPropertyValue.tryGetUnitTextAsString(pv)) "Should have unit name"
             Expect.equal unitName oa_degreeCel.NameText "Unit name should match"
-            let unitCode = Expect.wantSome (PropertyValue.tryGetUnitCodeAsString(pv)) "Should have unit code"
+            let unitCode = Expect.wantSome (LDPropertyValue.tryGetUnitCodeAsString(pv)) "Should have unit code"
             Expect.equal unitCode oa_degreeCel.TermAccessionOntobeeUrl "Unit code should match"
 
             let t' = ArcTable.fromProcesses(tableName1,processes)
@@ -705,16 +705,16 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
             let p = processes.[0]
-            let pvs = LabProcess.getParameterValues p
+            let pvs = LDLabProcess.getParameterValues p
             Expect.hasLength pvs 1 "Should have 1 parameter value"
             let pv = pvs.[0]
-            Expect.isNone (PropertyValue.tryGetValueAsString(pv)) "Should have no value"
-            let categoryName = Expect.wantSome (PropertyValue.tryGetNameAsString(pv)) "Should have category name"
+            Expect.isNone (LDPropertyValue.tryGetValueAsString(pv)) "Should have no value"
+            let categoryName = Expect.wantSome (LDPropertyValue.tryGetNameAsString(pv)) "Should have category name"
             Expect.equal categoryName oa_temperature.NameText "Category name should match"
-            let categoryID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
+            let categoryID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
             Expect.equal categoryID oa_temperature.TermAccessionOntobeeUrl "Category ID should match"
-            Expect.isNone (PropertyValue.tryGetUnitTextAsString(pv)) "Should have no unit text"
-            Expect.isNone (PropertyValue.tryGetUnitCodeAsString(pv)) "Should have no unit code"
+            Expect.isNone (LDPropertyValue.tryGetUnitTextAsString(pv)) "Should have no unit text"
+            Expect.isNone (LDPropertyValue.tryGetUnitCodeAsString(pv)) "Should have no unit code"
 
             let t' = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual t' t "Table should be equal"
@@ -730,17 +730,17 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
             let p = processes.[0]
-            let pvs = LabProcess.getParameterValues p
+            let pvs = LDLabProcess.getParameterValues p
             Expect.hasLength pvs 1 "Should have 1 parameter value"
             let pv = pvs.[0]
-            let categoryName = Expect.wantSome (PropertyValue.tryGetNameAsString(pv)) "Should have category name"
+            let categoryName = Expect.wantSome (LDPropertyValue.tryGetNameAsString(pv)) "Should have category name"
             Expect.equal categoryName oa_temperature.NameText "Category name should match"
-            let categoryID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
+            let categoryID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
             Expect.equal categoryID oa_temperature.TermAccessionOntobeeUrl "Category ID should match"
-            let value = Expect.wantSome (PropertyValue.tryGetValueAsString(pv)) "Should have value"
+            let value = Expect.wantSome (LDPropertyValue.tryGetValueAsString(pv)) "Should have value"
             Expect.equal value "5" "Value should match"
-            Expect.isNone (PropertyValue.tryGetUnitTextAsString(pv)) "Should have no unit text"
-            Expect.isNone (PropertyValue.tryGetUnitCodeAsString(pv)) "Should have no unit code"
+            Expect.isNone (LDPropertyValue.tryGetUnitTextAsString(pv)) "Should have no unit text"
+            Expect.isNone (LDPropertyValue.tryGetUnitCodeAsString(pv)) "Should have no unit code"
 
             let t' = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual t' t "Table should be equal"
@@ -756,16 +756,16 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             Expect.equal 1 processes.Length "Should have 1 process"
             let p = processes.[0]
-            let pvs = LabProcess.getParameterValues p
+            let pvs = LDLabProcess.getParameterValues p
             Expect.hasLength pvs 1 "Should have 1 parameter value"
             let pv = pvs.[0]
-            let categoryName = Expect.wantSome (PropertyValue.tryGetNameAsString(pv)) "Should have category name"
+            let categoryName = Expect.wantSome (LDPropertyValue.tryGetNameAsString(pv)) "Should have category name"
             Expect.equal categoryName oa_species.NameText "Category name should match"
-            let categoryID = Expect.wantSome (PropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
+            let categoryID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString(pv)) "Should have category ID"
             Expect.equal categoryID oa_species.TermAccessionOntobeeUrl "Category ID should match"
-            Expect.isNone (PropertyValue.tryGetValueAsString(pv)) "Should have no value"
-            Expect.isNone (PropertyValue.tryGetUnitTextAsString(pv)) "Should have no unit text"
-            Expect.isNone (PropertyValue.tryGetUnitCodeAsString(pv)) "Should have no unit code"
+            Expect.isNone (LDPropertyValue.tryGetValueAsString(pv)) "Should have no value"
+            Expect.isNone (LDPropertyValue.tryGetUnitTextAsString(pv)) "Should have no unit text"
+            Expect.isNone (LDPropertyValue.tryGetUnitCodeAsString(pv)) "Should have no unit code"
 
             let t' = ArcTable.fromProcesses(tableName1,processes)
             Expect.arcTableEqual t' t "Table should be equal"
@@ -779,7 +779,7 @@ let private tests_ArcTableProcess =
             t.AddColumn(CompositeHeader.Output(IOType.Sample),[|CompositeCell.createFreeText "Sample"|])
             let processes = t.GetProcesses()
             Expect.hasLength processes 1 "Should have 1 process"
-            let comments = LabProcess.getDisambiguatingDescriptionsAsString(processes.[0])
+            let comments = LDLabProcess.getDisambiguatingDescriptionsAsString(processes.[0])
             Expect.hasLength comments 1 "Should have 1 comment"
             let comment = Comment.fromString comments.[0]
             Expect.equal comment (Comment(commentKey,commentValue)) ""
@@ -810,12 +810,12 @@ let private tests_ArcTablesProcessSeq =
             let processes = tables.GetProcesses()
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
-            let name = LabProcess.getNameAsString p
+            let name = LDLabProcess.getNameAsString p
             Expect.equal name tableName1 "Process name should match table name"
-            Expect.isEmpty (LabProcess.getObjects(p)) "Process should have no inputs"
-            Expect.isEmpty (LabProcess.getResults(p)) "Process should have no outputs"
-            Expect.isEmpty (LabProcess.getParameterValues(p)) "Process should have no parameter values"
-            Expect.isNone (LabProcess.tryGetExecutesLabProtocol(p)) "Process should have no protocol"
+            Expect.isEmpty (LDLabProcess.getObjects(p)) "Process should have no inputs"
+            Expect.isEmpty (LDLabProcess.getResults(p)) "Process should have no outputs"
+            Expect.isEmpty (LDLabProcess.getParameterValues(p)) "Process should have no parameter values"
+            Expect.isNone (LDLabProcess.tryGetExecutesLabProtocol(p)) "Process should have no protocol"
         )
 
         testCase "EmptyTable GetAndFromProcesses" (fun () ->
@@ -999,7 +999,7 @@ let tests_Person =
             let graph = ro_Person.Flatten()
             // Test that flattened worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
-            let roleRef = Expect.wantSome (ro_Person.TryGetPropertyAsSingleton(Person.jobTitle)) "Person should still have jobTitle"
+            let roleRef = Expect.wantSome (ro_Person.TryGetPropertyAsSingleton(LDPerson.jobTitle)) "Person should still have jobTitle"
             Expect.isTrue (roleRef :? LDRef) "Person should be flattened correctly"
             //
             let p' = PersonConversion.decomposePerson(ro_Person, graph = graph)
@@ -1021,30 +1021,30 @@ let tests_Person =
             Expect.equal p' p "Person should match"
         )
         testCase "AddressAsObject_FromROCrate" (fun () ->
-            let address = PostalAddress.create(addressCountry = "Germoney", postalCode = "6969", streetAddress = "I think I'm funny street 69")
-            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
+            let address = LDPostalAddress.create(addressCountry = "Germoney", postalCode = "6969", streetAddress = "I think I'm funny street 69")
+            let p = LDPerson.create(givenName = "Loooookas",address = address)
             let scaffold_Person = PersonConversion.decomposePerson p
             let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
         testCase "AddressAsString_FromROCrate" (fun () ->
             let address = "Germoney, 6969, I think I'm funny street 69"
-            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",address = address)
+            let p = LDPerson.create(givenName = "Loooookas",address = address)
             let scaffold_Person = PersonConversion.decomposePerson p
             let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
         testCase "AffiliationOnlyName_FromROCrate" (fun () ->
-            let affiliation = Organization.create(name = "My University")
-            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
+            let affiliation = LDOrganization.create(name = "My University")
+            let p = LDPerson.create(givenName = "Loooookas",affiliation = affiliation)
             let scaffold_Person = PersonConversion.decomposePerson p
             let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
         )
         testCase "AffiliationMoreFields_FromROCrate" (fun () ->
-            let affiliation = Organization.create(name = "My University")
+            let affiliation = LDOrganization.create(name = "My University")
             affiliation.SetProperty("address","123 Main St")
-            let p = ARCtrl.ROCrate.Person.create(givenName = "Loooookas",affiliation = affiliation)
+            let p = LDPerson.create(givenName = "Loooookas",affiliation = affiliation)
             let scaffold_Person = PersonConversion.decomposePerson p
             let p' = PersonConversion.composePerson scaffold_Person
             Expect.equal p' p "Person should match"
@@ -1081,16 +1081,16 @@ let tests_Publication =
             let graph = ro_Publication.Flatten()
             // Test that flattened worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
-            let statusRef = Expect.wantSome (ro_Publication.TryGetPropertyAsSingleton(ScholarlyArticle.creativeWorkStatus)) "Publication should still have status"
+            let statusRef = Expect.wantSome (ro_Publication.TryGetPropertyAsSingleton(LDScholarlyArticle.creativeWorkStatus)) "Publication should still have status"
             Expect.isTrue (statusRef :? LDRef) "Publication should be flattened correctly"
             //
             let p' = ScholarlyArticleConversion.decomposeScholarlyArticle(ro_Publication,graph = graph)
             Expect.equal p' p "Publication should match"
         )
         testCase "FullAuthors_FromROCrate" (fun () ->
-            let author1 = ARCtrl.ROCrate.Person.create(givenName = "Lukas",familyName = "Weil", orcid = "0000-0002-1825-0097")
-            let author2 = ARCtrl.ROCrate.Person.create(givenName = "John",familyName = "Doe", orcid = "0000-0002-1325-0077")
-            let scholarlyArticle = ARCtrl.ROCrate.ScholarlyArticle.create(headline = "My Paper", identifiers = ResizeArray [], authors = ResizeArray [author1;author2])
+            let author1 = LDPerson.create(givenName = "Lukas",familyName = "Weil", orcid = "0000-0002-1825-0097")
+            let author2 = LDPerson.create(givenName = "John",familyName = "Doe", orcid = "0000-0002-1325-0077")
+            let scholarlyArticle = LDScholarlyArticle.create(headline = "My Paper", identifiers = ResizeArray [], authors = ResizeArray [author1;author2])
             let scaffold_Publication = ScholarlyArticleConversion.decomposeScholarlyArticle scholarlyArticle
             let p = ScholarlyArticleConversion.composeScholarlyArticle scaffold_Publication
             Expect.equal p scholarlyArticle "Publication should match"
@@ -1105,17 +1105,17 @@ let tests_GetDataFilesFromProcesses =
             Expect.isEmpty dataFiles "Should have no data files"
         )
         testCase "SingleProcessNoDataFiles" (fun () ->
-            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let p = LDLabProcess.create(name = Identifier.createMissingIdentifier())
             let processes = ResizeArray [p]
             let dataFiles = AssayConversion.getDataFilesFromProcesses processes
             Expect.isEmpty dataFiles "Should have no data files"
         )
         testCase "InputAndOutputFile" (fun () -> 
-            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
-            let input = File.create(name = "InputFile")
-            let output = File.create(name = "OutputFile")
-            LabProcess.setObjects(p, ResizeArray [input])
-            LabProcess.setResults(p, ResizeArray [output])
+            let p = LDLabProcess.create(name = Identifier.createMissingIdentifier())
+            let input = LDFile.create(name = "InputFile")
+            let output = LDFile.create(name = "OutputFile")
+            LDLabProcess.setObjects(p, ResizeArray [input])
+            LDLabProcess.setResults(p, ResizeArray [output])
             let processes = ResizeArray [p]
             let dataFiles = AssayConversion.getDataFilesFromProcesses processes
             Expect.hasLength dataFiles 2 "Should have 2 data files"
@@ -1123,91 +1123,91 @@ let tests_GetDataFilesFromProcesses =
             Expect.equal dataFiles.[1] output "Second data file should be output"
         )
         testCase "FragmentCorrectFieldCopies" (fun () ->
-            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
+            let p = LDLabProcess.create(name = Identifier.createMissingIdentifier())
             let encodingFormat = "text/csv"
-            let comment = ROCrate.Comment.create(name = "MyCommentKey", text = "MyCommentValue")
-            let input = File.create(name = "InputFile#Fragment1", encodingFormat = encodingFormat, comments = ResizeArray [comment])
-            LabProcess.setObjects(p, ResizeArray [input])
+            let comment = LDComment.create(name = "MyCommentKey", text = "MyCommentValue")
+            let input = LDFile.create(name = "InputFile#Fragment1", encodingFormat = encodingFormat, comments = ResizeArray [comment])
+            LDLabProcess.setObjects(p, ResizeArray [input])
             let processes = ResizeArray [p]
             let dataFiles = AssayConversion.getDataFilesFromProcesses processes
             Expect.hasLength dataFiles 1 "Should have 1 data file"
             let first = dataFiles.[0]
-            Expect.equal (File.getNameAsString first) "InputFile" "First data file should be input"
-            let encodFormat' = Expect.wantSome (File.tryGetEncodingFormatAsString first) "Encoding format was not copied"
+            Expect.equal (LDFile.getNameAsString first) "InputFile" "First data file should be input"
+            let encodFormat' = Expect.wantSome (LDFile.tryGetEncodingFormatAsString first) "Encoding format was not copied"
             Expect.equal encodFormat' encodingFormat "Encoding format should be copied"
-            let comments = File.getComments first
+            let comments = LDFile.getComments first
             Expect.hasLength comments 1 "Should have 1 comment"
             Expect.equal comments.[0] comment "Comment should be copied"
-            let fragments = Dataset.getHasPartsAsFile first
+            let fragments = LDDataset.getHasPartsAsFile first
             Expect.hasLength fragments 1 "Should have 1 fragment"
             Expect.equal fragments.[0] input "Fragment should be input"
         )
         testCase "FragmentsOfDifferentFiles" (fun () ->
-            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
-            let input1 = File.create(name = "InputFile1#Fragment1")
-            let output2 = File.create(name = "InputFile2#Fragment2")
-            LabProcess.setObjects(p, ResizeArray [input1])
-            LabProcess.setResults(p, ResizeArray [output2])
+            let p = LDLabProcess.create(name = Identifier.createMissingIdentifier())
+            let input1 = LDFile.create(name = "InputFile1#Fragment1")
+            let output2 = LDFile.create(name = "InputFile2#Fragment2")
+            LDLabProcess.setObjects(p, ResizeArray [input1])
+            LDLabProcess.setResults(p, ResizeArray [output2])
             let processes = ResizeArray [p]
             let dataFiles = AssayConversion.getDataFilesFromProcesses processes
             Expect.hasLength dataFiles 2 "Should have 2 data files"
             let first = dataFiles.[0]
-            Expect.equal (File.getNameAsString first) "InputFile1" "First data file should be input1"
+            Expect.equal (LDFile.getNameAsString first) "InputFile1" "First data file should be input1"
             let second = dataFiles.[1]
-            Expect.equal (File.getNameAsString second) "InputFile2" "Second data file should be input2"
-            let firstFragments = Dataset.getHasPartsAsFile(first)
+            Expect.equal (LDFile.getNameAsString second) "InputFile2" "Second data file should be input2"
+            let firstFragments = LDDataset.getHasPartsAsFile(first)
             Expect.hasLength firstFragments 1 "First data file should have 1 fragment"
             Expect.equal firstFragments.[0] input1 "First fragment should be Fragment1"
-            let secondFragments = Dataset.getHasPartsAsFile(second)
+            let secondFragments = LDDataset.getHasPartsAsFile(second)
             Expect.hasLength secondFragments 1 "Second data file should have 1 fragment"
             Expect.equal secondFragments.[0] output2 "Second fragment should be Fragment2"
         )
         testCase "FragmentsOfSameFile" (fun () ->
-            let p = LabProcess.create(name = Identifier.createMissingIdentifier())
-            let input1 = File.create(name = "InputFile#Fragment1")
-            let output2 = File.create(name = "InputFile#Fragment2")
-            LabProcess.setObjects(p, ResizeArray [input1])
-            LabProcess.setResults(p, ResizeArray [output2])
+            let p = LDLabProcess.create(name = Identifier.createMissingIdentifier())
+            let input1 = LDFile.create(name = "InputFile#Fragment1")
+            let output2 = LDFile.create(name = "InputFile#Fragment2")
+            LDLabProcess.setObjects(p, ResizeArray [input1])
+            LDLabProcess.setResults(p, ResizeArray [output2])
             let processes = ResizeArray [p]
             let dataFiles = AssayConversion.getDataFilesFromProcesses processes
             Expect.hasLength dataFiles 1 "Should have 1 data file"
             let first = dataFiles.[0]
-            Expect.equal (File.getNameAsString first) "InputFile" "First data file should be input1"
-            let firstFragments = Dataset.getHasPartsAsFile first
+            Expect.equal (LDFile.getNameAsString first) "InputFile" "First data file should be input1"
+            let firstFragments = LDDataset.getHasPartsAsFile first
             Expect.hasLength firstFragments 2 "First data file should have 2 fragments"
             Expect.equal firstFragments.[0] input1 "First fragment should be Fragment1"
             Expect.equal firstFragments.[1] output2 "Second fragment should be Fragment2"
         )
         testCase "ComplexMix" (fun () ->
-            let p1 = LabProcess.create(name = Identifier.createMissingIdentifier())
-            let p1_input = File.create(name = "InputFile")
-            let p1_output1 = File.create(name = "MiddleFile#Fragment1")
-            let p1_output2 = File.create(name = "MiddleFile#Fragment2")
-            LabProcess.setObjects(p1, ResizeArray [p1_input])
-            LabProcess.setResults(p1, ResizeArray [p1_output1;p1_output2])
-            let p2_output1 = File.create(name = "OutFile1#Fragment1")
-            let p2_output2 = File.create(name = "OutFile2#Fragment2")
-            let p2 = LabProcess.create(name = Identifier.createMissingIdentifier())
-            LabProcess.setObjects(p2, ResizeArray [p1_output1;p1_output2])
-            LabProcess.setResults(p2, ResizeArray [p2_output1;p2_output2])
+            let p1 = LDLabProcess.create(name = Identifier.createMissingIdentifier())
+            let p1_input = LDFile.create(name = "InputFile")
+            let p1_output1 = LDFile.create(name = "MiddleFile#Fragment1")
+            let p1_output2 = LDFile.create(name = "MiddleFile#Fragment2")
+            LDLabProcess.setObjects(p1, ResizeArray [p1_input])
+            LDLabProcess.setResults(p1, ResizeArray [p1_output1;p1_output2])
+            let p2_output1 = LDFile.create(name = "OutFile1#Fragment1")
+            let p2_output2 = LDFile.create(name = "OutFile2#Fragment2")
+            let p2 = LDLabProcess.create(name = Identifier.createMissingIdentifier())
+            LDLabProcess.setObjects(p2, ResizeArray [p1_output1;p1_output2])
+            LDLabProcess.setResults(p2, ResizeArray [p2_output1;p2_output2])
             let processes = ResizeArray [p1;p2]
             let dataFiles = AssayConversion.getDataFilesFromProcesses processes
             Expect.hasLength dataFiles 4 "Should have 4 data files"
             Expect.equal dataFiles.[0] p1_input "First data file should be input"
             let middleFile = dataFiles.[1]
-            Expect.equal (File.getNameAsString middleFile) "MiddleFile" "Second data file should be middle file"
-            let middleFragments = Dataset.getHasPartsAsFile middleFile
+            Expect.equal (LDFile.getNameAsString middleFile) "MiddleFile" "Second data file should be middle file"
+            let middleFragments = LDDataset.getHasPartsAsFile middleFile
             Expect.hasLength middleFragments 2 "Middle file should have 2 fragments"
             Expect.equal middleFragments.[0] p1_output1 "First fragment should be Fragment1"
             Expect.equal middleFragments.[1] p1_output2 "Second fragment should be Fragment2"
             let out1 = dataFiles.[2]
-            Expect.equal (File.getNameAsString out1) "OutFile1" "Third data file should be output1"
-            let out1_Fragments = Dataset.getHasPartsAsFile out1
+            Expect.equal (LDFile.getNameAsString out1) "OutFile1" "Third data file should be output1"
+            let out1_Fragments = LDDataset.getHasPartsAsFile out1
             Expect.hasLength out1_Fragments 1 "Output1 should have 1 fragment"
             Expect.equal out1_Fragments.[0] p2_output1 "First fragment should be Fragment1"
             let out2 = dataFiles.[3]
-            Expect.equal (File.getNameAsString out2) "OutFile2" "Fourth data file should be output2"
-            let out2_Fragments = Dataset.getHasPartsAsFile out2
+            Expect.equal (LDFile.getNameAsString out2) "OutFile2" "Fourth data file should be output2"
+            let out2_Fragments = LDDataset.getHasPartsAsFile out2
             Expect.hasLength out2_Fragments 1 "Output2 should have 1 fragment"
             Expect.equal out2_Fragments.[0] p2_output2 "First fragment should be Fragment2"
         )
@@ -1310,7 +1310,7 @@ let tests_Investigation =
             let graph = ro_Investigation.Flatten()
             // Test that flatten worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
-            let personRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(Dataset.creator)) "Investigation should still have creator"
+            let personRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.creator)) "Investigation should still have creator"
             Expect.isTrue (personRef :? LDRef) "Investigation should be flattened correctly"
             //
             let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)

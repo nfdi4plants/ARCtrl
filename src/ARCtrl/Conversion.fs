@@ -51,30 +51,30 @@ type BaseTypes =
 
     static member composeComment (comment : ARCtrl.Comment) =
         let name = match comment.Name with | Some n -> n | None -> failwith "Comment must have a name"
-        ARCtrl.ROCrate.Comment.create(name = name, ?text = comment.Value)
+        LDComment.create(name = name, ?text = comment.Value)
 
     static member decomposeComment (comment : LDNode, ?context : LDContext) =
-        let name = Comment.getNameAsString(comment, ?context = context)
-        let text = Comment.tryGetTextAsString(comment, ?context = context)
+        let name = LDComment.getNameAsString(comment, ?context = context)
+        let text = LDComment.tryGetTextAsString(comment, ?context = context)
         Comment(name = name,?value = text)
 
     static member composeDefinedTerm (term : OntologyAnnotation) =
         let tan = term.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
-        DefinedTerm.create(name = term.NameText, ?termCode = tan)
+        LDDefinedTerm.create(name = term.NameText, ?termCode = tan)
 
     static member decomposeDefinedTerm (term : LDNode, ?context : LDContext) =
-        let name = DefinedTerm.getNameAsString(term, ?context = context)
-        match DefinedTerm.tryGetTermCodeAsString(term, ?context = context) with
+        let name = LDDefinedTerm.getNameAsString(term, ?context = context)
+        match LDDefinedTerm.tryGetTermCodeAsString(term, ?context = context) with
         | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
         | None -> OntologyAnnotation.create(name = name)
 
     static member composePropertyValueFromOA (term : OntologyAnnotation) =
         let tan = term.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
-        PropertyValue.create(name = term.NameText, ?propertyID = tan)
+        LDPropertyValue.create(name = term.NameText, ?propertyID = tan)
 
     static member decomposePropertyValueToOA (term : LDNode, ?context : LDContext) =
-        let name = PropertyValue.getNameAsString(term, ?context = context)
-        match PropertyValue.tryGetPropertyIDAsString(term, ?context = context) with
+        let name = LDPropertyValue.getNameAsString(term, ?context = context)
+        match LDPropertyValue.tryGetPropertyIDAsString(term, ?context = context) with
         | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
         | None -> OntologyAnnotation.create(name = name)
 
@@ -107,25 +107,25 @@ type BaseTypes =
     static member composeComponent (header : CompositeHeader) (value : CompositeCell) : LDNode =
         let v,va,u,ua = BaseTypes.valuesOfCell value
         let n, na = BaseTypes.termOfHeader header
-        PropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        LDPropertyValue.createComponent(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessParameterValue
     static member composeParameterValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
         let v,va,u,ua = BaseTypes.valuesOfCell value
         let n, na = BaseTypes.termOfHeader header
-        PropertyValue.createParameterValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        LDPropertyValue.createParameterValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA FactorValue
     static member composeFactorValue (header : CompositeHeader) (value : CompositeCell) : LDNode =
         let v,va,u,ua = BaseTypes.valuesOfCell value
         let n, na = BaseTypes.termOfHeader header
-        PropertyValue.createFactorValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        LDPropertyValue.createFactorValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     /// Convert a CompositeHeader and Cell tuple to a ISA MaterialAttributeValue
     static member composeCharacteristicValue (header : CompositeHeader) (value : CompositeCell) : LDNode  =
         let v,va,u,ua = BaseTypes.valuesOfCell value
         let n, na = BaseTypes.termOfHeader header
-        PropertyValue.createCharacteristicValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
+        LDPropertyValue.createCharacteristicValue(n, ?value = v, ?propertyID = na, ?valueReference = va, ?unitCode = ua, ?unitText = u)
 
     static member composeFreetextMaterialName (headerFT : string) (name : string) =
         $"{headerFT}={name}"
@@ -133,31 +133,31 @@ type BaseTypes =
 
     static member composeFile (d : Data) : LDNode =
         let dataType = d.DataType |> Option.map (fun dt -> dt.AsString) 
-        File.create(d.NameText,d.NameText,?disambiguatingDescription = dataType, ?encodingFormat = d.Format, ?usageInfo = d.SelectorFormat)
+        LDFile.create(d.NameText,d.NameText,?disambiguatingDescription = dataType, ?encodingFormat = d.Format, ?usageInfo = d.SelectorFormat)
 
     static member decomposeFile (f : LDNode, ?context : LDContext) : Data =
-        let dataType = File.tryGetDisambiguatingDescriptionAsString(f, ?context = context) |> Option.map DataFile.fromString
-        let format = File.tryGetEncodingFormatAsString(f, ?context = context)
-        let selectorFormat = File.tryGetUsageInfoAsString(f, ?context = context)
-        let data = Data(id = f.Id, name = File.getNameAsString(f, ?context = context), ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
+        let dataType = LDFile.tryGetDisambiguatingDescriptionAsString(f, ?context = context) |> Option.map DataFile.fromString
+        let format = LDFile.tryGetEncodingFormatAsString(f, ?context = context)
+        let selectorFormat = LDFile.tryGetUsageInfoAsString(f, ?context = context)
+        let data = Data(id = f.Id, name = LDFile.getNameAsString(f, ?context = context), ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
         data
 
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
     static member composeProcessInput (header : CompositeHeader) (value : CompositeCell) : LDNode =
         match header with
-        | CompositeHeader.Input IOType.Source -> Sample.createSource(value.AsFreeText)
-        | CompositeHeader.Input IOType.Sample -> Sample.createSample(value.AsFreeText)
-        | CompositeHeader.Input IOType.Material -> Sample.createMaterial(value.AsFreeText)
+        | CompositeHeader.Input IOType.Source -> LDSample.createSource(value.AsFreeText)
+        | CompositeHeader.Input IOType.Sample -> LDSample.createSample(value.AsFreeText)
+        | CompositeHeader.Input IOType.Material -> LDSample.createMaterial(value.AsFreeText)
         | CompositeHeader.Input IOType.Data ->
             match value with
             | CompositeCell.FreeText ft ->
-                File.create(ft,ft)
+                LDFile.create(ft,ft)
             | CompositeCell.Data od ->
                 BaseTypes.composeFile od
             | _ -> failwithf "Could not parse input data %O" value
         | CompositeHeader.Input (IOType.FreeText ft) ->
             let n = LDNode(id = BaseTypes.composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
-            n.SetProperty(Sample.name, value.AsFreeText)
+            n.SetProperty(LDSample.name, value.AsFreeText)
             n
         | _ ->
             failwithf "Could not parse input header %O" header
@@ -167,33 +167,33 @@ type BaseTypes =
     static member composeProcessOutput (header : CompositeHeader) (value : CompositeCell) : LDNode =
         match header with
         | CompositeHeader.Output IOType.Source 
-        | CompositeHeader.Output IOType.Sample -> Sample.createSample(value.AsFreeText)
-        | CompositeHeader.Output IOType.Material -> Sample.createMaterial(value.AsFreeText)
+        | CompositeHeader.Output IOType.Sample -> LDSample.createSample(value.AsFreeText)
+        | CompositeHeader.Output IOType.Material -> LDSample.createMaterial(value.AsFreeText)
         | CompositeHeader.Output IOType.Data ->
             match value with
             | CompositeCell.FreeText ft ->
-                File.create(ft,ft)
+                LDFile.create(ft,ft)
             | CompositeCell.Data od ->
                 BaseTypes.composeFile od
             | _ -> failwithf "Could not parse output data %O" value
         | CompositeHeader.Output (IOType.FreeText ft) ->
             let n = LDNode(id = BaseTypes.composeFreetextMaterialName ft value.AsFreeText, schemaType = ResizeArray [ft])
-            n.SetProperty(Sample.name, value.AsFreeText)
+            n.SetProperty(LDSample.name, value.AsFreeText)
             n
         | _ -> failwithf "Could not parse output header %O" header
 
     static member headerOntologyOfPropertyValue (pv : LDNode, ?context : LDContext) =
-        let n = PropertyValue.getNameAsString(pv, ?context = context)
-        match PropertyValue.tryGetPropertyIDAsString(pv, ?context = context) with
+        let n = LDPropertyValue.getNameAsString(pv, ?context = context)
+        match LDPropertyValue.tryGetPropertyIDAsString(pv, ?context = context) with
         | Some nRef -> OntologyAnnotation.fromTermAnnotation(tan = nRef, name = n)
         | None -> OntologyAnnotation(name = n)
 
     /// Convert an ISA Value and Unit tuple to a CompositeCell
     static member cellOfPropertyValue (pv : LDNode, ?context : LDContext) =
-        let v = PropertyValue.tryGetValueAsString(pv, ?context = context)
-        let vRef = PropertyValue.tryGetValueReference(pv, ?context = context)
-        let u = PropertyValue.tryGetUnitTextAsString(pv, ?context = context)
-        let uRef = PropertyValue.tryGetUnitCodeAsString(pv, ?context = context)
+        let v = LDPropertyValue.tryGetValueAsString(pv, ?context = context)
+        let vRef = LDPropertyValue.tryGetValueReference(pv, ?context = context)
+        let u = LDPropertyValue.tryGetUnitTextAsString(pv, ?context = context)
+        let uRef = LDPropertyValue.tryGetUnitCodeAsString(pv, ?context = context)
         match vRef,u,uRef with
         | Some vr, None, None ->
             CompositeCell.Term (OntologyAnnotation.fromTermAnnotation(vr,?name = v))
@@ -233,19 +233,19 @@ type BaseTypes =
     /// Convert an ISA ProcessOutput to a CompositeHeader and Cell tuple
     static member decomposeProcessInput (pn : LDNode, ?context : LDContext) : CompositeHeader*CompositeCell =
         match pn with
-        | s when Sample.validateSource (s, ?context = context) -> CompositeHeader.Input IOType.Source, CompositeCell.FreeText (Sample.getNameAsString (s, ?context = context))
-        | m when Sample.validateMaterial (m, ?context = context) -> CompositeHeader.Input IOType.Material, CompositeCell.FreeText (Sample.getNameAsString (m, ?context = context))
-        | s when Sample.validate (s, ?context = context) -> CompositeHeader.Input IOType.Sample, CompositeCell.FreeText (Sample.getNameAsString (s, ?context = context))
-        | d when File.validate (d, ?context = context) -> CompositeHeader.Input IOType.Data, CompositeCell.Data (BaseTypes.decomposeFile (d, ?context = context))
-        | n -> CompositeHeader.Input (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (Sample.getNameAsString (n, ?context = context))            
+        | s when LDSample.validateSource (s, ?context = context) -> CompositeHeader.Input IOType.Source, CompositeCell.FreeText (LDSample.getNameAsString (s, ?context = context))
+        | m when LDSample.validateMaterial (m, ?context = context) -> CompositeHeader.Input IOType.Material, CompositeCell.FreeText (LDSample.getNameAsString (m, ?context = context))
+        | s when LDSample.validate (s, ?context = context) -> CompositeHeader.Input IOType.Sample, CompositeCell.FreeText (LDSample.getNameAsString (s, ?context = context))
+        | d when LDFile.validate (d, ?context = context) -> CompositeHeader.Input IOType.Data, CompositeCell.Data (BaseTypes.decomposeFile (d, ?context = context))
+        | n -> CompositeHeader.Input (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (LDSample.getNameAsString (n, ?context = context))            
 
 
     static member decomposeProcessOutput (pn : LDNode, ?context : LDContext) : CompositeHeader*CompositeCell =
         match pn with
-        | m when Sample.validateMaterial (m, ?context = context) -> CompositeHeader.Output IOType.Material, CompositeCell.FreeText (Sample.getNameAsString (m, ?context = context))
-        | s when Sample.validate (s, ?context = context) -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (Sample.getNameAsString (s, ?context = context))
-        | d when File.validate (d, ?context = context) -> CompositeHeader.Output IOType.Data, CompositeCell.Data (BaseTypes.decomposeFile (d, ?context = context))
-        | n -> CompositeHeader.Output (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (Sample.getNameAsString (n, ?context = context))
+        | m when LDSample.validateMaterial (m, ?context = context) -> CompositeHeader.Output IOType.Material, CompositeCell.FreeText (LDSample.getNameAsString (m, ?context = context))
+        | s when LDSample.validate (s, ?context = context) -> CompositeHeader.Output IOType.Sample, CompositeCell.FreeText (LDSample.getNameAsString (s, ?context = context))
+        | d when LDFile.validate (d, ?context = context) -> CompositeHeader.Output IOType.Data, CompositeCell.Data (BaseTypes.decomposeFile (d, ?context = context))
+        | n -> CompositeHeader.Output (IOType.FreeText n.SchemaType.[0]), CompositeCell.FreeText (LDSample.getNameAsString (n, ?context = context))
 
     /// This function creates a string containing the name and the ontology short-string of the given ontology annotation term
     ///
@@ -285,11 +285,11 @@ open ARCtrl.Helper.Regex.ActivePatterns
 type ProcessConversion = 
 
     static member tryGetProtocolType (pv : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        match LabProtocol.tryGetIntendedUseAsDefinedTerm(pv,?graph = graph, ?context = context) with
+        match LDLabProtocol.tryGetIntendedUseAsDefinedTerm(pv,?graph = graph, ?context = context) with
         | Some dt ->
             Some (BaseTypes.decomposeDefinedTerm(dt, ?context = context))
         | None ->
-            match LabProtocol.tryGetIntendedUseAsString(pv, ?context = context) with
+            match LDLabProtocol.tryGetIntendedUseAsString(pv, ?context = context) with
             | Some s -> Some (OntologyAnnotation.create(name = s))
             | None -> None
 
@@ -432,7 +432,7 @@ type ProcessConversion =
         | CompositeHeader.Performer ->
             fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                 let performer = matrix.[generalI,i].AsFreeText
-                let person = ARCtrl.ROCrate.Person.create(performer,performer)
+                let person = LDPerson.create(performer)
                 person
             |> Some
         | _ -> None
@@ -503,13 +503,13 @@ type ProcessConversion =
                     let input = inputGetter matrix i
 
                     if chars.Count > 0 then
-                        Sample.setAdditionalProperties(input,chars)
+                        LDSample.setAdditionalProperties(input,chars)
                     input
                     |> ResizeArray.singleton
             | None when charGetters.Length <> 0 ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let chars = charGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
-                    Sample.createSample(name = $"{processNameRoot}_Input_{i}", additionalProperties = chars)
+                    LDSample.createSample(name = $"{processNameRoot}_Input_{i}", additionalProperties = chars)
                     |> ResizeArray.singleton
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -523,13 +523,13 @@ type ProcessConversion =
                     let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
                     let output = outputGetter matrix i
                     if factors.Count > 0 then
-                        Sample.setAdditionalProperties(output,factors)
+                        LDSample.setAdditionalProperties(output,factors)
                     output
                     |> ResizeArray.singleton
             | None when factorValueGetters.Length <> 0 ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
                     let factors = factorValueGetters |> Seq.map (fun f -> f matrix i) |> ResizeArray
-                    Sample.createSample(name = $"{processNameRoot}_Output_{i}", additionalProperties = factors)
+                    LDSample.createSample(name = $"{processNameRoot}_Output_{i}", additionalProperties = factors)
                     |> ResizeArray.singleton
             | None ->
                 fun (matrix : System.Collections.Generic.Dictionary<(int * int),CompositeCell>) i ->
@@ -550,8 +550,8 @@ type ProcessConversion =
 
             let protocol : LDNode option =
                 let name = (protocolREFGetter |> Option.map (fun f -> f matrix i))
-                let protocolId = LabProtocol.genId(?name = name, processName = processNameRoot)
-                LabProtocol.create(
+                let protocolId = LDLabProtocol.genId(?name = name, processName = processNameRoot)
+                LDLabProtocol.create(
                     id = protocolId,
                     ?name = name,
                     ?description = (protocolDescriptionGetter |> Option.map (fun f -> f matrix i)),
@@ -567,7 +567,7 @@ type ProcessConversion =
 
             let agent = performerGetter |> Option.map (fun f -> f matrix i)
 
-            LabProcess.create(
+            LDLabProcess.create(
                 name = pn,
                 objects = input,
                 results = output,
@@ -586,11 +586,11 @@ type ProcessConversion =
     static member groupProcesses (processes : LDNode list, ?graph : LDGraph, ?context : LDContext) = 
         processes
         |> List.groupBy (fun p ->
-            match LabProcess.tryGetNameAsString (p, ?context = context), LabProcess.tryGetExecutesLabProtocol(p,?graph = graph, ?context = context) with
+            match LDLabProcess.tryGetNameAsString (p, ?context = context), LDLabProcess.tryGetExecutesLabProtocol(p,?graph = graph, ?context = context) with
             | Some name, _ when ProcessConversion.decomposeProcessName name |> snd |> Option.isSome ->
                 ProcessConversion.decomposeProcessName name |> fst
-            | _, Some protocol when LabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
-                LabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
+            | _, Some protocol when LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.isSome ->
+                LDLabProtocol.tryGetNameAsString (protocol, ?context = context) |> Option.defaultValue ""
             | Some name, _ when name.Contains "_" ->
                 let lastUnderScoreIndex = name.LastIndexOf '_'
                 name.Remove lastUnderScoreIndex
@@ -627,39 +627,39 @@ type ProcessConversion =
     // Transform a isa json process into a isa tab row, where each row is a header+value list
     static member processToRows (p : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let pvs =
-            LabProcess.getParameterValues(p, ?graph = graph, ?context = context)
+            LDLabProcess.getParameterValues(p, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun ppv -> BaseTypes.decomposeParameterValue(ppv, ?context = context), ColumnIndex.tryGetIndex ppv)
         // Get the component
         let components = 
-            match LabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
+            match LDLabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
             | Some prot ->
-                LabProtocol.getComponents(prot, ?graph = graph, ?context = context)
+                LDLabProtocol.getComponents(prot, ?graph = graph, ?context = context)
                 |> ResizeArray.map (fun ppv -> BaseTypes.decomposeComponent(ppv, ?context = context), ColumnIndex.tryGetIndex ppv)
             | None -> ResizeArray []
         // Get the values of the protocol
         let protVals = 
-            match LabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
+            match LDLabProcess.tryGetExecutesLabProtocol(p, ?graph = graph, ?context = context) with
             | Some prot ->
                 [
-                    match LabProtocol.tryGetNameAsString (prot, ?context = context) with | Some name -> yield (CompositeHeader.ProtocolREF, CompositeCell.FreeText name) | None -> ()
-                    match LabProtocol.tryGetDescriptionAsString (prot, ?context = context) with | Some desc -> yield (CompositeHeader.ProtocolDescription, CompositeCell.FreeText desc) | None -> ()
-                    match LabProtocol.tryGetUrl (prot, ?context = context) with | Some uri -> yield (CompositeHeader.ProtocolUri, CompositeCell.FreeText uri) | None -> ()
-                    match LabProtocol.tryGetVersionAsString(prot, ?context = context) with | Some version -> yield (CompositeHeader.ProtocolVersion, CompositeCell.FreeText version) | None -> ()
+                    match LDLabProtocol.tryGetNameAsString (prot, ?context = context) with | Some name -> yield (CompositeHeader.ProtocolREF, CompositeCell.FreeText name) | None -> ()
+                    match LDLabProtocol.tryGetDescriptionAsString (prot, ?context = context) with | Some desc -> yield (CompositeHeader.ProtocolDescription, CompositeCell.FreeText desc) | None -> ()
+                    match LDLabProtocol.tryGetUrl (prot, ?context = context) with | Some uri -> yield (CompositeHeader.ProtocolUri, CompositeCell.FreeText uri) | None -> ()
+                    match LDLabProtocol.tryGetVersionAsString(prot, ?context = context) with | Some version -> yield (CompositeHeader.ProtocolVersion, CompositeCell.FreeText version) | None -> ()
                     match ProcessConversion.tryGetProtocolType(prot, ?graph = graph, ?context = context) with
                     | Some intendedUse -> yield (CompositeHeader.ProtocolType, CompositeCell.Term intendedUse)
                     | None -> ()
                 ]
             | None -> []
         let comments = 
-            LabProcess.getDisambiguatingDescriptionsAsString(p, ?context = context)
+            LDLabProcess.getDisambiguatingDescriptionsAsString(p, ?context = context)
             |> ResizeArray.map (fun c ->
                 let c = Comment.fromString c
                 CompositeHeader.Comment (Option.defaultValue "" c.Name),
                 CompositeCell.FreeText (Option.defaultValue "" c.Value)
             )
 
-        let inputs = LabProcess.getObjects(p, ?graph = graph, ?context = context)
-        let outputs = LabProcess.getResults(p, ?graph = graph, ?context = context)
+        let inputs = LDLabProcess.getObjects(p, ?graph = graph, ?context = context)
+        let outputs = LDLabProcess.getResults(p, ?graph = graph, ?context = context)
 
         let inputs,outputs =
             if inputs.Count = 0 && outputs.Count <> 0 then
@@ -696,13 +696,13 @@ type ProcessConversion =
                 let chars =
                     match i with
                     | Some i -> 
-                        Sample.getCharacteristics(i, ?graph = graph, ?context = context)
+                        LDSample.getCharacteristics(i, ?graph = graph, ?context = context)
                         |> ResizeArray.map (fun cv -> BaseTypes.decomposeCharacteristicValue(cv, ?context = context), ColumnIndex.tryGetIndex cv)
                     | None -> ResizeArray []            
                 let factors =
                     match o with
                     | Some o -> 
-                        Sample.getFactors(o, ?graph = graph, ?context = context)
+                        LDSample.getFactors(o, ?graph = graph, ?context = context)
                         |> ResizeArray.map (fun fv -> BaseTypes.decomposeFactorValue(fv, ?context = context), ColumnIndex.tryGetIndex fv)
                     | None -> ResizeArray []
 
@@ -769,19 +769,19 @@ module CompositeRow =
         |> Seq.fold (fun p hc ->
             match hc with
             | CompositeHeader.ProtocolType, CompositeCell.Term oa -> 
-                LabProtocol.setIntendedUseAsDefinedTerm(p, BaseTypes.composeDefinedTerm oa)
+                LDLabProtocol.setIntendedUseAsDefinedTerm(p, BaseTypes.composeDefinedTerm oa)
                 
             | CompositeHeader.ProtocolVersion, CompositeCell.FreeText v ->
-                LabProtocol.setVersionAsString(p,v)
+                LDLabProtocol.setVersionAsString(p,v)
                 
             | CompositeHeader.ProtocolUri, CompositeCell.FreeText v ->
-                LabProtocol.setUrl(p,v)
+                LDLabProtocol.setUrl(p,v)
                 
             | CompositeHeader.ProtocolDescription, CompositeCell.FreeText v ->
-                LabProtocol.setDescriptionAsString(p,v)
+                LDLabProtocol.setDescriptionAsString(p,v)
                 
             | CompositeHeader.ProtocolREF, CompositeCell.FreeText v ->
-                LabProtocol.setNameAsString(p,v)             
+                LDLabProtocol.setNameAsString(p,v)             
             //| CompositeHeader.Parameter oa, _ ->
             //    DefinedTerm.create
             //    let pp = ProtocolParameter.create(ParameterName = oa)
@@ -789,11 +789,11 @@ module CompositeRow =
             | CompositeHeader.Component _, CompositeCell.Term _
             | CompositeHeader.Component _, CompositeCell.Unitized _ ->            
                 let c = BaseTypes.composeComponent (fst hc) (snd hc)
-                let newC = ResizeArray.appendSingleton c (LabProtocol.getLabEquipments(p))
-                LabProtocol.setLabEquipments(p,newC)  
+                let newC = ResizeArray.appendSingleton c (LDLabProtocol.getLabEquipments(p))
+                LDLabProtocol.setLabEquipments(p,newC)  
             | _ -> ()
             p
-        ) (LabProtocol.create(id = id, name = tableName))
+        ) (LDLabProtocol.create(id = id, name = tableName))
 
 [<AutoOpen>]
 module TableTypeExtensions = 
@@ -805,7 +805,7 @@ module TableTypeExtensions =
         /// The table will have at most one row, with the protocol information and the component values
         static member fromProtocol (p : LDNode, ?graph : LDGraph, ?context : LDContext) : ArcTable = 
 
-            let name = LabProtocol.getNameAsString(p, ?context = context)
+            let name = LDLabProtocol.getNameAsString(p, ?context = context)
             let t = ArcTable.init name
 
             //for pp in LabProtocol.getPa p.Parameters |> Option.defaultValue [] do
@@ -814,16 +814,16 @@ module TableTypeExtensions =
 
             //    t.AddColumn(CompositeHeader.Parameter pp.ParameterName.Value, ?index = pp.TryGetColumnIndex())
 
-            for c in LabProtocol.getComponents(p, ?graph = graph, ?context = context) do
+            for c in LDLabProtocol.getComponents(p, ?graph = graph, ?context = context) do
                 let h,v = BaseTypes.decomposeComponent(c, ?context = context)
                 t.AddColumn(
                     h, 
                     cells = Array.singleton v,
                     ?index = c.TryGetColumnIndex())
-            LabProtocol.tryGetDescriptionAsString(p, ?context = context)  |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
-            LabProtocol.tryGetVersionAsString(p, ?context = context)       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
+            LDLabProtocol.tryGetDescriptionAsString(p, ?context = context)  |> Option.map (fun d -> t.AddProtocolDescriptionColumn([|d|]))  |> ignore
+            LDLabProtocol.tryGetVersionAsString(p, ?context = context)       |> Option.map (fun d -> t.AddProtocolVersionColumn([|d|]))      |> ignore
             ProcessConversion.tryGetProtocolType(p, ?context =context) |> Option.map (fun d -> t.AddProtocolTypeColumn([|d|]))         |> ignore
-            LabProtocol.tryGetUrl(p, ?context = context)           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
+            LDLabProtocol.tryGetUrl(p, ?context = context)           |> Option.map (fun d -> t.AddProtocolUriColumn([|d|]))          |> ignore
             t.AddProtocolNameColumn([|name|])
             t
 
@@ -839,12 +839,12 @@ module TableTypeExtensions =
                     //    Protocol.addParameter (pp) p
                     | CompositeHeader.Component oa ->
                         let n, na = oa.NameText, oa.TermAccessionOntobeeUrl
-                        let c = PropertyValue.createComponent(n, "Empty Component Value", propertyID = na)
-                        let newC = ResizeArray.appendSingleton c (LabProtocol.getLabEquipments p)
-                        LabProtocol.setLabEquipments(p,newC)
+                        let c = LDPropertyValue.createComponent(n, "Empty Component Value", propertyID = na)
+                        let newC = ResizeArray.appendSingleton c (LDLabProtocol.getLabEquipments p)
+                        LDLabProtocol.setLabEquipments(p,newC)
                     | _ -> ()
                     p
-                ) (LabProtocol.create(id = Identifier.createMissingIdentifier(), name = this.Name))
+                ) (LDLabProtocol.create(id = Identifier.createMissingIdentifier(), name = this.Name))
                 |> List.singleton
             else
                 List.init this.RowCount (fun i ->
@@ -859,7 +859,7 @@ module TableTypeExtensions =
             if this.RowCount = 0 then
                 //let input = ResizeArray [Sample.createSample(name = $"{this.Name}_Input", additionalProperties = ResizeArray [])]
                 //let output = ResizeArray [Sample.createSample(name = $"{this.Name}_Output", additionalProperties = ResizeArray [])]
-                LabProcess.create(name = this.Name(*, objects = input, results = output*))
+                LDLabProcess.create(name = this.Name(*, objects = input, results = output*))
                 |> List.singleton
             else
                 let getter = ProcessConversion.getProcessGetter this.Name this.Headers          
@@ -915,15 +915,15 @@ type PersonConversion =
         try 
             ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder affiliation
         with
-        | _ -> Organization.create(name = affiliation)
+        | _ -> LDOrganization.create(name = affiliation)
 
     static member decomposeAffiliation (affiliation : LDNode, ?context : LDContext) : string =
         let hasOnlyName = 
             affiliation.GetPropertyNames(?context = context)
-            |> Seq.filter(fun n -> n <> Organization.name)
+            |> Seq.filter(fun n -> n <> LDOrganization.name)
             |> Seq.isEmpty
         if hasOnlyName then
-            Organization.getNameAsString(affiliation, ?context = context)
+            LDOrganization.getNameAsString(affiliation, ?context = context)
         else
             Json.LDNode.encoder affiliation
             |> ARCtrl.Json.Encode.toJsonString 0
@@ -962,34 +962,34 @@ type PersonConversion =
         let affiliation = 
             person.Affiliation
             |> Option.map PersonConversion.composeAffiliation
-        ARCtrl.ROCrate.Person.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
+        LDPerson.create(givenName, ?orcid = person.ORCID, ?affiliation = affiliation, ?email = person.EMail, ?familyName = person.LastName, ?jobTitles = jobTitles, ?additionalName = person.MidInitials, ?address = address, ?disambiguatingDescriptions = disambiguatingDescriptions, ?faxNumber = person.Fax, ?telephone = person.Phone)
 
     static member decomposePerson (person : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let orcid = ORCID.tryGetOrcidNumber person.Id
         let address = 
-            match Person.tryGetAddressAsString(person, ?context = context) with
+            match LDPerson.tryGetAddressAsString(person, ?context = context) with
             | Some s -> 
                 Some s
             | None ->
-                match Person.tryGetAddressAsPostalAddress(person, ?graph = graph, ?context = context) with
+                match LDPerson.tryGetAddressAsPostalAddress(person, ?graph = graph, ?context = context) with
                 | Some a -> Some (PersonConversion.decomposeAddress a)
                 | None -> None
         let roles = 
-            Person.getJobTitlesAsDefinedTerm(person, ?graph = graph, ?context = context)
+            LDPerson.getJobTitlesAsDefinedTerm(person, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun r -> BaseTypes.decomposeDefinedTerm(r, ?context = context))
         let comments =
-            Person.getDisambiguatingDescriptionsAsString(person, ?context = context)
+            LDPerson.getDisambiguatingDescriptionsAsString(person, ?context = context)
             |> ResizeArray.map Comment.fromString
         let affiliation =
-            Person.tryGetAffiliation(person, ?graph = graph, ?context = context)
+            LDPerson.tryGetAffiliation(person, ?graph = graph, ?context = context)
             |> Option.map (fun a -> PersonConversion.decomposeAffiliation(a, ?context = context))
-        ARCtrl.Person.create(
-            firstName = Person.getGivenNameAsString(person, ?context = context),
-            ?lastName = Person.tryGetFamilyNameAsString(person, ?context = context),
-            ?midInitials = Person.tryGetAdditionalNameAsString(person, ?context = context),
-            ?email = Person.tryGetEmailAsString(person, ?context = context),
-            ?fax = Person.tryGetFaxNumberAsString(person, ?context = context),
-            ?phone = Person.tryGetTelephoneAsString(person, ?context = context),
+        Person.create(
+            firstName = LDPerson.getGivenNameAsString(person, ?context = context),
+            ?lastName = LDPerson.tryGetFamilyNameAsString(person, ?context = context),
+            ?midInitials = LDPerson.tryGetAdditionalNameAsString(person, ?context = context),
+            ?email = LDPerson.tryGetEmailAsString(person, ?context = context),
+            ?fax = LDPerson.tryGetFaxNumberAsString(person, ?context = context),
+            ?phone = LDPerson.tryGetTelephoneAsString(person, ?context = context),
             ?orcid = orcid,
             ?affiliation = affiliation,
             roles = roles,
@@ -1010,26 +1010,26 @@ type ScholarlyArticleConversion =
     static member pubmedIDURL = "http://purl.obolibrary.org/obo/OBI_0001617"
 
     static member composeDOI (doi : string) : LDNode =
-        PropertyValue.create(name = ScholarlyArticleConversion.doiKey, value = doi, propertyID = ScholarlyArticleConversion.doiURL)
+        LDPropertyValue.create(name = ScholarlyArticleConversion.doiKey, value = doi, propertyID = ScholarlyArticleConversion.doiURL)
 
     static member tryDecomposeDOI (doi : LDNode, ?context : LDContext) : string option =
         match
-            PropertyValue.tryGetNameAsString(doi, ?context = context),
-            PropertyValue.tryGetValueAsString(doi, ?context = context),
-            PropertyValue.tryGetPropertyIDAsString(doi, ?context = context)
+            LDPropertyValue.tryGetNameAsString(doi, ?context = context),
+            LDPropertyValue.tryGetValueAsString(doi, ?context = context),
+            LDPropertyValue.tryGetPropertyIDAsString(doi, ?context = context)
         with
         | Some name, Some value, Some id when name = ScholarlyArticleConversion.doiKey && id = ScholarlyArticleConversion.doiURL ->
             Some value
         | _ -> None
 
     static member composePubMedID (pubMedID : string) : LDNode =
-        PropertyValue.create(name = ScholarlyArticleConversion.pubmedIDKey, value = pubMedID, propertyID = ScholarlyArticleConversion.pubmedIDURL)
+        LDPropertyValue.create(name = ScholarlyArticleConversion.pubmedIDKey, value = pubMedID, propertyID = ScholarlyArticleConversion.pubmedIDURL)
 
     static member tryDecomposePubMedID (pubMedID : LDNode, ?context : LDContext) : string option =
         match
-            PropertyValue.tryGetNameAsString(pubMedID, ?context = context),
-            PropertyValue.tryGetValueAsString(pubMedID, ?context = context),
-            PropertyValue.tryGetPropertyIDAsString(pubMedID, ?context = context)
+            LDPropertyValue.tryGetNameAsString(pubMedID, ?context = context),
+            LDPropertyValue.tryGetValueAsString(pubMedID, ?context = context),
+            LDPropertyValue.tryGetPropertyIDAsString(pubMedID, ?context = context)
         with
         | Some name, Some value, Some id when name = ScholarlyArticleConversion.pubmedIDKey && id = ScholarlyArticleConversion.pubmedIDURL ->
             Some value
@@ -1039,7 +1039,7 @@ type ScholarlyArticleConversion =
         try 
             ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder author
         with
-        | _ -> ARCtrl.ROCrate.Person.create(givenName = author)
+        | _ -> LDPerson.create(givenName = author)
 
     static member splitAuthors (a : string) =
         let mutable bracketCount = 0
@@ -1068,10 +1068,10 @@ type ScholarlyArticleConversion =
     static member decomposeAuthor (author : LDNode, ?context : LDContext) : string =
         let hasOnlyGivenName = 
             author.GetPropertyNames(?context = context)
-            |> Seq.filter(fun n -> n <> Person.givenName)
+            |> Seq.filter(fun n -> n <> LDPerson.givenName)
             |> Seq.isEmpty
         if hasOnlyGivenName then
-            Person.getGivenNameAsString(author, ?context = context)
+            LDPerson.getGivenNameAsString(author, ?context = context)
         else
             Json.LDNode.encoder author
             |> ARCtrl.Json.Encode.toJsonString 0
@@ -1098,7 +1098,7 @@ type ScholarlyArticleConversion =
         ]
         let status = publication.Status |> Option.map BaseTypes.composeDefinedTerm
         let scholarlyArticle = 
-            ScholarlyArticle.create(
+            LDScholarlyArticle.create(
                 headline = title,
                 identifiers = identifiers,
                 ?authors = authors,
@@ -1109,18 +1109,18 @@ type ScholarlyArticleConversion =
         scholarlyArticle
 
     static member decomposeScholarlyArticle (sa : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let title = ScholarlyArticle.getHeadlineAsString(sa, ?context = context)
+        let title = LDScholarlyArticle.getHeadlineAsString(sa, ?context = context)
         let authors = 
-            ScholarlyArticle.getAuthors(sa, ?graph = graph, ?context = context)
+            LDScholarlyArticle.getAuthors(sa, ?graph = graph, ?context = context)
             |> Option.fromSeq
             |> Option.map (fun a -> ScholarlyArticleConversion.decomposeAuthors(a, ?context = context))
         let comments = 
-            ScholarlyArticle.getComments(sa, ?graph = graph, ?context = context)
+            LDScholarlyArticle.getComments(sa, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
         let status = 
-            ScholarlyArticle.tryGetCreativeWorkStatus(sa, ?graph = graph, ?context = context)
+            LDScholarlyArticle.tryGetCreativeWorkStatus(sa, ?graph = graph, ?context = context)
             |> Option.map (fun s -> BaseTypes.decomposeDefinedTerm(s, ?context = context))
-        let identifiers = ScholarlyArticle.getIdentifiersAsPropertyValue(sa, ?graph = graph, ?context = context)
+        let identifiers = LDScholarlyArticle.getIdentifiersAsPropertyValue(sa, ?graph = graph, ?context = context)
         let pubMedID = identifiers |> ResizeArray.tryPick (fun i -> ScholarlyArticleConversion.tryDecomposePubMedID(i, ?context = context))
         let doi = identifiers |> ResizeArray.tryPick (fun i -> ScholarlyArticleConversion.tryDecomposeDOI(i, ?context = context))
         ARCtrl.Publication.create(
@@ -1138,8 +1138,8 @@ type AssayConversion =
         let data = 
             processes
             |> ResizeArray.collect (fun p -> 
-                let inputs = LabProcess.getObjectsAsData(p, ?graph = graph, ?context = context)
-                let outputs = LabProcess.getResultsAsData(p, ?graph = graph, ?context = context)
+                let inputs = LDLabProcess.getObjectsAsData(p, ?graph = graph, ?context = context)
+                let outputs = LDLabProcess.getResultsAsData(p, ?graph = graph, ?context = context)
                 ResizeArray.append inputs outputs
             )
             |> ResizeArray.distinct
@@ -1162,17 +1162,17 @@ type AssayConversion =
                     | Some f -> f
                     | None ->
                         let comments = 
-                            File.getComments(fragments.[0], ?graph = graph, ?context = context)
+                            LDFile.getComments(fragments.[0], ?graph = graph, ?context = context)
                             |> Option.fromSeq
-                        File.create(
+                        LDFile.create(
                             id = path,
                             name = path,
                             ?comments = comments,
-                            ?disambiguatingDescription = File.tryGetDisambiguatingDescriptionAsString(fragments.[0], ?context = context),
-                            ?encodingFormat = File.tryGetEncodingFormatAsString(fragments.[0], ?context = context),
+                            ?disambiguatingDescription = LDFile.tryGetDisambiguatingDescriptionAsString(fragments.[0], ?context = context),
+                            ?encodingFormat = LDFile.tryGetEncodingFormatAsString(fragments.[0], ?context = context),
                             ?context = fragments.[0].TryGetContext()
                         )
-                Dataset.setHasParts(file, fragments,?context = context)
+                LDDataset.setHasParts(file, fragments,?context = context)
                 file            
             )
         ResizeArray.append files filesFromfragments
@@ -1196,7 +1196,7 @@ type AssayConversion =
             assay.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
             |> Option.fromSeq
-        Dataset.createAssay(
+        LDDataset.createAssay(
             identifier = assay.Identifier,
             ?description = None, // TODO
             ?creators = creators,
@@ -1210,29 +1210,29 @@ type AssayConversion =
 
     static member decomposeAssay (assay : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let measurementMethod = 
-            Dataset.tryGetMeasurementMethodAsDefinedTerm(assay, ?graph = graph, ?context = context)
+            LDDataset.tryGetMeasurementMethodAsDefinedTerm(assay, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
         let measurementTechnique = 
-            Dataset.tryGetMeasurementTechniqueAsDefinedTerm(assay, ?graph = graph, ?context = context)
+            LDDataset.tryGetMeasurementTechniqueAsDefinedTerm(assay, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
         let variableMeasured = 
-            Dataset.tryGetVariableMeasuredAsPropertyValue(assay, ?graph = graph, ?context = context)
+            LDDataset.tryGetVariableMeasuredAsPropertyValue(assay, ?graph = graph, ?context = context)
             |> Option.map (fun v -> BaseTypes.decomposePropertyValueToOA(v, ?context = context))
         let perfomers = 
-            Dataset.getCreators(assay, ?graph = graph, ?context = context)
+            LDDataset.getCreators(assay, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         //let dataFiles = 
         //    Assay.getHasParts(assay, ?graph = graph, ?context = context)
         //    |> Option.fromSeq
         //    |> Option.map (fun df -> BaseTypes.decomposeFile(df, ?graph = graph, ?context = context))
         let tables = 
-            Dataset.getAboutsAsLabProcess(assay, ?graph = graph, ?context = context)
+            LDDataset.getAboutsAsLabProcess(assay, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
         let comments =
-            Dataset.getComments(assay, ?graph = graph, ?context = context)
+            LDDataset.getComments(assay, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
         ArcAssay.create(
-            identifier = Dataset.getIdentifierAsString(assay, ?context = context),
+            identifier = LDDataset.getIdentifierAsString(assay, ?context = context),
             ?measurementType = variableMeasured,
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,
@@ -1266,7 +1266,7 @@ type StudyConversion =
             study.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
             |> Option.fromSeq
-        Dataset.createStudy(
+        LDDataset.createStudy(
             identifier = study.Identifier,
             ?name = study.Title,
             ?description = study.Description,
@@ -1282,31 +1282,31 @@ type StudyConversion =
 
     static member decomposeStudy (study : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let dateCreated = 
-            Dataset.tryGetDateCreatedAsDateTime(study, ?context = context)
+            LDDataset.tryGetDateCreatedAsDateTime(study, ?context = context)
             |> Option.map DateTime.toString
         let datePublished = 
-            Dataset.tryGetDatePublishedAsDateTime(study, ?context = context)
+            LDDataset.tryGetDatePublishedAsDateTime(study, ?context = context)
             |> Option.map DateTime.toString
         let publications = 
-            Dataset.getCitations(study, ?graph = graph, ?context = context)
+            LDDataset.getCitations(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
         let creators = 
-            Dataset.getCreators(study, ?graph = graph, ?context = context)
+            LDDataset.getCreators(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         //let dataFiles = 
         //    Study.getHasParts(study, ?graph = graph, ?context = context)
         //    |> Option.fromSeq
         //    |> Option.map (fun df -> BaseTypes.decomposeFile(df, ?graph = graph, ?context = context))
         let tables = 
-            Dataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
+            LDDataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
         let comments =
-            Dataset.getComments(study, ?graph = graph, ?context = context)
+            LDDataset.getComments(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
         ArcStudy.create(
-            identifier = Dataset.getIdentifierAsString(study, ?context = context),
-            ?title = Dataset.tryGetNameAsString(study, ?context = context),
-            ?description = Dataset.tryGetDescriptionAsString(study, ?context = context),
+            identifier = LDDataset.getIdentifierAsString(study, ?context = context),
+            ?title = LDDataset.tryGetNameAsString(study, ?context = context),
+            ?description = LDDataset.tryGetDescriptionAsString(study, ?context = context),
             ?submissionDate = dateCreated,
             ?publicReleaseDate = datePublished,
             contacts = creators,
@@ -1345,7 +1345,7 @@ type InvestigationConversion =
         let mentions =
             ResizeArray [] // TODO
             |> Option.fromSeq
-        Dataset.createInvestigation(
+        LDDataset.createInvestigation(
             identifier = investigation.Identifier,
             name = name,
             ?description = investigation.Description,
@@ -1361,38 +1361,38 @@ type InvestigationConversion =
 
     static member decomposeInvestigation (investigation : LDNode, ?graph : LDGraph, ?context : LDContext) =
         let title =
-            match Dataset.tryGetNameAsString(investigation, ?context = context) with
+            match LDDataset.tryGetNameAsString(investigation, ?context = context) with
             | Some t -> Some t
-            | None -> Dataset.tryGetHeadlineAsString(investigation, ?context = context)
+            | None -> LDDataset.tryGetHeadlineAsString(investigation, ?context = context)
         let dateCreated = 
-            Dataset.tryGetDateCreatedAsDateTime(investigation, ?context = context)
+            LDDataset.tryGetDateCreatedAsDateTime(investigation, ?context = context)
             |> Option.map DateTime.toString
         let datePublished = 
-            Dataset.tryGetDatePublishedAsDateTime(investigation, ?context = context)
+            LDDataset.tryGetDatePublishedAsDateTime(investigation, ?context = context)
             |> Option.map DateTime.toString
         let publications = 
-            Dataset.getCitations(investigation, ?graph = graph, ?context = context)
+            LDDataset.getCitations(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun p -> ScholarlyArticleConversion.decomposeScholarlyArticle(p, ?graph = graph, ?context = context))
         let creators = 
-            Dataset.getCreators(investigation, ?graph = graph, ?context = context)
+            LDDataset.getCreators(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
         let datasets = 
-            Dataset.getHasPartsAsDataset  (investigation, ?graph = graph, ?context = context)
+            LDDataset.getHasPartsAsDataset  (investigation, ?graph = graph, ?context = context)
         let studies = 
             datasets
-            |> ResizeArray.filter (fun d -> Dataset.validateStudy(d, ?context = context))
+            |> ResizeArray.filter (fun d -> LDDataset.validateStudy(d, ?context = context))
             |> ResizeArray.map (fun d -> StudyConversion.decomposeStudy(d, ?graph = graph, ?context = context))
         let assays = 
             datasets
-            |> ResizeArray.filter (fun d -> Dataset.validateAssay(d, ?context = context))
+            |> ResizeArray.filter (fun d -> LDDataset.validateAssay(d, ?context = context))
             |> ResizeArray.map (fun d -> AssayConversion.decomposeAssay(d, ?graph = graph, ?context = context))
         let comments =
-            Dataset.getComments(investigation, ?graph = graph, ?context = context)
+            LDDataset.getComments(investigation, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
         ArcInvestigation.create(
-            identifier = Dataset.getIdentifierAsString(investigation, ?context = context),
+            identifier = LDDataset.getIdentifierAsString(investigation, ?context = context),
             ?title = title,
-            ?description = Dataset.tryGetDescriptionAsString(investigation, ?context = context),
+            ?description = LDDataset.tryGetDescriptionAsString(investigation, ?context = context),
             ?submissionDate = dateCreated,
             ?publicReleaseDate = datePublished,
             contacts = creators,

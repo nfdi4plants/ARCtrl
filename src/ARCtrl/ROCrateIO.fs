@@ -34,8 +34,8 @@ module ARC =
                           | Some license -> license
                           | None -> ROCrate.getDefaultLicense()
             let isa = isa.ToROCrateInvestigation()
-            Dataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
-            Dataset.setLicenseAsCreativeWork(isa, license)
+            LDDataset.setSDDatePublishedAsDateTime(isa, System.DateTime.Now)
+            LDDataset.setLicenseAsCreativeWork(isa, license)
             let graph = isa.Flatten()
             let context = LDContext(baseContexts=ResizeArray[Context.initV1_1();Context.initBioschemasContext()])
             graph.SetContext(context)
@@ -57,7 +57,7 @@ module ARC =
             LDNode.decoder
             |> Decode.map (fun ldnode ->
                 ldnode
-                |> Dataset.getAbouts
+                |> LDDataset.getAbouts
                 |> Seq.exactlyOne
                 |> fun node -> ArcInvestigation.fromROCrateInvestigation(node, context = Context.initV1_1())
             )

@@ -6,7 +6,7 @@ open ARCtrl.ROCrate
 open ARCtrl.Helper
 
 [<AttachMembers>]
-type LabProcess =
+type LDLabProcess =
 
     static member schemaType = "https://bioschemas.org/LabProcess"
 
@@ -27,102 +27,102 @@ type LabProcess =
     static member disambiguatingDescription = "http://schema.org/disambiguatingDescription"
 
     static member tryGetNameAsString(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(LabProcess.name, ?context = context) with
+        match lp.TryGetPropertyAsSingleton(LDLabProcess.name, ?context = context) with
         | Some (:? string as n) -> Some n
         | _ -> None
 
     static member getNameAsString(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(LabProcess.name, ?context = context) with
+        match lp.TryGetPropertyAsSingleton(LDLabProcess.name, ?context = context) with
         | Some (:? string as n) -> n
         | Some _ -> failwith $"property `name` of object with @id `{lp.Id}` was not a string"
         | _ -> failwith $"Could not access property `name` of object with @id `{lp.Id}`"
 
     static member setNameAsString(lp : LDNode, name : string, ?context : LDContext) =
-        lp.SetProperty(LabProcess.name, name, ?context = context)
+        lp.SetProperty(LDLabProcess.name, name, ?context = context)
 
     static member tryGetAgent(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = Person.validate(ldObject, ?context = context)
-        match lp.TryGetPropertyAsSingleNode(LabProcess.agent, ?graph = graph, ?context = context) with
+        let filter ldObject context = LDPerson.validate(ldObject, ?context = context)
+        match lp.TryGetPropertyAsSingleNode(LDLabProcess.agent, ?graph = graph, ?context = context) with
         | Some a when filter a context -> Some a
         | _ -> None
 
     static member getAgent(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = Person.validate(ldObject, ?context = context)
-        match lp.TryGetPropertyAsSingleNode(LabProcess.agent, ?graph = graph, ?context = context) with
+        let filter ldObject context = LDPerson.validate(ldObject, ?context = context)
+        match lp.TryGetPropertyAsSingleNode(LDLabProcess.agent, ?graph = graph, ?context = context) with
         | Some a when filter a context -> a
         | Some _ -> failwith $"Property of `agent` of object with @id `{lp.Id}` was not a valid Person"
         | _ -> failwith $"Could not access property `agent` of object with @id `{lp.Id}`"
 
     static member setAgent(lp : LDNode, agent : LDNode, ?context : LDContext) =
-        lp.SetProperty(LabProcess.agent, agent, ?context = context)
+        lp.SetProperty(LDLabProcess.agent, agent, ?context = context)
 
     static member getObjects(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        lp.GetPropertyNodes(LabProcess.object_, ?graph = graph, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.object_, ?graph = graph, ?context = context)
 
     static member getObjectsAsSample(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = Sample.validate(ldObject, ?context = context)
-        lp.GetPropertyNodes(LabProcess.object_, filter = filter, ?graph = graph, ?context = context)
+        let filter ldObject context = LDSample.validate(ldObject, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.object_, filter = filter, ?graph = graph, ?context = context)
 
     static member getObjectsAsData(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = File.validate(ldObject, ?context = context)
-        lp.GetPropertyNodes(LabProcess.object_, filter = filter, ?graph = graph, ?context = context)
+        let filter ldObject context = LDFile.validate(ldObject, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.object_, filter = filter, ?graph = graph, ?context = context)
 
     static member setObjects(lp : LDNode, objects : ResizeArray<LDNode>, ?context : LDContext) =
-        lp.SetProperty(LabProcess.object_, objects, ?context = context)
+        lp.SetProperty(LDLabProcess.object_, objects, ?context = context)
 
     static member getResults(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        lp.GetPropertyNodes(LabProcess.result, ?graph = graph, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.result, ?graph = graph, ?context = context)
 
     static member getResultsAsSample(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = Sample.validate(ldObject, ?context = context)
-        lp.GetPropertyNodes(LabProcess.result, filter = filter, ?graph = graph, ?context = context)
+        let filter ldObject context = LDSample.validate(ldObject, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.result, filter = filter, ?graph = graph, ?context = context)
 
     static member getResultsAsData(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = File.validate(ldObject, ?context = context)
-        lp.GetPropertyNodes(LabProcess.result, filter = filter, ?graph = graph, ?context = context)
+        let filter ldObject context = LDFile.validate(ldObject, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.result, filter = filter, ?graph = graph, ?context = context)
 
     static member setResults(lp : LDNode, results : ResizeArray<LDNode>, ?context : LDContext) =
-        lp.SetProperty(LabProcess.result, results, ?context = context)
+        lp.SetProperty(LDLabProcess.result, results, ?context = context)
 
     static member tryGetExecutesLabProtocol(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = LabProtocol.validate(ldObject, ?context = context)
-        match lp.TryGetPropertyAsSingleNode(LabProcess.executesLabProtocol, ?graph = graph, ?context = context) with
+        let filter ldObject context = LDLabProtocol.validate(ldObject, ?context = context)
+        match lp.TryGetPropertyAsSingleNode(LDLabProcess.executesLabProtocol, ?graph = graph, ?context = context) with
         | Some l when filter l context -> Some l
         | _ -> None
 
     static member setExecutesLabProtocol(lp : LDNode, executesLabProtocol : LDNode, ?context : LDContext) =
-        lp.SetProperty(LabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
+        lp.SetProperty(LDLabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
 
     static member getParameterValues(lp : LDNode, ?graph : LDGraph, ?context : LDContext) =
-        let filter ldObject context = PropertyValue.validate(ldObject, ?context = context)
-        lp.GetPropertyNodes(LabProcess.parameterValue, filter = filter, ?graph = graph, ?context = context)
+        let filter ldObject context = LDPropertyValue.validate(ldObject, ?context = context)
+        lp.GetPropertyNodes(LDLabProcess.parameterValue, filter = filter, ?graph = graph, ?context = context)
 
     static member setParameterValues(lp : LDNode, parameterValues : ResizeArray<LDNode>, ?context : LDContext) =
-        lp.SetProperty(LabProcess.parameterValue, parameterValues, ?context = context)
+        lp.SetProperty(LDLabProcess.parameterValue, parameterValues, ?context = context)
 
     static member tryGetEndTime(lp : LDNode, ?context : LDContext) =
-        match lp.TryGetPropertyAsSingleton(LabProcess.endTime, ?context = context) with
+        match lp.TryGetPropertyAsSingleton(LDLabProcess.endTime, ?context = context) with
         | Some (:? System.DateTime as et) -> Some et
         | _ -> None
 
     static member setEndTime(lp : LDNode, endTime : System.DateTime, ?context : LDContext) =
-        lp.SetProperty(LabProcess.endTime, endTime, ?context = context)
+        lp.SetProperty(LDLabProcess.endTime, endTime, ?context = context)
 
 
     static member getDisambiguatingDescriptionsAsString(lp : LDNode, ?context : LDContext) =
         let filter = fun (o : obj) context -> o :? string
-        lp.GetPropertyValues(LabProcess.disambiguatingDescription, filter = filter, ?context = context)
+        lp.GetPropertyValues(LDLabProcess.disambiguatingDescription, filter = filter, ?context = context)
         |> ResizeArray.map (fun (o : obj) -> o :?> string)
 
     static member setDisambiguatingDescriptionsAsString(lp : LDNode, disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
-        lp.SetProperty(LabProcess.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
+        lp.SetProperty(LDLabProcess.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
 
     static member validate(lp : LDNode, ?context : LDContext) =
-        lp.HasType(LabProcess.schemaType, ?context = context)
-        && lp.HasProperty(LabProcess.name, ?context = context)
-        //&& lp.HasProperty(LabProcess.agent, ?context = context)
-        //&& lp.HasProperty(LabProcess.object_, ?context = context)
-        //&& lp.HasProperty(LabProcess.result, ?context = context)
+        lp.HasType(LDLabProcess.schemaType, ?context = context)
+        && lp.HasProperty(LDLabProcess.name, ?context = context)
+        //&& lp.HasProperty(LDLabProcess.agent, ?context = context)
+        //&& lp.HasProperty(LDLabProcess.object_, ?context = context)
+        //&& lp.HasProperty(LDLabProcess.result, ?context = context)
 
     static member genId(name, ?assayName, ?studyName) =
         match assayName, studyName with
@@ -136,16 +136,16 @@ type LabProcess =
     static member create(name : string, ?objects : ResizeArray<LDNode>, ?results : ResizeArray<LDNode>, ?id : string, ?agent : LDNode, ?executesLabProtocol : LDNode, ?parameterValues : ResizeArray<LDNode>, ?endTime : System.DateTime, ?disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
-                 | None -> LabProcess.genId(name)
+                 | None -> LDLabProcess.genId(name)
         let objects = Option.defaultValue (ResizeArray []) objects
         let results = Option.defaultValue (ResizeArray []) results
-        let lp = LDNode(id, ResizeArray [LabProcess.schemaType], ?context = context)
-        lp.SetProperty(LabProcess.name, name, ?context = context)
-        lp.SetOptionalProperty(LabProcess.agent, agent, ?context = context) // Optional?
-        lp.SetProperty(LabProcess.object_, objects, ?context = context)
-        lp.SetProperty(LabProcess.result, results, ?context = context)
-        lp.SetOptionalProperty(LabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
-        lp.SetOptionalProperty(LabProcess.parameterValue, parameterValues, ?context = context)
-        lp.SetOptionalProperty(LabProcess.endTime, endTime, ?context = context)
-        lp.SetOptionalProperty(LabProcess.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
+        let lp = LDNode(id, ResizeArray [LDLabProcess.schemaType], ?context = context)
+        lp.SetProperty(LDLabProcess.name, name, ?context = context)
+        lp.SetOptionalProperty(LDLabProcess.agent, agent, ?context = context) // Optional?
+        lp.SetProperty(LDLabProcess.object_, objects, ?context = context)
+        lp.SetProperty(LDLabProcess.result, results, ?context = context)
+        lp.SetOptionalProperty(LDLabProcess.executesLabProtocol, executesLabProtocol, ?context = context)
+        lp.SetOptionalProperty(LDLabProcess.parameterValue, parameterValues, ?context = context)
+        lp.SetOptionalProperty(LDLabProcess.endTime, endTime, ?context = context)
+        lp.SetOptionalProperty(LDLabProcess.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
         lp

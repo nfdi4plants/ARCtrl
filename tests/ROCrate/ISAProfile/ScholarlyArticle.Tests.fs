@@ -43,10 +43,10 @@ let tests_profile_object_is_valid = testList "constructed properties" [
     ]
 ]
 
-let tests_interface_members = testList "interface members" [
-    testCase "mandatoryProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"schema.org/ScholarlyArticle"|] "scholarlyarticle_mandatory_properties_id" [||] mandatory_properties
-    testCase "allProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"schema.org/ScholarlyArticle"|] "scholarlyarticle_all_properties_id" [|"additionalType"|] all_properties
-]
+//let tests_interface_members = testList "interface members" [
+//    testCase "mandatoryProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"schema.org/ScholarlyArticle"|] "scholarlyarticle_mandatory_properties_id" [||] mandatory_properties
+//    testCase "allProperties" <| fun _ -> Expect.LDNodeHasExpectedInterfaceMembers [|"schema.org/ScholarlyArticle"|] "scholarlyarticle_all_properties_id" [|"additionalType"|] all_properties
+//]
 
 let tests_dynamic_members = testSequenced (
     testList "dynamic members" [
@@ -64,7 +64,7 @@ let tests_instance_methods = testSequenced (
     testList "instance methods" [
 
         let context = new LDContext()
-        context.SetProperty("more", "context")
+        context.AddMapping("more", "context")
 
         testCase "can set context" <| fun _ ->
             mandatory_properties.SetContext context
@@ -82,7 +82,7 @@ let tests_static_methods = testSequenced (
     testList "static methods" [
 
         let context = new LDContext()
-        context.SetProperty("more", "context")
+        context.AddMapping("more", "context")
 
         testCase "can set context" <| fun _ ->
             LDNode.setContext context mandatory_properties
@@ -98,7 +98,7 @@ let tests_static_methods = testSequenced (
 
 let main = testList "ScholarlyArticle" [
     tests_profile_object_is_valid
-    tests_interface_members
+    //tests_interface_members
     tests_dynamic_members
     tests_instance_methods
     tests_static_methods

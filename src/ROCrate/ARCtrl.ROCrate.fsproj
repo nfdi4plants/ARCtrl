@@ -24,6 +24,17 @@
     <Compile Include="Generic\LabProtocol.fs" />
     <Compile Include="Generic\LabProcess.fs" />
     <Compile Include="Generic\Dataset.fs" />
+    <Compile Include="ISAProfile\Dataset.fs" />
+    <Compile Include="ISAProfile\Investigation.fs" />
+    <Compile Include="ISAProfile\Study.fs" />
+    <Compile Include="ISAProfile\Assay.fs" />
+    <Compile Include="ISAProfile\LabProcess.fs" />
+    <Compile Include="ISAProfile\LabProtocol.fs" />
+    <Compile Include="ISAProfile\Sample.fs" />
+    <Compile Include="ISAProfile\Data.fs" />
+    <Compile Include="ISAProfile\PropertyValue.fs" />
+    <Compile Include="ISAProfile\Person.fs" />
+    <Compile Include="ISAProfile\ScholarlyArticle.fs" />
     <Compile Include="ArcROCrateMetadata.fs" />
     <None Include="playground.fsx" />
   </ItemGroup>
