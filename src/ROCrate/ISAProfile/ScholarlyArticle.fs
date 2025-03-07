@@ -16,7 +16,11 @@ type ScholarlyArticle(
     ?disambiguatingDescription
 
 ) as this =
-    inherit LDObject(id = id, schemaType = "schema.org/ScholarlyArticle", ?additionalType = additionalType)
+    inherit LDNode(
+        id = id,
+        schemaType = ResizeArray[|"schema.org/ScholarlyArticle"|],
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
 
         DynObj.setProperty (nameof headline) headline     this

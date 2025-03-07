@@ -2,12 +2,12 @@
 
 open DynamicObj
 
-type ILDObject =
+type ILDNode =
     abstract member SchemaType : string
     abstract member Id: string
     abstract member AdditionalType: string option
 
-type LDObject(id:string, schemaType: string, ?additionalType) =
+type LDNode(id:string, schemaType: string, ?additionalType) =
     inherit DynamicObj()
 
     let mutable _schemaType = "schema.org/Dataset"
@@ -24,16 +24,16 @@ type LDObject(id:string, schemaType: string, ?additionalType) =
         with get() = _additionalType
         and set(value) = _additionalType <- value
 
-    interface ILDObject with
+    interface ILDNode with
         member this.SchemaType = schemaType
         member this.Id = id
         member this.AdditionalType = additionalType
 
 type Dataset (id: string, ?additionalType: string) =
-    inherit LDObject(id = id, schemaType = "schema.org/Dataset", ?additionalType = additionalType)
+    inherit LDNode(id = id, schemaType = "schema.org/Dataset", ?additionalType = additionalType)
 
      //interface implementations
-    interface ILDObject with 
+    interface ILDNode with 
         member this.Id with get () = this.Id
         member this.SchemaType with get (): string = this.SchemaType
         member this.AdditionalType with get (): string option = this.AdditionalType

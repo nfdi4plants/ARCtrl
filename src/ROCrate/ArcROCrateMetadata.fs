@@ -2,9 +2,9 @@ namespace ARCtrl.ROCrate
 
 open DynamicObj
 
-type ArcROCrateMetadata(?about : LDObject) as this =
+type ArcROCrateMetadata(?about : LDNode) as this =
 
-    inherit LDObject(id = "ro-crate-metadata",schemaType = "CreativeWork")
+    inherit LDNode(id = "ro-crate-metadata",schemaType = ResizeArray([|"CreativeWork"|]))
 
     do DynObj.setOptionalProperty (nameof about) about this
 
@@ -15,10 +15,10 @@ type ArcROCrateMetadata(?about : LDObject) as this =
 
     do
         let context = LDContext()
-        context.SetProperty("sdo", "http://schema.org/")
-        context.SetProperty("arc", "http://purl.org/nfdi4plants/ontology/")
-        context.SetProperty("CreativeWork", "sdo:CreativeWork")
-        context.SetProperty("about", "sdo:about")
-        context.SetProperty("conformsTo", "sdo:conformsTo")
+        context.AddMapping("sdo", "http://schema.org/")
+        context.AddMapping("arc", "http://purl.org/nfdi4plants/ontology/")
+        context.AddMapping("CreativeWork", "sdo:CreativeWork")
+        context.AddMapping("about", "sdo:about")
+        context.AddMapping("conformsTo", "sdo:conformsTo")
         this.SetProperty("@context", context)
 

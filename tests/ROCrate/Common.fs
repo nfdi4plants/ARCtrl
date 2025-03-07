@@ -7,32 +7,49 @@ open TestingUtils
 
 module Expect =
 
-    let inline LDObjectHasId (expectedId:string) (roc:#LDObject) =
+    let inline LDNodeHasId (expectedId:string) (roc:#LDNode) =
         Expect.equal roc.Id expectedId "object did not contain correct @id"
 
-    let inline LDObjectHasType (expectedType:string) (roc:#LDObject) =
-        Expect.equal roc.SchemaType expectedType "object did not contain correct @type"
+    let inline LDNodeHasType (expectedType:string) (roc:#LDNode) =
+        Expect.containsAll
+            roc.SchemaType
+            [expectedType]
+            "object did not contain correct @type"
 
-    let inline LDObjectHasAdditionalType (expectedAdditionalType:string) (roc:#LDObject) =
-        Expect.isSome roc.AdditionalType "additionalType was None"
-        Expect.equal roc.AdditionalType (Some expectedAdditionalType) "object did not contain correct additionalType"
+    let inline LDNodeHasTypes (expectedTypes:seq<string>) (roc:#LDNode) =
+        Expect.containsAll
+            roc.SchemaType
+            expectedTypes
+            "object did not contain correct @types"
 
-    let inline LDObjectHasDynamicProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#LDObject) =
+    let inline LDNodeHasAdditionalType (expectedAdditionalType:string) (roc:#LDNode) =
+        Expect.containsAll
+            roc.AdditionalType
+            [expectedAdditionalType]
+            "object did not contain correct additionalType"
+
+    let inline LDNodeHasAdditionalTypes (expectedAdditionalTypes:seq<string>) (roc:#LDNode) =
+        Expect.containsAll
+            roc.AdditionalType
+            expectedAdditionalTypes
+            "object did not contain correct additionalTypes"
+
+    let inline LDNodeHasDynamicProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#LDNode) =
         Expect.isSome (roc.TryGetDynamicPropertyHelper(expectedPropertyName)) $"object did not contain the dynamic property '{expectedPropertyName}'"
         Expect.equal
             (DynObj.tryGetTypedPropertyValue<'P> expectedPropertyName roc)
             (Some expectedPropertyValue)
             $"property value of '{expectedPropertyName}' was not correct"
 
-    let inline LDObjectHasStaticProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#LDObject) =
-        Expect.isSome (roc.TryGetDynamicPropertyHelper(expectedPropertyName)) $"object did not contain the dynamic property '{expectedPropertyName}'"
+    let inline LDNodeHasStaticProperty (expectedPropertyName:string) (expectedPropertyValue:'P) (roc:#LDNode) =
+        Expect.isSome (roc.TryGetStaticPropertyHelper(expectedPropertyName)) $"object did not contain the static property '{expectedPropertyName}'"
         Expect.equal
             (DynObj.tryGetTypedPropertyValue<'P> expectedPropertyName roc)
             (Some expectedPropertyValue)
             $"property value of '{expectedPropertyName}' was not correct"
 
-    let inline LDObjectHasExpectedInterfaceMembers (expectedType:string) (expectedId:string) (expectedAdditionalType:string option) (roc:#LDObject) =
-        let interfacerino = roc :> ILDObject
-        Expect.equal interfacerino.SchemaType expectedType "object did not contain correct @type via interface access"
-        Expect.equal interfacerino.Id expectedId "object did not contain correct @id via interface access"
-        Expect.equal interfacerino.AdditionalType expectedAdditionalType "object did not contain correct additionalType via interface access"
+    //let inline LDNodeHasExpectedInterfaceMembers (expectedTypes: seq<string>) (expectedId:string) (expectedAdditionalTypes: seq<string>) (roc:#LDNode) =
+    //    let interfacerino = roc :> ILDNode
+    //    Expect.sequenceEqual interfacerino.SchemaType expectedTypes "object did not contain correct @types via interface access"
+    //    Expect.equal interfacerino.Id expectedId "object did not contain correct @id via interface access"
+    //    Expect.sequenceEqual interfacerino.AdditionalType expectedAdditionalTypes "object did not contain correct additionalTypes via interface access"
