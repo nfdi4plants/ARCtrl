@@ -1000,41 +1000,6 @@ type PersonConversion =
 
 type ScholarlyArticleConversion =
 
-
-    static member doiKey = "DOI"
-
-    static member doiURL = "http://purl.obolibrary.org/obo/OBI_0002110"
-
-    static member pubmedIDKey = "PubMedID"
-
-    static member pubmedIDURL = "http://purl.obolibrary.org/obo/OBI_0001617"
-
-    static member composeDOI (doi : string) : LDNode =
-        LDPropertyValue.create(name = ScholarlyArticleConversion.doiKey, value = doi, propertyID = ScholarlyArticleConversion.doiURL)
-
-    static member tryDecomposeDOI (doi : LDNode, ?context : LDContext) : string option =
-        match
-            LDPropertyValue.tryGetNameAsString(doi, ?context = context),
-            LDPropertyValue.tryGetValueAsString(doi, ?context = context),
-            LDPropertyValue.tryGetPropertyIDAsString(doi, ?context = context)
-        with
-        | Some name, Some value, Some id when name = ScholarlyArticleConversion.doiKey && id = ScholarlyArticleConversion.doiURL ->
-            Some value
-        | _ -> None
-
-    static member composePubMedID (pubMedID : string) : LDNode =
-        LDPropertyValue.create(name = ScholarlyArticleConversion.pubmedIDKey, value = pubMedID, propertyID = ScholarlyArticleConversion.pubmedIDURL)
-
-    static member tryDecomposePubMedID (pubMedID : LDNode, ?context : LDContext) : string option =
-        match
-            LDPropertyValue.tryGetNameAsString(pubMedID, ?context = context),
-            LDPropertyValue.tryGetValueAsString(pubMedID, ?context = context),
-            LDPropertyValue.tryGetPropertyIDAsString(pubMedID, ?context = context)
-        with
-        | Some name, Some value, Some id when name = ScholarlyArticleConversion.pubmedIDKey && id = ScholarlyArticleConversion.pubmedIDURL ->
-            Some value
-        | _ -> None
-
     static member composeAuthor (author : string) : LDNode =
         try 
             ARCtrl.Json.Decode.fromJsonString Json.LDNode.decoder author
@@ -1092,9 +1057,9 @@ type ScholarlyArticleConversion =
             |> Option.fromSeq
         let identifiers = ResizeArray [
             if publication.DOI.IsSome && publication.DOI.Value <> "" then
-                ScholarlyArticleConversion.composeDOI publication.DOI.Value
+                LDPropertyValue.createDOI publication.DOI.Value
             if publication.PubMedID.IsSome && publication.PubMedID.Value <> "" then
-                ScholarlyArticleConversion.composePubMedID publication.PubMedID.Value
+                LDPropertyValue.createPubMedID publication.PubMedID.Value
         ]
         let status = publication.Status |> Option.map BaseTypes.composeDefinedTerm
         let scholarlyArticle = 
@@ -1121,8 +1086,18 @@ type ScholarlyArticleConversion =
             LDScholarlyArticle.tryGetCreativeWorkStatus(sa, ?graph = graph, ?context = context)
             |> Option.map (fun s -> BaseTypes.decomposeDefinedTerm(s, ?context = context))
         let identifiers = LDScholarlyArticle.getIdentifiersAsPropertyValue(sa, ?graph = graph, ?context = context)
-        let pubMedID = identifiers |> ResizeArray.tryPick (fun i -> ScholarlyArticleConversion.tryDecomposePubMedID(i, ?context = context))
-        let doi = identifiers |> ResizeArray.tryPick (fun i -> ScholarlyArticleConversion.tryDecomposeDOI(i, ?context = context))
+        let doi =
+            identifiers
+            |> ResizeArray.tryPick (fun i -> LDPropertyValue.tryGetAsDOI(i, ?context = context))
+            |> function
+               | Some p -> Some p
+               | None -> LDScholarlyArticle.tryGetSameAsAsString(sa, ?context = context)
+        let pubMedID =
+            identifiers
+            |> ResizeArray.tryPick (fun i -> LDPropertyValue.tryGetAsPubMedID(i, ?context = context))
+            |> function
+               | Some p -> Some p
+               | None -> LDScholarlyArticle.tryGetUrlAsString(sa, ?context = context)
         ARCtrl.Publication.create(
             title = title,
             ?authors = authors,

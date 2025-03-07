@@ -18,6 +18,8 @@ type LDScholarlyArticle =
 
     static member url = "http://schema.org/url"
 
+    static member sameAs = "http://schema.org/sameAs"
+
     static member creativeWorkStatus = "http://schema.org/creativeWorkStatus"
 
     static member comment = "http://schema.org/comment"
@@ -53,13 +55,15 @@ type LDScholarlyArticle =
     static member setAuthors(s : LDNode, authors : ResizeArray<LDNode>, ?context : LDContext) =
         s.SetProperty(LDScholarlyArticle.author, authors, ?context = context)
 
-    static member tryGetUrl(s : LDNode, ?context : LDContext) =
+    static member tryGetUrlAsString(s : LDNode, ?context : LDContext) =
         match s.TryGetPropertyAsSingleton(LDScholarlyArticle.url, ?context = context) with
         | Some (:? string as u) -> Some u
         | _ -> None
 
-    static member setUrl(s : LDNode, u : string, ?context : LDContext) =
-        s.SetProperty(LDScholarlyArticle.url, u, ?context = context)
+    static member tryGetSameAsAsString(s : LDNode, ?context : LDContext) =
+        match s.TryGetPropertyAsSingleton(LDScholarlyArticle.sameAs, ?context = context) with
+        | Some (:? string as sa) -> Some sa
+        | _ -> None
 
     static member tryGetCreativeWorkStatus(s : LDNode, ?graph : LDGraph, ?context : LDContext) =
         match s.TryGetPropertyAsSingleNode(LDScholarlyArticle.creativeWorkStatus, ?graph  = graph, ?context = context) with

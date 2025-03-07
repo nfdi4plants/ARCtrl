@@ -22,6 +22,14 @@ type LDPropertyValue =
 
     static member valueReference = "http://schema.org/valueReference"
 
+    static member doiKey = "DOI"
+
+    static member doiURL = "http://purl.obolibrary.org/obo/OBI_0002110"
+
+    static member pubmedIDKey = "PubMedID"
+
+    static member pubmedIDURL = "http://purl.obolibrary.org/obo/OBI_0001617"
+
     static member tryGetNameAsString(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(LDPropertyValue.name, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -103,6 +111,28 @@ type LDPropertyValue =
         LDPropertyValue.validate(pv, ?context = context)
         && pv.AdditionalType.Contains("FactorValue")
 
+    static member validateDOI (pv : LDNode, ?context : LDContext) =
+        LDPropertyValue.validate(pv, ?context = context)
+        && 
+        match
+            LDPropertyValue.tryGetNameAsString(pv, ?context = context),
+            LDPropertyValue.tryGetValueAsString(pv, ?context = context),
+            LDPropertyValue.tryGetPropertyIDAsString(pv, ?context = context)
+        with
+        | Some name, Some value, Some id when name = LDPropertyValue.doiKey && id = LDPropertyValue.doiURL -> true
+        | _ -> false
+
+    static member validatePubMedID (pv : LDNode, ?context : LDContext) =
+        LDPropertyValue.validate(pv, ?context = context)
+        && 
+        match
+            LDPropertyValue.tryGetNameAsString(pv, ?context = context),
+            LDPropertyValue.tryGetValueAsString(pv, ?context = context),
+            LDPropertyValue.tryGetPropertyIDAsString(pv, ?context = context)
+        with
+        | Some name, Some value, Some id when name = LDPropertyValue.pubmedIDKey && id = LDPropertyValue.pubmedIDURL -> true
+        | _ -> false
+
     static member genId(name : string, ?value : string, ?propertyID : string, ?prefix) =
         let prefix = Option.defaultValue "PV" prefix
         match value,propertyID with
@@ -169,3 +199,21 @@ type LDPropertyValue =
         let fv = LDPropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         fv.AdditionalType <- ResizeArray ["FactorValue"]
         fv
+
+    static member createDOI(value, ?context : LDContext) =
+        let id = value
+        LDPropertyValue.create(name = LDPropertyValue.doiKey, value = value, id = id, propertyID = LDPropertyValue.doiURL, ?context = context)
+
+    static member createPubMedID(value, ?context : LDContext) =
+        let id = value
+        LDPropertyValue.create(name = LDPropertyValue.pubmedIDKey, value = value, id = id, propertyID = LDPropertyValue.pubmedIDURL, ?context = context)
+
+    static member tryGetAsDOI(pv : LDNode, ?context : LDContext) =
+        if LDPropertyValue.validateDOI(pv, ?context = context) then
+            Some (LDPropertyValue.getValueAsString(pv, ?context = context))
+        else None
+
+    static member tryGetAsPubMedID(pv : LDNode, ?context : LDContext) =
+        if LDPropertyValue.validatePubMedID(pv, ?context = context) then
+            Some (LDPropertyValue.getValueAsString(pv, ?context = context))
+        else None

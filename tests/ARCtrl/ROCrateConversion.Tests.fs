@@ -1071,6 +1071,17 @@ let tests_Publication =
             let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ro_Publication
             Expect.equal p' p "Publication should match"
         )
+        testCase "DOI_PubMedID_FromScaffold_ToDeprecatedROCrate" (fun () ->
+            let doi = "10.1234/5678"
+            let pubMedID = "12345678"
+            let p = ARCtrl.Publication.create(title = "My Paper", doi = doi, pubMedID = pubMedID)
+            let json =
+                Json.Publication.ROCrate.encoder p
+                |> Json.Encode.toJsonString 0
+            let ldNode = Json.Decode.fromJsonString Json.LDNode.decoder json
+            let p' = ScholarlyArticleConversion.decomposeScholarlyArticle ldNode
+            Expect.equal p' p "Publication should match"
+        )
         testCase "Full_FromScaffold_Flattened" (fun () ->
             let authors = "Lukas Weil, John Doe"
             let comment = Comment("MyCommentKey","MyCommentValue")
