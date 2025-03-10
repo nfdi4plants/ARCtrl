@@ -1380,6 +1380,65 @@ let tests_RemoveStudy =
         })
     ]
 
+let tests_ROCrate =
+    testList "RO-Crate" [
+        testCase "CanRead_Deprecated" <| fun _ ->
+            let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
+            let isa = Expect.wantSome arc.ISA "ARC should contain an ISA part"
+            let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
+            let nonDeprecatedISA = Expect.wantSome nonDeprecatedARC.ISA "ARC should contain an ISA part"
+            Expect.equal isa.Identifier nonDeprecatedISA.Identifier "Investigation should have correct identifier"
+            Expect.equal isa.Title nonDeprecatedISA.Title "Investigation should have correct title"
+            Expect.equal isa.Description nonDeprecatedISA.Description "Investigation should have correct description"
+            Expect.equal isa.Contacts.[1] nonDeprecatedISA.Contacts.[1] "Investigation should have correct contacts"
+            Expect.equal isa.Studies.[1] nonDeprecatedISA.Studies.[1] "Investigation should have correct studies"
+        testCase "CanRead" <| fun _ ->
+            let arc = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
+            let isa = Expect.wantSome arc.ISA "ARC should contain an ISA part"
+            Expect.equal isa.Identifier "ArcPrototype" "Investigation should have correct identifier"
+            let title = Expect.wantSome isa.Title "Investigation should have title"
+            Expect.equal title "ArcPrototype" "Investigation should have correct title"
+            let description = Expect.wantSome isa.Description "Investigation should have description"
+            Expect.equal description "A prototypic ARC that implements all specification standards accordingly" "Investigation should have correct description"
+            /// Contacts
+            Expect.hasLength isa.Contacts 3 "Investigation should have 3 contacts"
+            let first = isa.Contacts.[0]
+            let firstName = Expect.wantSome first.FirstName "First contact should have name"
+            Expect.equal firstName "Timo" "First contact should have correct name"
+            let lastName = Expect.wantSome first.LastName "First contact should have last name"
+            Expect.equal lastName "Mühlhaus" "First contact should have correct last name"
+            Expect.isNone first.MidInitials "First contact should not have middle initials"
+            let orcid = Expect.wantSome first.ORCID "First contact should have ORCID"
+            Expect.equal orcid "0000-0003-3925-6778" "First contact should have correct ORCID"
+            let affiliation = Expect.wantSome first.Affiliation "First contact should have affiliation"
+            Expect.equal affiliation "RPTU University of Kaiserslautern" "First contact should have correct affiliation"
+            let address = Expect.wantSome first.Address "First contact should have address"
+            Expect.equal address "RPTU University of Kaiserslautern, Paul-Ehrlich-Str. 23 , 67663 Kaiserslautern" "First contact should have correct address"
+            Expect.hasLength first.Roles 1 "First contact should have roles"
+            let firstRole = first.Roles.[0]
+            Expect.equal firstRole.NameText "principal investigator" "First contact should have correct role"
+            /// Studies 
+            Expect.equal isa.StudyCount 2 "ARC should contain 2 studies"
+            let secondStudy = isa.GetStudy("MaterialPreparation")
+            let secondStudyTitle = Expect.wantSome secondStudy.Title "Second study should have title"
+            Expect.equal secondStudyTitle "Prototype for experimental data" "Second study should have correct title"
+            let secondStudyDescription = Expect.wantSome secondStudy.Description "Second study should have description"
+            Expect.equal secondStudyDescription "In this a devised study to have an exemplary experimental material description." "Second study should have correct description"
+            Expect.isEmpty secondStudy.Contacts "Second study should have no contacts"
+            Expect.hasLength secondStudy.Tables 2 "Second study should have 2 tables"
+            let firstTable = secondStudy.Tables.[0]
+            Expect.equal firstTable.Name "CellCultivation" "First table should have correct name"
+            Expect.equal firstTable.RowCount 6 "First table should have correct row count"
+            Expect.equal firstTable.ColumnCount 5 "First table should have correct column count"
+            let inputCol = Expect.wantSome (firstTable.TryGetInputColumn()) "First table should have input column"
+            let expectedHeader = CompositeHeader.Input IOType.Source
+            Expect.equal inputCol.Header expectedHeader "First table input column should have correct header"
+            let expectedCells = [for i = 1 to 6 do CompositeCell.FreeText $"Source{i}"]
+            Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
+            /// Assays
+            Expect.equal isa.AssayCount 2 "ARC should contain 2 assays"
+    ]
+
 
 
 let main = testList "ARCtrl" [
@@ -1400,6 +1459,7 @@ let main = testList "ARCtrl" [
     tests_RenameStudy
     tests_RemoveAssay
     tests_RemoveStudy
+    tests_ROCrate
 ]
 
 

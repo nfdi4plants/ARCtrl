@@ -1,8 +1,8 @@
-﻿module ArcJsonConversion.Tests
+module ArcJsonConversion.Tests
 
 open ARCtrl
 open ARCtrl.Process
-open Conversion
+open ARCtrl.Process.Conversion
 open TestingUtils
 
 module Helper =

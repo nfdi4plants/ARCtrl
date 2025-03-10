@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Helper
+namespace ARCtrl.Helper
 
 module Seq = 
     let inline compare (a: seq<'a>) (b: seq<'a>) =
@@ -28,6 +28,11 @@ module Option =
         | Some v -> Some (f v)
         | None   -> d
 
+    /// If the value matches the default, a None is returned, else a Some is returned
+    let fromSeq (v : 'T when 'T :> System.Collections.IEnumerable) =
+        if Seq.isEmpty v then None
+        else Some v
+
 module internal List = 
     
     let tryPickAndRemove (f : 'T -> 'U option) (lst : 'T list) =
@@ -43,6 +48,12 @@ module internal List =
 module Dictionary = 
 
     open System.Collections.Generic
+
+    let addOrUpdate (key : 'Key) (value : 'T) (dict : Dictionary<'Key,'T>) =
+        if dict.ContainsKey key then
+            dict.[key] <- value
+        else
+            dict.Add(key,value)
 
     let ofSeq (s : seq<'Key*'T>) = 
         let dict = Dictionary()
@@ -78,6 +89,20 @@ module Dictionary =
         dict
 
 module ResizeArray =  
+
+    open System.Collections.Generic
+
+    let create (i : int) (v : 'T) =
+        let a = ResizeArray<_>()
+        if i > 0 then
+            for _ in 1 .. i do
+                a.Add(v)
+        a
+
+    let singleton (a : 'T) =
+        let b = ResizeArray<_>()
+        b.Add(a)
+        b
 
     let map  f (a : ResizeArray<_>) =
         let b = ResizeArray<_>()
@@ -159,3 +184,36 @@ module ResizeArray =
             c.Add(i)
         c.Add(b)
         c
+
+
+    // Make sure that output type matches
+    let groupBy (f : 'T -> 'a) (a : ResizeArray<'T>) : ResizeArray<'a*ResizeArray<'T>> =
+        Seq.groupBy f a
+        |> Seq.map (fun (k,v) -> k, ResizeArray v)
+        |> ResizeArray
+
+    let tryPick f (a : ResizeArray<'T>) =
+        let rec loop i =
+            if i < a.Count then
+                match f a.[i] with
+                | Some v -> Some v
+                | None -> loop (i + 1)
+            else None
+        loop 0
+
+    let zip (a : ResizeArray<'T>) (b : ResizeArray<'U>) =
+        let c = ResizeArray<_>()
+        let n = min a.Count b.Count
+        for i in 0 .. n - 1 do
+            c.Add(a.[i], b.[i])
+        c
+
+    let tryFind f (a : ResizeArray<'T>) =
+        let rec loop i =
+            if i < a.Count then
+                if f a.[i] then
+                    Some a.[i]
+                else
+                   loop (i + 1)
+            else None
+        loop 0

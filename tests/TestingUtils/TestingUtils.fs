@@ -198,6 +198,11 @@ module Expect =
         failwithf "%s. Sequence actual longer than expected, at pos %i found item %O."
           message i a
 
+    let genericSequenceEqual (actual : System.Collections.IEnumerable) (expected : System.Collections.IEnumerable) message = 
+        let actual = [for v in actual do v]
+        let expected = [for v in expected do v]
+        sequenceEqual actual expected message
+
     let pathSequenceEqual actual expected message = 
         let actual = actual |> Seq.map trim |> Seq.sort
         let expected = expected |> Seq.map trim |> Seq.sort

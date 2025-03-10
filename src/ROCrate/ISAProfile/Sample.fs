@@ -12,7 +12,11 @@ type Sample(
     ?additionalProperty,
     ?derivesFrom
 ) as this =
-    inherit LDObject(id = id, schemaType = "bioschemas.org/Sample", ?additionalType = additionalType)
+    inherit LDNode(
+        id = id,
+        schemaType = ResizeArray[|"bioschemas.org/Sample"|], 
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
         DynObj.setProperty (nameof name) name this
 

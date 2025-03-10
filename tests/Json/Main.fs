@@ -21,7 +21,9 @@ let all = testSequenced <| testList "Json" [
     Tests.Process.ProcessInput.main
     Tests.Process.Protocol.main
     Tests.Process.Process.main
-    Tests.LDObject.main
+    Tests.LDContext.main
+    Tests.LDNode.main
+    Tests.LDGraph.main
     Tests.SchemaValidation.main
 ]
 

@@ -17,7 +17,11 @@ type LabProcess(
     ?endTime,
     ?disambiguatingDescription
 ) as this =
-    inherit LDObject(id = id, schemaType = "bioschemas.org/LabProcess", ?additionalType = additionalType)
+    inherit LDNode(
+        id = id,
+        schemaType = ResizeArray[|"bioschemas.org/LabProcess"|],
+        additionalType = defaultArg additionalType (ResizeArray[||])
+    )
     do
         DynObj.setProperty (nameof name) name     this
         DynObj.setProperty (nameof agent) agent   this

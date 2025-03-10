@@ -10,6 +10,7 @@
 
   <ItemGroup>   
     <Content Include="ARCtrl.Common.props" Pack="true" PackagePath="fable/" />
+    <Compile Include="ColumnIndex.fs" />
     <Compile Include="JsonIO\Decode.fs" />
     <Compile Include="JsonIO\Encode.fs" />
     <Compile Include="JsonIO\Comment.fs" />
@@ -48,7 +49,8 @@
     <Compile Include="JsonIO\Study.fs" />
     <Compile Include="JsonIO\Investigation.fs" />
     <Compile Include="JsonIO\LDObject.fs" />
-    <Compile Include="JsonIO\ARC.fs" />
+    <Compile Include="Conversion.fs" />
+    <Compile Include="ROCrateIO.fs" />
     <Compile Include="CrossAsync.fs" />
     <None Include="README.md" />
   </ItemGroup>

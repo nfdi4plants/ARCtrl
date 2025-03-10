@@ -33,7 +33,9 @@
     <Compile Include="Process\Protocol.Tests.fs" />
     <Compile Include="Process\Process.Tests.fs" />
     <Compile Include="Template.Tests.fs" />
-    <Compile Include="LDObject.Tests.fs" />
+    <Compile Include="ROCrate\LDContext.Tests.fs" />
+    <Compile Include="ROCrate\LDNode.Tests.fs" />
+    <Compile Include="ROCrate\LDGraph.Tests.fs" />
     <Compile Include="JsonSchema.Tests.fs" />
     <Compile Include="Main.fs" />
   </ItemGroup>

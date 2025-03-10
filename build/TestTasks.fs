@@ -6,6 +6,8 @@ open Fake.DotNet
 open ProjectInfo
 open BasicTasks
 open Fake.Core
+open Fake.IO
+open Fake.IO.Globbing.Operators
 
 module RunTests = 
 
@@ -33,19 +35,26 @@ module RunTests =
             Trace.traceImportant "Skipping JavaScript tests"
     )
 
+    let prePareJsTests = BuildTask.create "PrepareJsTests" [] {
+        !! "tests/TestingUtils/TestResults"
+        |> Shell.cleanDirs
+        System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
+        //System.IO.File.Copy(jsHelperFilePath, $"{allTestsProject}/js/{jsHelperFileName}") |> ignore
+
+    }
+
+
     let runTestsJs = BuildTask.createFn "runTestsJS" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Js tests"
-            for path in ProjectInfo.testProjects do
-                // Setup test results directory after clean
-                System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
-                // transpile js files from fsharp code
-                run dotnet $"fable {path} -o {path}/js --nocache" ""
-
-                System.IO.File.Copy(jsHelperFilePath, $"{path}/js/{jsHelperFileName}") |> ignore
-                // run mocha in target path to execute tests
-                // "--timeout 20000" is used, because json schema validation takes a bit of time.
-                run node $"{path}/js/Main.js" ""
+            // Setup test results directory after clean
+            System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
+            // transpile js files from fsharp code
+            run dotnet $"fable {allTestsProject} -o {allTestsProject}/js --nocache" ""
+            System.IO.File.Copy(jsHelperFilePath, $"{allTestsProject}/js/{jsHelperFileName}") |> ignore
+            // run mocha in target path to execute tests
+            // "--timeout 20000" is used, because json schema validation takes a bit of time.
+            run node $"{allTestsProject}/js/Main.js" ""
         else
             Trace.traceImportant "Skipping Js tests"
     )
@@ -65,13 +74,12 @@ module RunTests =
     let runTestsPy = BuildTask.createFn "runTestsPy" [clean] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Python tests"
-            for path in ProjectInfo.testProjects do
-                // Setup test results directory after clean
-                System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/py") |> ignore
-                //transpile py files from fsharp code
-                run dotnet $"fable {path} -o {path}/py --lang python --nocache" ""
-                // run pyxpecto in target path to execute tests in python
-                run python $"{path}/py/main.py" ""
+            // Setup test results directory after clean
+            System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/py") |> ignore
+            //transpile py files from fsharp code
+            run dotnet $"fable {allTestsProject} -o {allTestsProject}/py --lang python --nocache" ""
+            // run pyxpecto in target path to execute tests in python
+            run python $"{allTestsProject}/py/main.py" ""
         else
             Trace.traceImportant "Skipping Python tests"
 
@@ -81,8 +89,7 @@ module RunTests =
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start .NET tests"
             let dotnetRun = run dotnet "run"
-            testProjects
-            |> Seq.iter dotnetRun
+            dotnetRun allTestsProject
         else
             Trace.traceImportant "Skipping .NET tests"
     )
@@ -105,6 +112,7 @@ module RunTests =
                 run python $"{p}/py/main.py" ""
                 // transpile js files from fsharp code
                 run dotnet $"fable {p} -o {p}/js" ""
+                System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
                 System.IO.File.Copy(jsHelperFilePath, $"{p}/js/{jsHelperFileName}") |> ignore
                 // run mocha in target path to execute tests
                 // "--timeout 20000" is used, because json schema validation takes a bit of time.

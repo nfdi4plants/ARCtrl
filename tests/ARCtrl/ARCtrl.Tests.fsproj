@@ -6,6 +6,7 @@
     <GenerateProgramFile>false</GenerateProgramFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ROCrateConversion.Tests.fs" />
     <Compile Include="CrossAsync.Tests.fs" />
     <Compile Include="FileSystemHelper.Tests.fs" />
     <Compile Include="ContractIO.Tests.fs" />

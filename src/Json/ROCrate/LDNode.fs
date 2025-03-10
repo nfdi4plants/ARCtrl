@@ -6,8 +6,8 @@ open ARCtrl.ROCrate
 open Thoth.Json.Core
 open DynamicObj
 
-module rec LDObject =
 
+module rec LDNode =
     #if !FABLE_COMPILER
     let (|SomeObj|_|) =
         // create generalized option type
@@ -36,7 +36,9 @@ module rec LDObject =
         | :? bool as b -> Encode.bool b
         | :? float as f -> Encode.float f
         | :? DateTime as d -> Encode.dateTime d
-        | :? LDObject as o -> encoder o
+        | :? LDValue as v -> LDValue.encoder v
+        | :? LDRef as r -> LDRef.encoder r
+        | :? LDNode as o -> encoder o
         #if !FABLE_COMPILER
         | SomeObj o -> genericEncoder o
         #endif
@@ -44,21 +46,37 @@ module rec LDObject =
         | :? System.Collections.IEnumerable as l -> [ for x in l -> genericEncoder x] |> Encode.list
         | _ -> failwith "Unknown type"
 
-    let rec encoder(obj: LDObject) =
-        obj.GetProperties true
-        |> Seq.choose (fun kv ->
-            let l = kv.Key.ToLower()
-            if l <> "id" && l <> "schematype" && l <> "additionaltype" then
-                Some(kv.Key, genericEncoder kv.Value)
-            else
-                None
+    let rec encoder(obj: LDNode) =
+        //obj.GetProperties true
+        //|> Seq.choose (fun kv ->
+        //    let l = kv.Key.ToLower()
+        //    if l <> "id" && l <> "schematype" && l <> "additionaltype" && l <> "@context" then
+        //        Some(kv.Key, genericEncoder kv.Value)
+        //    else
+        //        None
          
-        )
-        |> Seq.append [
-            "@id", Encode.string obj.Id
-            "@type", Encode.string obj.SchemaType
-            if obj.AdditionalType.IsSome then
-                "additionalType", Encode.string obj.AdditionalType.Value
+        //)
+        //|> Seq.append [
+        //    "@id", Encode.string obj.Id
+        //    "@type", LDType.encoder obj.SchemaType
+        //    if obj.AdditionalType.IsSome then
+        //        "additionalType", Encode.string obj.AdditionalType.Value
+        //    match obj.TryGetContext() with
+        //    | Some ctx -> "@context", LDContext.encoder ctx
+        //    | _ -> ()
+        //]
+        [
+            yield "@id", Encode.string obj.Id
+            yield "@type", Encode.resizeArrayOrSingleton Encode.string obj.SchemaType
+            if obj.AdditionalType.Count <> 0 then
+                yield "additionalType", Encode.resizeArrayOrSingleton Encode.string obj.AdditionalType
+            match obj.TryGetContext() with
+            | Some ctx -> yield "@context", LDContext.encoder ctx
+            | _ -> ()
+            for kv in (obj.GetProperties true) do
+                let l = kv.Key.ToLower()
+                if l <> "id" && l <> "schematype" && l <> "additionaltype" && l <> "@context" && (l.StartsWith("init@") |> not) && (l.StartsWith("init_") |> not)then 
+                    yield kv.Key, genericEncoder kv.Value
         ]
         |> Encode.object
 
@@ -67,20 +85,23 @@ module rec LDObject =
     /// If expectObject is set to true, decoder fails if top-level value is not an ROCrate object
     let rec getDecoder (expectObject : bool) : Decoder<obj> = 
         let rec decode(expectObject) = 
-            let decodeObject : Decoder<LDObject> =
-                { new Decoder<LDObject> with
+            let decodeObject : Decoder<LDNode> =
+                { new Decoder<LDNode> with
                     member _.Decode(helpers, value) =     
                         if helpers.isObject value then
                             let getters = Decode.Getters(helpers, value)
                             let properties = helpers.getProperties value
                             let builder =
                                 fun (get : Decode.IGetters) ->
-                                    let t = get.Required.Field "@type" Decode.string
+                                    let t = get.Required.Field "@type" (Decode.resizeArrayOrSingleton Decode.string)
                                     let id = get.Required.Field "@id" Decode.string
-                                    let o = LDObject(id,t)
+                                    let context = get.Optional.Field "@context" LDContext.decoder
+                                    let at = get.Optional.Field "additionalType" (Decode.resizeArrayOrSingleton Decode.string)
+                                    let o = LDNode(id, t, ?additionalType = at)
                                     for property in properties do
-                                        if property <> "@id" && property <> "@type" then
+                                        if property <> "@id" && property <> "@type" && property <> "@context" then
                                             o.SetProperty(property,get.Required.Field property (decode(false)))
+                                    if context.IsSome then o.SetContext context.Value
                                     o
                             let result = builder getters               
                             match getters.Errors with
@@ -127,15 +148,16 @@ module rec LDObject =
                 Decode.map box (decodeObject)
             else
                 Decode.oneOf [
+                    Decode.map box (LDValue.decoder)
                     Decode.map box (decodeObject)
+                    Decode.map box (LDRef.decoder)
                     Decode.map box (resizeArray)
                     Decode.map box (Decode.string)
                     Decode.map box (Decode.int)
                     Decode.map box (Decode.decimal)
-
                 ]
         decode(expectObject)
 
-    let decoder : Decoder<LDObject> = Decode.map unbox (getDecoder(true))
+    let decoder : Decoder<LDNode> = Decode.map unbox (getDecoder(true))
 
     let genericDecoder : Decoder<obj> = getDecoder(false)
