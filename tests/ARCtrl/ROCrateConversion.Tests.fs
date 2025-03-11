@@ -334,7 +334,7 @@ let private tests_PropertyValue =
             let propertyID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
             Expect.equal propertyID oa_species.TermAccessionOntobeeUrl "Property ID should match"
 
-            let valueReference = Expect.wantSome (LDPropertyValue.tryGetValueReference pv) "Should have value reference"
+            let valueReference = Expect.wantSome (LDPropertyValue.tryGetValueReferenceAsString pv) "Should have value reference"
             Expect.equal valueReference oa_chlamy.TermAccessionOntobeeUrl "Value reference should match"
 
             let header',cell' = BaseTypes.decomposeCharacteristicValue pv
@@ -417,7 +417,7 @@ let private tests_PropertyValue =
             Expect.equal value "MyComponentValue" "Value should match"
 
             Expect.isNone (LDPropertyValue.tryGetPropertyIDAsString pv) "Should not have property ID"
-            Expect.isNone (LDPropertyValue.tryGetValueReference pv) "Should not have value reference"
+            Expect.isNone (LDPropertyValue.tryGetValueReferenceAsString pv) "Should not have value reference"
             Expect.isNone (LDPropertyValue.tryGetUnitTextAsString pv) "Should not have unit"
             Expect.isNone (LDPropertyValue.tryGetUnitCodeAsString pv) "Should not have unit code"
 
@@ -788,6 +788,50 @@ let private tests_ArcTableProcess =
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
+    ]
+
+let private tests_DataContext =
+    testList "DataContext" [
+        ftestCase "Empty" (fun () ->
+            let dc = DataContext()
+            let f () = 
+                let fd = BaseTypes.composeFragmentDescriptor(dc)
+                let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+                ()
+            Expect.throws f "Should throw"
+            //Expect.equal dc dc' "Data context should match"
+        )
+        ftestCase "OnlyName" (fun () ->
+            let dc = DataContext(name = "MyFile")
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc dc' "Data context should match"
+        )
+        ftestCase "Full" (fun () ->
+            let explication = OntologyAnnotation.create(name = "MyExplication", tsr = "FO", tan = "FO:123")
+            let unit = OntologyAnnotation.create(name = "MyUnit", tsr = "UO", tan = "UO:456")
+            let generatedBy = "MyGeneratedBy"
+            let description = "MyDescription"
+            let label = "MyLabel"
+            let name = "MyFile#row=1"
+            let format = "text/csv"
+            let selectorFormat = "MySelector"
+            let dc = DataContext(
+                name = name,
+                format = format,
+                selectorFormat = selectorFormat,
+                explication = explication,
+                unit = unit,
+                generatedBy = generatedBy,
+                description = description,
+                label = label
+            )
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc dc' "Data context should match"
+
+
+        )
     ]
 
 let private tests_ArcTablesProcessSeq = 
@@ -1358,6 +1402,7 @@ let main =
         tests_Person
         tests_Publication
         tests_GetDataFilesFromProcesses
+        tests_DataContext
         tests_Assay
         tests_Investigation
     ]

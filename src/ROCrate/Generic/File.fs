@@ -20,6 +20,10 @@ type LDFile =
 
     static member encodingFormat = "http://schema.org/encodingFormat"
 
+    static member pattern = "http://schema.org/pattern"
+
+    static member about = "http://schema.org/about"
+
     static member tryGetNameAsString(dt : LDNode, ?context : LDContext) =
         match dt.TryGetPropertyAsSingleton(LDFile.name, ?context = context) with
         | Some (:? string as n) -> Some n
@@ -64,6 +68,21 @@ type LDFile =
 
     static member setUsageInfoAsString(dt : LDNode, usageInfo : string, ?context : LDContext) =
         dt.SetProperty(LDFile.usageInfo, usageInfo, ?context = context)
+
+    static member tryGetPatternAsDefinedTerm(dt : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match dt.TryGetPropertyAsSingleNode(LDFile.pattern, ?graph = graph, ?context = context) with
+        | Some dt when LDDefinedTerm.validate(dt, ?context = context) -> Some dt
+        | Some _ -> failwith $"Property of `pattern` of object with @id `{dt.Id}` was not a DefinedTerm"
+        | _ -> None
+
+    static member setPatternAsDefinedTerm(dt : LDNode, pattern : LDNode, ?context : LDContext) =
+        dt.SetProperty(LDFile.pattern, pattern, ?context = context)
+
+    static member tryGetAbout(dt : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        dt.TryGetPropertyAsSingleNode(LDFile.about, ?graph = graph, ?context = context)
+
+    static member setAbout(dt : LDNode, about : LDNode, ?context : LDContext) =
+        dt.SetProperty(LDFile.about, about, ?context = context)
 
     static member genId(name : string) =
         $"{name}"

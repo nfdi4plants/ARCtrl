@@ -58,15 +58,26 @@ type BaseTypes =
         let text = LDComment.tryGetTextAsString(comment, ?context = context)
         Comment(name = name,?value = text)
 
+    static member ontologyTermFromNameAndID(?name : string, ?id : string) =
+        match id with
+        | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, ?name = name)
+        | None -> OntologyAnnotation.create(?name = name)
+
+    static member tryOntologyTermFromNameAndID(?name : string, ?id : string) =
+        if name.IsNone && id.IsNone then
+            None
+        else
+            BaseTypes.ontologyTermFromNameAndID(?name = name, ?id = id)
+            |> Some
+
     static member composeDefinedTerm (term : OntologyAnnotation) =
         let tan = term.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
         LDDefinedTerm.create(name = term.NameText, ?termCode = tan)
 
     static member decomposeDefinedTerm (term : LDNode, ?context : LDContext) =
         let name = LDDefinedTerm.getNameAsString(term, ?context = context)
-        match LDDefinedTerm.tryGetTermCodeAsString(term, ?context = context) with
-        | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
-        | None -> OntologyAnnotation.create(name = name)
+        let id = LDDefinedTerm.tryGetTermCodeAsString(term, ?context = context)
+        BaseTypes.ontologyTermFromNameAndID(name, ?id = id)
 
     static member composePropertyValueFromOA (term : OntologyAnnotation) =
         let tan = term.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
@@ -74,9 +85,8 @@ type BaseTypes =
 
     static member decomposePropertyValueToOA (term : LDNode, ?context : LDContext) =
         let name = LDPropertyValue.getNameAsString(term, ?context = context)
-        match LDPropertyValue.tryGetPropertyIDAsString(term, ?context = context) with
-        | Some t -> OntologyAnnotation.fromTermAnnotation(tan = t, name = name)
-        | None -> OntologyAnnotation.create(name = name)
+        let id = LDPropertyValue.tryGetPropertyIDAsString(term, ?context = context)
+        BaseTypes.ontologyTermFromNameAndID(name, ?id = id)
 
     /// Convert a CompositeCell to a ISA Value and Unit tuple.
     static member valuesOfCell (value : CompositeCell) =
@@ -142,6 +152,61 @@ type BaseTypes =
         let data = Data(id = f.Id, name = LDFile.getNameAsString(f, ?context = context), ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
         data
 
+
+    static member composeFragmentDescriptor (dc : DataContext) =
+        if dc.Name.IsNone then failwith "RO-Crate parsing of DataContext failed: Cannot create a fragment descriptor without a name."
+        let id = LDPropertyValue.genIdFragmentDescriptor(dc.NameText)
+        let explicationName, explicationID =
+            dc.Explication
+            |> Option.map (fun e -> e.Name, e.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault "")
+            |> Option.defaultValue (None, None)
+        let unitName, unitID =
+            dc.Unit
+            |> Option.map (fun u -> u.Name, u.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault "")
+            |> Option.defaultValue (None, None)
+        let disambiguatingDescriptions = dc.Comments |> ResizeArray.map (fun c -> c.ToString()) |> Option.fromSeq
+        let dataFragment = BaseTypes.composeFile(dc)
+        let pattern = dc.ObjectType |> Option.map (BaseTypes.composeDefinedTerm)
+        dataFragment.SetProperty(LDFile.about, LDRef(id))
+        dataFragment.SetOptionalProperty(LDFile.pattern, pattern)
+        LDPropertyValue.createFragmentDescriptor(
+            dc.NameText,
+            ?value = explicationName,
+            ?valueReference = explicationID,
+            ?unitText = unitName,
+            ?unitCode = unitID,
+            ?measurementMethod = dc.GeneratedBy,
+            ?description = dc.Description,
+            ?alternateName = dc.Label,
+            ?disambiguatingDescriptions = disambiguatingDescriptions,
+            subjectOf = dataFragment
+        )
+
+    static member decomposeFragmentDescriptor (fd : LDNode, ?graph : LDGraph, ?context : LDContext)  =
+        let file = LDPropertyValue.tryGetSubjectOf(fd, ?graph = graph, ?context = context)
+        let name = match file with | Some f -> LDFile.getNameAsString(f, ?context = context) | None -> failwith "RO-Crate parsing of DataContext failed: Cannot decompose a fragment descriptor without a name."
+        let objectType =
+            file
+            |> Option.bind (fun f -> LDFile.tryGetPatternAsDefinedTerm(f, ?graph = graph, ?context = context))
+            |> Option.map (BaseTypes.decomposeDefinedTerm)
+        let format =
+            file
+            |> Option.bind (fun f -> LDFile.tryGetEncodingFormatAsString(f, ?context = context))
+        let selectorFormat =
+            file
+            |> Option.bind (fun f -> LDFile.tryGetUsageInfoAsString(f, ?context = context))
+        let explicationName = LDPropertyValue.tryGetValueAsString(fd)
+        let explicationID = LDPropertyValue.tryGetValueReferenceAsString(fd)
+        let explication = BaseTypes.tryOntologyTermFromNameAndID(?name = explicationName, ?id = explicationID)
+        let unitName = LDPropertyValue.tryGetUnitTextAsString(fd)
+        let unitID = LDPropertyValue.tryGetUnitCodeAsString(fd)
+        let unit = BaseTypes.tryOntologyTermFromNameAndID(?name = unitName, ?id = unitID)
+        let generatedBy = LDPropertyValue.tryGetMeasurementMethodAsString(fd)
+        let description = LDPropertyValue.tryGetDescriptionAsString(fd)
+        let label = LDPropertyValue.tryGetAlternateNameAsString(fd)
+        let comments = LDPropertyValue.getDisambiguatingDescriptionsAsString(fd) |> ResizeArray.map Comment.fromString
+        DataContext(name = name, ?format = format, ?selectorFormat = selectorFormat, ?explication = explication, ?unit = unit, ?objectType = objectType, ?generatedBy = generatedBy, ?description = description, ?label = label, comments = comments)
+
     /// Convert a CompositeHeader and Cell tuple to a ISA ProcessInput
     static member composeProcessInput (header : CompositeHeader) (value : CompositeCell) : LDNode =
         match header with
@@ -191,7 +256,7 @@ type BaseTypes =
     /// Convert an ISA Value and Unit tuple to a CompositeCell
     static member cellOfPropertyValue (pv : LDNode, ?context : LDContext) =
         let v = LDPropertyValue.tryGetValueAsString(pv, ?context = context)
-        let vRef = LDPropertyValue.tryGetValueReference(pv, ?context = context)
+        let vRef = LDPropertyValue.tryGetValueReferenceAsString(pv, ?context = context)
         let u = LDPropertyValue.tryGetUnitTextAsString(pv, ?context = context)
         let uRef = LDPropertyValue.tryGetUnitCodeAsString(pv, ?context = context)
         match vRef,u,uRef with
@@ -905,7 +970,16 @@ module TableTypeExtensions =
             |> ResizeArray
             |> ArcTables
 
+type DatamapConversion =
 
+    static member composeFragmentDescriptors (datamap : DataMap) : ResizeArray<LDNode> =
+        datamap.DataContexts
+        |> ResizeArray.map BaseTypes.composeFragmentDescriptor
+
+    static member decomposeFragmentDescriptors (fragmentDescriptors : ResizeArray<LDNode>, ?graph : LDGraph, ?context : LDContext) : DataMap =
+        fragmentDescriptors
+        |> ResizeArray.map BaseTypes.decomposeFragmentDescriptor
+        |> DataMap
 
 type PersonConversion = 
 
@@ -1109,7 +1183,11 @@ type ScholarlyArticleConversion =
 
 type AssayConversion =
 
-    static member getDataFilesFromProcesses (processes : LDNode ResizeArray, ?graph : LDGraph, ?context : LDContext) =
+    static member getDataFilesFromProcesses (processes : LDNode ResizeArray, ?fragmentDescriptors : LDNode ResizeArray, ?graph : LDGraph, ?context : LDContext) =
+        let dataFromFragmentDescriptors =
+            fragmentDescriptors
+            |> Option.defaultValue (ResizeArray [])
+            |> ResizeArray.choose (fun df -> LDPropertyValue.tryGetSubjectOf(df, ?graph = graph, ?context = context))
         let data = 
             processes
             |> ResizeArray.collect (fun p -> 
@@ -1117,6 +1195,7 @@ type AssayConversion =
                 let outputs = LDLabProcess.getResultsAsData(p, ?graph = graph, ?context = context)
                 ResizeArray.append inputs outputs
             )
+            |> ResizeArray.append dataFromFragmentDescriptors
             |> ResizeArray.distinct
         let files =
             data
@@ -1164,9 +1243,18 @@ type AssayConversion =
             ArcTables(assay.Tables).GetProcesses()
             |> ResizeArray
             |> Option.fromSeq
+        let fragmentDescriptors =
+            assay.DataMap
+            |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles = 
             processSequence
-            |> Option.map AssayConversion.getDataFilesFromProcesses
+            |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
+        let variableMeasureds =
+            match variableMeasured, fragmentDescriptors with
+            | Some vm, Some fds -> ResizeArray.appendSingleton vm fds |> Some
+            | Some vm, None -> ResizeArray.singleton vm |> Some
+            | None, Some fds -> fds |> Some
+            | None, None -> None
         let comments = 
             assay.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
@@ -1178,7 +1266,7 @@ type AssayConversion =
             ?hasParts = dataFiles,
             ?measurementMethod = measurementMethod,
             ?measurementTechnique = measurementTechnique,
-            ?variableMeasured = variableMeasured,
+            ?variableMeasureds = variableMeasureds,
             ?abouts = processSequence,
             ?comments = comments
         )
@@ -1191,15 +1279,15 @@ type AssayConversion =
             LDDataset.tryGetMeasurementTechniqueAsDefinedTerm(assay, ?graph = graph, ?context = context)
             |> Option.map (fun m -> BaseTypes.decomposeDefinedTerm(m, ?context = context))
         let variableMeasured = 
-            LDDataset.tryGetVariableMeasuredAsPropertyValue(assay, ?graph = graph, ?context = context)
+            LDDataset.tryGetVariableMeasuredAsMeasurementType(assay, ?graph = graph, ?context = context)
             |> Option.map (fun v -> BaseTypes.decomposePropertyValueToOA(v, ?context = context))
         let perfomers = 
             LDDataset.getCreators(assay, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
-        //let dataFiles = 
-        //    Assay.getHasParts(assay, ?graph = graph, ?context = context)
-        //    |> Option.fromSeq
-        //    |> Option.map (fun df -> BaseTypes.decomposeFile(df, ?graph = graph, ?context = context))
+        let dataMap = 
+            LDDataset.getVariableMeasuredAsFragmentDescriptors(assay, ?graph = graph, ?context = context)
+            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
+            |> Option.fromValueWithDefault (DataMap.init())
         let tables = 
             LDDataset.getAboutsAsLabProcess(assay, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
@@ -1212,6 +1300,7 @@ type AssayConversion =
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,
             tables = tables.Tables,
+            ?datamap = dataMap,
             performers = perfomers,
             comments = comments
         )

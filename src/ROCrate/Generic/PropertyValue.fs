@@ -3,6 +3,7 @@ namespace ARCtrl.ROCrate
 open DynamicObj
 open Fable.Core
 open ARCtrl.ROCrate
+open ARCtrl.Helper
 
 ///
 [<AttachMembers>]
@@ -21,6 +22,16 @@ type LDPropertyValue =
     static member unitText = "http://schema.org/unitText"
 
     static member valueReference = "http://schema.org/valueReference"
+
+    static member measurementMethod = "http://schema.org/measurementMethod"
+
+    static member description = "http://schema.org/description"
+
+    static member alternateName = "http://schema.org/alternateName"
+
+    static member subjectOf = "http://schema.org/subjectOf"
+
+    static member disambiguatingDescription = "http://schema.org/disambiguatingDescription"
 
     static member doiKey = "DOI"
 
@@ -82,13 +93,54 @@ type LDPropertyValue =
     static member setUnitTextAsString(pv : LDNode, unitText : string, ?context : LDContext) =
         pv.SetProperty(LDPropertyValue.unitText, unitText, ?context = context)
 
-    static member tryGetValueReference(pv : LDNode, ?context : LDContext) =
+    static member tryGetValueReferenceAsString(pv : LDNode, ?context : LDContext) =
         match pv.TryGetPropertyAsSingleton(LDPropertyValue.valueReference, ?context = context) with
         | Some (:? string as vr) -> Some vr
         | _ -> None
 
-    static member setValueReference(pv : LDNode, valueReference : string, ?context : LDContext) =
+    static member setValueReferenceAsString(pv : LDNode, valueReference : string, ?context : LDContext) =
         pv.SetProperty(LDPropertyValue.valueReference, valueReference, ?context = context)
+
+    // 
+    static member tryGetMeasurementMethodAsString(pv : LDNode, ?context : LDContext) =
+        match pv.TryGetPropertyAsSingleton(LDPropertyValue.measurementMethod, ?context = context) with
+        | Some (:? string as vr) -> Some vr
+        | _ -> None
+
+    static member setMeasurementMethodAsString(pv : LDNode, measurementMethod : string, ?context : LDContext) =
+        pv.SetProperty(LDPropertyValue.measurementMethod, measurementMethod, ?context = context)
+
+    static member tryGetDescriptionAsString(pv : LDNode, ?context : LDContext) =
+        match pv.TryGetPropertyAsSingleton(LDPropertyValue.description, ?context = context) with
+        | Some (:? string as vr) -> Some vr
+        | _ -> None
+
+    static member setDescriptionAsString(pv : LDNode, description : string, ?context : LDContext) =
+        pv.SetProperty(LDPropertyValue.description, description, ?context = context)
+
+    static member tryGetAlternateNameAsString(pv : LDNode, ?context : LDContext) =
+        match pv.TryGetPropertyAsSingleton(LDPropertyValue.alternateName, ?context = context) with
+        | Some (:? string as vr) -> Some vr
+        | _ -> None
+
+    static member setAlternateNameAsString(pv : LDNode, alternateName : string, ?context : LDContext) =
+        pv.SetProperty(LDPropertyValue.alternateName, alternateName, ?context = context)
+
+    static member getDisambiguatingDescriptionsAsString(pv : LDNode, ?context : LDContext) =
+        let filter = fun (o : obj) context -> o :? string
+        pv.GetPropertyValues(LDPropertyValue.disambiguatingDescription, filter = filter, ?context = context)
+        |> ResizeArray.map (fun (o : obj) -> o :?> string)
+
+    static member setDisambiguatingDescriptionsAsString(lp : LDNode, disambiguatingDescriptions : ResizeArray<string>, ?context : LDContext) =
+        lp.SetProperty(LDPropertyValue.disambiguatingDescription, disambiguatingDescriptions, ?context = context)
+
+    static member tryGetSubjectOf(pv : LDNode, ?graph : LDGraph, ?context : LDContext) =
+        match pv.TryGetPropertyAsSingleNode(LDPropertyValue.subjectOf, ?graph = graph, ?context = context) with
+        | Some so -> Some so
+        | _ -> None
+
+    static member setSubjectOf(pv : LDNode, subjectOf : LDNode, ?context : LDContext) =
+        pv.SetProperty(LDPropertyValue.subjectOf, subjectOf, ?context = context)
 
     static member validate(pv : LDNode, ?context : LDContext) =
         pv.HasType(LDPropertyValue.schemaType, ?context = context)
@@ -110,6 +162,12 @@ type LDPropertyValue =
     static member validateFactorValue (pv : LDNode, ?context : LDContext) =
         LDPropertyValue.validate(pv, ?context = context)
         && pv.AdditionalType.Contains("FactorValue")
+
+    static member validateFragmentDescriptor (pv : LDNode, ?context : LDContext) =
+        LDPropertyValue.validate(pv, ?context = context)
+        //&& pv.AdditionalType.Contains("FragmentDescriptor")
+        && LDPropertyValue.getNameAsString(pv, ?context = context) = "FragmentDescriptor"
+        //&& LDPropertyValue.tryGetPropertyIDAsString(pv, ?context = context) = (Some "URLToFragmentDescriptor")
 
     static member validateDOI (pv : LDNode, ?context : LDContext) =
         LDPropertyValue.validate(pv, ?context = context)
@@ -154,6 +212,9 @@ type LDPropertyValue =
     static member genIdFactorValue(name : string, ?value : string, ?propertyID : string) =
         LDPropertyValue.genId(name, ?value = value, ?propertyID = propertyID, prefix = "FactorValue")
 
+    static member genIdFragmentDescriptor(fileName : string) =
+        $"#Descriptor_{fileName}"
+
     static member create(name, ?value, ?id : string, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
@@ -165,7 +226,7 @@ type LDPropertyValue =
         propertyID |> Option.iter (fun pid -> LDPropertyValue.setPropertyIDAsString(pv, pid, ?context = context))
         unitCode |> Option.iter (fun uc -> LDPropertyValue.setUnitCodeAsString(pv, uc, ?context = context))
         unitText |> Option.iter (fun ut -> LDPropertyValue.setUnitTextAsString(pv, ut, ?context = context))
-        valueReference |> Option.iter (fun vr -> LDPropertyValue.setValueReference(pv, vr, ?context = context))
+        valueReference |> Option.iter (fun vr -> LDPropertyValue.setValueReferenceAsString(pv, vr, ?context = context))
         pv
 
     static member createComponent(name, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?context : LDContext) =
@@ -199,6 +260,20 @@ type LDPropertyValue =
         let fv = LDPropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         fv.AdditionalType <- ResizeArray ["FactorValue"]
         fv
+
+    static member createFragmentDescriptor(fileName, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?measurementMethod, ?description, ?alternateName, ?disambiguatingDescriptions, ?subjectOf, ?context : LDContext) =
+        let id = match id with
+                 | Some i -> i
+                 | None -> LDPropertyValue.genIdFragmentDescriptor(fileName)
+        let name = "FragmentDescriptor"
+        let fd = LDPropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+        fd.AdditionalType <- ResizeArray ["FragmentDescriptor"]
+        if measurementMethod.IsSome then LDPropertyValue.setMeasurementMethodAsString(fd, measurementMethod.Value, ?context = context)
+        if description.IsSome then LDPropertyValue.setDescriptionAsString(fd, description.Value, ?context = context)
+        if alternateName.IsSome then LDPropertyValue.setAlternateNameAsString(fd, alternateName.Value, ?context = context)
+        if disambiguatingDescriptions.IsSome then LDPropertyValue.setDisambiguatingDescriptionsAsString(fd, disambiguatingDescriptions.Value, ?context = context)
+        if subjectOf.IsSome then LDPropertyValue.setSubjectOf(fd, subjectOf.Value, ?context = context)
+        fd
 
     static member createDOI(value, ?context : LDContext) =
         let id = value
