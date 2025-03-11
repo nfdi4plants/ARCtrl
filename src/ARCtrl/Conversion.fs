@@ -1323,9 +1323,12 @@ type StudyConversion =
             ArcTables(study.Tables).GetProcesses()
             |> ResizeArray
             |> Option.fromSeq
+        let fragmentDescriptors =
+            study.DataMap
+            |> Option.map DatamapConversion.composeFragmentDescriptors
         let dataFiles = 
             processSequence
-            |> Option.map AssayConversion.getDataFilesFromProcesses
+            |> Option.map (fun ps -> AssayConversion.getDataFilesFromProcesses(ps, ?fragmentDescriptors = fragmentDescriptors))
         let comments = 
             study.Comments
             |> ResizeArray.map (fun c -> BaseTypes.composeComment c)
@@ -1340,6 +1343,7 @@ type StudyConversion =
             ?creators = creators,
             ?citations = publications,
             ?hasParts = dataFiles,
+            ?variableMeasureds = fragmentDescriptors,
             ?abouts = processSequence,
             ?comments = comments
         )
@@ -1357,10 +1361,10 @@ type StudyConversion =
         let creators = 
             LDDataset.getCreators(study, ?graph = graph, ?context = context)
             |> ResizeArray.map (fun c -> PersonConversion.decomposePerson(c, ?graph = graph, ?context = context))
-        //let dataFiles = 
-        //    Study.getHasParts(study, ?graph = graph, ?context = context)
-        //    |> Option.fromSeq
-        //    |> Option.map (fun df -> BaseTypes.decomposeFile(df, ?graph = graph, ?context = context))
+        let dataMap = 
+            LDDataset.getVariableMeasuredAsFragmentDescriptors(study, ?graph = graph, ?context = context)
+            |> fun fds -> DatamapConversion.decomposeFragmentDescriptors(fds, ?graph = graph, ?context = context)
+            |> Option.fromValueWithDefault (DataMap.init())
         let tables = 
             LDDataset.getAboutsAsLabProcess(study, ?graph = graph, ?context = context)
             |> fun ps -> ArcTables.fromProcesses(List.ofSeq ps, ?graph = graph, ?context = context)
@@ -1373,6 +1377,7 @@ type StudyConversion =
             ?description = LDDataset.tryGetDescriptionAsString(study, ?context = context),
             ?submissionDate = dateCreated,
             ?publicReleaseDate = datePublished,
+            ?datamap = dataMap,
             contacts = creators,
             publications = publications,
             tables = tables.Tables,

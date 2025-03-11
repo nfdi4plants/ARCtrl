@@ -146,6 +146,37 @@ module Helper =
         sheets |> Array.iter (fun table -> assay.AddTable(table))
         assay
 
+
+    let create_dataRow (fileName : string) (row : int) =
+        let name = $"{fileName}#row={row}"
+        let format = "text/csv"
+        let selectorFormat = "MySelector"
+        Data(
+            name = name,
+            format = format,
+            selectorFormat = selectorFormat
+        )
+
+    let create_dataContextOfRow (fileName : string) (row : int) =
+        let explication = OntologyAnnotation.create(name = "MyExplication", tsr = "FO", tan = "FO:123")
+        let unit = OntologyAnnotation.create(name = "MyUnit", tsr = "UO", tan = "UO:456")
+        let generatedBy = "MyGeneratedBy"
+        let description = "MyDescription"
+        let label = "MyLabel"
+        let name = $"{fileName}#row={row}"
+        let format = "text/csv"
+        let selectorFormat = "MySelector"
+        DataContext(
+            name = name,
+            format = format,
+            selectorFormat = selectorFormat,
+            explication = explication,
+            unit = unit,
+            generatedBy = generatedBy,
+            description = description,
+            label = label
+        )
+
 open Helper
 
 
@@ -808,29 +839,37 @@ let private tests_DataContext =
             Expect.equal dc dc' "Data context should match"
         )
         ftestCase "Full" (fun () ->
-            let explication = OntologyAnnotation.create(name = "MyExplication", tsr = "FO", tan = "FO:123")
-            let unit = OntologyAnnotation.create(name = "MyUnit", tsr = "UO", tan = "UO:456")
-            let generatedBy = "MyGeneratedBy"
-            let description = "MyDescription"
-            let label = "MyLabel"
-            let name = "MyFile#row=1"
-            let format = "text/csv"
-            let selectorFormat = "MySelector"
-            let dc = DataContext(
-                name = name,
-                format = format,
-                selectorFormat = selectorFormat,
-                explication = explication,
-                unit = unit,
-                generatedBy = generatedBy,
-                description = description,
-                label = label
-            )
+            let dc = create_dataContextOfRow "MyFile" 1
             let fd = BaseTypes.composeFragmentDescriptor(dc)
             let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
             Expect.equal dc dc' "Data context should match"
 
 
+        )
+    ]
+
+let private tests_DataMap =
+    testList "DataMap" [
+        ftestCase "Empty" (fun () ->
+            let dm = DataMap.init()
+            let fds = DatamapConversion.composeFragmentDescriptors dm
+            let dm' = DatamapConversion.decomposeFragmentDescriptors fds
+            Expect.equal dm dm' "Data map should match"
+        )
+        ftestCase "SingleEntry" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let dm = DataMap(ResizeArray[dc])
+            let fds = DatamapConversion.composeFragmentDescriptors dm
+            let dm' = DatamapConversion.decomposeFragmentDescriptors fds
+            Expect.equal dm dm' "Data map should match"
+        )
+        ftestCase "MultipleEntries" (fun () ->
+            let dc1 = create_dataContextOfRow "MyFile" 1
+            let dc2 = create_dataContextOfRow "MyFile" 2
+            let dm = DataMap(ResizeArray[dc1;dc2])
+            let fds = DatamapConversion.composeFragmentDescriptors dm
+            let dm' = DatamapConversion.decomposeFragmentDescriptors fds
+            Expect.equal dm dm' "Data map should match"
         )
     ]
 
@@ -1299,6 +1338,39 @@ let tests_Assay =
             let p' = AssayConversion.decomposeAssay ro_Assay
             Expect.equal p' p "Assay should match"
         )
+        testList "WithDatamap" [
+            ftestCase "MeasurementType" (fun () ->
+                let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let assay = ArcAssay("My Assay", measurementType = measurementType, datamap = dm)
+                let ro_Assay = AssayConversion.composeAssay assay
+                let assay' = AssayConversion.decomposeAssay ro_Assay
+                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let measurementType' = Expect.wantSome assay'.MeasurementType "Assay should have a measurement type"
+                Expect.equal measurementType measurementType' "Measurement type should match"
+                Expect.equal assay' assay "Assay should match"
+            )
+            ftestCase "ContextForFiles" (fun () ->
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
+                let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
+                let assay = ArcAssay("My Assay", datamap = dm)
+                let table = assay.InitTable("Table")
+                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                let ro_Assay = AssayConversion.composeAssay assay
+                let assay' = AssayConversion.decomposeAssay ro_Assay
+                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let table' = Expect.wantSome (Seq.tryExactlyOne assay'.Tables) "Assay should have a table"
+                Expect.arcTableEqual table table' "Table should match"
+                Expect.equal assay' assay "Assay should match"
+            )
+        ]
     ]
 
 
@@ -1403,6 +1475,7 @@ let main =
         tests_Publication
         tests_GetDataFilesFromProcesses
         tests_DataContext
+        tests_DataMap
         tests_Assay
         tests_Investigation
     ]
