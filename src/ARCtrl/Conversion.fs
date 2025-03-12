@@ -149,7 +149,7 @@ type BaseTypes =
         let dataType = LDFile.tryGetDisambiguatingDescriptionAsString(f, ?context = context) |> Option.map DataFile.fromString
         let format = LDFile.tryGetEncodingFormatAsString(f, ?context = context)
         let selectorFormat = LDFile.tryGetUsageInfoAsString(f, ?context = context)
-        let data = Data(id = f.Id, name = LDFile.getNameAsString(f, ?context = context), ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
+        let data = Data((*id = f.Id, *)name = LDFile.getNameAsString(f, ?context = context), ?dataType = dataType, ?format = format, ?selectorFormat = selectorFormat)
         data
 
 
@@ -978,7 +978,7 @@ type DatamapConversion =
 
     static member decomposeFragmentDescriptors (fragmentDescriptors : ResizeArray<LDNode>, ?graph : LDGraph, ?context : LDContext) : DataMap =
         fragmentDescriptors
-        |> ResizeArray.map BaseTypes.decomposeFragmentDescriptor
+        |> ResizeArray.map (fun fd -> BaseTypes.decomposeFragmentDescriptor(fd, ?graph = graph, ?context = context))
         |> DataMap
 
 type PersonConversion = 
