@@ -188,7 +188,7 @@ type BaseTypes =
         let objectType =
             file
             |> Option.bind (fun f -> LDFile.tryGetPatternAsDefinedTerm(f, ?graph = graph, ?context = context))
-            |> Option.map (BaseTypes.decomposeDefinedTerm)
+            |> Option.map (fun pa -> BaseTypes.decomposeDefinedTerm(pa, ?context = context))
         let format =
             file
             |> Option.bind (fun f -> LDFile.tryGetEncodingFormatAsString(f, ?context = context))
