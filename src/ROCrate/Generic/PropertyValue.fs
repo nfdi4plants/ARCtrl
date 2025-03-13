@@ -267,7 +267,7 @@ type LDPropertyValue =
                  | None -> LDPropertyValue.genIdFragmentDescriptor(fileName)
         let name = "FragmentDescriptor"
         let fd = LDPropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
-        fd.AdditionalType <- ResizeArray ["FragmentDescriptor"]
+        //fd.AdditionalType <- ResizeArray ["FragmentDescriptor"]
         if measurementMethod.IsSome then LDPropertyValue.setMeasurementMethodAsString(fd, measurementMethod.Value, ?context = context)
         if description.IsSome then LDPropertyValue.setDescriptionAsString(fd, description.Value, ?context = context)
         if alternateName.IsSome then LDPropertyValue.setAlternateNameAsString(fd, alternateName.Value, ?context = context)

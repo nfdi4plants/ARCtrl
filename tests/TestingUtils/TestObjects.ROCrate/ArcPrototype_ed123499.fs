@@ -554,7 +554,7 @@ let ed123499 = """{
       "@type": "Dataset",
       "additionalType": "Study",
       "identifier": "MaterialPreparation",
-      "dateModified": "2025-03-12T15:12:00.3304087",
+      "dateModified": "2025-03-13T15:56:23.8223345",
       "description": "In this a devised study to have an exemplary experimental material description.",
       "hasPart": [
         {
@@ -664,7 +664,7 @@ let ed123499 = """{
       "@type": "Dataset",
       "additionalType": "Study",
       "identifier": "experiment2",
-      "dateModified": "2025-03-12T15:12:00.3332215",
+      "dateModified": "2025-03-13T15:56:23.8251981",
       "hasPart": [],
       "about": {
         "@id": "#Process_experiment2"
@@ -721,288 +721,160 @@ let ed123499 = """{
       "termCode": "http://purl.obolibrary.org/obo/xsd_double"
     },
     {
-      "@id": "proteomics_result.csv#col=1",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=1",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=1"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=2",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=2",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=2"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=3",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=3",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=3"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=4",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=4",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=4"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=5",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=5",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=5"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=6",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=6",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=6"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=7",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=7",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=7"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=8",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=8",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=8"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=9",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=9",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=9"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=10",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=10",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=10"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=11",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=11",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=11"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv#col=12",
-      "@type": "File",
-      "name": "proteomics_result.csv#col=12",
-      "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
-      "about": {
-        "@id": "#Descriptor_proteomics_result.csv#col=12"
-      },
-      "pattern": {
-        "@id": "http://purl.obolibrary.org/obo/xsd_double"
-      }
-    },
-    {
-      "@id": "proteomics_result.csv",
-      "@type": "File",
-      "name": "proteomics_result.csv",
-      "encodingFormat": "text/csv",
-      "hasPart": [
-        {
-          "@id": "proteomics_result.csv#col=1"
-        },
-        {
-          "@id": "proteomics_result.csv#col=2"
-        },
-        {
-          "@id": "proteomics_result.csv#col=3"
-        },
-        {
-          "@id": "proteomics_result.csv#col=4"
-        },
-        {
-          "@id": "proteomics_result.csv#col=5"
-        },
-        {
-          "@id": "proteomics_result.csv#col=6"
-        },
-        {
-          "@id": "proteomics_result.csv#col=7"
-        },
-        {
-          "@id": "proteomics_result.csv#col=8"
-        },
-        {
-          "@id": "proteomics_result.csv#col=9"
-        },
-        {
-          "@id": "proteomics_result.csv#col=10"
-        },
-        {
-          "@id": "proteomics_result.csv#col=11"
-        },
-        {
-          "@id": "proteomics_result.csv#col=12"
-        }
-      ]
-    },
-    {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=1",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=1",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=1"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=2",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=2",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=2"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=3",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=3",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=3"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=4",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=4",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=4"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=5",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=5",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=5"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=6",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=6",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=6"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=7",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=7",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=7"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=8",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=8",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=8"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=9",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=9",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=9"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=10",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=10",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=10"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=11",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=11",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=11"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv#col=12",
       "@type": "File",
       "name": "assays/measurement1/dataset/proteomics_result.csv#col=12",
       "encodingFormat": "text/csv",
-      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111"
+      "usageInfo": "https://datatracker.ietf.org/doc/html/rfc7111",
+      "about": {
+        "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=12"
+      },
+      "pattern": {
+        "@id": "http://purl.obolibrary.org/obo/xsd_double"
+      }
     },
     {
       "@id": "assays/measurement1/dataset/proteomics_result.csv",
@@ -1010,6 +882,42 @@ let ed123499 = """{
       "name": "assays/measurement1/dataset/proteomics_result.csv",
       "encodingFormat": "text/csv",
       "hasPart": [
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=1"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=2"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=3"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=4"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=5"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=6"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=7"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=8"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=9"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=10"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=11"
+        },
+        {
+          "@id": "assays/measurement1/dataset/proteomics_result.csv#col=12"
+        },
         {
           "@id": "assays/measurement1/dataset/proteomics_result.csv#col=1"
         },
@@ -1726,9 +1634,8 @@ let ed123499 = """{
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=1",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=1",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1738,13 +1645,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=1"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=1"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=2",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=2",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1754,13 +1660,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=2"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=2"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=3",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=3",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1770,13 +1675,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=3"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=3"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=4",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=4",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1786,13 +1690,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=4"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=4"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=5",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=5",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1802,13 +1705,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=5"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=5"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=6",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=6",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1818,13 +1720,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=6"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=6"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=7",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=7",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1834,13 +1735,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=7"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=7"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=8",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=8",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1850,13 +1750,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=8"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=8"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=9",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=9",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1866,13 +1765,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=9"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=9"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=10",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=10",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1882,13 +1780,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=10"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=10"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=11",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=11",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1898,13 +1795,12 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=11"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=11"
       }
     },
     {
-      "@id": "#Descriptor_proteomics_result.csv#col=12",
+      "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=12",
       "@type": "PropertyValue",
-      "additionalType": "FragmentDescriptor",
       "name": "FragmentDescriptor",
       "value": "protein amount",
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
@@ -1914,7 +1810,7 @@ let ed123499 = """{
       "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
-        "@id": "proteomics_result.csv#col=12"
+        "@id": "assays/measurement1/dataset/proteomics_result.csv#col=12"
       }
     },
     {
@@ -1943,9 +1839,6 @@ let ed123499 = """{
         },
         {
           "@id": "assays/measurement1/dataset/sample6.raw"
-        },
-        {
-          "@id": "proteomics_result.csv"
         },
         {
           "@id": "assays/measurement1/dataset/proteomics_result.csv"
@@ -2045,40 +1938,40 @@ let ed123499 = """{
       ],
       "variableMeasured": [
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=1"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=1"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=2"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=2"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=3"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=3"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=4"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=4"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=5"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=5"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=6"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=6"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=7"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=7"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=8"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=8"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=9"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=9"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=10"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=10"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=11"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=11"
         },
         {
-          "@id": "#Descriptor_proteomics_result.csv#col=12"
+          "@id": "#Descriptor_assays/measurement1/dataset/proteomics_result.csv#col=12"
         }
       ]
     },
@@ -2104,7 +1997,7 @@ let ed123499 = """{
           "@id": "http://orcid.org/0000-0002-8241-5300"
         }
       ],
-      "datePublished": "2025-03-12T15:12:00.3336347",
+      "datePublished": "2025-03-13T15:56:23.8257783",
       "description": "A prototypic ARC that implements all specification standards accordingly",
       "hasPart": [
         {

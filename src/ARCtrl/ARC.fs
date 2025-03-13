@@ -304,52 +304,37 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     member this.MakeDataFilesAbsolute() =
         let filesPaths = this.FileSystem.Tree.ToFilePaths() |> set
         let checkExistenceFromRoot = fun p -> filesPaths |> Set.contains p
+        let updateColumnOption (dataNameFunction : Data -> string) (col : CompositeColumn option) =
+            match col with
+            | Some col when col.Header.IsDataColumn -> 
+                col.Cells |> Array.iter (fun c ->
+                    if c.AsData.FilePath.IsSome then               
+                        let newFilePath = dataNameFunction c.AsData
+                        c.AsData.FilePath <- Some newFilePath
+                )
+            | _ -> ()
+        let updateTable (dataNameFunction : Data -> string) (t : ArcTable) =
+            t.TryGetInputColumn() |> updateColumnOption dataNameFunction
+            t.TryGetOutputColumn() |> updateColumnOption dataNameFunction
+        let updateDataMap (dataNameFunction : Data -> string) (dm : DataMap) =
+            dm.DataContexts |> Seq.iter (fun c ->
+                if c.FilePath.IsSome then
+                    let newFilePath = dataNameFunction c
+                    c.FilePath <- Some newFilePath
+            )
         match this.ISA with
         | Some inv -> 
             inv.Studies |> Seq.iter (fun s ->
-                s.Tables |> Seq.iter (fun t ->
-                    match t.TryGetInputColumn() with
-                    | Some col when col.Header.IsDataColumn -> 
-                        col.Cells |> Array.iter (fun c ->
-                            if c.AsData.FilePath.IsSome then
-                            
-                                let newFilePath =
-                                    c.AsData.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
-                                c.AsData.FilePath <- Some newFilePath
-                        )
-                    | _ -> ()
-                    match t.TryGetOutputColumn() with
-                    | Some col when col.Header.IsDataColumn -> 
-                        col.Cells |> Array.iter (fun c ->
-                            if c.AsData.FilePath.IsSome then
-                                let newFilePath =
-                                    c.AsData.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
-                                c.AsData.FilePath <- Some newFilePath
-                        )
-                    | _ -> ()
-                )
+                let f (d : Data) = d.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
+                s.Tables |> Seq.iter (updateTable f)
+                if s.DataMap.IsSome then
+                    updateDataMap f s.DataMap.Value
             )
             inv.Assays |> Seq.iter (fun a ->
-                a.Tables |> Seq.iter (fun t ->
-                    match t.TryGetInputColumn() with
-                    | Some col when col.Header.IsDataColumn -> 
-                        col.Cells |> Array.iter (fun c ->
-                            if c.AsData.FilePath.IsSome then
-                                let newFilePath =
-                                    c.AsData.GetAbsolutePathForAssay (a.Identifier,checkExistenceFromRoot)
-                                c.AsData.FilePath <- Some newFilePath
-                        )
-                    | _ -> ()
-                    match t.TryGetOutputColumn() with
-                    | Some col when col.Header.IsDataColumn -> 
-                        col.Cells |> Array.iter (fun c ->
-                            if c.AsData.FilePath.IsSome then
-                                let newFilePath =
-                                    c.AsData.GetAbsolutePathForAssay (a.Identifier,checkExistenceFromRoot)
-                                c.AsData.FilePath <- Some newFilePath
-                        )
-                    | _ -> ()
-                )
+                let f (d : Data) = d.GetAbsolutePathForAssay(a.Identifier,checkExistenceFromRoot)
+                a.Tables |> Seq.iter (updateTable f)
+                if a.DataMap.IsSome then
+                    updateDataMap f a.DataMap.Value
             )
         | None -> ()
 
