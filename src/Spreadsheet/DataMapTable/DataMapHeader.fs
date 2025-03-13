@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.DataMapHeader
+module ARCtrl.Spreadsheet.DataMapHeader
 
 open ARCtrl
 open ARCtrl.Helper
@@ -79,7 +79,7 @@ module ActivePattern =
         match cellValues with
         | [DataMapAux.descriptionShortHand] -> 
             (fun (dc : DataContext) (cells : FsCell list) -> 
-                dc.Description <- Some (freeTextFromFsCells cells)
+                dc.Description <- freeTextFromFsCells cells |> Option.fromValueWithDefault ""
                 dc
             )
             |> Some
@@ -90,7 +90,7 @@ module ActivePattern =
         match cellValues with
         | [DataMapAux.generatedByShortHand] -> 
             (fun (dc : DataContext) (cells : FsCell list) -> 
-                dc.GeneratedBy <- Some (freeTextFromFsCells cells)
+                dc.GeneratedBy <- freeTextFromFsCells cells |> Option.fromValueWithDefault ""
                 dc
             )
             |> Some

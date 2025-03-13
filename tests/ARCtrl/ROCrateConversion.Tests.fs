@@ -913,6 +913,14 @@ let private tests_DataContext =
             let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
             Expect.equal dc dc' "Data context should match"
         )
+        testCase "UnitOnlyName" (fun () ->
+            let myUnit = OntologyAnnotation(name = "MyUnit")
+            let dc = DataContext(name = "MyFile", unit = myUnit)
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.unitText; LDPropertyValue.subjectOf|] "Should have only name property"
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc dc' "Data context should match"
+        )
         testCase "Full" (fun () ->
             let dc = create_dataContextOfRow "MyFile" 1
             let fd = BaseTypes.composeFragmentDescriptor(dc)

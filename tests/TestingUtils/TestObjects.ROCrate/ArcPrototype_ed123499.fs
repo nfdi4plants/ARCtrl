@@ -15,7 +15,7 @@ let ed123499 = """{
       "executesLabProtocol": "https://bioschemas.org/executesLabProtocol",
       "parameterValue": "https://bioschemas.org/parameterValue",
       "LabProcess": "https://bioschemas.org/LabProcess",
-      "measurementMethod": "https://schema.org/measurementMethod"
+      "measurementMethod": "http://schema.org/measurementMethod"
     }
   ],
   "@graph": [
@@ -554,7 +554,7 @@ let ed123499 = """{
       "@type": "Dataset",
       "additionalType": "Study",
       "identifier": "MaterialPreparation",
-      "dateModified": "2025-03-13T15:56:23.8223345",
+      "dateModified": "2025-03-13T16:36:26.9829134",
       "description": "In this a devised study to have an exemplary experimental material description.",
       "hasPart": [
         {
@@ -664,7 +664,7 @@ let ed123499 = """{
       "@type": "Dataset",
       "additionalType": "Study",
       "identifier": "experiment2",
-      "dateModified": "2025-03-13T15:56:23.8251981",
+      "dateModified": "2025-03-13T16:36:26.9843856",
       "hasPart": [],
       "about": {
         "@id": "#Process_experiment2"
@@ -1009,7 +1009,6 @@ let ed123499 = """{
       "name": "centrifugation",
       "value": "10",
       "propertyID": "https://bioregistry.io/OBI:0302886",
-      "unitCode": "",
       "unitText": "g unit",
       "columnIndex": "2"
     },
@@ -1641,8 +1640,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=1"
@@ -1656,8 +1653,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=2"
@@ -1671,8 +1666,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=3"
@@ -1686,8 +1679,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=4"
@@ -1701,8 +1692,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=5"
@@ -1716,8 +1705,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=6"
@@ -1731,8 +1718,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=7"
@@ -1746,8 +1731,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=8"
@@ -1761,8 +1744,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=9"
@@ -1776,8 +1757,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=10"
@@ -1791,8 +1770,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=11"
@@ -1806,8 +1783,6 @@ let ed123499 = """{
       "unitCode": "http://purl.obolibrary.org/obo/UO_0000274",
       "unitText": "microgram per milliliter",
       "valueReference": "http://purl.obolibrary.org/obo/OBA_VT0010120",
-      "http://schema.org/measurementMethod": "",
-      "description": "",
       "disambiguatingDescription": "Comment {Name = \"GeneratedBy\", Value = \"\"}",
       "subjectOf": {
         "@id": "assays/measurement1/dataset/proteomics_result.csv#col=12"
@@ -1997,7 +1972,7 @@ let ed123499 = """{
           "@id": "http://orcid.org/0000-0002-8241-5300"
         }
       ],
-      "datePublished": "2025-03-13T15:56:23.8257783",
+      "datePublished": "2025-03-13T16:36:26.9845861",
       "description": "A prototypic ARC that implements all specification standards accordingly",
       "hasPart": [
         {

@@ -97,8 +97,8 @@ type BaseTypes =
         | CompositeCell.Term (term) when term.TANInfo.IsSome -> term.Name, Some term.TermAccessionAndOntobeeUrlIfShort, None, None
         | CompositeCell.Term (term) -> term.Name, None, None, None
         | CompositeCell.Unitized (text,unit) ->
-            let unitName, unitAccession = if unit.isEmpty() then None, None else unit.Name, Some unit.TermAccessionAndOntobeeUrlIfShort
-            (if text = "" then None else Some text),
+            let unitName, unitAccession = if unit.isEmpty() then None, None else unit.Name, unit.TermAccessionAndOntobeeUrlIfShort |> Option.fromValueWithDefault ""
+            Option.fromValueWithDefault "" text,
             None,
             unitName,
             unitAccession          
