@@ -261,12 +261,13 @@ type LDPropertyValue =
         fv.AdditionalType <- ResizeArray ["FactorValue"]
         fv
 
-    static member createFragmentDescriptor(fileName, ?value, ?id, ?propertyID, ?unitCode, ?unitText, ?valueReference, ?measurementMethod, ?description, ?alternateName, ?disambiguatingDescriptions, ?subjectOf, ?context : LDContext) =
+    static member createFragmentDescriptor(fileName, ?value, ?id, ?unitCode, ?unitText, ?valueReference, ?measurementMethod, ?description, ?alternateName, ?disambiguatingDescriptions, ?subjectOf, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LDPropertyValue.genIdFragmentDescriptor(fileName)
         let name = "FragmentDescriptor"
-        let fd = LDPropertyValue.create(name, id = id, ?value = value, ?propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
+        let propertyID = "https://github.com/nfdi4plants/ARC-specification/blob/dev/ISA-XLSX.md#datamap-table-sheets"
+        let fd = LDPropertyValue.create(name, id = id, ?value = value, propertyID = propertyID, ?unitCode = unitCode, ?unitText = unitText, ?valueReference = valueReference, ?context = context)
         //fd.AdditionalType <- ResizeArray ["FragmentDescriptor"]
         if measurementMethod.IsSome then LDPropertyValue.setMeasurementMethodAsString(fd, measurementMethod.Value, ?context = context)
         if description.IsSome then LDPropertyValue.setDescriptionAsString(fd, description.Value, ?context = context)

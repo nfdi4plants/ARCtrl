@@ -909,7 +909,7 @@ let private tests_DataContext =
         testCase "OnlyName" (fun () ->
             let dc = DataContext(name = "MyFile")
             let fd = BaseTypes.composeFragmentDescriptor(dc)
-            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.subjectOf|] "Should have only name property"
+            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.propertyID; LDPropertyValue.subjectOf|] "Should have only name property"
             let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
             Expect.equal dc dc' "Data context should match"
         )
@@ -917,7 +917,7 @@ let private tests_DataContext =
             let myUnit = OntologyAnnotation(name = "MyUnit")
             let dc = DataContext(name = "MyFile", unit = myUnit)
             let fd = BaseTypes.composeFragmentDescriptor(dc)
-            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.unitText; LDPropertyValue.subjectOf|] "Should have only name property"
+            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.propertyID; LDPropertyValue.unitText; LDPropertyValue.subjectOf|] "Should have only name property"
             let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
             Expect.equal dc dc' "Data context should match"
         )
