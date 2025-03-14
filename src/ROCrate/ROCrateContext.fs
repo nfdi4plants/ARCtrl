@@ -5554,6 +5554,7 @@ module Context =
                 "executesLabProtocol", "https://bioschemas.org/executesLabProtocol"
                 "parameterValue", "https://bioschemas.org/parameterValue"
                 "LabProcess","https://bioschemas.org/LabProcess"
+                "measurementMethod", "http://schema.org/measurementMethod"
             ]
         let c = LDContext.fromMappingSeq terms
         c

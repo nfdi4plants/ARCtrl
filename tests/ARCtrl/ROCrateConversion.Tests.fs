@@ -43,9 +43,9 @@ module Helper =
     /// Input [Source] --> Source_0 .. Source_4
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "SRSP_Source" 1)
             CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 1)
-            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "SRSP_Sample" 1)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)
@@ -55,8 +55,8 @@ module Helper =
     /// Input [Source] --> Source_0 .. Source_4
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
-            CompositeColumn.create(CompositeHeader.Output IOType.Source, createCells_FreeText "Sample" 1)
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "SROS_Source" 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Source, createCells_FreeText "SROS_Sample" 1)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)
@@ -66,12 +66,12 @@ module Helper =
     /// Input [Source] --> Source_0 .. Source_4
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 1)
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "SMR_Source" 1)
             CompositeColumn.create(CompositeHeader.Parameter oa_time, createCells_Hour 1)
             CompositeColumn.create(CompositeHeader.Characteristic oa_species, createCells_chlamy 1)
             CompositeColumn.create(CompositeHeader.Factor oa_temperature, createCells_DegreeCelsius 1)
             CompositeColumn.create(CompositeHeader.Component oa_instrumentModel, createCells_Sciex 1)
-            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 1)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "SMR_Sample" 1)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)
@@ -102,9 +102,9 @@ module Helper =
     let twoRowsSameParamValue = 
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "TRSPV_Source" 2)
             CompositeColumn.create(CompositeHeader.Parameter oa_species, createCells_chlamy 2)
-            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "TRSPV_Sample" 2)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)
@@ -113,9 +113,9 @@ module Helper =
     let twoRowsDifferentParamValue = 
         let columns = 
             [|
-            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "Source" 2)
+            CompositeColumn.create(CompositeHeader.Input IOType.Source, createCells_FreeText "TRDPV_Source" 2)
             CompositeColumn.create(CompositeHeader.Parameter oa_time, createCells_Hour 2)
-            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "Sample" 2)
+            CompositeColumn.create(CompositeHeader.Output IOType.Sample, createCells_FreeText "TRDPV_Sample" 2)
             |]
         let t = ArcTable.init(tableName1)
         t.AddColumns(columns)
@@ -145,6 +145,111 @@ module Helper =
         let sheets = create_exampleTables("My")
         sheets |> Array.iter (fun table -> assay.AddTable(table))
         assay
+
+
+    let create_dataRow (fileName : string) (row : int) =
+        let name = $"{fileName}#row={row}"
+        let format = "text/csv"
+        let selectorFormat = "MySelector"
+        Data(
+            name = name,
+            format = format,
+            selectorFormat = selectorFormat
+        )
+
+    let create_dataContextOfRow (fileName : string) (row : int) =
+        let explication = OntologyAnnotation.create(name = "MyExplication", tsr = "FO", tan = "FO:123")
+        let unit = OntologyAnnotation.create(name = "MyUnit", tsr = "UO", tan = "UO:456")
+        let objectType = OntologyAnnotation.create(name = "float", tsr = "TO", tan = "TO:987")
+        let generatedBy = "MyGeneratedBy"
+        let description = "MyDescription"
+        let label = "MyLabel"
+        let name : URI = $"{fileName}#row={row}"
+        let format = "text/csv"
+        let selectorFormat = "MySelector"
+        DataContext(
+            //id = name,
+            name = name,
+            format = format,
+            selectorFormat = selectorFormat,
+            explication = explication,
+            objectType = objectType,
+            unit = unit,
+            generatedBy = generatedBy,
+            description = description,
+            label = label
+        )
+
+    let create_assay_full () = 
+        let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+        let technologyType = OntologyAnnotation(name = "Photometry", tsr = "NCIT", tan = "NCIT:C65109")
+        let technologyPlatform = OntologyAnnotation(name = "Infinite M200 plate reader (Tecan)", tsr = "DPBO", tan = "DPBO:0000116")
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let table2 = ArcTable.init("Table2")
+        table2.Headers <- twoRowsDifferentParamValue.Headers
+        table2.Values <- twoRowsDifferentParamValue.Values
+        let p =
+            ArcAssay(
+                identifier = "My Assay",
+                measurementType = measurementType,
+                technologyType = technologyType,
+                technologyPlatform = technologyPlatform,
+                performers = ResizeArray [person],
+                tables = ResizeArray [singleRowMixedValues; table2]
+            )
+        p
+
+    let create_study_full ()  =
+        let publication =
+            let authors = "Lukas Weil, John Doe"
+            let comment = Comment("MyCommentKey","MyCommentValue")
+            let commentOnlyKey = Comment("MyEmptyKey")
+            let status = OntologyAnnotation(name = "Published", tsr = "SO", tan = "SO:123")
+            ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let comment = Comment("MyCommentKey","MyCommentValue")
+        let table2 = ArcTable.init("Table2")
+        table2.Headers <- twoRowsDifferentParamValue.Headers
+        table2.Values <- twoRowsDifferentParamValue.Values
+        let p = ArcStudy(
+            identifier = "My Study",
+            title = "My Best Study",
+            description = "My Description is very good and such",
+            publicReleaseDate = DateTime.toString System.DateTime.Now,
+            submissionDate = DateTime.toString System.DateTime.Now,
+            publications = ResizeArray [publication],
+            contacts = ResizeArray [person],
+            tables = ResizeArray [singleRowMixedValues; table2],
+            comments = ResizeArray [comment]
+            )
+        p
+
+    let create_investigation_toplevel() =
+        let publication =
+            let authors = "Lukas Weil, John Doe"
+            let comment = Comment("MyCommentKey","MyCommentValue")
+            let commentOnlyKey = Comment("MyEmptyKey")
+            let status = OntologyAnnotation(name = "Published", tsr = "SO", tan = "SO:123")
+            ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
+        let person =
+            let role = OntologyAnnotation(name = "Resarcher", tsr = "PO", tan = "PO:123")
+            ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
+        let comment = Comment("MyCommentKey","MyCommentValue")
+        let p = ArcInvestigation(
+            identifier = "My Investigation",
+            title = "My Best Investigation",
+            description = "My Description is very good and such",
+            publicReleaseDate = DateTime.toString System.DateTime.Now,
+            submissionDate = DateTime.toString System.DateTime.Now,
+            publications = ResizeArray [publication],
+            contacts = ResizeArray [person],
+            comments = ResizeArray [comment]
+            )
+        p
 
 open Helper
 
@@ -197,7 +302,7 @@ let private tests_ProcessInput =
     
             let header',cell' = BaseTypes.decomposeProcessInput input
             Expect.equal header header' "Header should match"
-            data.ID <- Some input.Id
+            //data.ID <- Some input.Id
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Data_Freetext" (fun () ->
@@ -210,7 +315,7 @@ let private tests_ProcessInput =
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessInput input
-            let expectedCell = CompositeCell.createData (Data (id = input.Id, name = "MyData"))
+            let expectedCell = CompositeCell.createData (Data ((*id = input.Id, *)name = "MyData"))
             Expect.equal header header' "Header should match"
             Expect.equal expectedCell cell' "Cell should match"
         )
@@ -271,7 +376,7 @@ let private tests_ProcessOutput =
     
             let header',cell' = BaseTypes.decomposeProcessOutput output
             Expect.equal header header' "Header should match"
-            data.ID <- Some output.Id
+            //data.ID <- Some output.Id
             Expect.equal cell cell' "Cell should match"
         )
         testCase "Data_Freetext" (fun () ->
@@ -284,7 +389,7 @@ let private tests_ProcessOutput =
             Expect.equal name "MyData" "Name should match"
     
             let header',cell' = BaseTypes.decomposeProcessOutput output
-            let expectedCell = CompositeCell.createData (Data (id = output.Id, name = "MyData"))
+            let expectedCell = CompositeCell.createData (Data ((*id = output.Id, *)name = "MyData"))
             Expect.equal header header' "Header should match"
             Expect.equal expectedCell cell' "Cell should match"
         )
@@ -334,7 +439,7 @@ let private tests_PropertyValue =
             let propertyID = Expect.wantSome (LDPropertyValue.tryGetPropertyIDAsString pv) "Should have property ID"
             Expect.equal propertyID oa_species.TermAccessionOntobeeUrl "Property ID should match"
 
-            let valueReference = Expect.wantSome (LDPropertyValue.tryGetValueReference pv) "Should have value reference"
+            let valueReference = Expect.wantSome (LDPropertyValue.tryGetValueReferenceAsString pv) "Should have value reference"
             Expect.equal valueReference oa_chlamy.TermAccessionOntobeeUrl "Value reference should match"
 
             let header',cell' = BaseTypes.decomposeCharacteristicValue pv
@@ -417,7 +522,7 @@ let private tests_PropertyValue =
             Expect.equal value "MyComponentValue" "Value should match"
 
             Expect.isNone (LDPropertyValue.tryGetPropertyIDAsString pv) "Should not have property ID"
-            Expect.isNone (LDPropertyValue.tryGetValueReference pv) "Should not have value reference"
+            Expect.isNone (LDPropertyValue.tryGetValueReferenceAsString pv) "Should not have value reference"
             Expect.isNone (LDPropertyValue.tryGetUnitTextAsString pv) "Should not have unit"
             Expect.isNone (LDPropertyValue.tryGetUnitCodeAsString pv) "Should not have unit code"
 
@@ -441,8 +546,8 @@ let private tests_ArcTableProcess =
                     valueReference = oa_chlamy.TermAccessionOntobeeUrl
                 )
             ColumnIndex.setIndex expectedPPV 0
-            let expectedInput = LDSample.createSource(name = "Source_0")
-            let expectedOutput = LDSample.createSample(name = "Sample_0")
+            let expectedInput = LDSample.createSource(name = "SRSP_Source_0")
+            let expectedOutput = LDSample.createSample(name = "SRSP_Sample_0")
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
             let paramValues = LDLabProcess.getParameterValues(p)
@@ -467,8 +572,8 @@ let private tests_ArcTableProcess =
         testCase "SingleRowOutputSource GetProcesses" (fun () ->
             let t = singleRowOutputSource.Copy()
             let processes = t.GetProcesses()           
-            let expectedInput = LDSample.createSource(name = "Source_0")
-            let expectedOutput = LDSample.createSample(name = "Sample_0")
+            let expectedInput = LDSample.createSource(name = "SROS_Source_0")
+            let expectedOutput = LDSample.createSample(name = "SROS_Sample_0")
             Expect.equal processes.Length 1 "Should have 1 process"
             let p = processes.[0]
             let inputs = LDLabProcess.getObjects(p)
@@ -521,8 +626,8 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses(tableName1,processes)
             let expectedTable = t
-            let expectedInputData = CompositeCell.Data(Data(id = "RData_0", name = "RData_0"))
-            let expectedOutputData = CompositeCell.Data(Data(id = "DData_0", name = "DData_0"))
+            let expectedInputData = CompositeCell.Data(Data((*id = "RData_0", *)name = "RData_0"))
+            let expectedOutputData = CompositeCell.Data(Data((*id = "DData_0", *)name = "DData_0"))
             expectedTable.SetCellAt(0,0,expectedInputData)
             expectedTable.SetCellAt(t.ColumnCount - 1,0,expectedOutputData)
             Expect.arcTableEqual table expectedTable "Table should be equal"
@@ -548,8 +653,8 @@ let private tests_ArcTableProcess =
             let processes = t.GetProcesses()
             let table = ArcTable.fromProcesses(tableName1,processes)
             let expectedTable = t
-            let expectedInputData = CompositeCell.Data(Data(id = "RData_0", name = "RData_0"))
-            let expectedOutputData = CompositeCell.Data(Data(id = "DData_0", name = "DData_0"))
+            let expectedInputData = CompositeCell.Data(Data((*id = "RData_0", *)name = "RData_0"))
+            let expectedOutputData = CompositeCell.Data(Data((*id = "DData_0", *)name = "DData_0"))
             expectedTable.SetCellAt(0,0,expectedInputData)
             expectedTable.SetCellAt(t.ColumnCount - 1,0,expectedOutputData)
             Expect.arcTableEqual table expectedTable "Table should be equal"
@@ -788,6 +893,67 @@ let private tests_ArcTableProcess =
             Expect.arcTableEqual table expectedTable "Table should be equal"
         )
 
+    ]
+
+let private tests_DataContext =
+    testList "DataContext" [
+        testCase "Empty" (fun () ->
+            let dc = DataContext()
+            let f () = 
+                let fd = BaseTypes.composeFragmentDescriptor(dc)
+                let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+                ()
+            Expect.throws f "Should throw"
+            //Expect.equal dc dc' "Data context should match"
+        )
+        testCase "OnlyName" (fun () ->
+            let dc = DataContext(name = "MyFile")
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.propertyID; LDPropertyValue.subjectOf|] "Should have only name property"
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc dc' "Data context should match"
+        )
+        testCase "UnitOnlyName" (fun () ->
+            let myUnit = OntologyAnnotation(name = "MyUnit")
+            let dc = DataContext(name = "MyFile", unit = myUnit)
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            Expect.sequenceEqual (fd.GetPropertyNames()) [|LDPropertyValue.name; LDPropertyValue.propertyID; LDPropertyValue.unitText; LDPropertyValue.subjectOf|] "Should have only name property"
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc dc' "Data context should match"
+        )
+        testCase "Full" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let fd = BaseTypes.composeFragmentDescriptor(dc)
+            let dc' = BaseTypes.decomposeFragmentDescriptor(fd)
+            Expect.equal dc dc' "Data context should match"
+
+
+        )
+    ]
+
+let private tests_DataMap =
+    testList "DataMap" [
+        testCase "Empty" (fun () ->
+            let dm = DataMap.init()
+            let fds = DatamapConversion.composeFragmentDescriptors dm
+            let dm' = DatamapConversion.decomposeFragmentDescriptors fds
+            Expect.equal dm dm' "Data map should match"
+        )
+        testCase "SingleEntry" (fun () ->
+            let dc = create_dataContextOfRow "MyFile" 1
+            let dm = DataMap(ResizeArray[dc])
+            let fds = DatamapConversion.composeFragmentDescriptors dm
+            let dm' = DatamapConversion.decomposeFragmentDescriptors fds
+            Expect.equal dm dm' "Data map should match"
+        )
+        testCase "MultipleEntries" (fun () ->
+            let dc1 = create_dataContextOfRow "MyFile" 1
+            let dc2 = create_dataContextOfRow "MyFile" 2
+            let dm = DataMap(ResizeArray[dc1;dc2])
+            let fds = DatamapConversion.composeFragmentDescriptors dm
+            let dm' = DatamapConversion.decomposeFragmentDescriptors fds
+            Expect.equal dm dm' "Data map should match"
+        )
     ]
 
 let private tests_ArcTablesProcessSeq = 
@@ -1233,28 +1399,174 @@ let tests_Assay =
             Expect.equal p' p "Assay should match"
         )
         testCase "Full_FromScaffold" (fun () ->
-            let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
-            let technologyType = OntologyAnnotation(name = "Photometry", tsr = "NCIT", tan = "NCIT:C65109")
-            let technologyPlatform = OntologyAnnotation(name = "Infinite M200 plate reader (Tecan)", tsr = "DPBO", tan = "DPBO:0000116")
-            let person =
-                let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
-                ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let table2 = ArcTable.init("Table2")
-            table2.Headers <- Helper.twoRowsDifferentParamValue.Headers
-            table2.Values <- Helper.twoRowsDifferentParamValue.Values
-            let p =
-                ArcAssay(
-                    identifier = "My Assay",
-                    measurementType = measurementType,
-                    technologyType = technologyType,
-                    technologyPlatform = technologyPlatform,
-                    performers = ResizeArray [person],
-                    tables = ResizeArray [Helper.singleRowMixedValues; table2]
-                )
-            let ro_Assay = AssayConversion.composeAssay p
-            let p' = AssayConversion.decomposeAssay ro_Assay
-            Expect.equal p' p "Assay should match"
+            let assay = create_assay_full()
+            let ro_Assay = AssayConversion.composeAssay assay
+            let assay' = AssayConversion.decomposeAssay ro_Assay
+            Expect.equal assay' assay "Assay should match"
         )
+        testCase "Full_FromScaffold_Flattened" (fun () ->
+            let assay = create_assay_full()
+            let ro_Assay = AssayConversion.composeAssay assay
+            let graph = ro_Assay.Flatten()
+            // Test that flattened worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let measurementTypeRef = Expect.wantSome (ro_Assay.TryGetPropertyAsSingleton(LDDataset.variableMeasured)) "Assay should still have measurementType"
+            Expect.isTrue (measurementTypeRef :? LDRef) "Assay should be flattened correctly"
+            //
+            let assay' = AssayConversion.decomposeAssay(ro_Assay, graph = graph)
+            Expect.equal assay' assay "Assay should match"
+        )
+        testList "WithDatamap" [
+            testCase "MeasurementType" (fun () ->
+                let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let assay = ArcAssay("My Assay", measurementType = measurementType, datamap = dm)
+                let ro_Assay = AssayConversion.composeAssay assay
+                let assay' = AssayConversion.decomposeAssay ro_Assay
+                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let measurementType' = Expect.wantSome assay'.MeasurementType "Assay should have a measurement type"
+                Expect.equal measurementType measurementType' "Measurement type should match"
+                Expect.equal assay' assay "Assay should match"
+            )
+            testCase "MeasurementType_Flattened" (fun () ->
+                let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let assay = ArcAssay("My Assay", measurementType = measurementType, datamap = dm)
+                let ro_Assay = AssayConversion.composeAssay assay
+                let graph = ro_Assay.Flatten()
+                // Test that flattened worked
+                let variableMeasureds = ro_Assay.GetPropertyValues(LDDataset.variableMeasured)
+                Expect.hasLength variableMeasureds 3 "Assay should have three variableMeasureds"
+                let measurementTypeRef = variableMeasureds.[2]
+                Expect.isTrue (measurementTypeRef :? LDRef) "Assay should be flattened correctly"
+                //
+                let assay' = AssayConversion.decomposeAssay(ro_Assay, graph = graph)
+                Expect.equal assay' assay "Assay should match"
+            )
+            testCase "ContextForFiles" (fun () ->
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
+                let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
+                let assay = ArcAssay("My Assay", datamap = dm)
+                let table = assay.InitTable("Table")
+                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                let ro_Assay = AssayConversion.composeAssay assay
+                let assay' = AssayConversion.decomposeAssay ro_Assay
+                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let table' = Expect.wantSome (Seq.tryExactlyOne assay'.Tables) "Assay should have a table"
+                Expect.arcTableEqual table table' "Table should match"
+                Expect.equal assay' assay "Assay should match"
+            )
+            testCase "ContextForFiles_Flattened" (fun () ->
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
+                let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
+                let assay = ArcAssay("My Assay", datamap = dm)
+                let table = assay.InitTable("Table")
+                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                let ro_Assay = AssayConversion.composeAssay assay
+                let graph = ro_Assay.Flatten()
+                // Test that flattened worked
+                let dataFiles = ro_Assay.GetPropertyValues(LDDataset.hasPart)
+                let dataFile = Expect.wantSome (Seq.tryExactlyOne dataFiles) "Assay should have one data file"
+                Expect.isTrue (dataFile :? LDRef) "Data file should be flattened correctly"
+                let dataContext = ro_Assay.GetPropertyValues(LDDataset.variableMeasured)
+                Expect.hasLength dataContext 2 "Assay should have two data contexts"
+                let dataContextRef = dataContext.[1]
+                Expect.isTrue (dataContextRef :? LDRef) "Data context should be flattened correctly"
+                //
+                let assay' = AssayConversion.decomposeAssay(ro_Assay, graph = graph)
+                let dm' = Expect.wantSome assay'.DataMap "Assay should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let table' = Expect.wantSome (Seq.tryExactlyOne assay'.Tables) "Assay should have a table"
+                Expect.arcTableEqual table table' "Table should match"
+                Expect.equal assay' assay "Assay should match"
+            )
+        ]
+    ]
+
+let tests_Study =
+    testList "Study" [
+        testCase "Empty_FromScaffold" (fun () ->
+            let p = ArcStudy.init("My Study")
+            let ro_Study = StudyConversion.composeStudy p
+            let p' = StudyConversion.decomposeStudy ro_Study
+            Expect.equal p' p "Study should match"
+        )
+        testCase "Full_FromScaffold" (fun () ->
+            let study = create_study_full ()
+            let ro_Study = StudyConversion.composeStudy study
+            let study' = StudyConversion.decomposeStudy ro_Study
+            Expect.equal study' study "Study should match"
+        )
+        testCase "Full_FromScaffold_Flattened" (fun () ->
+            let study = create_study_full ()
+            let ro_Study = StudyConversion.composeStudy study
+            let graph = ro_Study.Flatten()
+            // Test that flattened worked
+            Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
+            let publication = Expect.wantSome (ro_Study.TryGetPropertyAsSingleton(LDDataset.citation)) "Study should still have Publication"
+            Expect.isTrue (publication :? LDRef) "Study should be flattened correctly"
+            //
+            let study' = StudyConversion.decomposeStudy(ro_Study, graph = graph)
+            Expect.equal study' study "Study should match"
+        )
+        testList "WithDatamap" [            
+            testCase "ContextForFiles" (fun () ->
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
+                let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
+                let study = ArcStudy("My Study", datamap = dm)
+                let table = study.InitTable("Table")
+                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                let ro_Study = StudyConversion.composeStudy study
+                let study' = StudyConversion.decomposeStudy ro_Study
+                let dm' = Expect.wantSome study'.DataMap "Study should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let table' = Expect.wantSome (Seq.tryExactlyOne study'.Tables) "Study should have a table"
+                Expect.arcTableEqual table table' "Table should match"
+                Expect.equal study' study "Study should match"
+            )
+            testCase "ContextForFiles_Flattened" (fun () ->
+                let dc1 = create_dataContextOfRow "MyFile" 1
+                let dc2 = create_dataContextOfRow "MyFile" 2
+                let dm = DataMap(ResizeArray[dc1;dc2])
+                let input1 = CompositeCell.createData(create_dataRow "MyFile" 1)
+                let input2 = CompositeCell.createData(create_dataRow "MyFile" 2)
+                let study = ArcStudy("My Study", datamap = dm)
+                let table = study.InitTable("Table")
+                table.AddColumn(CompositeHeader.Input IOType.Data, [|input1; input2|])
+                let ro_Study = StudyConversion.composeStudy study
+                let graph = ro_Study.Flatten()
+                // Test that flattened worked
+                let dataFiles = ro_Study.GetPropertyValues(LDDataset.hasPart)
+                let dataFile = Expect.wantSome (Seq.tryExactlyOne dataFiles) "Study should have one data file"
+                Expect.isTrue (dataFile :? LDRef) "Data file should be flattened correctly"
+                let dataContext = ro_Study.GetPropertyValues(LDDataset.variableMeasured)
+                Expect.hasLength dataContext 2 "Study should have two data contexts"
+                let dataContextRef = dataContext.[1]
+                Expect.isTrue (dataContextRef :? LDRef) "Data context should be flattened correctly"
+                //
+                let study' = StudyConversion.decomposeStudy(ro_Study, graph = graph)
+                let dm' = Expect.wantSome study'.DataMap "Study should have a data map"
+                Expect.equal dm dm' "Data map should match"
+                let table' = Expect.wantSome (Seq.tryExactlyOne study'.Tables) "Study should have a table"
+                Expect.arcTableEqual table table' "Table should match"
+                Expect.equal study' study "Study should match"
+            )
+        ]
     ]
 
 
@@ -1272,60 +1584,22 @@ let tests_Investigation =
             Expect.equal p' p "Investigation should match"
         )
         testCase "TopLevel_FromScaffold" (fun () ->
-            let publication =
-                let authors = "Lukas Weil, John Doe"
-                let comment = Comment("MyCommentKey","MyCommentValue")
-                let commentOnlyKey = Comment("MyEmptyKey")
-                let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:123")
-                ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
-            let person =
-                let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
-                ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let comment = Comment("MyCommentKey","MyCommentValue")
-            let p = ArcInvestigation(
-                identifier = "My Investigation",
-                title = "My Best Investigation",
-                description = "My Description is very good and such",
-                publicReleaseDate = DateTime.toString System.DateTime.Now,
-                submissionDate = DateTime.toString System.DateTime.Now,
-                publications = ResizeArray [publication],
-                contacts = ResizeArray [person],
-                comments = ResizeArray [comment]
-                )
-            let ro_Investigation = InvestigationConversion.composeInvestigation p
-            let p' = InvestigationConversion.decomposeInvestigation ro_Investigation
-            Expect.equal p' p "Investigation should match"
+            let investigation = create_investigation_toplevel()
+            let ro_Investigation = InvestigationConversion.composeInvestigation investigation
+            let investigation' = InvestigationConversion.decomposeInvestigation ro_Investigation
+            Expect.equal investigation' investigation "Investigation should match"
         )
         testCase "TopLevel_FromScaffold_Flattened" (fun () ->
-            let publication =
-                let authors = "Lukas Weil, John Doe"
-                let comment = Comment("MyCommentKey","MyCommentValue")
-                let commentOnlyKey = Comment("MyEmptyKey")
-                let status = OntologyAnnotation(name = "Published", tsr = "oo", tan = "oo:456")
-                ARCtrl.Publication.create(title = "My Paper", doi = "10.1234/5678", authors = authors, status = status, comments = ResizeArray [comment; commentOnlyKey])
-            let person =
-                let role = OntologyAnnotation(name = "Resarcher", tsr = "oo", tan = "oo:123")
-                ARCtrl.Person(orcid = "0000-0002-1825-0097", firstName = "John", lastName = "Doe", midInitials = "BD", email = "jd@email.com", phone = "123", fax = "456", address = "123 Main St", affiliation = "My University",roles = ResizeArray [role])
-            let comment = Comment("MyCommentKey2","MyCommentValue2")
-            let p = ArcInvestigation(
-                identifier = "My Investigation",
-                title = "My Best Investigation",
-                description = "My Description is very good and such",
-                publicReleaseDate = DateTime.toString System.DateTime.Now,
-                submissionDate = DateTime.toString System.DateTime.Now,
-                publications = ResizeArray [publication],
-                contacts = ResizeArray [person],
-                comments = ResizeArray [comment]
-                )
-            let ro_Investigation = InvestigationConversion.composeInvestigation p
+            let investigation = create_investigation_toplevel()
+            let ro_Investigation = InvestigationConversion.composeInvestigation investigation
             let graph = ro_Investigation.Flatten()
             // Test that flatten worked
             Expect.isTrue (graph.Nodes.Count > 0) "Graph should have properties"
             let personRef = Expect.wantSome (ro_Investigation.TryGetPropertyAsSingleton(LDDataset.creator)) "Investigation should still have creator"
             Expect.isTrue (personRef :? LDRef) "Investigation should be flattened correctly"
             //
-            let p' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
-            Expect.equal p' p "Investigation should match"
+            let investigation' = InvestigationConversion.decomposeInvestigation(ro_Investigation, graph = graph)
+            Expect.equal investigation' investigation "Investigation should match"
         )
         testCase "AssayAndStudy_FromScaffold" (fun () ->
             let assay = ArcAssay.init("My Assay")
@@ -1358,6 +1632,9 @@ let main =
         tests_Person
         tests_Publication
         tests_GetDataFilesFromProcesses
+        tests_DataContext
+        tests_DataMap
         tests_Assay
+        tests_Study
         tests_Investigation
     ]
