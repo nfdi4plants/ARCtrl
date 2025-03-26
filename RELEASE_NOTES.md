@@ -1,6 +1,22 @@
+### 2.5.0+b9de3c1 (Released 2025-3-26)
+RO-Crate rework (https://github.com/nfdi4plants/ARCtrl/pull/496)
+
+* Additions:
+    * [[#b9de3c1](https://github.com/nfdi4plants/ARCtrl/commit/b9de3c12d2fb5bb1159f80480c94ee87fe71b6ac)] Merge pull request #502 from nfdi4plants/datamap_rocrate
+    * [[#38e512b](https://github.com/nfdi4plants/ARCtrl/commit/38e512b735616cb58d597cd02eb889baa068e8f0)] make file paths from datamap absolute in RO-Crate
+    * [[#d6f802d](https://github.com/nfdi4plants/ARCtrl/commit/d6f802dbad4efb969b651027ba513c80db1ad236)] start working on Datamap RO-Crate parser
+    * [[#b3d1537](https://github.com/nfdi4plants/ARCtrl/commit/b3d1537b8bca5c3816e7870c07ada56e7b500273)] Merge pull request #496 from nfdi4plants/ld-object-context
+    * [[#0d82e3c](https://github.com/nfdi4plants/ARCtrl/commit/0d82e3c38489aecb6b2808670aa41df396e566c4)] added doi and pubmed helper functions to LDPropertyValue and LDScholarlyArticle converters
+    * [[#4beb8cd](https://github.com/nfdi4plants/ARCtrl/commit/4beb8cdd47d8ed4edfc395b481895647ad05d6ab)] bump to 2.4.0
+* Bugfixes:
+    * [[#589a332](https://github.com/nfdi4plants/ARCtrl/commit/589a3322b6fdc078ba41b46111e4dc87cf3c8003)] add fixed propertyID to RO-Crate Fragment Descriptor
+    * [[#19774ab](https://github.com/nfdi4plants/ARCtrl/commit/19774abd54fafbf443674a72374dc42f2ca6b156)] small fixes and adjustments for ro-crate export
+    * [[#7c35f44](https://github.com/nfdi4plants/ARCtrl/commit/7c35f442e64879f00d108580ee7865ebf4cd3f11)] update ro-crate testfile with datamap and small fix
+    * [[#20459ed](https://github.com/nfdi4plants/ARCtrl/commit/20459ed3c365e6f1307e8c1417e6c08e36e6a565)] add ro_crate conversion tests and fixes
+    * [[#60f0ad2](https://github.com/nfdi4plants/ARCtrl/commit/60f0ad2195d13826ddd79e48424cb06aa1dcb958)] add tests and fixes for datamap RO-Crate conversion
+    * [[#f997440](https://github.com/nfdi4plants/ARCtrl/commit/f997440c7ed560ff598e8f7953a8d4cdd8f17eff)] reinclude isaprofile types and prefix static class names with LD
+
 ### 2.4.0+4a309c7 (Released 2025-3-7)
-
-
 * Additions:
     * [[#d2e1f99](https://github.com/nfdi4plants/ARCtrl/commit/d2e1f99e2652583396491664921f3610e36830c5)] add ArcTable related helper functions
     * [[#c1a34d6](https://github.com/nfdi4plants/ARCtrl/commit/c1a34d64566ada818ed7ba1d8a9473835eaeb203)] Update documentation link in README.md
