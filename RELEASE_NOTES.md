@@ -1,6 +1,9 @@
-### 2.5.0+b9de3c1 (Released 2025-3-26)
-RO-Crate rework (https://github.com/nfdi4plants/ARCtrl/pull/496)
+### 2.5.1+9f76bf1 (Released 2025-3-27)
+* Bugfixes:
+    * [[#9f76bf1](https://github.com/nfdi4plants/ARCtrl/commit/9f76bf18eb707afc0428eb928259656936a544e0)] small fix to assay jsonld id
 
+### 2.5.0+b9de3c1 (Released 2025-3-26)
+    * RO-Crate rework (https://github.com/nfdi4plants/ARCtrl/pull/496)
 * Additions:
     * [[#b9de3c1](https://github.com/nfdi4plants/ARCtrl/commit/b9de3c12d2fb5bb1159f80480c94ee87fe71b6ac)] Merge pull request #502 from nfdi4plants/datamap_rocrate
     * [[#38e512b](https://github.com/nfdi4plants/ARCtrl/commit/38e512b735616cb58d597cd02eb889baa068e8f0)] make file paths from datamap absolute in RO-Crate
