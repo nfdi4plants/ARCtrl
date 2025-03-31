@@ -20,6 +20,7 @@ let private simpleTable =
                         ObjectType.appendFloatColumn        1
                         Description.appendDescriptionColumn 1
                         GeneratedBy.appendGeneratedByColumn 1
+                        Label.appendLabelColumn             1
 
                     ]
         testCase "Read" (fun () -> 
@@ -50,10 +51,12 @@ let private simpleTable =
             let generatedBy = Expect.wantSome dc.GeneratedBy "GeneratedBy was not set"
             Expect.equal generatedBy GeneratedBy.generatedByValue "GeneratedBy did not match"
 
+            let label = Expect.wantSome dc.Label "Label was not set"
+            Expect.equal label Label.labelValue "Label did not match"
+
             Expect.isEmpty dc.Comments "Comments should be empty"
         )
-        testCase "Write" (fun () -> 
-            
+        testCase "Write" (fun () ->            
             let table = DataMapTable.tryFromFsWorksheet ws        
             Expect.isSome table "Table was not created"
             let out = DataMapTable.toFsWorksheet table.Value
@@ -74,6 +77,7 @@ let private valuelessTable =
                         ObjectType.appendFloatColumn        0
                         Description.appendDescriptionColumn 0
                         GeneratedBy.appendGeneratedByColumn 0
+                        Label.appendLabelColumn             0
                     ]
         testCase "Read" (fun () -> 
                     
@@ -123,6 +127,7 @@ let private simpleFile =
                         ObjectType.appendFloatColumn        1
                         Description.appendDescriptionColumn 1
                         GeneratedBy.appendGeneratedByColumn 1
+                        Label.appendLabelColumn             1
 
                     ]
         wb.AddWorksheet ws
@@ -150,6 +155,9 @@ let private simpleFile =
 
             let generatedBy = Expect.wantSome dc.GeneratedBy "GeneratedBy was not set"
             Expect.equal generatedBy GeneratedBy.generatedByValue "GeneratedBy did not match"
+
+            let label = Expect.wantSome dc.Label "Label was not set"
+            Expect.equal label Label.labelValue "Label did not match"
 
             Expect.isEmpty dc.Comments "Comments should be empty"
         )

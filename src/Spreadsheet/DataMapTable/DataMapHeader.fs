@@ -96,6 +96,17 @@ module ActivePattern =
             |> Some
         | _ -> None
 
+    let (|Label|_|) (cells : FsCell list) =
+        let cellValues = cells |> List.map (fun c -> c.ValueAsString())
+        match cellValues with
+        | [DataMapAux.labelShortHand] -> 
+            (fun (dc : DataContext) (cells : FsCell list) -> 
+                dc.Label <- freeTextFromFsCells cells |> Option.fromValueWithDefault ""
+                dc
+            )
+            |> Some
+        | _ -> None
+
     let (|Data|_|) (cells : FsCell list) =
         let cellValues = cells |> List.map (fun c -> c.ValueAsString())
         match cellValues with
@@ -148,7 +159,8 @@ let fromFsCells (cells : FsCell list) : DataContext -> FsCell list -> DataContex
     | Unit r 
     | ObjectType r 
     | Description r 
-    | GeneratedBy r 
+    | GeneratedBy r
+    | Label r
     | Data r 
     | Comment r 
     | Freetext r -> 
@@ -182,6 +194,9 @@ let toFsCells (commentKeys : string list) : list<FsCell> =
         ]
         yield! [
             FsCell(DataMapAux.generatedByShortHand)
+        ]
+        yield! [
+            FsCell(DataMapAux.labelShortHand)
         ]
         for ck in commentKeys do
             yield FsCell(ck)
