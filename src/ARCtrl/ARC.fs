@@ -86,6 +86,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         with get() = _fs
         and set(fs) = _fs <- fs
 
+    static member fromArcInvestigation (isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem) = 
+        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?cwl = cwl, ?fs = fs) 
+
     member this.TryWriteAsync(arcPath) =
         this.GetWriteContracts()
         |> fullFillContractBatchAsync arcPath
@@ -171,7 +174,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         |> fullFillContractBatchAsync arcPath
 
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
-        if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier then
+        if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier |> not then
             failwith "ARC does not contain study with given name"
         this.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
@@ -423,6 +426,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         this.Contacts <- investigation.Contacts
         this.Comments <- investigation.Comments
         this.Remarks <- investigation.Remarks
+        this.RegisteredStudyIdentifiers <- investigation.RegisteredStudyIdentifiers
 
         /// get studies from xlsx
         let studies = ARCAux.getArcStudiesFromContracts contracts |> Array.map fst
@@ -491,7 +495,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     /// If datamapFile is set to true, a write contract for the datamap file will be included for each study and assay.
     /// </summary>
     /// <param name="datamapFile">Default: false.</param>
-    member this.GetWriteContracts () =
+    member this.GetWriteContracts (?skipUpdateFS : bool) =
+        if not (defaultArg skipUpdateFS false) then
+            this.UpdateFileSystem()
         //let datamapFile = defaultArg datamapFile false
         /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
@@ -544,11 +550,11 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     /// 
     /// ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
-    member this.GetUpdateContracts () =
+    member this.GetUpdateContracts (?skipUpdateFS : bool) =
         // Map containing the DTOTypes and objects for the ISA objects.
         if this.StaticHash = 0 then
             this.StaticHash <- this.GetLightHashCode()
-            this.GetWriteContracts()
+            this.GetWriteContracts(?skipUpdateFS = skipUpdateFS)
         else
             [|
                 // Get Investigation contract
@@ -609,23 +615,50 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     static member getCloneContract(remoteUrl : string,?merge : bool ,?branch : string,?token : string*string,?nolfs : bool) =
         Contract.Git.Clone.createCloneContract(remoteUrl,?merge = merge,?branch = branch,?token = token,?nolfs = nolfs)
 
-    member this.Copy() = 
-        let isaCopy = _isa |> Option.map (fun i -> i.Copy())
+    member this.Copy() =
+        let nextAssays = ResizeArray()
+        let nextStudies = ResizeArray()
+        for assay in this.Assays do
+            let copy = assay.Copy()
+            nextAssays.Add(copy)
+        for study in this.Studies do
+            let copy = study.Copy()
+            nextStudies.Add(copy)
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextRemarks = this.Remarks |> ResizeArray.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
+        let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
+        let nextOntologySourceReferences = this.OntologySourceReferences |> ResizeArray.map (fun c -> c.Copy())
+        let nextStudyIdentifiers = ResizeArray(this.RegisteredStudyIdentifiers)
         let fsCopy = _fs.Copy()
-        new ARC(?isa = isaCopy, ?cwl = _cwl, fs = fsCopy)
-        
+        ARC(
+            this.Identifier,
+            ?title = this.Title,
+            ?description = this.Description,
+            ?submissionDate = this.SubmissionDate,
+            ?publicReleaseDate = this.PublicReleaseDate,
+            studies = nextStudies,
+            assays = nextAssays,
+            registeredStudyIdentifiers = nextStudyIdentifiers,
+            ontologySourceReferences = nextOntologySourceReferences,
+            publications = nextPublications,
+            contacts = nextContacts,
+            comments = nextComments,
+            remarks = nextRemarks,
+            ?cwl = _cwl,
+            fs = fsCopy
+        )
+
     /// <summary>
     /// Returns the FileSystemTree of the ARC with only the registered files and folders included.
     /// </summary>
     /// <param name="IgnoreHidden">Wether or not to ignore hidden files and folders starting with '.'. If true, no hidden files are included in the result. (default: true)</param>
     member this.GetRegisteredPayload(?IgnoreHidden:bool) =
 
-        let isaCopy = _isa |> Option.map (fun i -> i.Copy()) // not sure if needed, but let's be safe
+        let copy = this.Copy()
 
         let registeredStudies =     
-            isaCopy
-            |> Option.map (fun isa -> isa.Studies.ToArray()) // to-do: isa.RegisteredStudies
-            |> Option.defaultValue [||]
+            copy.Studies.ToArray()
         
         let registeredAssays =
             registeredStudies
@@ -725,7 +758,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         try
             let s = s.Replace("bio:additionalProperty","sdo:additionalProperty")
             let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoderDeprecated s
-            ARC(isa = isa)
+            ARC.fromArcInvestigation(isa = isa)
         with
         | ex -> 
             failwithf "Could not parse deprecated ARC-RO-Crate metadata: \n%s" ex.Message
@@ -733,14 +766,14 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     static member fromROCrateJsonString (s:string) =
         try 
             let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
-            ARC(isa = isa)
+            ARC.fromArcInvestigation(isa = isa)
         with
         | ex -> 
             failwithf "Could not parse ARC-RO-Crate metadata: \n%s" ex.Message
 
     member this.ToROCrateJsonString(?spaces) =
         this.MakeDataFilesAbsolute()
-        ARCtrl.Json.ARC.ROCrate.encoder (Option.get _isa)
+        ARCtrl.Json.ARC.ROCrate.encoder this
         |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
 
         /// exports in json-ld format
@@ -787,6 +820,11 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     /// <param name="contract">the input contract that contains the config in it's DTO</param>
     member this.GetValidationPackagesConfigFromReadContract(contract) =
         ValidationPackagesConfig.tryFromReadContract contract
+
+    member this.ToFilePaths(?removeRoot: bool, ?skipUpdateFS : bool) =
+        if not (defaultArg skipUpdateFS false) then
+            this.UpdateFileSystem()
+        this.FileSystem.Tree.ToFilePaths(?removeRoot = removeRoot)
 
 //-Pseudo code-//
 //// Option 1
