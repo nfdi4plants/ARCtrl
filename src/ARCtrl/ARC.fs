@@ -123,7 +123,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
             failwith "ARC does not contain assay with given name"
         let assay = this.GetAssay(assayIdentifier)
         let studies = assay.StudiesRegisteredIn
-        this.RemoveAssay(assayIdentifier)
+        base.RemoveAssay(assayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let assayFolderPath = getAssayFolderPath(assayIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
@@ -143,7 +143,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         if this.AssayIdentifiers |> Seq.contains oldAssayIdentifier |> not then
             failwith "ARC does not contain assay with given name"
 
-        this.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
+        base.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldAssayFolderPath = getAssayFolderPath(oldAssayIdentifier)
         let newAssayFolderPath = getAssayFolderPath(newAssayIdentifier)
@@ -159,7 +159,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         |> fullFillContractBatchAsync arcPath
 
     member this.GetStudyRemoveContracts(studyIdentifier: string) =
-        this.RemoveStudy(studyIdentifier)
+        base.RemoveStudy(studyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let studyFolderPath = getStudyFolderPath(studyIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
@@ -176,7 +176,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
         if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier |> not then
             failwith "ARC does not contain study with given name"
-        this.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
+        base.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldStudyFolderPath = getStudyFolderPath(oldStudyIdentifier)
         let newStudyFolderPath = getStudyFolderPath(newStudyIdentifier)
