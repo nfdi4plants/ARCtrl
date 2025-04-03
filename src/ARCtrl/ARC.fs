@@ -1,4 +1,4 @@
-namespace ARCtrl
+namespace rec ARCtrl
 
 open ARCtrl.ValidationPackages
 open ARCtrl.FileSystem
@@ -64,13 +64,10 @@ module ARCAux =
             |> FileSystem.create
         fs.Union(tree)
 
-
-
-
 [<AttachMembers>]
-type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?cwl : unit, ?fs : FileSystem.FileSystem) as this =
+type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?cwl : unit, ?fs : FileSystem.FileSystem) as this =
 
-    inherit ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks) 
+    inherit ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?workflows = workflows, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks) 
 
     let mutable _cwl = cwl
     let mutable _fs = 
@@ -87,7 +84,7 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
         and set(fs) = _fs <- fs
 
     static member fromArcInvestigation (isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem) = 
-        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?cwl = cwl, ?fs = fs) 
+        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?cwl = cwl, ?fs = fs) 
 
     member this.TryWriteAsync(arcPath) =
         this.GetWriteContracts()

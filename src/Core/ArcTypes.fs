@@ -15,6 +15,9 @@ module ArcTypesAux =
         let unableToFindStudyIdentifier studyIdentifer investigationIdentifier =
             $"Error. Unable to find study with identifier '{studyIdentifer}' in investigation {investigationIdentifier}."
 
+        let unableToFindWorkflowIdentifier workflowIdentifier investigationIdentifier =
+            $"Error. Unable to find workflow with identifier '{workflowIdentifier}' in investigation {investigationIdentifier}."
+
     module SanityChecks = 
 
         let inline validateRegisteredInvestigation (investigation: ArcInvestigation option) =
@@ -54,6 +57,13 @@ module ArcTypesAux =
             match existingStudies |> Seq.tryFindIndex (fun x -> x.Identifier = study.Identifier) with
             | Some i ->
                 failwith $"Cannot create study with name {study.Identifier}, as study names must be unique and study at index {i} has the same name."
+            | None ->
+                ()
+
+        let inline validateUniqueWorkflowIdentifier (workflow: ArcWorkflow) (existingWorkflows: seq<ArcWorkflow>) =
+            match existingWorkflows |> Seq.tryFindIndex (fun x -> x.Identifier = workflow.Identifier) with
+            | Some i ->
+                failwith $"Cannot create workflow with name {workflow.Identifier}, as workflow names must be unique and workflow at index {i} has the same name."
             | None ->
                 ()
 
@@ -1099,8 +1109,294 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         |> HashCodes.boxHashArray 
         |> fun x -> x :?> int
 
+
+type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subworkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
+
+    let mutable identifier = identifier
+    let mutable investigation : ArcInvestigation option = None
+    let mutable title = title
+    let mutable description = description
+    let mutable subworkflowIdentifiers = defaultArg subworkflowIdentifiers (ResizeArray())
+    let mutable workflowType = workflowType
+    let mutable uri = uri
+    let mutable version = version
+    let mutable parameters = defaultArg parameters (ResizeArray())
+    let mutable components = defaultArg components (ResizeArray())
+    let mutable dataMap : DataMap option = datamap
+    let mutable contacts = defaultArg contacts (ResizeArray())
+    let mutable comments  = defaultArg comments (ResizeArray())
+    let mutable staticHash : int = 0
+
+    /// Must be unique in one study
+    member this.Identifier with get() = identifier and internal set(i) = identifier <- i
+    // read-online
+    member this.Investigation with get() = investigation and internal set(a) = investigation <- a
+    member this.Title with get() = title and set(t) = title <- t
+    member this.Description with get() = description and set(d) = description <- d
+    member this.SubworkflowIdentifiers with get() = subworkflowIdentifiers and set(s) = subworkflowIdentifiers <- s
+    member this.WorkflowType with get() = workflowType and set(w) = workflowType <- w
+    member this.URI with get() = uri and set(u) = uri <- u
+    member this.Version with get() = version and set(v) = version <- v
+    member this.Parameters with get() = parameters and set(p) = parameters <- p
+    member this.Components with get() = components and set(c) = components <- c
+    member this.DataMap with get() = dataMap and set(dm) = dataMap <- dm
+    member this.Contacts with get() = contacts and set(c) = contacts <- c
+    member this.Comments with get() = comments and set(c) = comments <- c
+    member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
+
+    static member init(identifier : string) = ArcWorkflow(identifier = identifier)
+    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subworkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subworkflowIdentifiers = subworkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?comments = comments)
+
+    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subworkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<Process.ProtocolParameter>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (comments : ResizeArray<Comment>) =
+        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subworkflowIdentifiers = subworkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, comments = comments)
+
+    static member FileName = ARCtrl.ArcPathHelper.RunFileName
+
+    /// Returns the count of registered subworkflow *identifiers*. This is not necessarily the same as the count of registered subworkflows, as not all identifiers correspond to an existing subworkflow.
+    member this.SubworkflowIdentifiersCount 
+        with get() = this.SubworkflowIdentifiers.Count
+
+    /// Returns the count of registered subworkflows. This is not necessarily the same as the count of registered subworkflow *identifiers*, as not all identifiers correspond to an existing subworkflow.
+    member this.SubworkflowCount 
+        with get() = this.Subworkflows.Count
+
+    /// Returns all subworkflows registered in this workflow, that correspond to an existing subworkflow object in the associated investigation.
+    member this.Subworkflows
+        with get(): ResizeArray<ArcWorkflow> = 
+            let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+            this.SubworkflowIdentifiers 
+            |> Seq.choose inv.TryGetWorkflow
+            |> ResizeArray
+
+    /// Returns all registered subworkflow identifiers that do not correspond to an existing subworkflow object in the associated investigation.
+    member this.VacantSubworkflowIdentifiers
+        with get() = 
+            let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+            this.SubworkflowIdentifiers 
+            |> Seq.filter (inv.ContainsWorkflow >> not)
+            |> ResizeArray
+
+    // - Subworkflow API - CRUD //
+    /// <summary>
+    /// Add subworkflow to investigation and register it to workflow.
+    /// </summary>
+    /// <param name="subworkflow"></param>
+    member this.AddSubworkflow(subworkflow: ArcWorkflow) =
+        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation 
+        inv.AddWorkflow(subworkflow)
+
+    static member addSubworkflow(subworkflow: ArcWorkflow) =
+        fun (workflow:ArcWorkflow) ->
+            let newWorkflow = workflow.Copy()
+            newWorkflow.AddSubworkflow(subworkflow)
+            newWorkflow
+
+    // - Subworkflow API - CRUD //
+    member this.InitSubworkflow(subworkflowIdentifier: string) =
+        let subworkflow = ArcWorkflow(subworkflowIdentifier)
+        this.AddSubworkflow(subworkflow)
+        subworkflow
+
+    static member initSubworkflow(subworkflowIdentifier: string) =
+        fun (workflow:ArcWorkflow) ->
+            let copy = workflow.Copy()
+            copy,copy.InitSubworkflow(subworkflowIdentifier)
+
+    // - Subworkflow API - CRUD //
+    member this.RegisterSubworkflow(subworkflowIdentifier: string) =
+        if Seq.contains subworkflowIdentifier this.SubworkflowIdentifiers then failwith $"Subworkflow `{subworkflowIdentifier}` is already registered on the workflow."
+        this.SubworkflowIdentifiers.Add(subworkflowIdentifier)
+
+    static member registerSubworkflow(subworkflowIdentifier: string) =
+        fun (workflow: ArcWorkflow) ->
+            let copy = workflow.Copy()
+            copy.RegisterSubworkflow(subworkflowIdentifier)
+            copy
+
+    // - Subworkflow API - CRUD //
+    member this.DeregisterSubworkflow(subworkflowIdentifier: string) =
+        this.SubworkflowIdentifiers.Remove(subworkflowIdentifier) |> ignore
+
+    static member deregisterSubworkflow(subworkflowIdentifier: string) =
+        fun (workflow: ArcWorkflow) ->
+            let copy = workflow.Copy()
+            copy.DeregisterSubworkflow(subworkflowIdentifier)
+            copy
+
+    // - Subworkflow API - CRUD //
+    member this.GetRegisteredSubworkflow(subworkflowIdentifier: string) =
+        if Seq.contains subworkflowIdentifier this.SubworkflowIdentifiers |> not then failwith $"Subworkflow `{subworkflowIdentifier}` is not registered on the workflow."
+        let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+        inv.GetWorkflow(subworkflowIdentifier)
+
+    static member getRegisteredSubworkflow(subworkflowIdentifier: string) =
+        fun (workflow: ArcWorkflow) ->
+            let copy = workflow.Copy()
+            copy.GetRegisteredSubworkflow(subworkflowIdentifier)
+
+    // - Subworkflow API - CRUD //
+    static member getRegisteredSubworkflows() =
+        fun (workflow: ArcWorkflow) ->
+            let copy = workflow.Copy()
+            copy.Subworkflows
+
+    /// <summary>
+    /// Returns ArcSubworkflows registered in workflow, or if no parent exists, initializies new ArcSubworkflow from identifier.
+    /// </summary>
+    member this.GetRegisteredSubworkflowsOrIdentifier() = 
+        // Two Options:
+        // 1. Init new subworkflows with only identifier. This is possible without ArcInvestigation parent.
+        // 2. Get full subworkflows from ArcInvestigation parent.
+        match this.Investigation with
+        | Some i -> 
+            this.SubworkflowIdentifiers
+            |> ResizeArray.map (fun identifier -> 
+                match i.TryGetWorkflow(identifier) with
+                | Some subworkflow -> subworkflow
+                | None -> ArcWorkflow.init(identifier)
+            )
+        | None ->
+            this.SubworkflowIdentifiers 
+            |> ResizeArray.map (fun identifier -> ArcWorkflow.init(identifier))
+
+
+    /// <summary>
+    /// Returns ArcSubworkflows registered in workflow, or if no parent exists, initializies new ArcSubworkflow from identifier.
+    /// </summary>
+    static member getRegisteredSubworkflowsOrIdentifier() =
+        fun (workflow: ArcWorkflow) ->
+            let copy = workflow.Copy()
+            copy.GetRegisteredSubworkflowsOrIdentifier()
+
+    /// Copies ArcStudy object without the pointer to the parent ArcInvestigation
+    ///
+    /// This copy does only contain the identifiers of the registered ArcAssays and not the actual objects.
+    ///
+    /// In order to copy the ArcAssays as well, use the Copy() method of the ArcInvestigation.
+    member this.Copy(?copyInvestigationRef: bool) : ArcWorkflow =
+        let copyInvestigationRef = defaultArg copyInvestigationRef false
+        let nextParameters = this.Parameters // |> ResizeArray.map (fun p -> p.Copy())
+        let nextComponents = this.Components // |> ResizeArray.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let workflow =
+            ArcWorkflow.make
+                this.Identifier
+                this.Title
+                this.Description
+                this.WorkflowType
+                this.URI
+                this.Version
+                this.SubworkflowIdentifiers
+                nextParameters
+                nextComponents
+                this.DataMap
+                nextContacts
+                nextComments
+        if copyInvestigationRef then workflow.Investigation <- this.Investigation
+        workflow
+
+    member this.StructurallyEquals (other: ArcWorkflow) : bool =
+        let i = this.Identifier = other.Identifier
+        let t = this.Title = other.Title
+        let d = this.Description = other.Description
+        let wft = this.WorkflowType = other.WorkflowType
+        let uri = this.URI = other.URI
+        let ver = this.Version = other.Version
+        let subwf = Seq.compare this.SubworkflowIdentifiers other.SubworkflowIdentifiers
+        let par = Seq.compare this.Parameters other.Parameters
+        let com = Seq.compare this.Components other.Components
+        let dm = this.DataMap = other.DataMap
+        let con = Seq.compare this.Contacts other.Contacts
+        let comments = Seq.compare this.Comments other.Comments
+        // Todo maybe add reflection check to prove that all members are compared?
+        [|i; t; d; wft; uri; ver; subwf; par; com; dm; con; comments|] |> Seq.forall (fun x -> x = true)
+
+
+    /// <summary>
+    /// Use this function to check if this ArcWorkflow and the input ArcWorkflow refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other ArcWorkflow to test for reference.</param>
+    member this.ReferenceEquals (other: ArcStudy) = System.Object.ReferenceEquals(this,other)
+
+    // Use this for better print debugging and better unit test output
+    override this.ToString() =
+        sprintf 
+            """ArcWorkflow {
+    Identifier = %A,
+    Title = %A,
+    Description = %A,
+    WorkflowType = %A,
+    URI = %A,
+    Version = %A,
+    SubworkflowIdentifiers = %A,
+    Parameters = %A,
+    Components = %A,
+    DataMap = %A,
+    Contacts = %A,
+    Comments = %A}"""
+            this.Identifier
+            this.Title
+            this.Description
+            this.WorkflowType
+            this.URI
+            this.Version
+            this.SubworkflowIdentifiers
+            this.Parameters
+            this.Components
+            this.DataMap
+            this.Contacts
+            this.Comments
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? ArcWorkflow as s -> 
+            this.StructurallyEquals(s)
+        | _ -> false
+
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Description
+            HashCodes.boxHashOption this.WorkflowType
+            HashCodes.boxHashOption this.URI
+            HashCodes.boxHashOption this.Version
+            HashCodes.boxHashSeq this.SubworkflowIdentifiers
+            HashCodes.boxHashSeq this.Parameters
+            HashCodes.boxHashSeq this.Components
+            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray
+        |> fun x -> x :?> int
+
+    member this.GetLightHashCode() = 
+        [|
+            box this.Identifier
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Description
+            HashCodes.boxHashOption this.WorkflowType
+            HashCodes.boxHashOption this.URI
+            HashCodes.boxHashOption this.Version
+            HashCodes.boxHashSeq this.SubworkflowIdentifiers
+            HashCodes.boxHashSeq this.Parameters
+            HashCodes.boxHashSeq this.Components
+            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashSeq this.Contacts
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray
+        |> fun x -> x :?> int
+
+
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this = 
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this = 
 
     let ontologySourceReferences = defaultArg ontologySourceReferences <| ResizeArray()
     let publications = defaultArg publications <| ResizeArray()
@@ -1115,6 +1411,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         for s in sss do 
             s.Investigation <- Some this
         sss
+    let workflows =
+        let wss = defaultArg workflows (ResizeArray())
+        for w in wss do
+            w.Investigation <- Some this
+        wss
     let registeredStudyIdentifiers = defaultArg registeredStudyIdentifiers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
     let remarks = defaultArg remarks <| ResizeArray()
@@ -1129,6 +1430,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     let mutable contacts : ResizeArray<Person> = contacts
     let mutable assays : ResizeArray<ArcAssay> = assays
     let mutable studies : ResizeArray<ArcStudy> = studies
+    let mutable workflows : ResizeArray<ArcWorkflow> = workflows
     let mutable registeredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers
     let mutable comments : ResizeArray<Comment> = comments
     let mutable remarks : ResizeArray<Remark> = remarks
@@ -1145,6 +1447,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.Contacts with get() = contacts and set(n) = contacts <- n
     member this.Assays with get() : ResizeArray<ArcAssay> = assays and set(n) = assays <- n
     member this.Studies with get() : ResizeArray<ArcStudy> = studies and set(n) = studies <- n
+    member this.Workflows with get() : ResizeArray<ArcWorkflow> = workflows and set(n) = workflows <- n
     member this.RegisteredStudyIdentifiers with get() = registeredStudyIdentifiers and set(n) = registeredStudyIdentifiers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.Remarks with get() = remarks and set(n) = remarks <- n
@@ -1700,6 +2003,86 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             let copy = i.Copy()
             copy.DeregisterStudy(studyIdentifier)
             copy
+
+    member this.WorkflowCount
+        with get() = this.Workflows.Count
+
+    member this.WorkflowIdentifiers
+        with get() = this.Workflows |> Seq.map (fun (x:ArcWorkflow) -> x.Identifier) |> Seq.toArray
+
+    member this.AddWorkflow(workflow: ArcWorkflow) =
+        ArcTypesAux.SanityChecks.validateUniqueWorkflowIdentifier workflow this.Workflows
+        workflow.Investigation <- Some this
+        this.Workflows.Add(workflow)
+
+    static member addWorkflow(workflow: ArcWorkflow) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.AddWorkflow(workflow)
+            copy
+
+    member this.InitWorkflow(workflowIdentifier: string) =
+        let workflow = ArcWorkflow.init(workflowIdentifier)
+        this.AddWorkflow(workflow)
+        workflow
+
+    static member initWorkflow(workflowIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.InitWorkflow(workflowIdentifier)
+
+    member this.DeleteWorkflowAt(index: int) =
+        this.Workflows.RemoveAt(index)
+
+    static member deleteWorkflowAt(index: int) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.DeleteWorkflowAt(index)
+            copy
+
+    member this.DeleteWorkflow(workflowIdentifier: string) =
+        let index = this.Workflows.FindIndex(fun w -> w.Identifier = workflowIdentifier)
+        this.DeleteWorkflowAt(index)
+
+    static member deleteWorkflow(workflowIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.DeleteWorkflow(workflowIdentifier)
+            copy
+
+    member this.GetWorkflowAt(index: int) : ArcWorkflow =
+        this.Workflows.[index]
+
+    static member getWorkflowAt(index: int) : ArcInvestigation -> ArcWorkflow =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.GetWorkflowAt(index)
+
+    member this.GetWorkflow(workflowIdentifier: string) : ArcWorkflow =
+        match this.TryGetWorkflow workflowIdentifier with
+        | Some w -> w
+        | None -> failwith (ArcTypesAux.ErrorMsgs.unableToFindWorkflowIdentifier workflowIdentifier this.Identifier)
+
+    static member getWorkflow(workflowIdentifier: string) : ArcInvestigation -> ArcWorkflow =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.GetWorkflow(workflowIdentifier)
+
+    member this.TryGetWorkflow(workflowIdentifier: string) : ArcWorkflow option =
+        this.Workflows |> Seq.tryFind (fun w -> w.Identifier = workflowIdentifier)
+
+    static member tryGetWorkflow(workflowIdentifier: string) : ArcInvestigation -> ArcWorkflow option =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.TryGetWorkflow(workflowIdentifier)
+
+    member this.ContainsWorkflow(workflowIdentifier: string) : bool =
+        this.Workflows
+        |> Seq.exists (fun w -> w.Identifier = workflowIdentifier)
+
+    static member containsWorkflow(workflowIdentifier: string) : ArcInvestigation -> bool =
+        fun (inv: ArcInvestigation) ->
+            inv.ContainsWorkflow(workflowIdentifier)
 
     /// <summary>
     /// Returns all fully distinct Contacts/Performers from assays/studies/investigation. 
