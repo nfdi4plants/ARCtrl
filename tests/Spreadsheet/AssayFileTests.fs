@@ -377,16 +377,22 @@ let testMetaDataFunctions =
         )
 
         testCase "OutputMatchesInputDeprecatedKeys" (fun () ->
-           
-            let o = 
+
+            let a = 
                 Assay.Proteome.assayMetadataDeprecatedKeys
                 |> ArcAssay.fromMetadataSheet
+
+            a.Title <- Some "Proteome Assay"
+            a.Description <- Some "This is a proteome assay"
+
+            let o = 
+                a
                 |> ArcAssay.toMetadataSheet
                 
             Expect.workSheetEqual o Assay.Proteome.assayMetadata "Written assay metadata does not match read assay metadata"
         )
 
-
+                
         ]
 
 let testAssayFileReader = 

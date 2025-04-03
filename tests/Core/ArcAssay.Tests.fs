@@ -70,13 +70,15 @@ let private test_create =
     testList "create" [
         testCase "constructor" <| fun _ ->
             let identifier = "MyIdentifier"
+            let title = "Best Assay On Earth"
+            let description = "Assay to be used for being the best"
             let oa_mt = OntologyAnnotation("measurement type")
             let oa_tt = OntologyAnnotation("technology type")
             let technologyPlatform = OntologyAnnotation("tp")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = ResizeArray [|Person(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray [|Comment.create("Comment Name")|]
-            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
+            let actual = ArcAssay(identifier, title, description, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
             Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
@@ -86,13 +88,15 @@ let private test_create =
             Expect.equal actual.Comments comments "Comments"
         testCase "constructor_tpOntology" <| fun _ ->
             let identifier = "MyIdentifier"
+            let title = "Best Assay On Earth"
+            let description = "Assay to be used for being the best"
             let oa_mt = OntologyAnnotation("measurement type")
             let oa_tt = OntologyAnnotation("technology type")
             let technologyPlatform = OntologyAnnotation("tp","ABC","ABC:123")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = ResizeArray [|Person.create(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray [|Comment.create("Comment Name")|]
-            let actual = ArcAssay(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
+            let actual = ArcAssay(identifier, title, description, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
             Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
@@ -102,13 +106,15 @@ let private test_create =
             Expect.equal actual.Comments comments "Comments"
         testCase "create" <| fun _ ->
             let identifier = "MyIdentifier"
+            let title = "Best Assay On Earth"
+            let description = "Assay to be used for being the best"
             let oa_mt = OntologyAnnotation("measurement type")
             let oa_tt = OntologyAnnotation("technology type")
             let technologyPlatform = OntologyAnnotation("tp")
             let tables = ResizeArray([ArcTable.init("MyTable1")])
             let performers = ResizeArray[|Person.create(firstName = "Kevin", lastName = "Frey")|]
             let comments = ResizeArray[|Comment.create("Comment Name")|]
-            let actual = ArcAssay.create(identifier, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
+            let actual = ArcAssay.create(identifier, title, description, oa_mt, oa_tt, technologyPlatform, tables, performers = performers, comments = comments)
             Expect.equal actual.Identifier identifier "identifier"
             Expect.equal actual.MeasurementType (Some oa_mt) "MeasurementType"
             Expect.equal actual.TechnologyType (Some oa_tt) "TechnologyType"
@@ -128,6 +134,8 @@ let private test_create =
             Expect.equal actual.Comments.Count 0 "Comments"
         testCase "make" <| fun _ ->
             let identifier = "MyIdentifier"
+            let title = Some "Best Assay On Earth"
+            let description = Some "Assay to be used for being the best"
             let measurementType = Some (OntologyAnnotation("Measurement Type"))
             let technologyType = Some (OntologyAnnotation("Technology Type"))
             let technologyPlatform = Some (OntologyAnnotation("Technology Platform"))
@@ -138,6 +146,8 @@ let private test_create =
             let actual = 
                 ArcAssay.make
                     identifier
+                    title
+                    description
                     measurementType
                     technologyType
                     technologyPlatform
@@ -529,7 +539,9 @@ let private tests_technologyPlatform =
 let private tests_UpdateBy = testList "UpdateBy" [
     let create_testAssay() = 
         ArcAssay.create(
-            "MyAssay", 
+            "MyAssay",
+            "Best Assay On Earth",
+            "Assay to be used for being the best",
             OntologyAnnotation("MyMeasurementType"),
             OntologyAnnotation("MyTechnologyType"),
             OntologyAnnotation("MyTechnologyPlatform"),
@@ -541,7 +553,9 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
-                "NextAssay", 
+                "NextAssay",
+                "Next Title",
+                "Next Description",
                 OntologyAnnotation("NextMeasurementType"),
                 OntologyAnnotation("NextTechnologyType"),
                 tables= ResizeArray ([ArcTable.init("NextTable")]),
@@ -549,6 +563,8 @@ let private tests_UpdateBy = testList "UpdateBy" [
             )
         actual.UpdateBy(next)
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
@@ -559,7 +575,9 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
-                "NextAssay", 
+                "NextAssay",
+                "Next Title",
+                "Next Description",
                 OntologyAnnotation("NextMeasurementType"),
                 OntologyAnnotation("NextTechnologyType"),
                 tables= ResizeArray ([ArcTable.init("NextTable")]),
@@ -568,6 +586,8 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let expected = create_testAssay()
         actual.UpdateBy(next, true)
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
@@ -578,7 +598,9 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
-                "NextAssay", 
+                "NextAssay",
+                "Next Title",
+                "Next Description",
                 OntologyAnnotation("NextMeasurementType"),
                 OntologyAnnotation("NextTechnologyType"),
                 performers= ResizeArray [|Person(firstName="NextKevin", lastName="NextFrey")|]
@@ -590,7 +612,9 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
-                "NextAssay", 
+                "NextAssay",
+                "Next Title",
+                "Next Description",
                 OntologyAnnotation("NextMeasurementType"),
                 OntologyAnnotation("NextTechnologyType"),
                 tables=ResizeArray([ArcTable.init("NextTable")]),
@@ -599,6 +623,8 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let expected = create_testAssay()
         actual.UpdateBy(next, true, true)
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform expected.TechnologyPlatform "TechnologyPlatform"
@@ -611,7 +637,9 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let actual = create_testAssay()
         let next = 
             ArcAssay.create(
-                "NextAssay", 
+                "NextAssay",
+                "Next Title",
+                "Next Description",
                 OntologyAnnotation("NextMeasurementType"),
                 OntologyAnnotation("NextTechnologyType"),
                 tables= ResizeArray ([ArcTable.init("NextTable")]),
@@ -620,6 +648,8 @@ let private tests_UpdateBy = testList "UpdateBy" [
         let expected = create_testAssay()
         actual.UpdateBy(next, false, true)
         Expect.notEqual actual.Identifier next.Identifier "Identifier"
+        Expect.equal actual.Title next.Title "Title"
+        Expect.equal actual.Description next.Description "Description"
         Expect.equal actual.MeasurementType next.MeasurementType "MeasurementType"
         Expect.equal actual.TechnologyType next.TechnologyType "TechnologyType"
         Expect.equal actual.TechnologyPlatform next.TechnologyPlatform "TechnologyPlatform"
@@ -634,6 +664,8 @@ let private tests_GetHashCode = testList "GetHashCode" [
     let createFullAssay(name) =
         ArcAssay.make 
             name
+            ("Best Assay On Earth" |> Some)
+            ("Assay to be used for being the best" |> Some)
             (OntologyAnnotation "mt" |> Some)
             (OntologyAnnotation "tt" |> Some)
             (OntologyAnnotation "tp" |> Some)

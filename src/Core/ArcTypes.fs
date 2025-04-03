@@ -111,7 +111,7 @@ module ArcTypesAux =
 
 
 [<AttachMembers>]
-type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+type ArcAssay(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
@@ -120,6 +120,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         let identifier = identifier.Trim()
         Helper.Identifier.checkValidCharacters identifier
         identifier
+    let mutable title : string option = title
+    let mutable description : string option = description
     let mutable investigation : ArcInvestigation option = None
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
@@ -133,6 +135,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.Identifier with get() = identifier and internal set(i) = identifier <- i
     // read-online
     member this.Investigation with get() = investigation and internal set(i) = investigation <- i
+    member this.Title with get() = title and set(t) = title <- t
+    member this.Description with get() = description and set(d) = description <- d
     member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
@@ -142,11 +146,13 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcAssay(identifier)
-    static member create (identifier: string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
-        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+        ArcAssay(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
 
     static member make 
         (identifier : string)
+        (title : string option)
+        (description : string option)
         (measurementType : OntologyAnnotation option)
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : OntologyAnnotation option)
@@ -154,7 +160,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         (datamap : DataMap option)
         (performers : ResizeArray<Person>)
         (comments : ResizeArray<Comment>) = 
-        ArcAssay(identifier = identifier, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
+        ArcAssay(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.AssayFileName
     member this.StudiesRegisteredIn
@@ -397,6 +403,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
         ArcAssay.make
             this.Identifier
+            this.Title
+            this.Description
             this.MeasurementType
             this.TechnologyType
             this.TechnologyPlatform
@@ -415,6 +423,10 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         let onlyReplaceExisting = defaultArg onlyReplaceExisting false
         let appendSequences = defaultArg appendSequences false
         let updateAlways = onlyReplaceExisting |> not
+        if assay.Title.IsSome || updateAlways then
+            this.Title <- assay.Title
+        if assay.Description.IsSome || updateAlways then
+            this.Description <- assay.Description
         if assay.MeasurementType.IsSome || updateAlways then 
             this.MeasurementType <- assay.MeasurementType
         if assay.TechnologyType.IsSome || updateAlways then 
@@ -436,6 +448,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         sprintf 
             """ArcAssay({
     Identifier = "%s",
+    Title = %A,
+    Description = %A,
     MeasurementType = %A,
     TechnologyType = %A,
     TechnologyPlatform = %A,
@@ -444,6 +458,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     Comments = %A
 })"""
             this.Identifier
+            this.Title
+            this.Description
             this.MeasurementType
             this.TechnologyType
             this.TechnologyPlatform
@@ -461,6 +477,10 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.UpdateReferenceByAssayFile(assay:ArcAssay,?onlyReplaceExisting : bool) =
         let onlyReplaceExisting = defaultArg onlyReplaceExisting false
         let updateAlways = onlyReplaceExisting |> not
+        if assay.Title.IsSome || updateAlways then
+            this.Title <- assay.Title
+        if assay.Description.IsSome || updateAlways then
+            this.Description <- assay.Description
         if assay.MeasurementType.IsSome || updateAlways then 
             this.MeasurementType <- assay.MeasurementType
         if assay.TechnologyPlatform.IsSome || updateAlways then 
@@ -477,6 +497,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
 
     member this.StructurallyEquals (other: ArcAssay) : bool =
         let i = this.Identifier = other.Identifier
+        let t = this.Title = other.Title
+        let d = this.Description = other.Description
         let mst = this.MeasurementType = other.MeasurementType
         let tt = this.TechnologyType = other.TechnologyType
         let tp = this.TechnologyPlatform = other.TechnologyPlatform
@@ -485,7 +507,7 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
         let perf = Seq.compare this.Performers other.Performers
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; mst; tt; tp; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; mst; tt; tp; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcAssay and the input ArcAssay refer to the same object.
@@ -506,6 +528,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     member this.GetLightHashCode() = 
         [|
             box this.Identifier
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
@@ -519,6 +543,8 @@ type ArcAssay(identifier: string, ?measurementType : OntologyAnnotation, ?techno
     override this.GetHashCode() = 
         [|
             box this.Identifier
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Description
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform

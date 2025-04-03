@@ -1,4 +1,4 @@
-﻿module ArcInvestigation.Tests
+module ArcInvestigation.Tests
 
 open ARCtrl
 
@@ -6,7 +6,7 @@ open TestingUtils
 
 let private assay_Identifier = "MyAssay"
 let private assay_MeasurementType = OntologyAnnotation("My Measurement Type", "MST", "MST:42424242")
-let private create_ExampleAssay() = ArcAssay.create(assay_Identifier,assay_MeasurementType)
+let private create_ExampleAssay() = ArcAssay.create(assay_Identifier,measurementType = assay_MeasurementType)
 let private create_ExampleAssays() = ResizeArray([create_ExampleAssay()])
 
 let private tests_create =
