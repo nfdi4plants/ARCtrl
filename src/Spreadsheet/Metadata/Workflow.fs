@@ -10,11 +10,13 @@ open ARCtrl.Process.Conversion
 
 module Workflow = 
 
-    let nameLabel = "Name"
-    let protocolTypeLabel = "Type"
+    let identifierLabel = "Identifier"
+    let titleLabel = "Title"
+    let descriptionLabel = "Description"
+    let workflowTypeLabel = "Type"
     let typeTermAccessionNumberLabel = "Type Term Accession Number"
     let typeTermSourceREFLabel = "Type Term Source REF"
-    let descriptionLabel = "Description"
+    let subWorkflowIdentifiersLabel = "Sub Workflow Identifiers"
     let uriLabel = "URI"
     let versionLabel = "Version"
     let parametersNameLabel = "Parameters Name"
@@ -24,166 +26,142 @@ module Workflow =
     let componentsTypeLabel = "Components Type"
     let componentsTypeTermAccessionNumberLabel = "Components Type Term Accession Number"
     let componentsTypeTermSourceREFLabel = "Components Type Term Source REF"
+    let fileNameLabel = "File Name"
 
-    //let [<Literal>] workflowLabel = "WORKFLOW"
-    //let [<Literal>] contactsLabel = "WORKFLOW CONTACTS"
+    let [<Literal>] workflowLabel = "WORKFLOW"
+    let [<Literal>] contactsLabel = "WORKFLOW CONTACTS"
 
-    //type StudyInfo =
-    //    {
-    //    Identifier : string
-    //    Title : string
-    //    Description : string
-    //    SubmissionDate : string
-    //    PublicReleaseDate : string
-    //    FileName : string
-    //    Comments : Comment list
-    //    }
+    let [<Literal>] workflowLabelPrefix = "Workflow"
+    let [<Literal>] contactsLabelPrefix = "Workflow Person"
 
-    //    static member create identifier title description submissionDate publicReleaseDate fileName comments =
-    //        {
-    //        Identifier = identifier
-    //        Title = title
-    //        Description = description
-    //        SubmissionDate = submissionDate
-    //        PublicReleaseDate = publicReleaseDate
-    //        FileName = fileName
-    //        Comments = comments
-    //        }
-  
-    //    static member Labels = [identifierLabel;titleLabel;descriptionLabel;submissionDateLabel;publicReleaseDateLabel;fileNameLabel]
-    
-    //    static member FromSparseTable (matrix : SparseTable) =
+    let labels = [
+        identifierLabel;
+        titleLabel;
+        descriptionLabel;
+        workflowTypeLabel;
+        typeTermAccessionNumberLabel;
+        typeTermSourceREFLabel;
+        subWorkflowIdentifiersLabel;
+        uriLabel;
+        versionLabel;
+        parametersNameLabel;
+        parametersTermAccessionNumberLabel;
+        parametersTermSourceREFLabel;
+        componentsNameLabel;
+        componentsTypeLabel;
+        componentsTypeTermAccessionNumberLabel;
+        componentsTypeTermSourceREFLabel;
+        fileNameLabel
+    ]
+
+    let fromString identifier title description workflowType workflowTypeTermAccessionNumber workflowTypeTermSourceREF (subworkflowIdentifiers : string option) uri version parametersName parametersTermAccessionNumber parametersTermSourceREF componentsName componentsType componentsTypeTermAccessionNumber componentsTypeTermSourceREF fileName comments : ArcWorkflow =
+        let subworkflowIdentifiers = 
+            match subworkflowIdentifiers with
+            | Some subworkflowIdentifiers -> 
+                subworkflowIdentifiers.Split(';') |> Seq.map (fun s -> s.Trim()) |> ResizeArray
+            | None -> ResizeArray()
+        let workflowType = OntologyAnnotation.create(?name = workflowType,?tan = workflowTypeTermAccessionNumber,?tsr = workflowTypeTermSourceREF) |> Option.fromValueWithDefault (OntologyAnnotation())
+        let parameters = ProtocolParameter.fromAggregatedStrings ';' parametersName parametersTermSourceREF parametersTermAccessionNumber |> ResizeArray
+        let components = Component.fromAggregatedStrings ';' componentsName componentsType componentsTypeTermSourceREF componentsTypeTermAccessionNumber |> ResizeArray
+        let identifier =
+            match identifier with
+            | Some identifier -> identifier
+            | None ->
+                match fileName with
+                | Some fileName ->
+                    match Identifier.Workflow.tryIdentifierFromFileName fileName with
+                    | Some identifier -> identifier
+                    | _ -> Identifier.createMissingIdentifier()
+                | None -> Identifier.createMissingIdentifier()
+        ArcWorkflow.make
+            identifier
+            title
+            description
+            workflowType
+            uri
+            version
+            subworkflowIdentifiers
+            parameters
+            components
+            None
+            (ResizeArray())
+            comments
+
+    let fromSparseTable (matrix : SparseTable) =
         
-    //        let i = 0
+        let i = 0
 
-    //        let comments = 
-    //            matrix.CommentKeys 
-    //            |> List.map (fun k -> 
-    //                Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
+        let comments = 
+            matrix.CommentKeys 
+            |> List.map (fun k -> 
+                Comment.fromString k (matrix.TryGetValueDefault("",(k,i))))
 
-    //        StudyInfo.create
-    //            (matrix.TryGetValueDefault(Identifier.createMissingIdentifier(),(identifierLabel,i)))  
-    //            (matrix.TryGetValueDefault("",(titleLabel,i)))  
-    //            (matrix.TryGetValueDefault("",(descriptionLabel,i)))  
-    //            (matrix.TryGetValueDefault("",(submissionDateLabel,i)))  
-    //            (matrix.TryGetValueDefault("",(publicReleaseDateLabel,i)))  
-    //            (matrix.TryGetValueDefault("",(fileNameLabel,i)))                    
-    //            comments
+        fromString
+            (matrix.TryGetValue(identifierLabel,i))  
+            (matrix.TryGetValue(titleLabel,i))
+            (matrix.TryGetValue(descriptionLabel,i))
+            (matrix.TryGetValue(workflowTypeLabel,i))
+            (matrix.TryGetValue(typeTermAccessionNumberLabel,i))
+            (matrix.TryGetValue(typeTermSourceREFLabel,i))
+            (matrix.TryGetValue(subWorkflowIdentifiersLabel,i))
+            (matrix.TryGetValue(uriLabel,i))
+            (matrix.TryGetValue(versionLabel,i))
+            (matrix.TryGetValueDefault("",(parametersNameLabel,i)))
+            (matrix.TryGetValueDefault("",(parametersTermAccessionNumberLabel,i)))
+            (matrix.TryGetValueDefault("",(parametersTermSourceREFLabel,i)))
+            (matrix.TryGetValueDefault("",(componentsNameLabel,i)))
+            (matrix.TryGetValueDefault("",(componentsTypeLabel,i)))
+            (matrix.TryGetValueDefault("",(componentsTypeTermAccessionNumberLabel,i)))
+            (matrix.TryGetValueDefault("",(componentsTypeTermSourceREFLabel,i)))
+            (matrix.TryGetValue(fileNameLabel,i))
+            (ResizeArray comments)
 
 
-    //    static member ToSparseTable (study: ArcStudy) =
-    //        let i = 1
-    //        let matrix = SparseTable.Create (keys = StudyInfo.Labels,length = 2)
-    //        let mutable commentKeys = []
-    //        let processedIdentifier,processedFileName =
-    //            if study.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then "","" else 
-    //                study.Identifier, Identifier.Study.fileNameFromIdentifier study.Identifier
+    let toSparseTable (workflow: ArcWorkflow) =
+        let i = 1
+        let matrix = SparseTable.Create (keys = labels,length = 2)
+        let mutable commentKeys = []
+        let processedIdentifier,processedFileName =
+            if workflow.Identifier.StartsWith(Identifier.MISSING_IDENTIFIER) then "","" else 
+                workflow.Identifier, Identifier.Workflow.fileNameFromIdentifier workflow.Identifier
 
-    //        do matrix.Matrix.Add ((identifierLabel,i),          processedIdentifier)
-    //        do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" study.Title))
-    //        do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" study.Description))
-    //        do matrix.Matrix.Add ((submissionDateLabel,i),      (Option.defaultValue "" study.SubmissionDate))
-    //        do matrix.Matrix.Add ((publicReleaseDateLabel,i),   (Option.defaultValue "" study.PublicReleaseDate))
-    //        do matrix.Matrix.Add ((fileNameLabel,i),            processedFileName)
+        let wt = Option.defaultValue (OntologyAnnotation()) workflow.WorkflowType |> fun tt -> OntologyAnnotation.toStringObject(tt,true)
+        let pAgg = workflow.Parameters |> List.ofSeq |> ProtocolParameter.toAggregatedStrings ';' 
+        let cAgg = workflow.Components |> List.ofSeq |> Component.toAggregatedStrings ';'
+        let subWorkflowsAgg = String.concat ";" workflow.SubWorkflowIdentifiers
 
-    //        study.Comments
-    //        |> ResizeArray.iter (fun comment -> 
-    //            let n,v = comment |> Comment.toString
-    //            commentKeys <- n :: commentKeys
-    //            matrix.Matrix.Add((n,i),v)
-    //        )    
+        do matrix.Matrix.Add ((identifierLabel,i),          processedIdentifier)
+        do matrix.Matrix.Add ((titleLabel,i),               (Option.defaultValue "" workflow.Title))
+        do matrix.Matrix.Add ((descriptionLabel,i),         (Option.defaultValue "" workflow.Description))
+        do matrix.Matrix.Add ((workflowTypeLabel,i),                        wt.TermName)
+        do matrix.Matrix.Add ((typeTermAccessionNumberLabel,i),             wt.TermAccessionNumber)
+        do matrix.Matrix.Add ((typeTermSourceREFLabel,i),                   wt.TermSourceREF)
+        do matrix.Matrix.Add ((subWorkflowIdentifiersLabel,i),              subWorkflowsAgg)
+        do matrix.Matrix.Add ((uriLabel,i),                                 (Option.defaultValue "" workflow.URI))
+        do matrix.Matrix.Add ((versionLabel,i),                             (Option.defaultValue "" workflow.Version))
+        do matrix.Matrix.Add ((parametersNameLabel,i),                      pAgg.TermNameAgg)
+        do matrix.Matrix.Add ((parametersTermAccessionNumberLabel,i),       pAgg.TermAccessionNumberAgg)
+        do matrix.Matrix.Add ((parametersTermSourceREFLabel,i),             pAgg.TermSourceREFAgg)
+        do matrix.Matrix.Add ((componentsNameLabel,i),                      cAgg.NameAgg)
+        do matrix.Matrix.Add ((componentsTypeLabel,i),                      cAgg.TermNameAgg)
+        do matrix.Matrix.Add ((componentsTypeTermAccessionNumberLabel,i),   cAgg.TermAccessionNumberAgg)
+        do matrix.Matrix.Add ((componentsTypeTermSourceREFLabel,i),         cAgg.TermSourceREFAgg)
+        do matrix.Matrix.Add ((fileNameLabel,i),                            processedFileName)
 
-    //        {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
+        workflow.Comments
+        |> ResizeArray.iter (fun comment -> 
+            let n,v = comment |> Comment.toString
+            commentKeys <- n :: commentKeys
+            matrix.Matrix.Add((n,i),v)
+        )    
 
-    //    static member fromRows lineNumber (rows : IEnumerator<SparseRow>) =
-    //        SparseTable.FromRows(rows,StudyInfo.Labels,lineNumber)
-    //        |> fun (s,ln,rs,sm) -> (s,ln,rs, StudyInfo.FromSparseTable sm)
+        {matrix with CommentKeys = commentKeys |> List.distinct |> List.rev}
+
+    let fromRows lineNumber (rows : IEnumerator<SparseRow>) =
+        SparseTable.FromRows(rows,labels,lineNumber, prefix = workflowLabelPrefix)
+        |> fun (s,ln,rs,sm) -> (s,ln,rs, fromSparseTable sm)
     
-    //    static member toRows (study : ArcStudy) =  
-    //        study
-    //        |> StudyInfo.ToSparseTable
-    //        |> SparseTable.ToRows
-    
-    ///// FACTORS AND PROTOCOLS ARE NOT USED ANYMORE, Lukas, 21.03.24
-    //// We made these changes as merging duplicated top level metadata with the underlying Table sequence is time consuming, complex and error prone
-    //let fromParts (studyInfo:StudyInfo) (designDescriptors:OntologyAnnotation list) (publications: Publication list) (factors: Factor list) (assays: ArcAssay list) (protocols : Protocol list) (contacts: Person list) =
-    //    let assayIdentifiers = assays |> List.map (fun assay -> assay.Identifier)
-    //    ArcStudy.make 
-    //        (studyInfo.Identifier)
-    //        (Option.fromValueWithDefault "" studyInfo.Title)
-    //        (Option.fromValueWithDefault "" studyInfo.Description) 
-    //        (Option.fromValueWithDefault "" studyInfo.SubmissionDate)
-    //        (Option.fromValueWithDefault "" studyInfo.PublicReleaseDate)
-    //        (ResizeArray publications)
-    //        (ResizeArray contacts)
-    //        (ResizeArray designDescriptors)  
-    //        (ResizeArray())
-    //        None
-    //        (ResizeArray(assayIdentifiers))
-    //        (ResizeArray studyInfo.Comments)
-    //    |> fun arcstudy -> 
-    //        if arcstudy.isEmpty && arcstudy.Identifier = "" 
-    //        then None else Some (arcstudy,assays)
-
-    //let fromRows lineNumber (en:IEnumerator<SparseRow>) = 
-
-    //    let rec loop lastLine (studyInfo : StudyInfo) designDescriptors publications factors assays protocols contacts remarks lineNumber =
-           
-    //        match lastLine with
-
-    //        | Some k when k = designDescriptorsLabel -> 
-    //            let currentLine,lineNumber,newRemarks,designDescriptors = DesignDescriptors.fromRows (Some designDescriptorsLabelPrefix) (lineNumber + 1) en         
-    //            loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
-
-    //        | Some k when k = publicationsLabel -> 
-    //            let currentLine,lineNumber,newRemarks,publications = Publications.fromRows (Some publicationsLabelPrefix) (lineNumber + 1) en       
-    //            loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
-
-    //        | Some k when k = factorsLabel -> 
-    //            let currentLine,lineNumber,newRemarks,factors = Factors.fromRows (Some factorsLabelPrefix) (lineNumber + 1) en       
-    //            loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
-
-    //        | Some k when k = assaysLabel -> 
-    //            let currentLine,lineNumber,newRemarks,assays = Assays.fromRows (Some assaysLabelPrefix) (lineNumber + 1) en       
-    //            loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
-
-    //        | Some k when k = protocolsLabel -> 
-    //            let currentLine,lineNumber,newRemarks,protocols = Protocols.fromRows (Some protocolsLabelPrefix) (lineNumber + 1) en  
-    //            loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
-
-    //        | Some k when k = contactsLabel -> 
-    //            let currentLine,lineNumber,newRemarks,contacts = Contacts.fromRows (Some contactsLabelPrefix) (lineNumber + 1) en  
-    //            loop currentLine studyInfo designDescriptors publications factors assays protocols contacts (List.append remarks newRemarks) lineNumber
-
-    //        | k -> 
-    //            k,lineNumber,remarks, fromParts studyInfo designDescriptors publications factors assays protocols contacts
-    
-    //    let currentLine,lineNumber,remarks,item = StudyInfo.fromRows lineNumber en  
-    //    loop currentLine item [] [] [] [] [] [] remarks lineNumber
-
-    
-    //let toRows (study : ArcStudy) (assays : ArcAssay list option) =
-    //    let protocols = study.Tables |> Seq.collect (fun p -> p.GetProtocols()) |> List.ofSeq
-    //    let factors = study.Tables |> Seq.collect (fun f -> f.GetProcesses() |> ProcessSequence.getFactors) |> List.ofSeq
-    //    let assays = assays |> Option.defaultValue (study.GetRegisteredAssaysOrIdentifier() |> List.ofSeq)
-    //    seq {          
-    //        yield! StudyInfo.toRows study
-
-    //        yield  SparseRow.fromValues [designDescriptorsLabel]
-    //        yield! DesignDescriptors.toRows (Some designDescriptorsLabelPrefix) (List.ofSeq study.StudyDesignDescriptors)
-
-    //        yield  SparseRow.fromValues [publicationsLabel]
-    //        yield! Publications.toRows (Some publicationsLabelPrefix) (List.ofSeq study.Publications)
-
-    //        yield  SparseRow.fromValues [factorsLabel]
-    //        yield! Factors.toRows (Some factorsLabelPrefix) factors
-
-    //        yield  SparseRow.fromValues [assaysLabel]
-    //        yield! Assays.toRows (Some assaysLabelPrefix) assays
-
-    //        yield  SparseRow.fromValues [protocolsLabel]
-    //        yield! Protocols.toRows (Some protocolsLabelPrefix) protocols
-
-    //        yield  SparseRow.fromValues [contactsLabel]
-    //        yield! Contacts.toRows (Some contactsLabelPrefix) (List.ofSeq study.Contacts)
-    //    }
+    let toRows (workflow: ArcWorkflow) =  
+        workflow
+        |> toSparseTable
+        |> fun st -> SparseTable.ToRows(st, prefix = workflowLabelPrefix)

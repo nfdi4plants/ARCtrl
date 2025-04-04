@@ -1136,13 +1136,13 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
         |> fun x -> x :?> int
 
 
-type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subworkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
+type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
 
     let mutable identifier = identifier
     let mutable investigation : ArcInvestigation option = None
     let mutable title = title
     let mutable description = description
-    let mutable subworkflowIdentifiers = defaultArg subworkflowIdentifiers (ResizeArray())
+    let mutable subWorkflowIdentifiers = defaultArg subWorkflowIdentifiers (ResizeArray())
     let mutable workflowType = workflowType
     let mutable uri = uri
     let mutable version = version
@@ -1159,7 +1159,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.Investigation with get() = investigation and internal set(a) = investigation <- a
     member this.Title with get() = title and set(t) = title <- t
     member this.Description with get() = description and set(d) = description <- d
-    member this.SubworkflowIdentifiers with get() = subworkflowIdentifiers and set(s) = subworkflowIdentifiers <- s
+    member this.SubWorkflowIdentifiers with get() = subWorkflowIdentifiers and set(s) = subWorkflowIdentifiers <- s
     member this.WorkflowType with get() = workflowType and set(w) = workflowType <- w
     member this.URI with get() = uri and set(u) = uri <- u
     member this.Version with get() = version and set(v) = version <- v
@@ -1171,129 +1171,129 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     member this.StaticHash with get() = staticHash and set(s) = staticHash <- s
 
     static member init(identifier : string) = ArcWorkflow(identifier = identifier)
-    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subworkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
-        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subworkflowIdentifiers = subworkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?comments = comments)
+    static member create(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, ?subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, ?parameters = parameters, ?components = components, ?datamap = datamap, ?contacts = contacts, ?comments = comments)
 
-    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subworkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<Process.ProtocolParameter>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (comments : ResizeArray<Comment>) =
-        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subworkflowIdentifiers = subworkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, comments = comments)
+    static member make (identifier : string) (title : string option) (description : string option) (workflowType : OntologyAnnotation option) (uri : string option) (version : string option) (subWorkflowIdentifiers : ResizeArray<string>) (parameters : ResizeArray<Process.ProtocolParameter>) (components : ResizeArray<Process.Component>) (datamap : DataMap option) (contacts : ResizeArray<Person>) (comments : ResizeArray<Comment>) =
+        ArcWorkflow(identifier = identifier, ?title = title, ?description = description, subWorkflowIdentifiers = subWorkflowIdentifiers, ?workflowType = workflowType, ?uri = uri, ?version = version, parameters = parameters, components = components, ?datamap = datamap, contacts = contacts, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
 
-    /// Returns the count of registered subworkflow *identifiers*. This is not necessarily the same as the count of registered subworkflows, as not all identifiers correspond to an existing subworkflow.
-    member this.SubworkflowIdentifiersCount 
-        with get() = this.SubworkflowIdentifiers.Count
+    /// Returns the count of registered subWorkflow *identifiers*. This is not necessarily the same as the count of registered subWorkflows, as not all identifiers correspond to an existing subWorkflow.
+    member this.SubWorkflowIdentifiersCount 
+        with get() = this.SubWorkflowIdentifiers.Count
 
-    /// Returns the count of registered subworkflows. This is not necessarily the same as the count of registered subworkflow *identifiers*, as not all identifiers correspond to an existing subworkflow.
-    member this.SubworkflowCount 
-        with get() = this.Subworkflows.Count
+    /// Returns the count of registered subWorkflows. This is not necessarily the same as the count of registered subWorkflow *identifiers*, as not all identifiers correspond to an existing subWorkflow.
+    member this.SubWorkflowCount 
+        with get() = this.SubWorkflows.Count
 
-    /// Returns all subworkflows registered in this workflow, that correspond to an existing subworkflow object in the associated investigation.
-    member this.Subworkflows
+    /// Returns all subWorkflows registered in this workflow, that correspond to an existing subWorkflow object in the associated investigation.
+    member this.SubWorkflows
         with get(): ResizeArray<ArcWorkflow> = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.SubworkflowIdentifiers 
+            this.SubWorkflowIdentifiers 
             |> Seq.choose inv.TryGetWorkflow
             |> ResizeArray
 
-    /// Returns all registered subworkflow identifiers that do not correspond to an existing subworkflow object in the associated investigation.
-    member this.VacantSubworkflowIdentifiers
+    /// Returns all registered subWorkflow identifiers that do not correspond to an existing subWorkflow object in the associated investigation.
+    member this.VacantSubWorkflowIdentifiers
         with get() = 
             let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-            this.SubworkflowIdentifiers 
+            this.SubWorkflowIdentifiers 
             |> Seq.filter (inv.ContainsWorkflow >> not)
             |> ResizeArray
 
-    // - Subworkflow API - CRUD //
+    // - SubWorkflow API - CRUD //
     /// <summary>
-    /// Add subworkflow to investigation and register it to workflow.
+    /// Add subWorkflow to investigation and register it to workflow.
     /// </summary>
-    /// <param name="subworkflow"></param>
-    member this.AddSubworkflow(subworkflow: ArcWorkflow) =
+    /// <param name="subWorkflow"></param>
+    member this.AddSubWorkflow(subWorkflow: ArcWorkflow) =
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation 
-        inv.AddWorkflow(subworkflow)
+        inv.AddWorkflow(subWorkflow)
 
-    static member addSubworkflow(subworkflow: ArcWorkflow) =
+    static member addSubWorkflow(subWorkflow: ArcWorkflow) =
         fun (workflow:ArcWorkflow) ->
             let newWorkflow = workflow.Copy()
-            newWorkflow.AddSubworkflow(subworkflow)
+            newWorkflow.AddSubWorkflow(subWorkflow)
             newWorkflow
 
-    // - Subworkflow API - CRUD //
-    member this.InitSubworkflow(subworkflowIdentifier: string) =
-        let subworkflow = ArcWorkflow(subworkflowIdentifier)
-        this.AddSubworkflow(subworkflow)
-        subworkflow
+    // - SubWorkflow API - CRUD //
+    member this.InitSubWorkflow(subWorkflowIdentifier: string) =
+        let subWorkflow = ArcWorkflow(subWorkflowIdentifier)
+        this.AddSubWorkflow(subWorkflow)
+        subWorkflow
 
-    static member initSubworkflow(subworkflowIdentifier: string) =
+    static member initSubWorkflow(subWorkflowIdentifier: string) =
         fun (workflow:ArcWorkflow) ->
             let copy = workflow.Copy()
-            copy,copy.InitSubworkflow(subworkflowIdentifier)
+            copy,copy.InitSubWorkflow(subWorkflowIdentifier)
 
-    // - Subworkflow API - CRUD //
-    member this.RegisterSubworkflow(subworkflowIdentifier: string) =
-        if Seq.contains subworkflowIdentifier this.SubworkflowIdentifiers then failwith $"Subworkflow `{subworkflowIdentifier}` is already registered on the workflow."
-        this.SubworkflowIdentifiers.Add(subworkflowIdentifier)
+    // - SubWorkflow API - CRUD //
+    member this.RegisterSubWorkflow(subWorkflowIdentifier: string) =
+        if Seq.contains subWorkflowIdentifier this.SubWorkflowIdentifiers then failwith $"SubWorkflow `{subWorkflowIdentifier}` is already registered on the workflow."
+        this.SubWorkflowIdentifiers.Add(subWorkflowIdentifier)
 
-    static member registerSubworkflow(subworkflowIdentifier: string) =
+    static member registerSubWorkflow(subWorkflowIdentifier: string) =
         fun (workflow: ArcWorkflow) ->
             let copy = workflow.Copy()
-            copy.RegisterSubworkflow(subworkflowIdentifier)
+            copy.RegisterSubWorkflow(subWorkflowIdentifier)
             copy
 
-    // - Subworkflow API - CRUD //
-    member this.DeregisterSubworkflow(subworkflowIdentifier: string) =
-        this.SubworkflowIdentifiers.Remove(subworkflowIdentifier) |> ignore
+    // - SubWorkflow API - CRUD //
+    member this.DeregisterSubWorkflow(subWorkflowIdentifier: string) =
+        this.SubWorkflowIdentifiers.Remove(subWorkflowIdentifier) |> ignore
 
-    static member deregisterSubworkflow(subworkflowIdentifier: string) =
+    static member deregisterSubWorkflow(subWorkflowIdentifier: string) =
         fun (workflow: ArcWorkflow) ->
             let copy = workflow.Copy()
-            copy.DeregisterSubworkflow(subworkflowIdentifier)
+            copy.DeregisterSubWorkflow(subWorkflowIdentifier)
             copy
 
-    // - Subworkflow API - CRUD //
-    member this.GetRegisteredSubworkflow(subworkflowIdentifier: string) =
-        if Seq.contains subworkflowIdentifier this.SubworkflowIdentifiers |> not then failwith $"Subworkflow `{subworkflowIdentifier}` is not registered on the workflow."
+    // - SubWorkflow API - CRUD //
+    member this.GetRegisteredSubWorkflow(subWorkflowIdentifier: string) =
+        if Seq.contains subWorkflowIdentifier this.SubWorkflowIdentifiers |> not then failwith $"SubWorkflow `{subWorkflowIdentifier}` is not registered on the workflow."
         let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
-        inv.GetWorkflow(subworkflowIdentifier)
+        inv.GetWorkflow(subWorkflowIdentifier)
 
-    static member getRegisteredSubworkflow(subworkflowIdentifier: string) =
+    static member getRegisteredSubWorkflow(subWorkflowIdentifier: string) =
         fun (workflow: ArcWorkflow) ->
             let copy = workflow.Copy()
-            copy.GetRegisteredSubworkflow(subworkflowIdentifier)
+            copy.GetRegisteredSubWorkflow(subWorkflowIdentifier)
 
-    // - Subworkflow API - CRUD //
-    static member getRegisteredSubworkflows() =
+    // - SubWorkflow API - CRUD //
+    static member getRegisteredSubWorkflows() =
         fun (workflow: ArcWorkflow) ->
             let copy = workflow.Copy()
-            copy.Subworkflows
+            copy.SubWorkflows
 
     /// <summary>
-    /// Returns ArcSubworkflows registered in workflow, or if no parent exists, initializies new ArcSubworkflow from identifier.
+    /// Returns ArcSubWorkflows registered in workflow, or if no parent exists, initializies new ArcSubWorkflow from identifier.
     /// </summary>
-    member this.GetRegisteredSubworkflowsOrIdentifier() = 
+    member this.GetRegisteredSubWorkflowsOrIdentifier() = 
         // Two Options:
-        // 1. Init new subworkflows with only identifier. This is possible without ArcInvestigation parent.
-        // 2. Get full subworkflows from ArcInvestigation parent.
+        // 1. Init new subWorkflows with only identifier. This is possible without ArcInvestigation parent.
+        // 2. Get full subWorkflows from ArcInvestigation parent.
         match this.Investigation with
         | Some i -> 
-            this.SubworkflowIdentifiers
+            this.SubWorkflowIdentifiers
             |> ResizeArray.map (fun identifier -> 
                 match i.TryGetWorkflow(identifier) with
-                | Some subworkflow -> subworkflow
+                | Some subWorkflow -> subWorkflow
                 | None -> ArcWorkflow.init(identifier)
             )
         | None ->
-            this.SubworkflowIdentifiers 
+            this.SubWorkflowIdentifiers 
             |> ResizeArray.map (fun identifier -> ArcWorkflow.init(identifier))
 
 
     /// <summary>
-    /// Returns ArcSubworkflows registered in workflow, or if no parent exists, initializies new ArcSubworkflow from identifier.
+    /// Returns ArcSubWorkflows registered in workflow, or if no parent exists, initializies new ArcSubWorkflow from identifier.
     /// </summary>
-    static member getRegisteredSubworkflowsOrIdentifier() =
+    static member getRegisteredSubWorkflowsOrIdentifier() =
         fun (workflow: ArcWorkflow) ->
             let copy = workflow.Copy()
-            copy.GetRegisteredSubworkflowsOrIdentifier()
+            copy.GetRegisteredSubWorkflowsOrIdentifier()
 
     /// Copies ArcStudy object without the pointer to the parent ArcInvestigation
     ///
@@ -1314,7 +1314,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
                 this.WorkflowType
                 this.URI
                 this.Version
-                this.SubworkflowIdentifiers
+                this.SubWorkflowIdentifiers
                 nextParameters
                 nextComponents
                 this.DataMap
@@ -1330,7 +1330,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         let wft = this.WorkflowType = other.WorkflowType
         let uri = this.URI = other.URI
         let ver = this.Version = other.Version
-        let subwf = Seq.compare this.SubworkflowIdentifiers other.SubworkflowIdentifiers
+        let subwf = Seq.compare this.SubWorkflowIdentifiers other.SubWorkflowIdentifiers
         let par = Seq.compare this.Parameters other.Parameters
         let com = Seq.compare this.Components other.Components
         let dm = this.DataMap = other.DataMap
@@ -1358,7 +1358,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     WorkflowType = %A,
     URI = %A,
     Version = %A,
-    SubworkflowIdentifiers = %A,
+    SubWorkflowIdentifiers = %A,
     Parameters = %A,
     Components = %A,
     DataMap = %A,
@@ -1370,7 +1370,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             this.WorkflowType
             this.URI
             this.Version
-            this.SubworkflowIdentifiers
+            this.SubWorkflowIdentifiers
             this.Parameters
             this.Components
             this.DataMap
@@ -1392,7 +1392,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             HashCodes.boxHashOption this.WorkflowType
             HashCodes.boxHashOption this.URI
             HashCodes.boxHashOption this.Version
-            HashCodes.boxHashSeq this.SubworkflowIdentifiers
+            HashCodes.boxHashSeq this.SubWorkflowIdentifiers
             HashCodes.boxHashSeq this.Parameters
             HashCodes.boxHashSeq this.Components
             HashCodes.boxHashOption this.DataMap
@@ -1410,7 +1410,7 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             HashCodes.boxHashOption this.WorkflowType
             HashCodes.boxHashOption this.URI
             HashCodes.boxHashOption this.Version
-            HashCodes.boxHashSeq this.SubworkflowIdentifiers
+            HashCodes.boxHashSeq this.SubWorkflowIdentifiers
             HashCodes.boxHashSeq this.Parameters
             HashCodes.boxHashSeq this.Components
             HashCodes.boxHashOption this.DataMap
