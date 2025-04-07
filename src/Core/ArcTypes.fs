@@ -18,6 +18,9 @@ module ArcTypesAux =
         let unableToFindWorkflowIdentifier workflowIdentifier investigationIdentifier =
             $"Error. Unable to find workflow with identifier '{workflowIdentifier}' in investigation {investigationIdentifier}."
 
+        let unableToFindRunIdentifier runIdentifier investigationIdentifier =
+            $"Error. Unable to find run with identifier '{runIdentifier}' in investigation {investigationIdentifier}."
+
     module SanityChecks = 
 
         let inline validateRegisteredInvestigation (investigation: ArcInvestigation option) =
@@ -64,6 +67,13 @@ module ArcTypesAux =
             match existingWorkflows |> Seq.tryFindIndex (fun x -> x.Identifier = workflow.Identifier) with
             | Some i ->
                 failwith $"Cannot create workflow with name {workflow.Identifier}, as workflow names must be unique and workflow at index {i} has the same name."
+            | None ->
+                ()
+
+        let inline validateUniqueRunIdentifier (run: ArcRun) (existingRuns: seq<ArcRun>) =
+            match existingRuns |> Seq.tryFindIndex (fun x -> x.Identifier = run.Identifier) with
+            | Some i ->
+                failwith $"Cannot create run with name {run.Identifier}, as run names must be unique and run at index {i} has the same name."
             | None ->
                 ()
 
@@ -1421,8 +1431,426 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
         |> fun x -> x :?> int
 
 
+
 [<AttachMembers>]
-type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this = 
+type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+    inherit ArcTables(defaultArg tables <| ResizeArray())
+
+    let performers = defaultArg performers <| ResizeArray()
+    let comments = defaultArg comments <| ResizeArray()
+    let mutable identifier : string =
+        let identifier = identifier.Trim()
+        Helper.Identifier.checkValidCharacters identifier
+        identifier
+    let mutable title : string option = title
+    let mutable description : string option = description
+    let mutable investigation : ArcInvestigation option = None
+    let mutable measurementType : OntologyAnnotation option = measurementType
+    let mutable technologyType : OntologyAnnotation option = technologyType
+    let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
+    let mutable dataMap : DataMap option = datamap
+    let mutable performers = performers
+    let mutable comments  = comments
+    let mutable staticHash : int = 0
+
+    /// Must be unique in one study
+    member this.Identifier with get() = identifier and internal set(i) = identifier <- i
+    // read-online
+    member this.Investigation with get() = investigation and internal set(i) = investigation <- i
+    member this.Title with get() = title and set(t) = title <- t
+    member this.Description with get() = description and set(d) = description <- d
+    member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
+    member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
+    member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
+    member this.DataMap with get() = dataMap and set(n) = dataMap <- n
+    member this.Performers with get() = performers and set(n) = performers <- n
+    member this.Comments with get() = comments and set(n) = comments <- n
+    member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
+
+    static member init (identifier : string) = ArcRun(identifier)
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
+
+    static member make 
+        (identifier : string)
+        (title : string option)
+        (description : string option)
+        (measurementType : OntologyAnnotation option)
+        (technologyType : OntologyAnnotation option)
+        (technologyPlatform : OntologyAnnotation option)
+        (tables : ResizeArray<ArcTable>)
+        (datamap : DataMap option)
+        (performers : ResizeArray<Person>)
+        (comments : ResizeArray<Comment>) = 
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
+
+    static member FileName = ARCtrl.ArcPathHelper.RunFileName
+        
+    // - Table API - //
+    static member addTable(table:ArcTable, ?index: int) =
+        fun (run:ArcRun) ->
+            let c = run.Copy()
+            c.AddTable(table, ?index = index)
+            c
+
+    // - Table API - //
+    static member addTables(tables:seq<ArcTable>, ?index: int) =
+        fun (run:ArcRun) ->
+            let c = run.Copy()
+            c.AddTables(tables, ?index = index)
+            c
+
+    // - Table API - //
+    static member initTable(tableName: string, ?index: int) =
+        fun (run:ArcRun) ->
+            let c = run.Copy()
+            c,c.InitTable(tableName, ?index=index)
+            
+    // - Table API - //
+    static member initTables(tableNames:seq<string>, ?index: int) =
+        fun (run:ArcRun) ->
+            let c = run.Copy()
+            c.InitTables(tableNames, ?index=index)
+            c
+
+    // - Table API - //
+    /// Receive **copy** of table at `index`
+    static member getTableAt(index:int) : ArcRun -> ArcTable =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.GetTableAt(index)
+
+    // - Table API - //
+    /// Receive **copy** of table with `name` = `ArcTable.Name`
+    static member getTable(name: string) : ArcRun -> ArcTable =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.GetTable(name)
+
+    // - Table API - //
+    static member updateTableAt(index:int, table:ArcTable) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.UpdateTableAt(index, table)
+            newRun
+
+    // - Table API - //
+    static member updateTable(name: string, table:ArcTable) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.UpdateTable(name, table)
+            newRun
+
+    // - Table API - //
+    static member setTableAt(index:int, table:ArcTable) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.SetTableAt(index, table)
+            newRun
+
+    // - Table API - //
+    static member setTable(name: string, table:ArcTable) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.SetTable(name, table)
+            newRun
+
+    // - Table API - //
+    static member removeTableAt(index:int) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RemoveTableAt(index)
+            newRun
+
+    // - Table API - //
+    static member removeTable(name: string) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RemoveTable(name)
+            newRun
+
+    // - Table API - //
+    static member mapTableAt(index:int, updateFun: ArcTable -> unit) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()    
+            newRun.MapTableAt(index, updateFun)
+            newRun
+
+    // - Table API - //
+    static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.MapTable(name, updateFun)
+            newRun
+
+    // - Table API - //
+    static member renameTableAt(index: int, newName: string) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()    
+            newRun.RenameTableAt(index, newName)
+            newRun
+
+    // - Table API - //
+    static member renameTable(name: string, newName: string) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RenameTable(name, newName)
+            newRun
+
+    // - Column CRUD API - //
+    static member addColumnAt(tableIndex:int, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun = 
+        fun (run: ArcRun) ->
+            let newRun = run.Copy()
+            newRun.AddColumnAt(tableIndex, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
+            newRun
+
+    // - Column CRUD API - //
+    static member addColumn(tableName: string, header: CompositeHeader, ?cells: CompositeCell [], ?columnIndex: int, ?forceReplace: bool) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.AddColumn(tableName, header, ?cells=cells, ?columnIndex=columnIndex, ?forceReplace=forceReplace)
+            newRun
+
+    // - Column CRUD API - //
+    static member removeColumnAt(tableIndex: int, columnIndex: int) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RemoveColumnAt(tableIndex, columnIndex)
+            newRun
+
+    // - Column CRUD API - //
+    static member removeColumn(tableName: string, columnIndex: int) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RemoveColumn(tableName, columnIndex)
+            newRun
+
+    // - Column CRUD API - //
+    static member updateColumnAt(tableIndex: int, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.UpdateColumnAt(tableIndex, columnIndex, header, ?cells=cells)
+            newRun
+
+    // - Column CRUD API - //
+    static member updateColumn(tableName: string, columnIndex: int, header: CompositeHeader, ?cells: CompositeCell []) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.UpdateColumn(tableName, columnIndex, header, ?cells=cells)
+            newRun
+
+    // - Column CRUD API - //
+    static member getColumnAt(tableIndex: int, columnIndex: int) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.GetColumnAt(tableIndex, columnIndex)
+
+    // - Column CRUD API - //
+    static member getColumn(tableName: string, columnIndex: int) =
+        fun (run: ArcRun) ->
+            let newRun = run.Copy()
+            newRun.GetColumn(tableName, columnIndex)
+
+    // - Row CRUD API - //
+    static member addRowAt(tableIndex:int, ?cells: CompositeCell [], ?rowIndex: int) : ArcRun -> ArcRun = 
+        fun (run: ArcRun) ->
+            let newRun = run.Copy()
+            newRun.AddRowAt(tableIndex, ?cells=cells, ?rowIndex=rowIndex)
+            newRun
+
+    // - Row CRUD API - //
+    static member addRow(tableName: string, ?cells: CompositeCell [], ?rowIndex: int) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.AddRow(tableName, ?cells=cells, ?rowIndex=rowIndex)
+            newRun
+
+    // - Row CRUD API - //
+    static member removeRowAt(tableIndex: int, rowIndex: int) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RemoveColumnAt(tableIndex, rowIndex)
+            newRun
+
+    // - Row CRUD API - //
+    static member removeRow(tableName: string, rowIndex: int) : ArcRun -> ArcRun =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.RemoveRow(tableName, rowIndex)
+            newRun
+
+    // - Row CRUD API - //
+    static member updateRowAt(tableIndex: int, rowIndex: int, cells: CompositeCell []) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.UpdateRowAt(tableIndex, rowIndex, cells)
+            newRun
+
+    // - Row CRUD API - //
+    static member updateRow(tableName: string, rowIndex: int, cells: CompositeCell []) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.UpdateRow(tableName, rowIndex, cells)
+            newRun
+
+    // - Row CRUD API - //
+    static member getRowAt(tableIndex: int, rowIndex: int) =
+        fun (run:ArcRun) ->
+            let newRun = run.Copy()
+            newRun.GetRowAt(tableIndex, rowIndex)
+
+    // - Row CRUD API - //
+    static member getRow(tableName: string, rowIndex: int) =
+        fun (run: ArcRun) ->
+            let newRun = run.Copy()
+            newRun.GetRow(tableName, rowIndex)
+
+    // - Mutable properties API - //
+    static member setPerformers performers (run: ArcRun) =
+        run.Performers <- performers
+        run
+
+    member this.Copy() : ArcRun =
+        let nextTables = this.Tables |> ResizeArray.map (fun c -> c.Copy())
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
+        let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
+        ArcRun.make
+            this.Identifier
+            this.Title
+            this.Description
+            this.MeasurementType
+            this.TechnologyType
+            this.TechnologyPlatform
+            nextTables
+            nextDataMap
+            nextPerformers
+            nextComments
+
+    /// <summary>
+    /// Updates given run with another run, Identifier will never be updated. By default update is full replace. Optional Parameters can be used to specify update logic.
+    /// </summary>
+    /// <param name="run">The run used for updating this run.</param>
+    /// <param name="onlyReplaceExisting">If true, this will only update fields which are `Some` or non-empty lists. Default: **false**</param>
+    /// <param name="appendSequences">If true, this will append lists instead of replacing. Will return only distinct elements. Default: **false**</param>
+    member this.UpdateBy(run:ArcRun,?onlyReplaceExisting : bool,?appendSequences : bool) =
+        let onlyReplaceExisting = defaultArg onlyReplaceExisting false
+        let appendSequences = defaultArg appendSequences false
+        let updateAlways = onlyReplaceExisting |> not
+        if run.Title.IsSome || updateAlways then
+            this.Title <- run.Title
+        if run.Description.IsSome || updateAlways then
+            this.Description <- run.Description
+        if run.MeasurementType.IsSome || updateAlways then 
+            this.MeasurementType <- run.MeasurementType
+        if run.TechnologyType.IsSome || updateAlways then 
+            this.TechnologyType <- run.TechnologyType
+        if run.TechnologyPlatform.IsSome || updateAlways then 
+            this.TechnologyPlatform <- run.TechnologyPlatform
+        if run.Tables.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables run.Tables
+            this.Tables <- s
+        if run.Performers.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Performers run.Performers
+            this.Performers <- s
+        if run.Comments.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Comments run.Comments
+            this.Comments <- s
+
+    // Use this for better print debugging and better unit test output
+    override this.ToString() =
+        sprintf 
+            """ArcRun({
+    Identifier = "%s",
+    Title = %A,
+    Description = %A,
+    MeasurementType = %A,
+    TechnologyType = %A,
+    TechnologyPlatform = %A,
+    Tables = %A,
+    Performers = %A,
+    Comments = %A
+})"""
+            this.Identifier
+            this.Title
+            this.Description
+            this.MeasurementType
+            this.TechnologyType
+            this.TechnologyPlatform
+            this.Tables
+            this.Performers
+            this.Comments
+
+    member internal this.AddToInvestigation (investigation: ArcInvestigation) =
+        this.Investigation <- Some investigation
+
+    member internal this.RemoveFromInvestigation () =
+        this.Investigation <- None
+
+    member this.StructurallyEquals (other: ArcRun) : bool =
+        let i = this.Identifier = other.Identifier
+        let t = this.Title = other.Title
+        let d = this.Description = other.Description
+        let mst = this.MeasurementType = other.MeasurementType
+        let tt = this.TechnologyType = other.TechnologyType
+        let tp = this.TechnologyPlatform = other.TechnologyPlatform
+        let dm = this.DataMap = other.DataMap
+        let tables = Seq.compare this.Tables other.Tables
+        let perf = Seq.compare this.Performers other.Performers
+        let comments = Seq.compare this.Comments other.Comments
+        // Todo maybe add reflection check to prove that all members are compared?
+        [|i; t; d; mst; tt; tp; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
+
+    /// <summary>
+    /// Use this function to check if this ArcRun and the input ArcRun refer to the same object.
+    ///
+    /// If true, updating one will update the other due to mutability.
+    /// </summary>
+    /// <param name="other">The other ArcRun to test for reference.</param>
+    member this.ReferenceEquals (other: ArcRun) = System.Object.ReferenceEquals(this,other)
+
+    // custom check
+    override this.Equals other =
+        match other with
+        | :? ArcRun as run -> 
+            this.StructurallyEquals(run)
+        | _ -> false
+
+    // Hashcode without Datamap
+    member this.GetLightHashCode() = 
+        [|
+            box this.Identifier
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Description
+            HashCodes.boxHashOption this.MeasurementType
+            HashCodes.boxHashOption this.TechnologyType
+            HashCodes.boxHashOption this.TechnologyPlatform
+            HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.Performers
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
+    override this.GetHashCode() = 
+        [|
+            box this.Identifier
+            HashCodes.boxHashOption this.Title
+            HashCodes.boxHashOption this.Description
+            HashCodes.boxHashOption this.MeasurementType
+            HashCodes.boxHashOption this.TechnologyType
+            HashCodes.boxHashOption this.TechnologyPlatform
+            HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashSeq this.Tables
+            HashCodes.boxHashSeq this.Performers
+            HashCodes.boxHashSeq this.Comments
+        |]
+        |> HashCodes.boxHashArray 
+        |> fun x -> x :?> int
+
+
+[<AttachMembers>]
+type ArcInvestigation(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) as this = 
 
     let ontologySourceReferences = defaultArg ontologySourceReferences <| ResizeArray()
     let publications = defaultArg publications <| ResizeArray()
@@ -1442,6 +1870,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         for w in wss do
             w.Investigation <- Some this
         wss
+    let runs =
+        let rss = defaultArg runs (ResizeArray())
+        for r in rss do
+            r.Investigation <- Some this
+        rss
     let registeredStudyIdentifiers = defaultArg registeredStudyIdentifiers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
     let remarks = defaultArg remarks <| ResizeArray()
@@ -1457,6 +1890,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     let mutable assays : ResizeArray<ArcAssay> = assays
     let mutable studies : ResizeArray<ArcStudy> = studies
     let mutable workflows : ResizeArray<ArcWorkflow> = workflows
+    let mutable runs : ResizeArray<ArcRun> = runs
     let mutable registeredStudyIdentifiers : ResizeArray<string> = registeredStudyIdentifiers
     let mutable comments : ResizeArray<Comment> = comments
     let mutable remarks : ResizeArray<Remark> = remarks
@@ -1474,6 +1908,7 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.Assays with get() : ResizeArray<ArcAssay> = assays and set(n) = assays <- n
     member this.Studies with get() : ResizeArray<ArcStudy> = studies and set(n) = studies <- n
     member this.Workflows with get() : ResizeArray<ArcWorkflow> = workflows and set(n) = workflows <- n
+    member this.Runs with get() : ResizeArray<ArcRun> = runs and set(n) = runs <- n
     member this.RegisteredStudyIdentifiers with get() = registeredStudyIdentifiers and set(n) = registeredStudyIdentifiers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.Remarks with get() = remarks and set(n) = remarks <- n
@@ -1482,11 +1917,11 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     static member FileName = ARCtrl.ArcPathHelper.InvestigationFileName
 
     static member init(identifier: string) = ArcInvestigation identifier
-    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>,?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) = 
-        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks)
+    static member create(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks) = 
+        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?workflows = workflows, ?runs = runs, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks)
 
-    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences) (publications) (contacts) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (registeredStudyIdentifiers : ResizeArray<string>) (comments : ResizeArray<Comment>) (remarks) : ArcInvestigation =
-        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, assays = assays, studies = studies, registeredStudyIdentifiers = registeredStudyIdentifiers, comments = comments, remarks = remarks)
+    static member make (identifier : string) (title : string option) (description : string option) (submissionDate : string option) (publicReleaseDate : string option) (ontologySourceReferences) (publications) (contacts) (assays: ResizeArray<ArcAssay>) (studies : ResizeArray<ArcStudy>) (workflows : ResizeArray<ArcWorkflow>) (runs : ResizeArray<ArcRun>) (registeredStudyIdentifiers : ResizeArray<string>) (comments : ResizeArray<Comment>) (remarks) : ArcInvestigation =
+        ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ontologySourceReferences = ontologySourceReferences, publications = publications, contacts = contacts, assays = assays, studies = studies, workflows = workflows, runs = runs, registeredStudyIdentifiers = registeredStudyIdentifiers, comments = comments, remarks = remarks)
 
     member this.AssayCount 
         with get() = this.Assays.Count
@@ -2109,6 +2544,88 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     static member containsWorkflow(workflowIdentifier: string) : ArcInvestigation -> bool =
         fun (inv: ArcInvestigation) ->
             inv.ContainsWorkflow(workflowIdentifier)
+
+
+    member this.RunCount
+        with get() = this.Runs.Count
+
+    member this.RunIdentifiers
+        with get() = this.Runs |> Seq.map (fun (x:ArcRun) -> x.Identifier) |> Seq.toArray
+
+    member this.AddRun(run: ArcRun) =
+        ArcTypesAux.SanityChecks.validateUniqueRunIdentifier run this.Runs
+        run.Investigation <- Some this
+        this.Runs.Add(run)
+
+    static member addRun(run: ArcRun) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.AddRun(run)
+            copy
+
+    member this.InitRun(runIdentifier: string) =
+        let run = ArcRun.init(runIdentifier)
+        this.AddRun(run)
+        run
+
+    static member initRun(runIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.InitRun(runIdentifier)
+
+    member this.DeleteRunAt(index: int) =
+        this.Runs.RemoveAt(index)
+
+    static member deleteRunAt(index: int) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.DeleteRunAt(index)
+            copy
+
+    member this.DeleteRun(runIdentifier: string) =
+        let index = this.Runs.FindIndex(fun w -> w.Identifier = runIdentifier)
+        this.DeleteRunAt(index)
+
+    static member deleteRun(runIdentifier: string) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.DeleteRun(runIdentifier)
+            copy
+
+    member this.GetRunAt(index: int) : ArcRun =
+        this.Runs.[index]
+
+    static member getRunAt(index: int) : ArcInvestigation -> ArcRun =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.GetRunAt(index)
+
+    member this.GetRun(runIdentifier: string) : ArcRun =
+        match this.TryGetRun runIdentifier with
+        | Some w -> w
+        | None -> failwith (ArcTypesAux.ErrorMsgs.unableToFindRunIdentifier runIdentifier this.Identifier)
+
+    static member getRun(runIdentifier: string) : ArcInvestigation -> ArcRun =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.GetRun(runIdentifier)
+
+    member this.TryGetRun(runIdentifier: string) : ArcRun option =
+        this.Runs |> Seq.tryFind (fun w -> w.Identifier = runIdentifier)
+
+    static member tryGetRun(runIdentifier: string) : ArcInvestigation -> ArcRun option =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.TryGetRun(runIdentifier)
+
+    member this.ContainsRun(runIdentifier: string) : bool =
+        this.Runs
+        |> Seq.exists (fun w -> w.Identifier = runIdentifier)
+
+    static member containsRun(runIdentifier: string) : ArcInvestigation -> bool =
+        fun (inv: ArcInvestigation) ->
+            inv.ContainsRun(runIdentifier)
+
 
     /// <summary>
     /// Returns all fully distinct Contacts/Performers from assays/studies/investigation. 
