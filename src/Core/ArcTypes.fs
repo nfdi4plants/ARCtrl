@@ -2471,6 +2471,14 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     member this.WorkflowIdentifiers
         with get() = this.Workflows |> Seq.map (fun (x:ArcWorkflow) -> x.Identifier) |> Seq.toArray
 
+    member this.GetWorkflowIndex(workflowIdentifier: string) : int =
+        let index = this.Workflows.FindIndex (fun w -> w.Identifier = workflowIdentifier)
+        if index = -1 then failwith $"Unable to find workflow with specified identifier '{workflowIdentifier}'!"
+        index
+
+    static member getWorkflowIndex(workflowIdentifier: string) : ArcInvestigation -> int =
+        fun (inv: ArcInvestigation) -> inv.GetWorkflowIndex(workflowIdentifier)
+
     member this.AddWorkflow(workflow: ArcWorkflow) =
         ArcTypesAux.SanityChecks.validateUniqueWorkflowIdentifier workflow this.Workflows
         workflow.Investigation <- Some this
@@ -2545,12 +2553,40 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         fun (inv: ArcInvestigation) ->
             inv.ContainsWorkflow(workflowIdentifier)
 
+    member this.SetWorkflowAt(index: int, workflow: ArcWorkflow) =
+        ArcTypesAux.SanityChecks.validateUniqueWorkflowIdentifier workflow this.Workflows
+        workflow.Investigation <- Some this
+        this.Workflows.[index] <- workflow
+
+    member this.SetWorkflow(workflowIdentifier: string, workflow: ArcWorkflow) =
+        let index = this.GetWorkflowIndex(workflowIdentifier)
+        this.SetWorkflowAt(index, workflow)
+
+    static member setWorkflow(workflowIdentifier: string, workflow: ArcWorkflow) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.SetWorkflow(workflowIdentifier, workflow)
+            copy
+
+    static member setWorkflowAt(index: int, workflow: ArcWorkflow) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.SetWorkflowAt(index, workflow)
+            copy
 
     member this.RunCount
         with get() = this.Runs.Count
 
     member this.RunIdentifiers
         with get() = this.Runs |> Seq.map (fun (x:ArcRun) -> x.Identifier) |> Seq.toArray
+
+    member this.GetRunIndex(runIdentifier: string) : int =
+        let index = this.Runs.FindIndex (fun r -> r.Identifier = runIdentifier)
+        if index = -1 then failwith $"Unable to find run with specified identifier '{runIdentifier}'!"
+        index
+
+    static member getRunIndex(runIdentifier: string) : ArcInvestigation -> int =
+        fun (inv: ArcInvestigation) -> inv.GetRunIndex(runIdentifier)
 
     member this.AddRun(run: ArcRun) =
         ArcTypesAux.SanityChecks.validateUniqueRunIdentifier run this.Runs
@@ -2626,6 +2662,26 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         fun (inv: ArcInvestigation) ->
             inv.ContainsRun(runIdentifier)
 
+    member this.SetRunAt(index: int, run: ArcRun) =
+        ArcTypesAux.SanityChecks.validateUniqueRunIdentifier run this.Runs
+        run.Investigation <- Some this
+        this.Runs.[index] <- run
+
+    member this.SetRun(runIdentifier: string, run: ArcRun) =
+        let index = this.GetRunIndex(runIdentifier)
+        this.SetRunAt(index, run)
+
+    static member setRunAt(index: int, run: ArcRun) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.SetRunAt(index, run)
+            copy
+
+    static member setRun(runIdentifier: string, run: ArcRun) =
+        fun (inv: ArcInvestigation) ->
+            let copy = inv.Copy()
+            copy.SetRun(runIdentifier, run)
+            copy
 
     /// <summary>
     /// Returns all fully distinct Contacts/Performers from assays/studies/investigation. 
@@ -2682,23 +2738,35 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
                     yield! study.Tables
                 for assay in this.Assays do
                     yield! assay.Tables
+                for run in this.Runs do
+                    yield! run.Tables
             ]
             |> ResizeArray
             |> ArcTablesAux.getIOMap
         for study in this.Studies do
             ArcTablesAux.applyIOMap ioMap study.Tables
         for assay in this.Assays do
-            ArcTablesAux.applyIOMap ioMap assay.Tables          
+            ArcTablesAux.applyIOMap ioMap assay.Tables
+        for run in this.Runs do
+            ArcTablesAux.applyIOMap ioMap run.Tables
 
     member this.Copy() : ArcInvestigation =
         let nextAssays = ResizeArray()
         let nextStudies = ResizeArray()
+        let nextWorkflows = ResizeArray()
+        let nextRuns = ResizeArray()
         for assay in this.Assays do
             let copy = assay.Copy()
             nextAssays.Add(copy)
         for study in this.Studies do
             let copy = study.Copy()
             nextStudies.Add(copy)
+        for workflow in this.Workflows do
+            let copy = workflow.Copy()
+            nextWorkflows.Add(copy)
+        for run in this.Runs do
+            let copy = run.Copy()
+            nextRuns.Add(copy)
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         let nextRemarks = this.Remarks |> ResizeArray.map (fun c -> c.Copy())
         let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
@@ -2713,6 +2781,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             ?publicReleaseDate = this.PublicReleaseDate,
             studies = nextStudies,
             assays = nextAssays,
+            workflows = nextWorkflows,
+            runs = nextRuns,
             registeredStudyIdentifiers = nextStudyIdentifiers,
             ontologySourceReferences = nextOntologySourceReferences,
             publications = nextPublications,
@@ -2776,11 +2846,13 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
         let osr = Seq.compare this.OntologySourceReferences other.OntologySourceReferences
         let assays = Seq.compare this.Assays other.Assays
         let studies = Seq.compare this.Studies other.Studies
+        let workflows = Seq.compare this.Workflows other.Workflows
+        let runs = Seq.compare this.Runs other.Runs
         let reg_studies = Seq.compare this.RegisteredStudyIdentifiers other.RegisteredStudyIdentifiers
         let comments = Seq.compare this.Comments other.Comments
         let remarks = Seq.compare this.Remarks other.Remarks
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; sd; prd; pub; con; osr; assays; studies; reg_studies; comments; remarks|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; sd; prd; pub; con; osr; assays; studies; workflows; runs; reg_studies; comments; remarks|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcInvestigation and the input ArcInvestigation refer to the same object.
@@ -2804,6 +2876,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
     Contacts = %A,
     Assays = %A,
     Studies = %A,
+    Workflows = %A,
+    Runs = %A,
     RegisteredStudyIdentifiers = %A,
     Comments = %A,
     Remarks = %A,
@@ -2818,6 +2892,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             this.Contacts
             this.Assays
             this.Studies
+            this.Workflows
+            this.Runs
             this.RegisteredStudyIdentifiers
             this.Comments
             this.Remarks
@@ -2841,6 +2917,8 @@ type ArcInvestigation(identifier : string, ?title : string, ?description : strin
             HashCodes.boxHashSeq this.OntologySourceReferences
             HashCodes.boxHashSeq this.Assays
             HashCodes.boxHashSeq this.Studies
+            HashCodes.boxHashSeq this.Workflows
+            HashCodes.boxHashSeq this.Runs
             HashCodes.boxHashSeq this.RegisteredStudyIdentifiers
             HashCodes.boxHashSeq this.Comments
             HashCodes.boxHashSeq this.Remarks

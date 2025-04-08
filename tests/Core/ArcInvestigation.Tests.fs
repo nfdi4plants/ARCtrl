@@ -22,6 +22,8 @@ let private tests_create =
             let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
+            let workflows = ResizeArray([|ArcWorkflow.init("Workflow 1")|])
+            let runs = ResizeArray([ArcRun.init("Run 1")])
             let comments = ResizeArray [|Comment.create("Comment 1")|]
             let remarks = ResizeArray [|Remark.create(1, "Remark 1")|]
 
@@ -37,6 +39,8 @@ let private tests_create =
                     contacts = contacts,
                     assays = assays,
                     studies = studies,
+                    workflows = workflows,
+                    runs = runs,
                     comments = comments,
                     remarks = remarks
                 )
@@ -51,6 +55,8 @@ let private tests_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.Assays assays "Assays"
             Expect.equal actual.Studies studies "Studies"
+            Expect.equal actual.Workflows workflows "Workflows"
+            Expect.equal actual.Runs runs "Runs"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
 
@@ -65,6 +71,8 @@ let private tests_create =
             let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let assays = create_ExampleAssays()
             let studies = ResizeArray [|ArcStudy.init("Study 1")|]
+            let workflows = ResizeArray [|ArcWorkflow.init("Workflow 1")|]
+            let runs = ResizeArray [|ArcRun.init("Run 1")|]
             let comments = ResizeArray [|Comment.create("Comment 1")|]
             let remarks = ResizeArray [|Remark.create(1, "Remark 1")|]
 
@@ -79,6 +87,8 @@ let private tests_create =
                 contacts = contacts,
                 assays = assays,
                 studies = studies,
+                workflows = workflows,
+                runs = runs,
                 comments = comments,
                 remarks = remarks
             )
@@ -93,6 +103,8 @@ let private tests_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.Assays assays "Assays"
             Expect.equal actual.Studies studies "Studies"
+            Expect.equal actual.Workflows workflows "Workflows"
+            Expect.equal actual.Runs runs "Runs"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
 
@@ -111,6 +123,8 @@ let private tests_create =
             Expect.isEmpty actual.Contacts "Contacts"
             Expect.isEmpty actual.Assays "Assays"
             Expect.isEmpty actual.Studies "Studies"
+            Expect.isEmpty actual.Workflows "Workflows"
+            Expect.isEmpty actual.Runs "Runs"
             Expect.isEmpty actual.Comments "Comments"
             Expect.isEmpty actual.Remarks "Remarks"
 
@@ -125,6 +139,8 @@ let private tests_create =
             let contacts = ResizeArray [|Person.create(firstName = "John", lastName = "Doe")|]
             let assays = create_ExampleAssays()
             let studies = ResizeArray([|ArcStudy.init("Study 1")|])
+            let workflows = ResizeArray([|ArcWorkflow.init("Workflow 1")|])
+            let runs = ResizeArray([|ArcRun.init("Run 1")|])
             let registeredStudyIdentifiers = ResizeArray(["Study 1"])
             let comments = ResizeArray [|Comment.create("Comment 1")|]
             let remarks = ResizeArray [|Remark.create(1, "Remark 1")|]
@@ -141,6 +157,8 @@ let private tests_create =
                     contacts
                     assays
                     studies
+                    workflows
+                    runs
                     registeredStudyIdentifiers
                     comments
                     remarks
@@ -155,6 +173,8 @@ let private tests_create =
             Expect.equal actual.Contacts contacts "Contacts"
             Expect.equal actual.Assays assays "Assays"
             Expect.equal actual.Studies studies "Studies"
+            Expect.equal actual.Workflows workflows "Workflows"
+            Expect.equal actual.Runs runs "Runs"
             Expect.equal actual.Comments comments "Comments"
             Expect.equal actual.Remarks remarks "Remarks"
         testCase "constructorAppliesReference" <| fun _ ->
@@ -583,6 +603,178 @@ let tests_Assay = testList "CRUD Assay" [
     ]
 ]
 
+let tests_Workflow = testList "CRUD_Workflow" [
+    let createExampleInvestigation() =
+        let i = ArcInvestigation.init("MyInvestigation")
+        let w = ArcWorkflow.init("Workflow 1")
+        let w2 = ArcWorkflow.create("Workflow 2",title="Workflow 2 Title")
+        i.AddWorkflow w
+        i.AddWorkflow w2
+        i
+    testCase "Ensure example" <| fun _ ->
+        let i = createExampleInvestigation()
+        Expect.equal i.WorkflowCount 2 "WorkflowCount"
+        TestingUtils.Expect.sequenceEqual i.WorkflowIdentifiers (seq {"Workflow 1"; "Workflow 2"}) "WorkflowIdentifiers"
+        let w = i.Workflows.Item 0 
+        Expect.equal w.Title None "Workflow 1 Title"
+        let w2 = i.Workflows.Item 1 
+        Expect.equal w2.Title (Some "Workflow 2 Title") "Workflow 2 Title"
+    testList "AddWorkflow" [
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let workflow_ident = "New Workflow"
+            let expected = ArcWorkflow(workflow_ident, version = "0.0.1")
+            i.AddWorkflow(expected)
+            Expect.equal i.WorkflowCount 3 "Workflow"
+            let actual = i.GetWorkflowAt 2
+            Expect.equal actual expected "equal"
+        testCase "by identifier" <| fun _ ->
+            let i = createExampleInvestigation()
+            let workflow_ident = "New Workflow"
+            let expected = ArcWorkflow(workflow_ident, version = "0.0.1")
+            i.AddWorkflow(expected)
+            Expect.equal i.WorkflowCount 3 "Workflow"
+            let actual = i.GetWorkflowAt 2
+            Expect.equal actual expected "equal"
+    ]
+    testList "SetWorkflow" [
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let workflow_ident = "New Workflow"
+            let expected = ArcWorkflow(workflow_ident, version = "0.0.1")
+            i.SetWorkflowAt(0, expected)
+            Expect.equal i.WorkflowCount 2 "Workflow"
+            Expect.equal i.Workflows.[0] expected "equal"
+        testCase "by identifier" <| fun _ ->
+            let i = createExampleInvestigation()
+            let workflow_ident = "New Workflow"
+            let expected = ArcWorkflow(workflow_ident, version = "0.0.1")
+            i.SetWorkflow("Workflow 2", expected)
+            Expect.equal i.WorkflowCount 2 "Workflow"
+            let actual = i.Workflows.[1]
+            Expect.equal actual expected "equal"
+    ]
+    testList "GetWorkflow" [
+        testCase "not existing, throws" <| fun _ ->
+            let i = createExampleInvestigation()
+            let func = fun () -> i.GetWorkflow("LOREM IPSUM; DOLOR") |> ignore
+            Expect.throws func "Should throw on non existing workflow"
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let w = i.GetWorkflowAt(0)
+            Expect.equal w.Identifier "Workflow 1" "FileName"
+        testCase "by ident" <| fun _ ->
+            let i = createExampleInvestigation()
+            let w = i.GetWorkflow("Workflow 2")
+            Expect.equal w.Identifier "Workflow 2" "FileName"
+        testCase "mutable propagation" <| fun _ ->
+            let i = createExampleInvestigation()
+            let w = i.GetWorkflowAt(0)
+            Expect.equal w.Identifier "Workflow 1" "FileName"
+            Expect.equal w.Title None "Title"
+            w.Title <- Some "New Title"
+            Expect.equal w.Title (Some "New Title") "Title, w"
+            Expect.equal i.Workflows.[0].Title (Some "New Title") "Title, direct"
+        testCase "mutable propagation, copy" <| fun _ ->
+            let i = createExampleInvestigation()
+            let copy = createExampleInvestigation()
+            let w = i.GetWorkflowAt(0)
+            Expect.equal w.Identifier "Workflow 1" "FileName"
+            Expect.equal w.Title None "Title"
+            w.Title <- Some "New Title"
+            Expect.equal w.Title (Some "New Title") "Title, w"
+            Expect.equal i.Workflows.[0].Title (Some "New Title") "Title, direct"
+            Expect.equal copy.Workflows.[0].Title None "Title, copy direct"
+    ]
+    
+]
+
+let tests_Run = testList "CRUD Run" [
+    let createExampleInvestigation() =
+        let i = ArcInvestigation.init("MyInvestigation")
+        let w = ArcRun.init("Run 1")
+        let w2 = ArcRun.create("Run 2",title="Run 2 Title")
+        i.AddRun w
+        i.AddRun w2
+        i
+    testCase "Ensure example" <| fun _ ->
+        let i = createExampleInvestigation()
+        Expect.equal i.RunCount 2 "RunCount"
+        TestingUtils.Expect.sequenceEqual i.RunIdentifiers (seq {"Run 1"; "Run 2"}) "RunIdentifiers"
+        let w = i.Runs.Item 0
+        Expect.equal w.Title None "Run 1 Title"
+        let w2 = i.Runs.Item 1
+        Expect.equal w2.Title (Some "Run 2 Title") "Run 2 Title"
+    testList "AddRun" [
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let run_ident = "New Run"
+            let expected = ArcRun(run_ident, description = "So good")
+            i.AddRun(expected)
+            Expect.equal i.RunCount 3 "Run"
+            let actual = i.GetRunAt 2
+            Expect.equal actual expected "equal"
+        testCase "by identifier" <| fun _ ->
+            let i = createExampleInvestigation()
+            let run_ident = "New Run"
+            let expected = ArcRun(run_ident, description = "So good")
+            i.AddRun(expected)
+            Expect.equal i.RunCount 3 "Run"
+            let actual = i.GetRunAt 2
+            Expect.equal actual expected "equal"
+    ]
+    testList "SetRun" [
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let run_ident = "New Run"
+            let expected = ArcRun(run_ident, description = "So good")
+            i.SetRunAt(0, expected)
+            Expect.equal i.RunCount 2 "Run"
+            Expect.equal i.Runs.[0] expected "equal"
+        testCase "by identifier" <| fun _ ->
+            let i = createExampleInvestigation()
+            let run_ident = "New Run"
+            let expected = ArcRun(run_ident, description = "So good")
+            i.SetRun("Run 2", expected)
+            Expect.equal i.RunCount 2 "Run"
+            let actual = i.Runs.[1]
+            Expect.equal actual expected "equal"
+    ]
+    testList "GetRun" [
+        testCase "not existing, throws" <| fun _ ->
+            let i = createExampleInvestigation()
+            let func = fun () -> i.GetRun("LOREM IPSUM; DOLOR") |> ignore
+            Expect.throws func "Should throw on non existing run"
+        testCase "by index" <| fun _ ->
+            let i = createExampleInvestigation()
+            let w = i.GetRunAt(0)
+            Expect.equal w.Identifier "Run 1" "FileName"
+        testCase "by ident" <| fun _ ->
+            let i = createExampleInvestigation()
+            let w = i.GetRun("Run 2")
+            Expect.equal w.Identifier "Run 2" "FileName"
+        testCase "mutable propagation" <| fun _ ->
+            let i = createExampleInvestigation()
+            let w = i.GetRunAt(0)
+            Expect.equal w.Identifier "Run 1" "FileName"
+            Expect.equal w.Title None "Title"
+            w.Title <- Some "New Title"
+            Expect.equal w.Title (Some "New Title") "Title, w"
+            Expect.equal i.Runs.[0].Title (Some "New Title") "Title, direct"
+        testCase "mutable propagation, copy" <| fun _ ->
+            let i = createExampleInvestigation()
+            let copy = createExampleInvestigation()
+            let w = i.GetRunAt(0)
+            Expect.equal w.Identifier "Run 1" "FileName"
+            Expect.equal w.Title None "Title"
+            w.Title <- Some "New Title"
+            Expect.equal w.Title (Some "New Title") "Title, w"
+            Expect.equal i.Runs.[0].Title (Some "New Title") "Title, direct"
+            Expect.equal copy.Runs.[0].Title None "Title, copy direct"
+    ]
+
+]
+
 let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [
     testList "SameAssay" [ 
         testCase "nothingToUpdate" <| fun _ ->
@@ -711,6 +903,8 @@ let private tests_GetHashCode = testList "GetHashCode" [
                 (ResizeArray [|Person(firstName="John",lastName="Doe"); Person(firstName="Jane",lastName="Doe")|])
                 (ResizeArray ([ArcAssay.init("Registered Assay1"); ArcAssay.init("Registered Assay2")]))
                 (ResizeArray ([ArcStudy.init("Registered Study1"); ArcStudy.init("Registered Study2")]))
+                (ResizeArray([ArcWorkflow.init("My Workflow")]))
+                (ResizeArray([ArcRun.init("My Run")]))
                 (ResizeArray (["Registered Study1"; "Registered Study2"]))
                 (ResizeArray [|Comment("Hello", "World"); Comment("ByeBye", "World") |])
                 (ResizeArray [|Remark.create(12,"Test"); Remark.create(42, "The answer")|])
@@ -846,6 +1040,8 @@ let main =
         tests_Copy
         tests_Study
         tests_Assay
+        tests_Workflow
+        tests_Run
         tests_GetHashCode
         tests_UpdateIOTypeByEntityIDTypes
         // tests_UpdateBy
