@@ -18,6 +18,7 @@
     <Compile Include="StudyFileTests.fs" />
     <Compile Include="AssayFileTests.fs" />
     <Compile Include="WorkflowFileTest.fs" />
+    <Compile Include="RunFileTests.fs" />
     <Compile Include="InvestigationFileTests.fs" />
     <Compile Include="TemplateTests.fs" />
     <Compile Include="Main.fs" />

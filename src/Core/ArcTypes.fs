@@ -1423,7 +1423,6 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
             HashCodes.boxHashSeq this.SubWorkflowIdentifiers
             HashCodes.boxHashSeq this.Parameters
             HashCodes.boxHashSeq this.Components
-            HashCodes.boxHashOption this.DataMap
             HashCodes.boxHashSeq this.Contacts
             HashCodes.boxHashSeq this.Comments
         |]
@@ -1433,11 +1432,12 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
 
 
 [<AttachMembers>]
-type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+type ArcRun(identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
     inherit ArcTables(defaultArg tables <| ResizeArray())
 
     let performers = defaultArg performers <| ResizeArray()
     let comments = defaultArg comments <| ResizeArray()
+    let workflowIdentifiers = defaultArg workflowIdentifiers <| ResizeArray()
     let mutable identifier : string =
         let identifier = identifier.Trim()
         Helper.Identifier.checkValidCharacters identifier
@@ -1448,6 +1448,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     let mutable measurementType : OntologyAnnotation option = measurementType
     let mutable technologyType : OntologyAnnotation option = technologyType
     let mutable technologyPlatform : OntologyAnnotation option = technologyPlatform
+    let mutable workflowIdentifiers : ResizeArray<string> = workflowIdentifiers
     let mutable dataMap : DataMap option = datamap
     let mutable performers = performers
     let mutable comments  = comments
@@ -1462,14 +1463,15 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     member this.MeasurementType with get() = measurementType and set(n) = measurementType <- n
     member this.TechnologyType with get() = technologyType and set(n) = technologyType <- n
     member this.TechnologyPlatform with get() = technologyPlatform and set(n) = technologyPlatform <- n
+    member this.WorkflowIdentifiers with get() = workflowIdentifiers and set(w) = workflowIdentifiers <- w
     member this.DataMap with get() = dataMap and set(n) = dataMap <- n
     member this.Performers with get() = performers and set(n) = performers <- n
     member this.Comments with get() = comments and set(n) = comments <- n
     member this.StaticHash with get() = staticHash and set(h) = staticHash <- h
 
     static member init (identifier : string) = ArcRun(identifier)
-    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
-        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
+    static member create (identifier: string, ?title : string, ?description : string, ?measurementType : OntologyAnnotation, ?technologyType : OntologyAnnotation, ?technologyPlatform : OntologyAnnotation, ?workflowIdentifiers : ResizeArray<string>, ?tables: ResizeArray<ArcTable>, ?datamap : DataMap, ?performers : ResizeArray<Person>, ?comments : ResizeArray<Comment>) = 
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, ?workflowIdentifiers = workflowIdentifiers, ?tables =tables, ?datamap = datamap, ?performers = performers, ?comments = comments)
 
     static member make 
         (identifier : string)
@@ -1478,14 +1480,38 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         (measurementType : OntologyAnnotation option)
         (technologyType : OntologyAnnotation option)
         (technologyPlatform : OntologyAnnotation option)
+        (workflowIdentifiers : ResizeArray<string>)
         (tables : ResizeArray<ArcTable>)
         (datamap : DataMap option)
         (performers : ResizeArray<Person>)
         (comments : ResizeArray<Comment>) = 
-        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
+        ArcRun(identifier = identifier, ?title = title, ?description = description, ?measurementType = measurementType, ?technologyType = technologyType, ?technologyPlatform = technologyPlatform, workflowIdentifiers = workflowIdentifiers, tables =tables, ?datamap = datamap, performers = performers, comments = comments)
 
     static member FileName = ARCtrl.ArcPathHelper.RunFileName
-        
+
+    /// Returns the count of workflow *identifiers*. This is not necessarily the same as the count of workflows, as not all identifiers correspond to an existing workflow.
+    member this.WorkflowIdentifierCount
+        with get() = this.WorkflowIdentifiers.Count
+
+    member this.WorkflowCount 
+        with get() = this.Workflows.Count
+
+    /// Returns all workflows registered in this run, that correspond to an existing workflow object in the associated investigation.
+    member this.Workflows
+        with get(): ResizeArray<ArcWorkflow> = 
+            let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+            this.WorkflowIdentifiers
+            |> Seq.choose inv.TryGetWorkflow
+            |> ResizeArray
+
+    /// Returns all registered workflow identifiers that do not correspond to an existing workflow object in the associated investigation.
+    member this.VacantWorkflowIdentifiers
+        with get() = 
+            let inv = ArcTypesAux.SanityChecks.validateRegisteredInvestigation this.Investigation
+            this.WorkflowIdentifiers 
+            |> Seq.filter (inv.ContainsWorkflow >> not)
+            |> ResizeArray
+
     // - Table API - //
     static member addTable(table:ArcTable, ?index: int) =
         fun (run:ArcRun) ->
@@ -1715,6 +1741,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
         let nextPerformers = this.Performers |> ResizeArray.map (fun c -> c.Copy())
+        let nextWorkflowIdentifiers = this.WorkflowIdentifiers |> ResizeArray.map (fun c -> c)
         ArcRun.make
             this.Identifier
             this.Title
@@ -1722,6 +1749,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.MeasurementType
             this.TechnologyType
             this.TechnologyPlatform
+            nextWorkflowIdentifiers
             nextTables
             nextDataMap
             nextPerformers
@@ -1747,6 +1775,11 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.TechnologyType <- run.TechnologyType
         if run.TechnologyPlatform.IsSome || updateAlways then 
             this.TechnologyPlatform <- run.TechnologyPlatform
+        if run.WorkflowIdentifiers.Count <> 0 || updateAlways then
+            let s = ArcTypesAux.updateAppendResizeArray appendSequences this.WorkflowIdentifiers run.WorkflowIdentifiers
+            this.WorkflowIdentifiers <- s
+        if run.DataMap.IsSome || updateAlways then
+            this.DataMap <- run.DataMap
         if run.Tables.Count <> 0 || updateAlways then
             let s = ArcTypesAux.updateAppendResizeArray appendSequences this.Tables run.Tables
             this.Tables <- s
@@ -1767,6 +1800,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
     MeasurementType = %A,
     TechnologyType = %A,
     TechnologyPlatform = %A,
+    WorkflowIdentifiers = %A,
+    DataMap = %A,
     Tables = %A,
     Performers = %A,
     Comments = %A
@@ -1777,6 +1812,8 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             this.MeasurementType
             this.TechnologyType
             this.TechnologyPlatform
+            this.WorkflowIdentifiers
+            this.DataMap
             this.Tables
             this.Performers
             this.Comments
@@ -1794,12 +1831,13 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
         let mst = this.MeasurementType = other.MeasurementType
         let tt = this.TechnologyType = other.TechnologyType
         let tp = this.TechnologyPlatform = other.TechnologyPlatform
+        let wf = Seq.compare this.WorkflowIdentifiers other.WorkflowIdentifiers
         let dm = this.DataMap = other.DataMap
         let tables = Seq.compare this.Tables other.Tables
         let perf = Seq.compare this.Performers other.Performers
         let comments = Seq.compare this.Comments other.Comments
         // Todo maybe add reflection check to prove that all members are compared?
-        [|i; t; d; mst; tt; tp; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
+        [|i; t; d; mst; tt; tp; wf; dm; tables; perf; comments|] |> Seq.forall (fun x -> x = true)
 
     /// <summary>
     /// Use this function to check if this ArcRun and the input ArcRun refer to the same object.
@@ -1825,6 +1863,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashOption this.MeasurementType
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
+            HashCodes.boxHashSeq this.WorkflowIdentifiers
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
@@ -1841,6 +1880,7 @@ type ArcRun(identifier: string, ?title : string, ?description : string, ?measure
             HashCodes.boxHashOption this.TechnologyType
             HashCodes.boxHashOption this.TechnologyPlatform
             HashCodes.boxHashOption this.DataMap
+            HashCodes.boxHashSeq this.WorkflowIdentifiers
             HashCodes.boxHashSeq this.Tables
             HashCodes.boxHashSeq this.Performers
             HashCodes.boxHashSeq this.Comments
