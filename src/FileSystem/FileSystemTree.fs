@@ -219,6 +219,26 @@ type FileSystemTree =
         else
             FileSystemTree.createFolder(studyName, [|resources; protocols; studyFile; readme|])
 
+    static member createWorkflowFolder(workflowName : string, ?hasDataMap) = 
+        let hasDataMap = defaultArg hasDataMap false
+        let readme = FileSystemTree.createReadmeFile()
+        let workflowFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.WorkflowFileName
+        if hasDataMap then
+            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+            FileSystemTree.createFolder(workflowName, [|workflowFile; readme; dataMapFile|])
+        else
+            FileSystemTree.createFolder(workflowName, [|workflowFile; readme|])
+
+    static member createRunFolder(runName : string, ?hasDataMap) = 
+        let hasDataMap = defaultArg hasDataMap false
+        let readme = FileSystemTree.createReadmeFile()
+        let runFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.RunFileName
+        if hasDataMap then
+            let dataMapFile = FileSystemTree.createFile ARCtrl.ArcPathHelper.DataMapFileName
+            FileSystemTree.createFolder(runName, [|runFile; readme; dataMapFile|])
+        else
+            FileSystemTree.createFolder(runName, [|runFile; readme|])
+
     static member createInvestigationFile() = 
         FileSystemTree.createFile ARCtrl.ArcPathHelper.InvestigationFileName
 
