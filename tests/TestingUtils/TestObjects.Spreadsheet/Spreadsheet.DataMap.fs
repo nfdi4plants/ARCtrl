@@ -1,4 +1,4 @@
-﻿module TestObjects.Spreadsheet.DataMap
+module TestObjects.Spreadsheet.DataMap
 
 open ARCtrl
 open FsSpreadsheet
@@ -149,6 +149,20 @@ module GeneratedBy =
         t.Cell(FsAddress(1, colCount + 1),c).SetValueAs generatedByHeaderV1
         for i = 2 to l + 1 do  
             t.Cell(FsAddress(i, colCount + 1),c).SetValueAs generatedByValueV1
+
+module Label =
+    
+    let labelValue = "avg"
+
+    let labelHeaderV1 = "Label"
+
+    let labelValueV1 = "avg"
+
+    let appendLabelColumn l (c : FsCellsCollection) (t : FsTable) = 
+        let colCount = if t.IsEmpty(c) then 0 else t.ColumnCount()
+        t.Cell(FsAddress(1, colCount + 1),c).SetValueAs labelHeaderV1
+        for i = 2 to l + 1 do  
+            t.Cell(FsAddress(i, colCount + 1),c).SetValueAs labelValueV1
 
 let initWorksheet (name : string) (appendOperations : (FsCellsCollection -> FsTable -> unit) list) = 
     let w = FsWorksheet(name)

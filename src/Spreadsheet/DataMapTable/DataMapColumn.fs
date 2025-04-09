@@ -1,4 +1,4 @@
-﻿module ARCtrl.Spreadsheet.DataMapColumn
+module ARCtrl.Spreadsheet.DataMapColumn
 
 open ARCtrl
 open ArcTable
@@ -57,6 +57,7 @@ let toFsColumns (dc : ResizeArray<DataContext>) : FsCell list list =
             yield! (createTerm dc.ObjectType)
             yield! (createText dc.Description)
             yield! (createText dc.GeneratedBy)
+            yield! (createText dc.Label)
             yield! (
                 commentKeys
                 |> List.map (fun key -> 
