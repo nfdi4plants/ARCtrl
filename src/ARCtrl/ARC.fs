@@ -123,8 +123,6 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
 
             let contracts = arc.GetReadContracts()
       
-        
-
             let! fulFilledContracts = 
                 contracts 
                 |> fullFillContractBatchAsync arcPath

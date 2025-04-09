@@ -138,7 +138,7 @@ module Expect =
     let wantSome actual message = Expect.wantSome actual message 
 
     let isEmpty actual message = Expect.isEmpty actual message 
-    let isNotEmpty actual message = Expect.isEmpty actual message 
+    let isNotEmpty actual message = Expect.isNotEmpty actual message 
     let hasLength actual expectedLength message = Expect.hasLength actual expectedLength message
 
     let isTrue actual message = Expect.isTrue actual message 

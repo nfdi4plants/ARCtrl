@@ -5,7 +5,7 @@ open FsSpreadsheet
 module Proteomics = 
 
     [<Literal>]
-    let runIdentifier = "proteomics"
+    let runIdentifier = "Proteomics"
 
     let runMetadata = 
         let ws = FsWorksheet("isa_run")
