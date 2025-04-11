@@ -686,7 +686,17 @@ let tests_Workflow = testList "CRUD_Workflow" [
             Expect.equal i.Workflows.[0].Title (Some "New Title") "Title, direct"
             Expect.equal copy.Workflows.[0].Title None "Title, copy direct"
     ]
-    
+    testCase "SubWorkflows" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let subW = ArcWorkflow("SubWorkflow1", title = "MySubWorkflow")
+        let w = ArcWorkflow("Workflow", subWorkflowIdentifiers = ResizeArray ["SubWorkflow1"; "SubWorkflow2"])
+        i.AddWorkflow subW
+        i.AddWorkflow w
+        let workflows = w.SubWorkflows
+        Expect.hasLength workflows 1 "Workflow count"
+        let workflow = workflows.[0]
+        Expect.equal workflow.Identifier "SubWorkflow1" "Workflow identifier"
+        Expect.equal workflow.Title (Some "MySubWorkflow") "Workflow title"
 ]
 
 let tests_Run = testList "CRUD Run" [
@@ -772,7 +782,17 @@ let tests_Run = testList "CRUD Run" [
             Expect.equal i.Runs.[0].Title (Some "New Title") "Title, direct"
             Expect.equal copy.Runs.[0].Title None "Title, copy direct"
     ]
-
+    testCase "Workflows" <| fun _ ->
+        let i = ArcInvestigation("MyInvestigation")
+        let w = ArcWorkflow("Workflow1", title = "MyWorkflow")
+        let r = ArcRun("Run1", WorkflowIdentifiers = ResizeArray ["Workflow1"; "Workflow2"])
+        i.AddRun r
+        i.AddWorkflow w
+        let workflows = r.Workflows
+        Expect.hasLength workflows 1 "Workflow count"
+        let workflow = workflows.[0]
+        Expect.equal workflow.Identifier "Workflow1" "Workflow identifier"
+        Expect.equal workflow.Title (Some "MyWorkflow") "Workflow title"
 ]
 
 let tests_UpdateIOTypeByEntityIDTypes = testList "UpdateIOTypeByEntityIDType" [

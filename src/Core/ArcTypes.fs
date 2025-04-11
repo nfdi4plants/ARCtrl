@@ -1148,7 +1148,10 @@ type ArcStudy(identifier : string, ?title, ?description, ?submissionDate, ?publi
 
 type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?workflowType : OntologyAnnotation, ?uri : string, ?version : string, ?subWorkflowIdentifiers : ResizeArray<string>, ?parameters : ResizeArray<Process.ProtocolParameter>, ?components : ResizeArray<Process.Component>, ?datamap : DataMap, ?contacts : ResizeArray<Person>, ?comments : ResizeArray<Comment>) =
 
-    let mutable identifier = identifier
+    let mutable identifier : string =
+        let identifier = identifier.Trim()
+        Helper.Identifier.checkValidCharacters identifier
+        identifier
     let mutable investigation : ArcInvestigation option = None
     let mutable title = title
     let mutable description = description
@@ -1312,8 +1315,11 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
     /// In order to copy the ArcAssays as well, use the Copy() method of the ArcInvestigation.
     member this.Copy(?copyInvestigationRef: bool) : ArcWorkflow =
         let copyInvestigationRef = defaultArg copyInvestigationRef false
-        let nextParameters = this.Parameters // |> ResizeArray.map (fun p -> p.Copy())
-        let nextComponents = this.Components // |> ResizeArray.map (fun c -> c.Copy())
+        let nextWorkFlowType = this.WorkflowType |> Option.map (fun w -> w.Copy())
+        let nextSubWorkflowIdentifiers = ResizeArray(this.SubWorkflowIdentifiers)
+        let nextParameters = this.Parameters |> ResizeArray.map id
+        let nextComponents = this.Components |> ResizeArray.map id
+        let nextDataMap = this.DataMap |> Option.map (fun d -> d.Copy())
         let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
         let workflow =
@@ -1321,13 +1327,13 @@ type ArcWorkflow(identifier : string, ?title : string, ?description : string, ?w
                 this.Identifier
                 this.Title
                 this.Description
-                this.WorkflowType
+                nextWorkFlowType
                 this.URI
                 this.Version
-                this.SubWorkflowIdentifiers
+                nextSubWorkflowIdentifiers
                 nextParameters
                 nextComponents
-                this.DataMap
+                nextDataMap
                 nextContacts
                 nextComments
         if copyInvestigationRef then workflow.Investigation <- this.Investigation
