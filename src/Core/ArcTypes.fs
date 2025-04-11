@@ -273,7 +273,7 @@ type ArcAssay(identifier: string, ?title : string, ?description : string, ?measu
             newAssay
 
     // - Table API - //
-    static member updateTable(name: string, updateFun: ArcTable -> unit) : ArcAssay -> ArcAssay =
+    static member updateTableBy(name: string, updateFun: ArcTable -> unit) : ArcAssay -> ArcAssay =
         fun (assay:ArcAssay) ->
             let newAssay = assay.Copy()
             newAssay.MapTable(name, updateFun)

@@ -35,9 +35,6 @@ let pyTestProjects =
         "tests/Python"
     ]
 
-let jsHelperFileName = "FileSystem.js"
-let jsHelperFilePath = "src/ARCtrl/ContractIO/" + jsHelperFileName
-
 let solutionFile  = $"{project}.sln"
 
 let configuration = "Release"
