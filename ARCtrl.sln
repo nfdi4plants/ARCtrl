@@ -13,7 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Directory.Packages.props = Directory.Packages.props
 		.config\dotnet-tools.json = .config\dotnet-tools.json
 		global.json = global.json
-		package.json = package.json
 		pyproject.toml = pyproject.toml
 		README.md = README.md
 		RELEASE_NOTES.md = RELEASE_NOTES.md
@@ -95,6 +94,13 @@ EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ARCtrl.ROCrate.Tests", "tests\ROCrate\ARCtrl.ROCrate.Tests.fsproj", "{212A1C64-02FC-465A-B0FA-F69735F37ACC}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "All.Tests", "tests\All\All.Tests.fsproj", "{243ACD5F-10AD-4BE6-9932-829667BE2053}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "js", "js", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		package.json = package.json
+		tsconfig.json = tsconfig.json
+		vite.config.mts = vite.config.mts
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -228,6 +234,7 @@ Global
 		{658BF141-B4B5-4B90-891D-AC36A3FD7574} = {6DA2330B-D407-4FB1-AF05-B0184034EC44}
 		{212A1C64-02FC-465A-B0FA-F69735F37ACC} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
 		{243ACD5F-10AD-4BE6-9932-829667BE2053} = {64B34A6E-318D-4E6E-9262-CE52C9B85A38}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {326188FB-2CC0-4610-A082-708885BF47AA}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1E354DE6-99BA-421E-9EF8-E808B855A85F}
