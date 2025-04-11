@@ -89,27 +89,39 @@ type Data(?id,?name : string,?dataType,?format,?selectorFormat,?comments) =
         this.Name
         |> Option.defaultValue ""
 
-    member this.GetAbsolutePathForAssay(assayIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
-        let folderPath = $"assays/{assayIdentifier}/dataset/"
+    member this.GetAbsolutePathBy(f : string -> string, ?checkExistenceFromRoot : string -> bool) =
         let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
+        let isPartOfSubFolder (p : string) =
+            p.StartsWith("assays/") || p.StartsWith("studies/") || p.StartsWith("workflows/") || p.StartsWith("runs/")
+        let isOnlineRessource (p : string) =
+            p.StartsWith("http:") || p.StartsWith("https:")
         match this.FilePath with
         | Some p -> 
-            if checkExistenceFromRoot p || p.StartsWith("assays/") || p.StartsWith("studies/") || p.StartsWith("http:") || p.StartsWith("https:") then
+            if checkExistenceFromRoot p || isPartOfSubFolder p || isOnlineRessource p then
                 p
             else
-                folderPath + p.TrimStart('/')
+                f p
         | None -> failwith "Data does not have a file path"
+
+    member this.GetAbsolutePathForAssay(assayIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+        let folderPath = $"assays/{assayIdentifier}/dataset/"
+        let f (p : string) = folderPath + p.TrimStart('/')
+        this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
 
     member this.GetAbsolutePathForStudy(studyIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
         let folderPath = $"studies/{studyIdentifier}/resources/"
-        let checkExistenceFromRoot = Option.defaultValue (fun _ -> false) checkExistenceFromRoot
-        match this.FilePath with
-        | Some p -> 
-            if checkExistenceFromRoot p || p.StartsWith("assays/") || p.StartsWith("studies/") || p.StartsWith("http:") || p.StartsWith("https:") then
-                p
-            else
-                folderPath + p.TrimStart('/')
-        | None -> failwith "Data does not have a file path"
+        let f (p : string) = folderPath + p.TrimStart('/')
+        this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
+
+    //member this.GetAbsolutePathForWorkflow(workflowIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+    //    let folderPath = $"workflows/{workflowIdentifier}/"
+    //    let f (p : string) = folderPath + p.TrimStart('/')
+    //    this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
+
+    //member this.GetAbsolutePathForRun(runIdentifier : string, ?checkExistenceFromRoot : string -> bool) =
+    //    let folderPath = $"runs/{runIdentifier}/"
+    //    let f (p : string) = folderPath + p.TrimStart('/')
+    //    this.GetAbsolutePathBy(f,?checkExistenceFromRoot = checkExistenceFromRoot)
 
     member this.Copy() =
         let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())

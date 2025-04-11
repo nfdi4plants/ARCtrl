@@ -180,7 +180,9 @@ module Helper =
             label = label
         )
 
-    let create_assay_full () = 
+    let create_assay_full () =
+        let title = "My Assay Title"
+        let description = "My Assay Description"
         let measurementType = OntologyAnnotation(name = "sugar measurement", tsr = "DPBO", tan = "DPBO:0000120")
         let technologyType = OntologyAnnotation(name = "Photometry", tsr = "NCIT", tan = "NCIT:C65109")
         let technologyPlatform = OntologyAnnotation(name = "Infinite M200 plate reader (Tecan)", tsr = "DPBO", tan = "DPBO:0000116")
@@ -193,6 +195,8 @@ module Helper =
         let p =
             ArcAssay(
                 identifier = "My Assay",
+                title = title,
+                description = description,
                 measurementType = measurementType,
                 technologyType = technologyType,
                 technologyPlatform = technologyPlatform,

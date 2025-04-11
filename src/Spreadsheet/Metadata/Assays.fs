@@ -10,6 +10,9 @@ open ARCtrl.Process.Conversion
 
 module Assays = 
 
+    let [<Literal>] identifierLabel =                         "Identifier"
+    let [<Literal>] titleLabel =                              "Title"
+    let [<Literal>] descriptionLabel =                        "Description"
     let [<Literal>] measurementTypeLabel =                    "Measurement Type"
     let [<Literal>] measurementTypeTermAccessionNumberLabel = "Measurement Type Term Accession Number"
     let [<Literal>] measurementTypeTermSourceREFLabel =       "Measurement Type Term Source REF"
@@ -21,16 +24,28 @@ module Assays =
 
     let labels = 
         [
-            measurementTypeLabel;measurementTypeTermAccessionNumberLabel;measurementTypeTermSourceREFLabel;
+            identifierLabel; titleLabel; descriptionLabel; measurementTypeLabel;measurementTypeTermAccessionNumberLabel;measurementTypeTermSourceREFLabel;
             technologyTypeLabel;technologyTypeTermAccessionNumberLabel;technologyTypeTermSourceREFLabel;technologyPlatformLabel;fileNameLabel
         ]
 
     
-    let fromString measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
+    let fromString identifier title description measurementType measurementTypeTermSourceREF measurementTypeTermAccessionNumber technologyType technologyTypeTermSourceREF technologyTypeTermAccessionNumber technologyPlatform fileName comments : ArcAssay = 
         let measurementType = OntologyAnnotation.create(?name = measurementType,?tan = measurementTypeTermAccessionNumber,?tsr = measurementTypeTermSourceREF)
         let technologyType = OntologyAnnotation.create(?name = technologyType,?tan = technologyTypeTermAccessionNumber,?tsr = technologyTypeTermSourceREF)
-        ArcAssay.make 
-            (fileName)
+        let identifier =
+            match identifier with
+            | Some identifier -> identifier
+            | None ->
+                match fileName with
+                | Some fileName ->
+                    match Identifier.Assay.tryIdentifierFromFileName fileName with
+                    | Some identifier -> identifier
+                    | _ -> Identifier.createMissingIdentifier()
+                | None -> Identifier.createMissingIdentifier()
+        ArcAssay.make
+            identifier
+            title
+            description
             (Option.fromValueWithDefault (OntologyAnnotation()) measurementType)
             (Option.fromValueWithDefault (OntologyAnnotation()) technologyType) 
             (technologyPlatform |> Option.map JsonTypes.decomposeTechnologyPlatform)
@@ -54,6 +69,9 @@ module Assays =
                     |> ResizeArray
 
                 fromString
+                    (matrix.TryGetValue(identifierLabel,i))
+                    (matrix.TryGetValue(titleLabel,i))
+                    (matrix.TryGetValue(descriptionLabel,i))
                     (matrix.TryGetValue(measurementTypeLabel,i))            
                     (matrix.TryGetValue((measurementTypeTermSourceREFLabel,i)))
                     (matrix.TryGetValue((measurementTypeTermAccessionNumberLabel,i)))
@@ -61,7 +79,7 @@ module Assays =
                     (matrix.TryGetValue((technologyTypeTermSourceREFLabel,i)))   
                     (matrix.TryGetValue((technologyTypeTermAccessionNumberLabel,i))) 
                     (matrix.TryGetValue(technologyPlatformLabel,i))     
-                    (matrix.TryGetValueDefault(Identifier.createMissingIdentifier(),(fileNameLabel,i)) |> Identifier.Assay.identifierFromFileName)                    
+                    (matrix.TryGetValue(fileNameLabel,i))                    
                     comments
             )
 
@@ -75,6 +93,9 @@ module Assays =
             let i = i + 1
             let mt = Option.defaultValue (OntologyAnnotation()) a.MeasurementType |> fun mt -> OntologyAnnotation.toStringObject(mt,true)
             let tt = Option.defaultValue (OntologyAnnotation()) a.TechnologyType |> fun tt -> OntologyAnnotation.toStringObject(tt,true)
+            do matrix.Matrix.Add ((identifierLabel,i),                            (Identifier.removeMissingIdentifier a.Identifier))
+            do matrix.Matrix.Add ((titleLabel,i),                                 (Option.defaultValue "" a.Title))
+            do matrix.Matrix.Add ((descriptionLabel,i),                           (Option.defaultValue "" a.Description))
             do matrix.Matrix.Add ((measurementTypeLabel,i),                       mt.TermName)
             do matrix.Matrix.Add ((measurementTypeTermAccessionNumberLabel,i),    mt.TermAccessionNumber)
             do matrix.Matrix.Add ((measurementTypeTermSourceREFLabel,i),          mt.TermSourceREF)

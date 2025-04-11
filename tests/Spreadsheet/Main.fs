@@ -12,6 +12,8 @@ let all = testSequenced <| testList "Spreadsheet" [
     DataMapTests.main
     ArcAssayTests.main
     ArcStudyTests.main
+    ArcWorkflowTests.main
+    ArcRunTests.main
     SparseTableTests.main
     IdentifierTests.main
     TemplateTests.main

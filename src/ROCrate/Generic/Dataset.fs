@@ -334,10 +334,10 @@ type LDDataset =
         s.AdditionalType <- ResizeArray ["Study"]
         s
 
-    static member createAssay(identifier : string, ?id : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
+    static member createAssay(identifier : string, ?id : string, ?name : string, ?description : string, ?creators : ResizeArray<LDNode>, ?hasParts : ResizeArray<LDNode>, ?measurementMethod : LDNode, ?measurementTechnique : LDNode, ?variableMeasureds : ResizeArray<LDNode>, ?abouts : ResizeArray<LDNode>, ?comments : ResizeArray<LDNode>, ?context : LDContext) =
         let id = match id with
                  | Some i -> i
                  | None -> LDDataset.genIDAssay(identifier)
-        let s = LDDataset.create(id, identier = identifier, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?comments = comments, ?context = context)
+        let s = LDDataset.create(id, identier = identifier, ?name = name, ?description = description, ?creators = creators, ?hasParts = hasParts, ?measurementMethod = measurementMethod, ?measurementTechnique = measurementTechnique, ?variableMeasureds = variableMeasureds, ?abouts = abouts, ?comments = comments, ?context = context)
         s.AdditionalType <- ResizeArray ["Assay"]
         s

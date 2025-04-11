@@ -110,6 +110,8 @@ module ArcInvestigation =
             (ResizeArray contacts)  
             (ResizeArray assays)
             (ResizeArray studies)
+            (ResizeArray())
+            (ResizeArray())
             (ResizeArray studyIdentifiers)
             (ResizeArray investigationInfo.Comments)  
             (ResizeArray remarks)

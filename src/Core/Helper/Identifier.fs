@@ -15,6 +15,10 @@ let [<Literal>] ValidAssayFileNamePattern = @"^(assays(\/|\\))?(?<identifier>" +
 // Define a regular expression pattern for valid characters
 let [<Literal>] ValidStudyFileNamePattern = @"^(studies(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.study.xlsx)?$"
 
+let [<Literal>] ValidWorkflowFileNamePattern = @"^(workflows(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.workflow.xlsx)?$"
+
+let [<Literal>] ValidRunFileNamePattern = @"^(runs(\/|\\))?(?<identifier>" + InnerValidCharactersPattern + @")((\/|\\)isa.run.xlsx)?$"
+
 // Function to check if a string contains only valid characters
 let tryCheckValidCharacters (identifier: string) =
     match identifier with
@@ -170,5 +174,137 @@ module Study =
     let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
         if tryCheckValidCharacters (identifier) then
             ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.StudiesFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+            |> Some
+        else None
+
+
+/// Workflow only contains "FileName" in isa.workflow.xlsx. To unify naming in our model, on read-in we transform fileName to identifier and reverse for writing.
+[<RequireQualifiedAccess>]
+module Workflow =
+
+    /// <summary>
+    /// On read-in the FileName can be any combination of "workflows" (workflow folder name), workflowIdentifier and "isa.workflow.xlsx" (the actual file name).
+    ///
+    /// This functions extracts workflowIdentifier from any of these combinations and returns it.
+    /// </summary>
+    /// <param name="fileName">FileName as written in isa.workflow.xlsx metadata sheet</param>
+    let identifierFromFileName (fileName: string) : string =
+        match fileName with
+        | Regex ValidWorkflowFileNamePattern m -> 
+            let identifier = m.Groups.["identifier"].Value
+            identifier
+        | _ -> failwith $"Cannot parse workflow identifier from FileName `{fileName}`"
+
+    /// <summary>
+    /// On read-in the FileName can be any combination of "workflows" (workflow folder name), workflowIdentifier and "isa.workflow.xlsx" (the actual file name).
+    ///
+    /// This functions extracts workflowIdentifier from any of these combinations and returns it.
+    /// </summary>
+    /// <param name="fileName">FileName as written in isa.workflow.xlsx metadata sheet</param>
+    let tryIdentifierFromFileName (fileName: string) : string option =
+        match fileName with
+        | Regex ValidWorkflowFileNamePattern m -> 
+            let identifier = m.Groups.["identifier"].Value
+            Some identifier
+        | _ -> None
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/isa.workflow.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct workflow identifier</param>
+    let fileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.WorkflowFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/isa.workflow.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct workflow identifier</param>
+    let tryFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.WorkflowFileName|]
+            |> Some
+        else None
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/isa.datamap.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct workflow identifier</param>
+    let datamapFileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `workflows/workflowIdentifier/isa.datamap.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct workflow identifier</param>
+    let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.WorkflowsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+            |> Some
+        else None
+
+[<RequireQualifiedAccess>]
+module Run =
+
+    /// <summary>
+    /// On read-in the FileName can be any combination of "runs" (run folder name), runIdentifier and "isa.run.xlsx" (the actual file name).
+    ///
+    /// This functions extracts runIdentifier from any of these combinations and returns it.
+    /// </summary>
+    /// <param name="fileName">FileName as written in isa.run.xlsx metadata sheet</param>
+    let identifierFromFileName (fileName: string) : string =
+        match fileName with
+        | Regex ValidRunFileNamePattern m -> 
+            let identifier = m.Groups.["identifier"].Value
+            identifier
+        | _ -> failwith $"Cannot parse run identifier from FileName `{fileName}`"
+
+    /// <summary>
+    /// On read-in the FileName can be any combination of "runs" (run folder name), runIdentifier and "isa.run.xlsx" (the actual file name).
+    ///
+    /// This functions extracts runIdentifier from any of these combinations and returns it.
+    /// </summary>
+    /// <param name="fileName">FileName as written in isa.run.xlsx metadata sheet</param>
+    let tryIdentifierFromFileName (fileName: string) : string option =
+        match fileName with
+        | Regex ValidRunFileNamePattern m -> 
+            let identifier = m.Groups.["identifier"].Value
+            Some identifier
+        | _ -> None
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/isa.run.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let fileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/isa.run.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let tryFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.RunFileName|]
+            |> Some
+        else None
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/isa.datamap.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let datamapFileNameFromIdentifier (identifier: string) : string =
+        checkValidCharacters (identifier)
+        ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
+
+    /// <summary>
+    /// On writing a xlsx file we unify our output to a relative path to ARC root. So: `runs/runIdentifier/isa.datamap.xlsx`.
+    /// </summary>
+    /// <param name="identifier">Any correct run identifier</param>
+    let tryDatamapFileNameFromIdentifier (identifier: string) : string option =
+        if tryCheckValidCharacters (identifier) then
+            ARCtrl.ArcPathHelper.combineMany [|ARCtrl.ArcPathHelper.RunsFolderName; identifier; ARCtrl.ArcPathHelper.DataMapFileName|]
             |> Some
         else None

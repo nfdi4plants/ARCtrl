@@ -12,7 +12,9 @@ let fulfillReadContractAsync basePath (c : Contract) =
             match c.DTOType with
             | Some DTOType.ISA_Assay 
             | Some DTOType.ISA_Investigation
-            | Some DTOType.ISA_Study 
+            | Some DTOType.ISA_Study
+            | Some DTOType.ISA_Workflow
+            | Some DTOType.ISA_Run
             | Some DTOType.ISA_Datamap ->
                 let path = ArcPathHelper.combine basePath c.Path
                 let! wb = FileSystemHelper.readFileXlsxAsync path

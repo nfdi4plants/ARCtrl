@@ -13,9 +13,9 @@ open CrossAsync
 
 let tests_create = testList "create" [
     testCase "empty" <| fun _ ->
-        let arc = ARC()
-        Expect.isNone arc.CWL "cwl"
-        Expect.isNone arc.ISA "isa"
+        let arc = ARC("MyIdentifier")
+        //Expect.isNone arc.CWL "cwl"
+        Expect.equal arc.Identifier "MyIdentifier" "Identifier should be set"
 ] 
 
 let private tests_fromFilePaths = testList "fromFilePaths" [
@@ -48,9 +48,9 @@ let private tests_fromFilePaths = testList "fromFilePaths" [
             |> Array.map (fun x -> x.Replace(@"\","/"))
             |> Array.sort
         let arc = ARC.fromFilePaths(input)
-        Expect.isNone arc.CWL "cwl"
-        Expect.isNone arc.ISA "isa"
-        let actualFilePaths = arc.FileSystem.Tree.ToFilePaths() |> Array.sort
+        //Expect.isNone arc.CWL "cwl"
+        Expect.isTrue (Helper.Identifier.isMissingIdentifier arc.Identifier) "nothing should have been parsed from isa"
+        let actualFilePaths = arc.ToFilePaths() |> Array.sort
         Expect.equal actualFilePaths input "isSome fs"
     testCase "correctContractsFor(.)AtBeginning" <| fun _ ->
         let input =  [|
@@ -72,16 +72,78 @@ let private simpleISAContracts =
         SimpleISA.Assay.transcriptomeReadContract
     |]
 
-let private tests_read_contracts = testList "read_contracts" [
-    testCase "simpleISA" (fun () -> 
-        let arc = ARC()
-        arc.SetISAFromContracts simpleISAContracts
-        Expect.isSome arc.ISA "isa should be filled out"
-        let inv = arc.ISA.Value
-        Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+let private simpleISAWithWRContracts = 
+    [|
+        SimpleISA.Investigation.investigationReadContract
+        SimpleISA.Study.bII_S_1ReadContract
+        SimpleISA.Assay.proteomeReadContract
+        SimpleISA.Workflow.proteomicsReadContract
+        SimpleISA.Run.proteomicsReadContract
+    |]
 
-        Expect.equal inv.Studies.Count 2 "should have read two studies"
-        let study1 = inv.Studies.[0]
+let private tests_read_contracts = testList "read_contracts" [
+    testCase "simpleISAWithWR" (fun () -> 
+        let input = 
+            [|@"isa.investigation.xlsx"; @".arc\.gitkeep"; @".git\config";
+            // assay
+            @"assays\TestAssay\isa.assay.xlsx";
+            @"assays\TestAssay\README.md";
+            @"assays\TestAssay\dataset\.gitkeep";
+            @"assays\TestAssay\protocols\.gitkeep";
+            // study
+            @"studies\TestStudy\isa.study.xlsx";
+            @"studies\TestStudy\README.md";
+            @"studies\TestStudy\isa.study.xlsx";
+            @"studies\TestStudy\protocols\.gitkeep";
+            // workflow
+            @"workflows\TestWorkflow\isa.workflow.xlsx";
+            @"workflows\TestWorkflow\README.md";
+            // run
+            @"runs\TestRun\isa.run.xlsx";
+            @"runs\TestRun\README.md";
+            |]
+            |> Array.map (fun x -> x.Replace(@"\","/"))
+            |> Array.sort
+        let arc = ARC.fromFilePaths(input)
+        let contracts = arc.GetReadContracts()
+        Expect.hasLength contracts 5 "should have read 5 read contracts"
+
+        let investigationContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "isa.investigation.xlsx")
+        let investigationContract = Expect.wantSome investigationContractOpt "investigation contract should be present"
+        Expect.equal investigationContract.Operation Operation.READ "investigation contract should be a read contract"
+        Expect.equal investigationContract.DTOType (Some DTOType.ISA_Investigation) "investigation contract should have the correct DTO type"
+
+        let studyContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "studies/TestStudy/isa.study.xlsx")
+        let studyContract = Expect.wantSome studyContractOpt "study contract should be present"
+        Expect.equal studyContract.Operation Operation.READ "study contract should be a read contract"
+        Expect.equal studyContract.DTOType (Some DTOType.ISA_Study) "study contract should have the correct DTO type"
+
+        let assayContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "assays/TestAssay/isa.assay.xlsx")
+        let assayContract = Expect.wantSome assayContractOpt "assay contract should be present"
+        Expect.equal assayContract.Operation Operation.READ "assay contract should be a read contract"
+        Expect.equal assayContract.DTOType (Some DTOType.ISA_Assay) "assay contract should have the correct DTO type"
+
+        let workflowContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "workflows/TestWorkflow/isa.workflow.xlsx")
+        let workflowContract = Expect.wantSome workflowContractOpt "workflow contract should be present"
+        Expect.equal workflowContract.Operation Operation.READ "workflow contract should be a read contract"
+        Expect.equal workflowContract.DTOType (Some DTOType.ISA_Workflow) "workflow contract should have the correct DTO type"
+
+        let runContractOpt = contracts |> Array.tryFind (fun c -> c.Path = "runs/TestRun/isa.run.xlsx")
+        let runContract = Expect.wantSome runContractOpt "run contract should be present"
+        Expect.equal runContract.Operation Operation.READ "run contract should be a read contract"
+        Expect.equal runContract.DTOType (Some DTOType.ISA_Run) "run contract should have the correct DTO type"      
+    )
+
+    ]
+
+let private tests_SetISAFromContracts = testList "SetISAFromContracts" [
+    testCase "simpleISA" (fun () -> 
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts simpleISAContracts
+        Expect.equal arc.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+
+        Expect.equal arc.Studies.Count 2 "should have read two studies"
+        let study1 = arc.Studies.[0]
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
 
         Expect.equal study1.TableCount 2 "study 1 should have the 2 tables. Top level Metadata tables are ignored."
@@ -90,24 +152,38 @@ let private tests_read_contracts = testList "read_contracts" [
         Expect.equal study1.RegisteredAssays.Count 3 "study 1 should have read three assays"
         let assay1 = study1.RegisteredAssays.[0]
         Expect.equal assay1.Identifier Assay.Proteome.assayIdentifier "assay 1 identifier should have been read from assay contract"
-        Expect.equal assay1.TableCount 1 "assay 1 should have read one table"
-    
+        Expect.equal assay1.TableCount 1 "assay 1 should have read one table"   
+    )
+    testCase "simpleISAWithWR" (fun () -> 
+        let arc = ARC("MyIdentifier")
+        arc.SetISAFromContracts simpleISAWithWRContracts
+        Expect.equal arc.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+
+        Expect.equal arc.StudyCount 1 "should have read two studies"
+        Expect.equal  arc.Studies.[0].Identifier Study.BII_S_1.studyIdentifier "Study Identifier"
+
+        Expect.equal arc.AssayCount 1 "should have read one assay"
+        Expect.equal arc.Assays.[0].Identifier Assay.Proteome.assayIdentifier "Assay Identifier"
+
+        Expect.equal arc.WorkflowCount 1 "should have read one workflow"
+        Expect.equal arc.Workflows.[0].Identifier Workflow.Proteomics.workflowIdentifier "Workflow Identifier"
+
+        Expect.equal arc.RunCount 1 "should have read one run"
+        Expect.equal arc.Runs.[0].Identifier Run.Proteomics.runIdentifier "Run Identifier"   
     )
     testCase "GetStudyRemoveContractsOnlyRegistered" (fun () -> // set to pending, until performance issues in Study.fromFsWorkbook is resolved.
-        let arc = ARC()
+        let arc = ARC("MyIdentifier")
         arc.SetISAFromContracts([|
             SimpleISA.Investigation.investigationReadContract
             SimpleISA.Study.bII_S_1ReadContract
             SimpleISA.Assay.proteomeReadContract
         |])
-        Expect.isSome arc.ISA "isa should be filled out"
-        let inv = arc.ISA.Value
-        Expect.equal inv.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
+        Expect.equal arc.Identifier Investigation.BII_I_1.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
-        Expect.equal inv.Studies.Count 1 "should have read one study"
-        Expect.equal inv.RegisteredStudyIdentifierCount 2 "should have read two registered study identifiers"
-        Expect.equal inv.VacantStudyIdentifiers.Count 1 "should have one vacant study identifier"
-        let study1 = inv.Studies.[0]
+        Expect.equal arc.Studies.Count 1 "should have read one study"
+        Expect.equal arc.RegisteredStudyIdentifierCount 2 "should have read two registered study identifiers"
+        Expect.equal arc.VacantStudyIdentifiers.Count 1 "should have one vacant study identifier"
+        let study1 = arc.Studies.[0]
         Expect.equal study1.Identifier Study.BII_S_1.studyIdentifier "study 1 identifier should have been read from study contract"
         Expect.equal study1.TableCount 2 "study 1 should have the 2 tables. Top level Metadata tables are ignored."
         //Expect.equal study1.TableCount 8 "study 1 should have the 7 tables from investigation plus one extra. One table should be overwritten."
@@ -125,14 +201,12 @@ let private tests_read_contracts = testList "read_contracts" [
         let iContract = UpdateAssayWithStudyProtocol.investigationReadContract
         let sContract = UpdateAssayWithStudyProtocol.studyReadContract
         let aContract = UpdateAssayWithStudyProtocol.assayReadContract
-        let arc = ARC()
+        let arc = ARC("MyIdentifier")
         arc.SetISAFromContracts([|iContract; sContract; aContract|])
-        Expect.isSome arc.ISA "isa should be filled out"
-        let inv = arc.ISA.Value
-        Expect.equal inv.Identifier UpdateAssayWithStudyProtocol.investigationIdentifier "investigation identifier should have been read from investigation contract"
+        Expect.equal arc.Identifier UpdateAssayWithStudyProtocol.investigationIdentifier "investigation identifier should have been read from investigation contract"
 
-        Expect.equal inv.Studies.Count 1 "should have read one study"
-        let study = inv.Studies.[0]
+        Expect.equal arc.Studies.Count 1 "should have read one study"
+        let study = arc.Studies.[0]
 
         Expect.equal study.TableCount 1 "study should have read one table"
         let studyTable = study.Tables.[0]
@@ -167,16 +241,15 @@ let private tests_read_contracts = testList "read_contracts" [
     testCase "SimpleISA_WithDataset" (fun _ ->
         let contracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
 
-        let arc = ARC()
+        let arc = ARC("MyIdentifier")
         arc.SetISAFromContracts contracts
 
-        let inv = Expect.wantSome arc.ISA "Arc should have investigation"
-        let a1 = inv.GetAssay(SimpleISA.Assay.proteomeIdentifer)
+        let a1 = arc.GetAssay(SimpleISA.Assay.proteomeIdentifer)
         let datamap = Expect.wantSome a1.DataMap "Proteome Assay was supposed to have datamap"
         
         Expect.equal 2 datamap.DataContexts.Count "Datamap was not read correctly"
 
-        let a2 = inv.GetAssay(SimpleISA.Assay.metabolomeIdentifer)
+        let a2 = arc.GetAssay(SimpleISA.Assay.metabolomeIdentifer)
         Expect.isNone a2.DataMap "Metabolome Assay was not supposed to have datamap"
     
     )
@@ -185,7 +258,7 @@ let private tests_read_contracts = testList "read_contracts" [
 
 let private tests_writeContracts = testList "write_contracts" [
     testCase "empty" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyIdentifier")
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 5 $"Should contain exactly as much contracts as base folders but contained: {contractPathsString}" 
@@ -199,7 +272,7 @@ let private tests_writeContracts = testList "write_contracts" [
     testCase "simpleISA" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         inv.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
-        let arc = ARC(isa = inv)
+        let arc = ARC.fromArcInvestigation(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 13 $"Should contain more contracts as base folders but contained: {contractPathsString}"
@@ -227,12 +300,53 @@ let private tests_writeContracts = testList "write_contracts" [
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
 
     )
+    testCase "simpleISAWithWR" (fun _ ->
+        let arc = ARC("MyInvestigation", title = "BestTitle")
+        arc.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
+        arc.InitWorkflow("MyWorkflow") |> ignore
+        arc.InitRun("MyRun") |> ignore
+        let contracts = arc.GetWriteContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 17 $"Should contain more contracts as base folders but contained: {contractPathsString}"
+
+        // Base 
+        Expect.exists contracts (fun c -> c.Path = "workflows/.gitkeep") "Contract for workflows folder missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/.gitkeep") "Contract for runs folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/.gitkeep") "Contract for assays folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/.gitkeep") "Contract for studies folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx") "Contract for investigation folder missing"
+        Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
+
+        // Study folder
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/README.md") "study readme missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/protocols/.gitkeep") "study protocols folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/resources/.gitkeep") "study resources folder missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/isa.study.xlsx") "study file missing"
+        Expect.exists contracts (fun c -> c.Path = "studies/MyStudy/isa.study.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Study) "study file exisiting but has wrong DTO type"
+
+        // Assay folder
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/README.md") "assay readme missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/protocols/.gitkeep") "assay protocols folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/dataset/.gitkeep") "assay dataset folder missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx") "assay file missing"
+        Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
+
+        // Workflow folder
+        Expect.exists contracts (fun c -> c.Path = "workflows/MyWorkflow/README.md") "workflow readme missing"
+        Expect.exists contracts (fun c -> c.Path = "workflows/MyWorkflow/isa.workflow.xlsx") "workflow file missing"
+        Expect.exists contracts (fun c -> c.Path = "workflows/MyWorkflow/isa.workflow.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Workflow) "workflow file exisiting but has wrong DTO type"
+
+        // Run folder
+        Expect.exists contracts (fun c -> c.Path = "runs/MyRun/README.md") "run readme missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/MyRun/isa.run.xlsx") "run file missing"
+        Expect.exists contracts (fun c -> c.Path = "runs/MyRun/isa.run.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Run) "run file exisiting but has wrong DTO type"
+    )
     testCase "assayWithDatamap" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         let a = inv.InitAssay("MyAssay")
         let dm = DataMap.init()
         a.DataMap <- Some dm
-        let arc = ARC(isa = inv)
+        let arc = ARC.fromArcInvestigation(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 10 $"Should contain more contracts as base folders but contained: {contractPathsString}"
@@ -257,7 +371,7 @@ let private tests_writeContracts = testList "write_contracts" [
     testCase "sameAssayAndStudyName" (fun _ ->
         let inv = ArcInvestigation("MyInvestigation", "BestTitle")
         inv.InitStudy("MyAssay").InitRegisteredAssay("MyAssay") |> ignore
-        let arc = ARC(isa = inv)
+        let arc = ARC.fromArcInvestigation(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 13 $"Should contain more contracts as base folders but contained: {contractPathsString}"
@@ -297,7 +411,7 @@ let private tests_writeContracts = testList "write_contracts" [
         let assay = ArcAssay("MyAssay")
         inv.InitStudy("Study1").AddRegisteredAssay(assay) |> ignore
         inv.InitStudy("Study2").RegisterAssay(assay.Identifier) |> ignore
-        let arc = ARC(isa = inv)
+        let arc = ARC.fromArcInvestigation(isa = inv)
         let contracts = arc.GetWriteContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 17 $"Should contain more contracts as base folders but contained: {contractPathsString}"
@@ -331,12 +445,11 @@ let private tests_writeContracts = testList "write_contracts" [
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx") "assay file missing"
         Expect.exists contracts (fun c -> c.Path = "assays/MyAssay/isa.assay.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Assay) "assay file exisiting but has wrong DTO type"
     )
-
 ]
 
 let private tests_updateContracts = testList "update_contracts" [
     testCase "empty" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyIdentifier")
         // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
         let contracts = arc.GetUpdateContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -349,10 +462,9 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.exists contracts (fun c -> c.Path = "isa.investigation.xlsx" && c.DTOType.IsSome && c.DTOType.Value = Contract.DTOType.ISA_Investigation) "Contract for investigation exisiting but has wrong DTO type"
     )
     testCase "empty_addAssay" (fun _ ->
-        let i = ArcInvestigation("MyInvestigation")
-        let arc = ARC(isa = i)
+        let arc = ARC("MyInvestigation")
         arc.GetWriteContracts() |> ignore
-        i.InitAssay("MyAssay") |> ignore
+        arc.InitAssay("MyAssay") |> ignore
         // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
         let contracts = arc.GetUpdateContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -390,10 +502,9 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.isNone datasetGitkeepContract.DTO "DTO for dataset gitkeep contract should be None"
     )
     testCase "empty_addStudy" (fun _ ->
-        let i = ArcInvestigation("MyInvestigation")
-        let arc = ARC(isa = i)
+        let arc = ARC("MyInvestigation")
         arc.GetWriteContracts() |> ignore
-        i.InitStudy("MyStudy") |> ignore
+        arc.InitStudy("MyStudy") |> ignore
         // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
         let contracts = arc.GetUpdateContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
@@ -430,26 +541,127 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.equal resourcesGitkeepDTOType DTOType.PlainText "DTOType for resources gitkeep contract should be GitKeep"
         Expect.isNone resourcesGitkeepContract.DTO "DTO for resources gitkeep contract should be None"
     )
+    testCase "empty_addWorkflow" (fun () ->
+        let arc = ARC("MyInvestigation")
+        arc.GetWriteContracts() |> ignore
+        arc.InitWorkflow("MyWorkflow") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 2 $"Should contain exactly as much contracts as needed for new workflow: {contractPathsString}"
+        // Workflow file contract
+        let workflowFilePath = "workflows/MyWorkflow/isa.workflow.xlsx"
+        let workflowFileContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = workflowFilePath)) $"Workflow file contract for {workflowFilePath} missing"
+        Expect.equal workflowFileContract.Operation Operation.CREATE "Operation for workflow file contract should be CREATE"
+        let workflowFileDTOType = Expect.wantSome workflowFileContract.DTOType "DTOType for workflow file contract missing"
+        Expect.equal workflowFileDTOType DTOType.ISA_Workflow "DTOType for workflow file contract should be ISA_Workflow"
+        let workflowFileDTO = Expect.wantSome workflowFileContract.DTO "DTO for workflow file contract missing"
+        let wb = workflowFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let workflow = ArcWorkflow.fromFsWorkbook wb
+        Expect.equal workflow.Identifier "MyWorkflow" "Workflow identifier should be set"
+        // readme contract
+        let readmeFilePath = "workflows/MyWorkflow/README.md"
+        let readmeContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = readmeFilePath)) $"Readme contract for {readmeFilePath} missing"
+        Expect.equal readmeContract.Operation Operation.CREATE "Operation for readme contract should be CREATE"
+        let readmeDTOType = Expect.wantSome readmeContract.DTOType "DTOType for readme contract missing"
+        Expect.equal readmeDTOType DTOType.PlainText "DTOType for readme contract should be ISA_Readme"
+        Expect.isNone readmeContract.DTO "DTO for readme contract should be None"
+    )
+    testCase "empty_changeWorkflow" (fun () ->
+        let arc = ARC("MyInvestigation")
+        arc.GetWriteContracts() |> ignore
+        let workflow = arc.InitWorkflow("MyWorkflow")
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.hasLength contracts 2 $"Should contain exactly as much contracts as needed for new workflow: {contractPathsString}"
+        workflow.Description <- Some "MyDescription"
+        let changeContracts = arc.GetUpdateContracts()
+        Expect.hasLength changeContracts 1 "Should contain only one contract for the change"
+        let expectedPath = "workflows/MyWorkflow/isa.workflow.xlsx"
+        Expect.equal changeContracts.[0].Path expectedPath "Should be the workflow file"
+        Expect.equal changeContracts.[0].Operation Operation.UPDATE "Operation for workflow file contract should be UPDATE"
+        let workflowFileDTOType = Expect.wantSome changeContracts.[0].DTOType "DTOType for workflow file contract missing"
+        Expect.equal workflowFileDTOType DTOType.ISA_Workflow "DTOType for workflow file contract should be ISA_Workflow"
+    )
+    testCase "empty_addRun" (fun () ->
+        let arc = ARC("MyInvestigation")
+        arc.GetWriteContracts() |> ignore
+        arc.InitRun("MyRun") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.equal contracts.Length 2 $"Should contain exactly as much contracts as needed for new run: {contractPathsString}"
+        // Run file contract
+        let runFilePath = "runs/MyRun/isa.run.xlsx"
+        let runFileContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = runFilePath)) $"Run file contract for {runFilePath} missing"
+        Expect.equal runFileContract.Operation Operation.CREATE "Operation for run file contract should be CREATE"
+        let runFileDTOType = Expect.wantSome runFileContract.DTOType "DTOType for run file contract missing"
+        Expect.equal runFileDTOType DTOType.ISA_Run "DTOType for run file contract should be ISA_Run"
+        let runFileDTO = Expect.wantSome runFileContract.DTO "DTO for run file contract missing"
+        let wb = runFileDTO.AsSpreadsheet() :?> FsWorkbook
+        let run = ArcRun.fromFsWorkbook wb
+        Expect.equal run.Identifier "MyRun" "Run identifier should be set"
+        // readme contract
+        let readmeFilePath = "runs/MyRun/README.md"
+        let readmeContract = Expect.wantSome (contracts |> Array.tryFind (fun c -> c.Path = readmeFilePath)) $"Readme contract for {readmeFilePath} missing"
+        Expect.equal readmeContract.Operation Operation.CREATE "Operation for readme contract should be CREATE"
+        let readmeDTOType = Expect.wantSome readmeContract.DTOType "DTOType for readme contract missing"
+        Expect.equal readmeDTOType DTOType.PlainText "DTOType for readme contract should be ISA_Readme"
+        Expect.isNone readmeContract.DTO "DTO for readme contract should be None"
+    )
+    testCase "empty_changeRun" (fun () ->
+        let arc = ARC("MyInvestigation")
+        arc.GetWriteContracts() |> ignore
+        let run = arc.InitRun("MyRun")
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
+        Expect.hasLength contracts 2 $"Should contain exactly as much contracts as needed for new run: {contractPathsString}"
+        run.Description <- Some "MyDescription"
+        let changeContracts = arc.GetUpdateContracts()
+        Expect.hasLength changeContracts 1 "Should contain only one contract for the change"
+        let expectedPath = "runs/MyRun/isa.run.xlsx"
+        Expect.equal changeContracts.[0].Path expectedPath "Should be the run file"
+        Expect.equal changeContracts.[0].Operation Operation.UPDATE "Operation for run file contract should be UPDATE"
+        let runFileDTOType = Expect.wantSome changeContracts.[0].DTOType "DTOType for run file contract missing"
+        Expect.equal runFileDTOType DTOType.ISA_Run "DTOType for run file contract should be ISA_Run"
+    )
+    testCase "full_CallingTwice" (fun _ ->
+        let arc = ARC("MyInvestigation")
+        arc.GetWriteContracts() |> ignore
+        arc.InitStudy("MyStudy") |> ignore
+        arc.InitAssay("MyAssay") |> ignore
+        arc.InitWorkflow("MyWorkflow") |> ignore
+        arc.InitRun("MyRun") |> ignore
+        // As the ARC is compeletely empty, GetUpdateContracts should return the same contracts as GetWriteContracts
+        let contracts = arc.GetUpdateContracts()
+        Expect.isNotEmpty contracts "Should contain contracts"
+        let secondContracts = arc.GetUpdateContracts()
+        let contractsAsString =
+            secondContracts
+            |> Array.map (fun c -> c.Path)
+            |> String.concat ", "
+        Expect.isEmpty secondContracts $"Should contain no contracts as there are no changes, but returned contracts: \n {contractsAsString}"
+    )
     testCase "init_simpleISA" (fun _ ->
-        let inv = ArcInvestigation("MyInvestigation", "BestTitle")
-        inv.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
-        let arc = ARC(isa = inv)
+        let arc = ARC("MyInvestigation", "BestTitle")
+        arc.InitStudy("MyStudy").InitRegisteredAssay("MyAssay") |> ignore
         let contracts = arc.GetUpdateContracts()
         let contractPathsString = contracts |> Array.map (fun c -> c.Path) |> String.concat ", "
         Expect.equal contracts.Length 13 $"Should contain more contracts as base folders but contained: {contractPathsString}"
     )
     testCase "simpleISA_NoChanges" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         arc.SetISAFromContracts simpleISAContracts
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 0 "Should contain no contracts as there are no changes"
     )
     testCase "simpleISA_AssayChange" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         arc.SetISAFromContracts simpleISAContracts
-        let isa = arc.ISA.Value
         let testAssayIdentifier = TestObjects.Spreadsheet.Assay.Metabolome.assayIdentifier
-        isa.GetAssay(testAssayIdentifier).InitTable("MyNewTestTable") |> ignore
+        arc.GetAssay(testAssayIdentifier).InitTable("MyNewTestTable") |> ignore
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 1 $"Should contain only assay change contract"
         let expectedPath = Identifier.Assay.fileNameFromIdentifier testAssayIdentifier
@@ -458,19 +670,18 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
     )
     testCase "simpleISA_Datamap_NoChanges" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
         arc.SetISAFromContracts readContracts
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 0 "Should contain no contracts as there are no changes"
     )
     testCase "simpleISA_Datamap_Changed" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         let readContracts = Array.append simpleISAContracts [|SimpleISA.Assay.proteomeDatamapContract|]
         arc.SetISAFromContracts readContracts
-        let isa = arc.ISA.Value
 
-        let dm = Expect.wantSome (isa.GetAssay(SimpleISA.Assay.proteomeIdentifer).DataMap) "Assay should have datamap"       
+        let dm = Expect.wantSome (arc.GetAssay(SimpleISA.Assay.proteomeIdentifer).DataMap) "Assay should have datamap"       
         dm.GetDataContext(1).Name <- Some "Hello"
 
         let contracts = arc.GetUpdateContracts()
@@ -481,11 +692,10 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"
     )
     testCase "simpleISA_StudyChange" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         arc.SetISAFromContracts simpleISAContracts
-        let isa = arc.ISA.Value
         let testStudyIdentifier = TestObjects.Spreadsheet.Study.BII_S_1.studyIdentifier
-        isa.GetStudy(testStudyIdentifier).InitTable("MyNewTestTable") |> ignore
+        arc.GetStudy(testStudyIdentifier).InitTable("MyNewTestTable") |> ignore
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 1 $"Should contain only study change contract"
         let expectedPath = Identifier.Study.fileNameFromIdentifier testStudyIdentifier
@@ -494,10 +704,9 @@ let private tests_updateContracts = testList "update_contracts" [
         Expect.equal nextContracts.Length 0 "Should contain no contracts as there are no changes"      
     )
     testCase "simpleISA_InvestigationChange" (fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         arc.SetISAFromContracts simpleISAContracts
-        let isa = arc.ISA.Value
-        isa.Title <- Some "NewTitle"
+        arc.Title <- Some "NewTitle"
         let contracts = arc.GetUpdateContracts()
         Expect.equal contracts.Length 1 $"Should contain only investigation change contract"
         let expectedPath = "isa.investigation.xlsx"
@@ -510,19 +719,17 @@ let private tests_updateContracts = testList "update_contracts" [
 
 let private tests_updateFileSystem = testList "update_Filesystem" [
     testCase "empty noChanges" (fun () ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         let oldFS = arc.FileSystem.Copy()
         arc.UpdateFileSystem()
         let newFS = arc.FileSystem
         Expect.equal oldFS.Tree newFS.Tree "Tree should be equal"
     )
     testCase "empty addInvestigationWithStudy" (fun () ->
-        let arc = ARC()
+        let arc = ARC("MyInvestigation")
         let oldFS = arc.FileSystem.Copy()
         let study = ArcStudy("MyStudy")
-        let inv = ArcInvestigation("MyInvestigation")
-        inv.AddStudy(study)
-        arc.ISA <- Some (inv)
+        arc.AddStudy(study)
         arc.UpdateFileSystem()
         let newFS = arc.FileSystem
         Expect.notEqual oldFS.Tree newFS.Tree "Tree should be unequal"
@@ -531,7 +738,7 @@ let private tests_updateFileSystem = testList "update_Filesystem" [
         let study = ArcStudy("MyStudy")
         let inv = ArcInvestigation("MyInvestigation")
         inv.AddStudy(study)
-        let arc = ARC(isa = inv)
+        let arc = ARC.fromArcInvestigation(isa = inv)
         let oldFS = arc.FileSystem.Copy()   
         arc.UpdateFileSystem()
         let newFS = arc.FileSystem
@@ -541,7 +748,7 @@ let private tests_updateFileSystem = testList "update_Filesystem" [
         let study = ArcStudy("MyStudy")
         let inv = ArcInvestigation("MyInvestigation")
         inv.AddStudy(study)
-        let arc = ARC(isa = inv)
+        let arc = ARC.fromArcInvestigation(isa = inv)
         let oldFS = arc.FileSystem.Copy()   
         let assay = ArcAssay("MyAssay")
         study.AddRegisteredAssay(assay)
@@ -550,31 +757,30 @@ let private tests_updateFileSystem = testList "update_Filesystem" [
         Expect.notEqual oldFS.Tree newFS.Tree "Tree should be unequal"
     )
     testCase "set ISA" <| fun () ->
-        let arc = new ARC()
-        let paths = arc.FileSystem.Tree.ToFilePaths()
-        let expected_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|]
+        let arc = new ARC("My Investigation")
+        let paths = arc.ToFilePaths() |> Seq.sort
+        let expected_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|] |> Seq.sort
         Expect.sequenceEqual paths expected_paths "paths"
-        let i = ArcInvestigation.init("My Investigation") 
-        let a = i.InitAssay("My Assay")
-        ()
-        arc.ISA <- Some i
-        let paths2 = arc.FileSystem.Tree.ToFilePaths()
-        let expected_paths2 = [|
+        let a = arc.InitAssay("My Assay")
+        let paths2 = arc.ToFilePaths() |> Seq.sort
+        let expected_paths2 =
+            [|
             "isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep";
             "assays/.gitkeep"; "assays/My Assay/isa.assay.xlsx";
             "assays/My Assay/README.md"; "assays/My Assay/dataset/.gitkeep";
             "assays/My Assay/protocols/.gitkeep"; "studies/.gitkeep"
-        |]
-        Expect.equal paths2 expected_paths2 "paths2"
+            |]
+            |> Seq.sort
+        Expect.sequenceEqual paths2 expected_paths2 "paths2"
     testCase "setFileSystem" <| fun () ->
-        let initial_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|]
+        let initial_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"|] 
         let updated_paths = [|"isa.investigation.xlsx"; "workflows/.gitkeep"; "runs/.gitkeep"; "assays/.gitkeep"; "studies/.gitkeep"; "studies/testFile.txt"|]
         let arc = ARC.fromFilePaths(initial_paths)
-        let paths = arc.FileSystem.Tree.ToFilePaths()
-        Expect.sequenceEqual paths initial_paths "paths"
+        let paths = arc.ToFilePaths() |> Seq.sort
+        Expect.sequenceEqual paths (initial_paths |> Seq.sort) "paths"
         arc.SetFilePaths(updated_paths)
-        let paths2 = arc.FileSystem.Tree.ToFilePaths()
-        Expect.sequenceEqual paths2 updated_paths "paths2"        
+        let paths2 = arc.ToFilePaths() |> Seq.sort
+        Expect.sequenceEqual paths2 (updated_paths |> Seq.sort) "paths2"        
 ]
 
 open ARCtrl.FileSystem
@@ -588,7 +794,7 @@ let private ``payload_file_filters`` =
         |> FileSystemTree.fromFilePaths
 
     testList "payload file filters" [
-        let inv = ArcInvestigation("MyInvestigation", "BestTitle")
+        let arc = ARC("MyInvestigation", "BestTitle")
 
         let assay = ArcAssay("registered_assay")
         let assayTable = assay.InitTable("MyAssayTable")
@@ -597,7 +803,7 @@ let private ``payload_file_filters`` =
         assayTable.AppendColumn(CompositeHeader.Output (IOType.Data), [|CompositeCell.createFreeText "registered_assay_output.txt"|])
 
         let study = ArcStudy("registered_study")
-        inv.AddRegisteredStudy(study)
+        arc.AddRegisteredStudy(study)
         let studyTable = study.InitTable("MyStudyTable")
         studyTable.AppendColumn(CompositeHeader.Input (IOType.Sample), [|CompositeCell.createFreeText "some_study_input_material"|])
         studyTable.AppendColumn(CompositeHeader.FreeText "Some File", [|CompositeCell.createFreeText "xd/some_file_that_lies_in_slashxd.txt"|])
@@ -662,7 +868,7 @@ let private ``payload_file_filters`` =
                 Folder ("workflows", [|File ".gitkeep"|]) // this folder should be included (empty)
             |])
        
-        let arc = ARC(isa = inv, fs = FileSystem.create(fs))
+        arc.FileSystem <- FileSystem.create(fs)
 
         test "GetRegisteredPayload" {
             let expected = 
@@ -727,25 +933,21 @@ let private ``payload_file_filters`` =
 
 let private tests_GetAssayRemoveContracts = testList "GetAssayRemoveContracts" [
     ptestCase "not registered, fsworkbook equal" <| fun _ ->
-        let arc = ARC()
-        let i = ArcInvestigation.init("My Investigation")
-        arc.ISA <- Some i
+        let arc = ARC("My Investigation")
         let assayIdentifier = "My Assay"
-        i.InitAssay(assayIdentifier) |> ignore
-        Expect.equal i.AssayCount 1 "ensure assay count"
+        arc.InitAssay(assayIdentifier) |> ignore
+        Expect.equal arc.AssayCount 1 "ensure assay count"
         let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         let expected = [
             Contract.createDelete (ArcPathHelper.getAssayFolderPath assayIdentifier)
-            i.ToUpdateContract()
+            arc.ToUpdateContract()
         ]
         Expect.sequenceEqual actual expected "we do not have correct FsWorkbook equality helper functions"
     testCase "not registered" <| fun _ ->
-        let arc = ARC()
-        let i = ArcInvestigation.init("My Investigation")
-        arc.ISA <- Some i
+        let arc = ARC("My Investigation")
         let assayIdentifier = "My Assay"
-        i.InitAssay(assayIdentifier) |> ignore
-        Expect.equal i.AssayCount 1 "ensure assay count"
+        arc.InitAssay(assayIdentifier) |> ignore
+        Expect.equal arc.AssayCount 1 "ensure assay count"
         let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         Expect.hasLength actual 2 "contract count"
         Expect.equal actual.[0].Path (ArcPathHelper.getAssayFolderPath assayIdentifier) "assay contract path"
@@ -756,17 +958,15 @@ let private tests_GetAssayRemoveContracts = testList "GetAssayRemoveContracts" [
         let dtoType = Expect.wantSome actual.[1].DTOType "has DTOType"
         Expect.equal dtoType DTOType.ISA_Investigation "dto type"
     testCase "registered in multiple studies" <| fun _ ->
-        let arc = ARC()
-        let i = ArcInvestigation.init("My Investigation")
-        arc.ISA <- Some i
+        let arc = ARC("My Investigation")
         let assayIdentifier = "My Assay"
-        let s1 = i.InitStudy("Study 1")
-        let s2 = i.InitStudy("Study 2")
-        let a = i.InitAssay(assayIdentifier)
+        let s1 = arc.InitStudy("Study 1")
+        let s2 = arc.InitStudy("Study 2")
+        let a = arc.InitAssay(assayIdentifier)
         s1.RegisterAssay(assayIdentifier)
         s2.RegisterAssay(assayIdentifier)
-        Expect.equal i.AssayCount 1 "ensure assay count"
-        Expect.equal i.StudyCount 2 "ensure study count"
+        Expect.equal arc.AssayCount 1 "ensure assay count"
+        Expect.equal arc.StudyCount 2 "ensure study count"
         Expect.hasLength a.StudiesRegisteredIn 2 "ensure studies registered in - count"
         let actual = arc.GetAssayRemoveContracts(assayIdentifier)
         Expect.hasLength actual 4 "contract count"
@@ -784,7 +984,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
     testCase "not existing" <| fun _ ->
         let i = ArcInvestigation("MyInvestigation")
         i.InitAssay("OtherAssayName") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC.fromArcInvestigation(isa = i)
         
         let assayMoveF = 
             fun () -> arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay") |> ignore
@@ -793,7 +993,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
     testCase "Basic" <| fun _ ->
         let i = ArcInvestigation("MyInvestigation")
         i.InitAssay("MyOldAssay") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC.fromArcInvestigation(isa = i)
         arc.GetWriteContracts() |> ignore
         let contracts = arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay")
         Expect.hasLength contracts 2 "Contract count is wrong"
@@ -815,7 +1015,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
         let i = ArcInvestigation("MyInvestigation")
         i.InitStudy("MyStudy") |> ignore
         i.InitAssay("MyOldAssay") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC.fromArcInvestigation(isa = i)
         arc.GetWriteContracts() |> ignore
         let contracts = arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay")
         Expect.hasLength contracts 2 "Contract count is wrong"
@@ -837,7 +1037,7 @@ let tests_GetAssayRenameContracts = testList "GetAssayRenameContracts" [
         let i = ArcInvestigation("MyInvestigation")
         let s = i.InitStudy("MyStudy")
         s.InitRegisteredAssay("MyOldAssay") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC.fromArcInvestigation(isa = i)
         arc.GetWriteContracts() |> ignore
         let contracts = arc.GetAssayRenameContracts("MyOldAssay","MyNewAssay")
         Expect.hasLength contracts 3 "Contract count is wrong"
@@ -874,9 +1074,8 @@ open ARCtrl.Spreadsheet
 
 let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
     testCase "not existing" <| fun _ ->
-        let i = ArcInvestigation("MyInvestigation")
-        i.InitStudy("OtherStudyName") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC("MyInvestigation")
+        arc.InitStudy("OtherStudyName") |> ignore
         
         let studyMoveF = 
             fun () -> arc.GetStudyRenameContracts("MyOldStudy","MyNewStudy") |> ignore
@@ -885,7 +1084,7 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
     testCase "Basic" <| fun _ ->
         let i = ArcInvestigation("MyInvestigation")
         i.InitStudy("MyOldStudy") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC.fromArcInvestigation(isa = i)
         arc.GetWriteContracts() |> ignore
         let contracts = arc.GetStudyRenameContracts("MyOldStudy","MyNewStudy")
         Expect.hasLength contracts 2 "Contract count is wrong"
@@ -909,7 +1108,7 @@ let tests_GetStudyRenameContracts = testList "GetStudyRenameContracts" [
         let i = ArcInvestigation("MyInvestigation")
         i.InitStudy("MyOldStudy") |> ignore
         i.RegisterStudy("MyOldStudy") |> ignore
-        let arc = ARC(isa = i)
+        let arc = ARC.fromArcInvestigation(isa = i)
         arc.GetWriteContracts() |> ignore
         let contracts = arc.GetStudyRenameContracts("MyOldStudy","MyNewStudy")
         Expect.hasLength contracts 3 "Contract count is wrong"
@@ -952,20 +1151,49 @@ let tests_load =
             let! result = ARC.tryLoadAsync(p)
             let result = Expect.wantOk result "ARC should load successfully"
 
-            Expect.isSome result.ISA "Should contain an ISA part"
-            Expect.isNone result.CWL "Should not contain a CWL part"
+            //Expect.isNone result.CWL "Should not contain a CWL part"
 
-            let isa = result.ISA.Value
-            Expect.equal isa.StudyCount 1 "Should contain 1 study"
-            Expect.equal isa.AssayCount 1 "Should contain 1 assay"
-            Expect.equal isa.RegisteredStudies.Count 1 "Should contain 1 registered study"
+            Expect.equal result.StudyCount 1 "Should contain 1 study"
+            Expect.equal result.AssayCount 1 "Should contain 1 assay"
+            Expect.equal result.RegisteredStudies.Count 1 "Should contain 1 registered study"
             
-            let s = isa.Studies.[0]
+            let s = result.Studies.[0]
             Expect.equal s.RegisteredAssayCount 1 "Should contain 1 registered assay"
             Expect.equal s.TableCount 3 "Study should contain 3 tables"
 
             let a = s.RegisteredAssays.[0]
             Expect.equal a.TableCount 4 "Assay should contain 4 tables"
+            }
+            
+        )
+        testCaseCrossAsync "simpleARCWithWR" (crossAsync {
+            let p = TestObjects.IO.testSimpleARCWithWR
+            let! result = ARC.tryLoadAsync(p)
+            let result = Expect.wantOk result "ARC should load successfully"
+
+            //Expect.isNone result.CWL "Should not contain a CWL part"
+
+            Expect.equal result.StudyCount 1 "Should contain 1 study"
+            Expect.equal result.AssayCount 1 "Should contain 1 assay"
+            Expect.equal result.WorkflowCount 1 "Should contain 1 workflow"
+            Expect.equal result.RunCount 1 "Should contain 1 run"
+            Expect.equal result.RegisteredStudies.Count 1 "Should contain 1 registered study"
+            
+            let s = result.Studies.[0]
+            Expect.equal s.RegisteredAssayCount 1 "Should contain 1 registered assay"
+            Expect.equal s.TableCount 3 "Study should contain 3 tables"
+
+            let a = s.RegisteredAssays.[0]
+            Expect.equal a.TableCount 4 "Assay should contain 4 tables"
+
+            let w = result.Workflows.[0]
+            Expect.equal w.Identifier "Proteomics" "Workflow identifer does not match"
+            Expect.equal w.Version (Some "0.1.2") "Workflow version does not match"
+            Expect.hasLength w.Contacts 3 "Workflow should have 3 contacts"
+
+            let r = result.Runs.[0]
+            Expect.equal r.Identifier "Proteomics" "Run identifer does not match"
+            Expect.hasLength r.Performers 2 "Run should have 2 performers"
             }
             
         )
@@ -977,7 +1205,7 @@ let tests_write =
     testList "Write" [
         testCaseCrossAsync "empty" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_Empty"
-            let a = ARC()
+            let a = ARC("MyInvestigation")
 
             let! result = a.TryWriteAsync(p)
 
@@ -1002,16 +1230,14 @@ let tests_write =
         })
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARC"
-            let arc = ARC()
+            let arc = ARC("MyInvestigation")
 
-            let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
             let s = ArcStudy(studyName)
-            i.AddRegisteredStudy(s)
+            arc.AddRegisteredStudy(s)
             let assayName = "MyAssay"
             let a = ArcAssay(assayName)
             s.AddRegisteredAssay(a)
-            arc.ISA <- Some i
             arc.UpdateFileSystem()
 
             let! result = arc.TryWriteAsync(p)
@@ -1042,6 +1268,55 @@ let tests_write =
 
             Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
         })
+        testCaseCrossAsync "SimpleARCWithWR" (crossAsync {
+            let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithWR"
+            let arc = ARC("MyInvestigation")
+
+            let studyName = "MyStudy"
+            let s = ArcStudy(studyName)
+            arc.AddRegisteredStudy(s)
+            let assayName = "MyAssay"
+            let a = ArcAssay(assayName)
+            s.AddRegisteredAssay(a)
+            let workflowName = "MyWorkflow"
+            let w = arc.InitWorkflow(workflowName)
+            let runName = "MyRun"
+            let r = arc.InitRun(runName)
+
+            arc.UpdateFileSystem()
+
+            let! result = arc.TryWriteAsync(p)
+            Expect.wantOk result "ARC should write successfully" |> ignore
+
+            let expectedPaths = 
+                [
+                    "/isa.investigation.xlsx";
+                    "/studies/.gitkeep";
+                    $"/studies/{studyName}/isa.study.xlsx"
+                    $"/studies/{studyName}/README.md"
+                    $"/studies/{studyName}/protocols/.gitkeep";
+                    $"/studies/{studyName}/resources/.gitkeep";
+                    "/assays/.gitkeep";
+                    $"/assays/{assayName}/isa.assay.xlsx"
+                    $"/assays/{assayName}/README.md"
+                    $"/assays/{assayName}/protocols/.gitkeep"
+                    $"/assays/{assayName}/dataset/.gitkeep"
+                    "/runs/.gitkeep";
+                    $"/runs/{runName}/isa.run.xlsx"
+                    $"/runs/{runName}/README.md"
+                    "/workflows/.gitkeep"
+                    $"/workflows/{workflowName}/isa.workflow.xlsx"
+                    $"/workflows/{workflowName}/README.md"
+                ]
+                |> List.sort
+
+
+            let! paths = 
+                FileSystemHelper.getAllFilePathsAsync p
+                |> map Seq.sort
+
+            Expect.sequenceEqual paths expectedPaths "Files were not created correctly."            
+        })
         // This test reads a preexisting assay with data and everything, data content is not copied though but just the 
         testCaseCrossAsync "LoadSimpleARCAndAddAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Write_SimpleARCWithAssay"
@@ -1049,14 +1324,11 @@ let tests_write =
             let! readResult = ARC.tryLoadAsync(TestObjects.IO.testSimpleARC)
             let arc = Expect.wantOk readResult "ARC should load correctly"
 
-            let i = arc.ISA.Value
-
             let existingStudyName = "experiment1_material"
             let existingAssayName = "measurement1"
 
             let assayName = "YourAssay"
-            i.InitAssay(assayName) |> ignore
-            arc.ISA <- Some i
+            arc.InitAssay(assayName) |> ignore
 
             arc.UpdateFileSystem()
 
@@ -1118,17 +1390,15 @@ let tests_Update =
     testList "Update" [
         testCaseCrossAsync "AddedAssay" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_Update_AddedAssay"
-            let arc = ARC()
+            let arc = ARC("MyInvestigation")
 
             // setup arc
-            let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
             let s = ArcStudy(studyName)
-            i.AddRegisteredStudy(s)
+            arc.AddRegisteredStudy(s)
             let assayName = "MyAssay"
             let a = ArcAssay(assayName)
             s.AddRegisteredAssay(a)
-            arc.ISA <- Some i
             arc.UpdateFileSystem()
 
             let! writeResult = arc.TryWriteAsync(p)
@@ -1137,8 +1407,7 @@ let tests_Update =
 
             // add assay
             let newAssayName = "MyNewAssay"
-            i.InitAssay(newAssayName) |> ignore
-            arc.ISA <- Some i
+            arc.InitAssay(newAssayName) |> ignore
             arc.UpdateFileSystem()
 
             let! updateResult = arc.TryUpdateAsync(p)
@@ -1181,17 +1450,15 @@ let tests_renameAssay =
     testList "RenameAssay" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameAssay_SimpleARC"
-            let arc = ARC()
+            let arc = ARC("MyInvestigation")
 
             // setup arc
-            let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
             let s = ArcStudy(studyName)
-            i.AddRegisteredStudy(s)
+            arc.AddRegisteredStudy(s)
             let assayName = "MyAssay"
             let a = ArcAssay(assayName)
             s.AddRegisteredAssay(a)
-            arc.ISA <- Some i
             arc.UpdateFileSystem()
 
             let! updateResult = arc.TryWriteAsync(p)
@@ -1234,17 +1501,15 @@ let tests_RenameStudy =
     testList "RenameStudy" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RenameStudy_SimpleARC"
-            let arc = ARC()
+            let arc = ARC("MyInvestigation")
 
             // setup arc
-            let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
             let s = ArcStudy(studyName)
-            i.AddRegisteredStudy(s)
+            arc.AddRegisteredStudy(s)
             let assayName = "MyAssay"
             let a = ArcAssay(assayName)
-            s.AddRegisteredAssay(a)
-            arc.ISA <- Some i
+            s.AddRegisteredAssay(a)            
             arc.UpdateFileSystem()
 
             let! writeResult = arc.TryWriteAsync(p)
@@ -1288,17 +1553,16 @@ let tests_RemoveAssay =
     testList "RemoveAssay" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveAssay_SimpleARC"
-            let arc = ARC()
+            let arc = ARC("MyInvestigation")
 
             // setup arc
             let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
             let s = ArcStudy(studyName)
-            i.AddRegisteredStudy(s)
+            arc.AddRegisteredStudy(s)
             let assayName = "MyAssay"
             let a = ArcAssay(assayName)
             s.AddRegisteredAssay(a)
-            arc.ISA <- Some i
             arc.UpdateFileSystem()
 
             let! writeResult = arc.TryWriteAsync(p)
@@ -1336,17 +1600,15 @@ let tests_RemoveStudy =
     testList "RemoveStudy" [
         testCaseCrossAsync "SimpleARC" (crossAsync {
             let p = ArcPathHelper.combine TestObjects.IO.testResultsFolder "ARC_RemoveStudy_SimpleARC"
-            let arc = ARC()
+            let arc = ARC("MyInvestigation")
 
             // setup arc
-            let i = ArcInvestigation("MyInvestigation")
             let studyName = "MyStudy"
             let s = ArcStudy(studyName)
-            i.AddRegisteredStudy(s)
+            arc.AddRegisteredStudy(s)
             let assayName = "MyAssay"
             let a = ArcAssay(assayName)
             s.AddRegisteredAssay(a)
-            arc.ISA <- Some i
             arc.UpdateFileSystem()
 
             let! writeResult = arc.TryWriteAsync(p)
@@ -1384,25 +1646,22 @@ let tests_ROCrate =
     testList "RO-Crate" [
         testCase "CanRead_Deprecated" <| fun _ ->
             let arc = ARC.fromDeprecatedROCrateJsonString(TestObjects.ROCrate.ArcPrototypeDeprecated.ed123499)
-            let isa = Expect.wantSome arc.ISA "ARC should contain an ISA part"
             let nonDeprecatedARC = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
-            let nonDeprecatedISA = Expect.wantSome nonDeprecatedARC.ISA "ARC should contain an ISA part"
-            Expect.equal isa.Identifier nonDeprecatedISA.Identifier "Investigation should have correct identifier"
-            Expect.equal isa.Title nonDeprecatedISA.Title "Investigation should have correct title"
-            Expect.equal isa.Description nonDeprecatedISA.Description "Investigation should have correct description"
-            Expect.equal isa.Contacts.[1] nonDeprecatedISA.Contacts.[1] "Investigation should have correct contacts"
-            Expect.equal isa.Studies.[1] nonDeprecatedISA.Studies.[1] "Investigation should have correct studies"
+            Expect.equal arc.Identifier nonDeprecatedARC.Identifier "Investigation should have correct identifier"
+            Expect.equal arc.Title nonDeprecatedARC.Title "Investigation should have correct title"
+            Expect.equal arc.Description nonDeprecatedARC.Description "Investigation should have correct description"
+            Expect.equal arc.Contacts.[1] nonDeprecatedARC.Contacts.[1] "Investigation should have correct contacts"
+            Expect.equal arc.Studies.[1] nonDeprecatedARC.Studies.[1] "Investigation should have correct studies"
         testCase "CanRead" <| fun _ ->
             let arc = ARC.fromROCrateJsonString(TestObjects.ROCrate.ArcPrototype.ed123499)
-            let isa = Expect.wantSome arc.ISA "ARC should contain an ISA part"
-            Expect.equal isa.Identifier "ArcPrototype" "Investigation should have correct identifier"
-            let title = Expect.wantSome isa.Title "Investigation should have title"
+            Expect.equal arc.Identifier "ArcPrototype" "Investigation should have correct identifier"
+            let title = Expect.wantSome arc.Title "Investigation should have title"
             Expect.equal title "ArcPrototype" "Investigation should have correct title"
-            let description = Expect.wantSome isa.Description "Investigation should have description"
+            let description = Expect.wantSome arc.Description "Investigation should have description"
             Expect.equal description "A prototypic ARC that implements all specification standards accordingly" "Investigation should have correct description"
             /// Contacts
-            Expect.hasLength isa.Contacts 3 "Investigation should have 3 contacts"
-            let first = isa.Contacts.[0]
+            Expect.hasLength arc.Contacts 3 "Investigation should have 3 contacts"
+            let first = arc.Contacts.[0]
             let firstName = Expect.wantSome first.FirstName "First contact should have name"
             Expect.equal firstName "Timo" "First contact should have correct name"
             let lastName = Expect.wantSome first.LastName "First contact should have last name"
@@ -1418,8 +1677,8 @@ let tests_ROCrate =
             let firstRole = first.Roles.[0]
             Expect.equal firstRole.NameText "principal investigator" "First contact should have correct role"
             /// Studies 
-            Expect.equal isa.StudyCount 2 "ARC should contain 2 studies"
-            let secondStudy = isa.GetStudy("MaterialPreparation")
+            Expect.equal arc.StudyCount 2 "ARC should contain 2 studies"
+            let secondStudy = arc.GetStudy("MaterialPreparation")
             let secondStudyTitle = Expect.wantSome secondStudy.Title "Second study should have title"
             Expect.equal secondStudyTitle "Prototype for experimental data" "Second study should have correct title"
             let secondStudyDescription = Expect.wantSome secondStudy.Description "Second study should have description"
@@ -1436,7 +1695,7 @@ let tests_ROCrate =
             let expectedCells = [for i = 1 to 6 do CompositeCell.FreeText $"Source{i}"]
             Expect.sequenceEqual inputCol.Cells expectedCells "First table input column should have correct cells"
             /// Assays
-            Expect.equal isa.AssayCount 2 "ARC should contain 2 assays"
+            Expect.equal arc.AssayCount 2 "ARC should contain 2 assays"
     ]
 
 
@@ -1446,6 +1705,7 @@ let main = testList "ARCtrl" [
     tests_fromFilePaths
     tests_updateFileSystem
     tests_read_contracts
+    tests_SetISAFromContracts
     tests_writeContracts
     tests_updateContracts
     tests_GetAssayRemoveContracts

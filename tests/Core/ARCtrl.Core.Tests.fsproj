@@ -19,6 +19,8 @@
     <Compile Include="ArcTables.Tests.fs" />
     <Compile Include="ArcAssay.Tests.fs" />
     <Compile Include="ArcStudy.Tests.fs" />
+    <Compile Include="ArcWorkflow.Tests.fs" />
+    <Compile Include="ArcRun.Tests.fs" />
     <Compile Include="ArcInvestigation.Tests.fs" />
     <Compile Include="Template.Tests.fs" />
     <Compile Include="ArcJsonConversion.Tests.fs" />

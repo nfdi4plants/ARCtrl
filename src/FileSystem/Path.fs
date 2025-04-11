@@ -12,6 +12,8 @@ let seperators = [|PathSeperator; PathSeperatorWindows|]
 let [<Literal>] DataMapFileName = "isa.datamap.xlsx"
 let [<Literal>] AssayFileName = "isa.assay.xlsx"
 let [<Literal>] StudyFileName = "isa.study.xlsx"
+let [<Literal>] WorkflowFileName = "isa.workflow.xlsx"
+let [<Literal>] RunFileName = "isa.run.xlsx"
 let [<Literal>] InvestigationFileName = "isa.investigation.xlsx"
 let [<Literal>] GitKeepFileName = ".gitkeep" 
 let [<Literal>] READMEFileName = "README.md"
@@ -67,4 +69,10 @@ let getAssayFolderPath (assayIdentifier: string) =
     combine AssaysFolderName assayIdentifier
 
 let getStudyFolderPath (studyIdentifier: string) =
-    combine StudiesFolderName studyIdentifier 
+    combine StudiesFolderName studyIdentifier
+
+let getWorkflowFolderPath (workflowIdentifier: string) =
+    combine WorkflowsFolderName workflowIdentifier
+
+let getRunFolderPath (runIdentifier: string) =
+    combine RunsFolderName runIdentifier

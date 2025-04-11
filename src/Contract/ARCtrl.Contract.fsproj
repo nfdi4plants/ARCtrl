@@ -14,6 +14,8 @@
     <Compile Include="ValidationPackagesConfig.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
+    <Compile Include="ArcWorkflow.fs" />
+    <Compile Include="ArcRun.fs" />
     <Compile Include="ArcInvestigation.fs" />
     <Compile Include="Git.fs" />
     <Compile Include="ARC.fs" />

@@ -1,4 +1,4 @@
-﻿namespace ARCtrl.Contract
+namespace ARCtrl.Contract
 
 open Fable.Core
 open Fable.Core.JsInterop
@@ -10,6 +10,8 @@ open Fable.Core.JsInterop
 type DTOType = 
     | [<CompiledName("ISA_Assay")>] ISA_Assay // isa.assay.xlsx
     | [<CompiledName("ISA_Study")>] ISA_Study // isa.study.xlsx
+    | [<CompiledName("ISA_Workflow")>] ISA_Workflow // isa.workflow.xlsx
+    | [<CompiledName("ISA_Run")>] ISA_Run // isa.run.xlsx"
     | [<CompiledName("ISA_Investigation")>] ISA_Investigation // isa.investigation.xlsx
     | [<CompiledName("ISA_Datamap")>] ISA_Datamap // isa.datamap.xlsx
     | [<CompiledName("JSON")>] JSON // arc.json

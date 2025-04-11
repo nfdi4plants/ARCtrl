@@ -1261,7 +1261,8 @@ type AssayConversion =
             |> Option.fromSeq
         LDDataset.createAssay(
             identifier = assay.Identifier,
-            ?description = None, // TODO
+            ?name = assay.Title,
+            ?description = assay.Description, 
             ?creators = creators,
             ?hasParts = dataFiles,
             ?measurementMethod = measurementMethod,
@@ -1296,6 +1297,8 @@ type AssayConversion =
             |> ResizeArray.map (fun c -> BaseTypes.decomposeComment(c, ?context = context))
         ArcAssay.create(
             identifier = LDDataset.getIdentifierAsString(assay, ?context = context),
+            ?title = LDDataset.tryGetNameAsString(assay, ?context = context),
+            ?description = LDDataset.tryGetDescriptionAsString(assay, ?context = context),
             ?measurementType = variableMeasured,
             ?technologyType = measurementMethod,
             ?technologyPlatform = measurementTechnique,

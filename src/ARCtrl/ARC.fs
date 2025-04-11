@@ -1,4 +1,4 @@
-namespace ARCtrl
+namespace rec ARCtrl
 
 open ARCtrl.ValidationPackages
 open ARCtrl.FileSystem
@@ -17,42 +17,63 @@ module ARCAux =
     let getArcAssaysFromContracts (contracts: Contract []) = 
         contracts 
         |> Array.choose ArcAssay.tryFromReadContract
-        
-    let getAssayDataMapFromContracts (assayIdentifier) (contracts: Contract []) = 
-        contracts 
-        |> Array.tryPick (DataMap.tryFromReadContractForAssay assayIdentifier)
 
     // No idea where to move this
     let getArcStudiesFromContracts (contracts: Contract []) =
         contracts 
         |> Array.choose ArcStudy.tryFromReadContract
 
+    let getArcWorkflowsFromContracts (contracts: Contract []) =
+        contracts
+        |> Array.choose ArcWorkflow.tryFromReadContract
+
+    let getArcRunsFromContracts (contracts : Contract []) =
+        contracts
+        |> Array.choose ArcRun.tryFromReadContract
+        
+    let getAssayDataMapFromContracts (assayIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (DataMap.tryFromReadContractForAssay assayIdentifier)
+
     let getStudyDataMapFromContracts (studyIdentifier) (contracts: Contract []) = 
         contracts 
         |> Array.tryPick (DataMap.tryFromReadContractForStudy studyIdentifier)
+
+    let getWorkflowDataMapFromContracts (workflowIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (DataMap.tryFromReadContractForWorkflow workflowIdentifier)
+
+    let getRunDataMapFromContracts (runIdentifier) (contracts: Contract []) = 
+        contracts 
+        |> Array.tryPick (DataMap.tryFromReadContractForRun runIdentifier)
+
 
     let getArcInvestigationFromContracts (contracts: Contract []) =
         contracts 
         |> Array.choose ArcInvestigation.tryFromReadContract
         |> Array.exactlyOne 
 
-    let updateFSByISA (isa : ArcInvestigation option) (fs : FileSystem) = 
-        let (studies,assays) = 
-            match isa with
-            | Some inv ->         
-                inv.Studies |> Seq.toArray, inv.Assays |> Seq.toArray
-            | None -> ([||],[||])
+    let updateFSByISA (isa : ArcInvestigation) (fs : FileSystem) = 
+
         let assaysFolder = 
-            assays
+            isa.Assays |> Seq.toArray
             |> Array.map (fun a -> FileSystemTree.createAssayFolder(a.Identifier,a.DataMap.IsSome))
             |> FileSystemTree.createAssaysFolder
         let studiesFolder = 
-            studies
+            isa.Studies |> Seq.toArray
             |> Array.map (fun s -> FileSystemTree.createStudyFolder(s.Identifier,s.DataMap.IsSome))
             |> FileSystemTree.createStudiesFolder
+        let workflowsFolder =
+            isa.Workflows |> Seq.toArray
+            |> Array.map (fun w -> FileSystemTree.createWorkflowFolder(w.Identifier,w.DataMap.IsSome))
+            |> FileSystemTree.createWorkflowsFolder
+        let runsFolder =
+            isa.Runs |> Seq.toArray
+            |> Array.map (fun r -> FileSystemTree.createRunFolder(r.Identifier,r.DataMap.IsSome))
+            |> FileSystemTree.createRunsFolder
         let investigation = FileSystemTree.createInvestigationFile()
         let tree = 
-            FileSystemTree.createRootFolder [|investigation;assaysFolder;studiesFolder|]
+            FileSystemTree.createRootFolder [|investigation;assaysFolder;studiesFolder; workflowsFolder; runsFolder|]
             |> FileSystem.create
         fs.Union(tree)
 
@@ -64,30 +85,27 @@ module ARCAux =
             |> FileSystem.create
         fs.Union(tree)
 
-
 [<AttachMembers>]
-type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
+type ARC(identifier : string, ?title : string, ?description : string, ?submissionDate : string, ?publicReleaseDate : string, ?ontologySourceReferences, ?publications, ?contacts, ?assays : ResizeArray<ArcAssay>, ?studies : ResizeArray<ArcStudy>, ?workflows : ResizeArray<ArcWorkflow>, ?runs : ResizeArray<ArcRun>, ?registeredStudyIdentifiers : ResizeArray<string>, ?comments : ResizeArray<Comment>, ?remarks, ?cwl : unit, ?fs : FileSystem.FileSystem) as this =
 
-    let mutable _isa = isa
+    inherit ArcInvestigation(identifier, ?title = title, ?description = description, ?submissionDate = submissionDate, ?publicReleaseDate = publicReleaseDate, ?ontologySourceReferences = ontologySourceReferences, ?publications = publications, ?contacts = contacts, ?assays = assays, ?studies = studies, ?workflows = workflows, ?runs = runs, ?registeredStudyIdentifiers = registeredStudyIdentifiers, ?comments = comments, ?remarks = remarks) 
+
     let mutable _cwl = cwl
     let mutable _fs = 
         fs
         |> Option.defaultValue (FileSystem.create(FileSystemTree.Folder ("",[||])))
-        |> ARCAux.updateFSByISA isa
-        |> ARCAux.updateFSByCWL cwl
+        |> ARCAux.updateFSByISA this
+        //|> ARCAux.updateFSByCWL cwl
 
-    member this.ISA 
-        with get() = _isa
-        and set(newISA : ArcInvestigation option) =
-            _isa <- newISA
-            this.UpdateFileSystem()
-
-    member this.CWL 
-        with get() = cwl
+    //member this.CWL 
+    //    with get() = cwl
 
     member this.FileSystem 
         with get() = _fs
         and set(fs) = _fs <- fs
+
+    static member fromArcInvestigation (isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem) = 
+        ARC(identifier = isa.Identifier, ?title = isa.Title, ?description = isa.Description, ?submissionDate = isa.SubmissionDate, ?publicReleaseDate = isa.PublicReleaseDate, ontologySourceReferences = isa.OntologySourceReferences, publications = isa.Publications, contacts = isa.Contacts, assays = isa.Assays, studies = isa.Studies, workflows = isa.Workflows, runs = isa.Runs, registeredStudyIdentifiers = isa.RegisteredStudyIdentifiers, comments = isa.Comments, remarks = isa.Remarks, ?cwl = cwl, ?fs = fs) 
 
     member this.TryWriteAsync(arcPath) =
         this.GetWriteContracts()
@@ -105,8 +123,6 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
 
             let contracts = arc.GetReadContracts()
       
-        
-
             let! fulFilledContracts = 
                 contracts 
                 |> fullFillContractBatchAsync arcPath
@@ -119,21 +135,18 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         }      
 
     member this.GetAssayRemoveContracts(assayIdentifier: string) =
-        let isa = 
-            match this.ISA with
-            | Some i when i.AssayIdentifiers |> Seq.contains assayIdentifier -> i
-            | Some _ -> failwith "ARC does not contain assay with given name"
-            | None -> failwith "Cannot remove assay from null ISA value."
-        let assay = isa.GetAssay(assayIdentifier)
+        if this.AssayIdentifiers |> Seq.contains assayIdentifier |> not then
+            failwith "ARC does not contain assay with given name"
+        let assay = this.GetAssay(assayIdentifier)
         let studies = assay.StudiesRegisteredIn
-        isa.RemoveAssay(assayIdentifier)
+        base.RemoveAssay(assayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let assayFolderPath = getAssayFolderPath(assayIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(assayFolderPath) |> not)
         this.SetFilePaths(filteredPaths)      
         [|
             assay.ToDeleteContract()
-            isa.ToUpdateContract()
+            this.ToUpdateContract()
             for s in studies do
                 s.ToUpdateContract()
         |]
@@ -143,13 +156,10 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         |> fullFillContractBatchAsync arcPath
 
     member this.GetAssayRenameContracts(oldAssayIdentifier: string, newAssayIdentifier: string) =
-        let isa = 
-            match this.ISA with
-            | Some i when i.AssayIdentifiers |> Seq.contains oldAssayIdentifier -> i
-            | Some _ -> failwith "ARC does not contain assay with given name"
-            | None -> failwith "Cannot rename assay in null ISA value."
+        if this.AssayIdentifiers |> Seq.contains oldAssayIdentifier |> not then
+            failwith "ARC does not contain assay with given name"
 
-        isa.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
+        base.RenameAssay(oldAssayIdentifier,newAssayIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldAssayFolderPath = getAssayFolderPath(oldAssayIdentifier)
         let newAssayFolderPath = getAssayFolderPath(newAssayIdentifier)
@@ -165,18 +175,14 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         |> fullFillContractBatchAsync arcPath
 
     member this.GetStudyRemoveContracts(studyIdentifier: string) =
-        let isa = 
-            match this.ISA with
-            | Some i -> i
-            | None -> failwith "Cannot remove study from null ISA value."
-        isa.RemoveStudy(studyIdentifier)
+        base.RemoveStudy(studyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let studyFolderPath = getStudyFolderPath(studyIdentifier)
         let filteredPaths = paths |> Array.filter (fun p -> p.StartsWith(studyFolderPath) |> not)
         this.SetFilePaths(filteredPaths)
         [|
             Contract.createDelete(studyFolderPath) // isa.GetStudy(studyIdentifier).ToDeleteContract()
-            isa.ToUpdateContract()
+            this.ToUpdateContract()
         |]
 
     member this.TryRemoveStudyAsync(arcPath : string, studyIdentifier: string) =
@@ -184,13 +190,9 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         |> fullFillContractBatchAsync arcPath
 
     member this.GetStudyRenameContracts(oldStudyIdentifier: string, newStudyIdentifier: string) =
-        let isa = 
-            match this.ISA with
-            | Some i when i.StudyIdentifiers |> Seq.contains oldStudyIdentifier -> i
-            | Some _ -> failwith "ARC does not contain study with given name"
-            | None -> failwith "Cannot rename study in null ISA value."
-
-        isa.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
+        if this.StudyIdentifiers |> Seq.contains oldStudyIdentifier |> not then
+            failwith "ARC does not contain study with given name"
+        base.RenameStudy(oldStudyIdentifier,newStudyIdentifier)
         let paths = this.FileSystem.Tree.ToFilePaths()
         let oldStudyFolderPath = getStudyFolderPath(oldStudyIdentifier)
         let newStudyFolderPath = getStudyFolderPath(newStudyIdentifier)
@@ -274,7 +276,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             | Error errors ->
                 let appended = errors |> Array.map (fun e -> e.ToString()) |> String.concat "\n"
                 failwithf "Could not load ARC, failed with the following errors %s" appended
-                return (ARC())
+                return (ARC(identifier = Helper.Identifier.createMissingIdentifier()))
         }
     
     #if FABLE_COMPILER_PYTHON || !FABLE_COMPILER
@@ -322,21 +324,19 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
                     let newFilePath = dataNameFunction c
                     c.FilePath <- Some newFilePath
             )
-        match this.ISA with
-        | Some inv -> 
-            inv.Studies |> Seq.iter (fun s ->
-                let f (d : Data) = d.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
-                s.Tables |> Seq.iter (updateTable f)
-                if s.DataMap.IsSome then
-                    updateDataMap f s.DataMap.Value
-            )
-            inv.Assays |> Seq.iter (fun a ->
-                let f (d : Data) = d.GetAbsolutePathForAssay(a.Identifier,checkExistenceFromRoot)
-                a.Tables |> Seq.iter (updateTable f)
-                if a.DataMap.IsSome then
-                    updateDataMap f a.DataMap.Value
-            )
-        | None -> ()
+        
+        this.Studies |> Seq.iter (fun s ->
+            let f (d : Data) = d.GetAbsolutePathForStudy(s.Identifier,checkExistenceFromRoot)
+            s.Tables |> Seq.iter (updateTable f)
+            if s.DataMap.IsSome then
+                updateDataMap f s.DataMap.Value
+        )
+        this.Assays |> Seq.iter (fun a ->
+            let f (d : Data) = d.GetAbsolutePathForAssay(a.Identifier,checkExistenceFromRoot)
+            a.Tables |> Seq.iter (updateTable f)
+            if a.DataMap.IsSome then
+                updateDataMap f a.DataMap.Value
+        )
 
 
     //static member updateISA (isa : ISA.Investigation) (arc : ARC) : ARC =
@@ -408,7 +408,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
 
     static member fromFilePaths (filePaths : string array) : ARC = 
         let fs : FileSystem = FileSystem.fromFilePaths filePaths
-        ARC(fs=fs)
+        ARC(identifier = Identifier.createMissingIdentifier(), fs=fs)
 
     member this.SetFilePaths (filePaths : string array) =
         let tree = FileSystemTree.fromFilePaths filePaths
@@ -432,33 +432,49 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     member this.SetISAFromContracts (contracts: Contract []) =
         /// get investigation from xlsx
         let investigation = ARCAux.getArcInvestigationFromContracts contracts
+        IdentifierSetters.setInvestigationIdentifier investigation.Identifier this |> ignore
+        this.Title <- investigation.Title
+        this.Description <- investigation.Description
+        this.SubmissionDate <- investigation.SubmissionDate
+        this.PublicReleaseDate <- investigation.PublicReleaseDate
+        this.OntologySourceReferences <- investigation.OntologySourceReferences
+        this.Publications <- investigation.Publications
+        this.Contacts <- investigation.Contacts
+        this.Comments <- investigation.Comments
+        this.Remarks <- investigation.Remarks
+        this.RegisteredStudyIdentifiers <- investigation.RegisteredStudyIdentifiers
+
         /// get studies from xlsx
         let studies = ARCAux.getArcStudiesFromContracts contracts |> Array.map fst
         /// get assays from xlsx
         let assays = ARCAux.getArcAssaysFromContracts contracts
+        /// get workflows from xlsx
+        let workflows = ARCAux.getArcWorkflowsFromContracts contracts
+        /// get runs from xlsx
+        let runs = ARCAux.getArcRunsFromContracts contracts
 
         // Remove Assay metadata objects read from investigation file from investigation object, if no assosiated assay file exists
-        investigation.AssayIdentifiers
+        this.AssayIdentifiers
         |> Array.iter (fun ai -> 
             if assays |> Array.exists (fun a -> a.Identifier = ai) |> not then
-                investigation.DeleteAssay(ai)      
+                this.DeleteAssay(ai)      
         )
 
         // Remove Study metadata objects read from investigation file from investigation object, if no assosiated study file exists
-        investigation.StudyIdentifiers
+        this.StudyIdentifiers
         |> Array.iter (fun si -> 
             if studies |> Array.exists (fun s -> s.Identifier = si) |> not then
-                investigation.DeleteStudy(si)
+                this.DeleteStudy(si)
         )
 
         studies |> Array.iter (fun study ->            
             /// Try find registered study in parsed READ contracts
-            let registeredStudyOpt = investigation.Studies |> Seq.tryFind (fun s -> s.Identifier = study.Identifier)
+            let registeredStudyOpt = this.Studies |> Seq.tryFind (fun s -> s.Identifier = study.Identifier)
             match registeredStudyOpt with
             | Some registeredStudy -> 
                 registeredStudy.UpdateReferenceByStudyFile(study,true)
             | None -> 
-                investigation.AddStudy(study)
+                this.AddStudy(study)
             let datamap = ARCAux.getAssayDataMapFromContracts study.Identifier contracts
             if study.DataMap.IsNone then
                 study.DataMap <- datamap
@@ -466,13 +482,13 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         )
         assays |> Array.iter (fun assay ->
             /// Try find registered study in parsed READ contracts
-            let registeredAssayOpt = investigation.Assays |> Seq.tryFind (fun a -> a.Identifier = assay.Identifier)
+            let registeredAssayOpt = this.Assays |> Seq.tryFind (fun a -> a.Identifier = assay.Identifier)
             match registeredAssayOpt with
             | Some registeredAssay -> // This study element is parsed from FsWorkbook and has no regsitered assays, yet
                 registeredAssay.UpdateReferenceByAssayFile(assay,true)
             | None -> 
-                investigation.AddAssay(assay)
-            let assay = investigation.Assays |> Seq.find (fun a -> a.Identifier = assay.Identifier)
+                this.AddAssay(assay)
+            let assay = this.Assays |> Seq.find (fun a -> a.Identifier = assay.Identifier)
             let updatedTables = 
                 assay.StudiesRegisteredIn
                 |> Array.fold (fun tables study -> 
@@ -483,15 +499,28 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
                 assay.DataMap <- datamap
             assay.Tables <- updatedTables.Tables
         )
-        investigation.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetLightHashCode())
-        investigation.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
-        investigation.StaticHash <- investigation.GetLightHashCode()
-        this.ISA <- Some investigation
+        workflows |> Array.iter (fun workflow ->
+            let datamap = ARCAux.getWorkflowDataMapFromContracts workflow.Identifier contracts
+            if workflow.DataMap.IsNone then
+                workflow.DataMap <- datamap
+            this.AddWorkflow(workflow)
+            workflow.StaticHash <- workflow.GetLightHashCode()
+        )
+        runs |> Array.iter (fun run ->
+            let datamap = ARCAux.getRunDataMapFromContracts run.Identifier contracts
+            if run.DataMap.IsNone then
+                run.DataMap <- datamap
+            this.AddRun(run)
+            run.StaticHash <- run.GetLightHashCode()
+        )
+        this.Assays |> Seq.iter (fun a -> a.StaticHash <- a.GetLightHashCode())
+        this.Studies |> Seq.iter (fun s -> s.StaticHash <- s.GetLightHashCode())
+        this.StaticHash <- this.GetLightHashCode()
 
     member this.UpdateFileSystem() =   
         let newFS = 
-            ARCAux.updateFSByISA _isa _fs
-            |> ARCAux.updateFSByCWL _cwl
+            ARCAux.updateFSByISA this _fs
+            //|> ARCAux.updateFSByCWL _cwl
         _fs <- newFS        
 
     /// <summary>
@@ -500,49 +529,76 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     /// If datamapFile is set to true, a write contract for the datamap file will be included for each study and assay.
     /// </summary>
     /// <param name="datamapFile">Default: false.</param>
-    member this.GetWriteContracts () =
+    member this.GetWriteContracts (?skipUpdateFS : bool) =
+        if not (defaultArg skipUpdateFS false) then
+            this.UpdateFileSystem()
         //let datamapFile = defaultArg datamapFile false
         /// Map containing the DTOTypes and objects for the ISA objects.
         let workbooks = System.Collections.Generic.Dictionary<string, DTOType*FsWorkbook>()
-        match this.ISA with
-        | Some inv -> 
-            let investigationConverter = ArcInvestigation.toFsWorkbook
-            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter inv))
-            inv.StaticHash <- inv.GetLightHashCode()
-            inv.Studies
-            |> Seq.iter (fun s ->
-                s.StaticHash <- s.GetLightHashCode()
+        
+        let investigationConverter = ArcInvestigation.toFsWorkbook
+        workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, investigationConverter this))
+        this.StaticHash <- this.GetLightHashCode()
+        this.Studies
+        |> Seq.iter (fun s ->
+            s.StaticHash <- s.GetLightHashCode()
+            workbooks.Add (
+                Identifier.Study.fileNameFromIdentifier s.Identifier,
+                (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
+            )
+            if s.DataMap.IsSome (*&& datamapFile*) then 
+                let dm = s.DataMap.Value
+                dm.StaticHash <- dm.GetHashCode()
                 workbooks.Add (
-                    Identifier.Study.fileNameFromIdentifier s.Identifier,
-                    (DTOType.ISA_Study, ArcStudy.toFsWorkbook s)
+                    Identifier.Study.datamapFileNameFromIdentifier s.Identifier,
+                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
                 )
-                if s.DataMap.IsSome (*&& datamapFile*) then 
-                    let dm = s.DataMap.Value
-                    dm.StaticHash <- dm.GetHashCode()
-                    workbooks.Add (
-                        Identifier.Study.datamapFileNameFromIdentifier s.Identifier,
-                        (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
-                    )
                 
-            )
-            inv.Assays
-            |> Seq.iter (fun a ->
-                a.StaticHash <- a.GetLightHashCode()
+        )
+        this.Assays
+        |> Seq.iter (fun a ->
+            a.StaticHash <- a.GetLightHashCode()
+            workbooks.Add (
+                Identifier.Assay.fileNameFromIdentifier a.Identifier,
+                (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a))     
+            if a.DataMap.IsSome (*&& datamapFile*) then 
+                let dm = a.DataMap.Value
+                dm.StaticHash <- dm.GetHashCode()
                 workbooks.Add (
-                    Identifier.Assay.fileNameFromIdentifier a.Identifier,
-                    (DTOType.ISA_Assay, ArcAssay.toFsWorkbook a))     
-                if a.DataMap.IsSome (*&& datamapFile*) then 
-                    let dm = a.DataMap.Value
-                    dm.StaticHash <- dm.GetHashCode()
-                    workbooks.Add (
-                        Identifier.Assay.datamapFileNameFromIdentifier a.Identifier,
-                        (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
-                    )
+                    Identifier.Assay.datamapFileNameFromIdentifier a.Identifier,
+                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
+                )
+        )
+        this.Workflows
+        |> Seq.iter (fun w ->
+            w.StaticHash <- w.GetLightHashCode()
+            workbooks.Add (
+                Identifier.Workflow.fileNameFromIdentifier w.Identifier,
+                (DTOType.ISA_Workflow, ArcWorkflow.toFsWorkbook w)
             )
-            
-        | None -> 
-            //printfn "ARC contains no ISA part."
-            workbooks.Add (InvestigationFileName, (DTOType.ISA_Investigation, ArcInvestigation.toFsWorkbook (ArcInvestigation.create(Identifier.MISSING_IDENTIFIER))))
+            if w.DataMap.IsSome (*&& datamapFile*) then 
+                let dm = w.DataMap.Value
+                dm.StaticHash <- dm.GetHashCode()
+                workbooks.Add (
+                    Identifier.Workflow.datamapFileNameFromIdentifier w.Identifier,
+                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
+                )
+        )
+        this.Runs
+        |> Seq.iter (fun r ->
+            r.StaticHash <- r.GetLightHashCode()
+            workbooks.Add (
+                Identifier.Run.fileNameFromIdentifier r.Identifier,
+                (DTOType.ISA_Run, ArcRun.toFsWorkbook r)
+            )
+            if r.DataMap.IsSome (*&& datamapFile*) then 
+                let dm = r.DataMap.Value
+                dm.StaticHash <- dm.GetHashCode()
+                workbooks.Add (
+                    Identifier.Run.datamapFileNameFromIdentifier r.Identifier,
+                    (DTOType.ISA_Datamap, Spreadsheet.DataMap.toFsWorkbook dm)
+                )
+        )
 
         // Iterates over filesystem and creates a write contract for every file. If possible, include DTO.       
         _fs.Tree.ToFilePaths(true)
@@ -558,26 +614,24 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     /// 
     /// ISA contracts do contain the object data as spreadsheets, while the other contracts only contain the path.
     /// </summary>  
-    member this.GetUpdateContracts () =
+    member this.GetUpdateContracts (?skipUpdateFS : bool) =
         // Map containing the DTOTypes and objects for the ISA objects.
-        match this.ISA with
-        | None -> // if no ISA is present, return write contracts
-            this.GetWriteContracts() 
-        | Some inv when inv.StaticHash = 0 -> // if ISA is present but has not been written to disk, return write contracts
-            this.GetWriteContracts()
-        | Some inv -> 
+        if this.StaticHash = 0 then
+            this.StaticHash <- this.GetLightHashCode()
+            this.GetWriteContracts(?skipUpdateFS = skipUpdateFS)
+        else
             [|
                 // Get Investigation contract
-                let hash = inv.GetLightHashCode()
+                let hash = this.GetLightHashCode()
                 // Currently catched by match case
-                //if inv.StaticHash = 0 then       
-                //    yield inv.ToCreateContract(isLight)
-                if inv.StaticHash <> hash then 
-                    yield inv.ToUpdateContract()
-                inv.StaticHash <- hash
+                //if this.StaticHash = 0 then       
+                //    yield this.ToCreateContract(isLight)
+                if this.StaticHash <> hash then 
+                    yield this.ToUpdateContract()
+                this.StaticHash <- hash
 
                 // Get Study contracts
-                for s in inv.Studies do
+                for s in this.Studies do
                     let hash = s.GetLightHashCode()
                     if s.StaticHash = 0 then
                         yield! s.ToCreateContract(WithFolder = true)
@@ -595,7 +649,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
                     | _ -> ()
                 
                 // Get Assay contracts
-                for a in inv.Assays do
+                for a in this.Assays do
                     let hash = a.GetLightHashCode()
                     if a.StaticHash = 0 then 
                         yield! a.ToCreateContract(WithFolder = true)
@@ -611,9 +665,39 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
                         yield dm.ToUpdateContractForAssay(a.Identifier)
                         dm.StaticHash <- dm.GetHashCode()
                     | _ -> ()
-            |]
-            
 
+                for w in this.Workflows do
+                    let hash = w.GetLightHashCode()
+                    if w.StaticHash = 0 then 
+                        yield! w.ToCreateContract(WithFolder = true)
+                    elif w.StaticHash <> hash then 
+                        yield w.ToUpdateContract()
+                    w.StaticHash <- hash
+                    match w.DataMap with
+                    | Some dm when dm.StaticHash = 0 -> 
+                        yield dm.ToCreateContractForWorkflow(w.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | Some dm when dm.StaticHash <> dm.GetHashCode() ->
+                        yield dm.ToUpdateContractForWorkflow(w.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | _ -> ()
+
+                for r in this.Runs do
+                    let hash = r.GetLightHashCode()
+                    if r.StaticHash = 0 then 
+                        yield! r.ToCreateContract(WithFolder = true)
+                    elif r.StaticHash <> hash then 
+                        yield r.ToUpdateContract()
+                    r.StaticHash <- hash
+                    match r.DataMap with
+                    | Some dm when dm.StaticHash = 0 -> 
+                        yield dm.ToCreateContractForRun(r.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | Some dm when dm.StaticHash <> dm.GetHashCode() ->
+                        yield dm.ToUpdateContractForRun(r.Identifier)
+                        dm.StaticHash <- dm.GetHashCode()
+                    | _ -> ()
+            |]           
 
     member this.GetGitInitContracts(?branch : string,?repositoryAddress : string,?defaultGitignore : bool) = 
         let defaultGitignore = defaultArg defaultGitignore false
@@ -627,23 +711,60 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     static member getCloneContract(remoteUrl : string,?merge : bool ,?branch : string,?token : string*string,?nolfs : bool) =
         Contract.Git.Clone.createCloneContract(remoteUrl,?merge = merge,?branch = branch,?token = token,?nolfs = nolfs)
 
-    member this.Copy() = 
-        let isaCopy = _isa |> Option.map (fun i -> i.Copy())
+    member this.Copy() =
+        let nextAssays = ResizeArray()
+        let nextStudies = ResizeArray()
+        let nextWorkflows = ResizeArray()
+        let nextRuns = ResizeArray()
+        for assay in this.Assays do
+            let copy = assay.Copy()
+            nextAssays.Add(copy)
+        for study in this.Studies do
+            let copy = study.Copy()
+            nextStudies.Add(copy)
+        for workflow in this.Workflows do
+            let copy = workflow.Copy()
+            nextWorkflows.Add(copy)
+        for run in this.Runs do
+            let copy = run.Copy()
+            nextRuns.Add(copy)
+        let nextComments = this.Comments |> ResizeArray.map (fun c -> c.Copy())
+        let nextRemarks = this.Remarks |> ResizeArray.map (fun c -> c.Copy())
+        let nextContacts = this.Contacts |> ResizeArray.map (fun c -> c.Copy())
+        let nextPublications = this.Publications |> ResizeArray.map (fun c -> c.Copy())
+        let nextOntologySourceReferences = this.OntologySourceReferences |> ResizeArray.map (fun c -> c.Copy())
+        let nextStudyIdentifiers = ResizeArray(this.RegisteredStudyIdentifiers)
         let fsCopy = _fs.Copy()
-        new ARC(?isa = isaCopy, ?cwl = _cwl, fs = fsCopy)
-        
+        ARC(
+            this.Identifier,
+            ?title = this.Title,
+            ?description = this.Description,
+            ?submissionDate = this.SubmissionDate,
+            ?publicReleaseDate = this.PublicReleaseDate,
+            studies = nextStudies,
+            assays = nextAssays,
+            workflows = nextWorkflows,
+            runs = nextRuns,
+            registeredStudyIdentifiers = nextStudyIdentifiers,
+            ontologySourceReferences = nextOntologySourceReferences,
+            publications = nextPublications,
+            contacts = nextContacts,
+            comments = nextComments,
+            remarks = nextRemarks,
+            ?cwl = _cwl,
+            fs = fsCopy
+        )
+
     /// <summary>
     /// Returns the FileSystemTree of the ARC with only the registered files and folders included.
     /// </summary>
     /// <param name="IgnoreHidden">Wether or not to ignore hidden files and folders starting with '.'. If true, no hidden files are included in the result. (default: true)</param>
     member this.GetRegisteredPayload(?IgnoreHidden:bool) =
 
-        let isaCopy = _isa |> Option.map (fun i -> i.Copy()) // not sure if needed, but let's be safe
+        let copy = this.Copy()
 
         let registeredStudies =     
-            isaCopy
-            |> Option.map (fun isa -> isa.Studies.ToArray()) // to-do: isa.RegisteredStudies
-            |> Option.defaultValue [||]
+            copy.Studies.ToArray()
         
         let registeredAssays =
             registeredStudies
@@ -696,7 +817,6 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
             )
             |> Set.unionMany
 
-
         let includeFiles = Set.unionMany [includeRootFiles; includeStudyFiles; includeAssayFiles]
 
         let ignoreHidden = defaultArg IgnoreHidden true
@@ -743,7 +863,7 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
         try
             let s = s.Replace("bio:additionalProperty","sdo:additionalProperty")
             let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoderDeprecated s
-            ARC(isa = isa)
+            ARC.fromArcInvestigation(isa = isa)
         with
         | ex -> 
             failwithf "Could not parse deprecated ARC-RO-Crate metadata: \n%s" ex.Message
@@ -751,14 +871,14 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     static member fromROCrateJsonString (s:string) =
         try 
             let isa = ARCtrl.Json.Decode.fromJsonString ARCtrl.Json.ARC.ROCrate.decoder s
-            ARC(isa = isa)
+            ARC.fromArcInvestigation(isa = isa)
         with
         | ex -> 
             failwithf "Could not parse ARC-RO-Crate metadata: \n%s" ex.Message
 
     member this.ToROCrateJsonString(?spaces) =
         this.MakeDataFilesAbsolute()
-        ARCtrl.Json.ARC.ROCrate.encoder (Option.get _isa)
+        ARCtrl.Json.ARC.ROCrate.encoder this
         |> ARCtrl.Json.Encode.toJsonString (ARCtrl.Json.Encode.defaultSpaces spaces)
 
         /// exports in json-ld format
@@ -805,6 +925,11 @@ type ARC(?isa : ArcInvestigation, ?cwl : unit, ?fs : FileSystem.FileSystem) =
     /// <param name="contract">the input contract that contains the config in it's DTO</param>
     member this.GetValidationPackagesConfigFromReadContract(contract) =
         ValidationPackagesConfig.tryFromReadContract contract
+
+    member this.ToFilePaths(?removeRoot: bool, ?skipUpdateFS : bool) =
+        if not (defaultArg skipUpdateFS false) then
+            this.UpdateFileSystem()
+        this.FileSystem.Tree.ToFilePaths(?removeRoot = removeRoot)
 
 //-Pseudo code-//
 //// Option 1

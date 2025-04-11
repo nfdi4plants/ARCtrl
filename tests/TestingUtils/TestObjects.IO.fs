@@ -30,6 +30,8 @@ let testSubPathsFolder = combine testObjectsBaseFolder "Path_findSubPaths"
 let testSimpleARC = combine testObjectsBaseFolder "SimpleARC"
 let testSimpleARC_Output = combine testResultsFolder "TestResults/SimpleARC"
 
+let testSimpleARCWithWR = combine testObjectsBaseFolder "SimpleARCWithWR"
+let testSimpleARCWithWR_Output = combine testResultsFolder "TestResults/SimpleARCWithWR"
 
 let simpleTextFilePath = combine testObjectsBaseFolder "SimpleText.txt"
 let simpleWorkbookPath = combine testObjectsBaseFolder "TestWorkbook.xlsx"

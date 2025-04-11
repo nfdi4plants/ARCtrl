@@ -1,4 +1,4 @@
-﻿module Tests.Investigation
+module Tests.Investigation
 
 open ARCtrl
 open ARCtrl.Json
@@ -30,6 +30,8 @@ module Helper =
                 (ResizeArray [Person.create(firstName="Kevin", lastName="Frey")])
                 (ResizeArray [])
                 (ResizeArray [study1; study2])
+                (ResizeArray())
+                (ResizeArray())
                 (ResizeArray [study1.Identifier; study2.Identifier])
                 (ResizeArray [Comment.create("Hello", "World")])
                 (ResizeArray())
