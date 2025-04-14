@@ -1,5 +1,6 @@
 import { equal, deepEqual } from 'assert';
-import { WebController } from "./ARCtrl/index.js";
+import { WebController } from "./index.js";
+import { expect, it, describe } from 'vitest';
 
 describe.skip('Template.Web', function () {
     it('getTemplates', async () => {

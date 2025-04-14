@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts'
  
@@ -19,5 +20,10 @@ export default defineConfig({
             external: ['@fable-org/fable-library-js']
         },
         outDir : 'dist/ts'
+    },
+    test: {
+        globals: true,
+        //'tests/**/js/Main.fs.ts',
+        include: [ 'tests/JavaScript/*.test.js', 'tests/JavaScript/*.test.ts'],
     }
   });

@@ -357,7 +357,7 @@ dist/
 src/ARCtrl/ts/
 tmp/
 /.venv
-/tests/JavaScript/ARCtrl
+/tests/JavaScript/ts
 /tests/Python/ARCtrl
 /tests/UI/ARCtrl
 /tests/**/js
