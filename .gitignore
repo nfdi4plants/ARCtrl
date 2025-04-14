@@ -358,6 +358,7 @@ src/ARCtrl/ts/
 tmp/
 /.venv
 /tests/JavaScript/ts
+/tests/**/ts
 /tests/Python/ARCtrl
 /tests/UI/ARCtrl
 /tests/**/js

@@ -283,3 +283,34 @@ module Test =
 
     let testList = testList
     let ftestList = ftestList
+
+
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+module TSUtils = 
+
+    open Fable.Pyxpecto
+    open Fable.Core
+    open Fable.Core.JS
+
+
+    [<Import("it", from = "vitest")>]
+    let it(name: string, test: unit -> unit) = jsNative
+
+    [<Import("it", from = "vitest")>]
+    let itAsync(name: string, test: unit -> Promise<unit>) = jsNative
+
+    [<Import("describe", from = "vitest")>]
+    let describe(name: string, testSuit: unit -> unit) = jsNative 
+
+
+    // module Promise = 
+    //     [<Emit("void $0")>]
+    //     let start (pr: JS.Promise<'T>): unit = jsNative
+
+    //     [<Emit("void ($1.then($0))")>]
+    //     let iter (a: 'T -> unit) (pr: JS.Promise<'T>): unit = jsNative
+
+    //     [<Emit("$1.then($0)")>]
+    //     let map (a: 'T1 -> 'T2) (pr: JS.Promise<'T1>): JS.Promise<'T2> = jsNative
+    //     let runTests = runTests   
+#endif

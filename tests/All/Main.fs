@@ -1,6 +1,7 @@
 module Main.Tests
 
 open Fable.Pyxpecto
+open Fable.Core
 
 let all = testList "All" [  
     ARCtrl.Core.Tests.all
@@ -15,5 +16,17 @@ let all = testList "All" [
     ARCtrl.ARC.Tests.all
 ]
 
+#if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
+open TestingUtils.TSUtils
+
+describe("index", fun () -> 
+    itAsync ("add", fun () ->
+        Pyxpecto.runTestsAsync [| ConfigArg.DoNotExitWithCode|] all
+        |> Async.StartAsPromise
+        |> Promise.map (fun (exitCode : int) -> Expect.equal exitCode 0 "Tests failed")
+    )
+)
+#else
 [<EntryPoint>]
 let main argv = Pyxpecto.runTests [||] all
+#endif

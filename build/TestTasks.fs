@@ -36,7 +36,7 @@ module RunTests =
                 // transpile library for native access
                 run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ts --lang ts -e fs.ts --nocache" ""
                 System.IO.File.Copy("src/ARCtrl/index.js", $"{path}/index.js", overwrite = true) |> ignore
-                run npx $"vitest run" ""
+                run npx $"vitest run --dir ./tests/JavaScript/" ""
         else
             Trace.traceImportant "Skipping JavaScript tests"
     )
@@ -56,10 +56,11 @@ module RunTests =
             // Setup test results directory after clean
             System.IO.Directory.CreateDirectory(jsIOResultFolder) |> ignore
             // transpile js files from fsharp code
-            run dotnet $"fable {allTestsProject} -o {allTestsProject}/js --nocache" ""
+            run dotnet $"fable {allTestsProject} -o {allTestsProject}/ts --lang ts -e fs.ts --nocache" ""
             // run mocha in target path to execute tests
             // "--timeout 20000" is used, because json schema validation takes a bit of time.
-            run node $"{allTestsProject}/js/Main.js" ""
+            // run node $"{allTestsProject}/js/Main.js" ""
+            run npx $"vitest run --dir {allTestsProject}/ts/" ""
         else
             Trace.traceImportant "Skipping Js tests"
     )

@@ -23,7 +23,7 @@ export default defineConfig({
     },
     test: {
         globals: true,
-        //'tests/**/js/Main.fs.ts',
-        include: [ 'tests/JavaScript/*.test.js', 'tests/JavaScript/*.test.ts'],
+        include : ['Main.fs.ts', '*.test.ts'],
+        testTimeout: 1_000_000,
     }
   });
