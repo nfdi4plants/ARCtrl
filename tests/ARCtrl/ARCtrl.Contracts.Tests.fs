@@ -1,4 +1,4 @@
-﻿module ARCtrl.Contracts.Tests
+module ARCtrl.Contracts.Tests
 
 open TestingUtils
 
@@ -76,7 +76,7 @@ let tests_tryFromContract = testList "tryFromContract" [
 
 let tests_gitContracts = testList "gitContracts" [
     testCase "init_basic" <| fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts()
         Expect.equal contracts.Length 2 "Should be two contracts"
         /// Check init contract
@@ -101,7 +101,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.equal text "**/dataset/**" "Should have the correct text"
 
     testCase "init_Branch" <| fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyARC")
         let branchName = "myBranch"
         let contracts = arc.GetGitInitContracts(branch = branchName)
         Expect.equal contracts.Length 2 "Should be two contracts"
@@ -110,7 +110,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.sequenceEqual cli.Arguments [|"init";"-b";branchName|] "Should have new branchname"
 
     testCase "init_remoteRepository" <| fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyARC")
         let remote = @"www.fantasyGit.net/MyAccount/MyRepo"
         let contracts = arc.GetGitInitContracts(repositoryAddress = remote)
         Expect.equal contracts.Length 3 "Should be three contracts"
@@ -119,7 +119,7 @@ let tests_gitContracts = testList "gitContracts" [
         Expect.sequenceEqual cli.Arguments [|"remote";"add";"origin";remote|] "Should correctly set new remote"
 
     testCase "init_GitIgnore" <| fun _ ->
-        let arc = ARC()
+        let arc = ARC("MyARC")
         let contracts = arc.GetGitInitContracts(defaultGitignore = true)
         Expect.equal contracts.Length 3 "Should be three contracts"
         Expect.equal contracts.[2].Operation Operation.CREATE "Should be an create operation"

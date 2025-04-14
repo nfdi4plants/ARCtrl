@@ -21,6 +21,8 @@
     <Compile Include="Metadata\Publication.fs" />
     <Compile Include="Metadata\Assays.fs" />
     <Compile Include="Metadata\Study.fs" />
+    <Compile Include="Metadata\Workflow.fs" />
+    <Compile Include="Metadata\Run.fs" />
     <Compile Include="Metadata\OntologySourceReference.fs" />
     <Compile Include="AnnotationTable\CompositeCell.fs" />
     <Compile Include="AnnotationTable\CompositeHeader.fs" />
@@ -32,11 +34,13 @@
     <Compile Include="DataMap.fs" />
     <Compile Include="ArcAssay.fs" />
     <Compile Include="ArcStudy.fs" />
+    <Compile Include="ArcWorkflow.fs" />
+    <Compile Include="ArcRun.fs" />
     <Compile Include="ArcInvestigation.fs" />
     <Compile Include="Template.fs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="FsSpreadsheet"/>
+    <PackageReference Include="FsSpreadsheet" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\ARCtrl.Core.fsproj" />

@@ -9,6 +9,8 @@ module Helper =
     let create_filled_datamap() = 
         ArcAssay.create(
             "My Cool Assay",
+            "Best Assay",
+            "This is a test assay",
             OntologyAnnotation("MT", "MS", "MS:424242", ResizeArray [Comment.create("ByeBye","Space")]), 
             OntologyAnnotation("TT", "MS", "MS:696969"), 
             OntologyAnnotation("TP", "MS", "MS:123456", ResizeArray [Comment.create("Hello","Space")]), 
@@ -20,6 +22,8 @@ module Helper =
     let create_filled() = 
         ArcAssay.create(
             "My Cool Assay",
+            "Best Assay",
+            "This is a test assay",
             OntologyAnnotation("MT", "MS", "MS:424242", ResizeArray [Comment.create("ByeBye","Space")]), 
             OntologyAnnotation("TT", "MS", "MS:696969"), 
             OntologyAnnotation("TP", "MS", "MS:123456", ResizeArray [Comment.create("Hello","Space")]), 
@@ -31,6 +35,8 @@ module Helper =
     let compare =
         fun (a1: ArcAssay) (a2: ArcAssay) ->
             Expect.equal a1.Identifier a2.Identifier "Identifier"
+            Expect.equal a1.Title a2.Title "Title"
+            Expect.equal a1.Description a2.Description "Description"
             Expect.equal a1.MeasurementType a2.MeasurementType "MeasurementType"
             Expect.equal a1.TechnologyType a2.TechnologyType "TechnologyType"
             Expect.equal a1.TechnologyPlatform a2.TechnologyPlatform "TechnologyPlatform"

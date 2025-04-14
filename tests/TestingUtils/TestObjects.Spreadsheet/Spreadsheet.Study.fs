@@ -55,77 +55,83 @@ let studyMetadataEmpty =
     let row25 = ws.Row(25)
     row25.[1].Value <- "STUDY ASSAYS"
     let row26 = ws.Row(26)
-    row26.[1].Value <- "Study Assay Measurement Type"
+    row26.[1].Value <- "Study Assay Identifier"
     let row27 = ws.Row(27)
-    row27.[1].Value <- "Study Assay Measurement Type Term Accession Number"
+    row27.[1].Value <- "Study Assay Title"
     let row28 = ws.Row(28)
-    row28.[1].Value <- "Study Assay Measurement Type Term Source REF"
+    row28.[1].Value <- "Study Assay Description"
     let row29 = ws.Row(29)
-    row29.[1].Value <- "Study Assay Technology Type"
+    row29.[1].Value <- "Study Assay Measurement Type"
     let row30 = ws.Row(30)
-    row30.[1].Value <- "Study Assay Technology Type Term Accession Number"
+    row30.[1].Value <- "Study Assay Measurement Type Term Accession Number"
     let row31 = ws.Row(31)
-    row31.[1].Value <- "Study Assay Technology Type Term Source REF"
+    row31.[1].Value <- "Study Assay Measurement Type Term Source REF"
     let row32 = ws.Row(32)
-    row32.[1].Value <- "Study Assay Technology Platform"
+    row32.[1].Value <- "Study Assay Technology Type"
     let row33 = ws.Row(33)
-    row33.[1].Value <- "Study Assay File Name"
+    row33.[1].Value <- "Study Assay Technology Type Term Accession Number"
     let row34 = ws.Row(34)
-    row34.[1].Value <- "STUDY PROTOCOLS"
+    row34.[1].Value <- "Study Assay Technology Type Term Source REF"
     let row35 = ws.Row(35)
-    row35.[1].Value <- "Study Protocol Name"
+    row35.[1].Value <- "Study Assay Technology Platform"
     let row36 = ws.Row(36)
-    row36.[1].Value <- "Study Protocol Type"
+    row36.[1].Value <- "Study Assay File Name"
     let row37 = ws.Row(37)
-    row37.[1].Value <- "Study Protocol Type Term Accession Number"
+    row37.[1].Value <- "STUDY PROTOCOLS"
     let row38 = ws.Row(38)
-    row38.[1].Value <- "Study Protocol Type Term Source REF"
+    row38.[1].Value <- "Study Protocol Name"
     let row39 = ws.Row(39)
-    row39.[1].Value <- "Study Protocol Description"
+    row39.[1].Value <- "Study Protocol Type"
     let row40 = ws.Row(40)
-    row40.[1].Value <- "Study Protocol URI"
+    row40.[1].Value <- "Study Protocol Type Term Accession Number"
     let row41 = ws.Row(41)
-    row41.[1].Value <- "Study Protocol Version"
+    row41.[1].Value <- "Study Protocol Type Term Source REF"
     let row42 = ws.Row(42)
-    row42.[1].Value <- "Study Protocol Parameters Name"
+    row42.[1].Value <- "Study Protocol Description"
     let row43 = ws.Row(43)
-    row43.[1].Value <- "Study Protocol Parameters Term Accession Number"
+    row43.[1].Value <- "Study Protocol URI"
     let row44 = ws.Row(44)
-    row44.[1].Value <- "Study Protocol Parameters Term Source REF"
+    row44.[1].Value <- "Study Protocol Version"
     let row45 = ws.Row(45)
-    row45.[1].Value <- "Study Protocol Components Name"
+    row45.[1].Value <- "Study Protocol Parameters Name"
     let row46 = ws.Row(46)
-    row46.[1].Value <- "Study Protocol Components Type"
+    row46.[1].Value <- "Study Protocol Parameters Term Accession Number"
     let row47 = ws.Row(47)
-    row47.[1].Value <- "Study Protocol Components Type Term Accession Number"
+    row47.[1].Value <- "Study Protocol Parameters Term Source REF"
     let row48 = ws.Row(48)
-    row48.[1].Value <- "Study Protocol Components Type Term Source REF"
+    row48.[1].Value <- "Study Protocol Components Name"
     let row49 = ws.Row(49)
-    row49.[1].Value <- "STUDY CONTACTS"
+    row49.[1].Value <- "Study Protocol Components Type"
     let row50 = ws.Row(50)
-    row50.[1].Value <- "Study Person Last Name"
+    row50.[1].Value <- "Study Protocol Components Type Term Accession Number"
     let row51 = ws.Row(51)
-    row51.[1].Value <- "Study Person First Name"
+    row51.[1].Value <- "Study Protocol Components Type Term Source REF"
     let row52 = ws.Row(52)
-    row52.[1].Value <- "Study Person Mid Initials"
+    row52.[1].Value <- "STUDY CONTACTS"
     let row53 = ws.Row(53)
-    row53.[1].Value <- "Study Person Email"
+    row53.[1].Value <- "Study Person Last Name"
     let row54 = ws.Row(54)
-    row54.[1].Value <- "Study Person Phone"
+    row54.[1].Value <- "Study Person First Name"
     let row55 = ws.Row(55)
-    row55.[1].Value <- "Study Person Fax"
+    row55.[1].Value <- "Study Person Mid Initials"
     let row56 = ws.Row(56)
-    row56.[1].Value <- "Study Person Address"
+    row56.[1].Value <- "Study Person Email"
     let row57 = ws.Row(57)
-    row57.[1].Value <- "Study Person Affiliation"
+    row57.[1].Value <- "Study Person Phone"
     let row58 = ws.Row(58)
-    row58.[1].Value <- "Study Person Roles"
+    row58.[1].Value <- "Study Person Fax"
     let row59 = ws.Row(59)
-    row59.[1].Value <- "Study Person Roles Term Accession Number"
+    row59.[1].Value <- "Study Person Address"
     let row60 = ws.Row(60)
-    row60.[1].Value <- "Study Person Roles Term Source REF"
+    row60.[1].Value <- "Study Person Affiliation"
     let row61 = ws.Row(61)
-    row61.[1].Value <- "Comment[Study Person REF]"
+    row61.[1].Value <- "Study Person Roles"
+    let row62 = ws.Row(62)
+    row62.[1].Value <- "Study Person Roles Term Accession Number"
+    let row63 = ws.Row(63)
+    row63.[1].Value <- "Study Person Roles Term Source REF"
+    let row64 = ws.Row(64)
+    row64.[1].Value <- "Comment[Study Person REF]"
     ws
 
 module BII_S_1 =
@@ -200,117 +206,132 @@ module BII_S_1 =
         let row25 = ws.Row(25)
         row25.[1].Value <- "STUDY ASSAYS"
         let row26 = ws.Row(26)
-        row26.[1].Value <- "Study Assay Measurement Type"
-        row26.[2].Value <- "protein expression profiling"
-        row26.[3].Value <- "metabolite profiling"
-        row26.[4].Value <- "transcription profiling"
+        row26.[1].Value <- "Study Assay Identifier"
+        row26.[2].Value <- $"{Assay.Proteome.assayIdentifier}"
+        row26.[3].Value <- $"{Assay.Metabolome.assayIdentifier}"
+        row26.[4].Value <- $"{Assay.Transcriptome.assayIdentifier}"
         let row27 = ws.Row(27)
-        row27.[1].Value <- "Study Assay Measurement Type Term Accession Number"
-        row27.[2].Value <- "http://purl.obolibrary.org/obo/OBI_0000615"
-        row27.[3].Value <- "http://purl.obolibrary.org/obo/OBI_0000366"
-        row27.[4].Value <- "424"
+        row27.[1].Value <- "Study Assay Title"
+        row27.[2].Value <- "Yeast proteome analysis"
+        row27.[3].Value <- "Yeast metabolome analysis"
+        row27.[4].Value <- "Yeast transcriptome analysis"
         let row28 = ws.Row(28)
-        row28.[1].Value <- "Study Assay Measurement Type Term Source REF"
-        row28.[2].Value <- "OBI"
-        row28.[3].Value <- "OBI"
-        row28.[4].Value <- "OBI"
+        row28.[1].Value <- "Study Assay Description"
+        row28.[2].Value <- "Yeast proteome analysis"
+        row28.[3].Value <- "Yeast metabolome analysis"
+        row28.[4].Value <- "Yeast transcriptome analysis"
         let row29 = ws.Row(29)
-        row29.[1].Value <- "Study Assay Technology Type"
-        row29.[2].Value <- "mass spectrometry"
-        row29.[3].Value <- "mass spectrometry"
-        row29.[4].Value <- "DNA microarray"
+        row29.[1].Value <- "Study Assay Measurement Type"
+        row29.[2].Value <- "protein expression profiling"
+        row29.[3].Value <- "metabolite profiling"
+        row29.[4].Value <- "transcription profiling"
         let row30 = ws.Row(30)
-        row30.[1].Value <- "Study Assay Technology Type Term Accession Number"
-        row30.[4].Value <- "http://purl.obolibrary.org/obo/OBI_0400148"
+        row30.[1].Value <- "Study Assay Measurement Type Term Accession Number"
+        row30.[2].Value <- "http://purl.obolibrary.org/obo/OBI_0000615"
+        row30.[3].Value <- "http://purl.obolibrary.org/obo/OBI_0000366"
+        row30.[4].Value <- "424"
         let row31 = ws.Row(31)
-        row31.[1].Value <- "Study Assay Technology Type Term Source REF"
+        row31.[1].Value <- "Study Assay Measurement Type Term Source REF"
         row31.[2].Value <- "OBI"
         row31.[3].Value <- "OBI"
         row31.[4].Value <- "OBI"
         let row32 = ws.Row(32)
-        row32.[1].Value <- "Study Assay Technology Platform"
-        row32.[2].Value <- "iTRAQ"
-        row32.[3].Value <- "LC-MS/MS"
-        row32.[4].Value <- "Affymetrix"
+        row32.[1].Value <- "Study Assay Technology Type"
+        row32.[2].Value <- "mass spectrometry"
+        row32.[3].Value <- "mass spectrometry"
+        row32.[4].Value <- "DNA microarray"
         let row33 = ws.Row(33)
-        row33.[1].Value <- "Study Assay File Name"
-        row33.[2].Value <- $"assays/{Assay.Proteome.assayIdentifier}/isa.assay.xlsx"
-        row33.[3].Value <- $"assays/{Assay.Metabolome.assayIdentifier}/isa.assay.xlsx"
-        row33.[4].Value <- $"assays/{Assay.Transcriptome.assayIdentifier}/isa.assay.xlsx"
+        row33.[1].Value <- "Study Assay Technology Type Term Accession Number"
+        row33.[4].Value <- "http://purl.obolibrary.org/obo/OBI_0400148"
         let row34 = ws.Row(34)
-        row34.[1].Value <- "STUDY PROTOCOLS"
+        row34.[1].Value <- "Study Assay Technology Type Term Source REF"
+        row34.[2].Value <- "OBI"
+        row34.[3].Value <- "OBI"
+        row34.[4].Value <- "OBI"
         let row35 = ws.Row(35)
-        row35.[1].Value <- "Study Protocol Name"
+        row35.[1].Value <- "Study Assay Technology Platform"
+        row35.[2].Value <- "iTRAQ"
+        row35.[3].Value <- "LC-MS/MS"
+        row35.[4].Value <- "Affymetrix"
         let row36 = ws.Row(36)
-        row36.[1].Value <- "Study Protocol Type"
+        row36.[1].Value <- "Study Assay File Name"
+        row36.[2].Value <- $"assays/{Assay.Proteome.assayIdentifier}/isa.assay.xlsx"
+        row36.[3].Value <- $"assays/{Assay.Metabolome.assayIdentifier}/isa.assay.xlsx"
+        row36.[4].Value <- $"assays/{Assay.Transcriptome.assayIdentifier}/isa.assay.xlsx"
         let row37 = ws.Row(37)
-        row37.[1].Value <- "Study Protocol Type Term Accession Number"
+        row37.[1].Value <- "STUDY PROTOCOLS"
         let row38 = ws.Row(38)
-        row38.[1].Value <- "Study Protocol Type Term Source REF"
+        row38.[1].Value <- "Study Protocol Name"
         let row39 = ws.Row(39)
-        row39.[1].Value <- "Study Protocol Description"
+        row39.[1].Value <- "Study Protocol Type"
         let row40 = ws.Row(40)
-        row40.[1].Value <- "Study Protocol URI"
+        row40.[1].Value <- "Study Protocol Type Term Accession Number"
         let row41 = ws.Row(41)
-        row41.[1].Value <- "Study Protocol Version"
+        row41.[1].Value <- "Study Protocol Type Term Source REF"
         let row42 = ws.Row(42)
-        row42.[1].Value <- "Study Protocol Parameters Name"
+        row42.[1].Value <- "Study Protocol Description"
         let row43 = ws.Row(43)
-        row43.[1].Value <- "Study Protocol Parameters Term Accession Number"
+        row43.[1].Value <- "Study Protocol URI"
         let row44 = ws.Row(44)
-        row44.[1].Value <- "Study Protocol Parameters Term Source REF"
+        row44.[1].Value <- "Study Protocol Version"
         let row45 = ws.Row(45)
-        row45.[1].Value <- "Study Protocol Components Name"
+        row45.[1].Value <- "Study Protocol Parameters Name"
         let row46 = ws.Row(46)
-        row46.[1].Value <- "Study Protocol Components Type"
+        row46.[1].Value <- "Study Protocol Parameters Term Accession Number"
         let row47 = ws.Row(47)
-        row47.[1].Value <- "Study Protocol Components Type Term Accession Number"
+        row47.[1].Value <- "Study Protocol Parameters Term Source REF"
         let row48 = ws.Row(48)
-        row48.[1].Value <- "Study Protocol Components Type Term Source REF"
+        row48.[1].Value <- "Study Protocol Components Name"
         let row49 = ws.Row(49)
-        row49.[1].Value <- "STUDY CONTACTS"
+        row49.[1].Value <- "Study Protocol Components Type"
         let row50 = ws.Row(50)
-        row50.[1].Value <- "Study Person Last Name"
-        row50.[2].Value <- "Oliver"
-        row50.[3].Value <- "Juan"
-        row50.[4].Value <- "Leo"
+        row50.[1].Value <- "Study Protocol Components Type Term Accession Number"
         let row51 = ws.Row(51)
-        row51.[1].Value <- "Study Person First Name"
-        row51.[2].Value <- "Stephen"
-        row51.[3].Value <- "Castrillo"
-        row51.[4].Value <- "Zeef"
+        row51.[1].Value <- "Study Protocol Components Type Term Source REF"
         let row52 = ws.Row(52)
-        row52.[1].Value <- "Study Person Mid Initials"
-        row52.[2].Value <- "G"
-        row52.[3].Value <- "I"
-        row52.[4].Value <- "A"
+        row52.[1].Value <- "STUDY CONTACTS"
         let row53 = ws.Row(53)
-        row53.[1].Value <- "Study Person Email"
+        row53.[1].Value <- "Study Person Last Name"
+        row53.[2].Value <- "Oliver"
+        row53.[3].Value <- "Juan"
+        row53.[4].Value <- "Leo"
         let row54 = ws.Row(54)
-        row54.[1].Value <- "Study Person Phone"
+        row54.[1].Value <- "Study Person First Name"
+        row54.[2].Value <- "Stephen"
+        row54.[3].Value <- "Castrillo"
+        row54.[4].Value <- "Zeef"
         let row55 = ws.Row(55)
-        row55.[1].Value <- "Study Person Fax"
+        row55.[1].Value <- "Study Person Mid Initials"
+        row55.[2].Value <- "G"
+        row55.[3].Value <- "I"
+        row55.[4].Value <- "A"
         let row56 = ws.Row(56)
-        row56.[1].Value <- "Study Person Address"
-        row56.[2].Value <- "Oxford Road, Manchester M13 9PT, UK"
-        row56.[3].Value <- "Oxford Road, Manchester M13 9PT, UK"
-        row56.[4].Value <- "Oxford Road, Manchester M13 9PT, UK"
+        row56.[1].Value <- "Study Person Email"
         let row57 = ws.Row(57)
-        row57.[1].Value <- "Study Person Affiliation"
-        row57.[2].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
-        row57.[3].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
-        row57.[4].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+        row57.[1].Value <- "Study Person Phone"
         let row58 = ws.Row(58)
-        row58.[1].Value <- "Study Person Roles"
-        row58.[2].Value <- "corresponding author"
-        row58.[3].Value <- "author"
-        row58.[4].Value <- "author"
+        row58.[1].Value <- "Study Person Fax"
         let row59 = ws.Row(59)
-        row59.[1].Value <- "Study Person Roles Term Accession Number"
+        row59.[1].Value <- "Study Person Address"
+        row59.[2].Value <- "Oxford Road, Manchester M13 9PT, UK"
+        row59.[3].Value <- "Oxford Road, Manchester M13 9PT, UK"
+        row59.[4].Value <- "Oxford Road, Manchester M13 9PT, UK"
         let row60 = ws.Row(60)
-        row60.[1].Value <- "Study Person Roles Term Source REF"
+        row60.[1].Value <- "Study Person Affiliation"
+        row60.[2].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+        row60.[3].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+        row60.[4].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
         let row61 = ws.Row(61)
-        row61.[1].Value <- "Comment[Study Person REF]"
+        row61.[1].Value <- "Study Person Roles"
+        row61.[2].Value <- "corresponding author"
+        row61.[3].Value <- "author"
+        row61.[4].Value <- "author"
+        let row62 = ws.Row(62)
+        row62.[1].Value <- "Study Person Roles Term Accession Number"
+        let row63 = ws.Row(63)
+        row63.[1].Value <- "Study Person Roles Term Source REF"
+        let row64 = ws.Row(64)
+        row64.[1].Value <- "Comment[Study Person REF]"
         ws
 
     let studyMetadataCollection =
@@ -403,107 +424,114 @@ module BII_S_2 =
         let row28 = ws.Row(28)
         row28.[1].Value <- "STUDY ASSAYS"
         let row29 = ws.Row(29)
-        row29.[1].Value <- "Study Assay Measurement Type"
-        row29.[2].Value <- "transcription profiling"
+        row29.[1].Value <- "Study Assay Identifier"
+        row29.[2].Value <- $"{Assay.Transcriptome.assayIdentifier}"
         let row30 = ws.Row(30)
-        row30.[1].Value <- "Study Assay Measurement Type Term Accession Number"
-        row30.[2].Value <- "424"
+        row30.[1].Value <- "Study Assay Title"
+        row30.[2].Value <- "Yeast transcriptome analysis"
         let row31 = ws.Row(31)
-        row31.[1].Value <- "Study Assay Measurement Type Term Source REF"
-        row31.[2].Value <- "OBI"
+        row31[1].Value <- "Study Assay Description"
+        row31.[2].Value <- "Yeast transcriptome analysis"
         let row32 = ws.Row(32)
-        row32.[1].Value <- "Study Assay Technology Type"
-        row32.[2].Value <- "DNA microarray"
+        row32.[1].Value <- "Study Assay Measurement Type"
+        row32.[2].Value <- "transcription profiling"
         let row33 = ws.Row(33)
-        row33.[1].Value <- "Study Assay Technology Type Term Accession Number"
-        row33.[2].Value <- "http://purl.obolibrary.org/obo/OBI_0400148"
+        row33.[1].Value <- "Study Assay Measurement Type Term Accession Number"
+        row33.[2].Value <- "424"
         let row34 = ws.Row(34)
-        row34.[1].Value <- "Study Assay Technology Type Term Source REF"
+        row34.[1].Value <- "Study Assay Measurement Type Term Source REF"
         row34.[2].Value <- "OBI"
         let row35 = ws.Row(35)
-        row35.[1].Value <- "Study Assay Technology Platform"
-        row35.[2].Value <- "Affymetrix"
+        row35.[1].Value <- "Study Assay Technology Type"
+        row35.[2].Value <- "DNA microarray"
         let row36 = ws.Row(36)
-        row36.[1].Value <- "Study Assay File Name"
-        row36.[2].Value <- $"assays/{Assay.Transcriptome.assayIdentifier}/isa.assay.xlsx"
+        row36.[1].Value <- "Study Assay Technology Type Term Accession Number"
+        row36.[2].Value <- "http://purl.obolibrary.org/obo/OBI_0400148"
         let row37 = ws.Row(37)
-        row37.[1].Value <- "STUDY PROTOCOLS"
+        row37.[1].Value <- "Study Assay Technology Type Term Source REF"
+        row37.[2].Value <- "OBI"
         let row38 = ws.Row(38)
-        row38.[1].Value <- "Study Protocol Name"
+        row38.[1].Value <- "Study Assay Technology Platform"
+        row38.[2].Value <- "Affymetrix"
         let row39 = ws.Row(39)
-        row39.[1].Value <- "Study Protocol Type"
+        row39.[1].Value <- "Study Assay File Name"
+        row39.[2].Value <- $"assays/{Assay.Transcriptome.assayIdentifier}/isa.assay.xlsx"
         let row40 = ws.Row(40)
-        row40.[1].Value <- "Study Protocol Type Term Accession Number"
+        row40.[1].Value <- "STUDY PROTOCOLS"
         let row41 = ws.Row(41)
-        row41.[1].Value <- "Study Protocol Type Term Source REF"
+        row41.[1].Value <- "Study Protocol Name"
         let row42 = ws.Row(42)
-        row42.[1].Value <- "Study Protocol Description"
+        row42.[1].Value <- "Study Protocol Type"
         let row43 = ws.Row(43)
-        row43.[1].Value <- "Study Protocol URI"
+        row43.[1].Value <- "Study Protocol Type Term Accession Number"
         let row44 = ws.Row(44)
-        row44.[1].Value <- "Study Protocol Version"
+        row44.[1].Value <- "Study Protocol Type Term Source REF"
         let row45 = ws.Row(45)
-        row45.[1].Value <- "Study Protocol Parameters Name"
+        row45.[1].Value <- "Study Protocol Description"
         let row46 = ws.Row(46)
-        row46.[1].Value <- "Study Protocol Parameters Term Accession Number"
+        row46.[1].Value <- "Study Protocol URI"
         let row47 = ws.Row(47)
-        row47.[1].Value <- "Study Protocol Parameters Term Source REF"
+        row47.[1].Value <- "Study Protocol Version"
         let row48 = ws.Row(48)
-        row48.[1].Value <- "Study Protocol Components Name"
+        row48.[1].Value <- "Study Protocol Parameters Name"
         let row49 = ws.Row(49)
-        row49.[1].Value <- "Study Protocol Components Type"
+        row49.[1].Value <- "Study Protocol Parameters Term Accession Number"
         let row50 = ws.Row(50)
-        row50.[1].Value <- "Study Protocol Components Type Term Accession Number"
+        row50.[1].Value <- "Study Protocol Parameters Term Source REF"
         let row51 = ws.Row(51)
-        row51.[1].Value <- "Study Protocol Components Type Term Source REF"
+        row51.[1].Value <- "Study Protocol Components Name"
         let row52 = ws.Row(52)
-        row52.[1].Value <- "STUDY CONTACTS"
+        row52.[1].Value <- "Study Protocol Components Type"
         let row53 = ws.Row(53)
-        row53.[1].Value <- "Study Person Last Name"
-        row53.[2].Value<- "Oliver"
-        row53.[3].Value <- "Juan"
-        row53.[4].Value <- "Leo"
+        row53.[1].Value <- "Study Protocol Components Type Term Accession Number"
         let row54 = ws.Row(54)
-        row54.[1].Value <- "Study Person First Name"
-        row54.[2].Value <- "Stephen"
-        row54.[3].Value <- "Castrillo"
-        row54.[4].Value <- "Zeef"
+        row54.[1].Value <- "Study Protocol Components Type Term Source REF"
         let row55 = ws.Row(55)
-        row55.[1].Value <- "Study Person Mid Initials"
-        row55.[2].Value <- "G"
-        row55.[3].Value <- "I"
-        row55.[4].Value <- "A"
+        row55.[1].Value <- "STUDY CONTACTS"
         let row56 = ws.Row(56)
-        row56.[1].Value <- "Study Person Email"
+        row56.[1].Value <- "Study Person Last Name"
+        row56.[2].Value<- "Oliver"
+        row56.[3].Value <- "Juan"
+        row56.[4].Value <- "Leo"
         let row57 = ws.Row(57)
-        row57.[1].Value <- "Study Person Phone"
+        row57.[1].Value <- "Study Person First Name"
+        row57.[2].Value <- "Stephen"
+        row57.[3].Value <- "Castrillo"
+        row57.[4].Value <- "Zeef"
         let row58 = ws.Row(58)
-        row58.[1].Value <- "Study Person Fax"
+        row58.[1].Value <- "Study Person Mid Initials"
+        row58.[2].Value <- "G"
+        row58.[3].Value <- "I"
+        row58.[4].Value <- "A"
         let row59 = ws.Row(59)
-        row59.[1].Value <- "Study Person Address"
-        row59.[2].Value <- "Oxford Road, Manchester M13 9PT, UK"
-        row59.[3].Value <- "Oxford Road, Manchester M13 9PT, UK"
-        row59.[4].Value <- "Oxford Road, Manchester M13 9PT, UK"
+        row59.[1].Value <- "Study Person Email"
         let row60 = ws.Row(60)
-        row60.[1].Value <- "Study Person Affiliation"
-        row60.[2].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
-        row60.[3].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
-        row60.[4].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+        row60.[1].Value <- "Study Person Phone"
         let row61 = ws.Row(61)
-        row61.[1].Value <- "Study Person Roles"
-        row61.[2].Value <- "corresponding author"
-        row61.[3].Value <- "author"
-        row61.[4].Value <- "author"
+        row61.[1].Value <- "Study Person Fax"
         let row62 = ws.Row(62)
-        row62.[1].Value <- "Study Person Roles Term Accession Number"
+        row62.[1].Value <- "Study Person Address"
+        row62.[2].Value <- "Oxford Road, Manchester M13 9PT, UK"
+        row62.[3].Value <- "Oxford Road, Manchester M13 9PT, UK"
+        row62.[4].Value <- "Oxford Road, Manchester M13 9PT, UK"
         let row63 = ws.Row(63)
-        row63.[1].Value <- "Study Person Roles Term Source REF"
+        row63.[1].Value <- "Study Person Affiliation"
+        row63.[2].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+        row63.[3].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
+        row63.[4].Value <- "Faculty of Life Sciences, Michael Smith Building, University of Manchester"
         let row64 = ws.Row(64)
-        row64.[1].Value <- "Comment[Study Person REF]"
-
-
-
+        row64.[1].Value <- "Study Person Roles"
+        row64.[2].Value <- "corresponding author"
+        row64.[3].Value <- "author"
+        row64.[4].Value <- "author"
+        let row65 = ws.Row(65)
+        row65.[1].Value <- "Study Person Roles Term Accession Number"
+        let row66 = ws.Row(66)
+        row66.[1].Value <- "Study Person Roles Term Source REF"
+        let row67 = ws.Row(67)
+        row67.[1].Value <- "Comment[Study Person REF]"
         ws
+
 
 module LargeFile =
     

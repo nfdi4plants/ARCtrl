@@ -12,6 +12,8 @@ module Assay =
     let encoder (assay:ArcAssay) = 
         [ 
             "Identifier", Encode.string assay.Identifier |> Some
+            Encode.tryInclude "Title" Encode.string assay.Title
+            Encode.tryInclude "Description" Encode.string assay.Description
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
@@ -27,6 +29,8 @@ module Assay =
         Decode.object (fun get ->
             ArcAssay.create(
                 get.Required.Field("Identifier") Decode.string,
+                ?title = get.Optional.Field "Title" Decode.string,
+                ?description = get.Optional.Field "Description" Decode.string,
                 ?measurementType = get.Optional.Field "MeasurementType" OntologyAnnotation.decoder,
                 ?technologyType = get.Optional.Field "TechnologyType" OntologyAnnotation.decoder,
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
@@ -44,6 +48,8 @@ module Assay =
     let encoderCompressed (stringTable : StringTableMap) (oaTable : OATableMap) (cellTable : CellTableMap) (assay:ArcAssay) =
         [ 
             "Identifier", Encode.string assay.Identifier |> Some
+            Encode.tryInclude "Title" Encode.string assay.Title
+            Encode.tryInclude "Description" Encode.string assay.Description
             Encode.tryInclude "MeasurementType" OntologyAnnotation.encoder assay.MeasurementType
             Encode.tryInclude "TechnologyType" OntologyAnnotation.encoder assay.TechnologyType
             Encode.tryInclude "TechnologyPlatform" OntologyAnnotation.encoder assay.TechnologyPlatform
@@ -59,6 +65,8 @@ module Assay =
         Decode.object (fun get ->
             ArcAssay.create(
                 get.Required.Field "Identifier" Decode.string,
+                ?title = get.Optional.Field "Title" Decode.string,
+                ?description = get.Optional.Field "Description" Decode.string,
                 ?measurementType = get.Optional.Field "MeasurementType" OntologyAnnotation.decoder,
                 ?technologyType = get.Optional.Field "TechnologyType" OntologyAnnotation.decoder,
                 ?technologyPlatform = get.Optional.Field "TechnologyPlatform" OntologyAnnotation.decoder,
@@ -89,6 +97,8 @@ module Assay =
                 "additionalType", Encode.string "Assay" |> Some
                 "identifier", Encode.string a.Identifier |> Some
                 "filename", Encode.string fileName |> Some
+                Encode.tryInclude "title" Encode.string a.Title
+                Encode.tryInclude "description" Encode.string a.Description
                 Encode.tryInclude "measurementType" OntologyAnnotation.ROCrate.encoderPropertyValue a.MeasurementType
                 Encode.tryInclude "technologyType" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyType
                 Encode.tryInclude "technologyPlatform" OntologyAnnotation.ROCrate.encoderDefinedTerm a.TechnologyPlatform
@@ -111,6 +121,8 @@ module Assay =
                     |> Option.map (ArcTables.fromProcesses >> (fun a -> a.Tables))
                 ArcAssay(
                     identifier,
+                    ?title = get.Optional.Field "title" Decode.string,
+                    ?description = get.Optional.Field "description" Decode.string,
                     ?measurementType = get.Optional.Field "measurementType" OntologyAnnotation.ROCrate.decoderPropertyValue,
                     ?technologyType = get.Optional.Field "technologyType" OntologyAnnotation.ROCrate.decoderDefinedTerm,
                     ?technologyPlatform = get.Optional.Field "technologyPlatform" OntologyAnnotation.ROCrate.decoderDefinedTerm,
@@ -138,6 +150,15 @@ module Assay =
                     ProcessSequence.getData processes
                     |> Encode.tryIncludeList "dataFiles" (Data.ISAJson.encoder idMap) 
                 let units = ProcessSequence.getUnits processes
+                let comments =
+                    [
+                        if a.Comments.Count > 0 then
+                            yield! a.Comments
+                        if a.Title.IsSome then
+                            yield Comment.create("title", a.Title.Value)
+                        if a.Description.IsSome then
+                            yield Comment.create("description", a.Description.Value)
+                    ]
                 [
                     "filename", Encode.string fileName |> Some
                     Encode.tryInclude "@id" Encode.string (ROCrate.genID a |> Some)
@@ -149,7 +170,7 @@ module Assay =
                     encodedCharacteristics
                     encodedUnits
                     Encode.tryIncludeList "processSequence" (Process.ISAJson.encoder studyName (Some a.Identifier) idMap) processes
-                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) a.Comments
+                    Encode.tryIncludeSeq "comments" (Comment.ISAJson.encoder idMap) comments
                 ]
                 |> Encode.choose
                 |> Encode.object
@@ -168,12 +189,29 @@ module Assay =
                 let tables = 
                     get.Optional.Field "processSequence" (Decode.list Process.ISAJson.decoder)
                     |> Option.map (ArcTables.fromProcesses >> (fun a -> a.Tables))
+                let comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ISAJson.decoder)
+                let title = 
+                    comments
+                    |> Option.bind (fun c -> c |> Seq.tryPick (fun x -> if x.Name.IsSome && x.Name.Value = "title" then x.Value else None))
+                let description =
+                    comments
+                    |> Option.bind (fun c -> c |> Seq.tryPick (fun x -> if x.Name.IsSome && x.Name.Value = "description" then x.Value else None))
+                let comments =
+                    comments
+                    |> Option.bind (fun c ->
+                        match c |> ResizeArray.filter (fun x -> x.Name.IsNone || x.Name.Value <> "title" && x.Name.Value <> "description") with
+                        | c when Seq.length c = 0 -> None
+                        | c -> Some c
+                    )
+                    
                 ArcAssay(
                     identifier,
+                    ?title = title,
+                    ?description = description,
                     ?measurementType = get.Optional.Field "measurementType" (OntologyAnnotation.ISAJson.decoder),
                     ?technologyType = get.Optional.Field "technologyType" (OntologyAnnotation.ISAJson.decoder),
                     ?technologyPlatform = get.Optional.Field "technologyPlatform" (Decode.map Conversion.JsonTypes.decomposeTechnologyPlatform Decode.string),
                     ?tables = tables,
-                    ?comments = get.Optional.Field "comments" (Decode.resizeArray Comment.ISAJson.decoder)
+                    ?comments = comments
                 )
             )

@@ -142,6 +142,36 @@ module SimpleISA =
                 dtoType = DTOType.ISA_Study,
                 dto = DTO.Spreadsheet bII_S_2WB)
 
+    module Workflow =
+
+        let proteomicsWorksheet = Workflow.Proteomics.workflowMetadata
+        let proteomicsWB = 
+            let wb = new FsWorkbook()
+            wb.AddWorksheet(proteomicsWorksheet)
+            wb
+        let proteomicsReadContract = 
+            Contract.create(
+                Operation.READ, 
+                path = Identifier.Workflow.fileNameFromIdentifier Workflow.Proteomics.workflowIdentifier,
+                dtoType = DTOType.ISA_Workflow,
+                dto = DTO.Spreadsheet proteomicsWB)
+
+    module Run =
+
+        let proteomicsWorksheet = Run.Proteomics.runMetadata
+
+        let proteomicsWB = 
+            let wb = new FsWorkbook()
+            wb.AddWorksheet(proteomicsWorksheet)
+            wb
+
+        let proteomicsReadContract =
+            Contract.create(
+                Operation.READ, 
+                path = Identifier.Run.fileNameFromIdentifier Run.Proteomics.runIdentifier,
+                dtoType = DTOType.ISA_Run,
+                dto = DTO.Spreadsheet proteomicsWB)
+
     module Investigation = 
 
         let investigationReadContract =
