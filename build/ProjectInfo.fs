@@ -47,7 +47,7 @@ let projectRepo = $"https://github.com/{gitOwner}/{project}"
 
 
 let netPkgDir = "./dist/net"
-let npmPkgDir = "./dist/js"
+let npmPkgDir = "./dist/ts"
 let pyPkgDir = "./dist/py"
 
 // Create RELEASE_NOTES.md if not existing. Or "release" would throw an error.

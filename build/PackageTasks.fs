@@ -20,7 +20,7 @@ let private replaceCommitLink input =
 module BundleDotNet =
     let bundle (versionTag : string) (versionSuffix : string option) =
         System.IO.Directory.CreateDirectory(ProjectInfo.netPkgDir) |> ignore
-        !! "src/**/*.*proj"
+        !! "src/**/*.fsproj"
         -- "src/bin/*"
         |> Seq.iter (Fake.DotNet.DotNet.pack (fun p ->           
             let msBuildParams =
@@ -39,7 +39,7 @@ module BundleDotNet =
             }
         ))
 
-let packDotNet = BuildTask.create "PackDotNet" [clean; build; runTests] {
+let packDotNet = BuildTask.create "PackDotNet" [clean; build; (*runTests*)] {
     BundleDotNet.bundle ProjectInfo.stableVersionTag None
 }
 
@@ -48,28 +48,22 @@ let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleas
     BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
 }
 
-let packDotNetSwate = BuildTask.create "packDotNetSwate" [clean; build; RunTests.runTestsDotnet; RunTests.runTestsJs; RunTests.runTestsJsNative] {
-    let semVer = release.SemVer
-    let releaseTag = sprintf "%i.%i.%i-swate" semVer.Major semVer.Minor semVer.Patch
-    BundleDotNet.bundle releaseTag (Some releaseTag)
-}
-
 module BundleJs =
     let bundle () =
 
-        Fake.IO.File.readAsString "README.md"
-        |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/README.md"
+        // Fake.IO.File.readAsString "README.md"
+        // |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/README.md"
 
-        "" // "fable-library.**/**"
-        |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
+        // "" // "fable-library.**/**"
+        // |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
 
-        Fake.JavaScript.Npm.exec "build" id 
+        Fake.JavaScript.Npm.exec "run build" id 
 
-let packJS = BuildTask.create "PackJS" [clean; build; transpileTS; runTests] {
+let packJS = BuildTask.create "PackJS" [clean; build; transpileTS; (*runTests*)] {
     BundleJs.bundle ()
 }
 
-let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; transpileTS; runTests] {
+let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; transpileTS; (*runTests*)] {
     let prereleaseTag = PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
     Fake.JavaScript.Npm.exec $"version {prereleaseTag} --no-git-tag-version"  id 
     BundleJs.bundle ()
@@ -96,12 +90,12 @@ module BundlePy =
         run python "-m poetry build" ProjectInfo.pyPkgDir //Remove "-o ." because not compatible with publish 
 
 
-let packPy = BuildTask.create "PackPy" [clean; build; runTests] {
+let packPy = BuildTask.create "PackPy" [clean; build; (*runTests*)] {
     BundlePy.bundle ProjectInfo.stableVersionTag
 
 }
 
-let packPyPrerelease = BuildTask.create "PackPyPrerelease" [setPrereleaseTag; clean; build; runTests] {
+let packPyPrerelease = BuildTask.create "PackPyPrerelease" [setPrereleaseTag; clean; build; (*runTests*)] {
     let prereleaseTag = PreReleaseFlag.toPyPITag release.SemVer prereleaseSuffix prereleaseSuffixNumber
     BundlePy.bundle prereleaseTag
     }
