@@ -55,15 +55,7 @@ let packDotNetSwate = BuildTask.create "packDotNetSwate" [clean; build; RunTests
 }
 
 module BundleJs =
-    let bundle (versionTag: string) =
-        run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {ProjectInfo.npmPkgDir}" ""
-
-        GenerateIndexJs.ARCtrl_generate ProjectInfo.npmPkgDir
-
-        Fake.IO.File.readAsString "build/release_package.json"
-        |> fun t ->
-            let t = t.Replace(ProjectInfo.stableVersionTag, versionTag)
-            Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/package.json" t
+    let bundle () =
 
         Fake.IO.File.readAsString "README.md"
         |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/README.md"
@@ -71,18 +63,16 @@ module BundleJs =
         "" // "fable-library.**/**"
         |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
 
-        Fake.JavaScript.Npm.exec "pack" (fun o ->
-            { o with
-                WorkingDirectory = ProjectInfo.npmPkgDir
-            })
+        Fake.JavaScript.Npm.exec "build" id 
 
-let packJS = BuildTask.create "PackJS" [clean; build; runTests] {
-    BundleJs.bundle ProjectInfo.stableVersionTag
+let packJS = BuildTask.create "PackJS" [clean; build; transpileTS; runTests] {
+    BundleJs.bundle ()
 }
 
-let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; runTests] {
+let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; transpileTS; runTests] {
     let prereleaseTag = PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-    BundleJs.bundle prereleaseTag
+    Fake.JavaScript.Npm.exec $"version {prereleaseTag} --no-git-tag-version"  id 
+    BundleJs.bundle ()
 }
 
 module BundlePy =

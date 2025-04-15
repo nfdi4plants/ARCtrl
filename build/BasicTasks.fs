@@ -176,3 +176,9 @@ let build = BuildTask.create "Build" [clean] {
         |> DotNet.Options.withCustomParams (Some "-tl")
     )
 }
+
+let transpileTS = BuildTask.create "TranspileTS" [clean] {
+
+    run dotnet $"fable clean -e fs.ts --yes" ""
+    run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-js --noCache -e fs.ts -o src/ARCtrl/ts" ""
+}

@@ -19,17 +19,7 @@ module RunTests =
     [<Literal>]
     let pyIOResultFolder = "./tests/TestingUtils/TestResults/py"
 
-
-    let runTestsUI = BuildTask.create "runTestsUI" [clean; build] {
-        let path = "tests/UI"
-        Trace.traceImportant "Start UI tests"
-        // transpile library for native access
-        run dotnet $"fable src/ARCtrl -o {path}/ARCtrl" ""
-        GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
-        run npx $"cypress run --component -P {path}" ""
-    }
-
-    let runTestsJsNative = BuildTask.createFn "runTestsJSNative" [clean] (fun tp ->
+    let runTestsJsNative = BuildTask.createFn "runTestsJSNative" [clean; transpileTS] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start native JavaScript tests"
             for path in ProjectInfo.jsTestProjects do

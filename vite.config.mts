@@ -17,7 +17,7 @@ export default defineConfig({
         },
         rollupOptions: {
             // Exclude peer dependencies from the final bundle
-            external: ['@fable-org/fable-library-js']
+            external: ['@fable-org/fable-library-js', 'fs/promises', 'path'],
         },
         outDir : 'dist/ts'
     },
