@@ -59,6 +59,8 @@ module BundleJs =
 
         Fake.JavaScript.Npm.exec "run build" id 
 
+        Fake.JavaScript.Npm.exec $"pack --pack-destination {ProjectInfo.npmPkgDir}" id 
+
 let packJS = BuildTask.create "PackJS" [clean; build; transpileTS; (*runTests*)] {
     BundleJs.bundle ()
 }
