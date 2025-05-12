@@ -431,7 +431,9 @@ type ARC(identifier : string, ?title : string, ?description : string, ?submissio
     /// <param name="enableLogging">If this flag is set true, the function will print any missing/found assays/studies to the console. *Default* = false</param>
     member this.SetISAFromContracts (contracts: Contract []) =
         /// get investigation from xlsx
-        let investigation = ARCAux.getArcInvestigationFromContracts contracts
+        let investigation =
+            try ARCAux.getArcInvestigationFromContracts contracts with
+                _ -> ArcInvestigation.create("")
         IdentifierSetters.setInvestigationIdentifier investigation.Identifier this |> ignore
         this.Title <- investigation.Title
         this.Description <- investigation.Description
