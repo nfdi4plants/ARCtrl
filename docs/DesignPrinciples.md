@@ -103,20 +103,20 @@ When creating an `Ontology Annotation` object, we should save the input string o
 
 ```mermaid
 flowchart LR
-obo[http://obo.obo/obo/EFO_0000721]
+obo[http:\/\/obo.obo/obo/EFO_0000721]
 short[EFO:0000721]
-other[http://www.ebi.ac.uk/efo/EFO_0000721]
+other[http:\/\/www\.ebi.ac.uk/efo/EFO_0000721]
 
 subgraph OntologyAnnotation
-    oboO[http://obo.obo/obo/EFO_0000721]
+    oboO[http:\/\/obo.obo/obo/EFO_0000721]
     shortO[EFO:0000721]
-    otherO[http://www.ebi.ac.uk/efo/EFO_0000721]       
+    otherO[http:\/\/www\.ebi.ac.uk/efo/EFO_0000721]       
 end
 
 shortOut[EFO:0000721]
-oboOut[http://obo.obo/obo/EFO_0000721]
+oboOut[http:\/\/obo.obo/obo/EFO_0000721]
 
-otherAny[http://www.ebi.ac.uk/efo/EFO_0000721]
+otherAny[http:\/\/www\.ebi.ac.uk/efo/EFO_0000721]
 
 obo --> oboO
 short --> shortO
