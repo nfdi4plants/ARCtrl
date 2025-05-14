@@ -16,22 +16,24 @@
   "contributors": [
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
   ],
-  "main": "./dist/ts/index.umd.js",
-  "module": "./dist/ts/index.es.js",
-  "types": "./dist/ts/index.d.ts",
+  "main": "./dist/ts/cjs/index.js",      
+  "module": "./dist/ts/esm/index.js",   
+  "types": "./dist/ts/types/index.d.ts", 
+  "exports": {
+    ".": {
+      "import": "./dist/ts/esm/index.js",
+      "require": "./dist/ts/cjs/index.js"
+    }
+  },
   "private": false,
   "files": [
     "dist/ts"
   ],
+
   "scripts": {
-    "build": "vite build"
-  },
-  "exports": {
-    ".": {
-      "import": "./dist/ts/index.es.js",
-      "require": "./dist/ts/index.umd.js",
-      "types": "./dist/ts/index.d.ts"
-    }
+    "build:esm": "tsc --module ESNext --outDir dist/ts/esm || echo 'ESM build displayed warnings'",
+    "build:cjs": "tsc --module CommonJS --outDir dist/ts/cjs --declaration false || echo 'CJS build displayed warnings'",
+    "build": "npm run build:esm && npm run build:cjs"
   },
   "dependencies": {
     "@fable-org/fable-library-js": "^1.8.0",

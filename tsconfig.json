@@ -7,11 +7,11 @@
     "declaration": true,
     // This compiler run should
     // only output d.ts files
-    "emitDeclarationOnly": true,
+    "emitDeclarationOnly": false,
     // Types should go into this directory.
     // Removing this would place the .d.ts files
     // next to the .js files
-    "outDir": "dist/ts",
+    // "outDir": "dist/ts",
     // go to js file when using IDE functions like
     // "Go to Definition" in VSCode
     "declarationMap": true,
@@ -19,10 +19,14 @@
     // Allow emitting .d.ts files even if there are errors
     "noEmitOnError": false,
     // Use strict mode if possible but relax for edge cases
-    "strict": false
+    "strict": false,
     // "jsx": "react-jsx",
+    // "allowImportingTsExtensions": true
+    "target": "ES2020",
+    "moduleResolution": "Node",
+    "declarationDir": "dist/ts/types"
   },
-  "include": [ "src/ARCtrl/" ],
+  "include": [ "src/ARCtrl/index.ts" ],
   "exclude": [
     "node_modules",
     "dist",
