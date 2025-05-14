@@ -150,6 +150,8 @@ let setPrereleaseTag = BuildTask.create "SetPrereleaseTag" [] {
 let clean = BuildTask.create "Clean" [] {
     !! "src/**/bin"
     ++ "src/**/obj"
+    ++ "src/ARCtrl/ts/"
+    ++ "src/ARCtrl/py/"
     ++ "tests/**/bin"
     ++ "tests/**/obj"
     ++ "tests/TestingUtils/TestResults"
@@ -178,7 +180,9 @@ let build = BuildTask.create "Build" [clean] {
 }
 
 let transpileTS = BuildTask.create "TranspileTS" [clean; build] {
+    run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-js --noCache -o src/ARCtrl/ts" ""
+}
 
-    run dotnet $"fable clean -e fs.ts --yes" ""
-    run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-js --noCache -e fs.ts -o src/ARCtrl/ts" ""
+let transpilePy = BuildTask.create "TranspilePy" [clean; build] {
+    run dotnet $"fable ./src/ARCtrl/ARCtrl.Python.fsproj --lang python --noCache -o src/ARCtrl/py" ""
 }

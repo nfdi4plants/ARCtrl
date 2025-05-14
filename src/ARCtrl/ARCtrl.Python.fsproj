@@ -56,7 +56,6 @@
   </ItemGroup>
   
   <ItemGroup>
-    <Content Include="ContractIO\file_system.py" PackagePath="fable\" />
     <Compile Include="ContractIO\FileSystemHelper.fs" />
     <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Py.fs" />

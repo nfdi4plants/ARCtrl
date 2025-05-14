@@ -355,6 +355,7 @@ paket-files/
 # Custom ignored files
 dist/
 src/ARCtrl/ts/
+src/ARCtrl/py/
 tmp/
 /.venv
 /tests/JavaScript/ts
