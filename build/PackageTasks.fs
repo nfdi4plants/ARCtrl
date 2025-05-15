@@ -43,66 +43,19 @@ let packDotNet = BuildTask.create "PackDotNet" [clean; build; (*runTests*)] {
     BundleDotNet.bundle ProjectInfo.stableVersionTag None
 }
 
-let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [setPrereleaseTag; clean; build] {
+let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [clean; build] {
     let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
     BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
 }
 
-module BundleJs =
-    let bundle () =
-
-        // Fake.IO.File.readAsString "README.md"
-        // |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/README.md"
-
-        // "" // "fable-library.**/**"
-        // |> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
-
-        Fake.JavaScript.Npm.exec "run build" id 
-
-        Fake.JavaScript.Npm.exec $"pack --pack-destination {ProjectInfo.npmPkgDir}" id 
-
-let packJS = BuildTask.create "PackJS" [clean; build; transpileTS; (*runTests*)] {
-    BundleJs.bundle ()
+let packJS = BuildTask.create "PackJS" [clean; build; transpileTS] {
+    Fake.JavaScript.Npm.exec "run build" id 
+    Fake.JavaScript.Npm.exec $"pack --pack-destination {ProjectInfo.npmPkgDir}" id 
 }
 
-let packJSPrerelease = BuildTask.create "PackJSPrerelease" [setPrereleaseTag; clean; build; transpileTS; (*runTests*)] {
-    let prereleaseTag = PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-    Fake.JavaScript.Npm.exec $"version {prereleaseTag} --no-git-tag-version"  id 
-    BundleJs.bundle ()
+let packPy = BuildTask.create "PackPy" [clean; build; transpilePy] {
+    run python "-m poetry install --no-root" ProjectInfo.pyPkgDir
+    run python "-m poetry build" "."
 }
-
-module BundlePy =
-    let bundle (versionTag: string) =
-        
-        run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {ProjectInfo.pyPkgDir}/arctrl --lang python" ""
-        run python "-m poetry install --no-root" ProjectInfo.pyPkgDir
-        GenerateIndexPy.ARCtrl_generate (ProjectInfo.pyPkgDir + "/arctrl")
-
-        Fake.IO.File.readAsString "pyproject.toml"
-        |> fun t ->
-            let t = t.Replace(ProjectInfo.stableVersionTag, versionTag)
-            Fake.IO.File.writeString false $"{ProjectInfo.pyPkgDir}/pyproject.toml" t
-
-        Fake.IO.File.readAsString "README.md"
-        |> Fake.IO.File.writeString false $"{ProjectInfo.pyPkgDir}/README.md"
-
-        //"" // "fable-library.**/**"
-        //|> Fake.IO.File.writeString false $"{ProjectInfo.npmPkgDir}/fable_modules/.npmignore"
-
-        run python "-m poetry build" ProjectInfo.pyPkgDir //Remove "-o ." because not compatible with publish 
-
-
-let packPy = BuildTask.create "PackPy" [clean; build; (*runTests*)] {
-    BundlePy.bundle ProjectInfo.stableVersionTag
-
-}
-
-let packPyPrerelease = BuildTask.create "PackPyPrerelease" [setPrereleaseTag; clean; build; (*runTests*)] {
-    let prereleaseTag = PreReleaseFlag.toPyPITag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-    BundlePy.bundle prereleaseTag
-    }
-
 
 let pack = BuildTask.createEmpty "Pack" [packDotNet; packJS; packPy]
-
-let packPrerelease = BuildTask.createEmpty "PackPrerelease" [packDotNetPrerelease;packJSPrerelease;packPyPrerelease]

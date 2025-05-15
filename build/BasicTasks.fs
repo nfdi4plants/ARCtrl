@@ -137,7 +137,7 @@ module Helper =
 
 
 
-let setPrereleaseTag = BuildTask.create "SetPrereleaseTag" [] {
+let setPrereleaseTag() = 
     printfn "Please enter pre-release package suffix option: (a/b/rc)"
     let suffixTag = System.Console.ReadLine() |> PreReleaseFlag.fromInput
     printfn "Please enter pre-release package version number"
@@ -145,7 +145,7 @@ let setPrereleaseTag = BuildTask.create "SetPrereleaseTag" [] {
     prereleaseSuffix <- suffixTag
     prereleaseSuffixNumber <- suffixNumber
     isPrerelease <- true
-}
+
 
 let clean = BuildTask.create "Clean" [] {
     !! "src/**/bin"

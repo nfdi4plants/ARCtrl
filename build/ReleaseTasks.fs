@@ -23,7 +23,7 @@ let createTag = BuildTask.create "CreateTag" [clean; build; runTests; packDotNet
         failwith "aborted"
 }
 
-let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [setPrereleaseTag; clean; build; packDotNetPrerelease] {
+let createPrereleaseTag = BuildTask.create "CreatePrereleaseTag" [clean; build; packDotNetPrerelease] {
     let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
 
     if promptYesNo (sprintf "tagging branch with %s OK?" prereleaseTag ) then 
@@ -76,7 +76,7 @@ let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] 
     else failwith "aborted"
 }
 
-let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build; runTests; packJSPrerelease] {
+let publishNPMPrerelease = BuildTask.create "PublishNPMPrerelease" [clean; build; runTests] {
     let target = 
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
@@ -102,18 +102,5 @@ let publishPyPi = BuildTask.create "PublishPyPi" [clean; build; runTests; packPy
             run python $"-m poetry config pypi-token.pypi {key}" ProjectInfo.pyPkgDir
         | None -> ()
         run python "-m poetry publish" ProjectInfo.pyPkgDir
-    else failwith "aborted"
-}
-
-let publishPyPiPrerelease = BuildTask.create "PublishPyPiPrerelease" [clean; build; runTests; packPyPrerelease] {
-    let prereleaseTag = PreReleaseFlag.toPyPITag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-    let msg = sprintf "[PyPi] release package with version %s?" prereleaseTag
-    if promptYesNo msg then
-        let apikey = Environment.environVarOrNone "PYPI_KEY"
-        match apikey with
-        | Some key -> 
-            run python $"-m poetry config pypi-token.pypi {key}" ProjectInfo.pyPkgDir
-        | None -> ()
-        run python "-m poetry publish --build" ProjectInfo.pyPkgDir
     else failwith "aborted"
 }

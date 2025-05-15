@@ -53,14 +53,39 @@ let pyPkgDir = "./dist/py"
 // Create RELEASE_NOTES.md if not existing. Or "release" would throw an error.
 Fake.Extensions.Release.ReleaseNotes.ensure()
 
-let release = ReleaseNotes.load "RELEASE_NOTES.md"
+let mutable release = ReleaseNotes.load "RELEASE_NOTES.md"
 
-let stableVersion = SemVer.parse release.NugetVersion
+let mutable stableVersion = SemVer.parse release.NugetVersion
 
-let stableVersionTag = (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
+let mutable stableVersionTag = (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
+
+let loadReleaseNotes () =
+    release <- ReleaseNotes.load "RELEASE_NOTES.md"
+    stableVersion <- SemVer.parse release.NugetVersion
+    stableVersionTag <- (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
 
 let mutable prereleaseSuffix = PreReleaseFlag.Alpha
+    //match release.SemVer.PreRelease with
+    //| Some pr -> pr.PreReleaseFlag.fromInput
 
 let mutable prereleaseSuffixNumber = 0
 
-let mutable isPrerelease = false
+let mutable isPrerelease = release.SemVer.PreRelease.IsSome
+
+do
+    match release.SemVer.PreRelease with
+    | Some pr ->
+        let preReleaseFlag = PreReleaseFlag.fromInput pr.Name
+        let preReleaseNumber =
+            pr.Values
+            |> Seq.pick (fun seg ->
+                match seg with
+                | Numeric i -> Some (int i)
+                | _ -> None)
+        isPrerelease <- true
+        prereleaseSuffix <- preReleaseFlag
+        prereleaseSuffixNumber <- preReleaseNumber
+    | None ->
+        isPrerelease <- false
+        prereleaseSuffix <- PreReleaseFlag.Alpha
+        prereleaseSuffixNumber <- 0

@@ -13,6 +13,6 @@
       <PackageVersion Include="Fake.IO.FileSystem" Version="6.0.0" />
       <PackageVersion Include="Fake.JavaScript.Npm" Version="6.0.0" />
       <PackageVersion Include="Fake.Tools.Git" Version="6.0.0" />
-      <PackageVersion Include="Fake.Extensions.Release" Version="0.3.0" />      
+      <PackageVersion Include="Fake.Extensions.Release" Version="1.0.0" />      
   </ItemGroup>
 </Project>
