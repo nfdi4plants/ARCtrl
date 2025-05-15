@@ -1,3 +1,10 @@
+### 3.0.0-alpha.2+4273dfa (Released 2025-5-15)
+
+Fix critical typescript error
+
+* Bugfixes:
+    * [[#4273dfa](https://github.com/nfdi4plants/ARCtrl/commit/4273dfad4308d97b48ce257b2118f256255c35f5)] fix typescript type declarations not being exported
+
 ### 3.0.0-alpha.1+a081b85 (Released 2025-5-15)
 
 - Add Run and Workflow isa xlsx files
