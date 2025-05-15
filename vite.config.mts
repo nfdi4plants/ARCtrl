@@ -9,18 +9,6 @@ export default defineConfig({
             tsconfigPath: 'tsconfig.json',
         })
     ],
-    build: {
-        lib: {
-            entry: './src/ARCtrl/index.js', // Entry file for your library
-            name: "@nfdi4plants/arctrl",
-            fileName: (format) => `index.${format}.js`,
-        },
-        rollupOptions: {
-            // Exclude peer dependencies from the final bundle
-            external: ['@fable-org/fable-library-js', 'fs/promises', 'path', 'isomorpic-fetch', '@nfdi4plants/exceljs'],
-        },
-        outDir : 'dist/ts'
-    },
     test: {
         globals: true,
         include : ['Main.fs.ts', '*.test.ts'],

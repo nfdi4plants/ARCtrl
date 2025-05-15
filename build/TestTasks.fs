@@ -60,8 +60,8 @@ module RunTests =
             Trace.traceImportant "Start native Python tests"
             for path in ProjectInfo.pyTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl --lang python --nocache" ""
-                GenerateIndexPy.ARCtrl_generate($"{path}/ARCtrl")
+                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl/py --lang python --nocache" ""
+                System.IO.File.Copy("src/ARCtrl/arctrl.py", $"{path}/ARCtrl/arctrl.py", overwrite = true)
                 run python $"-m pytest {path}" ""
         else
             Trace.traceImportant "Skipping Python tests"
