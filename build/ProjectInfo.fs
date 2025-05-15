@@ -53,39 +53,65 @@ let pyPkgDir = "./dist/py"
 // Create RELEASE_NOTES.md if not existing. Or "release" would throw an error.
 Fake.Extensions.Release.ReleaseNotes.ensure()
 
-let mutable release = ReleaseNotes.load "RELEASE_NOTES.md"
+type VersionController() =
 
-let mutable stableVersion = SemVer.parse release.NugetVersion
+    let mutable release = ReleaseNotes.load "RELEASE_NOTES.md"
 
-let mutable stableVersionTag = (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
+    let mutable isPrerelease = false
+    let mutable prereleaseSuffix = PreReleaseFlag.Alpha
+    let mutable prereleaseSuffixNumber = 0
 
-let loadReleaseNotes () =
-    release <- ReleaseNotes.load "RELEASE_NOTES.md"
-    stableVersion <- SemVer.parse release.NugetVersion
-    stableVersionTag <- (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch )
+    let refreshReleaseNotes() =
+        match release.SemVer.PreRelease with
+        | Some pr ->
+            isPrerelease <- true
+            prereleaseSuffix <- PreReleaseFlag.fromInput pr.Name
+            prereleaseSuffixNumber <-
+                pr.Values
+                |> Seq.pick (fun seg ->
+                    match seg with
+                    | Numeric i -> Some (int i)
+                    | _ -> None)
+        | None ->
+            isPrerelease <- false
+            prereleaseSuffix <- PreReleaseFlag.Alpha
+            prereleaseSuffixNumber <- 0
 
-let mutable prereleaseSuffix = PreReleaseFlag.Alpha
-    //match release.SemVer.PreRelease with
-    //| Some pr -> pr.PreReleaseFlag.fromInput
+    do 
+        refreshReleaseNotes()
 
-let mutable prereleaseSuffixNumber = 0
+    member this.StableVersion = SemVer.parse release.NugetVersion
 
-let mutable isPrerelease = release.SemVer.PreRelease.IsSome
+    member this.StableVersionTag =
+        let stableVersion = SemVer.parse release.NugetVersion
+        (sprintf "%i.%i.%i" stableVersion.Major stableVersion.Minor stableVersion.Patch)
 
-do
-    match release.SemVer.PreRelease with
-    | Some pr ->
-        let preReleaseFlag = PreReleaseFlag.fromInput pr.Name
-        let preReleaseNumber =
-            pr.Values
-            |> Seq.pick (fun seg ->
-                match seg with
-                | Numeric i -> Some (int i)
-                | _ -> None)
-        isPrerelease <- true
-        prereleaseSuffix <- preReleaseFlag
-        prereleaseSuffixNumber <- preReleaseNumber
-    | None ->
-        isPrerelease <- false
-        prereleaseSuffix <- PreReleaseFlag.Alpha
-        prereleaseSuffixNumber <- 0
+    member this.IsPrerelease = isPrerelease
+    member this.PrereleaseSuffix = prereleaseSuffix
+    member this.PrereleaseSuffixNumber = prereleaseSuffixNumber
+
+    member this.NugetTag =
+        if isPrerelease then
+            PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+        else
+            this.StableVersionTag
+
+    member this.NPMTag =
+        if isPrerelease then
+            PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+        else
+            this.StableVersionTag
+
+    member this.PyTag =
+        if isPrerelease then
+            PreReleaseFlag.toPyPITag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+        else
+            this.StableVersionTag
+
+    member this.Notes = release.Notes
+
+    member this.Refresh() =
+        release <- ReleaseNotes.load "RELEASE_NOTES.md"
+        refreshReleaseNotes()
+
+let versionController = VersionController()

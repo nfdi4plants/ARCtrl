@@ -16,10 +16,7 @@ open Fake.IO
 open Fake.IO.Globbing.Operators
 
 let createTag = BuildTask.create "CreateTag" [clean; build; runTests] {
-    let tag =
-        if isPrerelease then
-            PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-        else stableVersionTag
+    let tag = versionController.NugetTag
     if promptYesNo (sprintf "tagging branch with %s OK?" tag ) then
         Git.Branches.tag "" tag
         Git.Branches.pushTag "" projectRepo tag
@@ -31,10 +28,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
     let targets = (!! (sprintf "%s/*.*pkg" netPkgDir ))
     for target in targets do printfn "%A" target
     
-    let tag = 
-        if isPrerelease then
-            PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-        else stableVersionTag
+    let tag = versionController.NugetTag
     let msg = sprintf "[NUGET] release package with version %s?" tag 
     if promptYesNo msg then
         let source = "https://api.nuget.org/v3/index.json"
@@ -51,15 +45,12 @@ let publishNPM = BuildTask.create "PublishhNPM" [clean; build; runTests; packJS]
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
     printfn "%A" target
-    let tag = 
-        if isPrerelease then
-            PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-        else stableVersionTag
+    let tag = versionController.NPMTag
     let msg = sprintf "[NPM] release package with version %s?" tag 
     if promptYesNo msg then
         let apikey =  Environment.environVarOrNone "NPM_KEY"    
         let otp = if apikey.IsSome then $" --otp {apikey.Value}" else ""
-        let tag = if isPrerelease then $" --tag next" else ""
+        let tag = if versionController.IsPrerelease then $" --tag next" else ""
         Fake.JavaScript.Npm.exec $"publish {target} --access public {tag}{otp}" (fun o ->
             { o with
                 WorkingDirectory = "./dist/js/"
@@ -68,10 +59,7 @@ let publishNPM = BuildTask.create "PublishhNPM" [clean; build; runTests; packJS]
 }
 
 let publishPyPi = BuildTask.create "PublishPyPi" [clean; build; runTests; packPy] {
-    let tag = 
-        if isPrerelease then
-            PreReleaseFlag.toNPMTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-        else stableVersionTag
+    let tag = versionController.PyTag
     let msg = sprintf "[PyPi] release package with version %s?" tag
     if promptYesNo msg then
         let apikey = Environment.environVarOrNone "PYPI_KEY"

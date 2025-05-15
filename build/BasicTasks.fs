@@ -142,9 +142,7 @@ let setPrereleaseTag() =
     let suffixTag = System.Console.ReadLine() |> PreReleaseFlag.fromInput
     printfn "Please enter pre-release package version number"
     let suffixNumber = System.Console.ReadLine() |> int
-    prereleaseSuffix <- suffixTag
-    prereleaseSuffixNumber <- suffixNumber
-    isPrerelease <- true
+    suffixTag, suffixNumber
 
 
 let clean = BuildTask.create "Clean" [] {

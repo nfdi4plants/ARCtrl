@@ -27,7 +27,7 @@ module BundleDotNet =
                 {p.MSBuildParams with 
                     Properties = ([
                         "Version",versionTag
-                        "PackageReleaseNotes",  (ProjectInfo.release.Notes |> List.map replaceCommitLink |> String.toLines )
+                        "PackageReleaseNotes",  (versionController.Notes |> List.map replaceCommitLink |> String.toLines )
                     ] @ p.MSBuildParams.Properties)
                     DisableInternalBinLog = true
                 }
@@ -40,10 +40,10 @@ module BundleDotNet =
         ))
 
 let packDotNet = BuildTask.create "PackDotNet" [clean; build; (*runTests*)] {
-    if isPrerelease then
-        let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-        BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
-    BundleDotNet.bundle ProjectInfo.stableVersionTag None
+    if versionController.IsPrerelease then
+        BundleDotNet.bundle versionController.NugetTag (Some versionController.NugetTag)
+    else 
+        BundleDotNet.bundle versionController.NugetTag None
 }
 
 let packJS = BuildTask.create "PackJS" [clean; build; transpileTS] {
