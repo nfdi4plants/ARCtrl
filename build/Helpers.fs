@@ -35,22 +35,25 @@ type PreReleaseFlag =
 
     static member fromInput (input: string) =
         match input with
-        | "a" -> Alpha
-        | "b" -> Beta
+        | "a" | "alpha" -> Alpha
+        | "b" | "beta" -> Beta
         | "rc" -> ReleaseCandidate
         | any when any.StartsWith "swate" ->
             let rmvdSwate = any.Replace("swate.","")
             Swate (PreReleaseFlag.fromInput rmvdSwate)
         | _ -> failwith "Invalid input"
 
-    static member toNugetTag (semVer : SemVerInfo) (flag: PreReleaseFlag) (number : int) =
+    static member toNugetSuffix (flag: PreReleaseFlag) (number : int) =
         let rec mkSuffix (flag) (number) = 
             match flag with
             | Alpha -> $"alpha.{number}"
             | Beta -> $"beta.{number}"
             | ReleaseCandidate -> $"rc.{number}"
             | Swate any -> mkSuffix any number + ".swate"
-        let suffix = mkSuffix flag number
+        mkSuffix flag number
+
+    static member toNugetTag (semVer : SemVerInfo) (flag: PreReleaseFlag) (number : int) =
+        let suffix = PreReleaseFlag.toNugetSuffix flag number
         sprintf "%i.%i.%i-%s" semVer.Major semVer.Minor semVer.Patch suffix
 
 

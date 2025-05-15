@@ -8,6 +8,67 @@ open Fable
 #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
 open Fable.Core.JsInterop
 open FsSpreadsheet.Js
+
+[<Erase>]
+type Stats =
+    abstract member isDirectory: unit -> bool
+
+    abstract member isFile : unit -> bool
+
+[<Erase>]
+type Dirent =
+    abstract member isDirectory: unit -> bool
+    abstract member isFile : unit -> bool
+    abstract member name : string
+
+[<Erase>]
+type FS =
+    [<ImportMember("fs/promises")>]
+    static member stat (path : string) : Fable.Core.JS.Promise<Stats> = jsNative
+    
+    [<ImportMember("fs/promises")>]
+    static member mkdir (path : string) (options : obj) : Fable.Core.JS.Promise<string option> = jsNative
+
+    [<ImportMember("fs/promises")>]
+    static member readdir (path : string) (options : obj) : Fable.Core.JS.Promise<Dirent []> = jsNative
+
+    [<ImportMember("fs/promises")>]
+    static member rename (oldName : string) (newName : string) : Fable.Core.JS.Promise<unit> = jsNative
+
+    [<ImportMember("fs/promises")>]
+    static member unlink (path : string) : Fable.Core.JS.Promise<unit> = jsNative
+
+    [<ImportMember("fs/promises")>]
+    static member rm (path : string) (options : obj) : Fable.Core.JS.Promise<unit> = jsNative
+
+    [<ImportMember("fs/promises")>]
+    static member readFile (path : string) (encoding : string option) : Fable.Core.JS.Promise<obj> = jsNative
+
+    [<ImportMember("fs/promises")>]
+    static member writeFile (path : string) (fileContent : obj) (encoding : string option) :Fable.Core.JS.Promise<unit> = jsNative
+
+    static member readFileText (path: string) : Fable.Core.JS.Promise<string> =
+        FS.readFile path (Some "utf-8")
+        |> unbox
+
+    static member readFileBinary (path : string) : Fable.Core.JS.Promise<byte []> =
+        FS.readFile path None
+        |> unbox
+
+    static member writeFileText (path: string) (text: string) : Fable.Core.JS.Promise<unit> =
+        FS.writeFile path text (Some "utf-8")
+
+    static member writeFileBinary (path: string) (bytes: byte []) : Fable.Core.JS.Promise<unit> =
+        FS.writeFile path bytes None
+
+[<Erase>]
+type PathModule =
+    [<ImportMember("path")>]
+    static member dirname (filePath : string) : string = jsNative
+
+    [<ImportMember("path")>]
+    static member join ([<ParamSeq>] paths : string []) : string = jsNative
+
 #endif
 #if FABLE_COMPILER_PYTHON
 open FsSpreadsheet.Py
@@ -25,7 +86,11 @@ open FsSpreadsheet.Net
 
 let directoryExistsAsync (path : string) : CrossAsync<bool> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "directoryExists" "${outDir}/FileSystem.js"
+        crossAsync {
+            let! fsStat = FS.stat path
+            return fsStat.isDirectory()
+        }
+        |> Promise.catch (fun _ -> false)
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : bool = emitPyExpr (path) "Path(path).is_dir()"
@@ -41,7 +106,8 @@ let directoryExistsAsync (path : string) : CrossAsync<bool> =
 
 let createDirectoryAsync (path : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "createDirectory" "${outDir}/FileSystem.js"
+        FS.mkdir path {|recursive = true|}
+        |> Promise.map ignore
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : unit = emitPyExpr (path) "Path(path).mkdir(parents=True, exist_ok=True)"
@@ -55,20 +121,17 @@ let createDirectoryAsync (path : string) : CrossAsync<unit> =
     }
     #endif
 
-let ensureDirectoryAsync (path : string) : CrossAsync<unit> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "ensureDirectory" "${outDir}/FileSystem.js"
-    #else
+let ensureDirectoryAsync (path : string) : CrossAsync<unit> =   
     crossAsync {
         let! exists = directoryExistsAsync path
         if not exists then
             return! createDirectoryAsync path
     }
-    #endif
 
 let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "ensureDirectoryOfFile" "${outDir}/FileSystem.js"
+        PathModule.dirname filePath
+        |> ensureDirectoryAsync
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : string = emitPyExpr (path) "Path(file_path).parent"
@@ -85,7 +148,11 @@ let ensureDirectoryOfFileAsync (filePath : string) : CrossAsync<unit> =
 
 let fileExistsAsync (path : string) : CrossAsync<bool> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "fileExists" "${outDir}/FileSystem.js"
+        crossAsync {
+            let! fsStat = FS.stat path
+            return fsStat.isFile()
+        }
+        |> Promise.catch (fun _ -> false)
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : bool = emitPyExpr (path) "Path(path).is_file()"
@@ -103,7 +170,7 @@ let fileExistsAsync (path : string) : CrossAsync<bool> =
 
 let readFileTextAsync (path : string) : CrossAsync<string> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "readFileText" "${outDir}/FileSystem.js"
+        FS.readFileText path
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : string = emitPyStatement (path) "with open(path, 'r', encoding='utf-8') as f: return f.read()"
@@ -119,7 +186,7 @@ let readFileTextAsync (path : string) : CrossAsync<string> =
 
 let readFileBinaryAsync (path : string) : CrossAsync<byte []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "readFileBinary" "${outDir}/FileSystem.js"
+        FS.readFileBinary path
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : byte [] = emitPyStatement (path) "with open(path, 'rb') as f: return f.read()"
@@ -142,13 +209,13 @@ let readFileXlsxAsync (path : string) : CrossAsync<FsWorkbook> =
     }
     #endif
 
-let moveFileAsync oldPath newPath =
+let moveFileAsync (oldPath : string) (newPath : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "moveFile" "${outDir}/FileSystem.js"
+        FS.rename oldPath newPath
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (oldPath : string) (newPath : string) : unit =
-            // import "moveFile" "${outDir}/src/ARCtrl/ContractIO/file_system.py"
+            // import "moveFile" "./src/ARCtrl/ContractIO/file_system.py"
             emitPyStatement (oldPath,newPath) "shutil.move($0, $1)"
         crossAsync {
             f oldPath newPath
@@ -160,9 +227,9 @@ let moveFileAsync oldPath newPath =
     }
     #endif
 
-let moveDirectoryAsync oldPath newPath =
+let moveDirectoryAsync (oldPath : string) (newPath : string) : CrossAsync<unit>  =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "moveDirectory" "${outDir}/FileSystem.js"
+        FS.rename oldPath newPath
     #endif
     #if FABLE_COMPILER_PYTHON
         moveFileAsync oldPath newPath
@@ -173,9 +240,9 @@ let moveDirectoryAsync oldPath newPath =
     }
     #endif
 
-let deleteFileAsync path =
+let deleteFileAsync (path : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "deleteFile" "${outDir}/FileSystem.js"
+        FS.unlink path
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : unit = emitPyStatement (path) """try:
@@ -192,9 +259,9 @@ let deleteFileAsync path =
     }
     #endif
 
-let deleteDirectoryAsync path =
+let deleteDirectoryAsync (path : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "deleteDirectory" "${outDir}/FileSystem.js"
+        FS.rm path {|recursive = true; force = true|}
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path : string) : unit = emitPyStatement (path) "shutil.rmtree(path, ignore_errors=True)"
@@ -209,9 +276,9 @@ let deleteDirectoryAsync path =
     #endif
 
 
-let writeFileTextAsync path text =
+let writeFileTextAsync (path : string) (text : string) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "writeFileText" "${outDir}/FileSystem.js"
+        FS.writeFileText path text
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path :string) (text : string) : unit =
@@ -226,13 +293,13 @@ let writeFileTextAsync path text =
     }
     #endif
 
-let writeFileBinaryAsync path (bytes : byte []) =
+let writeFileBinaryAsync (path : string) (bytes : byte []) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        import "writeFileBinary" "${outDir}/FileSystem.js"
+        FS.writeFileBinary path bytes
     #endif
     #if FABLE_COMPILER_PYTHON
         let f (path :string) (bytes : byte []) : unit =
-            // let f : (string * byte []) -> unit = import "writeFileBinary" "${outDir}/src/ARCtrl/ContractIO/file_system.py"
+            // let f : (string * byte []) -> unit = import "writeFileBinary" "./src/ARCtrl/ContractIO/file_system.py"
             emitPyStatement (path,bytes) "with open($0, 'wb') as f: f.write($1)"
         crossAsync {
             f path bytes
@@ -244,7 +311,7 @@ let writeFileBinaryAsync path (bytes : byte []) =
     }
     #endif
 
-let writeFileXlsxAsync path (wb : FsWorkbook) =
+let writeFileXlsxAsync (path : string) (wb : FsWorkbook) : CrossAsync<unit> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
         FsWorkbook.toXlsxFile path wb
     #else
@@ -254,13 +321,13 @@ let writeFileXlsxAsync path (wb : FsWorkbook) =
     #endif
 
 
-let trim (path : string) =
+let trim (path : string) : string =
     if path.StartsWith("./") then
         path.Replace("./","").Trim('/')
     else path.Trim('/')
 
 /// Return the absolute path relative to the directoryPath
-let makeRelative directoryPath (path : string) =
+let makeRelative (directoryPath : string) (path : string) : string =
     if directoryPath = "." || directoryPath = "/" || directoryPath = "" then
         path
     else
@@ -272,14 +339,21 @@ let makeRelative directoryPath (path : string) =
     
     
 
-let standardizeSlashes (path : string) = 
+let standardizeSlashes (path : string) : string = 
     path.Replace("\\","/")              
 
 let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
-    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        let f : string -> CrossAsync<string []> = import "getSubDirectories" "${outDir}/FileSystem.js"
+    #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT      
         crossAsync {
-            let! paths = f path
+            let! entries = FS.readdir path {|withFileTypes = true|}
+            let paths = 
+                entries
+                |> Array.choose (fun entry ->
+                    if entry.isDirectory() then
+                        Some (PathModule.join [|path;entry.name|])
+                    else
+                        None
+                    )
             return paths |> Array.map standardizeSlashes
         }
     #endif
@@ -300,9 +374,16 @@ let getSubDirectoriesAsync (path : string) : CrossAsync<string []> =
 
 let getSubFilesAsync (path : string) : CrossAsync<string []> =
     #if FABLE_COMPILER_JAVASCRIPT || FABLE_COMPILER_TYPESCRIPT
-        let f : string -> CrossAsync<string []> = import "getSubFiles" "${outDir}/FileSystem.js"
         crossAsync {
-            let! paths = f path
+            let! entries = FS.readdir path {|withFileTypes = true|}
+            let paths = 
+                entries
+                |> Array.choose (fun entry ->
+                    if entry.isFile() then
+                        Some (PathModule.join [|path;entry.name|])
+                    else
+                        None
+                    )
             return paths |> Array.map standardizeSlashes
         }
     #endif
@@ -322,7 +403,7 @@ let getSubFilesAsync (path : string) : CrossAsync<string []> =
     #endif
 
 
-let getAllFilePathsAsync (directoryPath : string) =
+let getAllFilePathsAsync (directoryPath : string) : CrossAsync<string []> =
     let directoryPath = standardizeSlashes directoryPath
     crossAsync {
         let rec allFiles (dirs : string seq) : CrossAsync<string seq> =
@@ -347,7 +428,7 @@ let getAllFilePathsAsync (directoryPath : string) =
     }
 
 
-let renameFileOrDirectoryAsync oldPath newPath =
+let renameFileOrDirectoryAsync (oldPath : string) (newPath : string) : CrossAsync<unit> =
     crossAsync {
         let! fileExists = fileExistsAsync oldPath
         let! directoryExists = directoryExistsAsync oldPath
@@ -359,7 +440,7 @@ let renameFileOrDirectoryAsync oldPath newPath =
     }
 
 
-let deleteFileOrDirectoryAsync path =
+let deleteFileOrDirectoryAsync (path : string) : CrossAsync<unit>  =
     crossAsync {
         let! fileExists = fileExistsAsync path
         let! directoryExists = directoryExistsAsync path

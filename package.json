@@ -1,21 +1,48 @@
 {
   "type": "module",
+  "name": "@nfdi4plants/arctrl",
+  "version": "2.5.1",
+  "description": "Top level ARC DataModel and API function descriptions.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nfdi4plants/ARCtrl.git"
+  },
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nfdi4plants/ARCtrl/issues"
+  },
+  "homepage": "https://github.com/nfdi4plants/ARCtrl#readme",
   "author": "Heinrich Lukas Weil <weil@rptu.de> (https://github.com/HLWeil)",
   "contributors": [
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
   ],
+  "main": "./dist/ts/cjs/index.js",      
+  "module": "./dist/ts/esm/index.js",   
+  "types": "./dist/ts/types/index.d.ts", 
+  "exports": {
+    ".": {
+      "import": "./dist/ts/esm/index.js",
+      "require": "./dist/ts/cjs/index.js"
+    }
+  },
+  "private": false,
+  "files": [
+    "dist/ts"
+  ],
+
+  "scripts": {
+    "build:esm": "tsc --module ESNext --outDir dist/ts/esm || echo 'ESM build displayed warnings'",
+    "build:cjs": "tsc --module CommonJS --outDir dist/ts/cjs --declaration false || echo 'CJS build displayed warnings'",
+    "build": "npm run build:esm && npm run build:cjs"
+  },
   "dependencies": {
+    "@fable-org/fable-library-js": "^1.8.0",
     "@nfdi4plants/exceljs": "^0.3.0",
-    "fable-library": "^1.1.1",
-    "isomorphic-fetch": "^3.0.0",
-    "jsonschema": "^1.4.1"
+    "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^4.4.1",
-    "cypress": "^13.5.0",
-    "mkdirp": "3.0.1",
-    "mocha": "^10.2.0",
-    "vite": "^4.5.0",
-    "vue": "^3.3.8"
+    "jsonschema": "^1.4.1",
+    "vite": "^6.3.5",
+    "vitest": "^3.1.1"
   }
 }

@@ -1,4 +1,5 @@
 import { equal } from 'assert';
+import { expect, it, describe } from 'vitest';
 
 describe('Mocha native', function () {
     describe('subtestlist', function () {

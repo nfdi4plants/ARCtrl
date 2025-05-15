@@ -1,34 +1,35 @@
 import { equal, deepEqual, notEqual } from 'assert';
-import { CompositeHeader, IOType } from "./ARCtrl/index.js"
-import { OntologyAnnotation } from './ARCtrl/index.js';
-import { assertEqual } from './ARCtrl/fable_modules/fable-library-js.4.24.0/Util.js';
+import { CompositeHeader, IOType } from "./index.js"
+import { OntologyAnnotation } from './index.js';
+import { expect, it, describe } from 'vitest';
 
 function tests_IOType() {
     describe('IOType', function () {
         it('cases', function () {
             let cases = IOType.Cases
             //console.log(cases)
-            equal(cases.length, 5);
+            expect(cases.length).toStrictEqual(5);
         });
         it('Create non Freetext', function () {
             for (let mycase of IOType.Cases) {
                 let tag = mycase[0]
                 let iotype = new IOType(tag, [])
+                
                 switch (tag) {
                     case 0:
-                        equal(iotype.asInput, "Input [Source Name]");
+                        expect(iotype.asInput).toStrictEqual("Input [Source Name]");
                         break;
                     case 1:
-                        equal(iotype.asInput, "Input [Sample Name]");
+                        expect(iotype.asInput).toStrictEqual("Input [Sample Name]");
                         break;
                     case 2:
-                        equal(iotype.asInput, "Input [Data]");
+                        expect(iotype.asInput).toStrictEqual("Input [Data]");
                         break;
                     case 3:
-                        equal(iotype.asInput, "Input [Material]");
+                        expect(iotype.asInput).toStrictEqual("Input [Material]");
                         break;
                     case 4:
-                        equal(iotype.asInput, "Input [undefined]");
+                        expect(iotype.asInput).toStrictEqual("Input [undefined]");
                         break;
                 }
             }
@@ -36,29 +37,29 @@ function tests_IOType() {
         it('Create FreeText', function () {
             let freetext = new IOType(4, ["My FreeTextValue"])
             let asinput = freetext.asInput
-            equal(asinput, "Input [My FreeTextValue]")
+            expect(asinput).toStrictEqual("Input [My FreeTextValue]")
         });
         it('Helper Members', function () {
             let so1 = IOType.source()
             let so2 = new IOType(0, [])
-            assertEqual(so1, so2);
+            expect(so1).toStrictEqual(so2);
 
             let sa1 = IOType.sample()
             let sa2 = new IOType(1, [])
-            assertEqual(sa1, sa2);
+            expect(sa1).toStrictEqual(sa2);
 
             let ra1 = IOType.data()
             let ra2 = new IOType(2, [])
-            assertEqual(ra1, ra2);
+            expect(ra1).toStrictEqual(ra2);
 
             let ma1 = IOType.material()
             let ma2 = new IOType(3, [])
-            assertEqual(ma1, ma2);
+            expect(ma1).toStrictEqual(ma2);
 
             let ft = "My FreeTextValue"
             let ft1 = IOType.freeText(ft)
             let ft2 = new IOType(4, [ft])
-            assertEqual(ft1, ft2);
+            expect(ft1).toStrictEqual(ft2);
 
         });
     });
@@ -70,24 +71,24 @@ describe('CompositeHeader', function () {
         let iotype = new IOType(4, ["My FreeTextValue"])
         let header = new CompositeHeader(11, [iotype])
         let actual = header.toString()
-        equal(actual, "Input [My FreeTextValue]")
+        expect(actual).toStrictEqual("Input [My FreeTextValue]")
     });
     it("FreeText", function () {
         let header = new CompositeHeader(13, ["My FreeTextValue"])
         let actual = header.toString()
-        equal(actual, "My FreeTextValue")
+        expect(actual).toStrictEqual("My FreeTextValue")
     });
     it("Comment", function () {
         let header = new CompositeHeader(14, ["My Comment"])
         let actual = header.toString()
-        equal(actual, "Comment [My Comment]")
+        expect(actual).toStrictEqual("Comment [My Comment]")
     });
     it("Term", function () {
         let oa = new OntologyAnnotation("My OA Name")
         let header = new CompositeHeader(0, [oa])
         let actual = header.toString()
         //console.log(CompositeHeader.Cases)
-        equal(actual, "Component [My OA Name]")
+        expect(actual).toStrictEqual("Component [My OA Name]")
     });
     it('jsGetColumnMetaType', function () {
         let cases = CompositeHeader.Cases
@@ -100,19 +101,19 @@ describe('CompositeHeader', function () {
             switch (code) {
                 case 0:
                     let header1 = new CompositeHeader(tag, [])
-                    equal((header1.IsSingleColumn || header1.IsFeaturedColumn), true);
+                    expect((header1.IsSingleColumn || header1.IsFeaturedColumn)).toStrictEqual(true);
                     break;
                 case 1:
                     let header2 = new CompositeHeader(tag, [oa])
-                    equal(header2.IsTermColumn, true);
+                    expect(header2.IsTermColumn).toStrictEqual(true);
                     break;
                 case 2:
                     let header3 = new CompositeHeader(tag, [iotype])
-                    equal(header3.IsIOType, true);
+                    expect(header3.IsIOType).toStrictEqual(true);
                     break;
                 case 3:
                     let header4 = new CompositeHeader(tag, [stringExample])
-                    equal(header4.isFreeText || header4.isComment, true);
+                    expect(header4.isFreeText || header4.isComment).toStrictEqual(true);
                     break;
             }
         }
@@ -121,77 +122,77 @@ describe('CompositeHeader', function () {
       let oa = new OntologyAnnotation("My OA Name", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C12345")
       let c1 = CompositeHeader.component(oa)
       let c2 = new CompositeHeader(0, [oa])
-      assertEqual(c1, c2);
+      expect(c1).toStrictEqual(c2);
     });
     it('characteristic - Helper Members', function () {
       let oa = new OntologyAnnotation("My OA Name", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C12345")
       let ch1 = CompositeHeader.characteristic(oa)
       let ch2 = new CompositeHeader(1, [oa])
-      assertEqual(ch1, ch2);
+      expect(ch1).toStrictEqual(ch2);
     });
     it('factor - Helper Members', function () {
       let oa = new OntologyAnnotation("My OA Name", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C12345")
       let f1 = CompositeHeader.factor(oa)
       let f2 = new CompositeHeader(2, [oa])
-      assertEqual(f1, f2);
+      expect(f1).toStrictEqual(f2);
     });
     it('parameter - Helper Members', function () {  
       let oa = new OntologyAnnotation("My OA Name", "NCIT", "http://purl.obolibrary.org/obo/NCIT_C12345")
       let p1 = CompositeHeader.parameter(oa)
       let p2 = new CompositeHeader(3, [oa])
-      assertEqual(p1, p2);
+      expect(p1).toStrictEqual(p2);
     });
     it('protocolType - Helper Members', function () {  
       let pt1 = CompositeHeader.protocolType()
       let pt2 = new CompositeHeader(4, [])
-      assertEqual(pt1, pt2);
+      expect(pt1).toStrictEqual(pt2);
     }); 
     it('protocolDescription - Helper Members', function () {  
       let pd1 = CompositeHeader.protocolDescription()
       let pd2 = new CompositeHeader(5, [])
-      assertEqual(pd1, pd2);
+      expect(pd1).toStrictEqual(pd2);
     });
     it('protocolUri - Helper Members', function () {  
       let pu1 = CompositeHeader.protocolUri()
       let pu2 = new CompositeHeader(6, [])
-      assertEqual(pu1, pu2);
+      expect(pu1).toStrictEqual(pu2);
     });
     it('protocolVersion - Helper Members', function () {  
       let pv1 = CompositeHeader.protocolVersion()
       let pv2 = new CompositeHeader(7, [])
-      assertEqual(pv1, pv2);
+      expect(pv1).toStrictEqual(pv2);
     });
     it('protocolREF - Helper Members', function () {  
       let pr1 = CompositeHeader.protocolREF()
       let pr2 = new CompositeHeader(8, [])
-      assertEqual(pr1, pr2);
+      expect(pr1).toStrictEqual(pr2);
     });
     it('performer - Helper Members', function () {  
       let pe1 = CompositeHeader.performer()
       let pe2 = new CompositeHeader(9, [])
-      assertEqual(pe1, pe2);
+      expect(pe1).toStrictEqual(pe2);
     });
     it('date - Helper Members', function () {  
       let d1 = CompositeHeader.date()
       let d2 = new CompositeHeader(10, [])
-      assertEqual(d1, d2);
+      expect(d1).toStrictEqual(d2);
     });
     it('sample - Helper Members', function () {  
       let iotype = IOType.sample()
       let i1 = CompositeHeader.input(iotype)
       let i2 = new CompositeHeader(11, [iotype])
-      assertEqual(i1, i2);
+      expect(i1).toStrictEqual(i2);
     });
     it('output - Helper Members', function () {  
       let iotype = IOType.sample()
       let o1 = CompositeHeader.output(iotype)
       let o2 = new CompositeHeader(12, [iotype])
-      assertEqual(o1, o2);
+      expect(o1).toStrictEqual(o2);
     });
     it('freeText - Helper Members', function () {  
         let ft = "My FreeTextValue"
         let ft1 = CompositeHeader.freeText(ft)
         let ft2 = new CompositeHeader(13, [ft])
-        assertEqual(ft1, ft2);
+        expect(ft1).toStrictEqual(ft2);
     });
 });

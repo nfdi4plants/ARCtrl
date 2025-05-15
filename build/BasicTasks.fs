@@ -137,19 +137,19 @@ module Helper =
 
 
 
-let setPrereleaseTag = BuildTask.create "SetPrereleaseTag" [] {
+let setPrereleaseTag() = 
     printfn "Please enter pre-release package suffix option: (a/b/rc)"
     let suffixTag = System.Console.ReadLine() |> PreReleaseFlag.fromInput
     printfn "Please enter pre-release package version number"
     let suffixNumber = System.Console.ReadLine() |> int
-    prereleaseSuffix <- suffixTag
-    prereleaseSuffixNumber <- suffixNumber
-    isPrerelease <- true
-}
+    suffixTag, suffixNumber
+
 
 let clean = BuildTask.create "Clean" [] {
     !! "src/**/bin"
     ++ "src/**/obj"
+    ++ "src/ARCtrl/ts/"
+    ++ "src/ARCtrl/py/"
     ++ "tests/**/bin"
     ++ "tests/**/obj"
     ++ "tests/TestingUtils/TestResults"
@@ -175,4 +175,12 @@ let build = BuildTask.create "Build" [clean] {
         }
         |> DotNet.Options.withCustomParams (Some "-tl")
     )
+}
+
+let transpileTS = BuildTask.create "TranspileTS" [clean; build] {
+    run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-js --noCache -o src/ARCtrl/ts" ""
+}
+
+let transpilePy = BuildTask.create "TranspilePy" [clean; build] {
+    run dotnet $"fable ./src/ARCtrl/ARCtrl.Python.fsproj --lang python --noCache -o src/ARCtrl/py" ""
 }

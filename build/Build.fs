@@ -23,11 +23,6 @@ let _release =
         "Release" 
         [clean; build; runTests; pack; createTag; publishNuget; publishNPM; publishPyPi]
 
-/// Full release of nuget package for the prerelease version.
-let _preRelease = 
-    BuildTask.createEmpty 
-        "PreRelease" 
-        [setPrereleaseTag; clean; build; runTests; packPrerelease; createPrereleaseTag; publishNugetPrerelease; publishNPMPrerelease; publishPyPiPrerelease]
 
 ReleaseNotesTasks.updateReleaseNotes |> ignore
 PerformanceTasks.perforanceReport |> ignore

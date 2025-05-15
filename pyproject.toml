@@ -7,6 +7,13 @@ maintainers = ["Florian Wetzels"]
 readme = "README.md"
 repository = "https://github.com/nfdi4plants/ARCtrl"
 keywords = ["arc", "annotated research context", "isa", "research data", "multi platform"]
+include = [
+    "src/ARCtrl/py/**/*.py"
+]
+packages = [
+    { include = "ARCtrl/**/*.py", from = "src" }
+]
+
 
 [tool.poetry.dependencies]
 python = "^3.10"

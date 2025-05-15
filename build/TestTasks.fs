@@ -13,24 +13,20 @@ module RunTests =
 
     let skipTestsFlag = "--skipTests"
 
-    let runTestsUI = BuildTask.create "runTestsUI" [clean; build] {
-        let path = "tests/UI"
-        Trace.traceImportant "Start UI tests"
-        // transpile library for native access
-        run dotnet $"fable src/ARCtrl -o {path}/ARCtrl" ""
-        GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
-        run npx $"cypress run --component -P {path}" ""
-    }
+    [<Literal>]
+    let jsIOResultFolder = "./tests/TestingUtils/TestResults/js"
 
-    let runTestsJsNative = BuildTask.createFn "runTestsJSNative" [clean] (fun tp ->
+    [<Literal>]
+    let pyIOResultFolder = "./tests/TestingUtils/TestResults/py"
+
+    let runTestsJsNative = BuildTask.createFn "runTestsJSNative" [clean; transpileTS] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start native JavaScript tests"
             for path in ProjectInfo.jsTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ARCtrl --nocache" ""
-                System.IO.File.Copy(jsHelperFilePath, $"{path}/ARCtrl/{jsHelperFileName}") |> ignore
-                GenerateIndexJs.ARCtrl_generate($"{path}/ARCtrl")
-                run npx $"mocha {path} --timeout 20000" ""
+                run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ts --lang ts -e fs.ts --nocache" ""
+                System.IO.File.Copy("src/ARCtrl/index.ts", $"{path}/index.ts", overwrite = true) |> ignore
+                run npx $"vitest run --dir ./tests/JavaScript/" ""
         else
             Trace.traceImportant "Skipping JavaScript tests"
     )
@@ -38,7 +34,7 @@ module RunTests =
     let prePareJsTests = BuildTask.create "PrepareJsTests" [] {
         !! "tests/TestingUtils/TestResults"
         |> Shell.cleanDirs
-        System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
+        System.IO.Directory.CreateDirectory(jsIOResultFolder) |> ignore
         //System.IO.File.Copy(jsHelperFilePath, $"{allTestsProject}/js/{jsHelperFileName}") |> ignore
 
     }
@@ -48,13 +44,13 @@ module RunTests =
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Js tests"
             // Setup test results directory after clean
-            System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
+            System.IO.Directory.CreateDirectory(jsIOResultFolder) |> ignore
             // transpile js files from fsharp code
-            run dotnet $"fable {allTestsProject} -o {allTestsProject}/js --nocache" ""
-            System.IO.File.Copy(jsHelperFilePath, $"{allTestsProject}/js/{jsHelperFileName}") |> ignore
+            run dotnet $"fable {allTestsProject} -o {allTestsProject}/ts --lang ts -e fs.ts --nocache" ""
             // run mocha in target path to execute tests
             // "--timeout 20000" is used, because json schema validation takes a bit of time.
-            run node $"{allTestsProject}/js/Main.js" ""
+            // run node $"{allTestsProject}/js/Main.js" ""
+            run npx $"vitest run --dir {allTestsProject}/ts/" ""
         else
             Trace.traceImportant "Skipping Js tests"
     )
@@ -64,8 +60,8 @@ module RunTests =
             Trace.traceImportant "Start native Python tests"
             for path in ProjectInfo.pyTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl --lang python --nocache" ""
-                GenerateIndexPy.ARCtrl_generate($"{path}/ARCtrl")
+                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl/py --lang python --nocache" ""
+                System.IO.File.Copy("src/ARCtrl/arctrl.py", $"{path}/ARCtrl/arctrl.py", overwrite = true)
                 run python $"-m pytest {path}" ""
         else
             Trace.traceImportant "Skipping Python tests"
@@ -75,7 +71,7 @@ module RunTests =
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start Python tests"
             // Setup test results directory after clean
-            System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/py") |> ignore
+            System.IO.Directory.CreateDirectory(pyIOResultFolder) |> ignore
             //transpile py files from fsharp code
             run dotnet $"fable {allTestsProject} -o {allTestsProject}/py --lang python --nocache" ""
             // run pyxpecto in target path to execute tests in python
@@ -112,8 +108,8 @@ module RunTests =
                 run python $"{p}/py/main.py" ""
                 // transpile js files from fsharp code
                 run dotnet $"fable {p} -o {p}/js" ""
-                System.IO.Directory.CreateDirectory("./tests/TestingUtils/TestResults/js") |> ignore
-                System.IO.File.Copy(jsHelperFilePath, $"{p}/js/{jsHelperFileName}") |> ignore
+                System.IO.Directory.CreateDirectory(jsIOResultFolder) |> ignore
+                
                 // run mocha in target path to execute tests
                 // "--timeout 20000" is used, because json schema validation takes a bit of time.
                 run node $"{p}/js/Main.js" ""

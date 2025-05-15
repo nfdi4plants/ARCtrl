@@ -55,8 +55,7 @@
     <None Include="README.md" />
   </ItemGroup>
   
-  <ItemGroup>
-    <Content Include="ContractIO\FileSystem.js" PackagePath="fable\" />  
+  <ItemGroup>  
     <Compile Include="ContractIO\FileSystemHelper.fs" />
     <Compile Include="ContractIO\ContractIO.fs" />
     <Compile Include="WebRequest\WebRequest.Node.fs" />
