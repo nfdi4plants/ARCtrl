@@ -7,11 +7,14 @@
   <Import Project="../Package.Metadata.props" />
   
   <ItemGroup>
+    <!-- Base types -->
     <Compile Include="Helper.fs" />
     <Compile Include="DynObjExtensions.fs" />
     <Compile Include="LDContext.fs" />
     <Compile Include="ROCrateContext.fs" />
     <Compile Include="LDObject.fs" />
+
+    <!-- Generic types -->
     <Compile Include="Generic\Comment.fs" />
     <Compile Include="Generic\DefinedTerm.fs" />
     <Compile Include="Generic\PropertyValue.fs" />
@@ -25,6 +28,10 @@
     <Compile Include="Generic\LabProcess.fs" />
     <Compile Include="Generic\CreativeWork.fs" />
     <Compile Include="Generic\Dataset.fs" />
+    <Compile Include="Generic\SoftwareApplication.fs" />
+    <Compile Include="Generic\FormalParameter.fs" />
+
+    <!-- ISA Profile types -->
     <Compile Include="ISAProfile\Dataset.fs" />
     <Compile Include="ISAProfile\Investigation.fs" />
     <Compile Include="ISAProfile\Study.fs" />
@@ -36,6 +43,14 @@
     <Compile Include="ISAProfile\PropertyValue.fs" />
     <Compile Include="ISAProfile\Person.fs" />
     <Compile Include="ISAProfile\ScholarlyArticle.fs" />
+
+    <!-- Workflow Profile types -->
+    <Compile Include="WorkflowProfile\WorkflowProtocol.fs" />
+    <Compile Include="WorkflowProfile\WorkflowInvocation.fs" />
+    <Compile Include="WorkflowProfile\Workflow.fs" />
+    <Compile Include="WorkflowProfile\ARCRun.fs" />
+
+    <!-- Main module -->
     <Compile Include="ArcROCrateMetadata.fs" />
     <None Include="playground.fsx" />
   </ItemGroup>
