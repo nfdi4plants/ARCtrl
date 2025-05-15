@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@nfdi4plants/arctrl",
-  "version": "2.5.1",
+  "version": "3.0.0-alpha.1",
   "description": "Top level ARC DataModel and API function descriptions.",
   "repository": {
     "type": "git",
@@ -16,9 +16,9 @@
   "contributors": [
     "Kevin Frey <Freymaurer@gmx.de> (https://github.com/Freymaurer)"
   ],
-  "main": "./dist/ts/cjs/index.js",      
-  "module": "./dist/ts/esm/index.js",   
-  "types": "./dist/ts/types/index.d.ts", 
+  "main": "./dist/ts/cjs/index.js",
+  "module": "./dist/ts/esm/index.js",
+  "types": "./dist/ts/types/index.d.ts",
   "exports": {
     ".": {
       "import": "./dist/ts/esm/index.js",
@@ -29,7 +29,6 @@
   "files": [
     "dist/ts"
   ],
-
   "scripts": {
     "build:esm": "tsc --module ESNext --outDir dist/ts/esm || echo 'ESM build displayed warnings'",
     "build:cjs": "tsc --module CommonJS --outDir dist/ts/cjs --declaration false || echo 'CJS build displayed warnings'",

@@ -1,3 +1,46 @@
+### 3.0.0-alpha.1+a081b85 (Released 2025-5-15)
+
+- Add Run and Workflow isa xlsx files
+- Add fields to Assay
+- Add fields to Datamap
+- Flattened ArcInvestigation into ARC class
+
+* Additions:
+    * [[#d33f5a0](https://github.com/nfdi4plants/ARCtrl/commit/d33f5a02e40e301017991e6b6985344b0afd6363)] cleanup version control and release tag generation
+    * [[#0de2c57](https://github.com/nfdi4plants/ARCtrl/commit/0de2c579e0a181a013e994238906b4cd9199fed6)] bump node version in ci to 18
+    * [[#af9edf5](https://github.com/nfdi4plants/ARCtrl/commit/af9edf523d2b66e20be54cb9715dd407d1556427)] cleanup npm dependencies
+    * [[#a295671](https://github.com/nfdi4plants/ARCtrl/commit/a295671d728790347ef2b1effb369284391244ef)] finish up release pipeline rework
+    * [[#9637108](https://github.com/nfdi4plants/ARCtrl/commit/9637108092f13d4974eaeb900013575056214018)] continue reworking package build tasks
+    * [[#7828ea6](https://github.com/nfdi4plants/ARCtrl/commit/7828ea6ad9db6ba7cdf5033234da4d8899eeda98)] adjust python transpilation and build chain to ts changes
+    * [[#04cc5cb](https://github.com/nfdi4plants/ARCtrl/commit/04cc5cbf41b46f9338a4420be642a34a1d17529e)] switch from vite packaging to tsc
+    * [[#9dad19a](https://github.com/nfdi4plants/ARCtrl/commit/9dad19a719e8df683a7d2229d38eed9cd3b29970)] Update DesignPrinciples.md
+    * [[#2074e77](https://github.com/nfdi4plants/ARCtrl/commit/2074e77543098fed722ae0ab7f98f366a62c98fd)] small tweaks to ts packaging
+    * [[#963dc90](https://github.com/nfdi4plants/ARCtrl/commit/963dc90db666e11dad6ea29296f09494cb2fbb94)] continue working on build targets for ts release
+    * [[#76893ef](https://github.com/nfdi4plants/ARCtrl/commit/76893eff06896d7d1fc0b73b799704a50a244bfb)] refactor js fs bindings and finish up vitest implementation
+    * [[#61781cb](https://github.com/nfdi4plants/ARCtrl/commit/61781cb2b0bf7a2fdef2ed31fdacff704e2ea35b)] start working on typescript support
+    * [[#a64d7c0](https://github.com/nfdi4plants/ARCtrl/commit/a64d7c07d699002f12038cc0e322223e0e93c6bf)] add workflow and run contract handling tests
+    * [[#83ec141](https://github.com/nfdi4plants/ARCtrl/commit/83ec1412fe82ecc39fe6e11faf87c2061dfec7ad)] add workflow and run contract handling
+    * [[#9f11b5f](https://github.com/nfdi4plants/ARCtrl/commit/9f11b5f3f693043950eabacf387870a04a0da6a0)] add run spreadsheet parser and tests
+    * [[#36e0407](https://github.com/nfdi4plants/ARCtrl/commit/36e0407152187ce76051c0d9817e5401040ce300)] update and test ArcInvestigation Run and Workflow handling
+    * [[#fdb299b](https://github.com/nfdi4plants/ARCtrl/commit/fdb299b8900606120a99328b62bc22101ea508c5)] add ArcRun Type
+    * [[#618c33f](https://github.com/nfdi4plants/ARCtrl/commit/618c33f6154acacd2cf093ffaa412aec508f2998)] implement and test ArcWorkflow Spreadsheet parsing
+    * [[#8560e8b](https://github.com/nfdi4plants/ARCtrl/commit/8560e8b5e80bfbbc90f533d4086a6acd1fc7bad9)] start working on workflow spreadsheet parsing
+    * [[#839c70b](https://github.com/nfdi4plants/ARCtrl/commit/839c70b750bd52fe9fe79c0f7bbeede553a11299)] add identifier, title and description to assay according to specification changes
+    * [[#3d424b8](https://github.com/nfdi4plants/ARCtrl/commit/3d424b88d0da81cfaa1c5ea2d22567d34297c04f)] add ArcWorkflow type
+    * [[#6211557](https://github.com/nfdi4plants/ARCtrl/commit/62115579a116453e8af5eba5bd423834ddf8d094)] update methods and tests according to ARC ISA flattening
+    * [[#f72aecf](https://github.com/nfdi4plants/ARCtrl/commit/f72aecfad5c8c9f6e8850b11de81521df1146887)] start flattening ARC class
+    * [[#1d81138](https://github.com/nfdi4plants/ARCtrl/commit/1d81138bec93cdc910912fe9c0472962b2b0a3ae)] include label in datamap spreadsheet parsing
+    * [[#bb772de](https://github.com/nfdi4plants/ARCtrl/commit/bb772deba1a8f7b2defef6fda56a02aa5d4d537d)] bump to 2.5.1
+* Deletions:
+    * [[#8f49f11](https://github.com/nfdi4plants/ARCtrl/commit/8f49f11b54dc87a4fa8618ec136b71ca0380c2f7)] remove py index file generation
+* Bugfixes:
+    * [[#a36aa3f](https://github.com/nfdi4plants/ARCtrl/commit/a36aa3f034fa9afce273eed41f71812e56638211)] try fix esbuild in ci
+    * [[#a2622a2](https://github.com/nfdi4plants/ARCtrl/commit/a2622a20bf7a4897746f8cba0547d8a4591ed14e)] fix jsnativetests copying correct index file
+    * [[#521ad99](https://github.com/nfdi4plants/ARCtrl/commit/521ad99079eca1a1bcab02ec2ef443f3b72fad93)] fixes and cleanup to ts packaging
+    * [[#b3685f9](https://github.com/nfdi4plants/ARCtrl/commit/b3685f9ad7506f994579f3dfd94372521a4a8ae9)] update to vitest and fix jsnative tests
+    * [[#811545f](https://github.com/nfdi4plants/ARCtrl/commit/811545f12bbf44f82569bfbb758ada567c03feec)] add tests for arcworkflow and arcrun and according fixes
+    * [[#4b9d5e6](https://github.com/nfdi4plants/ARCtrl/commit/4b9d5e601a37ddf8a9872896f13a3455e8bee3ac)] small fix to assay/study rename/remove failing in python
+
 ### 2.5.1+9f76bf1 (Released 2025-3-27)
 * Bugfixes:
     * [[#9f76bf1](https://github.com/nfdi4plants/ARCtrl/commit/9f76bf18eb707afc0428eb928259656936a544e0)] small fix to assay jsonld id

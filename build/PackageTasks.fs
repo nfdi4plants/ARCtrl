@@ -20,7 +20,7 @@ let private replaceCommitLink input =
 module BundleDotNet =
     let bundle (versionTag : string) (versionSuffix : string option) =
         System.IO.Directory.CreateDirectory(ProjectInfo.netPkgDir) |> ignore
-        !! "src/**/*.fsproj"
+        !! "src/*/*.fsproj"
         -- "src/bin/*"
         |> Seq.iter (Fake.DotNet.DotNet.pack (fun p ->           
             let msBuildParams =
@@ -52,8 +52,8 @@ let packJS = BuildTask.create "PackJS" [clean; build; transpileTS] {
 }
 
 let packPy = BuildTask.create "PackPy" [clean; build; transpilePy] {
-    run python "-m poetry install --no-root" ProjectInfo.pyPkgDir
-    run python "-m poetry build" "."
+    run python "-m poetry install --no-root" "."
+    run python $"-m poetry build -o {ProjectInfo.pyPkgDir}" "."
 }
 
 let pack = BuildTask.createEmpty "Pack" [packDotNet; packJS; packPy]

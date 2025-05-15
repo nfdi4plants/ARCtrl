@@ -40,7 +40,7 @@ let publishNuget = BuildTask.create "PublishNuget" [clean; build; runTests; pack
 }
 
 
-let publishNPM = BuildTask.create "PublishhNPM" [clean; build; runTests; packJS] {
+let publishNPM = BuildTask.create "PublishNPM" [clean; build; runTests; packJS] {
     let target = 
         (!! (sprintf "%s/*.tgz" npmPkgDir ))
         |> Seq.head
@@ -53,7 +53,7 @@ let publishNPM = BuildTask.create "PublishhNPM" [clean; build; runTests; packJS]
         let tag = if versionController.IsPrerelease then $" --tag next" else ""
         Fake.JavaScript.Npm.exec $"publish {target} --access public {tag}{otp}" (fun o ->
             { o with
-                WorkingDirectory = "./dist/js/"
+                WorkingDirectory = "./dist/ts/"
             })      
     else failwith "aborted"
 }
@@ -65,8 +65,8 @@ let publishPyPi = BuildTask.create "PublishPyPi" [clean; build; runTests; packPy
         let apikey = Environment.environVarOrNone "PYPI_KEY"
         match apikey with
         | Some key -> 
-            run python $"-m poetry config pypi-token.pypi {key}" ProjectInfo.pyPkgDir
+            run python $"-m poetry config pypi-token.pypi {key}" "."
         | None -> ()
-        run python "-m poetry publish" ProjectInfo.pyPkgDir
+        run python $"-m poetry publish --dist-dir {pyPkgDir}" "."
     else failwith "aborted"
 }
