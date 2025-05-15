@@ -40,12 +40,10 @@ module BundleDotNet =
         ))
 
 let packDotNet = BuildTask.create "PackDotNet" [clean; build; (*runTests*)] {
+    if isPrerelease then
+        let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
+        BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
     BundleDotNet.bundle ProjectInfo.stableVersionTag None
-}
-
-let packDotNetPrerelease = BuildTask.create "PackDotNetPrerelease" [clean; build] {
-    let prereleaseTag = PreReleaseFlag.toNugetTag release.SemVer prereleaseSuffix prereleaseSuffixNumber
-    BundleDotNet.bundle prereleaseTag (Some prereleaseTag)
 }
 
 let packJS = BuildTask.create "PackJS" [clean; build; transpileTS] {
