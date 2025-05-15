@@ -35,6 +35,9 @@ jobs:
     - name: install node modules
       working-directory: ./
       run: npm install --ignore-scripts
+    - name: esbuild postinstall
+      working-directory: ./
+      run: npm explore esbuild -- npm run postinstall
 
     # SETUP PYTHON
     - name: Setup Python
