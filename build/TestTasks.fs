@@ -55,13 +55,13 @@ module RunTests =
             Trace.traceImportant "Skipping Js tests"
     )
 
-    let runTestsPyNative = BuildTask.createFn "runTestsPyNative" [clean] (fun tp ->
+    let runTestsPyNative = BuildTask.createFn "runTestsPyNative" [clean; transpilePy] (fun tp ->
         if tp.Context.Arguments |> List.exists (fun a -> a.ToLower() = skipTestsFlag.ToLower()) |> not then
             Trace.traceImportant "Start native Python tests"
             for path in ProjectInfo.pyTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl/py --lang python --nocache" ""
-                System.IO.File.Copy("src/ARCtrl/arctrl.py", $"{path}/ARCtrl/arctrl.py", overwrite = true)
+                //run dotnet $"fable src/ARCtrl/ARCtrl.Python.fsproj -o {path}/ARCtrl/py --lang python --nocache" ""
+                //System.IO.File.Copy("src/ARCtrl/arctrl.py", $"{path}/ARCtrl/arctrl.py", overwrite = true)
                 run python $"-m pytest {path}" ""
         else
             Trace.traceImportant "Skipping Python tests"

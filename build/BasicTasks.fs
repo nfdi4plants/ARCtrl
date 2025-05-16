@@ -177,10 +177,10 @@ let build = BuildTask.create "Build" [clean] {
     )
 }
 
-let transpileTS = BuildTask.create "TranspileTS" [clean; build] {
+let transpileTS = BuildTask.create "TranspileTS" [clean] {
     run dotnet $"fable ./src/ARCtrl/ARCtrl.Javascript.fsproj --lang ts --fableLib @fable-org/fable-library-js --noCache -o src/ARCtrl/ts" ""
 }
 
-let transpilePy = BuildTask.create "TranspilePy" [clean; build] {
+let transpilePy = BuildTask.create "TranspilePy" [clean] {
     run dotnet $"fable ./src/ARCtrl/ARCtrl.Python.fsproj --lang python --noCache -o src/ARCtrl/py" ""
 }
