@@ -1,6 +1,5 @@
 import { equal, deepEqual, notEqual } from 'assert';
-import { CompositeHeader, IOType } from "./index.js"
-import { OntologyAnnotation } from './index.js';
+import { CompositeHeader, IOType, OntologyAnnotation } from "../../src/ARCtrl/index.ts"
 import { expect, it, describe } from 'vitest';
 
 function tests_IOType() {

@@ -1,5 +1,5 @@
 import { equal, deepEqual, notEqual } from 'assert';
-import { JsonController, OntologyAnnotation } from "./index.js"
+import { JsonController, OntologyAnnotation } from "../../src/ARCtrl/index.ts"
 import { expect, it, describe } from 'vitest';
 
 describe('JsonController', function () {

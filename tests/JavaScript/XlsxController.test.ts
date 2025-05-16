@@ -1,5 +1,5 @@
 import { equal, deepEqual, notEqual } from 'assert';
-import { XlsxController, ArcAssay } from "./index.js"
+import { XlsxController, ArcAssay } from "../../src/ARCtrl/index.ts";
 import { expect, it, describe } from 'vitest';
 
 describe('XlsxController', function () {

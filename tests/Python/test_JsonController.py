@@ -1,4 +1,4 @@
-from .ARCtrl.arctrl import OntologyAnnotation, JsonController, ArcInvestigation
+from src.ARCtrl import OntologyAnnotation, JsonController, ArcInvestigation
 
 class TestInvestigation:
     

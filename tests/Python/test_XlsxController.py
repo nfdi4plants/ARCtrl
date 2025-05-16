@@ -1,4 +1,4 @@
-from .ARCtrl.arctrl import OntologyAnnotation, XlsxController, ArcInvestigation
+from src.ARCtrl import OntologyAnnotation, XlsxController, ArcInvestigation
 
 class TestInvestigation:
     
