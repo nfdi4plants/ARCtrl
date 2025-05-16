@@ -50,14 +50,14 @@ jobs:
       if: matrix.os == 'windows-latest'
       run: |
           .\.venv\Scripts\python.exe -m pip install -U pip setuptools
-          .\.venv\Scripts\python.exe -m pip install poetry
-          .\.venv\Scripts\python.exe -m poetry install --no-root
+          .\.venv\Scripts\python.exe -m pip install uv
+          .\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml
     - name: Setup Poetry Unix
       if: matrix.os == 'ubuntu-latest'
       run: |
           ./.venv/bin/python -m pip install -U pip setuptools
-          ./.venv/bin/python -m pip install poetry
-          ./.venv/bin/python -m poetry install --no-root
+          ./.venv/bin/python -m pip install uv
+          ./.venv/bin/python -m uv pip install -r pyproject.toml
 
     # BUILD
     - name: make script executable

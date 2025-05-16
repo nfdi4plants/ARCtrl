@@ -68,11 +68,11 @@ On windows you can use the `setup.cmd` to run the following steps automatically!
     
     `py -m venv .venv`
 
-4. Install [Poetry](https://python-poetry.org/) and dependencies
+4. Install [uv](https://docs.astral.sh/uv/) and dependencies
 
    1. `.\.venv\Scripts\python.exe -m pip install -U pip setuptools`
-   2. `.\.venv\Scripts\python.exe -m pip install poetry`
-   3. `.\.venv\Scripts\python.exe -m poetry install --no-root`
+   2. `.\.venv\Scripts\python.exe -m pip install uv`
+   3. `.\.venv\Scripts\python.exe -m uv pip install -r pyproject.toml`
 
 Verify correct setup with `./build.cmd runtests` ✨
 
