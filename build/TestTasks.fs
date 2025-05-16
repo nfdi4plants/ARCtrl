@@ -24,8 +24,8 @@ module RunTests =
             Trace.traceImportant "Start native JavaScript tests"
             for path in ProjectInfo.jsTestProjects do
                 // transpile library for native access
-                run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ts --lang ts -e fs.ts --nocache" ""
-                System.IO.File.Copy("src/ARCtrl/index.ts", $"{path}/index.ts", overwrite = true) |> ignore
+                // run dotnet $"fable src/ARCtrl/ARCtrl.Javascript.fsproj -o {path}/ts --lang ts -e fs.ts --nocache" ""
+                // System.IO.File.Copy("src/ARCtrl/index.ts", $"{path}/index.ts", overwrite = true) |> ignore
                 run npx $"vitest run --dir ./tests/JavaScript/" ""
         else
             Trace.traceImportant "Skipping JavaScript tests"
